@@ -17,6 +17,7 @@ export function HeroPreview({
   initialTheme,
   ctaLabel,
   fieldTestLabel,
+  demoEnabled,
 }: {
   badge: string;
   title: string;
@@ -25,6 +26,7 @@ export function HeroPreview({
   initialTheme: "light" | "dark";
   ctaLabel: string;
   fieldTestLabel: string;
+  demoEnabled: boolean;
 }) {
   const [mode, setMode] = useState<"light" | "dark">(initialTheme);
   const screenshot = mode === "dark" ? "/landingpagephoto/workzoneliveDark.png" : "/landingpagephoto/workzoneliveLight.png";
@@ -62,9 +64,11 @@ export function HeroPreview({
 
               <div className="relative flex h-full items-end justify-center p-6 text-center transition hover:bg-black/5">
                 <div className="flex flex-col items-center gap-2">
-                  <Link href="/demo/workzone" className="inline-flex min-w-40 justify-center rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
-                    {ctaLabel}
-                  </Link>
+                  {demoEnabled ? (
+                    <Link href="/demo/workzone" className="inline-flex min-w-40 justify-center rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
+                      {ctaLabel}
+                    </Link>
+                  ) : null}
                   <Link href="/zugang" className="inline-flex min-w-40 justify-center rounded-full border border-white/18 bg-black/55 px-5 py-2.5 text-sm font-semibold text-white/88 backdrop-blur transition hover:bg-black/70 hover:text-white">
                     {fieldTestLabel}
                   </Link>

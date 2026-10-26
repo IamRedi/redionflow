@@ -57,6 +57,19 @@ type ModernCspReport = {
   };
 };
 
+/** Reports are tiny; anything larger is noise or abuse of a public endpoint. */
+const MAX_REPORT_BYTES = 16 * 1024;
+const MAX_FIELD_LENGTH = 500;
+
+function clip(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [
+      key,
+      typeof value === "string" && value.length > MAX_FIELD_LENGTH ? `${value.slice(0, MAX_FIELD_LENGTH)}…` : value,
+    ]),
+  );
+}
+
 function normaliseReport(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== "object") return null;
 
@@ -101,9 +114,14 @@ function normaliseReport(payload: unknown): Record<string, unknown> | null {
 }
 
 export async function POST(req: Request) {
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (declaredLength > MAX_REPORT_BYTES) return new NextResponse(null, { status: 204 });
+
   let payload: unknown = null;
   try {
-    payload = await req.json();
+    const raw = await req.text();
+    if (raw.length > MAX_REPORT_BYTES) return new NextResponse(null, { status: 204 });
+    payload = JSON.parse(raw);
   } catch {
     // Malformed JSON — silently drop. Browser doesn't retry regardless.
     return new NextResponse(null, { status: 204 });
@@ -113,7 +131,7 @@ export async function POST(req: Request) {
   if (!normalised) return new NextResponse(null, { status: 204 });
 
   logger.warn(
-    { event: "csp.report_only.violation", ...normalised },
+    { event: "csp.report_only.violation", ...clip(normalised) },
     "CSP violation reported",
   );
 

@@ -21,7 +21,9 @@ export async function register() {
   logger.info(
     {
       event: "server.startup",
-      nodeVersion: process.version,
+      // NEXT_RUNTIME is "nodejs" or "edge"; process.version only exists in Node.
+      runtime: process.env.NEXT_RUNTIME ?? "nodejs",
+      nodeVersion: process.env.NEXT_RUNTIME === "edge" ? "edge" : globalThis.process.version,
       nodeEnv: process.env.NODE_ENV,
       appEnv: process.env.APP_ENV ?? null,
       saas: process.env.SAAS_MODE === "true",
