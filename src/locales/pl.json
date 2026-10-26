@@ -400,7 +400,10 @@
   "admin": {
     "responseLanguage": "Jezyk odpowiedzi",
     "motherTongue": "Jezyk ojczysty",
-    "vacationDays": "Dni urlopu"
+    "vacationDays": "Dni urlopu",
+    "adminPassword": "Hasło",
+    "adminPasswordHint": "Co najmniej 12 znaków.",
+    "adminPasswordKeepHint": "Pozostaw puste, aby zachować obecne hasło."
   },
   "language": {
     "de": "Niemiecki",

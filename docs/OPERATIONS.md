@@ -452,6 +452,11 @@ Automatic admin creation is disabled on every deployment except a strictly
 gated local/demo path (BDF-P1-001) or the operator-driven `/first-boot`
 flow (BDF-P1-002).
 
+Admins sign in at `/admin-login` with **e-mail and password**. Passwords
+set in the app (first boot, owner adding or editing an admin) need at
+least 12 characters. The API route and the form's server action share one
+login rate limiter. Only workers and the display login keep 6-digit codes.
+
 ## First-boot administrator setup (BDF-P1-002)
 
 Use this when you deploy a **fresh dedicated** BaumdienstFlow installation

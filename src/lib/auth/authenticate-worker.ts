@@ -1,7 +1,7 @@
 /**
  * BDF-P1-005 — shared worker-credential verifier.
  *
- * Mirrors `authenticateAdminByCode` for the worker login flow so the
+ * Mirrors `authenticateAdmin` for the worker login flow so the
  * server action in `src/app/(workzone)/workzone/hr-actions.ts` (and any
  * future caller) cannot drift on the security-critical login policy.
  *

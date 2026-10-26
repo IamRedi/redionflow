@@ -9,6 +9,7 @@ import { ASSISTANT_LANGUAGE_OPTIONS } from "@/lib/assistant/language";
 import { getCurrentAdmin, isOwnerAdmin } from "@/lib/auth/admin-session";
 import { getAdminCompanyId } from "@/lib/auth/authorization";
 import { prisma } from "@/lib/db/prisma";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/first-boot-setup";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { reportLocale } from "@/lib/workzone/date-utils";
@@ -171,8 +172,9 @@ export default async function WorkzoneAdminProfilePage({
               </div>
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="managed-code">{t("form.loginCodePlaceholder", currentLang)}</Label>
-                  <Input id="managed-code" name="code" inputMode="numeric" maxLength={6} defaultValue="" />
+                  <Label htmlFor="managed-password">{t("admin.adminPassword", currentLang)}</Label>
+                  <Input id="managed-password" name="password" type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} maxLength={200} defaultValue="" />
+                  <p className="text-xs text-muted-foreground">{t("admin.adminPasswordKeepHint", currentLang)}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="managed-motherTongue">{t("admin.motherTongue", currentLang)}</Label>
