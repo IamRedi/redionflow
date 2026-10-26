@@ -80,6 +80,7 @@ Gemessen am 26.10.2026 mit Lighthouse 12, Mobil-Profil (gedrosselte CPU und Netz
 - [Betriebshandbuch](docs/OPERATIONS.md) – lokale Entwicklung, Auth, Tests, Deployment
 - [Architektur & SaaS](docs/SAAS_ARCHITECTURE.md), [Row-Level Security](docs/RLS.md), [CSP](docs/CSP.md)
 - [Architekturentscheidungen](docs/DECISIONS.md), [ADRs](docs/adr/)
+- [Sicherheit & Bedrohungsmodell](SECURITY.md)
 
 ## Lizenz
 
