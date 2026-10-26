@@ -19,10 +19,10 @@ describe("password (BDF-P1-001)", () => {
     expect(verifyPassword("wrong-password", stored)).toBe(false);
   });
 
-  it("verifyPassword rejects legacy plaintext PIN 121985 stored as-is", () => {
-    // Simulates a legacy row: `passwordHash = "121985"`. verifyPassword
+  it("verifyPassword rejects legacy plaintext PIN 654321 stored as-is", () => {
+    // Simulates a legacy row: `passwordHash = "654321"`. verifyPassword
     // must return false regardless of what the client submits.
-    expect(verifyPassword("121985", "121985")).toBe(false);
+    expect(verifyPassword("654321", "654321")).toBe(false);
   });
 
   it("verifyPassword rejects legacy plaintext PIN 202020 stored as-is", () => {
@@ -49,7 +49,7 @@ describe("password (BDF-P1-001)", () => {
   it("isHashedPassword correctly classifies scrypt vs plaintext", () => {
     const stored = hashPassword("hunter22-strong");
     expect(isHashedPassword(stored)).toBe(true);
-    expect(isHashedPassword("121985")).toBe(false);
+    expect(isHashedPassword("654321")).toBe(false);
     expect(isHashedPassword("202020")).toBe(false);
     expect(isHashedPassword("")).toBe(false);
     expect(isHashedPassword(null)).toBe(false);
@@ -59,7 +59,7 @@ describe("password (BDF-P1-001)", () => {
   it("isLegacyPlaintextHash flags exactly the values scrypt does not", () => {
     const stored = hashPassword("hunter22-strong");
     expect(isLegacyPlaintextHash(stored)).toBe(false);
-    expect(isLegacyPlaintextHash("121985")).toBe(true);
+    expect(isLegacyPlaintextHash("654321")).toBe(true);
     expect(isLegacyPlaintextHash("202020")).toBe(true);
     expect(isLegacyPlaintextHash("plain")).toBe(true);
     expect(isLegacyPlaintextHash("")).toBe(false); // no hash to reject

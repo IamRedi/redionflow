@@ -1259,7 +1259,7 @@
     "inactive": "inattivo",
     "siteAddress": "Indirizzo cantiere",
     "siteAddressPlaceholder": "Indirizzo cantiere",
-    "siteAddressExample": "es. Frillendorferstr 176, 45139 Essen",
+    "siteAddressExample": "es. Musterstraße 12, 12345 Musterstadt",
     "descriptionAddress": "Descrizione / indirizzo",
     "shortDescriptionOptional": "Descrizione breve (opzionale)",
     "addDirectTaskTree": "Aggiungi attività / albero diretto",

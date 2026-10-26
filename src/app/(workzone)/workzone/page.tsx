@@ -172,10 +172,7 @@ export default async function WorkzoneHomePage() {
     return "border-amber-200 bg-amber-50/80 dark:border-yellow-900/40 dark:bg-yellow-950/10";
   }
 
-  const fallbackStreet = "Frillendorferstr 176";
-  const fallbackZip = "45139";
-  const fallbackCity = "Essen";
-  const defaultAddress = `${company.street ?? fallbackStreet}, ${company.zip ?? fallbackZip} ${company.city ?? fallbackCity}`.trim();
+  const defaultAddress = [company.street, [company.zip, company.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const missionItems = baustellen.map((b) => {
     const total = b.treeItems.length;
     const done = b.treeItems.filter((t) => t.status === "done").length;

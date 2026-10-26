@@ -1228,7 +1228,7 @@
     "inactive": "inactive",
     "siteAddress": "Site address",
     "siteAddressPlaceholder": "Site address",
-    "siteAddressExample": "e.g. Frillendorferstr 176, 45139 Essen",
+    "siteAddressExample": "e.g. Musterstraße 12, 12345 Musterstadt",
     "descriptionAddress": "Description / address",
     "shortDescriptionOptional": "Short description (optional)",
     "addDirectTaskTree": "Add direct task / tree",

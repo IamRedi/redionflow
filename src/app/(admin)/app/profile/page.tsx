@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ASSISTANT_LANGUAGE_OPTIONS } from "@/lib/assistant/language";
-import { getCurrentAdmin, isPrimaryTestAdmin } from "@/lib/auth/admin-session";
+import { getCurrentAdmin, isOwnerAdmin } from "@/lib/auth/admin-session";
 import { prisma } from "@/lib/db/prisma";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -24,11 +24,12 @@ export default async function AdminProfilePage() {
       preferredLanguage: true,
       motherTongue: true,
       aiPersonalityNote: true,
+      isOwner: true,
     },
   });
   if (!user) return null;
 
-  const canManageAdmins = isPrimaryTestAdmin(user.email);
+  const canManageAdmins = isOwnerAdmin(user);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">

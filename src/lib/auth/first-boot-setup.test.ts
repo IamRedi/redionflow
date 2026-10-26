@@ -147,11 +147,6 @@ describe("validateFirstBootInput", () => {
   it("rejects an invalid email", () => {
     expect(validateFirstBootInput({ ...goodInput, email: "not-an-email" }).ok).toBe(false);
   });
-  it("rejects a legacy admin email", () => {
-    const r = validateFirstBootInput({ ...goodInput, email: "redi@baumdienst.flow" });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toBe("legacy_email");
-  });
   it(`rejects a password shorter than ${MIN_PASSWORD_LENGTH}`, () => {
     const r = validateFirstBootInput({ ...goodInput, password: "short", confirmation: "short" });
     expect(r.ok).toBe(false);
@@ -181,15 +176,9 @@ describe("validateFirstBootInput", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("password_equals_email");
   });
-  it("rejects the legacy PIN 121985 as password even when it satisfies length checks", () => {
-    // The legacy-PIN blocklist runs against the trimmed password before
-    // the length check so the specific rejection reason is preserved.
-    const r = validateFirstBootInput({
-      ...goodInput,
-      password: "121985",
-      confirmation: "121985",
-    });
+  it("rejects a short numeric PIN as password", () => {
+    const r = validateFirstBootInput({ ...goodInput, password: "123456", confirmation: "123456" });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.reason).toBe("password_is_legacy_pin");
+    if (!r.ok) expect(r.reason).toBe("password_too_short");
   });
 });
