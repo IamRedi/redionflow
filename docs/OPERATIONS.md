@@ -645,3 +645,12 @@ Die Wahrheit über Produkt/Architektur lebt unter `docs/`:
 - `docs/ROADMAP.md`: task-basierte Planung mit Dependencies & AC
 - `docs/DECISIONS.md`: Architektur-Entscheidungen (ADR light)
 - `docs/adr/`: einzelne Architecture Decision Records
+
+## Demo-Instanz
+
+- `docker compose up --build` startet PostgreSQL und die App mit `APP_ENV=demo`. Beim Start laufen `prisma migrate deploy` und `prisma/seed.ts`.
+- Der Seed ist idempotent: Existiert die Firma „Baumdienst Musterstadt GmbH“ schon, passiert nichts. Die Daten stehen in `prisma/seed-data.ts` und sind vollständig erfunden.
+- `npm run demo:reset` leert die Demo-Tabellen und spielt den Seed neu ein. Das Skript verweigert den Lauf bei `APP_ENV=production|saas` und verlangt bei `APP_ENV=demo` zusätzlich `DEMO_MODE=true` und `DEMO_RESET_ALLOWED=true`.
+- Für eine öffentliche Demo den Reset nächtlich planen (z. B. 03:00 Uhr), damit Arbeitszeiten und Tagesplan zum aktuellen Tag passen und Änderungen von Besuchern verschwinden.
+- `/demo/*` ist schreibgeschützt und ohne Login erreichbar, aber nur bei `APP_ENV=demo|local` (siehe `src/lib/public-demo.ts`).
+- Der Demo-Container ist kein gehärtetes Produktions-Image. `SESSION_SIGNING_SECRET` hat in `docker-compose.yml` einen lokalen Standardwert; für jede von außen erreichbare Instanz einen eigenen Wert setzen.
