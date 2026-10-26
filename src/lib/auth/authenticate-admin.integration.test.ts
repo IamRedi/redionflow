@@ -63,9 +63,9 @@ beforeEach(async () => {
 });
 
 describe("authenticateAdminByCode (real DB)", () => {
-  it("rejects a legacy plaintext PIN 121985", async () => {
-    await createAdmin("legacy-a@example.local", "121985");
-    const result = await authenticateAdminByCode(prisma, "legacy-a@example.local", "121985");
+  it("rejects a legacy plaintext PIN 654321", async () => {
+    await createAdmin("legacy-a@example.local", "654321");
+    const result = await authenticateAdminByCode(prisma, "legacy-a@example.local", "654321");
     expect(result).toEqual({ ok: false, reason: "legacy_plaintext" });
   });
 
@@ -121,9 +121,9 @@ describe("authenticateAdminByCode (real DB)", () => {
   });
 
   it("does not disclose the stored hash in its return value", async () => {
-    await createAdmin("legacy-x@example.local", "121985");
+    await createAdmin("legacy-x@example.local", "654321");
     const result = await authenticateAdminByCode(prisma, "legacy-x@example.local", "wrong");
-    expect(JSON.stringify(result)).not.toContain("121985");
+    expect(JSON.stringify(result)).not.toContain("654321");
     expect(JSON.stringify(result)).not.toContain("passwordHash");
   });
 });
@@ -150,7 +150,7 @@ describe("ensureDefaultAdmins gated demo bootstrap (real DB)", () => {
     expect(row?.isActive).toBe(true);
     expect(row?.passwordHash?.startsWith("scrypt$1$")).toBe(true);
     expect(row?.passwordHash).not.toBe("correcthorse-strong");
-    expect(row?.passwordHash).not.toContain("121985");
+    expect(row?.passwordHash).not.toContain("654321");
 
     // Idempotent: a second invocation does not throw and does not
     // silently rotate the stored password.

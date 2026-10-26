@@ -72,11 +72,11 @@ describe("resolveDemoAdminBootstrap (BDF-P1-001)", () => {
   });
 
   it("does not accept the legacy PIN literals as passwords (they are too short)", () => {
-    // "121985" and "202020" are 6 chars, below the 8-char minimum, so even
+    // "654321" and "202020" are 6 chars, below the 8-char minimum, so even
     // if an operator tries to reproduce the legacy PIN via env vars it is
     // rejected before hashing.
     expect(
-      resolveDemoAdminBootstrap(envWith({ ...OK, DEMO_ADMIN_PASSWORD: "121985" })),
+      resolveDemoAdminBootstrap(envWith({ ...OK, DEMO_ADMIN_PASSWORD: "654321" })),
     ).toBeNull();
     expect(
       resolveDemoAdminBootstrap(envWith({ ...OK, DEMO_ADMIN_PASSWORD: "202020" })),
