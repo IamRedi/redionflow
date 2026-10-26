@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { recordAudit } from "@/lib/audit/log";
-import { getCurrentAdmin, isPrimaryTestAdmin } from "@/lib/auth/admin-session";
+import { getCurrentAdmin, isOwnerAdmin } from "@/lib/auth/admin-session";
 import { hashPassword } from "@/lib/auth/password";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -46,7 +46,7 @@ export async function updateAdminProfileFormAction(formData: FormData): Promise<
 
 export async function upsertTestAdminFormAction(formData: FormData): Promise<void> {
   const admin = await getCurrentAdmin();
-  if (!admin || !isPrimaryTestAdmin(admin.email)) return;
+  if (!admin || !isOwnerAdmin(admin)) return;
 
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return;
@@ -86,7 +86,7 @@ export async function upsertTestAdminFormAction(formData: FormData): Promise<voi
 
 export async function updateManagedTestAdminFormAction(formData: FormData): Promise<void> {
   const admin = await getCurrentAdmin();
-  if (!admin || !isPrimaryTestAdmin(admin.email)) return;
+  if (!admin || !isOwnerAdmin(admin)) return;
 
   const adminId = String(formData.get("adminId") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -103,10 +103,10 @@ export async function updateManagedTestAdminFormAction(formData: FormData): Prom
 
   const existing = await prisma.user.findFirst({
     where: { id: adminId, role: "ADMIN" },
-    select: { id: true, email: true, companyProfileId: true },
+    select: { id: true, email: true, companyProfileId: true, isOwner: true },
   });
-  if (!existing || isPrimaryTestAdmin(existing.email)) return;
-  // Cross-tenant guard: primary admin may only edit admins in their own tenant.
+  if (!existing || isOwnerAdmin(existing)) return;
+  // Cross-tenant guard: the owner may only edit admins in their own tenant.
   if (existing.companyProfileId !== currentCompanyId) return;
 
   await prisma.user.update({
@@ -132,7 +132,7 @@ export async function removeManagedTestAdminAction(adminId: string): Promise<Act
   const lang = await resolveRequestLanguage();
   const message = (key: string) => t(`admin.${key}`, lang);
   const admin = await getCurrentAdmin();
-  if (!admin || !isPrimaryTestAdmin(admin.email)) {
+  if (!admin || !isOwnerAdmin(admin)) {
     return { ok: false, message: message("onlyPrimaryAdminCanRemoveAdmin") };
   }
 
@@ -146,9 +146,9 @@ export async function removeManagedTestAdminAction(adminId: string): Promise<Act
 
   const existing = await prisma.user.findFirst({
     where: { id: targetId, role: "ADMIN" },
-    select: { id: true, email: true, companyProfileId: true },
+    select: { id: true, email: true, companyProfileId: true, isOwner: true },
   });
-  if (!existing || isPrimaryTestAdmin(existing.email)) {
+  if (!existing || isOwnerAdmin(existing)) {
     return { ok: false, message: message("adminCannotBeRemoved") };
   }
   if (existing.companyProfileId !== currentCompanyId) {

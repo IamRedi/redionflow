@@ -49,6 +49,7 @@ export async function bootstrapSignupTenant(value: unknown) {
           email: input.email,
           name: input.fullName.trim(),
           role: "ADMIN",
+          isOwner: true,
           passwordHash: input.passwordHash,
           isActive: true,
           companyProfileId: company.id,

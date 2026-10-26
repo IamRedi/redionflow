@@ -68,7 +68,7 @@ export default async function DemoWorkzonePage() {
     if (movement.type === "COLLECT") coneQtyByBaustelle.set(movement.baustelleId, Math.max(0, current - qty));
   }
 
-  const defaultAddress = `${company.street ?? "Frillendorferstr 176"}, ${company.zip ?? "45139"} ${company.city ?? "Essen"}`.trim();
+  const defaultAddress = [company.street, [company.zip, company.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const missionItems = baustellen.map((b) => {
     const total = b.treeItems.length;
     const done = b.treeItems.filter((tree) => tree.status === "done").length;

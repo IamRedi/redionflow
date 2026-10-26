@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ASSISTANT_LANGUAGE_OPTIONS } from "@/lib/assistant/language";
-import { getCurrentAdmin, isPrimaryTestAdmin, LEGACY_LUCY_ADMIN_EMAIL } from "@/lib/auth/admin-session";
+import { getCurrentAdmin, isOwnerAdmin } from "@/lib/auth/admin-session";
 import { getAdminCompanyId } from "@/lib/auth/authorization";
 import { prisma } from "@/lib/db/prisma";
 import { t } from "@/lib/i18n";
@@ -49,16 +49,16 @@ export default async function WorkzoneAdminProfilePage({
       motherTongue: true,
       aiPersonalityNote: true,
       isActive: true,
+      isOwner: true,
       createdAt: true,
       updatedAt: true,
     },
   });
 
   if (!profile) notFound();
-  if (profile.email === LEGACY_LUCY_ADMIN_EMAIL) notFound();
 
   const isOwnProfile = currentAdmin.id === profile.id;
-  const canEditThisAdmin = isPrimaryTestAdmin(currentAdmin.email) && !isPrimaryTestAdmin(profile.email);
+  const canEditThisAdmin = isOwnerAdmin(currentAdmin) && !isOwnerAdmin(profile);
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
