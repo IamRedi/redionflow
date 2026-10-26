@@ -44,7 +44,6 @@ const CSP_REPORT_ONLY = [
   "form-action 'self'",
   "base-uri 'self'",
   "object-src 'none'",
-  "upgrade-insecure-requests",
   "report-uri /api/csp-report",
 ].join("; ");
 
@@ -67,8 +66,7 @@ const nextConfig = {
   images: {
     localPatterns: [
       {
-        pathname: "/branding/baumdienstflow-hero.png",
-        search: "?v=20260427-2",
+        pathname: "/branding/**",
       },
       {
         pathname: "/landingpagephoto/**",

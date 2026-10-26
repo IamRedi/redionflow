@@ -1,6 +1,10 @@
 export const appName = "Baumdienst";
 export const appSuffix = "Flow";
-export const brandLogoSrc = "/branding/baumdienstflow-hero.png?v=20260427-2";
+export const brandLogoSrc = "/branding/logo-256.webp";
+export const brandIconSrc = "/branding/logo-192.png";
+export const brandAppleIconSrc = "/branding/logo-180.png";
+export const brandFaviconSrc = "/branding/logo-48.png";
+export const brandManifestIconSrc = "/branding/logo-512.png";
 export const appSuperscript = "26";
 export const saasAppName = "RediOn";
 export const saasAppSuffix = "Flow";

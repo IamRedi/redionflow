@@ -26,9 +26,9 @@ function ColumnList({
   return (
     <div className={`rounded-xl border p-4 sm:p-5 ${cardTone}`}>
       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/48">{eyebrow}</div>
-      <h3 className="mt-2.5 max-w-lg text-[1rem] font-semibold tracking-tight text-white sm:text-[1.4rem] [font-family:'Canela','Iowan_Old_Style','Palatino_Linotype','Book_Antiqua',serif]">
+      <h2 className="mt-2.5 max-w-lg text-[1rem] font-semibold tracking-tight text-white sm:text-[1.4rem] [font-family:'Canela','Iowan_Old_Style','Palatino_Linotype','Book_Antiqua',serif]">
         {title}
-      </h3>
+      </h2>
 
       <div className="mt-4 space-y-2.5 sm:mt-5">
         {items.slice(0, 3).map((item) => (

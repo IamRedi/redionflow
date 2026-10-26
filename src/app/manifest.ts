@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { appName, appSuffix, brandLogoSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
+import { appName, appSuffix, brandIconSrc, brandManifestIconSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
 import { isSaasMode } from "@/lib/saas-config";
 
 export default function manifest(): MetadataRoute.Manifest {
@@ -18,13 +18,13 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "de",
     icons: [
       {
-        src: brandLogoSrc,
+        src: brandManifestIconSrc,
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: brandLogoSrc,
+        src: brandIconSrc,
         sizes: "192x192",
         type: "image/png",
         purpose: "maskable",
