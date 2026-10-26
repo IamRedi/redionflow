@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { brandLogoSrc } from "@/lib/branding";
+import { brandFaviconSrc } from "@/lib/branding";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const logoPath = brandLogoSrc.replace(/^\//, "").split("?")[0] ?? "";
+  const logoPath = brandFaviconSrc.replace(/^\//, "");
   const filePath = path.join(process.cwd(), "public", logoPath);
   const icon = await readFile(filePath);
 

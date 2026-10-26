@@ -43,6 +43,18 @@ npm run build       # Produktionsbuild
 
 Integrations- und E2E-Tests laufen in CI gegen eine frische, wegwerfbare PostgreSQL (`npm run test:integration:local`, `npm run test:e2e:local`). Jeder Push wird zusätzlich mit gitleaks auf Secrets geprüft.
 
+### Lighthouse (mobil)
+
+Gemessen am 26.10.2026 mit Lighthouse 12, Mobil-Profil (gedrosselte CPU und Netzwerk), gegen einen lokalen Produktionsbuild (`npm run build && npm start`).
+
+| Seite | Performance | Barrierefreiheit | Best Practices | SEO |
+|---|---|---|---|---|
+| Startseite `/` | 96 | 100 | 100 | 100 |
+| Zugang `/zugang` | 99 | 100 | 100 | 60¹ |
+| Admin-Login `/admin-login` | 98 | 100 | 100 | 60¹ |
+
+¹ Login-Seiten sind absichtlich `noindex`, damit sie nicht in Suchmaschinen landen.
+
 ## Dokumentation
 
 - [Betriebshandbuch](docs/OPERATIONS.md) – lokale Entwicklung, Auth, Tests, Deployment
