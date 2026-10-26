@@ -24,13 +24,13 @@ export async function DemoTopBar({ workers }: { workers: DemoWorker[] }) {
   const currentLang = await resolveRequestLanguage();
 
   return (
-    <div className="mx-auto grid min-w-[430px] max-w-6xl gap-2 px-5 pb-1 pt-8 sm:min-w-0">
+    <div className="mx-auto grid max-w-6xl gap-2 px-5 pb-1 pt-8">
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <AppBrand compact logoAlt={t("common.companyLogoAlt", currentLang)} />
             <span
-              className="inline-flex h-8 items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300"
+              className="inline-flex h-8 items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
               title="AI preview"
               aria-label="AI preview"
             >

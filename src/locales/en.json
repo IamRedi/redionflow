@@ -43,7 +43,8 @@
     "add": "Add",
     "photo": "Photo",
     "active": "active",
-    "error": "Error"
+    "error": "Error",
+    "none": "None"
   },
   "public": {
     "loginTitle": "Sign in",
@@ -665,7 +666,8 @@
     "rejectedStatus": "Rejected",
     "pendingStatus": "Pending",
     "totalLabel": "Total",
-    "remainingLabel": "Remaining"
+    "remainingLabel": "Remaining",
+    "workingNow": "Working now"
   },
   "report": {
     "daily": "Daily report",
@@ -1436,5 +1438,17 @@
     "pl": "Polish",
     "ro": "Romanian",
     "switchLabel": "Language"
+  },
+  "demo": {
+    "liveCrewTitle": "On site now",
+    "liveCrewDescription": "Workers with a running shift.",
+    "safetyDescription": "Current state of the safety equipment.",
+    "tasksDescription": "Open tasks on this site.",
+    "itemsDescription": "Progress per item. Tap for details.",
+    "toolsDisabled": "Preview: the tools are visible but disabled in the public demo.",
+    "statusTodo": "open",
+    "statusDone": "done",
+    "statusBlocked": "blocked",
+    "workzoneDescription": "Read-only live view of sites, crews, fleet and current field status."
   }
 }

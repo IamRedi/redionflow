@@ -241,7 +241,8 @@ async function main() {
           diameter: 20 + Math.floor(hashToUnit(`${site.key}:dbh:${i}`) * 70),
           coordinates: pointAlong(site.path, i / Math.max(site.treeCount - 1, 1), `${site.key}:gps:${i}`),
           status,
-          notes: status === "blocked" ? pick(BLOCKED_NOTES, `${site.key}:note:${i}`) : undefined,
+          // Same JSON shape the Workzone writes ({ note, haltverbot, ... }).
+          notes: status === "blocked" ? JSON.stringify({ note: pick(BLOCKED_NOTES, `${site.key}:note:${i}`) }) : undefined,
           completedAt: status === "done" ? new Date(shiftStart.getTime() + i * 6 * 60 * 1000) : null,
           completedByWorkerId: status === "done" ? finisher.id : null,
         };

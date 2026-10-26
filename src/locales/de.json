@@ -703,7 +703,8 @@
     "rejectedStatus": "Abgelehnt",
     "pendingStatus": "Offen",
     "totalLabel": "Gesamt",
-    "remainingLabel": "Rest"
+    "remainingLabel": "Rest",
+    "workingNow": "Arbeitet gerade"
   },
   "report": {
     "brandName": "Baumdienst Flow",
@@ -1559,5 +1560,17 @@
     "pl": "Polski",
     "ro": "Romana",
     "switchLabel": "Sprache"
+  },
+  "demo": {
+    "liveCrewTitle": "Jetzt auf der Baustelle",
+    "liveCrewDescription": "Mitarbeitende mit laufender Arbeitszeit.",
+    "safetyDescription": "Aktueller Stand des Sicherungsmaterials.",
+    "tasksDescription": "Offene Aufgaben auf dieser Baustelle.",
+    "itemsDescription": "Fortschritt pro Position. Antippen für Details.",
+    "toolsDisabled": "Vorschau: Die Werkzeuge sind sichtbar, aber in der öffentlichen Demo deaktiviert.",
+    "statusTodo": "offen",
+    "statusDone": "erledigt",
+    "statusBlocked": "blockiert",
+    "workzoneDescription": "Schreibgeschützte Live-Ansicht von Baustellen, Teams, Fuhrpark und aktuellem Stand."
   }
 }

@@ -96,7 +96,7 @@ async function loginWorker(page: Page, fullName: string, loginCode: string) {
   await page.goto("/workzone/login");
   await page.locator('input[name="name"]').fill(fullName);
   await page.locator('input[name="loginCode"]').fill(loginCode);
-  await page.getByRole("button", { name: /Einloggen|Sign in|Accedi|Hyr/i }).click();
+  await page.getByRole("button", { name: /Einloggen|Sign in|Log in|Accedi|Hyr/i }).click();
   await expect(page).toHaveURL(/\/workzone\/profile$/);
   await expect(page.getByText(fullName).first()).toBeVisible();
 }

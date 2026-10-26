@@ -9,7 +9,7 @@ import { getCompanyMode } from "@/lib/db/company";
 import { t } from "@/lib/i18n";
 import { productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
-import { LANGUAGE_COOKIE, normalizeLanguage } from "@/lib/i18n/language";
+import { resolveRequestLanguage } from "@/lib/i18n/server";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -36,7 +36,9 @@ export default async function RootLayout({
 }>) {
   const jar = await cookies();
   const theme = jar.get("bk_theme")?.value === "dark" ? "dark" : "light";
-  const initialLang = normalizeLanguage(jar.get(LANGUAGE_COOKIE)?.value) ?? "de";
+  // Same resolution as server components (cookie, worker, Accept-Language), so client
+  // and server parts of a page never render in different languages.
+  const initialLang = await resolveRequestLanguage();
   const admin = await getCurrentAdmin();
   const companyMode = await getCompanyMode();
   const brand = productBranding(companyMode);
