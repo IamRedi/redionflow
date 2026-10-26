@@ -43,7 +43,8 @@
     "remove": "Rimuovi",
     "add": "Aggiungi",
     "active": "attivo",
-    "error": "Errore"
+    "error": "Errore",
+    "none": "Nessuno"
   },
   "public": {
     "loginTitle": "Accedi",
@@ -673,7 +674,8 @@
     "rejectedStatus": "Rifiutato",
     "pendingStatus": "In attesa",
     "totalLabel": "Totale",
-    "remainingLabel": "Rimanenti"
+    "remainingLabel": "Rimanenti",
+    "workingNow": "Al lavoro"
   },
   "report": {
     "daily": "Report giornaliero",
@@ -1476,5 +1478,17 @@
     "pl": "Polacco",
     "ro": "Rumeno",
     "switchLabel": "Lingua"
+  },
+  "demo": {
+    "liveCrewTitle": "Ora in cantiere",
+    "liveCrewDescription": "Operai con turno in corso.",
+    "safetyDescription": "Stato attuale del materiale di sicurezza.",
+    "tasksDescription": "Attività aperte in questo cantiere.",
+    "itemsDescription": "Avanzamento per voce. Tocca per i dettagli.",
+    "toolsDisabled": "Anteprima: gli strumenti sono visibili ma disattivati nella demo pubblica.",
+    "statusTodo": "aperto",
+    "statusDone": "fatto",
+    "statusBlocked": "bloccato",
+    "workzoneDescription": "Vista live in sola lettura di cantieri, squadre, flotta e stato attuale."
   }
 }

@@ -36,7 +36,8 @@
     "remove": "Scoate",
     "add": "Adauga",
     "photo": "Poza",
-    "active": "activ"
+    "active": "activ",
+    "none": "Niciunul"
   },
   "public": {
     "loginTitle": "Autentificare",
@@ -356,7 +357,8 @@
     "rejectedStatus": "Respins",
     "pendingStatus": "Deschis",
     "totalLabel": "Total",
-    "remainingLabel": "Ramas"
+    "remainingLabel": "Ramas",
+    "workingNow": "Lucrează acum"
   },
   "report": {
     "daily": "Raport zilnic",
@@ -411,5 +413,17 @@
     "sq": "Albaneza",
     "en": "Engleza",
     "pl": "Poloneza"
+  },
+  "demo": {
+    "liveCrewTitle": "Acum pe șantier",
+    "liveCrewDescription": "Muncitori cu tura în desfășurare.",
+    "safetyDescription": "Starea actuală a materialului de siguranță.",
+    "tasksDescription": "Sarcini deschise pe acest șantier.",
+    "itemsDescription": "Progres pe fiecare poziție. Atinge pentru detalii.",
+    "toolsDisabled": "Previzualizare: instrumentele sunt vizibile, dar dezactivate în demo-ul public.",
+    "statusTodo": "deschis",
+    "statusDone": "gata",
+    "statusBlocked": "blocat",
+    "workzoneDescription": "Vizualizare live doar în citire a șantierelor, echipelor, flotei și stării curente."
   }
 }

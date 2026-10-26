@@ -36,7 +36,8 @@
     "remove": "Usun",
     "add": "Dodaj",
     "photo": "Zdjecie",
-    "active": "aktywny"
+    "active": "aktywny",
+    "none": "Brak"
   },
   "public": {
     "loginTitle": "Zaloguj",
@@ -355,7 +356,8 @@
     "rejectedStatus": "Odrzucone",
     "pendingStatus": "Otwarte",
     "totalLabel": "Lacznie",
-    "remainingLabel": "Pozostalo"
+    "remainingLabel": "Pozostalo",
+    "workingNow": "Teraz pracuje"
   },
   "report": {
     "daily": "Raport dzienny",
@@ -410,5 +412,17 @@
     "sq": "Albanski",
     "en": "Angielski",
     "ro": "Rumuński"
+  },
+  "demo": {
+    "liveCrewTitle": "Teraz na budowie",
+    "liveCrewDescription": "Pracownicy z trwającą zmianą.",
+    "safetyDescription": "Aktualny stan sprzętu zabezpieczającego.",
+    "tasksDescription": "Otwarte zadania na tej budowie.",
+    "itemsDescription": "Postęp dla każdej pozycji. Dotknij, aby zobaczyć szczegóły.",
+    "toolsDisabled": "Podgląd: narzędzia są widoczne, ale wyłączone w publicznym demo.",
+    "statusTodo": "otwarte",
+    "statusDone": "gotowe",
+    "statusBlocked": "zablokowane",
+    "workzoneDescription": "Podgląd na żywo (tylko odczyt) budów, ekip, floty i bieżącego stanu."
   }
 }

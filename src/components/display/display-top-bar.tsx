@@ -33,7 +33,7 @@ export function DisplayTopBar({
   const { currentLang } = useLanguage();
 
   return (
-    <div className="mx-auto grid min-w-[430px] max-w-7xl gap-3 px-5 pb-2 pt-8 sm:min-w-0">
+    <div className="mx-auto grid max-w-7xl gap-3 px-5 pb-2 pt-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <AppBrand compact logoAlt={t("common.companyLogoAlt", currentLang)} />

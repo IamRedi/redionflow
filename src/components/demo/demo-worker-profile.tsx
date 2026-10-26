@@ -157,7 +157,7 @@ export async function DemoWorkerProfileView({ worker }: { worker: DemoWorkerProf
   const whatsappUrl = whatsappHref(worker.phone);
 
   return (
-    <div className="mx-auto min-w-[430px] max-w-6xl space-y-5 sm:min-w-0">
+    <div className="mx-auto max-w-6xl space-y-5">
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <div className="h-28 bg-[#163328]" />
         <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6">
