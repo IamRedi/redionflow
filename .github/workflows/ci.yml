@@ -31,6 +31,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  demo:
+    name: Docker demo (compose up + smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start demo stack
+        run: |
+          start=$(date +%s)
+          docker compose up --build --detach --wait --wait-timeout 600
+          echo "Demo ready after $(( $(date +%s) - start ))s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test
+        run: |
+          curl --fail --silent http://localhost:3000/api/healthz
+          curl --fail --silent --output /dev/null http://localhost:3000/demo/workzone
+          curl --fail --silent http://localhost:3000/demo/workzone | grep -q "Lindenallee"
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail 200
+
   test:
     name: Lint, Typecheck, Test, Build, E2E
     runs-on: ubuntu-latest

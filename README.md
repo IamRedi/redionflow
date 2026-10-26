@@ -7,7 +7,7 @@ Eine Codebasis, zwei Produkte für Betriebe, die draußen arbeiten:
 
 Das Produkt wird pro Firma über `company.mode` und zentrale Feature-Flags gesteuert, nicht über getrennte Apps.
 
-> **Status:** Dieses Repository wird gerade als saubere, öffentlich präsentierbare Fassung aufgebaut. Ausführliche Doku, Screenshots und eine Live-Demo folgen.
+> **Status:** Dieses Repository wird gerade als saubere, öffentlich präsentierbare Fassung aufgebaut. Ausführliche Doku, Screenshots und eine öffentliche Live-Demo folgen.
 
 ## Stack
 
@@ -16,9 +16,28 @@ Das Produkt wird pro Firma über `company.mode` und zentrale Feature-Flags geste
 - Tailwind CSS, Radix UI, React Hook Form, Zod
 - Vitest (Unit + Integration), Playwright (E2E), GitHub Actions
 - Supabase Storage, Firebase Cloud Messaging, Stripe (SaaS-Modus), OpenAI (Assistent)
-- Mehrsprachig: Deutsch, Englisch, Albanisch, Italienisch
+- Mehrsprachig: Deutsch, Englisch, Albanisch, Italienisch, Polnisch, Rumänisch
 
-## Schnellstart
+## Demo in drei Minuten
+
+Voraussetzung: Docker.
+
+```bash
+docker compose up --build
+```
+
+Danach `http://localhost:3000/demo` öffnen. Der Container führt die Migrationen aus und legt die fiktive Firma **Baumdienst Musterstadt GmbH** an: 8 Mitarbeitende, 3 Baustellen, 152 Bäume mit Koordinaten, 5 Maschinen, ein Tagesplan und laufende Arbeitszeiten. Alle Namen, Adressen und Kennzeichen sind erfunden ([`prisma/seed-data.ts`](prisma/seed-data.ts)).
+
+Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Wer zusätzlich den Admin-Bereich sehen will, setzt vor dem Start ein Passwort:
+
+```bash
+DEMO_ADMIN_PASSWORD='ein-langes-passwort' docker compose up --build
+# Login unter /admin-login mit admin@baumdienst-musterstadt.example
+```
+
+Frische Demo-Daten: `docker compose exec app npm run demo:reset`.
+
+## Schnellstart (Entwicklung)
 
 Voraussetzungen: Node.js 22 (siehe `.nvmrc`), npm 10, Docker für eine lokale PostgreSQL.
 
@@ -27,6 +46,7 @@ docker run -d --name redionflow-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=
 cp .env.example .env
 npm ci
 npm run db:migrate
+npm run db:seed     # fiktive Demo-Daten
 npm run dev
 ```
 
