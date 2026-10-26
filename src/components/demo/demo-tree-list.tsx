@@ -150,7 +150,7 @@ export function DemoTreeList({ items, mode }: { items: DemoTreeItem[]; mode?: Co
               <div className="min-w-0">
                 <div className="font-medium text-foreground">{tree.treeId}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {tree.species || "-"} {tree.diameter ? `· ${tree.diameter} cm` : ""}
+                  {tree.species || "-"} {tree.diameter ? (mode === "bau" ? `· ${label("workzone.treeDiameter")}: ${tree.diameter}` : `· ${tree.diameter} cm`) : ""}
                 </div>
                 {note && !expanded ? <div className="mt-1 text-xs text-red-700 dark:text-red-300">{note}</div> : null}
               </div>

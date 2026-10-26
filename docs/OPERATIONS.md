@@ -649,7 +649,8 @@ Die Wahrheit über Produkt/Architektur lebt unter `docs/`:
 ## Demo-Instanz
 
 - `docker compose up --build` startet PostgreSQL und die App mit `APP_ENV=demo`. Beim Start laufen `prisma migrate deploy` und `prisma/seed.ts`.
-- Der Seed ist idempotent: Existiert die Firma „Baumdienst Musterstadt GmbH“ schon, passiert nichts. Die Daten stehen in `prisma/seed-data.ts` und sind vollständig erfunden.
+- Der Seed ist idempotent: Existiert die Demo-Firma schon, passiert nichts. Die Daten sind vollständig erfunden.
+- `DEMO_SEED_MODE` wählt das Produkt: ohne Wert oder `baumdienst` entsteht „Baumdienst Musterstadt GmbH“ (BaumdienstFlow, `prisma/seed-data.ts`), mit `bau` „Bau Beispielstadt GmbH“ (BauFlow, `prisma/seed-data-bau.ts`). Eine Datenbank enthält immer nur eine Demo-Firma.
 - `npm run demo:reset` leert die Demo-Tabellen und spielt den Seed neu ein. Das Skript verweigert den Lauf bei `APP_ENV=production|saas` und verlangt bei `APP_ENV=demo` zusätzlich `DEMO_MODE=true` und `DEMO_RESET_ALLOWED=true`.
 - Für eine öffentliche Demo den Reset nächtlich planen (z. B. 03:00 Uhr), damit Arbeitszeiten und Tagesplan zum aktuellen Tag passen und Änderungen von Besuchern verschwinden.
 - `/demo/*` ist schreibgeschützt und ohne Login erreichbar, aber nur bei `APP_ENV=demo|local` (siehe `src/lib/public-demo.ts`).
@@ -668,3 +669,4 @@ Laut `docs/DEPLOYMENT.md` läuft die Demo auf Railway. `railway.json` legt fest:
    - `SESSION_SIGNING_SECRET` und `LOGIN_GUARD_SALT` (je `openssl rand -hex 32`)
    - Optional Admin-Zugang: `ALLOW_DEMO_ADMIN_BOOTSTRAP=true`, `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD` (12+ Zeichen)
 4. Nächtlicher Reset: zweiter Service aus demselben Repo mit denselben Variablen, Start-Befehl `npm run demo:reset`, Cron `0 2 * * *` (UTC, also ca. 03:00/04:00 Uhr deutscher Zeit).
+5. BauFlow-Demo: dieselben Schritte noch einmal mit eigener, neuer Datenbank und `DEMO_SEED_MODE=bau` auf App- und Reset-Service. Die beiden Demos teilen sich nichts außer dem Code.

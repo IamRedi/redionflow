@@ -8,17 +8,8 @@ import {
 } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { resolveDatabaseConnectionString } from "../src/lib/db/connection-string";
-import {
-  ANNOUNCEMENT,
-  BLOCKED_NOTES,
-  DEMO_COMPANY,
-  LABOR_ROLES,
-  MACHINES,
-  SEED_SYSTEM_USER,
-  SITES,
-  WORKERS,
-  type DemoSite,
-} from "./seed-data";
+import { BAUMDIENST_DEMO, type DemoDataset, type DemoSite } from "./seed-data";
+import { BAU_DEMO } from "./seed-data-bau";
 
 // Seed is for local/demo bootstrap only, not runtime execution. It creates
 // no administrator: use the gated demo bootstrap (`ALLOW_DEMO_ADMIN_BOOTSTRAP`)
@@ -27,6 +18,9 @@ const adapter = new PrismaPg({
   connectionString: resolveDatabaseConnectionString({ preferDirect: true }),
 });
 const prisma = new PrismaClient({ adapter });
+
+// `DEMO_SEED_MODE=bau` seeds the BauFlow demo company, anything else BaumdienstFlow.
+const data: DemoDataset = process.env.DEMO_SEED_MODE?.trim().toLowerCase() === "bau" ? BAU_DEMO : BAUMDIENST_DEMO;
 
 // Deterministic pseudo-random numbers so every reset produces the same demo.
 function hashToUnit(seed: string) {
@@ -86,7 +80,7 @@ function pastSessions(crew: Array<{ id: string }>, baustelleId: string, today: D
 }
 
 async function main() {
-  const existing = await prisma.companyProfile.findFirst({ where: { displayName: DEMO_COMPANY.displayName } });
+  const existing = await prisma.companyProfile.findFirst({ where: { displayName: data.company.displayName } });
   if (existing) {
     console.log("Demo data already present. Run `npm run demo:reset` for a fresh copy.");
     return;
@@ -99,8 +93,8 @@ async function main() {
 
   const company = await prisma.companyProfile.create({
     data: {
-      ...DEMO_COMPANY,
-      mode: "baumdienst",
+      ...data.company,
+      mode: data.mode,
       overheadSettings: {
         create: {
           bgkPct: new Prisma.Decimal("0.18"),
@@ -117,17 +111,17 @@ async function main() {
   });
 
   const systemUser = await prisma.user.upsert({
-    where: { email: SEED_SYSTEM_USER.email },
+    where: { email: data.systemUser.email },
     update: { companyProfileId: company.id },
     create: {
-      ...SEED_SYSTEM_USER,
+      ...data.systemUser,
       role: "STAFF",
       isActive: false,
       companyProfileId: company.id,
     },
   });
 
-  for (const role of LABOR_ROLES) {
+  for (const role of data.laborRoles) {
     await prisma.laborRole.create({
       data: {
         companyProfileId: company.id,
@@ -143,7 +137,7 @@ async function main() {
   }
 
   const machineIds = new Map<string, { id: string; name: string }>();
-  for (const machine of MACHINES) {
+  for (const machine of data.machines) {
     const created = await prisma.machine.create({
       data: {
         companyProfileId: company.id,
@@ -160,7 +154,7 @@ async function main() {
   }
 
   const workerIds = new Map<string, { id: string; name: string }>();
-  for (const worker of WORKERS) {
+  for (const worker of data.workers) {
     const created = await prisma.worker.create({
       data: {
         companyProfileId: company.id,
@@ -178,7 +172,7 @@ async function main() {
     workerIds.set(worker.key, { id: created.id, name: `${worker.firstName} ${worker.lastName}` });
   }
 
-  const ioana = workerIds.get("ioana")!;
+  const onVacation = workerIds.get(data.vacationWorker)!;
   const vacationStart = new Date(today);
   vacationStart.setDate(vacationStart.getDate() - 2);
   const vacationEnd = new Date(today);
@@ -186,7 +180,7 @@ async function main() {
   await prisma.vacationRequest.create({
     data: {
       companyProfileId: company.id,
-      workerId: ioana.id,
+      workerId: onVacation.id,
       startDate: vacationStart,
       endDate: vacationEnd,
       requestedDays: 7,
@@ -201,11 +195,11 @@ async function main() {
   await prisma.vacationRequest.create({
     data: {
       companyProfileId: company.id,
-      workerId: workerIds.get("marco")!.id,
+      workerId: workerIds.get(data.plannedVacationWorker)!.id,
       startDate: nextMonth,
       endDate: nextMonthEnd,
       requestedDays: 5,
-      workerNote: "Familienbesuch",
+      workerNote: data.plannedVacationNote,
     },
   });
 
@@ -214,7 +208,7 @@ async function main() {
   });
 
   let treeTotal = 0;
-  for (const [siteIndex, site] of SITES.entries()) {
+  for (const [siteIndex, site] of data.sites.entries()) {
     const baustelle = await prisma.baustelle.create({
       data: {
         companyProfileId: company.id,
@@ -242,7 +236,7 @@ async function main() {
           coordinates: pointAlong(site.path, i / Math.max(site.treeCount - 1, 1), `${site.key}:gps:${i}`),
           status,
           // Same JSON shape the Workzone writes ({ note, haltverbot, ... }).
-          notes: status === "blocked" ? JSON.stringify({ note: pick(BLOCKED_NOTES, `${site.key}:note:${i}`) }) : undefined,
+          notes: status === "blocked" ? JSON.stringify({ note: pick(data.blockedNotes, `${site.key}:note:${i}`) }) : undefined,
           completedAt: status === "done" ? new Date(shiftStart.getTime() + i * 6 * 60 * 1000) : null,
           completedByWorkerId: status === "done" ? finisher.id : null,
         };
@@ -293,10 +287,10 @@ async function main() {
   }
 
   await prisma.workzoneAnnouncement.create({
-    data: { companyProfileId: company.id, message: ANNOUNCEMENT, createdByName: "Büro" },
+    data: { companyProfileId: company.id, message: data.announcement, createdByName: "Büro" },
   });
 
-  await createDemoProject(company.id, machineIds.get("chipper")!.id);
+  await createDemoProject(company.id, machineIds.get(data.offer.project.position.machineKey)!);
 
   // Link admins created earlier by the gated bootstrap to the demo company.
   await prisma.user.updateMany({
@@ -305,62 +299,66 @@ async function main() {
   });
 
   console.log(
-    `Seed completed: ${DEMO_COMPANY.displayName}, ${WORKERS.length} workers, ${SITES.length} sites, ${treeTotal} trees, ${MACHINES.length} machines.`,
+    `Seed completed: ${data.company.displayName}, ${data.workers.length} workers, ${data.sites.length} sites, ${treeTotal} ${data.itemLabel}, ${data.machines.length} machines.`,
   );
 }
 
-async function createDemoProject(companyProfileId: string, chipperId: string) {
-  const [helper, climber] = await Promise.all([
-    prisma.laborRole.findFirstOrThrow({ where: { companyProfileId, name: "Helfer" } }),
-    prisma.laborRole.findFirstOrThrow({ where: { companyProfileId, name: "Kletterer" } }),
-  ]);
+async function createDemoProject(companyProfileId: string, machine: { id: string; name: string }) {
+  const { template, project } = data.offer;
+  const roles = await prisma.laborRole.findMany({ where: { companyProfileId } });
+  const roleByName = new Map(roles.map((role) => [role.name, role]));
 
   await prisma.calculationTemplate.create({
     data: {
       companyProfileId,
-      name: "Standard: Baumfällung (einfach)",
-      description: "Typische Positionen als Startpunkt. Inhalte und Mengen sind bewusst editierbar.",
+      name: template.name,
+      description: template.description,
       templatePositions: {
-        create: [
-          { sortOrder: 10, title: "Baum fällen und abtragen", description: "Fällung, Entastung, Abschnittbildung, Verladen", quantity: new Prisma.Decimal("1"), unit: "pauschal" },
-          { sortOrder: 20, title: "Häckselgut entsorgen", description: "Abtransport / Entsorgung gemäß Vorgabe", quantity: new Prisma.Decimal("1"), unit: "pauschal" },
-        ],
+        create: template.positions.map((position, i) => ({
+          sortOrder: (i + 1) * 10,
+          title: position.title,
+          description: position.description,
+          quantity: new Prisma.Decimal("1"),
+          unit: position.unit,
+        })),
       },
     },
   });
 
+  const { position } = project;
   await prisma.project.create({
     data: {
       companyProfileId,
-      title: "Angebot: Fällung Gartenbaum – Familie Muster",
-      customerName: "Erika Musterfrau",
-      customerStreet: "Beispielweg 8",
-      customerZip: "12345",
-      customerCity: "Musterstadt",
+      title: project.title,
+      customerName: project.customerName,
+      customerStreet: project.customerStreet,
+      customerZip: project.customerZip,
+      customerCity: project.customerCity,
       status: ProjectStatus.DRAFT,
-      internalNotes: "Demo-Angebot. Positionen dienen als realistischer Startpunkt.",
+      internalNotes: project.internalNotes,
       positions: {
         create: [
           {
             sortOrder: 10,
-            title: "Baum fällen und abtragen",
-            description: "Fällung einer Fichte (ca. 18 m) in Seilklettertechnik",
+            title: position.title,
+            description: position.description,
             quantity: new Prisma.Decimal("1"),
-            unit: "pauschal",
+            unit: position.unit,
             laborItems: {
-              create: [
-                { laborRoleId: climber.id, laborRoleNameSnapshot: climber.name, workers: 1, hours: new Prisma.Decimal("6.0") },
-                { laborRoleId: helper.id, laborRoleNameSnapshot: helper.name, workers: 1, hours: new Prisma.Decimal("6.0") },
-              ],
+              create: position.labor.map((item) => {
+                const role = roleByName.get(item.roleName);
+                if (!role) throw new Error(`Seed offer uses unknown labor role "${item.roleName}"`);
+                return { laborRoleId: role.id, laborRoleNameSnapshot: role.name, workers: 1, hours: new Prisma.Decimal(item.hours) };
+              }),
             },
             machineItems: {
-              create: [{ machineId: chipperId, machineNameSnapshot: "Häcksler", timeUnit: MachineTimeUnit.HOURS, quantity: new Prisma.Decimal("3.0") }],
+              create: [{ machineId: machine.id, machineNameSnapshot: machine.name, timeUnit: MachineTimeUnit.HOURS, quantity: new Prisma.Decimal(position.machineHours) }],
             },
             materialItems: {
-              create: [{ title: "Sicherungs-/Absperrmaterial", quantity: new Prisma.Decimal("1"), unit: "pauschal", unitPriceCents: 1500 }],
+              create: [{ title: position.material.title, quantity: new Prisma.Decimal("1"), unit: "pauschal", unitPriceCents: position.material.unitPriceCents }],
             },
             externalServiceItems: {
-              create: [{ title: "Entsorgungsgebühr Grünabfall", amountCents: 4500, notes: "Kann je nach Menge/Container variieren." }],
+              create: [{ title: position.externalService.title, amountCents: position.externalService.amountCents, notes: position.externalService.notes }],
             },
           },
         ],
