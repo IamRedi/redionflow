@@ -7,12 +7,10 @@ import { Button } from "@/components/ui/button";
 import { HubsteigerIcon } from "@/components/icons";
 import { prisma } from "@/lib/db/prisma";
 import { getOrCreateDefaultCompany, getCompanyMode } from "@/lib/db/company";
-import { getFeatures, productBranding } from "@/lib/mode-config";
 import { autoLockPastWorkLogs } from "@/lib/workzone/auto-lock";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
-import { PersonalFlowCanvas } from "./personal-flow-canvas";
 import { dateKey, dayRange } from "@/lib/workzone/date-utils";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { WorkingBadge } from "./working-badge";
@@ -57,22 +55,8 @@ export default async function WorkzoneHomePage() {
     getCurrentWorker(),
     getCompanyMode(),
   ]);
-  const features = getFeatures(mode);
   const currentLang = await resolveRequestLanguage();
 
-  // T-030: PersonalFlow replaces the mission-control canvas with a simplified
-  // task-list surface. The full baustellen workzone (which is what mission
-  // control is for) is gated by `features.baustellen`.
-  if (!features.baustellen) {
-    return (
-      <PersonalFlowCanvas
-        productName={productBranding(mode).full}
-        canEdit={Boolean(admin || worker)}
-        currentLang={currentLang}
-        mode={mode}
-      />
-    );
-  }
   const today = dateKey(new Date());
   const todayDate = dayRange(today).start;
   if (Number.isNaN(todayDate.getTime())) return null;

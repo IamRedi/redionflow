@@ -23,9 +23,9 @@ add it to `en.ts`, `it.ts`, `sq.ts` at the same time — the language files
 fall back to German, so the app won't crash, but a missing English
 translation renders German for English users.
 
-### 2. Mode-override drift (`bau` / `personal`)
+### 2. Mode-override drift (`bau`)
 
-When a company runs in BauFlow or PersonalFlow mode, `mode-overrides.ts`
+When a company runs in BauFlow mode, `mode-overrides.ts`
 overlays alternative wording on top of the base dictionary
 (e.g. `"Baum"` → `"Arbeit"`). If someone adds a DE override without also
 adding it in EN/IT/SQ/PL/RO, non-DE BauFlow users see the German

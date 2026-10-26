@@ -13,7 +13,7 @@ const AI_BADGE_TEXT = "AI";
  * Structure is IDENTICAL across modes so React never sees a hydration
  * mismatch between server and client. Only the *contents* switch:
  *   - baumdienst: hero image with the tree wordmark baked in.
- *   - bau / personal: safety-orange gradient with the product name.
+ *   - bau: safety-orange gradient with the product name.
  */
 export function AppBrand({
   compact = false,

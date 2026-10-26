@@ -25,7 +25,7 @@ import type { ActionResult } from "@/lib/validation/action-result";
 const signupSchema = z.object({
   displayName: z.string().trim().min(2).max(120),
   legalName: z.string().trim().min(2).max(200),
-  mode: z.enum(["baumdienst", "bau", "personal"]),
+  mode: z.enum(["baumdienst", "bau"]),
   email: z.string().email().max(200),
   password: z.string().min(8).max(200),
   fullName: z.string().trim().min(2).max(120),
