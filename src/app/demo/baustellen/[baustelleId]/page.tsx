@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getCompanyMode } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -18,7 +19,8 @@ function formatDateTime(date: Date) {
 
 export default async function DemoBaustelleDetailPage({ params }: { params: Promise<{ baustelleId: string }> }) {
   const { baustelleId } = await params;
-  const currentLang = await resolveRequestLanguage();
+  const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
+  const tr = (key: string) => t(key, currentLang, mode);
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId },
     include: {
@@ -64,9 +66,9 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   }).length;
   const rawSafetyStatus = isRecord(baustelle.activeEquipmentStatus) ? baustelle.activeEquipmentStatus : {};
   const safetyRows = [
-    { category: "SIGN" as const, label: t("workzone.haltingBan", currentLang) },
-    { category: "PLATE" as const, label: t("workzone.coverPlates", currentLang) },
-    { category: "FENCE" as const, label: t("workzone.barriers", currentLang) },
+    { category: "SIGN" as const, label: tr("workzone.haltingBan") },
+    { category: "PLATE" as const, label: tr("workzone.coverPlates") },
+    { category: "FENCE" as const, label: tr("workzone.barriers") },
   ].map((item) => {
     const entry = rawSafetyStatus[item.category];
     const row = isRecord(entry) ? entry : null;
@@ -81,17 +83,17 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   });
 
   return (
-    <div className="min-w-[430px] space-y-4 sm:min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border bg-card p-4 shadow-sm">
+        <div className="min-w-0">
           <div className="text-xs text-muted-foreground">
             <Link className="hover:underline" href="/demo/workzone">
-              {t("common.back", currentLang)} {t("workzone.siteListBack", currentLang)}
+              ← {tr("workzone.siteListBack")}
             </Link>
           </div>
-          <h1 className="text-xl font-semibold">{baustelle.name}</h1>
+          <h1 className="mt-1 text-xl font-semibold text-foreground">{baustelle.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{baustelle.description ?? ""}</p>
-          {haltCount > 0 ? <p className="mt-1 text-sm font-semibold text-red-500">{t("workzone.haltActive", currentLang)} ({haltCount})</p> : null}
+          {haltCount > 0 ? <p className="mt-1 text-sm font-semibold text-red-500">{tr("workzone.haltActive")} ({haltCount})</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <DemoReadonlyBadge />
@@ -102,17 +104,17 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>
-            <CardTitle>{t("workzone.treesTitle", currentLang)}</CardTitle>
-            <CardDescription>{t("workzone.treesDescription", currentLang)}</CardDescription>
+            <CardTitle>{tr("workzone.treesTitle")}</CardTitle>
+            <CardDescription>{tr("demo.itemsDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="liste">
               <TabsList>
-                <TabsTrigger value="liste">{t("workzone.list", currentLang)}</TabsTrigger>
-                <TabsTrigger value="harta">{t("workzone.map", currentLang)}</TabsTrigger>
+                <TabsTrigger value="liste">{tr("workzone.list")}</TabsTrigger>
+                <TabsTrigger value="harta">{tr("workzone.map")}</TabsTrigger>
               </TabsList>
               <TabsContent value="liste">
-                <DemoTreeList items={baustelle.treeItems} />
+                <DemoTreeList items={baustelle.treeItems} mode={mode} />
               </TabsContent>
               <TabsContent value="harta">
                 <BaustelleMap points={points} userId="demo-viewer" />
@@ -124,12 +126,12 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{t("workzone.externalWorkerTitle", currentLang)}</CardTitle>
-              <CardDescription>Live crew currently active on this site.</CardDescription>
+              <CardTitle>{tr("demo.liveCrewTitle")}</CardTitle>
+              <CardDescription>{tr("demo.liveCrewDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {baustelle.workSessions.length === 0 ? (
-                <p className="text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>
+                <p className="text-muted-foreground">{tr("workzone.noLiveWorkers")}</p>
               ) : (
                 baustelle.workSessions.map((session) => (
                   <div key={session.workerId} className="rounded-md border px-3 py-2">
@@ -147,8 +149,8 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
 
           <Card>
             <CardHeader>
-              <CardTitle>{t("workzone.safetyEquipment", currentLang)}</CardTitle>
-              <CardDescription>Current safety equipment state on this site.</CardDescription>
+              <CardTitle>{tr("workzone.safetyEquipment")}</CardTitle>
+              <CardDescription>{tr("demo.safetyDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {safetyRows.map((row) => (
@@ -158,7 +160,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
                     <span>{row.quantity}</span>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {row.requested ? `${row.workerName || "-"} · ${row.dateSet || "-"}` : t("common.none", currentLang)}
+                    {row.requested ? `${row.workerName || "-"} · ${row.dateSet || "-"}` : tr("common.none")}
                   </div>
                 </div>
               ))}
@@ -167,23 +169,23 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
 
           <Card>
             <CardHeader>
-              <CardTitle>{t("workzone.recentTasksTitle", currentLang)}</CardTitle>
-              <CardDescription>{t("workzone.recentTasksDescription", currentLang)}</CardDescription>
+              <CardTitle>{tr("workzone.recentTasksTitle")}</CardTitle>
+              <CardDescription>{tr("demo.tasksDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {baustelle.manualTasks.length === 0 ? (
-                <p className="text-muted-foreground">{t("workzone.noTasksYet", currentLang)}</p>
+                <p className="text-muted-foreground">{tr("workzone.noTasksYet")}</p>
               ) : (
                 <ul className="space-y-2">
                   {baustelle.manualTasks.slice(0, 10).map((task) => (
                     <li key={task.id} className="rounded-md border px-3 py-2">
                       <div className="text-xs text-muted-foreground">
-                        {`${task.user?.name ?? task.user?.email ?? t("common.unknown", currentLang)} · ${new Date(task.createdAt).toLocaleString()}`}
+                        {`${task.user?.name ?? task.user?.email ?? tr("common.unknown")} · ${formatDateTime(new Date(task.createdAt))}`}
                       </div>
                       <div className="font-medium">{task.description}</div>
                       {!task.isFlagged ? (
                         <div className="mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-300">
-                          {t("workzone.siteTaskDone", currentLang)}
+                          {tr("workzone.siteTaskDone")}
                         </div>
                       ) : null}
                     </li>

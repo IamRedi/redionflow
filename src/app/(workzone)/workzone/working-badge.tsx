@@ -15,7 +15,7 @@ export function WorkingBadge({ workers }: { workers: string[] }) {
       transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
       className="min-w-0 max-w-full rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-800 dark:border-green-900/40 dark:bg-green-950/10 dark:text-green-200"
     >
-      <span className="font-semibold">{t("workzone.startWork", currentLang)}</span>
+      <span className="font-semibold">{t("workzone.workingNow", currentLang)}</span>
       <span className="ml-2 break-words text-emerald-700 dark:text-green-200/80">{workers.join(", ")}</span>
     </motion.div>
   );
