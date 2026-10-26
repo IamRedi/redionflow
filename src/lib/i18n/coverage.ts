@@ -1,9 +1,9 @@
 /**
  * BDF-P8-007 — i18n coverage helpers.
  *
- * The language dictionaries in `de.ts`, `en.ts`, `it.ts`, `sq.ts`,
- * `pl.ts`, `ro.ts` all spread `...de` as a fallback, so every language
- * has the same **key shape** as German. What differs is the string
+ * The language dictionaries (`src/locales/*.json`) fall back to German
+ * for every key they do not translate (see `dictionaries.ts`), so every
+ * language has the same **key shape** as German. What differs is the string
  * *values*: any leaf whose value equals the German string has not been
  * explicitly translated and will show up as German in the UI.
  *
@@ -12,12 +12,7 @@
  * no Prisma, no Next.js — and safe to run in unit tests.
  */
 
-import { de } from "./de";
-import { en } from "./en";
-import { it } from "./it";
-import { pl } from "./pl";
-import { ro } from "./ro";
-import { sq } from "./sq";
+import { de, en, it, pl, ro, sq } from "./dictionaries";
 
 type NestedDict = { [key: string]: NestedDict | string | undefined };
 
