@@ -103,4 +103,18 @@ describe("POST /api/csp-report", () => {
     expect(res.status).toBe(204);
     expect(captured.filter((c) => c.includes("csp.report_only.violation"))).toEqual([]);
   });
+
+  it("drops oversized reports without logging", async () => {
+    const res = await post({ "csp-report": { "document-uri": "x".repeat(20_000) } });
+    expect(res.status).toBe(204);
+    expect(captured.filter((c) => c.includes("csp.report_only.violation"))).toEqual([]);
+  });
+
+  it("clips long fields in the log line", async () => {
+    const res = await post({ "csp-report": { "document-uri": "https://example.com", "blocked-uri": "b".repeat(2_000) } });
+    expect(res.status).toBe(204);
+    const line = captured.find((c) => c.includes("csp.report_only.violation")) ?? "";
+    expect(line).toContain("b".repeat(500));
+    expect(line).not.toContain("b".repeat(501));
+  });
 });
