@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useHydrated } from "@/lib/ui/use-hydrated";
 import { t } from "@/lib/i18n";
+import type { CompanyMode } from "@/lib/mode-config";
 
 import { signupAction } from "./actions";
 
-type Mode = "baumdienst" | "bau" | "personal";
+type Mode = CompanyMode;
 
 const PRODUCT_LABEL: Record<Mode, string> = {
   baumdienst: "BaumdienstFlow — Baumdienst",
   bau: "BauFlow — Bau",
-  personal: "PersonalFlow — Personal",
 };
 
 export function SignupForm({ preselectedMode }: { preselectedMode: Mode }) {

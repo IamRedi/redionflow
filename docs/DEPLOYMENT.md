@@ -8,7 +8,7 @@ path:
 1. **BaumdienstFlow dedicated/private-server** — the current production app,
    hosted separately with its own database and `SAAS_MODE=false`.
 2. **SaaS platform (RediOnFlow)** — the future multi-tenant deployment with
-   BaumdienstFlow, BauFlow, and PersonalFlow selectable per tenant.
+   BaumdienstFlow and BauFlow selectable per tenant.
 3. **Demo/presentation environments** — optional non-SaaS deployments for
    sales/testing, also with `SAAS_MODE=false`.
 

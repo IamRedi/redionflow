@@ -237,7 +237,7 @@ model CompanyProfile {
   vatId                 String?
   phone                 String?
   email                 String?
-  /// "baumdienst" | "bau" | "personal" — controls feature flags and product branding
+  /// "baumdienst" | "bau" — controls feature flags and product branding (DB CHECK constraint)
   mode                  String  @default("baumdienst")
   fleetGpsEnabled       Boolean @default(false)
   workerPhoneGpsEnabled Boolean @default(false)

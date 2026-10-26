@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, HardHat, TreePine, User } from "lucide-react";
+import { ArrowRight, HardHat, TreePine } from "lucide-react";
 
 import type { LandingLanguage } from "./landing-content";
 
-type ProductKey = "baumdienst" | "bau" | "personal";
+type ProductKey = "baumdienst" | "bau";
 
 const productsContent: Record<LandingLanguage, {
   products: Array<{
@@ -52,20 +52,9 @@ const productsContent: Record<LandingLanguage, {
           "Reports und Sicherheit ohne Baumdienst-Spezifika",
         ],
       },
-      {
-        key: "personal",
-        name: "PersonalFlow²⁶",
-        icon: User,
-        tagline: "Für kleine Teams — Tasks und Erinnerungen, klar und ruhig.",
-        bullets: [
-          "Tasks statt Mission-Control",
-          "Bis zu ~5 Nutzer",
-          "Kein Baustellen-, Baum- oder Flottenmodul",
-        ],
-      },
     ],
     sectionLabel: "Produkte",
-    sectionTitle: "Ein System, drei klare Zuschnitte.",
+    sectionTitle: "Ein System, zwei klare Zuschnitte.",
     sectionCopy: "Dieselbe Plattform, dieselbe Datenbasis — sichtbar wird nur, was der Betrieb braucht. Wählen Sie das Produkt, das zu Ihnen passt.",
     saasLabel: "SaaS-Plattform",
     dedicatedLabel: "Dedizierte Instanz",
@@ -100,20 +89,9 @@ const productsContent: Record<LandingLanguage, {
           "Reports and safety without tree-service specifics",
         ],
       },
-      {
-        key: "personal",
-        name: "PersonalFlow²⁶",
-        icon: User,
-        tagline: "For small teams — tasks and reminders, clear and calm.",
-        bullets: [
-          "Tasks instead of mission control",
-          "Up to ~5 users",
-          "No job-site, tree or fleet module",
-        ],
-      },
     ],
     sectionLabel: "Products",
-    sectionTitle: "One system, three clear editions.",
+    sectionTitle: "One system, two clear editions.",
     sectionCopy: "Same platform, same data foundation — only what the business needs is visible. Choose the product that fits you.",
     saasLabel: "SaaS platform",
     dedicatedLabel: "Dedicated instance",
@@ -148,20 +126,9 @@ const productsContent: Record<LandingLanguage, {
           "Report e sicurezza senza specifiche da tree service",
         ],
       },
-      {
-        key: "personal",
-        name: "PersonalFlow²⁶",
-        icon: User,
-        tagline: "Per piccoli team - task e promemoria, chiari e tranquilli.",
-        bullets: [
-          "Task invece di mission control",
-          "Fino a ~5 utenti",
-          "Nessun modulo cantieri, alberi o flotta",
-        ],
-      },
     ],
     sectionLabel: "Prodotti",
-    sectionTitle: "Un sistema, tre versioni chiare.",
+    sectionTitle: "Un sistema, due versioni chiare.",
     sectionCopy: "Stessa piattaforma, stessa base dati: si vede solo cio che serve all'azienda. Scegli il prodotto adatto.",
     saasLabel: "Piattaforma SaaS",
     dedicatedLabel: "Istanza dedicata",
@@ -196,20 +163,9 @@ const productsContent: Record<LandingLanguage, {
           "Raporty i bezpieczenstwo bez specyfiki arborystycznej",
         ],
       },
-      {
-        key: "personal",
-        name: "PersonalFlow²⁶",
-        icon: User,
-        tagline: "Dla malych zespolow - zadania i przypomnienia, jasno i spokojnie.",
-        bullets: [
-          "Zadania zamiast mission control",
-          "Do ~5 uzytkownikow",
-          "Bez modulu miejsc pracy, drzew lub floty",
-        ],
-      },
     ],
     sectionLabel: "Produkty",
-    sectionTitle: "Jeden system, trzy jasne wersje.",
+    sectionTitle: "Jeden system, dwie jasne wersje.",
     sectionCopy: "Ta sama platforma, ta sama baza danych: widoczne jest tylko to, czego firma potrzebuje. Wybierz produkt dla siebie.",
     saasLabel: "Platforma SaaS",
     dedicatedLabel: "Instancja dedykowana",
@@ -244,20 +200,9 @@ const productsContent: Record<LandingLanguage, {
           "Rapoarte si siguranta fara specific de servicii arboricole",
         ],
       },
-      {
-        key: "personal",
-        name: "PersonalFlow²⁶",
-        icon: User,
-        tagline: "Pentru echipe mici - taskuri si remindere, clar si calm.",
-        bullets: [
-          "Taskuri in loc de mission control",
-          "Pana la ~5 utilizatori",
-          "Fara modul de santier, arbori sau flota",
-        ],
-      },
     ],
     sectionLabel: "Produse",
-    sectionTitle: "Un sistem, trei versiuni clare.",
+    sectionTitle: "Un sistem, doua versiuni clare.",
     sectionCopy: "Aceeasi platforma, aceeasi baza de date: se vede doar ce are nevoie firma. Alege produsul potrivit.",
     saasLabel: "Platforma SaaS",
     dedicatedLabel: "Instanta dedicata",
@@ -292,20 +237,9 @@ const productsContent: Record<LandingLanguage, {
           "Raporte dhe siguri pa specifika te sherbimit te pemeve",
         ],
       },
-      {
-        key: "personal",
-        name: "PersonalFlow²⁶",
-        icon: User,
-        tagline: "Per ekipe te vogla — detyra dhe kujtesa, qarte dhe qete.",
-        bullets: [
-          "Detyra ne vend te Mission-Control",
-          "Deri ne ~5 perdorues",
-          "Pa modul kantieri, peme ose flote",
-        ],
-      },
     ],
     sectionLabel: "Produktet",
-    sectionTitle: "Nje sistem, tre versione te qarta.",
+    sectionTitle: "Nje sistem, dy versione te qarta.",
     sectionCopy: "E njejta platforme, e njejta baze te dhenash — shfaqet vetem ajo qe i duhet biznesit. Zgjidh produktin qe te pershtatet.",
     saasLabel: "Platforme SaaS",
     dedicatedLabel: "Instance e dedikuar",

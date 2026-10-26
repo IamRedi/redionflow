@@ -7,7 +7,7 @@
  * The env flag is intentionally coarse: it gates entire subsystems
  * (signup, billing, plan limits, tenant switcher) rather than individual
  * features. Product-level differentiation still lives in `company.mode`
- * (baumdienst / bau / personal) and `modeConfig` feature flags.
+ * (baumdienst / bau) and `modeConfig` feature flags.
  *
  * This module must stay dependency-free so it can be imported from both
  * server actions and client boundary components.

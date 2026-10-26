@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
-type ProductMode = "baumdienst" | "bau" | "personal";
+type ProductMode = "baumdienst" | "bau";
 
 const password = "SmokeTest123!";
 
@@ -344,11 +344,18 @@ test.describe("SaaS authenticated smoke", () => {
     await createExtraWorkItem(page, "Eiche", "30");
   });
 
-  test("PersonalFlow signup hides Baustellen and project modules", async ({ page }) => {
-    await signUpTenant(page, "personal");
+  test("BauFlow signup shows Baustellen but hides tree-only project modules", async ({ page }) => {
+    await signUpTenant(page, "bau");
 
-    await expect(page.locator('a[href="/app/baustellen"]')).toHaveCount(0);
+    await expect(page.locator('a[href="/app/baustellen"]').first()).toBeVisible();
     await expect(page.locator('a[href="/app/projects"]')).toHaveCount(0);
+  });
+
+  test("signup only offers BaumdienstFlow and BauFlow; an unknown mode falls back to BaumdienstFlow", async ({ page }) => {
+    await page.goto("/signup?mode=personal");
+    const modeSelect = page.locator('select[name="mode"]');
+    await expect(modeSelect).toHaveValue("baumdienst");
+    await expect(modeSelect.locator("option")).toHaveCount(2);
   });
 
   test("SaaS tenants cannot read another tenant's admin, Workzone, project, worker, or export data", async ({

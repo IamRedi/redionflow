@@ -11,7 +11,7 @@ Langfristig gehoert die Plattform zur Master-Marke **RediOnFlow**:
 - multi-product
 - mode-driven
 
-BaumdienstFlow bleibt der reale Ausgangspunkt. BauFlow und PersonalFlow werden spaeter ueber `company.mode`, Konfiguration und UI-Vereinfachung abgeleitet.
+BaumdienstFlow bleibt der reale Ausgangspunkt. BauFlow wird ueber `company.mode` und Konfiguration abgeleitet.
 
 ## Zielgruppe & Rollen
 
@@ -130,10 +130,9 @@ Die Kalkulation folgt einer deutschen Kostenstruktur mit konfigurierbaren Prozen
 ## SaaS/Product Mode Guardrails
 
 - The long-term platform is one codebase, one platform, multi-product, and mode-driven.
-- No separate BaumdienstFlow, BauFlow, or PersonalFlow apps are allowed.
+- No separate BaumdienstFlow or BauFlow apps are allowed.
 - BaumdienstFlow is the SaaS reference implementation and must stay equivalent to the current real-client product before other modes are simplified.
 - BauFlow is derived from the same operational company logic, with tree-specific modules hidden or replaced by construction-focused terminology and workflows.
-- PersonalFlow is derived after BauFlow by simplifying UI and hiding advanced team/company surfaces.
 - Product behavior must come from `company.mode` and central feature flags, not hardcoded product checks.
 - `RediOnFlow` is the master/legal/document brand, not the primary top-right in-app product name.
 - SaaS and dedicated-client deployments must keep the same logic and database structure; only environment, deployment, tenancy, and mode may differ.

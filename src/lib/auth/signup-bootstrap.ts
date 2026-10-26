@@ -7,7 +7,7 @@ import { assertSignupBootstrapAllowed, runSignupBootstrap } from "@/lib/db/opera
 const bootstrapSchema = z.object({
   displayName: z.string().trim().min(2).max(120),
   legalName: z.string().trim().min(2).max(200),
-  mode: z.enum(["baumdienst", "bau", "personal"]),
+  mode: z.enum(["baumdienst", "bau"]),
   email: z.string().email().max(200),
   fullName: z.string().trim().min(2).max(120),
   passwordHash: z.string().min(20).max(1000),

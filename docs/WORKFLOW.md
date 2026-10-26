@@ -106,7 +106,7 @@ The CI workflow was verified on GitHub for branch `i18n-admin-worker-ci`.
 The current live deployment is BaumdienstFlow on Railway from `prod`.
 
 `vercel.json` is kept for the future SaaS deployment path on Vercel. The SaaS
-track will later support BaumdienstFlow, BauFlow, and PersonalFlow as tenant
+track will later support BaumdienstFlow and BauFlow as tenant
 modes; it is not the current production deployment. Do not change Vercel config
 as part of ordinary Railway release work.
 

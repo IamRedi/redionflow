@@ -28,9 +28,6 @@ const BAUSTELLE_TYPES_BY_MODE: Record<CompanyMode, Array<{ value: string; labelK
     { value: "EXCAVATOR", labelKey: "workzone.excavator", defaultLabel: "Bagger" },
     { value: "OTHER", labelKey: "workzone.otherType", defaultLabel: "Sonstige" },
   ],
-  personal: [
-    { value: "OTHER", labelKey: "workzone.otherType", defaultLabel: "Sonstige" },
-  ],
 };
 
 export function WorkzoneCreateBaustelleModal({
