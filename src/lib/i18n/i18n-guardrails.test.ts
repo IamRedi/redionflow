@@ -215,7 +215,7 @@ const ALLOWED_DEDE_FILES = new Set([
   "src/components/demo/demo-worker-profile.tsx",
   "src/components/display/display-refresh-controls.tsx",
   "src/lib/assistant/admin-tools.ts",
-  "src/lib/export/baustelle-export.ts",
+  "src/lib/export/baustelle/text.ts",
 ]);
 
 const LOCALE_LITERAL = /"de-(?:DE|CH|AT)"/;
