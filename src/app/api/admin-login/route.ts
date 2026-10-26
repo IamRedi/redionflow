@@ -4,18 +4,12 @@ import { NextResponse } from "next/server";
 import { createSessionCookie } from "@/lib/auth/session-cookie";
 
 import { ADMIN_COOKIE, ensureDefaultAdmins } from "@/lib/auth/admin-session";
-import { authenticateAdminByCode } from "@/lib/auth/authenticate-admin";
+import { authenticateAdmin, readAdminPassword } from "@/lib/auth/authenticate-admin";
 import { DISPLAY_COOKIE } from "@/lib/auth/display-session";
 import { clearFailedLogin, ensureLoginAllowed, getClientIp, registerFailedLogin } from "@/lib/auth/login-guard";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/observability/logger";
 import { WORKER_COOKIE } from "@/lib/workzone/worker-session";
-
-function normalizeCode(value: FormDataEntryValue | null) {
-  return String(value ?? "")
-    .replace(/\D/g, "")
-    .slice(0, 6);
-}
 
 export const runtime = "nodejs";
 
@@ -50,9 +44,9 @@ export async function POST(req: Request) {
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
-  const code = normalizeCode(formData.get("code"));
+  const password = readAdminPassword(formData.get("password"));
 
-  if (!email || code.length !== 6) {
+  if (!email || !password) {
     await registerFailedLogin("admin", clientIp);
     return redirectWithPublicOrigin(req, "/admin-login?error=invalid");
   }
@@ -61,7 +55,7 @@ export async function POST(req: Request) {
     // BDF-P1-001: identity-only lookup + scrypt-only verification via the
     // shared helper so this route and the parallel server action in
     // `src/app/admin-login/actions.ts` cannot diverge on policy.
-    const result = await authenticateAdminByCode(prisma, email, code);
+    const result = await authenticateAdmin(prisma, email, password);
 
     if (!result.ok) {
       await registerFailedLogin("admin", clientIp);

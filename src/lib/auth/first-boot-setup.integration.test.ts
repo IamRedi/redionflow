@@ -16,7 +16,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 // the SaaS rejection case below loads its own isSaasMode=true mock.
 vi.mock("@/lib/saas-config", () => ({ isSaasMode: false }));
 
-import { authenticateAdminByCode } from "@/lib/auth/authenticate-admin";
+import { authenticateAdmin } from "@/lib/auth/authenticate-admin";
 import { hashPassword } from "@/lib/auth/password";
 import { performFirstBootSetup } from "@/lib/auth/first-boot-setup-service";
 // Use the same Prisma singleton the service uses so writes made from the
@@ -121,10 +121,10 @@ describe("performFirstBootSetup (real DB)", () => {
     expect(await prisma.user.count()).toBe(0);
   });
 
-  it("created admin can authenticate via authenticateAdminByCode", async () => {
+  it("created admin can authenticate via authenticateAdmin", async () => {
     const setup = await performFirstBootSetup(validInput, okEnv);
     expect(setup.ok).toBe(true);
-    const auth = await authenticateAdminByCode(prisma, validInput.email, validInput.password);
+    const auth = await authenticateAdmin(prisma, validInput.email, validInput.password);
     expect(auth.ok).toBe(true);
     if (auth.ok && setup.ok) expect(auth.adminId).toBe(setup.adminId);
   });
