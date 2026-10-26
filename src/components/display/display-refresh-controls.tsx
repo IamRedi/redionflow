@@ -23,10 +23,13 @@ export function DisplayRefreshControls({ initialTimestamp }: { initialTimestamp:
   const pathname = usePathname() ?? "";
   const [isPending, startTransition] = useTransition();
   const [lastUpdated, setLastUpdated] = useState(() => timestampLabel(initialTimestamp));
-
-  useEffect(() => {
+  // Reset the label when the server sends a newer snapshot (React's
+  // "adjust state when a prop changes" pattern, no effect needed).
+  const [seenTimestamp, setSeenTimestamp] = useState(initialTimestamp);
+  if (seenTimestamp !== initialTimestamp) {
+    setSeenTimestamp(initialTimestamp);
     setLastUpdated(timestampLabel(initialTimestamp));
-  }, [initialTimestamp]);
+  }
 
   useEffect(() => {
     let cancelled = false;
