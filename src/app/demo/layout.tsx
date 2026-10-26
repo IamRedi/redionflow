@@ -5,7 +5,8 @@ import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
-import { getOrCreateDefaultCompany } from "@/lib/db/company";
+import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
+import { getFeatures } from "@/lib/mode-config";
 import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { isPublicDemoEnabled } from "@/lib/public-demo";
@@ -19,7 +20,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   const todayEnd = new Date(todayStart);
   todayEnd.setHours(23, 59, 59, 999);
 
-  const [workers, machines, announcement] = await Promise.all([
+  const [workers, machines, announcement, mode] = await Promise.all([
     prisma.worker.findMany({
       where: { companyProfileId: company.id, status: "active" },
       select: {
@@ -54,11 +55,15 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
       select: { message: true },
       orderBy: { createdAt: "desc" },
     }),
+    getCompanyMode(),
   ]);
+  const features = getFeatures(mode);
+  // Mirrors the real Workzone layout: theme background, dark green only in dark mode.
+  const pageTone = mode === "baumdienst" ? "dark:bg-[#10211a]" : "";
 
   return (
-    <div className="min-h-dvh bg-[#10211a]">
-      <header className="sticky top-0 z-10 print:hidden">
+    <div className={`min-h-dvh overflow-x-hidden bg-background text-foreground ${pageTone}`}>
+      <header className={`sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         <div className="pt-3">
           <DemoTopBar
             workers={workers.map((worker) => ({
@@ -80,7 +85,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
           ) : null}
         </div>
       </header>
-      <DemoMachineRail machines={machines} />
+      {features.machines ? <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
       <div className="mx-auto max-w-6xl lg:pr-20">
         <main className="px-5 py-6 print:max-w-none print:px-0 print:py-0">{children}</main>

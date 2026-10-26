@@ -43,7 +43,8 @@
     "remove": "Hiq",
     "add": "Shto",
     "active": "aktive",
-    "error": "Gabim"
+    "error": "Gabim",
+    "none": "Asnjë"
   },
   "public": {
     "loginTitle": "Hyr",
@@ -666,7 +667,8 @@
     "rejectedStatus": "Refuzuar",
     "pendingStatus": "Ne pritje",
     "totalLabel": "Totali",
-    "remainingLabel": "Mbeten"
+    "remainingLabel": "Mbeten",
+    "workingNow": "Duke punuar"
   },
   "report": {
     "daily": "Raporti ditor",
@@ -1457,5 +1459,17 @@
     "it": "Italisht",
     "pl": "Polonisht",
     "ro": "Rumanisht"
+  },
+  "demo": {
+    "liveCrewTitle": "Tani në kantier",
+    "liveCrewDescription": "Punëtorët me orë pune aktive.",
+    "safetyDescription": "Gjendja aktuale e materialit të sigurisë.",
+    "tasksDescription": "Detyrat e hapura në këtë kantier.",
+    "itemsDescription": "Përparimi për çdo pozicion. Prek për detaje.",
+    "toolsDisabled": "Pamje paraprake: veglat duken, por në demon publike janë të çaktivizuara.",
+    "statusTodo": "e hapur",
+    "statusDone": "kryer",
+    "statusBlocked": "bllokuar",
+    "workzoneDescription": "Pamje live vetëm për lexim e kantiereve, ekipeve, flotës dhe gjendjes aktuale."
   }
 }

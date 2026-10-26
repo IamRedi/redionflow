@@ -132,13 +132,11 @@ export default async function DemoWorkzonePage() {
     <div className="space-y-4">
       <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Public Demo</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">{t("admin.publicDemo", currentLang)}</div>
           <DemoReadonlyBadge />
         </div>
         <h1 className="mt-1 text-xl font-semibold">Workzone</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Read-only live view of sites, crews, fleet and current field status.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("demo.workzoneDescription", currentLang)}</p>
       </div>
       <WorkzoneMissionControl
         items={liveMission}
