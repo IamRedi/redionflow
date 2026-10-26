@@ -191,6 +191,10 @@ model User {
   role              UserRole          @default(STAFF)
   passwordHash      String?
   isActive          Boolean           @default(true)
+  /// The company owner: the admin created by signup or first boot. Only the
+  /// owner may add, edit or deactivate other admins, and the owner itself
+  /// cannot be edited or removed by them.
+  isOwner           Boolean           @default(false)
   preferredLanguage AssistantLanguage @default(DE)
   motherTongue      AssistantLanguage @default(DE)
   aiPersonalityNote String?

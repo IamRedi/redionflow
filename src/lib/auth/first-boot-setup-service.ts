@@ -108,6 +108,7 @@ export async function performFirstBootSetup(
           email: validated.email,
           name,
           role: "ADMIN",
+          isOwner: true,
           passwordHash,
           isActive: true,
         },

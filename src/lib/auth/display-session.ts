@@ -27,9 +27,7 @@ export function isDisplayLoginEmail(email: string): boolean {
 /**
  * BDF-P1-005: strictly gated demo/local display bootstrap.
  *
- * Previously seeded `display@baumdienst.flow` with the literal PIN
- * `303030` and wrote it verbatim into `passwordHash`. That path is
- * removed. Under the gate defined by `resolveDemoDisplayBootstrap`
+ * There is no hard-coded display account or PIN. Under the gate defined by `resolveDemoDisplayBootstrap`
  * (`APP_ENV in {local, demo}` AND `ALLOW_DEMO_DISPLAY_BOOTSTRAP=true`
  * AND both `DEMO_DISPLAY_EMAIL` + `DEMO_DISPLAY_PASSWORD` set) this
  * function upserts one display user whose password is scrypt-hashed at

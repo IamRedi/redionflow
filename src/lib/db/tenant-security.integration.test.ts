@@ -179,10 +179,9 @@ it("worker cannot change/delete another worker or edit calculation positions", a
   expect(await prisma.worker.findUnique({where:{id:tenants[0].worker.id}})).not.toBeNull();
 });
 
-it("primary admin cannot take over another tenant admin by email upsert", async () => {
-  const { PRIMARY_TEST_ADMIN_EMAIL } = await import("@/lib/auth/admin-session");
+it("owner admin cannot take over another tenant admin by email upsert", async () => {
   const { upsertTestAdminFormAction } = await import("@/app/(admin)/app/profile/actions");
-  await prisma.user.update({where:{id:tenants[0].admin.id},data:{email:PRIMARY_TEST_ADMIN_EMAIL}});
+  await prisma.user.update({where:{id:tenants[0].admin.id},data:{isOwner:true}});
   await asAdmin(0);
   await upsertTestAdminFormAction(form({name:"Forged",email:tenants[1].admin.email,code:"654321",isActive:"on"}));
   const foreign = await prisma.user.findUniqueOrThrow({where:{id:tenants[1].admin.id}});
@@ -204,10 +203,10 @@ it("worker credential rotation revokes old session and permits new login/session
 });
 it("admin credential rotation revokes old session and permits new login/session", async () => {
   const { hashPassword } = await import("@/lib/auth/password");
-  const { getCurrentAdmin, PRIMARY_TEST_ADMIN_EMAIL } = await import("@/lib/auth/admin-session");
+  const { getCurrentAdmin } = await import("@/lib/auth/admin-session");
   const { upsertTestAdminFormAction } = await import("@/app/(admin)/app/profile/actions");
   const { authenticateAdminByCode } = await import("@/lib/auth/authenticate-admin");
-  const a=tenants[0]; await prisma.user.update({where:{id:a.admin.id},data:{email:PRIMARY_TEST_ADMIN_EMAIL}});
+  const a=tenants[0]; await prisma.user.update({where:{id:a.admin.id},data:{isOwner:true}});
   const target=await prisma.user.create({data:{companyProfileId:a.company.id,role:"ADMIN",email:`session-target-${a.company.id}@example.test`,passwordHash:hashPassword("111111")}});
   const old=await createSessionCookie("admin",target.id); request.values.set("bk_admin_id",old); expect((await getCurrentAdmin())?.id).toBe(target.id);
   await asAdmin(0); await upsertTestAdminFormAction(form({name:"Synthetic target",email:target.email,code:"654321",isActive:"on"}));
@@ -216,11 +215,11 @@ it("admin credential rotation revokes old session and permits new login/session"
   request.values.set("bk_admin_id",await createSessionCookie("admin",target.id)); expect((await getCurrentAdmin())?.id).toBe(target.id);
 });
 
-it("primary admin cannot revoke an unassigned legacy admin outside tenant ownership",async()=>{
+it("owner admin cannot revoke an unassigned legacy admin outside tenant ownership",async()=>{
   const {removeManagedTestAdminAction}=await import("@/app/(admin)/app/profile/actions");
-  const {getCurrentAdmin,isPrimaryTestAdmin,PRIMARY_TEST_ADMIN_EMAIL}=await import("@/lib/auth/admin-session");
-  await prisma.user.update({where:{id:tenants[0].admin.id},data:{email:PRIMARY_TEST_ADMIN_EMAIL}});await asAdmin(0);
-  const caller=await getCurrentAdmin();expect(caller?.id).toBe(tenants[0].admin.id);expect(isPrimaryTestAdmin(caller!.email)).toBe(true);
+  const {getCurrentAdmin,isOwnerAdmin}=await import("@/lib/auth/admin-session");
+  await prisma.user.update({where:{id:tenants[0].admin.id},data:{isOwner:true}});await asAdmin(0);
+  const caller=await getCurrentAdmin();expect(caller?.id).toBe(tenants[0].admin.id);expect(isOwnerAdmin(caller)).toBe(true);
   const owned=await prisma.user.create({data:{companyProfileId:tenants[0].company.id,email:`owned-removal-${tenants[0].marker}@example.test`,role:"ADMIN",isActive:true}});
   expect((await removeManagedTestAdminAction(owned.id)).ok).toBe(true);
   expect((await prisma.user.findUniqueOrThrow({where:{id:owned.id}})).isActive).toBe(false);

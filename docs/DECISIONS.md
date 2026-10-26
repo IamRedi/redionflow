@@ -1,5 +1,14 @@
 # BaumdienstFlow / RediOnFlow - DECISIONS
 
+## 2026-10-26 - Admin management belongs to the company owner, not to an e-mail address
+
+- **Decision**: `User.isOwner` marks the admin created by signup, first boot or the demo bootstrap. Only the owner may add, edit or deactivate other admins, and the owner cannot be changed by them. The hard-coded "primary test admin" e-mail and the legacy admin e-mail / PIN deny-lists were removed.
+- **Why**: Authorisation keyed to one personal e-mail address does not work for any other installation and leaked personal identities into the code.
+- **Consequences**:
+  - Migration `20261026150000_user_is_owner` adds the column and marks the earliest active admin of each company as owner.
+  - `isOwnerAdmin(user)` replaces `isPrimaryTestAdmin(email)`.
+  - First boot still rejects short passwords (12+ characters), which already covers the old 6-digit PINs.
+
 ## 2026-10-26 - Two products only: PersonalFlow removed
 
 - **Decision**: RediOnFlow ships exactly two modes, `baumdienst` (BaumdienstFlow) and `bau` (BauFlow). The experimental `personal` mode (PersonalFlow), its canvas, signup option, landing tab, theme selectors and translations were removed.

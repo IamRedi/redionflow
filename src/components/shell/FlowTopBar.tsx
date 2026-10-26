@@ -5,7 +5,7 @@ import { TeamAssistantLogoTrigger, WorkerAssistantTrigger } from "@/components/a
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { AppBrand } from "@/components/branding/AppBrand";
 import { Button } from "@/components/ui/button";
-import { getCurrentAdmin, LEGACY_LUCY_ADMIN_EMAIL, PRIMARY_TEST_ADMIN_EMAIL } from "@/lib/auth/admin-session";
+import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { getCompanyMode } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
@@ -78,7 +78,7 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
           where: {
             role: "ADMIN",
             isActive: true,
-            email: { notIn: [PRIMARY_TEST_ADMIN_EMAIL, LEGACY_LUCY_ADMIN_EMAIL] },
+            isOwner: false,
             ...tenantWhere,
           },
           select: { id: true, name: true, email: true },
