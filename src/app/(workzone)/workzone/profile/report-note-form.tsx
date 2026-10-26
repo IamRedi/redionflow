@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/ui/cn";
+import { isRecord } from "@/lib/workzone/site-json";
 import { formatCount } from "@/lib/workzone/date-utils";
 import { saveReportNoteOffline } from "@/lib/workzone/offline/offline-actions";
 import { saveReportNoteAction } from "../hr-actions";
@@ -29,11 +30,12 @@ function parseMessages(note: string, lang: string): ChatMessage[] {
     const parsed = JSON.parse(note);
     const messages = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.messages) ? parsed.messages : [];
     return (messages as unknown[])
-      .filter((message: any) => typeof message?.text === "string" && message.text.trim())
-      .map((message: any, index: number) => ({
+      .filter(isRecord)
+      .filter((message) => typeof message?.text === "string" && message.text.trim())
+      .map((message, index: number) => ({
         id: String(message.id ?? `message-${index}`),
         authorName: String(message.authorName ?? fallbackAuthor),
-        authorRole: ["Admin", "Worker", "System"].includes(message.authorRole) ? message.authorRole : "System",
+        authorRole: message.authorRole === "Admin" || message.authorRole === "Worker" ? message.authorRole : "System",
         text: String(message.text).trim(),
         createdAt: String(message.createdAt ?? ""),
       }));

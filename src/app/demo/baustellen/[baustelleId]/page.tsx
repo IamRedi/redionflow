@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { prisma } from "@/lib/db/prisma";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { isRecord, readLatLng } from "@/lib/workzone/site-json";
 import { WorkingBadge } from "@/app/(workzone)/workzone/working-badge";
 import { BaustelleMap } from "@/app/(workzone)/workzone/baustellen/[baustelleId]/baustelle-map";
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
@@ -46,15 +47,10 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   });
   if (!baustelle) notFound();
 
-  const points = baustelle.treeItems
-    .map((tree) => {
-      const c = tree.coordinates as any;
-      const lat = typeof c?.lat === "number" ? c.lat : typeof c?.latitude === "number" ? c.latitude : null;
-      const lng = typeof c?.lng === "number" ? c.lng : typeof c?.longitude === "number" ? c.longitude : null;
-      if (lat == null || lng == null) return null;
-      return { id: tree.id, treeId: tree.treeId, status: tree.status as "todo" | "done" | "blocked", lat, lng };
-    })
-    .filter(Boolean) as { id: string; treeId: string; status: "todo" | "done" | "blocked"; lat: number; lng: number }[];
+  const points = baustelle.treeItems.flatMap((tree) => {
+    const coords = readLatLng(tree.coordinates);
+    return coords ? [{ id: tree.id, treeId: tree.treeId, status: tree.status, ...coords }] : [];
+  });
 
   const activeWorkerNames = baustelle.workSessions.map((session) => `${session.worker.firstName} ${session.worker.lastName}`.trim()).filter(Boolean);
   const haltCount = baustelle.treeItems.filter((item) => {
@@ -66,13 +62,14 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
       return false;
     }
   }).length;
-  const rawSafetyStatus = (baustelle.activeEquipmentStatus as Record<string, any> | null) ?? {};
+  const rawSafetyStatus = isRecord(baustelle.activeEquipmentStatus) ? baustelle.activeEquipmentStatus : {};
   const safetyRows = [
     { category: "SIGN" as const, label: t("workzone.haltingBan", currentLang) },
     { category: "PLATE" as const, label: t("workzone.coverPlates", currentLang) },
     { category: "FENCE" as const, label: t("workzone.barriers", currentLang) },
   ].map((item) => {
-    const row = rawSafetyStatus[item.category] as any;
+    const entry = rawSafetyStatus[item.category];
+    const row = isRecord(entry) ? entry : null;
     return {
       category: item.category,
       label: item.label,
@@ -115,7 +112,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
                 <TabsTrigger value="harta">{t("workzone.map", currentLang)}</TabsTrigger>
               </TabsList>
               <TabsContent value="liste">
-                <DemoTreeList items={baustelle.treeItems as any} />
+                <DemoTreeList items={baustelle.treeItems} />
               </TabsContent>
               <TabsContent value="harta">
                 <BaustelleMap points={points} userId="demo-viewer" />

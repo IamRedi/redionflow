@@ -20,6 +20,7 @@ import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { updateNotificationSettings } from "@/lib/notifications/notification-store";
 import { sendNotificationToAdmins } from "@/lib/notifications/sendNotification";
 import { scanFileContent } from "@/lib/storage/content-scan";
+import { isRecord } from "@/lib/workzone/site-json";
 import { validateFileAgainstAllowedCategories } from "@/lib/storage/file-validation";
 import { deleteManagedFileByUrl, uploadManagedFile } from "@/lib/storage/object-storage";
 import type { ActionResult } from "@/lib/validation/action-result";
@@ -87,8 +88,9 @@ type WorkerDocument = {
 function parseWorkerDocuments(value: unknown): WorkerDocument[] {
   if (!value || !Array.isArray(value)) return [];
   return value
-    .filter((item: any) => typeof item?.url === "string" && typeof item?.label === "string")
-    .map((item: any) => ({
+    .filter(isRecord)
+      .filter((item) => typeof item?.url === "string" && typeof item?.label === "string")
+    .map((item) => ({
       id: String(item.id ?? crypto.randomUUID()),
       label: String(item.label),
       type: String(item.type ?? "document"),

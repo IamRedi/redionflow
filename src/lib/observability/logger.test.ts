@@ -28,12 +28,12 @@ describe("logger", () => {
 
   beforeEach(() => {
     captured.length = 0;
-    stdoutWrite = vi.spyOn(process.stdout, "write").mockImplementation((chunk: any) => {
-      captured.push({ stream: "stdout", line: typeof chunk === "string" ? chunk : chunk.toString("utf8") });
+    stdoutWrite = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
+      captured.push({ stream: "stdout", line: typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8") });
       return true;
     });
-    stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation((chunk: any) => {
-      captured.push({ stream: "stderr", line: typeof chunk === "string" ? chunk : chunk.toString("utf8") });
+    stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
+      captured.push({ stream: "stderr", line: typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8") });
       return true;
     });
   });

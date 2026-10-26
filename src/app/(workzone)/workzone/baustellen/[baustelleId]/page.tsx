@@ -13,6 +13,7 @@ import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { autoLockPastWorkLogs } from "@/lib/workzone/auto-lock";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { isRecord, readLatLng } from "@/lib/workzone/site-json";
 import { WorkzoneTreeList } from "./tree-list";
 import { ManualTaskForm } from "./manual-task-form";
 import { BaustelleMap } from "./baustelle-map";
@@ -93,15 +94,10 @@ export default async function BaustelleDetailPage({
   const activeWorkerIds = activeSessions.map((w) => w.workerId);
   const activeWorkerNames = activeSessions.map((w) => `${w.worker.firstName} ${w.worker.lastName}`.trim()).filter(Boolean);
 
-  const points = baustelle.treeItems
-    .map((t) => {
-      const c = t.coordinates as any;
-      const lat = typeof c?.lat === "number" ? c.lat : typeof c?.latitude === "number" ? c.latitude : null;
-      const lng = typeof c?.lng === "number" ? c.lng : typeof c?.longitude === "number" ? c.longitude : null;
-      if (lat == null || lng == null) return null;
-      return { id: t.id, treeId: t.treeId, status: t.status as any, lat, lng };
-    })
-    .filter(Boolean) as { id: string; treeId: string; status: "todo" | "done" | "blocked"; lat: number; lng: number }[];
+  const points = baustelle.treeItems.flatMap((t) => {
+    const coords = readLatLng(t.coordinates);
+    return coords ? [{ id: t.id, treeId: t.treeId, status: t.status, ...coords }] : [];
+  });
   const haltCount = baustelle.treeItems.filter((item) => {
     if (!item.notes) return false;
     try {
@@ -111,13 +107,14 @@ export default async function BaustelleDetailPage({
       return false;
     }
   }).length;
-  const rawSafetyStatus = (baustelle.activeEquipmentStatus as Record<string, any> | null) ?? {};
+  const rawSafetyStatus = isRecord(baustelle.activeEquipmentStatus) ? baustelle.activeEquipmentStatus : {};
   const safetyRows = [
     { category: "SIGN" as const, label: t("workzone.haltingBan", currentLang, mode) },
     { category: "PLATE" as const, label: t("workzone.coverPlates", currentLang, mode) },
     { category: "FENCE" as const, label: t("workzone.barriers", currentLang, mode) },
   ].map((item) => {
-    const row = rawSafetyStatus[item.category] as any;
+    const entry = rawSafetyStatus[item.category];
+    const row = isRecord(entry) ? entry : null;
     return {
       category: item.category,
       label: item.label,
@@ -248,7 +245,7 @@ export default async function BaustelleDetailPage({
                 <TabsContent value="liste">
                   <WorkzoneTreeList
                     baustelleId={baustelle.id}
-                    items={baustelle.treeItems as any}
+                    items={baustelle.treeItems}
                     currentWorker={currentActorView}
                     baustelleTasks={baustelle.manualTasks.map((task) => ({
                       id: task.id,
@@ -271,7 +268,7 @@ export default async function BaustelleDetailPage({
               <div className="mt-4">
                 <WorkzoneTreeList
                   baustelleId={baustelle.id}
-                  items={baustelle.treeItems as any}
+                  items={baustelle.treeItems}
                   currentWorker={currentActorView}
                   baustelleTasks={baustelle.manualTasks.map((task) => ({
                     id: task.id,
