@@ -6,6 +6,8 @@ import { normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { hashPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
+import { WorkerAvailability, WorkerLevel } from "@/generated/prisma/enums";
+import { parseEnumInput } from "@/lib/validation/enum-input";
 
 function cleanText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -49,14 +51,14 @@ export async function updateWorkerAction(formData: FormData) {
       position: cleanText(formData.get("position")),
       licenses: cleanText(formData.get("licenses")),
       status: formData.get("status") === "inactive" ? "inactive" : "active",
-      availability: String(formData.get("availability") ?? "AVAILABLE") as any,
+      availability: parseEnumInput(formData.get("availability"), WorkerAvailability, WorkerAvailability.AVAILABLE),
       vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), 26),
       // Blank profile fields preserve both hashed and legacy credentials.
       ...(loginCode ? { loginCode: null, loginCodeHash: hashPassword(loginCode) } : {}),
       isTemporary: formData.get("isTemporary") === "on",
       birthDate: cleanDate(formData.get("birthDate")),
       startedAtCompany: cleanDate(formData.get("startedAtCompany")),
-      level: String(formData.get("level") ?? "JUNIOR") as any,
+      level: parseEnumInput(formData.get("level"), WorkerLevel, WorkerLevel.JUNIOR),
       preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
       motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
     },

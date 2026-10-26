@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
@@ -103,7 +104,7 @@ async function generateUniqueInventoryItemCode(companyProfileId: string) {
   return `INV-${Date.now().toString().slice(-6)}`;
 }
 
-async function createMovement(tx: any, input: {
+async function createMovement(tx: Prisma.TransactionClient, input: {
   companyProfileId: string;
   itemId?: string | null;
   workerId?: string | null;
@@ -129,7 +130,7 @@ async function createMovement(tx: any, input: {
   });
 }
 
-async function findActiveAssignment(tx: any, companyInventoryItemId: string) {
+async function findActiveAssignment(tx: Prisma.TransactionClient, companyInventoryItemId: string) {
   return tx.workerAssetItem.findFirst({
     where: {
       companyInventoryItemId,

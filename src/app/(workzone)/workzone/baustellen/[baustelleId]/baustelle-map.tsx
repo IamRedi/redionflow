@@ -1,6 +1,6 @@
 "use client";
 
-import { divIcon } from "leaflet";
+import { divIcon, type LatLngTuple, type Marker as LeafletMarker } from "leaflet";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import { LocateFixed } from "lucide-react";
@@ -10,13 +10,6 @@ import { useLanguage } from "@/components/i18n/language-provider";
 import { t } from "@/lib/i18n";
 import { checkTreeItemAction } from "../../actions";
 
-const MapAny: any = MapContainer;
-const TileAny: any = TileLayer;
-const MarkerAny: any = Marker;
-const PopupAny: any = Popup;
-const CircleAny: any = Circle;
-const LayersAny: any = LayersControl;
-const BaseLayerAny: any = LayersControl.BaseLayer;
 
 type TreePoint = {
   id: string;
@@ -111,8 +104,8 @@ function FitBounds({ points }: { points: TreePoint[] }) {
   useEffect(() => {
     if (hasFit.current || points.length === 0) return;
     hasFit.current = true;
-    const bounds = points.map((p) => [p.lat, p.lng]);
-    map.fitBounds(bounds as any, { padding: [42, 42], maxZoom: 19 });
+    const bounds = points.map((p): LatLngTuple => [p.lat, p.lng]);
+    map.fitBounds(bounds, { padding: [42, 42], maxZoom: 19 });
   }, [map, points]);
 
   return null;
@@ -134,7 +127,7 @@ function UserLocationLayer({
         setPixel(null);
         return;
       }
-      const point = map.latLngToContainerPoint([location.lat, location.lng] as any);
+      const point = map.latLngToContainerPoint([location.lat, location.lng]);
       setPixel({ x: point.x, y: point.y });
     };
 
@@ -155,8 +148,8 @@ function UserLocationLayer({
 
   return (
     <>
-      <CircleAny
-        center={[location.lat, location.lng] as any}
+      <Circle
+        center={[location.lat, location.lng]}
         radius={Math.max(location.accuracy, 8)}
         pathOptions={{
           color: "#0284c7",
@@ -204,7 +197,7 @@ function FindMeControl({
         disabled={!location}
         title={location ? t("workzone.toMyPosition", currentLang) : t("workzone.gpsNotReady", currentLang)}
         onClick={() => {
-          if (location) map.flyTo([location.lat, location.lng] as any, Math.max(map.getZoom(), 18), { duration: 0.8 });
+          if (location) map.flyTo([location.lat, location.lng], Math.max(map.getZoom(), 18), { duration: 0.8 });
         }}
       >
         <LocateFixed className="size-5" />
@@ -233,7 +226,7 @@ function TreeMarker({
   onActivate: () => void;
   onRelease: () => void;
 }) {
-  const markerRef = useRef<any>(null);
+  const markerRef = useRef<LeafletMarker>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
 
@@ -254,9 +247,9 @@ function TreeMarker({
   }
 
   return (
-    <MarkerAny
+    <Marker
       ref={markerRef}
-      position={[point.lat, point.lng] as any}
+      position={[point.lat, point.lng]}
       icon={pinIcon(point.status, isActive)}
       opacity={isLockedByOther ? 0.45 : 1}
       eventHandlers={{
@@ -266,7 +259,7 @@ function TreeMarker({
       }}
     >
       {isActive ? (
-        <PopupAny closeButton={false} closeOnClick={false} autoClose={false} closeOnEscapeKey={false}>
+        <Popup closeButton={false} closeOnClick={false} autoClose={false} closeOnEscapeKey={false}>
           <div className="w-56 space-y-3">
             <div>
               <div className="text-sm font-semibold text-sky-800">{t("workzone.editingTree")}</div>
@@ -293,9 +286,9 @@ function TreeMarker({
               </button>
             </div>
           </div>
-        </PopupAny>
+        </Popup>
       ) : null}
-    </MarkerAny>
+    </Marker>
   );
 }
 
@@ -313,9 +306,9 @@ export function BaustelleMap({
     typeof navigator !== "undefined" && "geolocation" in navigator ? t("workzone.gpsSearching", currentLang) : t("workzone.gpsUnsupported", currentLang),
   );
   const lastLocationUpdateRef = useRef(0);
-  const center = useMemo(() => {
+  const center = useMemo((): LatLngTuple => {
     const p = points[0];
-    return p ? ([p.lat, p.lng] as const) : ([52.52, 13.405] as const);
+    return p ? [p.lat, p.lng] : [52.52, 13.405];
   }, [points]);
   const worksiteCenter = useMemo(
     () => ({
@@ -363,7 +356,7 @@ export function BaustelleMap({
 
   return (
     <div className="h-[520px] w-full overflow-hidden rounded-md border">
-      <MapAny center={center as any} zoom={16} preferCanvas={points.length > 100} style={{ height: "100%", width: "100%" }}>
+      <MapContainer center={center} zoom={16} preferCanvas={points.length > 100} style={{ height: "100%", width: "100%" }}>
         {/* eslint-disable-next-line i18n/no-hardcoded-jsx-text */}
         <style>{`
           @keyframes bk-map-pin-pulse {
@@ -377,20 +370,20 @@ export function BaustelleMap({
             overflow: hidden;
           }
         `}</style>
-        <LayersAny position="topright">
-          <BaseLayerAny checked name={t("workzone.streets", currentLang)}>
-            <TileAny
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name={t("workzone.streets", currentLang)}>
+            <TileLayer
               attribution="&copy; OpenStreetMap contributors"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-          </BaseLayerAny>
-          <BaseLayerAny name={t("workzone.satellite", currentLang)}>
-            <TileAny
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name={t("workzone.satellite", currentLang)}>
+            <TileLayer
               attribution="Tiles &copy; Esri"
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
-          </BaseLayerAny>
-        </LayersAny>
+          </LayersControl.BaseLayer>
+        </LayersControl>
         <FitBounds points={points} />
         <UserLocationLayer location={userLocation} worksiteCenter={worksiteCenter} />
         <FindMeControl location={userLocation} locationMessage={locationMessage} />
@@ -405,7 +398,7 @@ export function BaustelleMap({
             onRelease={() => setActiveTreeId(null)}
           />
         ))}
-      </MapAny>
+      </MapContainer>
     </div>
   );
 }

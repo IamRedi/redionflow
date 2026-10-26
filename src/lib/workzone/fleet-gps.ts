@@ -2,10 +2,10 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { DEFAULT_BAUSTELLE_GEOFENCE_METERS, isInsideGeofence, presenceDurationMinutes, type GeoPoint } from "./gps-rules";
 
-type OptionalFleetGpsPrisma = typeof prisma & {
-  gpsLocationPoint?: any;
-  machineBaustellePresence?: any;
-};
+// The fleet GPS delegates are treated as optional so older generated clients
+// (or partially migrated databases) degrade to "no GPS data" instead of crashing.
+type FleetGpsDelegates = "gpsLocationPoint" | "machineBaustellePresence";
+type OptionalFleetGpsPrisma = Omit<typeof prisma, FleetGpsDelegates> & Partial<Pick<typeof prisma, FleetGpsDelegates>>;
 
 export type MachinePresenceWithBaustelle = {
   id: string;
@@ -187,7 +187,7 @@ export async function findFleetGpsMachineByDeviceId(companyProfileId: string, de
   }
 }
 
-export async function createGpsLocationPointSafe(data: Record<string, unknown>) {
+export async function createGpsLocationPointSafe(data: Prisma.GpsLocationPointUncheckedCreateInput) {
   const delegate = optionalPrisma().gpsLocationPoint;
   if (!delegate) return null;
   try {

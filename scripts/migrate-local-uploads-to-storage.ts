@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { prisma } from "../src/lib/db/prisma";
 import { uploadManagedFile } from "../src/lib/storage/object-storage";
+import { isRecord } from "../src/lib/workzone/site-json";
 
 function mimeTypeFromName(fileName: string) {
   const ext = path.extname(fileName).toLowerCase();
@@ -51,8 +52,9 @@ type WorkerDocument = {
 function parseWorkerDocuments(value: unknown): WorkerDocument[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((item: any) => typeof item?.url === "string")
-    .map((item: any) => ({
+    .filter(isRecord)
+      .filter((item) => typeof item?.url === "string")
+    .map((item) => ({
       id: String(item.id ?? item.url),
       label: String(item.label ?? item.filename ?? "Dokument"),
       type: String(item.type ?? "document"),
