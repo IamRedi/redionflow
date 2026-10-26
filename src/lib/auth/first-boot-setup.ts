@@ -110,24 +110,6 @@ export function verifyToken(submitted: unknown, expected: string): boolean {
 
 export const MIN_PASSWORD_LENGTH = 12;
 
-/**
- * Emails known to have been shipped as demo admins in the past. We refuse
- * to reuse them for the fresh first-boot admin so an operator does not
- * accidentally recreate a legacy identity.
- */
-const LEGACY_ADMIN_EMAILS = new Set<string>([
-  "redi@baumdienst.flow",
-  "oli@baumdienst.flow",
-  "lucy@baumdienst.flow",
-  "annki@baumdienst.flow",
-]);
-
-/**
- * Known legacy plaintext PIN literals that must never be accepted as an
- * administrator password. Matches the audit trail in BDF-P1-001.
- */
-const LEGACY_PLAINTEXT_PINS = new Set<string>(["121985", "202020", "101010", "303030"]);
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function normalizeAdminEmail(value: unknown): string {
@@ -144,12 +126,10 @@ export type FirstBootInputValidation =
       ok: false;
       reason:
         | "invalid_email"
-        | "legacy_email"
         | "password_too_short"
         | "password_mismatch"
         | "password_equals_token"
-        | "password_equals_email"
-        | "password_is_legacy_pin";
+        | "password_equals_email";
     };
 
 export function validateFirstBootInput(input: {
@@ -160,15 +140,11 @@ export function validateFirstBootInput(input: {
 }): FirstBootInputValidation {
   const email = normalizeAdminEmail(input.email);
   if (!isValidAdminEmail(email)) return { ok: false, reason: "invalid_email" };
-  if (LEGACY_ADMIN_EMAILS.has(email)) return { ok: false, reason: "legacy_email" };
 
   const password = typeof input.password === "string" ? input.password : "";
   const confirmation = typeof input.confirmation === "string" ? input.confirmation : "";
   // Order: identify more specific rejection reasons before falling back to
   // the generic length check.
-  if (LEGACY_PLAINTEXT_PINS.has(password.trim())) {
-    return { ok: false, reason: "password_is_legacy_pin" };
-  }
   if (typeof input.token === "string" && password === input.token) {
     return { ok: false, reason: "password_equals_token" };
   }

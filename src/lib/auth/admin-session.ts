@@ -10,10 +10,6 @@ import {
 } from "@/lib/auth/demo-admin-bootstrap";
 
 export const ADMIN_COOKIE = "bk_admin_id";
-export const PRIMARY_TEST_ADMIN_EMAIL = "redi@baumdienst.flow";
-export const OLI_TEST_ADMIN_EMAIL = "oli@baumdienst.flow";
-export const LEGACY_LUCY_ADMIN_EMAIL = "annki@baumdienst.flow";
-export const LUCY_TEST_ADMIN_EMAIL = "lucy@baumdienst.flow";
 
 let bootstrapWarningLogged = false;
 
@@ -60,6 +56,7 @@ export async function ensureDefaultAdmins() {
       where: { email: bootstrap.email },
       update: {
         role: "ADMIN",
+        isOwner: true,
         passwordHash,
         isActive: true,
         ...(defaultCompanyId ? { companyProfileId: defaultCompanyId } : {}),
@@ -68,19 +65,13 @@ export async function ensureDefaultAdmins() {
         email: bootstrap.email,
         name: "Demo Admin",
         role: "ADMIN",
+        isOwner: true,
         passwordHash,
         isActive: true,
         ...(defaultCompanyId ? { companyProfileId: defaultCompanyId } : {}),
       },
     });
 
-    await prisma.user.updateMany({
-      where: {
-        role: "ADMIN",
-        email: { in: ["admin@baumkalk.local", LEGACY_LUCY_ADMIN_EMAIL] },
-      },
-      data: { isActive: false },
-    });
   } catch (error) {
     logger.error({ event: "auth.ensure_default_admins_failed" }, "ensureDefaultAdmins failed", error);
     throw error;
@@ -107,7 +98,8 @@ export async function getCurrentAdmin() {
   }
 }
 
-export function isPrimaryTestAdmin(email: string | null | undefined) {
-  return String(email ?? "").trim().toLowerCase() === PRIMARY_TEST_ADMIN_EMAIL;
+/** Only the company owner may manage the other admins. */
+export function isOwnerAdmin(user: { isOwner: boolean } | null | undefined): boolean {
+  return Boolean(user?.isOwner);
 }
 

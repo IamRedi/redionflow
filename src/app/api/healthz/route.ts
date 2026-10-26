@@ -3,5 +3,5 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 export async function GET() {
-  return NextResponse.json({ ok: true, service: "baumkalk" }, { status: 200 });
+  return NextResponse.json({ ok: true, service: "redionflow" }, { status: 200 });
 }

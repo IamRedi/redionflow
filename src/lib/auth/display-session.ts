@@ -14,7 +14,7 @@ let bootstrapWarningLogged = false;
 
 /**
  * BDF-P1-005: the previous `DEFAULT_DISPLAY_USERS` constant hard-coded
- * a single display user with PIN `303030`. That literal is gone. Any
+ * a single display user with a fixed PIN. That literal is gone. Any
  * email may now be a display login as long as the operator has
  * provisioned a STAFF user for it via the gated demo bootstrap below or
  * the admin display-management UI.
@@ -27,9 +27,7 @@ export function isDisplayLoginEmail(email: string): boolean {
 /**
  * BDF-P1-005: strictly gated demo/local display bootstrap.
  *
- * Previously seeded `display@baumdienst.flow` with the literal PIN
- * `303030` and wrote it verbatim into `passwordHash`. That path is
- * removed. Under the gate defined by `resolveDemoDisplayBootstrap`
+ * There is no hard-coded display account or PIN. Under the gate defined by `resolveDemoDisplayBootstrap`
  * (`APP_ENV in {local, demo}` AND `ALLOW_DEMO_DISPLAY_BOOTSTRAP=true`
  * AND both `DEMO_DISPLAY_EMAIL` + `DEMO_DISPLAY_PASSWORD` set) this
  * function upserts one display user whose password is scrypt-hashed at

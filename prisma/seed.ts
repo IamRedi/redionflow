@@ -24,10 +24,6 @@ async function main() {
   // `DEMO_ADMIN_PASSWORD` under `APP_ENV=local|demo`) to seed one local
   // admin, or wait for the BDF-P1-002 first-boot flow.
 
-  await prisma.user.updateMany({
-    where: { role: "ADMIN", email: { in: ["admin@baumkalk.local", "redi@baumkalk.local", "annki@baumdienst.flow"] } },
-    data: { isActive: false },
-  });
 
   const company =
     (await prisma.companyProfile.findFirst({

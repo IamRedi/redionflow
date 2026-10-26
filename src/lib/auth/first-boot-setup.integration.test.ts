@@ -181,7 +181,7 @@ describe("performFirstBootSetup (real DB)", () => {
         email: "legacy@example.local",
         role: "ADMIN",
         isActive: true,
-        passwordHash: "121985",
+        passwordHash: "654321",
       },
     });
     const result = await performFirstBootSetup(validInput, okEnv);
