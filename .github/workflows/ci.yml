@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Lint, Typecheck, Test, Build, E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: true
+      SAAS_MODE: "true"
+      APP_ENV: saas
+      DEMO_MODE: "false"
+      DEMO_RESET_ALLOWED: "false"
+      # Build/typecheck use an unreachable local identity; live runners own DBs.
+      DATABASE_URL: postgresql://baseline@127.0.0.1:1/baseline_unreachable
+      DIRECT_URL: postgresql://baseline@127.0.0.1:1/baseline_unreachable
+      TENANT_DATABASE_URL: ""
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Integration tests
+        # Same fresh Postgres16/migrations/restricted LOGIN role as local.
+        # Baseline suites use system fixtures; runtime pilot uses tenant pool.
+        run: npm run test:integration:local
+
+      - name: Build
+        run: npm run build
+
+      - name: End-to-end tests
+        env:
+          RLS_ENFORCE: "true"
+        # Own the disposable DB and managed loopback app; never reuse a target.
+        run: npm run test:e2e:local

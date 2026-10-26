@@ -1,0 +1,1333 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum ProjectStatus {
+  DRAFT
+  IN_REVIEW
+  SENT
+  ACCEPTED
+  LOST
+  ARCHIVED
+}
+
+enum WageType {
+  HOURLY
+  MONTHLY
+}
+
+enum MachineCategory {
+  CHIPPER
+  TRUCK
+  AWP
+  CHAINSAW
+  OTHER
+}
+
+enum OverheadBase {
+  EK_TOTAL
+  LABOR_ONLY
+}
+
+enum RiskProfitMode {
+  SEPARATE
+  COMBINED
+}
+
+enum MachineTimeUnit {
+  HOURS
+  DAYS
+}
+
+enum BaustelleStatus {
+  active
+  inactive
+}
+
+enum BaustelleType {
+  // Baumdienst work types
+  TRUCK_PLATFORM
+  TRUCK_CRANE
+  CLIMBING
+  WATERING
+  EXCAVATOR
+  // Bau (construction) work types
+  SIGNAGE
+  DRAINAGE
+  WALL
+  PAVING
+  PAINTING
+  RENOVATION
+  OTHER
+}
+
+enum TreeItemStatus {
+  todo
+  done
+  blocked
+}
+
+enum WorkerStatus {
+  active
+  inactive
+}
+
+enum WorkerLevel {
+  JUNIOR
+  WORKER
+  SENIOR
+  VORARBEITER
+  MEISTER
+}
+
+enum WorkerAvailability {
+  AVAILABLE
+  SICK
+  VACATION
+  UNAVAILABLE
+}
+
+enum VacationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum WorkReportType {
+  DAILY
+  MONTHLY
+}
+
+enum WorkerAssetKind {
+  CLOTHING
+  EQUIPMENT
+}
+
+enum CompanyInventoryCategory {
+  WORK_TOOL
+  CLOTHING
+  SITE_EQUIPMENT
+}
+
+enum WorkerAssetStatus {
+  PENDING_ADMIN_CONFIRMATION
+  PENDING_WORKER_CONFIRMATION
+  ACTIVE
+  PENDING_ADMIN_DELETE_CONFIRMATION
+  PENDING_WORKER_DELETE_CONFIRMATION
+  DELETED
+}
+
+enum WorkerAssetActorRole {
+  ADMIN
+  WORKER
+  SYSTEM
+}
+
+enum MachineConeMovementType {
+  DEPLOY
+  COLLECT
+  TRANSFER
+}
+
+enum MachineConeActorRole {
+  ADMIN
+  WORKER
+  SYSTEM
+}
+
+enum GpsPointSource {
+  MACHINE
+  WORKER_PHONE
+}
+
+enum MachinePresenceSource {
+  MACHINE_GPS
+  WORKER_PHONE
+  MANUAL
+  SYSTEM
+}
+
+enum DailyPlanAssignmentKind {
+  WORKER
+  MACHINE
+}
+
+enum SiteEquipmentCategory {
+  SIGN
+  PLATE
+  FENCE
+  OTHER
+}
+
+enum InventoryMovementType {
+  DEPLOY
+  COLLECT
+}
+
+enum AssistantLanguage {
+  DE
+  EN
+  SQ
+  IT
+  PL
+  RO
+}
+
+model User {
+  id                String            @id @default(cuid())
+  email             String            @unique
+  name              String?
+  role              UserRole          @default(STAFF)
+  passwordHash      String?
+  isActive          Boolean           @default(true)
+  preferredLanguage AssistantLanguage @default(DE)
+  motherTongue      AssistantLanguage @default(DE)
+  aiPersonalityNote String?
+
+  /// T-026: link admin/staff to their tenant. Nullable during dedicated
+  /// backfill; SaaS signup always sets this. `getCurrentCompanyId` prefers
+  /// this over the fall-back "first company" lookup.
+  companyProfileId String?
+  companyProfile   CompanyProfile? @relation("CompanyUsers", fields: [companyProfileId], references: [id], onDelete: SetNull)
+
+  workLogs                  WorkLog[]
+  completedTreeItems        TreeItem[]               @relation("TreeCompletedBy")
+  manualTasks               ManualTask[]
+  resolvedManualTasks       ManualTask[]             @relation("ManualTaskResolvedByUser")
+  createdDailyPlans         DailyWorkPlan[]          @relation("DailyPlanCreatedBy")
+  createdDailyPlanSnapshots DailyWorkPlanSnapshot[]  @relation("DailyPlanSnapshotCreatedBy")
+  inventoryMovements        InventoryMovement[]      @relation("InventoryMovementActorAdmin")
+  inventoryAssetMovements   InventoryAssetMovement[] @relation("InventoryAssetMovementActorAdmin")
+  coneMovements             MachineConeMovement[]    @relation("ConeActorAdmin")
+  reviewedVacationRequests  VacationRequest[]        @relation("VacationReviewedBy")
+
+  /// BDF-P8-007 session revocation. Any live session cookie carries the
+  /// epoch that was in force when it was issued. Password rotation,
+  /// admin removal, or explicit "sign out everywhere" bumps this
+  /// number; enforcement compares the cookie epoch against the DB
+  /// epoch and rejects mismatches.
+  ///
+  /// Phase 1 (this migration) only introduces the column with default
+  /// 0. Enforcement wires in a follow-up PR so existing sessions
+  /// created before the schema change continue to work — they read
+  /// as epoch 0 and match the row default.
+  sessionEpoch Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId])
+}
+
+model CompanyProfile {
+  id                    String  @id @default(cuid())
+  legalName             String
+  displayName           String
+  vatId                 String?
+  phone                 String?
+  email                 String?
+  /// "baumdienst" | "bau" | "personal" — controls feature flags and product branding
+  mode                  String  @default("baumdienst")
+  fleetGpsEnabled       Boolean @default(false)
+  workerPhoneGpsEnabled Boolean @default(false)
+
+  street String?
+  zip    String?
+  city   String?
+
+  overheadSettings          OverheadSettings?
+  laborRoles                LaborRole[]
+  machines                  Machine[]
+  workers                   Worker[]
+  inventoryItems            CompanyInventoryItem[]
+  inventoryCatalog          CompanyInventoryCatalog[]
+  inventoryMovements        InventoryMovement[]
+  inventoryAssetMovements   InventoryAssetMovement[]
+  coneMovements             MachineConeMovement[]
+  vacationRequests          VacationRequest[]
+  templates                 CalculationTemplate[]
+  projects                  Project[]
+  dailyPlans                DailyWorkPlan[]
+  workzoneAnnouncements     WorkzoneAnnouncement[]
+  gpsLocationPoints         GpsLocationPoint[]
+  machineBaustellePresences MachineBaustellePresence[]
+
+  baustellen          Baustelle[]
+  knowledge           CompanyKnowledge[]
+  workzoneSyncActions WorkzoneSyncAction[]
+  users               User[]               @relation("CompanyUsers")
+  auditLogs           AuditLog[]
+
+  /// T-026: SaaS trial expiry. Null for dedicated deployments.
+  trialEndsAt DateTime?
+
+  /// T-027: SaaS Stripe customer id. Null for dedicated deployments and for
+  /// SaaS tenants that have not opened checkout yet.
+  stripeCustomerId String?
+  subscription     Subscription?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PlanTier {
+  starter
+  pro
+  enterprise
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  canceled
+}
+
+/// T-027: SaaS plan catalog. Seeded with `starter`, `pro`, `enterprise` and
+/// mirrors a Stripe price. Dedicated deployments ignore this table.
+model Plan {
+  id                String   @id @default(cuid())
+  tier              PlanTier @unique
+  displayName       String
+  priceCents        Int      @default(0)
+  currency          String   @default("EUR")
+  billingIntervalMo Int      @default(1)
+  /// Stripe price id. Nullable so the catalog can seed before checkout is wired.
+  stripePriceId     String?  @unique
+  isActive          Boolean  @default(true)
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// T-027: exactly one subscription per Company. `trialing` on signup. Stripe
+/// webhook updates status idempotently keyed on `stripeSubscriptionId`.
+model Subscription {
+  id                   String             @id @default(cuid())
+  companyProfileId     String             @unique
+  companyProfile       CompanyProfile     @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  planId               String?
+  plan                 Plan?              @relation(fields: [planId], references: [id], onDelete: SetNull)
+  status               SubscriptionStatus @default(trialing)
+  stripeSubscriptionId String?            @unique
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+enum AuditActorType {
+  ADMIN
+  WORKER
+  SYSTEM
+}
+
+/// T-033: sensitive-action audit log. One row per meaningful state change
+/// (billing, admin management, exports, mode changes, plan-limit blocks).
+/// Scope: per-tenant. Payload is a Prisma Json field — callers redact PII
+/// before writing.
+model AuditLog {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  actorType AuditActorType
+  actorId   String?
+  action    String
+  payload   Json           @default("{}")
+
+  createdAt DateTime @default(now())
+
+  @@index([companyProfileId, createdAt])
+  @@index([action, createdAt])
+}
+
+/// T-034: per-tenant token for the fleet GPS ingest endpoint. Replaces the
+/// single `FLEET_GPS_INGEST_TOKEN` env var so SaaS tenants each have their
+/// own credential. Dedicated deployments may keep using the env var alongside
+/// or migrate to a per-tenant token — both paths are supported by
+/// `resolveFleetIngestTenant`.
+model FleetIngestToken {
+  id               String    @id @default(cuid())
+  companyProfileId String
+  token            String    @unique
+  label            String?
+  isActive         Boolean   @default(true)
+  lastUsedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId, isActive])
+}
+
+/// T-027: idempotency ledger for Stripe webhook events. Each Stripe event id
+/// is recorded once so replays are noops.
+model StripeWebhookEvent {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  eventType     String
+  receivedAt    DateTime @default(now())
+}
+
+model WorkzoneAnnouncement {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  message          String
+  isActive         Boolean @default(true)
+  createdByAdminId String?
+  createdByName    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId, isActive, createdAt])
+}
+
+model CompanyKnowledge {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  language AssistantLanguage @default(DE)
+  key      String
+  title    String
+  content  String
+  tags     String[]          @default([])
+  isActive Boolean           @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, key])
+  @@index([companyProfileId, isActive])
+  @@index([companyProfileId, language])
+}
+
+model CompanyInventoryCatalog {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  name          String
+  category      SiteEquipmentCategory
+  totalQuantity Int                   @default(0)
+  isActive      Boolean               @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, category])
+  @@index([companyProfileId, isActive])
+}
+
+model CompanyInventoryItem {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  category  CompanyInventoryCategory
+  itemCode  String
+  barcode   String?                  @unique
+  name      String
+  sizeLabel String?
+  note      String?
+  isActive  Boolean                  @default(true)
+
+  workerAssignments WorkerAssetItem[]
+  movementHistory   InventoryAssetMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, itemCode])
+  @@index([companyProfileId, category])
+  @@index([isActive])
+}
+
+model OverheadSettings {
+  id               String         @id @default(cuid())
+  companyProfileId String         @unique
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  bgkPct    Decimal @default(0.15) @db.Decimal(7, 4)
+  agkPct    Decimal @default(0.10) @db.Decimal(7, 4)
+  riskPct   Decimal @default(0.03) @db.Decimal(7, 4)
+  profitPct Decimal @default(0.05) @db.Decimal(7, 4)
+  vatPct    Decimal @default(0.19) @db.Decimal(7, 4)
+
+  bgkBase           OverheadBase   @default(EK_TOTAL)
+  riskProfitMode    RiskProfitMode @default(SEPARATE)
+  applyVatByDefault Boolean        @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LaborRole {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  name String
+
+  wageType          WageType @default(HOURLY)
+  grossHourlyCents  Int?
+  grossMonthlyCents Int?
+
+  employerOverheadPct Decimal @default(0.25) @db.Decimal(7, 4)
+  productivityPct     Decimal @default(0.85) @db.Decimal(7, 4)
+  absencePct          Decimal @default(0.00) @db.Decimal(7, 4)
+
+  notes     String?
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  laborItems PositionLaborItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, name])
+}
+
+model Machine {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  name     String
+  category MachineCategory @default(OTHER)
+
+  hourlyRateCents Int
+  dayRateCents    Int?
+
+  nickname          String?
+  model             String?
+  targe             String?
+  vitiProdhimit     Int?
+  vitiBlerjes       Int?
+  tuvDate           DateTime?
+  auDate            DateTime?
+  huStatus          String?
+  spDate            DateTime?
+  spStatus          String?
+  uvvDate           DateTime?
+  uvvStatus         String?
+  funksioni         String?
+  patentaEnevojshme String?
+  imageUrl          String?
+
+  notes       String?
+  isActive    Boolean   @default(true)
+  gpsEnabled  Boolean   @default(false)
+  gpsDeviceId String?   @unique
+  lastGpsLat  Decimal?  @db.Decimal(10, 7)
+  lastGpsLng  Decimal?  @db.Decimal(10, 7)
+  lastGpsAt   DateTime?
+
+  coneTotal Int @default(0)
+
+  machineItems         PositionMachineItem[]
+  dailyPlanAssignments DailyWorkPlanAssignment[]
+  coneMovementsFrom    MachineConeMovement[]      @relation("ConeFromMachine")
+  coneMovementsTo      MachineConeMovement[]      @relation("ConeToMachine")
+  gpsLocationPoints    GpsLocationPoint[]
+  baustellePresences   MachineBaustellePresence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, name])
+}
+
+model MachineConeMovement {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  type     MachineConeMovementType
+  quantity Int
+
+  fromMachineId String?
+  fromMachine   Machine? @relation("ConeFromMachine", fields: [fromMachineId], references: [id], onDelete: SetNull)
+  toMachineId   String?
+  toMachine     Machine? @relation("ConeToMachine", fields: [toMachineId], references: [id], onDelete: SetNull)
+
+  baustelleId String?
+  baustelle   Baustelle? @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+  treeItemId  String?
+  treeItem    TreeItem?  @relation(fields: [treeItemId], references: [id], onDelete: SetNull)
+
+  actorRole     MachineConeActorRole
+  actorWorkerId String?
+  actorWorker   Worker?              @relation("ConeActorWorker", fields: [actorWorkerId], references: [id], onDelete: SetNull)
+  actorAdminId  String?
+  actorAdmin    User?                @relation("ConeActorAdmin", fields: [actorAdminId], references: [id], onDelete: SetNull)
+  actorName     String?
+
+  note String?
+
+  createdAt DateTime @default(now())
+
+  @@index([companyProfileId, createdAt])
+  @@index([fromMachineId, createdAt])
+  @@index([toMachineId, createdAt])
+  @@index([baustelleId, createdAt])
+  @@index([treeItemId, createdAt])
+}
+
+model Worker {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  firstName             String
+  lastName              String
+  phone                 String?
+  position              String?
+  licenses              String?
+  status                WorkerStatus       @default(active)
+  availability          WorkerAvailability @default(AVAILABLE)
+  vacationAllowanceDays Int                @default(26)
+  loginCode             String?            @unique
+  /// BDF-P1-005: scrypt hash of the worker login code. New writes go
+  /// here via `hashPassword`; `loginCode` remains as a legacy read-only
+  /// column and is no longer used for authentication. See ADR-0001 and
+  /// BDF-P1-005.
+  loginCodeHash         String?
+  isTemporary           Boolean            @default(false)
+  birthDate             DateTime?
+  startedAtCompany      DateTime?
+  emailAccount          String?
+  clothingTopSize       String?
+  clothingBottomSize    String?
+  shoeSize              String?
+  profileImageUrl       String?
+  documents             Json?
+  level                 WorkerLevel        @default(JUNIOR)
+  preferredLanguage     AssistantLanguage  @default(DE)
+  motherTongue          AssistantLanguage  @default(DE)
+  aiPersonalityNote     String?
+  addedByWorkerId       String?
+  addedByWorker         Worker?            @relation("WorkerAddedBy", fields: [addedByWorkerId], references: [id], onDelete: SetNull)
+  addedWorkers          Worker[]           @relation("WorkerAddedBy")
+
+  sessions                WorkSession[]
+  completedTreeItems      TreeItem[]                 @relation("TreeCompletedByWorker")
+  manualTasks             ManualTask[]
+  resolvedManualTasks     ManualTask[]               @relation("ManualTaskResolvedByWorker")
+  reportNotes             WorkReportNote[]
+  assetItems              WorkerAssetItem[]
+  dailyPlanAssignments    DailyWorkPlanAssignment[]
+  inventoryMovements      InventoryMovement[]
+  inventoryAssetMovements InventoryAssetMovement[]
+  coneMovements           MachineConeMovement[]      @relation("ConeActorWorker")
+  vacationRequests        VacationRequest[]
+  pauseIntervals          WorkSessionPauseInterval[]
+  phoneGpsLocationPoints  GpsLocationPoint[]         @relation("WorkerPhoneGpsLocationPoints")
+
+  /// BDF-P8-007 session revocation. Same semantics as `User.sessionEpoch`
+  /// but scoped to worker sessions (Workzone worker cookie). Login-code
+  /// rotation or an admin's "log this worker out everywhere" action
+  /// bumps this number.
+  sessionEpoch Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId])
+  @@index([status])
+  @@index([availability])
+}
+
+model NotificationSubscription {
+  id       String @id @default(cuid())
+  userId   String
+  fcmToken String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model NotificationSettings {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  tagesplan     Boolean @default(true)
+  workStart     Boolean @default(true)
+  workEnd       Boolean @default(true)
+  adminMessages Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VacationRequest {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  workerId         String
+  worker           Worker         @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  startDate     DateTime
+  endDate       DateTime
+  requestedDays Int
+  status        VacationRequestStatus @default(PENDING)
+  workerNote    String?
+  adminMessage  String?
+
+  reviewedAt        DateTime?
+  reviewedByAdminId String?
+  reviewedByAdmin   User?     @relation("VacationReviewedBy", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId, status])
+  @@index([workerId, createdAt])
+  @@index([reviewedByAdminId])
+}
+
+model WorkerAssetItem {
+  id                     String                @id @default(cuid())
+  workerId               String
+  worker                 Worker                @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  companyInventoryItemId String?
+  companyInventoryItem   CompanyInventoryItem? @relation(fields: [companyInventoryItemId], references: [id], onDelete: SetNull)
+
+  kind         WorkerAssetKind
+  itemName     String
+  itemCode     String?
+  barcode      String?
+  sizeLabel    String?
+  isPrivate    Boolean           @default(false)
+  note         String?
+  handedOverAt DateTime          @default(now())
+  status       WorkerAssetStatus
+
+  createdByRole   WorkerAssetActorRole
+  createdByName   String?
+  confirmedAt     DateTime?
+  confirmedByRole WorkerAssetActorRole?
+  confirmedByName String?
+
+  deleteRequestedAt     DateTime?
+  deleteRequestedByRole WorkerAssetActorRole?
+  deleteRequestedByName String?
+  deletedAt             DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workerId, kind])
+  @@index([companyInventoryItemId])
+  @@index([status])
+  @@index([barcode])
+}
+
+model WorkReportNote {
+  id       String @id @default(cuid())
+  workerId String
+  worker   Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  type      WorkReportType
+  periodKey String
+  note      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workerId, type, periodKey])
+  @@index([workerId, type])
+}
+
+model WorkSession {
+  id          String     @id @default(cuid())
+  workerId    String
+  worker      Worker     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  baustelleId String?
+  baustelle   Baustelle? @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+
+  startTime      DateTime
+  endTime        DateTime?
+  breakMinutes   Int       @default(30)
+  totalHours     Float     @default(0)
+  isLive         Boolean   @default(false)
+  closedBySystem Boolean   @default(false)
+  systemNote     String?
+
+  pauseIntervals            WorkSessionPauseInterval[]
+  gpsLocationPoints         GpsLocationPoint[]
+  machineBaustellePresences MachineBaustellePresence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workerId, startTime])
+  @@index([baustelleId])
+  @@index([isLive])
+}
+
+model WorkSessionPauseInterval {
+  id            String      @id @default(cuid())
+  workSessionId String
+  workSession   WorkSession @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  workerId      String
+  worker        Worker      @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  startedAt DateTime
+  endedAt   DateTime?
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workSessionId, startedAt])
+  @@index([workerId, startedAt])
+}
+
+model GpsLocationPoint {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  machineId     String?
+  machine       Machine?     @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  workerId      String?
+  worker        Worker?      @relation("WorkerPhoneGpsLocationPoints", fields: [workerId], references: [id], onDelete: SetNull)
+  workSessionId String?
+  workSession   WorkSession? @relation(fields: [workSessionId], references: [id], onDelete: SetNull)
+  baustelleId   String?
+  baustelle     Baustelle?   @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+
+  source         GpsPointSource
+  lat            Decimal        @db.Decimal(10, 7)
+  lng            Decimal        @db.Decimal(10, 7)
+  accuracyMeters Decimal?       @db.Decimal(10, 2)
+  speedKmh       Decimal?       @db.Decimal(10, 2)
+  headingDeg     Decimal?       @db.Decimal(10, 2)
+  recordedAt     DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([companyProfileId, recordedAt])
+  @@index([machineId, recordedAt])
+  @@index([workerId, recordedAt])
+  @@index([workSessionId, recordedAt])
+  @@index([baustelleId, recordedAt])
+}
+
+model MachineBaustellePresence {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  machineId     String
+  machine       Machine      @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  baustelleId   String
+  baustelle     Baustelle    @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  workSessionId String?
+  workSession   WorkSession? @relation(fields: [workSessionId], references: [id], onDelete: SetNull)
+
+  source          MachinePresenceSource @default(MACHINE_GPS)
+  enteredAt       DateTime
+  leftAt          DateTime?
+  durationMinutes Int?
+  routePointCount Int                   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId, enteredAt])
+  @@index([machineId, enteredAt])
+  @@index([baustelleId, enteredAt])
+  @@index([workSessionId])
+}
+
+model Baustelle {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  name                  String
+  type                  BaustelleType   @default(CLIMBING)
+  status                BaustelleStatus @default(active)
+  address               String?
+  description           String?
+  documents             String[]
+  coordinates           Json?
+  activeEquipmentStatus Json?
+  canvasX               Int?
+  canvasY               Int?
+  canvasMobileX         Int?
+  canvasMobileY         Int?
+
+  treeItems                 TreeItem[]
+  workLogs                  WorkLog[]
+  workSessions              WorkSession[]
+  manualTasks               ManualTask[]
+  dailyPlanColumns          DailyWorkPlanColumn[]
+  inventoryMovements        InventoryMovement[]
+  coneMovements             MachineConeMovement[]
+  gpsLocationPoints         GpsLocationPoint[]
+  machineBaustellePresences MachineBaustellePresence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId])
+}
+
+model InventoryMovement {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  workerId         String?
+  worker           Worker?        @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  actorAdminId     String?
+  actorAdmin       User?          @relation("InventoryMovementActorAdmin", fields: [actorAdminId], references: [id], onDelete: SetNull)
+  actorRole        String         @default("WORKER")
+  actorName        String?
+  treeItemId       String?
+  treeItem         TreeItem?      @relation(fields: [treeItemId], references: [id], onDelete: SetNull)
+
+  category  SiteEquipmentCategory
+  quantity  Int
+  type      InventoryMovementType
+  timestamp DateTime              @default(now())
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyProfileId, timestamp])
+  @@index([baustelleId, timestamp])
+  @@index([workerId, timestamp])
+  @@index([actorAdminId, timestamp])
+  @@index([treeItemId, timestamp])
+}
+
+model InventoryAssetMovement {
+  id               String                @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile        @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  itemId           String?
+  item             CompanyInventoryItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  workerId         String?
+  worker           Worker?               @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  actorAdminId     String?
+  actorAdmin       User?                 @relation("InventoryAssetMovementActorAdmin", fields: [actorAdminId], references: [id], onDelete: SetNull)
+  action           String
+  actorRole        String?
+  actorName        String?
+  barcode          String?
+  isPrivate        Boolean               @default(false)
+  note             String?
+  createdAt        DateTime              @default(now())
+
+  @@index([companyProfileId, createdAt])
+  @@index([itemId, createdAt])
+  @@index([workerId, createdAt])
+  @@index([actorAdminId, createdAt])
+  @@index([barcode, createdAt])
+}
+
+model DailyWorkPlan {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  planDate         DateTime
+  createdByAdminId String
+  createdByAdmin   User           @relation("DailyPlanCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Cascade)
+
+  columns   DailyWorkPlanColumn[]
+  savedRows DailyWorkPlanSavedRow[]
+  snapshots DailyWorkPlanSnapshot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, planDate])
+  @@index([planDate])
+}
+
+model DailyWorkPlanColumn {
+  id          String        @id @default(cuid())
+  planId      String
+  plan        DailyWorkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  baustelleId String?
+  baustelle   Baustelle?    @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+
+  title     String
+  note      String?
+  sortOrder Int     @default(0)
+
+  assignments DailyWorkPlanAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planId, sortOrder])
+  @@index([baustelleId])
+}
+
+model DailyWorkPlanAssignment {
+  id       String              @id @default(cuid())
+  columnId String
+  column   DailyWorkPlanColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  kind          DailyPlanAssignmentKind
+  workerId      String?
+  worker        Worker?                 @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  machineId     String?
+  machine       Machine?                @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  labelSnapshot String
+  sortOrder     Int                     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([columnId, sortOrder])
+  @@index([workerId])
+  @@index([machineId])
+}
+
+model DailyWorkPlanSavedRow {
+  id     String        @id @default(cuid())
+  planId String
+  plan   DailyWorkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  workerNames   String
+  machineNames  String
+  baustelleName String
+  note          String?
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planId, sortOrder])
+}
+
+model DailyWorkPlanSnapshot {
+  id               String        @id @default(cuid())
+  planId           String
+  plan             DailyWorkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  versionNumber    Int
+  createdByAdminId String
+  createdByAdmin   User          @relation("DailyPlanSnapshotCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Cascade)
+
+  rows DailyWorkPlanSnapshotRow[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([planId, versionNumber])
+  @@index([planId, createdAt])
+}
+
+model DailyWorkPlanSnapshotRow {
+  id         String                @id @default(cuid())
+  snapshotId String
+  snapshot   DailyWorkPlanSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  workerNames   String
+  machineNames  String
+  baustelleName String
+  note          String?
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([snapshotId, sortOrder])
+}
+
+model TreeItem {
+  id          String    @id @default(cuid())
+  treeId      String
+  baustelleId String
+  baustelle   Baustelle @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+
+  species             String
+  diameter            Int
+  coordinates         Json?
+  status              TreeItemStatus @default(todo)
+  notes               String?
+  siteEquipmentStatus Json?
+  isEdited            Boolean        @default(false)
+  lastEditedBy        String?
+  lastEditedAt        DateTime?
+
+  completedAt         DateTime?
+  completedBy         String?
+  completedByUser     User?     @relation("TreeCompletedBy", fields: [completedBy], references: [id], onDelete: SetNull)
+  completedByWorkerId String?
+  completedByWorker   Worker?   @relation("TreeCompletedByWorker", fields: [completedByWorkerId], references: [id], onDelete: SetNull)
+
+  inventoryMovements InventoryMovement[]
+  coneMovements      MachineConeMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([baustelleId, treeId])
+  @@index([baustelleId])
+  @@index([treeId])
+}
+
+model WorkLog {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baustelleId String
+  baustelle   Baustelle @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+
+  date         DateTime
+  startTime    DateTime?
+  endTime      DateTime?
+  breakMinutes Int       @default(30)
+  isLocked     Boolean   @default(false)
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([baustelleId])
+  @@index([userId, date])
+}
+
+model ManualTask {
+  id                 String    @id @default(cuid())
+  baustelleId        String
+  baustelle          Baustelle @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  description        String
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerId           String?
+  worker             Worker?   @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  resolvedByUserId   String?
+  resolvedByUser     User?     @relation("ManualTaskResolvedByUser", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+  resolvedByWorkerId String?
+  resolvedByWorker   Worker?   @relation("ManualTaskResolvedByWorker", fields: [resolvedByWorkerId], references: [id], onDelete: SetNull)
+  resolvedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  isFlagged          Boolean   @default(true)
+
+  @@index([baustelleId])
+  @@index([userId])
+  @@index([workerId])
+  @@index([resolvedByUserId])
+  @@index([resolvedByWorkerId])
+  @@index([resolvedAt])
+}
+
+model CalculationTemplate {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  templatePositions TemplatePositionPreset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyProfileId, name])
+}
+
+model TemplatePositionPreset {
+  id         String              @id @default(cuid())
+  templateId String
+  template   CalculationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  sortOrder   Int     @default(0)
+  title       String
+  description String?
+  quantity    Decimal @default(1) @db.Decimal(12, 3)
+  unit        String  @default("pauschal")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  title          String
+  customerName   String
+  customerStreet String?
+  customerZip    String?
+  customerCity   String?
+
+  status ProjectStatus @default(DRAFT)
+  date   DateTime      @default(now())
+
+  internalNotes String?
+
+  positions ProjectPosition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectPosition {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  sortOrder Int @default(0)
+
+  title       String
+  description String?
+
+  quantity Decimal @default(1) @db.Decimal(12, 3)
+  unit     String  @default("pauschal")
+
+  notes String?
+
+  manualAdjustmentCents Int? // optional manual surcharge/adjustment (can be negative)
+
+  laborItems           PositionLaborItem[]
+  machineItems         PositionMachineItem[]
+  materialItems        PositionMaterialItem[]
+  externalServiceItems PositionExternalServiceItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PositionLaborItem {
+  id         String          @id @default(cuid())
+  positionId String
+  position   ProjectPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  laborRoleId           String?
+  laborRole             LaborRole? @relation(fields: [laborRoleId], references: [id], onDelete: SetNull)
+  laborRoleNameSnapshot String
+
+  workers Int     @default(1)
+  hours   Decimal @db.Decimal(12, 3)
+
+  hourlyRateOverrideCents Int?
+  notes                   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PositionMachineItem {
+  id         String          @id @default(cuid())
+  positionId String
+  position   ProjectPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  machineId           String?
+  machine             Machine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  machineNameSnapshot String
+
+  timeUnit MachineTimeUnit @default(HOURS)
+  quantity Decimal         @db.Decimal(12, 3) // hours or days depending on timeUnit
+
+  rateOverrideCents Int?
+  notes             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PositionMaterialItem {
+  id         String          @id @default(cuid())
+  positionId String
+  position   ProjectPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  title    String
+  quantity Decimal @db.Decimal(12, 3)
+  unit     String
+
+  unitPriceCents Int
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PositionExternalServiceItem {
+  id         String          @id @default(cuid())
+  positionId String
+  position   ProjectPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  title       String
+  amountCents Int
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Idempotency log for Workzone offline sync. Each processed client action is
+// stored here so that retries after network failures cannot be applied twice.
+model WorkzoneSyncAction {
+  id               String         @id // client-generated UUID (idempotency key)
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  actorKind  String // "WORKER" | "ADMIN"
+  actorId    String
+  actionType String // e.g. "START_WORK", "STOP_WORK", "CHECK_TREE"
+  entityType String // e.g. "WORK_SESSION", "TREE", "BAUSTELLE"
+  entityId   String
+
+  payload Json
+
+  outcome    String // "synced" | "noop" | "conflict" | "rejected"
+  outcomeMsg String? // human-readable detail for the UI / admin review
+
+  processedAt DateTime @default(now())
+
+  @@index([companyProfileId, processedAt])
+  @@index([actorId, processedAt])
+  @@index([actionType, entityId])
+}
+
+/// BDF-P1-003 — durable login rate-limiter storage. One row per
+/// `(scope, clientKey)` pair. See ADR-0001
+/// (`docs/adr/0001-login-rate-limiter-backend.md`). `clientKey` is
+/// `sha256(LOGIN_GUARD_SALT || ':' || scope || ':' || ip)` — raw IPs are
+/// never persisted. Cleaned up opportunistically by the store.
+model LoginAttempt {
+  id             String    @id @default(cuid())
+  scope          String
+  clientKey      String
+  attempts       Int       @default(0)
+  firstAttemptAt DateTime  @default(now())
+  lockedUntil    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([scope, clientKey])
+  @@index([updatedAt])
+}
