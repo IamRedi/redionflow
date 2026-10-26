@@ -70,7 +70,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   function featureEnabled(feature: RequiredFeature | undefined): boolean {
     if (!feature) return true;
     const value = features[feature];
-    return value === true || value === "limited";
+    return value === true;
   }
 
   const visibleNavSections = navSections
@@ -99,11 +99,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 </span>
               </div>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                {mode === "personal"
-                  ? t("admin.panelPersonalDescription", currentLang, mode)
-                  : mode === "bau"
-                    ? t("admin.panelBauDescription", currentLang, mode)
-                    : t("admin.panelBaumdienstDescription", currentLang, mode)}
+                {mode === "bau"
+                  ? t("admin.panelBauDescription", currentLang, mode)
+                  : t("admin.panelBaumdienstDescription", currentLang, mode)}
               </p>
               <div className="mt-2.5 rounded-xl border bg-background/80 px-2.5 py-2">
                 <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.signedInAs", currentLang, mode)}</div>
