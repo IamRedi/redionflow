@@ -27,7 +27,7 @@ one dictionary system, one `t()`, mode-aware overrides on top.
 Current state (2026-07-06)
 --------------------------
 
-- `src/lib/i18n/` holds five dictionaries: `de`, `en`, `sq`, `pl`, `ro`.
+- `src/locales/` holds the dictionaries as JSON: `de` (canonical, full key set) and sparse `en`, `it`, `sq`, `pl`, `ro` that fall back to German (`src/lib/i18n/dictionaries.ts`). BauFlow wording lives in `src/locales/bau/<lang>.json`.
 - `t(path, lang?, mode?)` reads the dictionary + `mode-overrides` (T-029).
 - `LanguageProvider` (client) + `resolveRequestLanguage` (server) resolve
   the active language from cookie → worker profile → default `de`.
@@ -114,7 +114,7 @@ Guard rails
 -----------
 
 - Zero code duplication: dictionaries live under `src/lib/i18n`, mode
-  overrides in `mode-overrides.ts`, both consumed via `t()`.
+  overrides in `src/locales/bau/`, both consumed via `t()`.
 - Fallback chain: mode override → target language → English → German.
   Missing keys never render the raw dot-notation to the user.
 - Assistant responses (OpenAI) continue to honor the caller's language

@@ -16,23 +16,23 @@ UI renders the raw dot-notation (`"workzone.newKey"`) in every language.
 
 The test walks every `.ts` / `.tsx` under `src/` (except the dictionaries
 themselves and generated code), scrapes out every `t("…")` call, and
-asserts the key exists in `de.ts`.
+asserts the key exists in `src/locales/de.json`.
 
-**Fix on failure**: add the missing key to `src/lib/i18n/de.ts`. Ideally
-add it to `en.ts`, `it.ts`, `sq.ts` at the same time — the language files
+**Fix on failure**: add the missing key to `src/locales/de.json`. Ideally
+add it to `en.json`, `it.json`, `sq.json` at the same time — the language files
 fall back to German, so the app won't crash, but a missing English
 translation renders German for English users.
 
 ### 2. Mode-override drift (`bau`)
 
-When a company runs in BauFlow mode, `mode-overrides.ts`
+When a company runs in BauFlow mode, the override files in `src/locales/bau/`
 overlays alternative wording on top of the base dictionary
 (e.g. `"Baum"` → `"Arbeit"`). If someone adds a DE override without also
 adding it in EN/IT/SQ/PL/RO, non-DE BauFlow users see the German
 override leak through.
 
 The test asserts that the key set present in the DE override for `bau`
-(and separately for `personal`) exists in all five other languages.
+exists in all five other languages.
 
 **Fix on failure**: mirror the DE override into the language blocks
 listed by the failure message.
@@ -65,7 +65,7 @@ core helpers.
 
 ### 4. Broken DE dictionary leaves
 
-Two subtle bugs in `de.ts`:
+Two subtle bugs in `de.json`:
 
 - Empty string or literal `"undefined"` at a leaf — usually a bad
   auto-completion. Renders as blank in the UI.
