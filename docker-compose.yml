@@ -1,0 +1,45 @@
+# Local demo: `docker compose up --build`, then open http://localhost:3000/demo
+# All data is fictitious (prisma/seed-data.ts). Not meant for production.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: redionflow
+      POSTGRES_PASSWORD: redionflow
+      POSTGRES_DB: redionflow
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redionflow -d redionflow"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      APP_ENV: demo
+      DEMO_MODE: "true"
+      DEMO_RESET_ALLOWED: "true"
+      DATABASE_URL: postgresql://redionflow:redionflow@db:5432/redionflow
+      DIRECT_URL: postgresql://redionflow:redionflow@db:5432/redionflow
+      APP_BASE_URL: http://localhost:3000
+      # Local demo only. Set your own value for anything reachable by others.
+      SESSION_SIGNING_SECRET: ${SESSION_SIGNING_SECRET:-local-demo-only-change-me-0123456789abcdef}
+      # Optional admin login: set DEMO_ADMIN_PASSWORD (12+ chars) in your shell or .env.
+      ALLOW_DEMO_ADMIN_BOOTSTRAP: ${DEMO_ADMIN_PASSWORD:+true}
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@baumdienst-musterstadt.example}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+
+volumes:
+  db-data:

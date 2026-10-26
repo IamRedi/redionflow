@@ -23,6 +23,8 @@
     "db:reset:workzone": "tsx scripts/reset-workzone-data.ts",
     "db:reset:cones": "tsx scripts/reset-cones-data.ts",
     "db:reset:demo": "tsx scripts/reset-demo-database.ts",
+    "db:seed": "prisma db seed",
+    "demo:reset": "tsx scripts/reset-demo-database.ts && prisma db seed",
     "check:saas-env": "tsx scripts/validate-saas-env.ts",
     "login-attempts:cleanup": "tsx scripts/login-attempts-cleanup.ts",
     "i18n:coverage": "tsx scripts/i18n-coverage-report.ts",
