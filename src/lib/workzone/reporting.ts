@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { findMachinePresencesForBaustelles } from "@/lib/workzone/fleet-gps";
 import { effectiveSessionHours, isReportableSession } from "@/lib/workzone/session-rules";
+import { isRecord, readLatLng } from "@/lib/workzone/site-json";
 import {
   dateKey,
   dayRange,
@@ -155,11 +156,12 @@ export function parseReportMessages(note: string | null | undefined, lang?: stri
     const parsed = JSON.parse(note);
     const messages = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.messages) ? parsed.messages : [];
     return (messages as unknown[])
-      .filter((message: any) => typeof message?.text === "string" && message.text.trim())
-      .map((message: any, index: number) => ({
+      .filter(isRecord)
+      .filter((message) => typeof message?.text === "string" && message.text.trim())
+      .map((message, index: number) => ({
         id: String(message.id ?? `legacy-${index}`),
         authorName: String(message.authorName ?? text.note),
-        authorRole: ["Admin", "Worker", "System"].includes(message.authorRole) ? message.authorRole : "System",
+        authorRole: message.authorRole === "Admin" || message.authorRole === "Worker" ? message.authorRole : "System",
         text: String(message.text).trim(),
         createdAt: String(message.createdAt ?? new Date(0).toISOString()),
       }));
@@ -183,10 +185,8 @@ export function serializeReportMessages(messages: ReportMessage[]) {
 export function baustelleStandort(baustelle: { description?: string | null; coordinates?: unknown } | null | undefined) {
   if (!baustelle) return "-";
   if (baustelle.description?.trim()) return baustelle.description.trim();
-  const c = baustelle.coordinates as any;
-  const lat = typeof c?.lat === "number" ? c.lat : typeof c?.latitude === "number" ? c.latitude : null;
-  const lng = typeof c?.lng === "number" ? c.lng : typeof c?.longitude === "number" ? c.longitude : null;
-  if (lat != null && lng != null) return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  const coords = readLatLng(baustelle.coordinates);
+  if (coords) return `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
   return "-";
 }
 

@@ -60,13 +60,13 @@ function relFromRoot(absolute: string): string {
 // Guardrail 1 — every t("...") lookup in the codebase must exist in de.ts.
 // ---------------------------------------------------------------------------
 
-function hasKey(dict: any, path: string): boolean {
+function hasKey(dict: unknown, path: string): boolean {
   const parts = path.split(".");
-  let cur: any = dict;
+  let cur: unknown = dict;
   for (const p of parts) {
     if (cur == null || typeof cur !== "object") return false;
     if (!(p in cur)) return false;
-    cur = cur[p];
+    cur = (cur as Record<string, unknown>)[p];
   }
   return typeof cur === "string";
 }
@@ -120,7 +120,7 @@ describe("i18n guardrail: every used t() key exists in de.ts", () => {
 // otherwise BauFlow leaks tree terminology into other locales.
 // ---------------------------------------------------------------------------
 
-function collectOverrideKeyPaths(dict: any, prefix = ""): Set<string> {
+function collectOverrideKeyPaths(dict: unknown, prefix = ""): Set<string> {
   const out = new Set<string>();
   for (const [k, v] of Object.entries(dict ?? {})) {
     const p = prefix ? `${prefix}.${k}` : k;
@@ -134,10 +134,10 @@ describe("i18n guardrail: bau mode overrides have parity across languages", () =
   for (const mode of ["bau"] as const) {
     it(`${mode} override sets match across de/en/it/sq/pl/ro`, () => {
       const byLang = MODE_OVERRIDES_INTERNAL[mode] ?? {};
-      const dePaths = collectOverrideKeyPaths((byLang as any).de);
+      const dePaths = collectOverrideKeyPaths((byLang as Record<string, unknown>).de);
       const gaps: string[] = [];
       for (const lang of ["en", "it", "sq", "pl", "ro"]) {
-        const langPaths = collectOverrideKeyPaths((byLang as any)[lang]);
+        const langPaths = collectOverrideKeyPaths((byLang as Record<string, unknown>)[lang]);
         for (const key of dePaths) {
           if (!langPaths.has(key)) gaps.push(`${mode}.${lang}.${key}`);
         }
@@ -253,7 +253,7 @@ describe("i18n guardrail: no hardcoded de-DE locale outside the whitelist", () =
 // key (a common copy-paste bug that would render as raw text).
 // ---------------------------------------------------------------------------
 
-function collectLeaves(dict: any, prefix = ""): Array<[string, string]> {
+function collectLeaves(dict: unknown, prefix = ""): Array<[string, string]> {
   const out: Array<[string, string]> = [];
   for (const [k, v] of Object.entries(dict ?? {})) {
     const p = prefix ? `${prefix}.${k}` : k;

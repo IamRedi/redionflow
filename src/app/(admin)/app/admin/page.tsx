@@ -24,6 +24,8 @@ import { cn } from "@/lib/ui/cn";
 import type { CompanyMode } from "@/lib/mode-config";
 import { reportLocale } from "@/lib/workzone/date-utils";
 import { dateKey, monthKey } from "@/lib/workzone/reporting";
+import { WorkerAvailability, WorkerLevel } from "@/generated/prisma/enums";
+import { parseEnumInput } from "@/lib/validation/enum-input";
 
 function cleanText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -211,7 +213,7 @@ async function createWorker(formData: FormData) {
       position: cleanText(formData.get("position")),
       licenses: cleanText(formData.get("licenses")),
       status: formData.get("status") === "inactive" ? "inactive" : "active",
-      availability: String(formData.get("availability") ?? "AVAILABLE") as any,
+      availability: parseEnumInput(formData.get("availability"), WorkerAvailability, WorkerAvailability.AVAILABLE),
       vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), 26),
       // BDF-P1-005: hash the raw code into `loginCodeHash`; never persist
       // it verbatim into `loginCode` (the legacy plaintext column is
@@ -221,7 +223,7 @@ async function createWorker(formData: FormData) {
       isTemporary,
       birthDate: cleanDate(formData.get("birthDate")),
       startedAtCompany: cleanDate(formData.get("startedAtCompany")),
-      level: String(formData.get("level") ?? "JUNIOR") as any,
+      level: parseEnumInput(formData.get("level"), WorkerLevel, WorkerLevel.JUNIOR),
       preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
       motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
     },
@@ -528,8 +530,8 @@ export default async function AdminHrFleetPage() {
                     status: worker.status,
                     vacationAllowanceDays: worker.vacationAllowanceDays ?? 26,
                     level: worker.level,
-                    motherTongue: (worker as any).motherTongue ?? "DE",
-                    preferredLanguage: (worker as any).preferredLanguage ?? "DE",
+                    motherTongue: worker.motherTongue ?? "DE",
+                    preferredLanguage: worker.preferredLanguage ?? "DE",
                   }}
                   currentLang={currentLang}
                   companyMode={mode}
@@ -630,7 +632,7 @@ export default async function AdminHrFleetPage() {
                       <select
                         form={formId}
                         name="motherTongue"
-                        defaultValue={(worker as any).motherTongue ?? "DE"}
+                        defaultValue={worker.motherTongue ?? "DE"}
                         className="h-8 w-full rounded-md border bg-background px-2 text-sm"
                         title={t("admin.colMotherTongue", currentLang, mode)}
                       >
@@ -643,7 +645,7 @@ export default async function AdminHrFleetPage() {
                       <select
                         form={formId}
                         name="preferredLanguage"
-                        defaultValue={(worker as any).preferredLanguage ?? "DE"}
+                        defaultValue={worker.preferredLanguage ?? "DE"}
                         className="h-8 w-full rounded-md border bg-background px-2 text-sm"
                         title={t("admin.colResponseLanguage", currentLang, mode)}
                       >

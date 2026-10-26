@@ -14,12 +14,12 @@ describe("POST /api/csp-report", () => {
     captured.length = 0;
     delete process.env.BDF_LOGGER_SILENT;
     vi.resetModules();
-    stdoutWrite = vi.spyOn(process.stdout, "write").mockImplementation((chunk: any) => {
-      captured.push(typeof chunk === "string" ? chunk : chunk.toString("utf8"));
+    stdoutWrite = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
+      captured.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
       return true;
     });
-    stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation((chunk: any) => {
-      captured.push(typeof chunk === "string" ? chunk : chunk.toString("utf8"));
+    stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation((chunk: string | Uint8Array) => {
+      captured.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
       return true;
     });
     POST = (await import("./route")).POST;

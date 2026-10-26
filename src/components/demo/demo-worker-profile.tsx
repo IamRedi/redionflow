@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { isReportableSession } from "@/lib/workzone/session-rules";
+import { isRecord } from "@/lib/workzone/site-json";
 
 type WorkerDocument = {
   id: string;
@@ -113,8 +114,9 @@ function inventoryActionLabel(action: string, lang: string) {
 function parseDocuments(value: unknown): WorkerDocument[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((item: any) => typeof item?.url === "string")
-    .map((item: any) => ({
+    .filter(isRecord)
+    .filter((item) => typeof item?.url === "string")
+    .map((item) => ({
       id: String(item.id ?? item.url),
       label: String(item.label ?? item.filename ?? "Dokument"),
       url: String(item.url),
