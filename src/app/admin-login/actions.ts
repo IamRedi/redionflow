@@ -2,27 +2,31 @@
 
 import { createSessionCookie } from "@/lib/auth/session-cookie";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ADMIN_COOKIE, ensureDefaultAdmins } from "@/lib/auth/admin-session";
-import { authenticateAdminByCode } from "@/lib/auth/authenticate-admin";
+import { authenticateAdmin, readAdminPassword } from "@/lib/auth/authenticate-admin";
 import { DISPLAY_COOKIE } from "@/lib/auth/display-session";
+import { clearFailedLogin, ensureLoginAllowed, getClientIp, registerFailedLogin } from "@/lib/auth/login-guard";
 import { prisma } from "@/lib/db/prisma";
+import { t } from "@/lib/i18n";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
+import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { logger } from "@/lib/observability/logger";
 import { WORKER_COOKIE } from "@/lib/workzone/worker-session";
 
 type LoginState = { message?: string };
 
-function normalizeCode(value: FormDataEntryValue | null) {
-  return String(value ?? "")
-    .replace(/\D/g, "")
-    .slice(0, 6);
-}
-
 export async function loginAdminAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const tr = await getActionTranslator("admin");
+  // Same limiter as the API route, so the form action is not a way around it.
+  const clientIp = getClientIp(await headers());
+  const access = await ensureLoginAllowed("admin", clientIp);
+  if (!access.ok) {
+    const lang = await resolveRequestLanguage();
+    return { message: t("public.loginTooManyAttempts", lang).replace("{seconds}", String(access.retryAfterSeconds)) };
+  }
   try {
     await ensureDefaultAdmins();
   } catch (error) {
@@ -37,23 +41,25 @@ export async function loginAdminAction(_prevState: LoginState, formData: FormDat
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
-  const code = normalizeCode(formData.get("code"));
+  const password = readAdminPassword(formData.get("password"));
 
-  if (!email || code.length !== 6) {
+  if (!email || !password) {
+    await registerFailedLogin("admin", clientIp);
     return { message: tr("loginInvalid") };
   }
 
-  let result: Awaited<ReturnType<typeof authenticateAdminByCode>>;
+  let result: Awaited<ReturnType<typeof authenticateAdmin>>;
   try {
     // BDF-P1-001: use the shared verifier so this server action and the
     // API route in `src/app/api/admin-login/route.ts` cannot drift apart.
-    result = await authenticateAdminByCode(prisma, email, code);
+    result = await authenticateAdmin(prisma, email, password);
   } catch (error) {
     logger.error({ event: "admin_login.lookup_failed", email }, "user lookup failed", error);
     return { message: tr("loginUnavailable") };
   }
 
   if (!result.ok) {
+    await registerFailedLogin("admin", clientIp);
     if (result.reason === "legacy_plaintext") {
       logger.warn(
         { event: "admin_login.legacy_plaintext", email },
@@ -64,6 +70,7 @@ export async function loginAdminAction(_prevState: LoginState, formData: FormDat
     // enumerate whether an account exists or how its hash is shaped.
     return { message: tr("loginInvalid") };
   }
+  await clearFailedLogin("admin", clientIp);
   const admin = { id: result.adminId };
 
   const jar = await cookies();

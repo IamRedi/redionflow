@@ -1,7 +1,7 @@
 /**
  * BDF-P1-001 integration coverage.
  *
- * Exercises `authenticateAdminByCode`, `ensureDefaultAdmins`, and the
+ * Exercises `authenticateAdmin`, `ensureDefaultAdmins`, and the
  * gated demo-bootstrap against a live disposable Postgres. Run via:
  *
  *   npm run test:integration:local
@@ -13,7 +13,7 @@
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { authenticateAdminByCode } from "@/lib/auth/authenticate-admin";
+import { authenticateAdmin } from "@/lib/auth/authenticate-admin";
 import { hashPassword } from "@/lib/auth/password";
 import { resolveDemoAdminBootstrap } from "@/lib/auth/demo-admin-bootstrap";
 // BDF-P1-002 completion pass: use the same Prisma singleton the service
@@ -62,28 +62,28 @@ beforeEach(async () => {
   await resetUsers();
 });
 
-describe("authenticateAdminByCode (real DB)", () => {
+describe("authenticateAdmin (real DB)", () => {
   it("rejects a legacy plaintext PIN 654321", async () => {
     await createAdmin("legacy-a@example.local", "654321");
-    const result = await authenticateAdminByCode(prisma, "legacy-a@example.local", "654321");
+    const result = await authenticateAdmin(prisma, "legacy-a@example.local", "654321");
     expect(result).toEqual({ ok: false, reason: "legacy_plaintext" });
   });
 
   it("rejects a legacy plaintext PIN 202020", async () => {
     await createAdmin("legacy-b@example.local", "202020");
-    const result = await authenticateAdminByCode(prisma, "legacy-b@example.local", "202020");
+    const result = await authenticateAdmin(prisma, "legacy-b@example.local", "202020");
     expect(result).toEqual({ ok: false, reason: "legacy_plaintext" });
   });
 
   it("rejects an arbitrary plaintext passwordHash", async () => {
     await createAdmin("legacy-c@example.local", "hunter2");
-    const result = await authenticateAdminByCode(prisma, "legacy-c@example.local", "hunter2");
+    const result = await authenticateAdmin(prisma, "legacy-c@example.local", "hunter2");
     expect(result).toEqual({ ok: false, reason: "legacy_plaintext" });
   });
 
   it("rejects a malformed scrypt$… value", async () => {
     await createAdmin("legacy-d@example.local", "scrypt$9$deadbeef$deadbeef");
-    const result = await authenticateAdminByCode(prisma, "legacy-d@example.local", "hunter2");
+    const result = await authenticateAdmin(prisma, "legacy-d@example.local", "hunter2");
     // Malformed scrypt fails verifyPassword (`invalid_password`) because
     // isLegacyPlaintextHash only flags values that don't start with `scrypt$`.
     expect(result).toEqual({ ok: false, reason: "invalid_password" });
@@ -94,24 +94,24 @@ describe("authenticateAdminByCode (real DB)", () => {
       "valid@example.local",
       hashPassword("correcthorse"),
     );
-    const result = await authenticateAdminByCode(prisma, "valid@example.local", "correcthorse");
+    const result = await authenticateAdmin(prisma, "valid@example.local", "correcthorse");
     expect(result).toEqual({ ok: true, adminId: admin.id, sessionEpoch: admin.sessionEpoch });
   });
 
   it("does not enumerate account existence — unknown email returns not_found", async () => {
-    const result = await authenticateAdminByCode(prisma, "no-such@example.local", "anything");
+    const result = await authenticateAdmin(prisma, "no-such@example.local", "anything");
     expect(result).toEqual({ ok: false, reason: "not_found" });
   });
 
   it("refuses inactive admins even with a correct hash", async () => {
     await createAdmin("inactive@example.local", hashPassword("correcthorse"), { isActive: false });
-    const result = await authenticateAdminByCode(prisma, "inactive@example.local", "correcthorse");
+    const result = await authenticateAdmin(prisma, "inactive@example.local", "correcthorse");
     expect(result).toEqual({ ok: false, reason: "not_found" });
   });
 
   it("refuses when the stored hash is null/empty", async () => {
     await createAdmin("empty@example.local", "");
-    const result = await authenticateAdminByCode(prisma, "empty@example.local", "anything");
+    const result = await authenticateAdmin(prisma, "empty@example.local", "anything");
     // Empty-string hash: `isLegacyPlaintextHash` returns false (needs
     // non-empty), so we fall through to `no_hash` (empty string is falsy
     // once passed to verifyPassword).
@@ -122,7 +122,7 @@ describe("authenticateAdminByCode (real DB)", () => {
 
   it("does not disclose the stored hash in its return value", async () => {
     await createAdmin("legacy-x@example.local", "654321");
-    const result = await authenticateAdminByCode(prisma, "legacy-x@example.local", "wrong");
+    const result = await authenticateAdmin(prisma, "legacy-x@example.local", "wrong");
     expect(JSON.stringify(result)).not.toContain("654321");
     expect(JSON.stringify(result)).not.toContain("passwordHash");
   });

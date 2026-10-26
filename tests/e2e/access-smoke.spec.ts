@@ -24,11 +24,11 @@ test.describe("access and public smoke", () => {
     await expect(page.getByRole("heading", { name: /display/i })).toBeVisible();
   });
 
-  test("admin login form exposes email, code and submit controls", async ({ page }) => {
+  test("admin login form exposes email, password and submit controls", async ({ page }) => {
     await page.goto("/admin-login");
 
     await expect(page.locator('input[name="email"]')).toBeVisible();
-    await expect(page.locator('input[name="code"]')).toBeVisible();
+    await expect(page.locator('input[name="password"][type="password"]')).toBeVisible();
     await expect(page.getByRole("button", { name: /admin/i })).toBeVisible();
   });
 

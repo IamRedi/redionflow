@@ -1365,7 +1365,6 @@
     "createTestAdminTitle": "Crea nuovo admin di test",
     "editTestAdminTitle": "Modifica admin di test",
     "editTestAdminDescription": "Qui Redi può modificare e-mail, codice e stato di questo admin.",
-    "sixDigitCode": "Codice a 6 cifre",
     "active": "Attivo",
     "createTestAdminButton": "Crea nuovo admin",
     "saveAdmin": "Salva admin",
@@ -1465,7 +1464,10 @@
     "updatedAt": "Aggiornato",
     "removeAdmin": "Rimuovi admin",
     "removeAdminDescription": "Rimuove l'accesso admin. Storico ed audit esistenti vengono conservati.",
-    "confirmRemoveAdmin": "Rimuovere davvero {name} come admin? Questo account non potrà più accedere."
+    "confirmRemoveAdmin": "Rimuovere davvero {name} come admin? Questo account non potrà più accedere.",
+    "adminPassword": "Password",
+    "adminPasswordHint": "Almeno 12 caratteri.",
+    "adminPasswordKeepHint": "Lascia vuoto per mantenere la password attuale."
   },
   "language": {
     "de": "Tedesco",

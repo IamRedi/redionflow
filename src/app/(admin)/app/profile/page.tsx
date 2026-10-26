@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { ASSISTANT_LANGUAGE_OPTIONS } from "@/lib/assistant/language";
 import { getCurrentAdmin, isOwnerAdmin } from "@/lib/auth/admin-session";
 import { prisma } from "@/lib/db/prisma";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/first-boot-setup";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { updateAdminProfileFormAction, upsertTestAdminFormAction } from "./actions";
@@ -133,8 +134,9 @@ export default async function AdminProfilePage() {
               </div>
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-admin-code">{t("admin.sixDigitCode", currentLang)}</Label>
-                  <Input id="new-admin-code" name="code" inputMode="numeric" maxLength={6} placeholder={t("admin.newAdminCodePlaceholder", currentLang)} />
+                  <Label htmlFor="new-admin-password">{t("admin.adminPassword", currentLang)}</Label>
+                  <Input id="new-admin-password" name="password" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD_LENGTH} maxLength={200} />
+                  <p className="text-xs text-muted-foreground">{t("admin.adminPasswordHint", currentLang)}</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="new-admin-motherTongue">{t("admin.motherTongue", currentLang)}</Label>

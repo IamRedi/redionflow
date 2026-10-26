@@ -12,7 +12,7 @@
  *   2. any stored `passwordHash` that is not scrypt-formatted is treated as
  *      a legacy plaintext record and refused (`legacy_plaintext`);
  *   3. a null/empty stored hash is refused (`no_hash`);
- *   4. otherwise the caller-supplied `code` goes through scrypt via
+ *   4. otherwise the caller-supplied password goes through scrypt via
  *      `verifyPassword`.
  *
  * The return value never contains the stored hash, the request body, or any
@@ -33,21 +33,33 @@ type AdminAuthClient = {
   };
 };
 
+/** Longest password accepted at login; longer input is rejected before hashing. */
+export const MAX_ADMIN_PASSWORD_LENGTH = 200;
+
+/**
+ * Reads the password field of an admin login form. The value is used exactly
+ * as typed (no trimming); empty or over-long input becomes "".
+ */
+export function readAdminPassword(value: FormDataEntryValue | null): string {
+  const password = typeof value === "string" ? value : "";
+  return password.length > MAX_ADMIN_PASSWORD_LENGTH ? "" : password;
+}
+
 export type AdminAuthResult =
   | { ok: true; adminId: string; sessionEpoch: number }
   | { ok: false; reason: "not_found" | "no_hash" | "legacy_plaintext" | "invalid_password" };
 
 /**
- * Verify an admin's `code` against the stored scrypt hash. Returns a
+ * Verify an admin's password against the stored scrypt hash. Returns a
  * discriminated result. Callers translate `reason` into their own outward
  * error shape; the two possible outward states are "invalid credentials"
  * (map `not_found`, `no_hash`, and `invalid_password` to the same message
  * to avoid enumeration) and "reset required" (map `legacy_plaintext`).
  */
-export async function authenticateAdminByCode(
+export async function authenticateAdmin(
   prisma: Pick<PrismaClient, "user"> | AdminAuthClient,
   email: string,
-  code: string,
+  password: string,
 ): Promise<AdminAuthResult> {
   const client = prisma as AdminAuthClient;
   const admin = await client.user.findFirst({
@@ -60,7 +72,7 @@ export async function authenticateAdminByCode(
     return { ok: false, reason: "legacy_plaintext" };
   }
   if (!admin.passwordHash) return { ok: false, reason: "no_hash" };
-  if (!verifyPassword(code, admin.passwordHash)) {
+  if (!verifyPassword(password, admin.passwordHash)) {
     return { ok: false, reason: "invalid_password" };
   }
   return { ok: true, adminId: admin.id, sessionEpoch: admin.sessionEpoch };

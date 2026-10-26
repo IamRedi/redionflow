@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { recordAudit } from "@/lib/audit/log";
 import { getCurrentAdmin, isOwnerAdmin } from "@/lib/auth/admin-session";
+import { MAX_ADMIN_PASSWORD_LENGTH } from "@/lib/auth/authenticate-admin";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/first-boot-setup";
 import { hashPassword } from "@/lib/auth/password";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -14,10 +16,11 @@ import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { logger } from "@/lib/observability/logger";
 import type { ActionResult } from "@/lib/validation/action-result";
 
-function normalizeCode(value: FormDataEntryValue | null) {
-  return String(value ?? "")
-    .replace(/\D/g, "")
-    .slice(0, 6);
+/** New admin passwords follow the first-boot policy: 12 to 200 characters. */
+function readNewPassword(value: FormDataEntryValue | null): string | null {
+  const password = typeof value === "string" ? value : "";
+  if (password.trim().length < MIN_PASSWORD_LENGTH || password.length > MAX_ADMIN_PASSWORD_LENGTH) return null;
+  return password;
 }
 
 export async function updateAdminProfileFormAction(formData: FormData): Promise<void> {
@@ -53,17 +56,15 @@ export async function upsertTestAdminFormAction(formData: FormData): Promise<voi
 
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const code = normalizeCode(formData.get("code"));
+  const password = readNewPassword(formData.get("password"));
   const isActive = formData.get("isActive") === "on";
   const preferredLanguage = normalizeAssistantLanguage(formData.get("preferredLanguage"));
   const motherTongue = normalizeAssistantLanguage(formData.get("motherTongue"));
 
-  if (!name || !email || code.length !== 6) return;
+  if (!name || !email || !password) return;
 
-  // BDF-P1-001: the login code is a 6-digit shared PIN in local/demo mode.
-  // Persist it only after scrypt-hashing so no plaintext credential is
-  // ever written to `passwordHash`.
-  const passwordHash = hashPassword(code);
+  // Only the scrypt hash is stored, never the password itself.
+  const passwordHash = hashPassword(password);
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true, companyProfileId: true, role: true } });
   if (existing && (existing.companyProfileId !== currentCompanyId || existing.role !== "ADMIN")) return;
@@ -91,12 +92,16 @@ export async function updateManagedTestAdminFormAction(formData: FormData): Prom
   const adminId = String(formData.get("adminId") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const code = normalizeCode(formData.get("code"));
+  const rawPassword = formData.get("password");
+  const changesPassword = typeof rawPassword === "string" && rawPassword.length > 0;
+  const password = changesPassword ? readNewPassword(rawPassword) : null;
   const isActive = formData.get("isActive") === "on";
   const preferredLanguage = normalizeAssistantLanguage(formData.get("preferredLanguage"));
   const motherTongue = normalizeAssistantLanguage(formData.get("motherTongue"));
 
-  if (!adminId || !name || !email || code.length !== 6) return;
+  // An empty password field keeps the current password; a filled one must
+  // meet the policy.
+  if (!adminId || !name || !email || (changesPassword && !password)) return;
 
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return;
@@ -114,7 +119,7 @@ export async function updateManagedTestAdminFormAction(formData: FormData): Prom
     data: {
       name,
       email,
-      passwordHash: hashPassword(code),
+      ...(password ? { passwordHash: hashPassword(password) } : {}),
       isActive,
       preferredLanguage,
       motherTongue,
