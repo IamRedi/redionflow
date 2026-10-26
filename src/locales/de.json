@@ -1443,8 +1443,6 @@
     "editTestAdminDescription": "Redi kann hier E-Mail, Code und Status dieses Admins ändern.",
     "newAdminNamePlaceholder": "Lucy",
     "newAdminEmailPlaceholder": "name@firma.de",
-    "newAdminCodePlaceholder": "123456",
-    "sixDigitCode": "6-stelliger Code",
     "active": "Aktiv",
     "createTestAdminButton": "Neuen Admin anlegen",
     "saveAdmin": "Admin speichern",
@@ -1548,7 +1546,10 @@
     "updatedAt": "Aktualisiert",
     "removeAdmin": "Admin entfernen",
     "removeAdminDescription": "Entfernt den Admin-Zugriff. Bestehende Historie und Audits bleiben erhalten.",
-    "confirmRemoveAdmin": "{name} wirklich als Admin entfernen? Dieser Zugang kann danach nicht mehr einloggen."
+    "confirmRemoveAdmin": "{name} wirklich als Admin entfernen? Dieser Zugang kann danach nicht mehr einloggen.",
+    "adminPassword": "Passwort",
+    "adminPasswordHint": "Mindestens 12 Zeichen.",
+    "adminPasswordKeepHint": "Leer lassen, um das bisherige Passwort zu behalten."
   },
   "language": {
     "de": "Deutsch",

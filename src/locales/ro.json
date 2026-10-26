@@ -401,7 +401,10 @@
   "admin": {
     "responseLanguage": "Limba raspunsului",
     "motherTongue": "Limba materna",
-    "vacationDays": "Zile de concediu"
+    "vacationDays": "Zile de concediu",
+    "adminPassword": "Parolă",
+    "adminPasswordHint": "Cel puțin 12 caractere.",
+    "adminPasswordKeepHint": "Lăsați gol pentru a păstra parola actuală."
   },
   "language": {
     "de": "Germana",

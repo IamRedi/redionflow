@@ -1350,7 +1350,6 @@
     "createTestAdminTitle": "Krijo test-admin te ri",
     "editTestAdminTitle": "Ndrysho test-admin",
     "editTestAdminDescription": "Redi mund te ndryshoje ketu e-mailin, kodin dhe statusin e ketij admini.",
-    "sixDigitCode": "Kodi 6-shifror",
     "createTestAdminButton": "Krijo admin te ri",
     "saveAdmin": "Ruaj adminin",
     "fleetGpsSubtitle": "Sinjale live te makinave, lidhje me kantierin dhe baze rruge per raportet ditore.",
@@ -1447,7 +1446,10 @@
     "updatedAt": "Perditesuar",
     "removeAdmin": "Hiq adminin",
     "removeAdminDescription": "Heq qasjen e adminit. Historia dhe auditimet ekzistuese ruhen.",
-    "confirmRemoveAdmin": "{name} te hiqet vertet si admin? Ky akses nuk mund te logohet me."
+    "confirmRemoveAdmin": "{name} te hiqet vertet si admin? Ky akses nuk mund te logohet me.",
+    "adminPassword": "Fjalëkalimi",
+    "adminPasswordHint": "Të paktën 12 shenja.",
+    "adminPasswordKeepHint": "Lëre bosh për të mbajtur fjalëkalimin aktual."
   },
   "language": {
     "de": "Gjermanisht",

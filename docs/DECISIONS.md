@@ -1,5 +1,11 @@
 # BaumdienstFlow / RediOnFlow - DECISIONS
 
+## 2026-10-26 - Admins sign in with a password, workers keep their PIN
+
+- **Decision**: `/admin-login` takes e-mail + password instead of a 6-digit code. Admin passwords set in the app need 12+ characters; editing an admin with an empty password field keeps the current one. Workers and the display login keep 6-digit codes for fast sign-in on site.
+- **Why**: A 6-digit admin code has one million combinations and was protected only by the rate limiter, which the server-action path did not even use. The first-boot admin (12+ character password) could not log in on dedicated installs at all, because the form only accepted six digits.
+- **Consequences**: `authenticateAdmin(email, password)` replaces `authenticateAdminByCode`; the login server action now uses the same rate limiter as the API route. Existing admins with a 6-digit code still sign in with it until the owner sets a new password.
+
 ## 2026-10-26 - Admin management belongs to the company owner, not to an e-mail address
 
 - **Decision**: `User.isOwner` marks the admin created by signup, first boot or the demo bootstrap. Only the owner may add, edit or deactivate other admins, and the owner cannot be changed by them. The hard-coded "primary test admin" e-mail and the legacy admin e-mail / PIN deny-lists were removed.

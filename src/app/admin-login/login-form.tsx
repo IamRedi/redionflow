@@ -21,8 +21,8 @@ export function AdminLoginForm() {
         <Input id="email" name="email" type="email" autoComplete="username" placeholder={t("admin.adminEmailPlaceholder", currentLang)} />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="code">{t("form.loginCodePlaceholder", currentLang)}</Label>
-        <Input id="code" name="code" inputMode="numeric" maxLength={6} autoComplete="one-time-code" placeholder={t("form.loginCodeExample", currentLang)} />
+        <Label htmlFor="password">{t("admin.adminPassword", currentLang)}</Label>
+        <Input id="password" name="password" type="password" autoComplete="current-password" maxLength={200} />
       </div>
       {state.message ? <p className="text-sm text-destructive">{state.message}</p> : null}
       <Button type="submit" disabled={isPending} className="w-full">

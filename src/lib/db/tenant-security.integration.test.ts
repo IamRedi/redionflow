@@ -183,7 +183,7 @@ it("owner admin cannot take over another tenant admin by email upsert", async ()
   const { upsertTestAdminFormAction } = await import("@/app/(admin)/app/profile/actions");
   await prisma.user.update({where:{id:tenants[0].admin.id},data:{isOwner:true}});
   await asAdmin(0);
-  await upsertTestAdminFormAction(form({name:"Forged",email:tenants[1].admin.email,code:"654321",isActive:"on"}));
+  await upsertTestAdminFormAction(form({name:"Forged",email:tenants[1].admin.email,password:"forged-password-2026",isActive:"on"}));
   const foreign = await prisma.user.findUniqueOrThrow({where:{id:tenants[1].admin.id}});
   expect(foreign.companyProfileId).toBe(tenants[1].company.id);
   expect(foreign.passwordHash).toBe(tenants[1].admin.passwordHash);
@@ -205,13 +205,13 @@ it("admin credential rotation revokes old session and permits new login/session"
   const { hashPassword } = await import("@/lib/auth/password");
   const { getCurrentAdmin } = await import("@/lib/auth/admin-session");
   const { upsertTestAdminFormAction } = await import("@/app/(admin)/app/profile/actions");
-  const { authenticateAdminByCode } = await import("@/lib/auth/authenticate-admin");
+  const { authenticateAdmin } = await import("@/lib/auth/authenticate-admin");
   const a=tenants[0]; await prisma.user.update({where:{id:a.admin.id},data:{isOwner:true}});
   const target=await prisma.user.create({data:{companyProfileId:a.company.id,role:"ADMIN",email:`session-target-${a.company.id}@example.test`,passwordHash:hashPassword("111111")}});
   const old=await createSessionCookie("admin",target.id); request.values.set("bk_admin_id",old); expect((await getCurrentAdmin())?.id).toBe(target.id);
-  await asAdmin(0); await upsertTestAdminFormAction(form({name:"Synthetic target",email:target.email,code:"654321",isActive:"on"}));
+  await asAdmin(0); await upsertTestAdminFormAction(form({name:"Synthetic target",email:target.email,password:"rotated-password-2026",isActive:"on"}));
   request.values.set("bk_admin_id",old); expect(await getCurrentAdmin()).toBeNull();
-  expect((await authenticateAdminByCode(prisma,target.email,"654321")).ok).toBe(true);
+  expect((await authenticateAdmin(prisma,target.email,"rotated-password-2026")).ok).toBe(true);
   request.values.set("bk_admin_id",await createSessionCookie("admin",target.id)); expect((await getCurrentAdmin())?.id).toBe(target.id);
 });
 

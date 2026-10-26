@@ -53,16 +53,15 @@ export default async function AdminLoginPage({
             />
           </div>
           <div className="space-y-1.5">
-            <label htmlFor="code" className="block text-sm font-medium">
-              {t("form.loginCodePlaceholder")}
+            <label htmlFor="password" className="block text-sm font-medium">
+              {t("admin.adminPassword")}
             </label>
             <input
-              id="code"
-              name="code"
-              inputMode="numeric"
-              maxLength={6}
-              autoComplete="one-time-code"
-              placeholder={t("admin.loginCodePlaceholder")}
+              id="password"
+              name="password"
+              type="password"
+              maxLength={200}
+              autoComplete="current-password"
               className="h-10 w-full rounded-md border bg-background px-3 text-sm"
             />
           </div>
