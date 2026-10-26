@@ -78,7 +78,7 @@ it("REAL APPLICATION POOL: rollback and SQL transaction error clear the same con
   await cleanPool(pid);
 });
 
-it("unauthenticated, missing/invalid/forged tenant and wrong role deny without invoking a callback", async () => {
+it("unauthenticated, missing/invalid/forged tenant and wrong role deny without invoking a callback", async () => { // gitleaks:allow (false positive: test title, not a key)
   const callback = vi.fn(async () => true);
   await expect(withTenantDbContext(tenants[0].company.id, callback)).rejects.toThrow("No authenticated tenant");
   await as(0);
