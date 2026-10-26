@@ -2,16 +2,8 @@ import { prisma } from "@/lib/db/prisma";
 import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { t } from "@/lib/i18n";
+import { equipmentQuantity, readLatLng } from "@/lib/workzone/site-json";
 import { WorkzoneMissionControl } from "@/app/(workzone)/workzone/workzone-mission-control";
-
-type EquipmentCategory = "SIGN" | "PLATE" | "FENCE";
-
-function equipmentQuantity(value: unknown, category: EquipmentCategory) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return 0;
-  const row = (value as Record<string, any>)[category];
-  const qty = Number(row?.quantity ?? 0);
-  return Number.isFinite(qty) ? Math.max(0, qty) : 0;
-}
 
 function materialIndicators(
   input: { signQty: number; plateQty: number; fenceQty: number; coneQty: number },
@@ -108,9 +100,7 @@ export default async function DisplayWorkzonePage() {
     const equipmentIndicators = materialIndicators({ signQty, plateQty, fenceQty, coneQty }, currentLang);
     const pendingCollection = equipmentIndicators.length > 0;
     const pendingSiteTask = b.manualTasks[0]?.description ?? null;
-    const c = b.coordinates as any;
-    const lat = typeof c?.lat === "number" ? c.lat : typeof c?.latitude === "number" ? c.latitude : null;
-    const lng = typeof c?.lng === "number" ? c.lng : typeof c?.longitude === "number" ? c.longitude : null;
+    const coordinates = readLatLng(b.coordinates);
     return {
       id: b.id,
       name: b.name,
@@ -122,7 +112,7 @@ export default async function DisplayWorkzonePage() {
       workers,
       haltCount,
       activeLiveCount: workers.length,
-      coordinates: lat != null && lng != null ? { lat, lng } : null,
+      coordinates,
       canvasX: b.canvasX,
       canvasY: b.canvasY,
       canvasMobileX: b.canvasMobileX,

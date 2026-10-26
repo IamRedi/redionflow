@@ -1,6 +1,6 @@
 "use client";
 
-import { divIcon } from "leaflet";
+import { divIcon, type LatLngTuple } from "leaflet";
 import { LayersControl, MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,6 @@ type MissionItem = {
   coordinates: { lat: number; lng: number } | null;
 };
 
-const MapAny: any = MapContainer;
-const TileAny: any = TileLayer;
-const MarkerAny: any = Marker;
-const PopupAny: any = Popup;
-const LayersAny: any = LayersControl;
-const BaseLayerAny: any = LayersControl.BaseLayer;
 
 function typeIcon(type: string) {
   if (type === "WATERING") return "🐘";
@@ -66,14 +60,14 @@ function MapFocusController({
   const withCoords = items.filter((item) => item.coordinates);
 
   if (withCoords.length > 0) {
-    const bounds = withCoords.map((item) => [item.coordinates!.lat, item.coordinates!.lng]);
-    map.fitBounds(bounds as any, { padding: [36, 36], maxZoom: 14 });
+    const bounds = withCoords.map((item): LatLngTuple => [item.coordinates!.lat, item.coordinates!.lng]);
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
   }
 
   if (focusId) {
     const item = items.find((entry) => entry.id === focusId);
     if (item?.coordinates) {
-      map.flyTo([item.coordinates.lat, item.coordinates.lng] as any, Math.max(map.getZoom(), 15), { duration: 0.8 });
+      map.flyTo([item.coordinates.lat, item.coordinates.lng], Math.max(map.getZoom(), 15), { duration: 0.8 });
     }
   }
 
@@ -95,24 +89,24 @@ export function WorkzoneMissionMap({
   }
 
   return (
-    <MapAny center={[51.45, 7.0] as any} zoom={10} style={{ width: "100%", height: "100%" }}>
-      <LayersAny position="topright">
-        <BaseLayerAny checked name={t("workzone.streets", currentLang)}>
-          <TileAny attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        </BaseLayerAny>
-        <BaseLayerAny name={t("workzone.satellite", currentLang)}>
-          <TileAny attribution="Tiles &copy; Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-        </BaseLayerAny>
-      </LayersAny>
+    <MapContainer center={[51.45, 7.0]} zoom={10} style={{ width: "100%", height: "100%" }}>
+      <LayersControl position="topright">
+        <LayersControl.BaseLayer checked name={t("workzone.streets", currentLang)}>
+          <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        </LayersControl.BaseLayer>
+        <LayersControl.BaseLayer name={t("workzone.satellite", currentLang)}>
+          <TileLayer attribution="Tiles &copy; Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+        </LayersControl.BaseLayer>
+      </LayersControl>
       <MapFocusController items={items} focusId={focusId} />
       {items.map((item) => (
-        <MarkerAny
+        <Marker
           key={item.id}
-          position={[item.coordinates!.lat, item.coordinates!.lng] as any}
+          position={[item.coordinates!.lat, item.coordinates!.lng]}
           icon={missionMarker(item)}
           eventHandlers={{ click: () => onFocusChange(item.id) }}
         >
-          <PopupAny>
+          <Popup>
             <div className="space-y-2 text-xs">
               <p className="font-semibold">{item.name}</p>
               <p>
@@ -124,9 +118,9 @@ export function WorkzoneMissionMap({
                 </Button>
               </div>
             </div>
-          </PopupAny>
-        </MarkerAny>
+          </Popup>
+        </Marker>
       ))}
-    </MapAny>
+    </MapContainer>
   );
 }

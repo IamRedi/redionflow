@@ -125,7 +125,7 @@ export async function SafetyOverviewSection({ currentLang }: { currentLang: Lang
             </TableHeader>
             <TableBody>
               {safetyMovements.map((row) => {
-                const catalog = safetyCatalog.find((c) => c.category === (row.category as any));
+                const catalog = safetyCatalog.find((c) => c.category === row.category);
                 const label = catalog?.name?.trim()
                   ? `${catalog.name} (${row.category})`
                   : row.category === "FENCE"

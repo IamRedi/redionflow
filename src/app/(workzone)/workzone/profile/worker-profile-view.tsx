@@ -11,6 +11,7 @@ import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { reportLocale } from "@/lib/workzone/date-utils";
 import { dateKey, monthKey } from "@/lib/workzone/reporting";
 import { hasOpenPause, isReportableSession, totalPauseMinutes } from "@/lib/workzone/session-rules";
+import { isRecord } from "@/lib/workzone/site-json";
 import { logoutWorkerAction } from "../hr-actions";
 import { updateWorkerContactDetailsFormAction } from "../hr-actions";
 import { updateWorkerClothingSizesFormAction } from "../hr-actions";
@@ -109,8 +110,9 @@ function formatDateTime(date: Date | null, lang?: string) {
 function parseDocuments(value: unknown, fallbackLabel: string): WorkerDocument[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((item: any) => typeof item?.url === "string")
-    .map((item: any) => ({
+    .filter(isRecord)
+      .filter((item) => typeof item?.url === "string")
+    .map((item) => ({
       id: String(item.id ?? item.url),
       label: String(item.label ?? item.filename ?? fallbackLabel),
       type: String(item.type ?? "document"),

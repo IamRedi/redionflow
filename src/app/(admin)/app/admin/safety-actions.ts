@@ -29,10 +29,10 @@ export async function upsertSafetyCatalogItemAction(formData: FormData): Promise
   if (!currentCompanyId || currentCompanyId !== companyId) return;
 
   await prisma.companyInventoryCatalog.upsert({
-    where: { companyProfileId_category: { companyProfileId: companyId, category: category as any } },
+    where: { companyProfileId_category: { companyProfileId: companyId, category } },
     create: {
       companyProfileId: companyId,
-      category: category as any,
+      category,
       name,
       totalQuantity,
       isActive: true,

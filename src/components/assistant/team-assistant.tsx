@@ -15,14 +15,23 @@ function canUseSpeech() {
   return typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
 }
 
+// Minimal Web Speech API surface; the DOM lib does not ship these types.
+type SpeechRecognitionResultEventLike = {
+  resultIndex: number;
+  results: ArrayLike<{ isFinal: boolean; 0?: { transcript: string } }>;
+};
 type SpeechRecognitionLike = {
   lang: string;
   interimResults: boolean;
   maxAlternatives: number;
-  onresult: ((event: any) => void) | null;
+  onresult: ((event: SpeechRecognitionResultEventLike) => void) | null;
   start: () => void;
 };
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+type WindowWithSpeech = Window & {
+  SpeechRecognition?: SpeechRecognitionCtor;
+  webkitSpeechRecognition?: SpeechRecognitionCtor;
+};
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
@@ -151,14 +160,16 @@ function AssistantChat({
 
   function startVoiceToText() {
     if (!speechSupported) return;
-    const Ctor = ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) as SpeechRecognitionCtor;
+    const speechWindow = window as WindowWithSpeech;
+    const Ctor = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!Ctor) return;
     const rec = new Ctor();
     rec.lang = speechLang;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
     let finalText = "";
-    rec.onresult = (event: any) => {
+    rec.onresult = (event) => {
       let text = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const res = event.results[i];

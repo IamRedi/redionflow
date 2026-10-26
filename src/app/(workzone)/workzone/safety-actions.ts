@@ -8,6 +8,7 @@ import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { isRecord } from "@/lib/workzone/site-json";
 import type { ActionResult } from "@/lib/validation/action-result";
 
 type EquipmentCategory = "SIGN" | "PLATE" | "FENCE";
@@ -25,12 +26,12 @@ type EquipmentStatusMap = Partial<
 >;
 
 function parseEquipmentStatus(value: unknown): EquipmentStatusMap {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  const map = value as Record<string, any>;
+  if (!isRecord(value)) return {};
+  const map = value;
   const next: EquipmentStatusMap = {};
   for (const category of ["SIGN", "PLATE", "FENCE"] as const) {
     const row = map[category];
-    if (!row || typeof row !== "object") continue;
+    if (!isRecord(row)) continue;
     next[category] = {
       requested: Boolean(row.requested),
       quantity: Math.max(0, Number(row.quantity ?? 0) || 0),

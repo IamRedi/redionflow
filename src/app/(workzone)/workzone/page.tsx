@@ -13,19 +13,11 @@ import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { dateKey, dayRange } from "@/lib/workzone/date-utils";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { equipmentQuantity, hasEquipmentOnSite, readLatLng } from "@/lib/workzone/site-json";
 import { WorkingBadge } from "./working-badge";
 import { WorkzoneCalendarModal } from "./workzone-calendar-modal";
 import { WorkzoneCreateBaustelleModal } from "./workzone-create-baustelle-modal";
 import { WorkzoneMissionControl } from "./workzone-mission-control";
-
-type EquipmentCategory = "SIGN" | "PLATE" | "FENCE";
-
-function equipmentQuantity(value: unknown, category: EquipmentCategory) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return 0;
-  const row = (value as Record<string, any>)[category];
-  const qty = Number(row?.quantity ?? 0);
-  return Number.isFinite(qty) ? Math.max(0, qty) : 0;
-}
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -216,9 +208,7 @@ export default async function WorkzoneHomePage() {
     const equipmentIndicators = materialIndicators({ signQty, plateQty, fenceQty, coneQty }, currentLang);
     const pendingCollection = equipmentIndicators.length > 0;
     const pendingSiteTask = b.manualTasks[0]?.description ?? null;
-    const c = b.coordinates as any;
-    const lat = typeof c?.lat === "number" ? c.lat : typeof c?.latitude === "number" ? c.latitude : null;
-    const lng = typeof c?.lng === "number" ? c.lng : typeof c?.longitude === "number" ? c.longitude : null;
+    const coordinates = readLatLng(b.coordinates);
     return {
       id: b.id,
       name: b.name,
@@ -230,7 +220,7 @@ export default async function WorkzoneHomePage() {
       workers,
       haltCount,
       activeLiveCount: workers.length,
-      coordinates: lat != null && lng != null ? { lat, lng } : null,
+      coordinates,
       canvasX: b.canvasX,
       canvasY: b.canvasY,
       canvasMobileX: b.canvasMobileX,
@@ -421,20 +411,9 @@ export default async function WorkzoneHomePage() {
                   </div>
                 ) : null}
                 {(() => {
-                  const equipmentStatus = (b.activeEquipmentStatus as Record<string, any> | null) ?? {};
-                  const baustelleHasEquipment = Object.values(equipmentStatus).some((row) => {
-                    const qty = Number((row as any)?.quantity ?? 0);
-                    return Number.isFinite(qty) && qty > 0;
-                  });
-                  const treeHasEquipment = b.treeItems.some((t) => {
-                    const map = (t.siteEquipmentStatus as Record<string, any> | null) ?? null;
-                    if (!map) return false;
-                    return Object.values(map).some((row) => {
-                      const qty = Number((row as any)?.quantity ?? 0);
-                      return Number.isFinite(qty) && qty > 0;
-                    });
-                  });
-                  const pendingCollection = baustelleHasEquipment || treeHasEquipment;
+                  const pendingCollection =
+                    hasEquipmentOnSite(b.activeEquipmentStatus) ||
+                    b.treeItems.some((t) => hasEquipmentOnSite(t.siteEquipmentStatus));
                   return pendingCollection ? (
                     <div className="text-[11px] font-semibold text-amber-500">{t("workzone.safetyPending", currentLang)} · {t("workzone.materialOnSite", currentLang)}</div>
                   ) : null;

@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import {
   baustelleStandort,
@@ -453,7 +454,7 @@ function normalizeName(input: string) {
   return input.trim().replace(/\s+/g, " ");
 }
 
-function workerByNameFilter(companyId: string, workerName: string) {
+function workerByNameFilter(companyId: string, workerName: string): Prisma.WorkerWhereInput {
   const name = normalizeName(workerName);
   const [first, ...rest] = name.split(" ");
   const last = rest.join(" ").trim();
@@ -463,7 +464,7 @@ function workerByNameFilter(companyId: string, workerName: string) {
       { firstName: { equals: first, mode: "insensitive" }, lastName: last ? { equals: last, mode: "insensitive" } : undefined },
       { firstName: { equals: name, mode: "insensitive" } },
       { lastName: { equals: name, mode: "insensitive" } },
-    ].filter(Boolean) as any,
+    ],
   };
 }
 

@@ -14,39 +14,45 @@ import {
  * will depend on in Phase 2.
  */
 
+type EpochQuery = {
+  where: { id: string };
+  select: unknown;
+  data?: { sessionEpoch?: { increment?: number } };
+};
+
 function makePrismaMock(state: {
   users: Map<string, { sessionEpoch: number }>;
   workers: Map<string, { sessionEpoch: number }>;
 }) {
   return {
     user: {
-      findUnique: vi.fn(async ({ where, select }: any) => {
+      findUnique: vi.fn(async ({ where, select }: EpochQuery) => {
         expect(select).toEqual({ sessionEpoch: true });
         const row = state.users.get(where.id);
         return row ?? null;
       }),
-      update: vi.fn(async ({ where, data, select }: any) => {
+      update: vi.fn(async ({ where, data, select }: EpochQuery) => {
         expect(select).toEqual({ sessionEpoch: true });
         const row = state.users.get(where.id);
         if (!row) {
           const err = new Error("not found");
           throw err;
         }
-        row.sessionEpoch += (data.sessionEpoch?.increment ?? 0) as number;
+        row.sessionEpoch += data?.sessionEpoch?.increment ?? 0;
         return { sessionEpoch: row.sessionEpoch };
       }),
     },
     worker: {
-      findUnique: vi.fn(async ({ where, select }: any) => {
+      findUnique: vi.fn(async ({ where, select }: EpochQuery) => {
         expect(select).toEqual({ sessionEpoch: true });
         const row = state.workers.get(where.id);
         return row ?? null;
       }),
-      update: vi.fn(async ({ where, data, select }: any) => {
+      update: vi.fn(async ({ where, data, select }: EpochQuery) => {
         expect(select).toEqual({ sessionEpoch: true });
         const row = state.workers.get(where.id);
         if (!row) throw new Error("not found");
-        row.sessionEpoch += (data.sessionEpoch?.increment ?? 0) as number;
+        row.sessionEpoch += data?.sessionEpoch?.increment ?? 0;
         return { sessionEpoch: row.sessionEpoch };
       }),
     },
