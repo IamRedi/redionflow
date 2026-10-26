@@ -138,7 +138,7 @@ export function SideNavigation() {
                     }}
                     className={`rounded-md px-3 py-2 text-left text-xs font-semibold transition ${
                       isActive
-                        ? "bg-emerald-600 text-white shadow-sm"
+                        ? "bg-emerald-700 text-white shadow-sm"
                         : "text-foreground/70 hover:bg-emerald-500/10 hover:text-foreground"
                     }`}
                     aria-current={isActive ? "true" : undefined}
@@ -167,7 +167,7 @@ export function SideNavigation() {
                 onClick={() => scrollToSection(section.id)}
                 className={`shrink-0 rounded-md px-3 py-2 text-xs font-semibold transition ${
                   isActive
-                    ? "bg-emerald-600 text-white shadow-sm"
+                    ? "bg-emerald-700 text-white shadow-sm"
                     : "text-foreground/70 hover:bg-emerald-500/10 hover:text-foreground"
                 }`}
                 aria-current={isActive ? "true" : undefined}

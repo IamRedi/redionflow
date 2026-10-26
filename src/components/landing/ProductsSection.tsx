@@ -310,7 +310,7 @@ export function ProductsSection({ isSaasMode, landingLang }: ProductsSectionProp
         })}
       </div>
 
-      <article
+      <div
         className="mt-6 grid gap-6 rounded-2xl border border-white/12 bg-white/[0.045] p-6 shadow-[0_16px_32px_rgba(0,0,0,0.14)] md:grid-cols-[1.2fr_1fr]"
         role="tabpanel"
       >
@@ -356,7 +356,7 @@ export function ProductsSection({ isSaasMode, landingLang }: ProductsSectionProp
             </p>
           ) : null}
         </div>
-      </article>
+      </div>
     </section>
   );
 }

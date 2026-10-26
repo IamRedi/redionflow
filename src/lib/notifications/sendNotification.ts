@@ -73,7 +73,7 @@ export async function sendNotification({ userIds, title, body, url = "/workzone"
       notification: {
         title,
         body,
-        icon: "/branding/logoholz.png",
+        icon: "/branding/logo-192.png",
       },
     },
   });

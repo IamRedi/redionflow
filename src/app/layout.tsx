@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
-import { appName, appSuffix, appSuperscript, brandLogoSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
+import { appName, appSuffix, appSuperscript, brandAppleIconSrc, brandIconSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
 import { getCompanyMode } from "@/lib/db/company";
 import { t } from "@/lib/i18n";
 import { productBranding } from "@/lib/mode-config";
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     title: rootTitle,
   },
   icons: {
-    icon: brandLogoSrc,
-    apple: brandLogoSrc,
+    icon: brandIconSrc,
+    apple: brandAppleIconSrc,
   },
 };
 
@@ -53,7 +53,7 @@ export default async function RootLayout({
       <span className="relative inline-block pr-1 text-brand-green">
         {displaySuffix}
         {displaySuperscript ? (
-          <span className="absolute -right-1 -top-0.5 text-[8px] font-bold leading-none text-alfa-red">
+          <span className="absolute -right-1 -top-0.5 text-[8px] font-bold leading-none text-red-700 dark:text-red-400">
             {displaySuperscript}
           </span>
         ) : null}
