@@ -654,3 +654,17 @@ Die Wahrheit über Produkt/Architektur lebt unter `docs/`:
 - Für eine öffentliche Demo den Reset nächtlich planen (z. B. 03:00 Uhr), damit Arbeitszeiten und Tagesplan zum aktuellen Tag passen und Änderungen von Besuchern verschwinden.
 - `/demo/*` ist schreibgeschützt und ohne Login erreichbar, aber nur bei `APP_ENV=demo|local` (siehe `src/lib/public-demo.ts`).
 - Der Demo-Container ist kein gehärtetes Produktions-Image. `SESSION_SIGNING_SECRET` hat in `docker-compose.yml` einen lokalen Standardwert; für jede von außen erreichbare Instanz einen eigenen Wert setzen.
+
+### Live-Demo auf Railway
+
+Laut `docs/DEPLOYMENT.md` läuft die Demo auf Railway. `railway.json` legt fest: Build über das `Dockerfile`, Healthcheck `/api/healthz`. Der Container führt beim Start Migrationen und Seed selbst aus.
+
+1. Railway-Service mit `IamRedi/redionflow`, Branch `main`, verbinden.
+2. **Eine neue, leere Datenbank** anlegen (Railway Postgres oder ein neues Supabase-Projekt). Nie eine Datenbank mit echten Kundendaten wiederverwenden.
+3. Variablen setzen:
+   - `APP_ENV=demo`, `DEMO_MODE=true`, `DEMO_RESET_ALLOWED=true`
+   - `DATABASE_URL`, `DIRECT_URL` (neue Datenbank)
+   - `APP_BASE_URL`, `APP_DOMAIN` (öffentliche Demo-URL)
+   - `SESSION_SIGNING_SECRET` und `LOGIN_GUARD_SALT` (je `openssl rand -hex 32`)
+   - Optional Admin-Zugang: `ALLOW_DEMO_ADMIN_BOOTSTRAP=true`, `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD` (12+ Zeichen)
+4. Nächtlicher Reset: zweiter Service aus demselben Repo mit denselben Variablen, Start-Befehl `npm run demo:reset`, Cron `0 2 * * *` (UTC, also ca. 03:00/04:00 Uhr deutscher Zeit).
