@@ -1,0 +1,347 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 42 52% 95%;
+  --foreground: 158 20% 13%;
+
+  --card: 43 70% 98%;
+  --card-foreground: 158 20% 13%;
+
+  --popover: 43 70% 98%;
+  --popover-foreground: 158 20% 13%;
+
+  --brand-green: 150 45% 29%;
+  --alfa-red: 357 79% 50%;
+
+  --primary: 150 45% 29%;
+  --primary-foreground: 43 70% 98%;
+
+  --secondary: 39 42% 90%;
+  --secondary-foreground: 158 18% 17%;
+
+  --muted: 41 38% 91%;
+  --muted-foreground: 35 13% 40%;
+
+  --accent: 48 51% 88%;
+  --accent-foreground: 158 24% 17%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 38 30% 82%;
+  --input: 38 30% 82%;
+  --ring: 150 45% 29%;
+
+  --radius: 10px;
+}
+
+.dark {
+  --background: 220 11% 10%;
+  --foreground: 210 20% 96%;
+
+  --card: 220 10% 12%;
+  --card-foreground: 210 20% 96%;
+
+  --popover: 220 10% 12%;
+  --popover-foreground: 210 20% 96%;
+
+  --brand-green: 142 57% 38%;
+  --alfa-red: 357 79% 50%;
+
+  --primary: 142 57% 38%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 220 9% 18%;
+  --secondary-foreground: 210 20% 96%;
+
+  --muted: 220 9% 18%;
+  --muted-foreground: 220 10% 72%;
+
+  --accent: 220 9% 18%;
+  --accent-foreground: 210 20% 96%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 220 9% 24%;
+  --input: 220 9% 24%;
+  --ring: 142 57% 38%;
+}
+
+/* -------------------------------------------------------------------------
+   Mode themes — applied via `mode-bau` / `mode-personal` on <body>.
+   Baumdienst uses the default green/vanilla theme above.
+   Bau (construction) uses a concrete-grey base with safety-orange accents.
+   Personal reuses Bau for now.
+   ------------------------------------------------------------------------- */
+
+/* Bau / Personal — light mode: concrete grey base (like poured concrete),
+   with safety-orange accents and clean white surfaces. Reads premium and
+   construction-themed at once. */
+.mode-bau,
+.mode-personal {
+  --background: 220 6% 88%;             /* concrete grey */
+  --foreground: 220 10% 15%;
+  --card: 0 0% 100%;                    /* clean white cards */
+  --card-foreground: 220 10% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 10% 15%;
+  --brand-green: 24 95% 52%;
+  --primary: 24 95% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 8% 82%;
+  --secondary-foreground: 220 10% 20%;
+  --muted: 220 6% 92%;
+  --muted-foreground: 220 8% 38%;
+  --accent: 24 95% 52%;
+  --accent-foreground: 0 0% 100%;
+  --border: 220 8% 76%;
+  --input: 220 8% 76%;
+  --ring: 24 95% 52%;
+  --alfa-red: 0 78% 52%;
+}
+
+/* Bau / Personal — dark mode: neutral concrete grey (zero hue) so the base
+   never picks up a green or blue tint. Same darkness level as the default
+   dark theme so the tonality feels familiar. */
+.dark.mode-bau,
+.dark.mode-personal,
+.dark .mode-bau,
+.dark .mode-personal {
+  --background: 0 0% 11%;               /* pure neutral dark grey */
+  --foreground: 0 0% 96%;
+  --card: 0 0% 14%;
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 14%;
+  --popover-foreground: 0 0% 96%;
+  --brand-green: 24 95% 58%;
+  --primary: 24 95% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 19%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 0 0% 19%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 24 95% 58%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 25%;
+  --input: 0 0% 25%;
+  --ring: 24 95% 58%;
+  --alfa-red: 0 78% 62%;
+}
+
+/* Bau light body: subtle concrete gradient (top-lighter, base-darker) so
+   the page has depth without shouting orange. */
+body.mode-bau:not(.dark body),
+body.mode-personal:not(.dark body) {
+  background: linear-gradient(180deg, hsl(220 6% 92%) 0%, hsl(var(--background)) 55%, hsl(220 6% 84%) 100%);
+}
+
+/* Bau dark body: flat charcoal. */
+.dark body.mode-bau,
+.dark body.mode-personal {
+  background: hsl(var(--background));
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    linear-gradient(180deg, hsl(43 68% 97%) 0%, hsl(var(--background)) 34%, hsl(39 45% 92%) 100%);
+  color: hsl(var(--foreground));
+  font-feature-settings: "ss01" 1, "ss02" 1, "cv01" 1, "cv02" 1;
+}
+
+.dark body {
+  background: hsl(var(--background));
+}
+
+/* Base body background stays identical between modes — the theme feel
+   comes from accents, not from repainting the whole page. */
+
+/* -------------------------------------------------------------------------
+   Bau / Personal accent remap.
+   Only shift TEXT, BORDER, RING, FILL and GRADIENT stops that reference
+   Tailwind's emerald palette. Solid `bg-emerald-*` fills are LEFT ALONE so
+   panels, mission-control canvas gradients, and card tints keep their
+   existing dark base — the mode difference reads through the accents, not
+   through orange-flooded surfaces. This keeps the UI premium.
+   ------------------------------------------------------------------------- */
+
+/* Text-only remap: emerald + brand-green text becomes safety orange.
+   All other emerald (borders, fills, backgrounds) is left alone so every
+   card renders with the same neutral border and the accent reads through
+   the text + logo + gradients only. Cleaner, more premium. */
+body.mode-bau [class*="text-emerald-"],
+body.mode-personal [class*="text-emerald-"],
+body.mode-bau [class*="text-brand-green"],
+body.mode-personal [class*="text-brand-green"] {
+  color: hsl(24 95% 60%) !important;
+}
+
+body.mode-bau [class*="fill-emerald-"],
+body.mode-personal [class*="fill-emerald-"] {
+  fill: hsl(24 95% 55%) !important;
+}
+
+body.mode-bau [class*="ring-emerald-"],
+body.mode-personal [class*="ring-emerald-"] {
+  --tw-ring-color: hsl(24 95% 55%) !important;
+}
+
+/* Emerald gradient stops used across dashboards + card headers.
+   Repaint to a soft cool steel-grey overlay — reads as brushed iron
+   / industrial. The high-visibility safety orange stays on primary
+   accents (logo, buttons, focus rings) so the two levels of hierarchy
+   are clear: panels feel like steel, critical actions feel like signage. */
+body.mode-bau [class*="from-emerald-"],
+body.mode-personal [class*="from-emerald-"] {
+  --tw-gradient-from: hsl(215 12% 52% / 0.16) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: hsl(215 12% 52% / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via, var(--tw-gradient-to)), var(--tw-gradient-to) !important;
+}
+body.mode-bau [class*="via-emerald-"],
+body.mode-personal [class*="via-emerald-"] {
+  --tw-gradient-via: hsl(215 12% 52% / 0.12) var(--tw-gradient-via-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+}
+body.mode-bau [class*="to-emerald-"],
+body.mode-personal [class*="to-emerald-"] {
+  --tw-gradient-to: hsl(215 12% 52% / 0.16) var(--tw-gradient-to-position) !important;
+}
+
+/* Shadow colored emerald -> subtle cool steel */
+body.mode-bau [class*="shadow-emerald-"],
+body.mode-personal [class*="shadow-emerald-"] {
+  --tw-shadow-color: hsl(215 12% 40% / 0.20) !important;
+  --tw-shadow: var(--tw-shadow-colored) !important;
+}
+
+/* Neutralize the hardcoded green shells used by workzone + landing when in
+   Bau / Personal mode. #10211a is a dark green base, #183428 is a mid-tone
+   green card. Replace both with neutral concrete grey. */
+body.mode-bau [class*="10211a"],
+body.mode-personal [class*="10211a"] {
+  background-color: hsl(0 0% 11%) !important;
+}
+body.mode-bau [class*="183428"],
+body.mode-personal [class*="183428"] {
+  background-color: hsl(0 0% 15%) !important;
+}
+body.mode-bau [class*="emerald-950"],
+body.mode-personal [class*="emerald-950"] {
+  border-color: hsl(0 0% 25% / 0.4) !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.workzone-announcement-marquee {
+  animation: workzone-announcement-marquee 28s linear infinite;
+  transform: translateX(100%);
+}
+
+@keyframes workzone-announcement-marquee {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes workzone-worker-live-ping {
+  75%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workzone-announcement-marquee {
+    animation: none;
+    transform: translateX(0);
+  }
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body,
+  body > div,
+  main,
+  [class*="min-h-dvh"],
+  [class*="bg-background"],
+  [class*="bg-card"] {
+    background: white !important;
+  }
+
+  body * {
+    background-color: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  table,
+  thead,
+  tbody,
+  tfoot,
+  tr,
+  th,
+  td {
+    border-color: black !important;
+  }
+
+  th {
+    background: #f4f4f5 !important;
+    font-weight: 700 !important;
+  }
+
+  .print-fill {
+    background: #f4f4f5 !important;
+  }
+
+  .stundenzettel-table {
+    font-size: 8pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .stundenzettel-table th,
+  .stundenzettel-table td {
+    padding: 2.5pt 4pt !important;
+  }
+
+  input,
+  textarea,
+  button {
+    box-shadow: none !important;
+  }
+}
