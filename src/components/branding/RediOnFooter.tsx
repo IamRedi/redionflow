@@ -1,14 +1,23 @@
+import { cn } from "@/lib/ui/cn";
+
 const BRAND_RED = "Redi";
 const BRAND_GREEN = "ON";
 const BRAND_TAGLINE = "Upgrade humans. Not replace them.";
 
-export function RediOnFooter() {
+/** `onDark` is for pages that paint their own dark background regardless of the theme (landing). */
+export function RediOnFooter({ onDark = false }: { onDark?: boolean }) {
   return (
-    <footer className="px-5 pb-4 pt-8 text-center text-[9px] font-light tracking-wide text-muted-foreground/35 print:hidden">
-      <div className="text-[8px] font-medium tracking-[0.08em] text-muted-foreground/45">
-        <span className="text-alfa-red/60">{BRAND_RED}</span><span className="text-brand-green/60">{BRAND_GREEN}</span>
+    <footer
+      className={cn(
+        "px-5 pb-4 pt-8 text-center text-[10px] font-light tracking-wide print:hidden",
+        onDark ? "text-white/70" : "text-muted-foreground",
+      )}
+    >
+      <div className="font-medium tracking-[0.08em]">
+        <span className={onDark ? "text-red-400" : "text-red-700 dark:text-red-400"}>{BRAND_RED}</span>
+        <span className={onDark ? "text-emerald-400" : "text-emerald-700 dark:text-emerald-400"}>{BRAND_GREEN}</span>
       </div>
-      <div className="mt-0.5 text-[8px]">
+      <div className="mt-0.5">
         <span>{BRAND_TAGLINE}</span>
       </div>
     </footer>

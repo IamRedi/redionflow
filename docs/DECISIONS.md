@@ -286,8 +286,8 @@
 - **Why**: The same platform may run for Baumdienst, AutoService or another client category while the `Flow` platform mark stays stable.
 - **Consequences**:
   - `appName` controls the category label; `appSuffix` remains `Flow`.
-  - Header uses `public/branding/logoholz.png`, category text, green `Flow`, and the red Alfa-style `®` mark.
-  - `RediON` footer is global, minimal and low-opacity.
+  - Header uses the square logo variants in `public/branding/logo-*` (WebP for the UI, small PNGs for favicon, Apple and manifest icons), category text, green `Flow`, and the red superscript.
+  - `RediON` footer is global and minimal; it keeps WCAG AA contrast (2026-10-26).
   - Primary UI accent is green from the logo; dark mode was shifted from blue/slate to a lighter neutral grey base.
 
 ## 2026-04-18 - Safe local Docker DB lifecycle

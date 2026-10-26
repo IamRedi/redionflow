@@ -237,7 +237,7 @@ export function LandingPage({
         </div>
 
         <footer className="mt-10 border-t border-white/10 pt-5">
-          <RediOnFooter />
+          <RediOnFooter onDark />
         </footer>
       </div>
     </main>

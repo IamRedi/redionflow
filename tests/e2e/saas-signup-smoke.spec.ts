@@ -170,9 +170,9 @@ async function uploadSiteDocument(page: Page, fileName: string) {
 test.describe.configure({ mode: "serial" });
 
 test.describe("SaaS authenticated smoke", () => {
-  test("native image optimizer serves the existing allowlisted PNG as WebP", async ({ request }) => {
+  test("native image optimizer serves the allowlisted landing PNG as WebP", async ({ request }) => {
     const response = await request.get("/_next/image", {
-      params: { url: "/branding/baumdienstflow-hero.png?v=20260427-2", w: "640", q: "75" },
+      params: { url: "/landingpagephoto/workzoneliveLight.png", w: "640", q: "75" },
       headers: { accept: "image/webp" },
     });
     expect(response.status()).toBe(200);
