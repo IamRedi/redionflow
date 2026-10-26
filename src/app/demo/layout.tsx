@@ -66,6 +66,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
       <header className={`sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         <div className="pt-3">
           <DemoTopBar
+            mode={mode}
             workers={workers.map((worker) => ({
               id: worker.id,
               firstName: worker.firstName,

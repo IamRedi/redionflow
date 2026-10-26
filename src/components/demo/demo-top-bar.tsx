@@ -5,6 +5,7 @@ import { AppBrand } from "@/components/branding/AppBrand";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { t } from "@/lib/i18n";
+import type { CompanyMode } from "@/lib/mode-config";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { DemoReadonlyBadge } from "./demo-readonly-badge";
 
@@ -20,7 +21,7 @@ type DemoWorker = {
   live: boolean;
 };
 
-export async function DemoTopBar({ workers }: { workers: DemoWorker[] }) {
+export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mode?: CompanyMode }) {
   const currentLang = await resolveRequestLanguage();
 
   return (
@@ -28,7 +29,7 @@ export async function DemoTopBar({ workers }: { workers: DemoWorker[] }) {
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <AppBrand compact logoAlt={t("common.companyLogoAlt", currentLang)} />
+            <AppBrand compact mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} />
             <span
               className="inline-flex h-8 items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
               title="AI preview"

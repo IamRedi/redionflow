@@ -2,8 +2,28 @@
 // invented. Coordinates lie in a real German city only so the maps look real.
 
 import type { AssistantLanguage, BaustelleType, MachineCategory, WorkerLevel } from "../src/generated/prisma/client";
+import type { CompanyMode } from "../src/lib/mode-config";
 
-export const DEMO_COMPANY = {
+export type DemoCompany = {
+  legalName: string;
+  displayName: string;
+  vatId: string;
+  phone: string;
+  email: string;
+  street: string;
+  zip: string;
+  city: string;
+};
+
+export type DemoLaborRole = {
+  name: string;
+  grossHourlyCents: number;
+  employerOverheadPct: string;
+  productivityPct: string;
+  sortOrder: number;
+};
+
+export const DEMO_COMPANY: DemoCompany = {
   legalName: "Baumdienst Musterstadt GmbH",
   displayName: "Baumdienst Musterstadt GmbH",
   vatId: "DE000000000",
@@ -21,13 +41,13 @@ export const SEED_SYSTEM_USER = {
   name: "Demo-Daten",
 } as const;
 
-export const LABOR_ROLES = [
+export const LABOR_ROLES: DemoLaborRole[] = [
   { name: "Helfer", grossHourlyCents: 1650, employerOverheadPct: "0.28", productivityPct: "0.80", sortOrder: 10 },
   { name: "Facharbeiter", grossHourlyCents: 2150, employerOverheadPct: "0.30", productivityPct: "0.85", sortOrder: 20 },
   { name: "Vorarbeiter", grossHourlyCents: 2550, employerOverheadPct: "0.32", productivityPct: "0.88", sortOrder: 30 },
   { name: "Kletterer", grossHourlyCents: 2850, employerOverheadPct: "0.34", productivityPct: "0.90", sortOrder: 40 },
   { name: "Maschinist", grossHourlyCents: 2450, employerOverheadPct: "0.30", productivityPct: "0.87", sortOrder: 50 },
-] as const;
+];
 
 export type DemoMachine = {
   key: string;
@@ -163,3 +183,96 @@ export const BLOCKED_NOTES = [
 
 export const ANNOUNCEMENT =
   "Willkommen in der Demo! Alle Firmen, Personen und Baustellen sind frei erfunden.";
+
+export type DemoOffer = {
+  template: {
+    name: string;
+    description: string;
+    positions: Array<{ title: string; description: string; unit: string }>;
+  };
+  project: {
+    title: string;
+    customerName: string;
+    customerStreet: string;
+    customerZip: string;
+    customerCity: string;
+    internalNotes: string;
+    position: {
+      title: string;
+      description: string;
+      unit: string;
+      labor: Array<{ roleName: string; hours: string }>;
+      machineKey: string;
+      machineHours: string;
+      material: { title: string; unitPriceCents: number };
+      externalService: { title: string; amountCents: number; notes: string };
+    };
+  };
+};
+
+/** Everything one demo company needs. `prisma/seed.ts` picks one by `DEMO_SEED_MODE`. */
+export type DemoDataset = {
+  mode: CompanyMode;
+  company: DemoCompany;
+  systemUser: { email: string; name: string };
+  laborRoles: DemoLaborRole[];
+  machines: DemoMachine[];
+  workers: DemoWorker[];
+  // Worker keys: one on approved vacation now, one with a pending request next month.
+  vacationWorker: string;
+  plannedVacationWorker: string;
+  plannedVacationNote: string;
+  sites: DemoSite[];
+  blockedNotes: readonly string[];
+  announcement: string;
+  /** Word used in the seed log line, e.g. "trees" or "work items". */
+  itemLabel: string;
+  offer: DemoOffer;
+};
+
+export const BAUMDIENST_DEMO: DemoDataset = {
+  mode: "baumdienst",
+  company: DEMO_COMPANY,
+  systemUser: SEED_SYSTEM_USER,
+  laborRoles: LABOR_ROLES,
+  machines: MACHINES,
+  workers: WORKERS,
+  vacationWorker: "ioana",
+  plannedVacationWorker: "marco",
+  plannedVacationNote: "Familienbesuch",
+  sites: SITES,
+  blockedNotes: BLOCKED_NOTES,
+  announcement: ANNOUNCEMENT,
+  itemLabel: "trees",
+  offer: {
+    template: {
+      name: "Standard: Baumfällung (einfach)",
+      description: "Typische Positionen als Startpunkt. Inhalte und Mengen sind bewusst editierbar.",
+      positions: [
+        { title: "Baum fällen und abtragen", description: "Fällung, Entastung, Abschnittbildung, Verladen", unit: "pauschal" },
+        { title: "Häckselgut entsorgen", description: "Abtransport / Entsorgung gemäß Vorgabe", unit: "pauschal" },
+      ],
+    },
+    project: {
+      title: "Angebot: Fällung Gartenbaum – Familie Muster",
+      customerName: "Erika Musterfrau",
+      customerStreet: "Beispielweg 8",
+      customerZip: "12345",
+      customerCity: "Musterstadt",
+      internalNotes: "Demo-Angebot. Positionen dienen als realistischer Startpunkt.",
+      position: {
+        title: "Baum fällen und abtragen",
+        description: "Fällung einer Fichte (ca. 18 m) in Seilklettertechnik",
+        unit: "pauschal",
+        labor: [
+          { roleName: "Kletterer", hours: "6.0" },
+          { roleName: "Helfer", hours: "6.0" },
+        ],
+        machineKey: "chipper",
+        machineHours: "3.0",
+        material: { title: "Sicherungs-/Absperrmaterial", unitPriceCents: 1500 },
+        externalService: { title: "Entsorgungsgebühr Grünabfall", amountCents: 4500, notes: "Kann je nach Menge/Container variieren." },
+      },
+    },
+  },
+};
