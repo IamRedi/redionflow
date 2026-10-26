@@ -37,6 +37,13 @@ DEMO_ADMIN_PASSWORD='ein-langes-passwort' docker compose up --build
 
 Frische Demo-Daten: `docker compose exec app npm run demo:reset`.
 
+Die BauFlow-Variante mit der fiktiven **Bau Beispielstadt GmbH** (Pflaster, Beschilderung, Entwässerung) startet mit einer frischen Datenbank:
+
+```bash
+docker compose down -v
+DEMO_SEED_MODE=bau docker compose up --build
+```
+
 ## Schnellstart (Entwicklung)
 
 Voraussetzungen: Node.js 22 (siehe `.nvmrc`), npm 10, Docker für eine lokale PostgreSQL.

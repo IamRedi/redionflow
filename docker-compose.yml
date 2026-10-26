@@ -26,6 +26,8 @@ services:
       APP_ENV: demo
       DEMO_MODE: "true"
       DEMO_RESET_ALLOWED: "true"
+      # DEMO_SEED_MODE=bau seeds the BauFlow company instead of BaumdienstFlow.
+      DEMO_SEED_MODE: ${DEMO_SEED_MODE:-baumdienst}
       DATABASE_URL: postgresql://redionflow:redionflow@db:5432/redionflow
       DIRECT_URL: postgresql://redionflow:redionflow@db:5432/redionflow
       APP_BASE_URL: http://localhost:3000
