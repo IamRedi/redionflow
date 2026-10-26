@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { de } from "./de";
+import { de } from "./dictionaries";
 import { MODE_OVERRIDES_INTERNAL } from "./mode-overrides";
 
 /**
@@ -57,7 +57,7 @@ function relFromRoot(absolute: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Guardrail 1 — every t("...") lookup in the codebase must exist in de.ts.
+// Guardrail 1 — every t("...") lookup in the codebase must exist in de.json.
 // ---------------------------------------------------------------------------
 
 function hasKey(dict: unknown, path: string): boolean {
@@ -98,14 +98,14 @@ function collectUsedKeys(): string[] {
   return [...keys];
 }
 
-describe("i18n guardrail: every used t() key exists in de.ts", () => {
+describe("i18n guardrail: every used t() key exists in de.json", () => {
   it("has no missing base translation keys", () => {
     const used = collectUsedKeys();
     const missing = used.filter((key) => !hasKey(de, key));
     if (missing.length > 0) {
       throw new Error(
-        `Found ${missing.length} t() call site(s) whose key is missing from de.ts.\n` +
-          `Fix by adding the key to src/lib/i18n/de.ts (and ideally to en/it/sq).\n\n` +
+        `Found ${missing.length} t() call site(s) whose key is missing from de.json.\n` +
+          `Fix by adding the key to src/locales/de.json (and ideally to en/it/sq).\n\n` +
           `Missing keys:\n  ${missing.slice(0, 40).join("\n  ")}` +
           (missing.length > 40 ? `\n  … +${missing.length - 40} more` : ""),
       );

@@ -1,10 +1,5 @@
 import type { CompanyMode } from "@/lib/mode-config";
-import { de } from "./de";
-import { en } from "./en";
-import { it } from "./it";
-import { pl } from "./pl";
-import { ro } from "./ro";
-import { sq } from "./sq";
+import { de, en, it, pl, ro, sq } from "./dictionaries";
 import { resolveModeOverride } from "./mode-overrides";
 
 export const translations = {
@@ -17,6 +12,7 @@ export const translations = {
 } as const;
 
 export type Language = keyof typeof translations;
+export type { TranslationKey } from "./dictionaries";
 
 function resolvePath(source: unknown, path: string) {
   return path.split(".").reduce<unknown>((current, key) => {
