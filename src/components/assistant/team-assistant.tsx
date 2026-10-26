@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Send, Sparkles, Trash2 } from "lucide-react";
 
 import { AppBrand } from "@/components/branding/AppBrand";
@@ -14,6 +14,8 @@ const WORKER_ASSISTANT_PANEL_STORAGE_KEY = "worker-assistant:panel-state";
 function canUseSpeech() {
   return typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
 }
+
+const subscribeNever = () => () => {};
 
 // Minimal Web Speech API surface; the DOM lib does not ship these types.
 type SpeechRecognitionResultEventLike = {
@@ -105,7 +107,8 @@ function AssistantChat({
   voiceHint = "Double-click = voice",
   speechLang = "de-DE",
 }: AssistantChatProps) {
-  const [speechSupported, setSpeechSupported] = useState(false);
+  // false on the server, the real capability after hydration.
+  const speechSupported = useSyncExternalStore(subscribeNever, canUseSpeech, () => false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -114,12 +117,11 @@ function AssistantChat({
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setSpeechSupported(canUseSpeech());
-  }, []);
-
-  useEffect(() => {
     if (!storageKey) return;
     const saved = readAssistantChatState(storageKey);
+    // Restoring from localStorage has to wait until after hydration, so this
+    // one-time sync from an external store stays in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessages(saved.messages);
     setInput(saved.input);
     setStorageReady(true);

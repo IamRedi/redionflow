@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 
@@ -25,11 +25,7 @@ export function DashboardRefreshControls({ generatedAt }: DashboardRefreshContro
   const { currentLang } = useLanguage();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [lastUpdated, setLastUpdated] = useState(() => timestampLabel(generatedAt));
-
-  useEffect(() => {
-    setLastUpdated(timestampLabel(generatedAt));
-  }, [generatedAt]);
+  const lastUpdated = timestampLabel(generatedAt);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
