@@ -14,7 +14,7 @@ let bootstrapWarningLogged = false;
 
 /**
  * BDF-P1-005: the previous `DEFAULT_DISPLAY_USERS` constant hard-coded
- * a single display user with PIN `303030`. That literal is gone. Any
+ * a single display user with a fixed PIN. That literal is gone. Any
  * email may now be a display login as long as the operator has
  * provisioned a STAFF user for it via the gated demo bootstrap below or
  * the admin display-management UI.

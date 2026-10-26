@@ -2,7 +2,7 @@
  * BDF-P1-005 — gated demo/local display-user bootstrap.
  *
  * Parallel to `demo-admin-bootstrap.ts`. The default display user is no
- * longer seeded with the hard-coded PIN `303030`. A local/demo operator
+ * longer seeded with a hard-coded PIN. A local/demo operator
  * can still seed one display user by setting all of:
  *
  *   - APP_ENV=local or demo,

@@ -484,8 +484,9 @@ and the admin table is still empty.
   (`pg_advisory_xact_lock`). Two racing valid requests serialise; the
   winner creates the admin, the loser sees `admin_exists` and yields the
   generic denied response.
-- Password policy: at least 12 characters, cannot equal the setup token,
-  the admin email, or any known legacy PIN (`121985`, `202020`, …).
+- Password policy: at least 12 characters, cannot equal the setup token
+  or the admin email. The first admin becomes the company owner
+  (`User.isOwner`) and is the only one who can manage other admins.
 
 **Operator sequence**
 
