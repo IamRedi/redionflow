@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { notFound } from "next/navigation";
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
@@ -7,8 +8,11 @@ import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener
 import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
+import { isPublicDemoEnabled } from "@/lib/public-demo";
 
 export default async function DemoLayout({ children }: { children: ReactNode }) {
+  // No login on these pages: never serve them outside a demo/local instance.
+  if (!isPublicDemoEnabled()) notFound();
   const company = await getOrCreateDefaultCompany();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);

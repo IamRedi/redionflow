@@ -105,6 +105,19 @@ function serializeError(err: unknown): Record<string, unknown> | undefined {
   return { message: String(err) };
 }
 
+/**
+ * Node writes straight to stdout/stderr. The Edge runtime (instrumentation
+ * runs there too) has no process streams, so it falls back to console. The
+ * stream is looked up by name so the Edge bundle carries no static
+ * `process.stdout` reference.
+ */
+function lineWriter(name: "stdout" | "stderr"): (line: string) => void {
+  const stream = (globalThis as { process?: Partial<Record<"stdout" | "stderr", { write(chunk: string): unknown }>> })
+    .process?.[name];
+  if (stream) return (line) => void stream.write(`${line}\n`);
+  return name === "stderr" ? (line) => console.error(line) : (line) => console.log(line);
+}
+
 function emit(level: LogLevel, context: LogContext, message?: string, err?: unknown): void {
   if (SILENT) return;
   const configuredIndex = LEVELS.indexOf(level);
@@ -119,18 +132,18 @@ function emit(level: LogLevel, context: LogContext, message?: string, err?: unkn
   if (message) record.message = message;
   if (err !== undefined) record.error = redact(serializeError(err));
 
-  const target = level === "error" ? process.stderr : process.stdout;
+  const write = lineWriter(level === "error" ? "stderr" : "stdout");
 
   if (PRETTY) {
     const kv = Object.entries(record)
       .filter(([k]) => k !== "level" && k !== "time" && k !== "event" && k !== "message")
       .map(([k, v]) => `${k}=${typeof v === "string" ? v : JSON.stringify(v)}`)
       .join(" ");
-    target.write(`[${record.time}] ${level.toUpperCase()} ${record.event}${message ? ` — ${message}` : ""}${kv ? ` ${kv}` : ""}\n`);
+    write(`[${record.time}] ${level.toUpperCase()} ${record.event}${message ? ` — ${message}` : ""}${kv ? ` ${kv}` : ""}`);
     return;
   }
 
-  target.write(JSON.stringify(record) + "\n");
+  write(JSON.stringify(record));
 }
 
 export const logger = {
