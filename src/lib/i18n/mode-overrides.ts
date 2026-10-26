@@ -1,13 +1,12 @@
 import type { CompanyMode } from "@/lib/mode-config";
 
 /**
- * T-029 — BauFlow / PersonalFlow terminology polish.
+ * T-029 — BauFlow terminology polish.
  *
  * Sparse override map applied ON TOP of the base translation dictionary
  * when a company runs in a non-baumdienst mode. The base language files
  * (de/en/pl/ro/sq) stay canonical; overrides only replace strings that
- * would otherwise leak tree-work language into a construction-only or
- * personal workspace.
+ * would otherwise leak tree-work language into a construction workspace.
  *
  * Adding a new override is safe: if a key is missing from an override
  * map, the base translation is used. Fall-back order:
@@ -534,16 +533,6 @@ const bauOverridesRO: SparseTranslations = {
 
 const MODE_OVERRIDES: Partial<Record<CompanyMode, Record<string, SparseTranslations>>> = {
   bau: {
-    de: bauOverridesDE,
-    en: bauOverridesEN,
-    sq: bauOverridesSQ,
-    it: bauOverridesIT,
-    pl: bauOverridesPL,
-    ro: bauOverridesRO,
-  },
-  // PersonalFlow shares BauFlow terminology today. When PersonalFlow gets a
-  // dedicated voice, add a `personal:` entry here.
-  personal: {
     de: bauOverridesDE,
     en: bauOverridesEN,
     sq: bauOverridesSQ,

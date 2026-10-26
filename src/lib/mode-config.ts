@@ -1,12 +1,12 @@
-export type CompanyMode = "baumdienst" | "bau" | "personal";
+export type CompanyMode = "baumdienst" | "bau";
 
 export interface ModeFeatures {
   /** Tree-specific modules: BaumKalk, TreeItem management, site tree scanning */
   trees: boolean;
   /** Machines, fleet, cone tracking */
   machines: boolean;
-  /** Full reports (true) or limited summary only ("limited") */
-  reports: boolean | "limited";
+  /** Reporting module */
+  reports: boolean;
   /** Baustelle management and workzone */
   baustellen: boolean;
   /** Cost calculation engine: Projekte, Vorlagen, Lohnrollen */
@@ -36,19 +36,10 @@ export const modeConfig: Record<CompanyMode, ModeFeatures> = {
     inventory: true,
     gps: true,
   },
-  personal: {
-    trees: false,
-    machines: false,
-    reports: "limited",
-    baustellen: false,
-    calculation: false,
-    inventory: false,
-    gps: false,
-  },
 };
 
 export function resolveMode(raw: string | null | undefined): CompanyMode {
-  if (raw === "bau" || raw === "personal") return raw;
+  if (raw === "bau") return raw;
   return "baumdienst";
 }
 
@@ -68,8 +59,6 @@ export function productBranding(mode: CompanyMode): ProductBranding {
   switch (mode) {
     case "bau":
       return { name: "Bau", suffix: "Flow", superscript: "26", full: "BauFlow²⁶" };
-    case "personal":
-      return { name: "Personal", suffix: "Flow", superscript: "26", full: "PersonalFlow²⁶" };
     default:
       return { name: "Baumdienst", suffix: "Flow", superscript: "26", full: "BaumdienstFlow²⁶" };
   }

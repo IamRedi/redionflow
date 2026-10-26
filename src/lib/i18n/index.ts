@@ -35,7 +35,7 @@ function resolvePath(source: unknown, path: string) {
 /**
  * T-029: `t()` is mode-aware. Callers that have the company mode in scope
  * (server components after `getCompanyMode()`) should pass it as the third
- * arg so BauFlow / PersonalFlow tenants get construction-friendly wording.
+ * arg so BauFlow tenants get construction-friendly wording.
  *
  * Callers that omit `mode` (or pass `baumdienst`) get the original strings —
  * fully backwards compatible.

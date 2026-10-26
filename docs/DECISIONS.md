@@ -1,5 +1,14 @@
 # BaumdienstFlow / RediOnFlow - DECISIONS
 
+## 2026-10-26 - Two products only: PersonalFlow removed
+
+- **Decision**: RediOnFlow ships exactly two modes, `baumdienst` (BaumdienstFlow) and `bau` (BauFlow). The experimental `personal` mode (PersonalFlow), its canvas, signup option, landing tab, theme selectors and translations were removed.
+- **Why**: Both remaining products have real demand and share almost all modules. A third, much thinner product added code paths and test surface without a customer behind it.
+- **Consequences**:
+  - `CompanyMode = "baumdienst" | "bau"`; `ModeFeatures.reports` is a plain boolean.
+  - Migration `20261026120000_restrict_company_mode` moves any unknown mode to `baumdienst` and adds `CompanyProfile_mode_check`.
+  - `resolveMode` still falls back to `baumdienst` for unexpected input.
+
 ## 2026-04-30 - Active docs stay short; old notes move to archive
 
 - **Decision**: Keep active docs short and agent-readable. Move obsolete setup/test notes to `docs/archive/` instead of deleting them.

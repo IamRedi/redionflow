@@ -12,7 +12,7 @@ import { MODE_OVERRIDES_INTERNAL } from "./mode-overrides";
  *
  *   1. Missing i18n keys — code calls `t("workzone.newKey")` but no
  *      dictionary contains it, so the UI renders the raw dot-notation.
- *   2. Mode-override drift — bau/personal DE grows an override but the
+ *   2. Mode-override drift — bau DE grows an override but the
  *      matching key never lands in EN/IT/SQ/PL/RO, so BauFlow users on
  *      those languages see German fallbacks.
  *   3. Hardcoded `de-DE` locale — someone re-introduces
@@ -115,7 +115,7 @@ describe("i18n guardrail: every used t() key exists in de.ts", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Guardrail 2 — bau/personal mode overrides must have the same key set
+// Guardrail 2 — bau mode overrides must have the same key set
 // across all six supported languages. If DE adds a key, others must too,
 // otherwise BauFlow leaks tree terminology into other locales.
 // ---------------------------------------------------------------------------
@@ -130,8 +130,8 @@ function collectOverrideKeyPaths(dict: any, prefix = ""): Set<string> {
   return out;
 }
 
-describe("i18n guardrail: bau/personal mode overrides have parity across languages", () => {
-  for (const mode of ["bau", "personal"] as const) {
+describe("i18n guardrail: bau mode overrides have parity across languages", () => {
+  for (const mode of ["bau"] as const) {
     it(`${mode} override sets match across de/en/it/sq/pl/ro`, () => {
       const byLang = MODE_OVERRIDES_INTERNAL[mode] ?? {};
       const dePaths = collectOverrideKeyPaths((byLang as any).de);
@@ -144,7 +144,7 @@ describe("i18n guardrail: bau/personal mode overrides have parity across languag
       }
       if (gaps.length > 0) {
         throw new Error(
-          `Found ${gaps.length} bau/personal override key(s) present in DE but missing in another language.\n` +
+          `Found ${gaps.length} bau override key(s) present in DE but missing in another language.\n` +
             `Fix by mirroring the DE override into the missing language block(s) in src/lib/i18n/mode-overrides.ts.\n\n` +
             `Gaps:\n  ${gaps.slice(0, 40).join("\n  ")}` +
             (gaps.length > 40 ? `\n  … +${gaps.length - 40} more` : ""),

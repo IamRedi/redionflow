@@ -31,7 +31,6 @@ User-facing product is derived from `company.mode`.
 | --- | --- | --- |
 | `baumdienst` | BaumdienstFlow²⁶ | Full system and reference implementation |
 | `bau` | BauFlow²⁶ | Construction companies, without tree logic |
-| `personal` | PersonalFlow²⁶ | Personal use and small teams |
 
 BaumdienstFlow²⁶ includes:
 
@@ -46,13 +45,9 @@ BauFlow²⁶ focuses on:
 - materials
 - team coordination
 
-PersonalFlow²⁶ focuses on:
-
-- tasks
-- reminders
-- history
-
-PersonalFlow²⁶ has a simplified UI and limited users, approximately 5.
+A third mode (PersonalFlow) existed as an experiment and was removed on
+2026-10-26 to keep the platform focused on two products. The database
+rejects any other mode via a CHECK constraint.
 
 `²⁶` is visual only. Never use it in DB, API, or logic.
 
@@ -61,7 +56,7 @@ PersonalFlow²⁶ has a simplified UI and limited users, approximately 5.
 `company.mode`:
 
 ```ts
-"baumdienst" | "bau" | "personal"
+"baumdienst" | "bau"
 ```
 
 Controls:
@@ -198,7 +193,6 @@ Only these may differ:
 2. Build SaaS structures around the same BaumdienstFlow behavior.
 3. Make BaumdienstFlow in SaaS match the current client product.
 4. Derive BauFlow from the same logic, without tree-specific modules.
-5. Derive PersonalFlow from BauFlow by simplifying UI and limiting scope.
 
 No mode may fork the codebase.
 
@@ -238,7 +232,6 @@ Top-right corner shows product name based on `company.mode`:
 
 - BaumdienstFlow²⁶
 - BauFlow²⁶
-- PersonalFlow²⁶
 
 RediOnFlow is not shown there.
 
@@ -269,12 +262,11 @@ Migration: `20260527221723_add_company_mode`
 `src/lib/mode-config.ts`
 
 ```ts
-type CompanyMode = "baumdienst" | "bau" | "personal"
+type CompanyMode = "baumdienst" | "bau"
 
 modeConfig = {
-  baumdienst: { trees: true,  machines: true,  reports: true,       baustellen: true,  calculation: true,  inventory: true,  gps: true  },
-  bau:        { trees: false, machines: true,  reports: true,       baustellen: true,  calculation: true,  inventory: true,  gps: true  },
-  personal:   { trees: false, machines: false, reports: "limited",  baustellen: false, calculation: false, inventory: false, gps: false },
+  baumdienst: { trees: true,  machines: true, reports: true, baustellen: true, calculation: true, inventory: true, gps: true },
+  bau:        { trees: false, machines: true, reports: true, baustellen: true, calculation: true, inventory: true, gps: true },
 }
 ```
 
@@ -298,7 +290,7 @@ Each nav item has an optional `requires` flag. Items whose flag is `false` in th
 
 #### Product name in UI
 
-`src/components/shell/FlowTopBar.tsx` — small text label top-right: `BaumdienstFlow²⁶` / `BauFlow²⁶` / `PersonalFlow²⁶`
+`src/components/shell/FlowTopBar.tsx` — small text label top-right: `BaumdienstFlow²⁶` / `BauFlow²⁶`
 
 Admin sidebar also shows the product badge next to "Admin Panel".
 
@@ -315,12 +307,6 @@ Nav visible: Personal & Flotte, Fleet GPS, Barcode Inventar, Sicherheit, Baustel
 Product name: BauFlow²⁶.
 
 Note: Baustellen and Workzone are fully functional in bau mode — workers, sessions, tasks all work. Only the tree-specific cost calculation module is hidden.
-
-#### personal (can test locally)
-
-Nav hidden: Fleet GPS, Barcode Inventar, Sicherheit & Ausrüstung, Baustellen, BaumKalk.
-Nav visible: Personal & Flotte, Einstellungen only.
-Product name: PersonalFlow²⁶.
 
 ### How to switch mode for testing
 
@@ -345,8 +331,8 @@ Tracked as roadmap tasks. Order matters — see `docs/ROADMAP.md` priority chain
 - **T-027**: Stripe integration + `Plan`/`Subscription` models.
 - **T-028**: Plan-based feature limits (workers, machines, storage, active baustellen).
 - **T-029**: Mode-aware i18n so BauFlow stops showing "Baum" text.
-- **T-030**: PersonalFlow simplified UI (tasks + reminders shell).
-- **T-031**: Multi-product landing with three product tabs and `Start free trial` CTA.
+- **T-030**: ~~PersonalFlow simplified UI~~ (built, then removed 2026-10-26).
+- **T-031**: Multi-product landing with product tabs and `Start free trial` CTA.
 - **T-032**: Data portability — export/import per Company for SaaS ↔ dedicated migrations.
 - **T-033**: Central `AuditLog` for sensitive actions.
 - **Supabase RLS**: Deferred until after T-025 and T-026 stabilize.
