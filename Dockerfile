@@ -9,6 +9,7 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY vendor ./vendor
 RUN npm ci --no-audit --no-fund
 
 COPY . .
