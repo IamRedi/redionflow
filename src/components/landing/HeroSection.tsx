@@ -14,10 +14,12 @@ export function HeroSection({
   content,
   initialTheme,
   landingLang,
+  demoEnabled,
 }: {
   content: LandingContent["hero"];
   initialTheme: "light" | "dark";
   landingLang: LandingLanguage;
+  demoEnabled: boolean;
 }) {
   const titleLines = splitHeroTitle(content.title);
   const ctas = {
@@ -64,6 +66,7 @@ export function HeroSection({
               initialTheme={initialTheme}
               ctaLabel={ctas.primary}
               fieldTestLabel={ctas.fieldTest}
+              demoEnabled={demoEnabled}
             />
           </div>
 

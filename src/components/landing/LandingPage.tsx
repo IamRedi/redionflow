@@ -66,9 +66,11 @@ function TaskCard({
 export function LandingPage({
   initialTheme,
   isSaasMode = false,
+  demoEnabled = false,
 }: {
   initialTheme: "light" | "dark";
   isSaasMode?: boolean;
+  demoEnabled?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const landingLang = normalizeLandingLanguage(currentLang);
@@ -166,7 +168,7 @@ export function LandingPage({
       <SideNavigation />
 
       <section id="overview" className="scroll-mt-28">
-        <HeroSection content={content.hero} initialTheme={initialTheme} landingLang={landingLang} />
+        <HeroSection content={content.hero} initialTheme={initialTheme} landingLang={landingLang} demoEnabled={demoEnabled} />
         <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
           <ProblemSolutionSection content={content.problemSolution} />
         </div>
