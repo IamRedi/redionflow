@@ -18,7 +18,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
-import { MACHINE_CATEGORY_OPTIONS, machineOptionLabel, type MachineCategoryCode } from "@/lib/machines/display";
+import { machineCategoryOptions, machineOptionLabel, type MachineCategoryCode } from "@/lib/machines/display";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { cn } from "@/lib/ui/cn";
 import type { CompanyMode } from "@/lib/mode-config";
@@ -180,7 +180,7 @@ function InspectionDot({
 
 function machineCategoryText(category: string | null | undefined, currentLang: string, mode: CompanyMode) {
   const key = category && ["TRUCK", "AWP", "CHIPPER", "CHAINSAW", "OTHER"].includes(category) ? category : "OTHER";
-  return t(`workzone.machineCategory.${key}`, currentLang, mode);
+  return t(`form.machineCategory.${key}`, currentLang, mode);
 }
 
 async function createWorker(formData: FormData) {
@@ -730,7 +730,7 @@ export default async function AdminHrFleetPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="category">{t("admin.machineCategory", currentLang, mode)}</Label>
                 <select id="category" name="category" defaultValue="TRUCK" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-                  {MACHINE_CATEGORY_OPTIONS.map((category) => (
+                  {machineCategoryOptions(mode).map((category) => (
                     <option key={category.value} value={category.value}>
                       {machineCategoryText(category.value, currentLang, mode)}
                     </option>

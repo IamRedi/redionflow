@@ -5,9 +5,17 @@ import { t } from "@/lib/i18n";
 import { RECIPE_TEMPLATES, recipeTemplateText, type RecipeCategory } from "@/lib/recipes/catalog";
 import { createRecipePositionAction } from "./recipe-builder-actions";
 
-const categories: RecipeCategory[] = ["baumdienst", "gartenbau", "bau", "regie"];
+import type { CompanyMode } from "@/lib/mode-config";
 
-export function RecipeBuilder({ projectId, currentLang }: { projectId: string; currentLang: string }) {
+// BauFlow companies only see construction recipes; tree and garden recipes
+// stay in BaumdienstFlow.
+const CATEGORIES_BY_MODE: Record<CompanyMode, RecipeCategory[]> = {
+  baumdienst: ["baumdienst", "gartenbau", "bau", "regie"],
+  bau: ["bau", "regie"],
+};
+
+export function RecipeBuilder({ projectId, currentLang, mode }: { projectId: string; currentLang: string; mode: CompanyMode }) {
+  const categories = CATEGORIES_BY_MODE[mode] ?? CATEGORIES_BY_MODE.baumdienst;
   return (
     <div className="space-y-4">
       {categories.map((category) => {

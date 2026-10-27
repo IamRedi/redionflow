@@ -304,7 +304,7 @@
     "externalWorkerTitle": "Lucrator extern",
     "externalWorkerDescription": "Adauga ajutoare temporare pentru acest santier.",
     "recentTasksTitle": "Sarcini recente",
-    "recentTasksDescription": "Doar citire pentru admin, live pentru Workzone.",
+    "recentTasksDescription": "Ultimele sarcini deschise și finalizate.",
     "noTasksYet": "Nu exista sarcini.",
     "manualTaskPermission": "Autentifica-te ca lucrator sau admin pentru a adauga sarcini din santier.",
     "manualTaskSavedBy": "Sarcina este salvata de",
@@ -361,7 +361,9 @@
     "workingNow": "Lucrează acum",
     "fiberTrench": "Traseu fibră optică",
     "fiberDrilling": "Foraj orizontal dirijat (HDD)",
-    "fiberHouseConnection": "Branșamente fibră optică"
+    "fiberHouseConnection": "Branșamente fibră optică",
+    "settingsFold": "Limbă și notificări",
+    "recentShiftsFold": "Arată turele recente"
   },
   "report": {
     "daily": "Raport zilnic",

@@ -13,8 +13,8 @@ import { ReportNoteForm } from "../../report-note-form";
 import { ReportPeriodPicker } from "../../report-period-picker";
 
 export async function generateMetadata({ params }: { params: Promise<{ month: string }> }) {
-  const [{ month }, currentLang] = await Promise.all([params, resolveRequestLanguage()]);
-  const t = getTranslator(currentLang);
+  const [{ month }, currentLang, mode] = await Promise.all([params, resolveRequestLanguage(), getCompanyMode()]);
+  const t = getTranslator(currentLang, mode);
   return {
     title: `${t("report.brandName")} - ${t("report.monthly")} ${month}`,
   };

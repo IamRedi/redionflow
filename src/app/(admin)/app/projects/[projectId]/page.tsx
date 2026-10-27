@@ -17,10 +17,11 @@ import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { ProjectMetaForm } from "./project-meta-form";
 import { ApplyTemplateForm } from "./apply-template-form";
 import { RecipeBuilder } from "./recipe-builder";
+import { getCompanyMode } from "@/lib/db/company";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const [project, currentLang, currentCompanyId] = await Promise.all([
+  const [project, currentLang, currentCompanyId, mode] = await Promise.all([
     prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -38,6 +39,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     }),
     resolveRequestLanguage(),
     getCurrentCompanyId(),
+    getCompanyMode(),
   ]);
   if (!project || !currentCompanyId || project.companyProfileId !== currentCompanyId) notFound();
   const translate = getTranslator(currentLang);
@@ -125,7 +127,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <CardDescription>{translate("admin.recipeNewCalculationDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <RecipeBuilder projectId={projectId} currentLang={currentLang} />
+          <RecipeBuilder projectId={projectId} currentLang={currentLang} mode={mode} />
         </CardContent>
       </Card>
 

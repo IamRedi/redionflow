@@ -1,5 +1,6 @@
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { requireCurrentCompanyId } from "@/lib/db/tenant";
+import { getCompanyMode } from "@/lib/db/company";
 import { buildBaustelleExportZip } from "@/lib/export/baustelle-export";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -23,7 +24,7 @@ export async function GET(
     return new Response(t("workzone.loginRequired", currentLang), { status: 401 });
   }
   const { baustelleId } = await params;
-  const archive = await buildBaustelleExportZip(baustelleId, companyProfileId, currentLang);
+  const archive = await buildBaustelleExportZip(baustelleId, companyProfileId, currentLang, await getCompanyMode());
   if (!archive) {
     return new Response(t("workzone.siteNotFound", currentLang), { status: 404 });
   }
