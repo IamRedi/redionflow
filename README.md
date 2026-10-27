@@ -11,6 +11,9 @@
 
 **[English version](README.en.md)** · **Stand: 27. Oktober 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+
+> **Nachweisstand und Grenzen:** Zwei schreibgeschützte Online-Demos mit fiktiven Firmendaten zeigen BaumdienstFlow und BauFlow. CI-Nachweise sind dokumentiert. Mandantentrennung per Anwendungsfilter ist umgesetzt; die Durchsetzung zusätzlicher PostgreSQL-RLS-Regeln mit eingeschränkter Datenbankrolle befindet sich teilweise noch im Pilotstadium. [Prüfprotokoll](EVIDENCE.md).
+
 ## Live ausprobieren
 
 | Produkt | Demo | Fiktive Firma |
