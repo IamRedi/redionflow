@@ -28,7 +28,7 @@ Jede ändernde Anfrage durchläuft dieselben Schritte:
 2. **Identität und Rolle:** signierte Sitzung mit Epoche, die sich serverseitig widerrufen lässt; Rollen Admin, Mitarbeitende, Display.
 3. **Mandant:** Die Firma kommt aus der Sitzung, nie aus der Anfrage. Kind-Datensätze werden nur an Eltern derselben Firma gebunden.
 4. **Eingaben:** Zod-Schemas, zum Beispiel für die Workzone-Synchronisation (`src/lib/workzone/sync/schemas.ts`).
-5. **Datenbank:** PostgreSQL Row-Level Security als zweite Linie, Laufzeit über eine eingeschränkte Datenbankrolle.
+5. **Datenbank:** PostgreSQL-Row-Level-Security-Policies (mit `FORCE`) für alle Mandantentabellen als zweite Linie. Durchgesetzt über eine eingeschränkte Datenbankrolle werden sie bisher nur im Pilot für Baustellen und Tagesplan (`src/lib/db/tenant-runtime.ts`), der ausschließlich in Wegwerf-Datenbanken läuft. Überall sonst, auch in den Live-Demos, ist Schritt 3 die wirksame Grenze.
 
 ## Daten
 

@@ -33,7 +33,7 @@ die Infrastruktur des Hosting-Anbieters.
 
 | Bedrohung | Kontrolle | Wo |
 |---|---|---|
-| Fremder Mandant liest Daten | Mandantenfilter in jeder Abfrage **und** PostgreSQL Row-Level Security mit `FORCE`; ohne gesetzten Mandanten liefert jede Policy 0 Zeilen | `src/lib/db/tenant*.ts`, [docs/RLS.md](docs/RLS.md) |
+| Fremder Mandant liest Daten | Mandantenfilter in jeder Abfrage (wirksame Grenze); PostgreSQL-Row-Level-Security-Policies mit `FORCE` als zweite Linie, mit eingeschränkter Rolle bisher nur im Pilot für Baustellen und Tagesplan durchgesetzt; ohne gesetzten Mandanten liefert jede Policy 0 Zeilen | `src/lib/db/tenant*.ts`, [docs/RLS.md](docs/RLS.md) |
 | Rechteausweitung Worker → Admin | Rollenprüfung in jeder Server Action und jedem Route Handler; Admin-Verwaltung nur durch den Firmeninhaber (`User.isOwner`) | `src/lib/auth/authorization.ts`, `src/app/(admin)/app/profile/actions.ts` |
 | Passwort raten | Admins: E-Mail + Passwort (mind. 12 Zeichen), scrypt-Hashes; Postgres-gestütztes Rate-Limit pro Client (fail-closed) für Admin-, Worker-, Display- und First-Boot-Login | `src/lib/auth/password.ts`, `src/lib/auth/login-guard.ts`, [ADR-0001](docs/adr/0001-login-rate-limiter-backend.md) |
 | Sitzung gestohlen | HMAC-signierte, `httpOnly`-, `SameSite=Lax`-, in Produktion `Secure`-Cookies; Sitzungs-Epoche wird bei Passwortwechsel oder Entfernung erhöht und entwertet alle alten Cookies | `src/lib/auth/session-cookie.ts`, [docs/SESSION_REVOCATION.md](docs/SESSION_REVOCATION.md) |
@@ -57,7 +57,7 @@ die Infrastruktur des Hosting-Anbieters.
 
 ## Prüfungen in CI
 
-Lint, Typecheck, Unit-, Integrations- (gegen frische PostgreSQL mit RLS) und
+Lint, Typecheck, Unit-, Integrations- (gegen frische PostgreSQL mit RLS-Policies) und
 E2E-Tests sowie gitleaks laufen bei jedem Push. Die Integrationstests enthalten
 eine Sicherheitsmatrix für Mandantentrennung, Sitzungsgrenzen und
 Rollenprüfungen (`src/lib/db/*security*.integration.test.ts`).
