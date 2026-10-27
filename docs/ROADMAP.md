@@ -1,5 +1,7 @@
 # BaumdienstFlow / RediOnFlow - ROADMAP
 
+> **Historisch.** Diese Roadmap stammt aus der Entwicklung im privaten Vorgänger *baumkalk* und beschreibt die damalige Arbeitsweise (WORKLOG, HANDOFF, PersonalFlow). Sie wird nicht mehr fortgeschrieben. Den aktuellen Stand beschreibt [PROJEKTSTAND.md](PROJEKTSTAND.md).
+
 > Status: `todo | doing | done | blocked`
 
 ## T-001 – Initialize foundation
