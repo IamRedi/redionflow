@@ -21,7 +21,10 @@
     "treeListFileDescription": "Lista sarcini (.xlsx, .xls, .csv)",
     "importRequirementHint": "Este necesar cel putin un fisier. Reimportul pe un santier existent actualizeaza sarcinile potrivite fara a reseta lucrul terminat.",
     "importNoTreesFound": "Nu s-au gasit sarcini de importat in fisierele incarcate.",
-    "importSuccessSummary": "{created} sarcini noi importate, {updated} actualizate, {unchanged} neschimbate."
+    "importSuccessSummary": "{created} sarcini noi importate, {updated} actualizate, {unchanged} neschimbate.",
+    "baustelleTypeFiberTrench": "Traseu fibră optică",
+    "baustelleTypeFiberDrilling": "Foraj orizontal dirijat (HDD)",
+    "baustelleTypeFiberHouseConnection": "Branșamente fibră optică"
   },
   "report": {
     "crownWidth": "Latime / masura"

@@ -68,6 +68,10 @@ enum BaustelleType {
   PAVING
   PAINTING
   RENOVATION
+  // Fiber-optic civil works (Glasfaser-Tiefbau)
+  FIBER_TRENCH
+  FIBER_DRILLING
+  FIBER_HOUSE_CONNECTION
   OTHER
 }
 

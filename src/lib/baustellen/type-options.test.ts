@@ -7,7 +7,7 @@ describe("Baustelle type options", () => {
     const values = baustelleTypeOptionsForMode("bau").map((option) => option.value);
 
     expect(defaultBaustelleTypeForMode("bau")).toBe("SIGNAGE");
-    expect(values).toEqual(["SIGNAGE", "DRAINAGE", "WALL", "PAVING", "PAINTING", "RENOVATION", "OTHER"]);
+    expect(values).toEqual(["SIGNAGE", "DRAINAGE", "WALL", "PAVING", "PAINTING", "RENOVATION", "FIBER_TRENCH", "FIBER_DRILLING", "FIBER_HOUSE_CONNECTION", "OTHER"]);
     expect(values).not.toContain("CLIMBING");
   });
 

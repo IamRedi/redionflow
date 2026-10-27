@@ -704,7 +704,10 @@
     "pendingStatus": "Offen",
     "totalLabel": "Gesamt",
     "remainingLabel": "Rest",
-    "workingNow": "Arbeitet gerade"
+    "workingNow": "Arbeitet gerade",
+    "fiberTrench": "Glasfaser-Trasse",
+    "fiberDrilling": "Spülbohrung (HDD)",
+    "fiberHouseConnection": "Glasfaser-Hausanschlüsse"
   },
   "report": {
     "brandName": "Baumdienst Flow",

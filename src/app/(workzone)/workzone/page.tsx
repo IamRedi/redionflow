@@ -159,6 +159,12 @@ export default async function WorkzoneHomePage() {
         return { icon: "▰", label: t("workzone.painting", currentLang, "bau"), watermark: "FARBE" };
       case "RENOVATION":
         return { icon: "◫", label: t("workzone.renovation", currentLang, "bau"), watermark: "RENOV" };
+      case "FIBER_TRENCH":
+        return { icon: "〰", label: t("workzone.fiberTrench", currentLang, "bau"), watermark: "TRASSE" };
+      case "FIBER_DRILLING":
+        return { icon: "⤳", label: t("workzone.fiberDrilling", currentLang, "bau"), watermark: "BOHRUNG" };
+      case "FIBER_HOUSE_CONNECTION":
+        return { icon: "⌂", label: t("workzone.fiberHouseConnection", currentLang, "bau"), watermark: "HA" };
       case "OTHER":
         return { icon: "⬛", label: t("workzone.otherType", currentLang, "bau"), watermark: "SONST" };
       default:

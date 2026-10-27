@@ -675,7 +675,10 @@
     "pendingStatus": "In attesa",
     "totalLabel": "Totale",
     "remainingLabel": "Rimanenti",
-    "workingNow": "Al lavoro"
+    "workingNow": "Al lavoro",
+    "fiberTrench": "Tracciato fibra ottica",
+    "fiberDrilling": "Perforazione orizzontale (HDD)",
+    "fiberHouseConnection": "Allacciamenti fibra"
   },
   "report": {
     "daily": "Report giornaliero",

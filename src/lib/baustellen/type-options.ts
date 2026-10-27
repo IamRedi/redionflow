@@ -22,6 +22,9 @@ export const BAU_BAUSTELLE_TYPES: BaustelleTypeOption[] = [
   { value: "PAVING", labelKey: "admin.baustelleTypePaving" },
   { value: "PAINTING", labelKey: "admin.baustelleTypePainting" },
   { value: "RENOVATION", labelKey: "admin.baustelleTypeRenovation" },
+  { value: "FIBER_TRENCH", labelKey: "admin.baustelleTypeFiberTrench" },
+  { value: "FIBER_DRILLING", labelKey: "admin.baustelleTypeFiberDrilling" },
+  { value: "FIBER_HOUSE_CONNECTION", labelKey: "admin.baustelleTypeFiberHouseConnection" },
   { value: "OTHER", labelKey: "admin.baustelleTypeOther" },
 ];
 

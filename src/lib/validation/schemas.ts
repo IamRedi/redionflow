@@ -165,6 +165,9 @@ const baustelleTypeSchema = z.enum([
   "PAVING",
   "PAINTING",
   "RENOVATION",
+  "FIBER_TRENCH",
+  "FIBER_DRILLING",
+  "FIBER_HOUSE_CONNECTION",
   "OTHER",
 ]);
 

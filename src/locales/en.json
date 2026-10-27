@@ -667,7 +667,10 @@
     "pendingStatus": "Pending",
     "totalLabel": "Total",
     "remainingLabel": "Remaining",
-    "workingNow": "Working now"
+    "workingNow": "Working now",
+    "fiberTrench": "Fiber route (trench)",
+    "fiberDrilling": "Directional drilling (HDD)",
+    "fiberHouseConnection": "Fiber house connections"
   },
   "report": {
     "daily": "Daily report",
