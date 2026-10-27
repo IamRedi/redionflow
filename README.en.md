@@ -13,7 +13,6 @@
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
-
 > **Evidence and limitations:** Two read-only online demos using fictional business data show BaumdienstFlow and BauFlow. CI evidence is documented. Application-level tenant filtering is implemented; enforcement of additional PostgreSQL RLS policies through restricted database roles remains at pilot scope. [Verification record (German)](EVIDENCE.md).
 
 ## Try it live
