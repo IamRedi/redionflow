@@ -11,6 +11,16 @@
 
 **[English version](README.en.md)** · **Stand: 27. Oktober 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Video-Präsentation (Review-Fassung)
+
+Eine Geschichte vom Büro auf die Baustelle: Tagesplan speichern, Arbeit am Handy dokumentieren, Stunden bestätigen und den Bericht im Büro prüfen. Danach zeigt BauFlow Arbeitslisten und Inventar.
+
+| Deutsch | English |
+|---|---|
+| [![Video auf Deutsch](docs/media/overview-de.png)](docs/media/OVERVIEW.md) | [![Video in English](docs/media/overview-en.png)](docs/media/OVERVIEW.md) |
+
+Die MP4s, Untertitel und Schnittquellen liegen in einer **[Draft-Medienrelease](https://github.com/IamRedi/redionflow/releases/tag/untagged-707c1ef68d95293886e7)**, die bis zur Freigabe nur für berechtigte Repository-Nutzer sichtbar ist. Noch keine öffentliche Video-Veröffentlichung. [Prüfumfang und Reproduktion](docs/media/OVERVIEW.md).
+
 ## Live ausprobieren
 
 | Produkt | Demo | Fiktive Firma |

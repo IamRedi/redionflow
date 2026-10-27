@@ -13,6 +13,16 @@
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
+## Video overview (review edition)
+
+One working day from the office to the field: save a daily plan, record work on a phone, confirm working hours and review the office report. Then explore BauFlow's task lists and inventory.
+
+| Deutsch | English |
+|---|---|
+| [![German overview film](docs/media/overview-de.png)](docs/media/OVERVIEW.md) | [![English overview film](docs/media/overview-en.png)](docs/media/OVERVIEW.md) |
+
+The MP4s, subtitles and edit sources are staged in a **[draft media release](https://github.com/IamRedi/redionflow/releases/tag/untagged-707c1ef68d95293886e7)**, visible to authorized repository users until approval. The videos have not been publicly published. [Verification and reproduction](docs/media/OVERVIEW.md).
+
 ## Try it live
 
 | Product | Demo | Fictitious company |
