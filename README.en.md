@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/hero.svg" alt="RediOnFlow: one codebase, two products. BaumdienstFlow for tree care, BauFlow for construction and civil works." width="100%"></p>
+<p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: one codebase, two products. BaumdienstFlow for tree care, BauFlow for construction and civil works." width="100%"></p>
 
 # RediOnFlow
 
