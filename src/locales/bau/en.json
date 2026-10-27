@@ -21,7 +21,10 @@
     "treeListFileDescription": "Task list (.xlsx, .xls, .csv)",
     "importRequirementHint": "At least one file is required. Re-importing onto an existing site updates matching tasks without resetting completed work.",
     "importNoTreesFound": "No importable tasks found in the uploaded files.",
-    "importSuccessSummary": "{created} new tasks imported, {updated} updated, {unchanged} unchanged."
+    "importSuccessSummary": "{created} new tasks imported, {updated} updated, {unchanged} unchanged.",
+    "baustelleTypeFiberTrench": "Fiber route (trench)",
+    "baustelleTypeFiberDrilling": "Directional drilling (HDD)",
+    "baustelleTypeFiberHouseConnection": "Fiber house connections"
   },
   "report": {
     "crownWidth": "Width / dimension"

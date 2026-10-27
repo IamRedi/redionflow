@@ -26,6 +26,9 @@ const BAUSTELLE_TYPES_BY_MODE: Record<CompanyMode, Array<{ value: string; labelK
     { value: "PAINTING", labelKey: "workzone.painting", defaultLabel: "Anstrich / Malerarbeiten" },
     { value: "RENOVATION", labelKey: "workzone.renovation", defaultLabel: "Sanierung / Renovierung" },
     { value: "EXCAVATOR", labelKey: "workzone.excavator", defaultLabel: "Bagger" },
+    { value: "FIBER_TRENCH", labelKey: "workzone.fiberTrench", defaultLabel: "Glasfaser-Trasse" },
+    { value: "FIBER_DRILLING", labelKey: "workzone.fiberDrilling", defaultLabel: "Spülbohrung" },
+    { value: "FIBER_HOUSE_CONNECTION", labelKey: "workzone.fiberHouseConnection", defaultLabel: "Glasfaser-Hausanschlüsse" },
     { value: "OTHER", labelKey: "workzone.otherType", defaultLabel: "Sonstige" },
   ],
 };

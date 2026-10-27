@@ -650,7 +650,7 @@ Die Wahrheit über Produkt/Architektur lebt unter `docs/`:
 
 - `docker compose up --build` startet PostgreSQL und die App mit `APP_ENV=demo`. Beim Start laufen `prisma migrate deploy` und `prisma/seed.ts`.
 - Der Seed ist idempotent: Existiert die Demo-Firma schon, passiert nichts. Die Daten sind vollständig erfunden.
-- `DEMO_SEED_MODE` wählt das Produkt: ohne Wert oder `baumdienst` entsteht „Baumdienst Musterstadt GmbH“ (BaumdienstFlow, `prisma/seed-data.ts`), mit `bau` „Bau Beispielstadt GmbH“ (BauFlow, `prisma/seed-data-bau.ts`). Eine Datenbank enthält immer nur eine Demo-Firma.
+- `DEMO_SEED_MODE` wählt das Produkt: ohne Wert oder `baumdienst` entsteht „Baumdienst Musterstadt GmbH“ (BaumdienstFlow, `prisma/seed-data.ts`), mit `bau` „Bau Beispielstadt GmbH“ (BauFlow, `prisma/seed-data-bau.ts`), mit `glasfaser` „Glasfaserbau Beispieltal GmbH“ (BauFlow für Glasfaser-Tiefbau: Trassen, Hausanschlüsse, Spülbohrung, Spleißen, Inventar und Werkzeuge, `prisma/seed-data-glasfaser.ts`). Eine Datenbank enthält immer nur eine Demo-Firma.
 - `npm run demo:reset` leert die Demo-Tabellen und spielt den Seed neu ein. Das Skript verweigert den Lauf bei `APP_ENV=production|saas` und verlangt bei `APP_ENV=demo` zusätzlich `DEMO_MODE=true` und `DEMO_RESET_ALLOWED=true`.
 - Für eine öffentliche Demo den Reset nächtlich planen (z. B. 03:00 Uhr), damit Arbeitszeiten und Tagesplan zum aktuellen Tag passen und Änderungen von Besuchern verschwinden.
 - `/demo/*` ist schreibgeschützt und ohne Login erreichbar, aber nur bei `APP_ENV=demo|local` (siehe `src/lib/public-demo.ts`).

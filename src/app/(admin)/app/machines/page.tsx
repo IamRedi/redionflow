@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { checkLimit } from "@/lib/billing/limits";
-import { getOrCreateDefaultCompany } from "@/lib/db/company";
+import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { getTranslator } from "@/lib/i18n";
@@ -16,18 +16,29 @@ import { MACHINE_CATEGORY_OPTIONS, machineOptionLabel, type MachineCategoryCode 
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { revalidatePath } from "next/cache";
 
-const MACHINE_PRESETS: Array<{
+type MachinePreset = {
   name: string;
   category: MachineCategoryCode;
   hourlyEur: string;
   funksioni: string;
-}> = [
+};
+
+const MACHINE_PRESETS: MachinePreset[] = [
   { name: "Transporter 1", category: "TRUCK", hourlyEur: "58", funksioni: "Transport / Anfahrt" },
   { name: "Hubsteiger", category: "AWP", hourlyEur: "95", funksioni: "Baumpflege / Hoehenarbeit" },
   { name: "Haechsler", category: "CHIPPER", hourlyEur: "85", funksioni: "Gruenschnitt" },
   { name: "Motorsaege", category: "CHAINSAW", hourlyEur: "12", funksioni: "Baumdienst" },
   { name: "Rasenmaeher", category: "OTHER", hourlyEur: "28", funksioni: "Gartenpflege" },
   { name: "Minibagger", category: "OTHER", hourlyEur: "70", funksioni: "Erdarbeiten" },
+];
+
+const BAU_MACHINE_PRESETS: MachinePreset[] = [
+  { name: "Transporter 1", category: "TRUCK", hourlyEur: "58", funksioni: "Transport / Anfahrt" },
+  { name: "Minibagger", category: "OTHER", hourlyEur: "70", funksioni: "Erdarbeiten" },
+  { name: "Kipper", category: "TRUCK", hourlyEur: "45", funksioni: "Aushub / Material" },
+  { name: "Ruettelplatte", category: "OTHER", hourlyEur: "15", funksioni: "Verdichten" },
+  { name: "Radlader", category: "OTHER", hourlyEur: "65", funksioni: "Material / Verladen" },
+  { name: "Kompressor", category: "OTHER", hourlyEur: "30", funksioni: "Druckluft / Einblasen" },
 ];
 
 function cleanText(value: FormDataEntryValue | null) {
@@ -52,8 +63,9 @@ function machineCategoryLabel(category: MachineCategoryCode, t: (path: string) =
 }
 
 export default async function MachinesPage() {
-  const [company, currentLang] = await Promise.all([getOrCreateDefaultCompany(), resolveRequestLanguage()]);
+  const [company, currentLang, mode] = await Promise.all([getOrCreateDefaultCompany(), resolveRequestLanguage(), getCompanyMode()]);
   const t = getTranslator(currentLang);
+  const presets = mode === "bau" ? BAU_MACHINE_PRESETS : MACHINE_PRESETS;
   const machines = await prisma.machine.findMany({
     where: { companyProfileId: company.id },
     orderBy: [{ isActive: "desc" }, { name: "asc" }],
@@ -113,7 +125,7 @@ export default async function MachinesPage() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {MACHINE_PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <form key={preset.name} action={create}>
                 <input type="hidden" name="companyId" value={company.id} />
                 <input type="hidden" name="name" value={preset.name} />

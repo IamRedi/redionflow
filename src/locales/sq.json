@@ -668,7 +668,10 @@
     "pendingStatus": "Ne pritje",
     "totalLabel": "Totali",
     "remainingLabel": "Mbeten",
-    "workingNow": "Duke punuar"
+    "workingNow": "Duke punuar",
+    "fiberTrench": "Trase fibre optike",
+    "fiberDrilling": "Shpim horizontal (HDD)",
+    "fiberHouseConnection": "Lidhje fibre në shtëpi"
   },
   "report": {
     "daily": "Raporti ditor",
