@@ -58,14 +58,24 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
             {worker.isTemporary ? <span className="rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground">{tx("admin.colTemporary")}</span> : null}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span>{tx("admin.colPhone")}: {worker.phone || "-"}</span>
-            <span>{tx("admin.colEmail")}: {worker.emailAccount || "-"}</span>
-            <span>{tx("admin.colPosition")}: {worker.position || "-"}</span>
-            <span>{tx("admin.colLicenses")}: {worker.licenses || "-"}</span>
-            <span>{tx("admin.colLoginCode")}: {worker.loginCode || "-"}</span>
-            <span>{tx("admin.birthDate")}: {worker.birthDate || "-"}</span>
-            <span>{tx("admin.colAge")}: {worker.ageLabel}</span>
-            <span>{tx("admin.colStart")}: {worker.startedAtCompany || "-"}</span>
+            {/* Only filled fields; empty ones are edited via the pencil. */}
+            {(
+              [
+                ["admin.colPosition", worker.position],
+                ["admin.colPhone", worker.phone],
+                ["admin.colEmail", worker.emailAccount],
+                ["admin.colLicenses", worker.licenses],
+                ["admin.colLoginCode", worker.loginCode],
+                ["admin.colAge", worker.ageLabel === "-" ? null : worker.ageLabel],
+                ["admin.colStart", worker.startedAtCompany],
+              ] as const
+            )
+              .filter(([, value]) => Boolean(value))
+              .map(([label, value]) => (
+                <span key={label}>
+                  {tx(label)}: {value}
+                </span>
+              ))}
           </div>
         </div>
 

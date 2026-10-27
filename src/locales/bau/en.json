@@ -27,13 +27,24 @@
     "baustelleTypeFiberHouseConnection": "Fiber house connections"
   },
   "report": {
-    "crownWidth": "Width / dimension"
+    "crownWidth": "Width / dimension",
+    "brandName": "BauFlow",
+    "species": "Task",
+    "diameter": "Qty",
+    "work": "Status"
   },
   "form": {
     "quickStartTreeRemoval": "Quick start: standard task",
     "quickStartTreeRemovalSubmit": "Create standard task",
     "skilledWorker": "Skilled worker",
-    "titleExample": "e.g. yard signage work"
+    "titleExample": "e.g. yard signage work",
+    "machineCategory": {
+      "TRUCK": "Vehicles / trucks",
+      "AWP": "Aerial work platform",
+      "CHAINSAW": "Small equipment / tools",
+      "CHIPPER": "Other equipment",
+      "OTHER": "Construction machines"
+    }
   },
   "validation": {
     "standardTreeRemovalCreated": "Default position for the task was created.",
@@ -61,7 +72,7 @@
     "confirmTreeUndo": "Reopen task {treeId}?",
     "collectSafetyPrompt": "How many to collect? (Task {treeId}, currently {qty} on site):",
     "targetSafetyPrompt": "Target quantity on site (Task {treeId}):",
-    "treeSummaryCompact": "{id} · {species} · {diameter}",
+    "treeSummaryCompact": "{id} · {species} · Qty {diameter}",
     "extraTree": "Extra task",
     "extraTreeTitle": "Add extra task",
     "extraTreeDescription": "Saved visibly as an extra task with a note.",

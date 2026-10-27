@@ -27,13 +27,24 @@
     "baustelleTypeFiberHouseConnection": "Branșamente fibră optică"
   },
   "report": {
-    "crownWidth": "Latime / masura"
+    "crownWidth": "Latime / masura",
+    "brandName": "BauFlow",
+    "species": "Activitate",
+    "diameter": "Cantitate",
+    "work": "Stare"
   },
   "form": {
     "quickStartTreeRemoval": "Pornire rapida: sarcina standard",
     "quickStartTreeRemovalSubmit": "Creeaza sarcina standard",
     "skilledWorker": "Muncitor calificat",
-    "titleExample": "ex. semnalizare curte"
+    "titleExample": "ex. semnalizare curte",
+    "machineCategory": {
+      "TRUCK": "Vehicule / camioane",
+      "AWP": "Platformă de lucru",
+      "CHAINSAW": "Echipamente mici / scule",
+      "CHIPPER": "Alte echipamente",
+      "OTHER": "Utilaje de construcții"
+    }
   },
   "validation": {
     "standardTreeRemovalCreated": "Pozitia implicita pentru sarcina a fost creata.",
@@ -61,7 +72,7 @@
     "confirmTreeUndo": "Redeschide sarcina {treeId}?",
     "collectSafetyPrompt": "Cate colectam? (Sarcina {treeId}, momentan {qty} pe santier):",
     "targetSafetyPrompt": "Cantitate tinta pe santier (Sarcina {treeId}):",
-    "treeSummaryCompact": "{id} · {species} · {diameter}",
+    "treeSummaryCompact": "{id} · {species} · Cant. {diameter}",
     "extraTree": "Sarcina extra",
     "extraTreeTitle": "Adauga sarcina extra",
     "extraTreeDescription": "Se salveaza vizibil ca sarcina extra cu nota.",

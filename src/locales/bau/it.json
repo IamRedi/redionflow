@@ -27,13 +27,24 @@
     "baustelleTypeFiberHouseConnection": "Allacciamenti fibra"
   },
   "report": {
-    "crownWidth": "Larghezza / misura"
+    "crownWidth": "Larghezza / misura",
+    "brandName": "BauFlow",
+    "species": "Attività",
+    "diameter": "Quantità",
+    "work": "Stato"
   },
   "form": {
     "quickStartTreeRemoval": "Avvio rapido: attività standard",
     "quickStartTreeRemovalSubmit": "Crea attività standard",
     "skilledWorker": "Operaio specializzato",
-    "titleExample": "es. segnaletica cortile"
+    "titleExample": "es. segnaletica cortile",
+    "machineCategory": {
+      "TRUCK": "Veicoli / camion",
+      "AWP": "Piattaforma aerea",
+      "CHAINSAW": "Piccole attrezzature",
+      "CHIPPER": "Altre attrezzature",
+      "OTHER": "Macchine edili"
+    }
   },
   "validation": {
     "standardTreeRemovalCreated": "Posizione predefinita per l'attività è stata creata.",
@@ -61,7 +72,7 @@
     "confirmTreeUndo": "Riaprire l'attivita {treeId}?",
     "collectSafetyPrompt": "Quanti raccogliere? (Attivita {treeId}, attualmente {qty} in cantiere):",
     "targetSafetyPrompt": "Quantita target in cantiere (Attivita {treeId}):",
-    "treeSummaryCompact": "{id} · {species} · {diameter}",
+    "treeSummaryCompact": "{id} · {species} · Qtà {diameter}",
     "extraTree": "Attivita extra",
     "extraTreeTitle": "Aggiungi attivita extra",
     "extraTreeDescription": "Viene salvata visibilmente come attivita extra con nota.",

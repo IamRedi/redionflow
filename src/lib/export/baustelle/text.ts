@@ -316,6 +316,16 @@ export const EXPORT_TEXT = {
   },
 } as const;
 
+/** BauFlow wording: a site holds work items, not trees. */
+export const BAU_EXPORT_TEXT: Record<ExportLang, Partial<Record<keyof (typeof EXPORT_TEXT)["de"], string>>> = {
+  de: { treesTotal: "Arbeiten gesamt", treeList: "Arbeitsliste", treeListIntro: "Alle Arbeiten mit Status, Menge und Notizen.", tree: "Nr.", species: "Tätigkeit", diameter: "Menge", action: "Ergebnis" },
+  en: { treesTotal: "Work items total", treeList: "Work list", treeListIntro: "All work items with status, quantity and notes.", tree: "No.", species: "Task", diameter: "Qty", action: "Result" },
+  it: { treesTotal: "Lavori totali", treeList: "Elenco lavori", treeListIntro: "Tutti i lavori con stato, quantità e note.", tree: "N.", species: "Attività", diameter: "Quantità", action: "Esito" },
+  pl: { treesTotal: "Prace razem", treeList: "Lista prac", treeListIntro: "Wszystkie prace ze statusem, ilością i notatkami.", tree: "Nr", species: "Czynność", diameter: "Ilość", action: "Wynik" },
+  ro: { treesTotal: "Lucrări total", treeList: "Listă lucrări", treeListIntro: "Toate lucrările cu stare, cantitate și note.", tree: "Nr.", species: "Activitate", diameter: "Cantitate", action: "Rezultat" },
+  sq: { treesTotal: "Punë gjithsej", treeList: "Lista e punëve", treeListIntro: "Të gjitha punët me status, sasi dhe shënime.", tree: "Nr.", species: "Detyra", diameter: "Sasia", action: "Rezultati" },
+};
+
 export function normalizeExportLang(lang?: string): ExportLang {
   return lang === "en" || lang === "it" || lang === "pl" || lang === "ro" || lang === "sq" ? lang : "de";
 }

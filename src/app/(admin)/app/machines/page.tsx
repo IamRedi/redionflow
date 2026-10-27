@@ -12,7 +12,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
-import { MACHINE_CATEGORY_OPTIONS, machineOptionLabel, type MachineCategoryCode } from "@/lib/machines/display";
+import { machineCategoryOptions, machineOptionLabel, type MachineCategoryCode } from "@/lib/machines/display";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { revalidatePath } from "next/cache";
 
@@ -167,7 +167,7 @@ export default async function MachinesPage() {
                 defaultValue="OTHER"
                 className="h-9 w-full rounded-md border bg-background px-3 text-sm"
               >
-                {MACHINE_CATEGORY_OPTIONS.map((c) => (
+                {machineCategoryOptions(mode).map((c) => (
                   <option key={c.value} value={c.value}>
                     {machineCategoryLabel(c.value, t)}
                   </option>

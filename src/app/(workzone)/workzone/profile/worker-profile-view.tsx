@@ -293,80 +293,86 @@ export async function WorkerProfileView({
                   : null
                 }
             />
-            <form action={updateWorkerLanguagePreferencesFormAction} className="mt-3 grid gap-2 rounded-md border p-3">
-              <input type="hidden" name="workerId" value={worker.id} />
-              <div className="text-xs font-semibold">{t("workzone.language", currentLang)}</div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <label className="grid gap-1 text-xs">
-                  <span className="text-muted-foreground">{t("admin.motherTongue", currentLang)}</span>
-                  <select
-                    name="motherTongue"
-                    defaultValue={worker.motherTongue ?? "DE"}
-                    className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  >
-                    <option value="DE">{t("language.de", currentLang)}</option>
-                    <option value="EN">{t("language.en", currentLang)}</option>
-                    <option value="SQ">{t("language.sq", currentLang)}</option>
-                    <option value="IT">{t("language.it", currentLang)}</option>
-                    <option value="PL">{t("language.pl", currentLang)}</option>
-                    <option value="RO">{t("language.ro", currentLang)}</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-xs">
-                  <span className="text-muted-foreground">{t("admin.responseLanguage", currentLang)}</span>
-                  <select
-                    name="preferredLanguage"
-                    defaultValue={worker.preferredLanguage ?? "DE"}
-                    className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  >
-                    <option value="DE">{t("language.de", currentLang)}</option>
-                    <option value="EN">{t("language.en", currentLang)}</option>
-                    <option value="SQ">{t("language.sq", currentLang)}</option>
-                    <option value="IT">{t("language.it", currentLang)}</option>
-                    <option value="PL">{t("language.pl", currentLang)}</option>
-                    <option value="RO">{t("language.ro", currentLang)}</option>
-                  </select>
-                </label>
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit" variant="outline" size="sm">
-                  {t("common.save", currentLang)}
-                </Button>
-              </div>
-            </form>
-            <form action={updateNotificationSettingsFormAction} className="mt-3 grid gap-3 rounded-md border p-3">
-              <input type="hidden" name="userId" value={worker.id} />
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div className="text-xs font-semibold">{t("workzone.pushNotifications", currentLang)}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{t("workzone.pushNotificationsDescription", currentLang)}</div>
+            {/* Set once and rarely changed, so folded away. */}
+            <details className="mt-3 rounded-md border">
+              <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium">{t("workzone.settingsFold", currentLang)}</summary>
+              <div className="border-t p-3">
+              <form action={updateWorkerLanguagePreferencesFormAction} className="grid gap-2 rounded-md border p-3">
+                <input type="hidden" name="workerId" value={worker.id} />
+                <div className="text-xs font-semibold">{t("workzone.language", currentLang)}</div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <label className="grid gap-1 text-xs">
+                    <span className="text-muted-foreground">{t("admin.motherTongue", currentLang)}</span>
+                    <select
+                      name="motherTongue"
+                      defaultValue={worker.motherTongue ?? "DE"}
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                    >
+                      <option value="DE">{t("language.de", currentLang)}</option>
+                      <option value="EN">{t("language.en", currentLang)}</option>
+                      <option value="SQ">{t("language.sq", currentLang)}</option>
+                      <option value="IT">{t("language.it", currentLang)}</option>
+                      <option value="PL">{t("language.pl", currentLang)}</option>
+                      <option value="RO">{t("language.ro", currentLang)}</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-xs">
+                    <span className="text-muted-foreground">{t("admin.responseLanguage", currentLang)}</span>
+                    <select
+                      name="preferredLanguage"
+                      defaultValue={worker.preferredLanguage ?? "DE"}
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                    >
+                      <option value="DE">{t("language.de", currentLang)}</option>
+                      <option value="EN">{t("language.en", currentLang)}</option>
+                      <option value="SQ">{t("language.sq", currentLang)}</option>
+                      <option value="IT">{t("language.it", currentLang)}</option>
+                      <option value="PL">{t("language.pl", currentLang)}</option>
+                      <option value="RO">{t("language.ro", currentLang)}</option>
+                    </select>
+                  </label>
                 </div>
-                <NotificationEnableButton />
+                <div className="flex justify-end">
+                  <Button type="submit" variant="outline" size="sm">
+                    {t("common.save", currentLang)}
+                  </Button>
+                </div>
+              </form>
+              <form action={updateNotificationSettingsFormAction} className="mt-3 grid gap-3 rounded-md border p-3">
+                <input type="hidden" name="userId" value={worker.id} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold">{t("workzone.pushNotifications", currentLang)}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{t("workzone.pushNotificationsDescription", currentLang)}</div>
+                  </div>
+                  <NotificationEnableButton />
+                </div>
+                <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" name="tagesplan" defaultChecked={notificationSettings.tagesplan} className="size-4 accent-brand-green" />
+                    {t("workzone.dailyPlanUpdates", currentLang)}
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" name="workStart" defaultChecked={notificationSettings.workStart} className="size-4 accent-brand-green" />
+                    {t("workzone.workStartNotifications", currentLang)}
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" name="workEnd" defaultChecked={notificationSettings.workEnd} className="size-4 accent-brand-green" />
+                    {t("workzone.workEndNotifications", currentLang)}
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" name="adminMessages" defaultChecked={notificationSettings.adminMessages} className="size-4 accent-brand-green" />
+                    {t("workzone.adminMessages", currentLang)}
+                  </label>
+                </div>
+                <div className="flex justify-end">
+                  <Button type="submit" variant="outline" size="sm">
+                    {t("common.save", currentLang)}
+                  </Button>
+                </div>
+              </form>
               </div>
-              <div className="grid gap-2 text-sm sm:grid-cols-2">
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" name="tagesplan" defaultChecked={notificationSettings.tagesplan} className="size-4 accent-brand-green" />
-                  {t("workzone.dailyPlanUpdates", currentLang)}
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" name="workStart" defaultChecked={notificationSettings.workStart} className="size-4 accent-brand-green" />
-                  {t("workzone.workStartNotifications", currentLang)}
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" name="workEnd" defaultChecked={notificationSettings.workEnd} className="size-4 accent-brand-green" />
-                  {t("workzone.workEndNotifications", currentLang)}
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" name="adminMessages" defaultChecked={notificationSettings.adminMessages} className="size-4 accent-brand-green" />
-                  {t("workzone.adminMessages", currentLang)}
-                </label>
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit" variant="outline" size="sm">
-                  {t("common.save", currentLang)}
-                </Button>
-              </div>
-            </form>
+            </details>
           </CardContent>
         </Card>
 
@@ -578,36 +584,41 @@ export async function WorkerProfileView({
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("report.start", currentLang)}</TableHead>
-                <TableHead>{t("report.end", currentLang)}</TableHead>
-                <TableHead>{t("report.siteLocation", currentLang)}</TableHead>
-                <TableHead className="text-right">{t("report.break", currentLang)}</TableHead>
-                <TableHead className="text-right">{t("report.hours", currentLang)}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground">
-                    {t("workzone.noCompletedSessions", currentLang)}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                history.map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell>{formatDateTime(session.startTime, currentLang)}</TableCell>
-                    <TableCell>{formatDateTime(session.endTime, currentLang)}</TableCell>
-                    <TableCell>{session.baustelle?.name ?? "-"}</TableCell>
-                    <TableCell className="text-right tabular-nums">{session.breakMinutes} {t("common.minutes", currentLang)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{session.totalHours.toFixed(2)}</TableCell>
+          <details>
+            <summary className="cursor-pointer text-sm font-medium">{t("workzone.recentShiftsFold", currentLang)}</summary>
+            <div className="mt-3">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("report.start", currentLang)}</TableHead>
+                    <TableHead>{t("report.end", currentLang)}</TableHead>
+                    <TableHead>{t("report.siteLocation", currentLang)}</TableHead>
+                    <TableHead className="text-right">{t("report.break", currentLang)}</TableHead>
+                    <TableHead className="text-right">{t("report.hours", currentLang)}</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {history.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-muted-foreground">
+                        {t("workzone.noCompletedSessions", currentLang)}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    history.map((session) => (
+                      <TableRow key={session.id}>
+                        <TableCell>{formatDateTime(session.startTime, currentLang)}</TableCell>
+                        <TableCell>{formatDateTime(session.endTime, currentLang)}</TableCell>
+                        <TableCell>{session.baustelle?.name ?? "-"}</TableCell>
+                        <TableCell className="text-right tabular-nums">{session.breakMinutes} {t("common.minutes", currentLang)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{session.totalHours.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </details>
         </CardContent>
       </Card>
 

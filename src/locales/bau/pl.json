@@ -27,13 +27,24 @@
     "baustelleTypeFiberHouseConnection": "Przyłącza światłowodowe"
   },
   "report": {
-    "crownWidth": "Szerokosc / miara"
+    "crownWidth": "Szerokosc / miara",
+    "brandName": "BauFlow",
+    "species": "Czynność",
+    "diameter": "Ilość",
+    "work": "Status"
   },
   "form": {
     "quickStartTreeRemoval": "Szybki start: zadanie standardowe",
     "quickStartTreeRemovalSubmit": "Utworz zadanie standardowe",
     "skilledWorker": "Wykwalifikowany pracownik",
-    "titleExample": "np. oznakowanie podworza"
+    "titleExample": "np. oznakowanie podworza",
+    "machineCategory": {
+      "TRUCK": "Pojazdy / ciężarówki",
+      "AWP": "Podnośnik koszowy",
+      "CHAINSAW": "Drobny sprzęt / narzędzia",
+      "CHIPPER": "Inny sprzęt",
+      "OTHER": "Maszyny budowlane"
+    }
   },
   "validation": {
     "standardTreeRemovalCreated": "Domyslna pozycja dla zadania zostala utworzona.",
@@ -61,7 +72,7 @@
     "confirmTreeUndo": "Cofnąć zadanie {treeId}?",
     "collectSafetyPrompt": "Ile zebrać? (Zadanie {treeId}, obecnie {qty} na miejscu):",
     "targetSafetyPrompt": "Docelowa ilość na miejscu (Zadanie {treeId}):",
-    "treeSummaryCompact": "{id} · {species} · {diameter}",
+    "treeSummaryCompact": "{id} · {species} · Ilość {diameter}",
     "extraTree": "Zadanie dodatkowe",
     "extraTreeTitle": "Dodaj zadanie dodatkowe",
     "extraTreeDescription": "Zapisuje sie widocznie jako dodatkowe zadanie z notatka.",

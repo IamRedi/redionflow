@@ -352,10 +352,10 @@ export default async function WorkzoneHomePage() {
               key={b.id}
               href={isLocked ? "#" : `/workzone/baustellen/${b.id}`}
               aria-disabled={isLocked}
-              className={`group ${isLocked ? "pointer-events-none opacity-70" : ""}`}
+              className={`group block min-w-0 ${isLocked ? "pointer-events-none opacity-70" : ""}`}
             >
               <Card
-                className={`relative transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${cardTone(
+                className={`relative min-w-0 transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${cardTone(
                   b.status,
                   done,
                   total,

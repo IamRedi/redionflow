@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { prisma } from "@/lib/db/prisma";
 import { getTranslator } from "@/lib/i18n";
+import { getCompanyMode } from "@/lib/db/company";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
-import { MACHINE_CATEGORY_OPTIONS, type MachineCategoryCode } from "@/lib/machines/display";
+import { machineCategoryOptions, type MachineCategoryCode } from "@/lib/machines/display";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { dateKey } from "@/lib/workzone/reporting";
 
@@ -107,9 +108,9 @@ async function saveMachine(formData: FormData) {
 export default async function FleetMachineDetailPage({ params }: { params: Promise<{ machineId: string }> }) {
   const companyProfileId = await requireAdminTenant();
   const { machineId } = await params;
-  const [machine, currentLang] = await Promise.all([prisma.machine.findFirst({ where: { id: machineId, companyProfileId } }), resolveRequestLanguage()]);
+  const [machine, currentLang, mode] = await Promise.all([prisma.machine.findFirst({ where: { id: machineId, companyProfileId } }), resolveRequestLanguage(), getCompanyMode()]);
   if (!machine) notFound();
-  const t = getTranslator(currentLang);
+  const t = getTranslator(currentLang, mode);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -165,7 +166,7 @@ export default async function FleetMachineDetailPage({ params }: { params: Promi
             <div className="space-y-1.5">
               <Label htmlFor="category">{t("admin.calculationCategory")}</Label>
               <select id="category" name="category" defaultValue={machine.category} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-                {MACHINE_CATEGORY_OPTIONS.map((category) => (
+                {machineCategoryOptions(mode, machine.category).map((category) => (
                   <option key={category.value} value={category.value}>
                     {machineCategoryLabel(category.value, t)}
                   </option>

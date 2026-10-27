@@ -1,3 +1,5 @@
+import type { CompanyMode } from "@/lib/mode-config";
+
 export type MachineCategoryCode = "CHIPPER" | "TRUCK" | "AWP" | "CHAINSAW" | "OTHER";
 
 export type MachineListOption = {
@@ -63,4 +65,13 @@ export function machineOptionsForField(
 ) {
   const preferred = machines.filter((machine) => machine.category === category || fallbackPattern.test(machineSearchText(machine)));
   return preferred.length > 0 ? preferred : machines;
+}
+
+/**
+ * Category choices for a select. BauFlow has no wood chippers, so that
+ * category is offered only when a machine already has it.
+ */
+export function machineCategoryOptions(mode: CompanyMode, current?: MachineCategoryCode | null) {
+  if (mode !== "bau") return MACHINE_CATEGORY_OPTIONS;
+  return MACHINE_CATEGORY_OPTIONS.filter((option) => option.value !== "CHIPPER" || option.value === current);
 }

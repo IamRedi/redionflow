@@ -27,13 +27,24 @@
     "baustelleTypeFiberHouseConnection": "Glasfaser-Hausanschlüsse"
   },
   "report": {
-    "crownWidth": "Breite / Maß"
+    "crownWidth": "Breite / Maß",
+    "brandName": "BauFlow",
+    "species": "Tätigkeit",
+    "diameter": "Menge",
+    "work": "Status"
   },
   "form": {
     "quickStartTreeRemoval": "Schnellstart: Standardarbeit",
     "quickStartTreeRemovalSubmit": "Standardarbeit anlegen",
     "skilledWorker": "Fachkraft",
-    "titleExample": "z. B. Schilderarbeiten Hof"
+    "titleExample": "z. B. Schilderarbeiten Hof",
+    "machineCategory": {
+      "TRUCK": "Fahrzeuge / LKW",
+      "AWP": "Hubsteiger / Arbeitsbühne",
+      "CHAINSAW": "Kleingeräte / Werkzeug",
+      "CHIPPER": "Sonstige Geräte",
+      "OTHER": "Baumaschinen"
+    }
   },
   "validation": {
     "standardTreeRemovalCreated": "Standard-Position für die Arbeit wurde angelegt.",
@@ -61,7 +72,7 @@
     "confirmTreeUndo": "Arbeit {treeId} wirklich wieder zurücksetzen?",
     "collectSafetyPrompt": "Wie viele einsammeln? (Arbeit {treeId}, aktuell {qty} vor Ort):",
     "targetSafetyPrompt": "Zielmenge vor Ort (Arbeit {treeId}):",
-    "treeSummaryCompact": "{id} · {species} · {diameter}",
+    "treeSummaryCompact": "{id} · {species} · Menge {diameter}",
     "extraTree": "Zusatzarbeit",
     "extraTreeTitle": "Zusatzarbeit hinzufügen",
     "extraTreeDescription": "Wird sichtbar als Zusatzarbeit mit Hinweis gespeichert.",
