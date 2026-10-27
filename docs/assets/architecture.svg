@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="t d">
   <title id="t">Architektur von RediOnFlow</title>
-  <desc id="d">Drei Oberflächen (Workzone, Admin, Display) laufen in einer Next.js-Anwendung. Ein Modus pro Firma schaltet BaumdienstFlow oder BauFlow. Server Actions und API-Routen prüfen Herkunft, Rolle und Mandant, bevor Prisma auf PostgreSQL mit Row-Level Security zugreift. Externe Dienste sind optional.</desc>
+  <desc id="d">Drei Oberflächen (Workzone, Admin, Display) laufen in einer Next.js-Anwendung. Ein Modus pro Firma schaltet BaumdienstFlow oder BauFlow. Server Actions und API-Routen prüfen Herkunft, Rolle und Mandant, bevor Prisma auf PostgreSQL zugreift; Row-Level-Security-Policies sind angelegt und im Pilot durchgesetzt. Externe Dienste sind optional.</desc>
   <style>
     .box{fill:#ffffff;stroke:#cfd6d1;stroke-width:1.5}
     .accent{fill:#f2f7f4;stroke:#2f9e66;stroke-width:1.5}
@@ -48,7 +48,7 @@
   <text x="40" y="414" class="cap">DATEN</text>
   <rect x="40" y="428" width="540" height="96" rx="14" class="warm"/>
   <text x="62" y="460" class="h">PostgreSQL + Prisma 7</text>
-  <text x="62" y="486" class="t">Row-Level Security pro Mandant, 49 Migrationen,</text>
+  <text x="62" y="486" class="t">Mandantenfilter, RLS-Policies (Pilot), 49 Migrationen,</text>
   <text x="62" y="506" class="t">Audit-Log, widerrufbare Sitzungen</text>
 
   <rect x="620" y="428" width="540" height="96" rx="14" class="opt"/>

@@ -7,6 +7,8 @@
 - **BaumdienstFlow** for tree care companies: tree lists with coordinates, removals, crown work, aerial lifts and chippers.
 - **BauFlow** for construction, civil works and fibre-optic contractors: task lists instead of trees, trenches, house connections, directional drilling, tools and traffic safety.
 
+[![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
+
 **[Deutsche Version](README.md)** · **As of 27 October 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
@@ -66,10 +68,10 @@ All images come from the running application with the fictitious demo data. None
 
 ## Architecture
 
-![Architecture: three surfaces, one Next.js application with a mode per company, PostgreSQL with row-level security, optional services](docs/assets/architecture.svg)
+![Architecture: three surfaces, one Next.js application with a mode per company, PostgreSQL with tenant isolation, optional services](docs/assets/architecture.svg)
 
 - **One application, two products.** `CompanyProfile.mode` picks BaumdienstFlow or BauFlow per company. Central feature flags hide tree-specific parts, and BauFlow has its own vocabulary in all 6 languages. There are no two codebases drifting apart.
-- **Tenant isolation in the database.** PostgreSQL row-level security separates companies even if an application filter were missing. The browser tests run with row-level security enforced and check that one tenant cannot see another tenant's data.
+- **Tenant isolation.** Every query is filtered by the company from the session; today that is the effective boundary, including in the live demos. As a second line, PostgreSQL row-level security policies exist for all tenant tables. Enforcement through a restricted database role currently runs as a pilot (job sites and daily plan), tested in CI against a throwaway database; rolling it out to every area is still open. The browser tests check that one tenant cannot see another tenant's data.
 - **Two deployment modes.** As SaaS with many companies in one database, or as a dedicated instance for a single customer.
 - **Stack:** Next.js 16 (App Router, Server Actions), React 19, TypeScript strict, Prisma 7, PostgreSQL 16, Tailwind CSS, Radix UI, Zod, Vitest, Playwright, GitHub Actions, Docker, Railway.
 
@@ -114,9 +116,13 @@ Operations, auth details and deployment: [docs/OPERATIONS.md](docs/OPERATIONS.md
 
 RediOnFlow is developed by Redion Cekrezi, with AI agents as tools: the human decides what gets built, reviews every result and approves it; the agents write code, tests and documentation in small pull requests that are merged only with green CI. How that works in practice and where its limits are: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md) (German).
 
+## About the author
+
+Redion Cekrezi has worked as an arborist and team lead at a tree care company in North Rhine-Westphalia since 2021, after more than 15 years in electronics and technical diagnostics. RediOnFlow grew out of that work: he knows the workflows the software models from the aerial lift and the daily planning, not from a requirements document. Since 2025 he has been building his own software products as a full-stack and applied AI developer.
+
 ## Working together
 
-Of interest to tree care, construction, civil works and fibre-optic companies that want to run their job sites digitally, and to partners who want to accompany a pilot. Contact via [GitHub](https://github.com/IamRedi).
+Of interest to tree care, construction, civil works and fibre-optic companies that want to run their job sites digitally, and to partners who want to accompany a pilot. A walkthrough or admin access to the demo is available on request via the **[portfolio](https://www.redioncekrezi.de)** or [GitHub](https://github.com/IamRedi).
 
 **Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
 
