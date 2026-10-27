@@ -21,7 +21,10 @@
     "treeListFileDescription": "Lista e detyrave (.xlsx, .xls, .csv)",
     "importRequirementHint": "Së paku një skedar është i detyrueshëm. Re-importi mbi një kantier ekzistues përditëson detyrat përkatëse pa rikthyer punën e kryer.",
     "importNoTreesFound": "Nuk u gjetën detyra të importueshme në skedarët e ngarkuar.",
-    "importSuccessSummary": "{created} detyra të reja të importuara, {updated} të përditësuara, {unchanged} të pandryshuara."
+    "importSuccessSummary": "{created} detyra të reja të importuara, {updated} të përditësuara, {unchanged} të pandryshuara.",
+    "baustelleTypeFiberTrench": "Trase fibre optike",
+    "baustelleTypeFiberDrilling": "Shpim horizontal (HDD)",
+    "baustelleTypeFiberHouseConnection": "Lidhje fibre në shtëpi"
   },
   "report": {
     "crownWidth": "Gjerësia / Masat"

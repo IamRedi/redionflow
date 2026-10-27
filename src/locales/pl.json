@@ -357,7 +357,10 @@
     "pendingStatus": "Otwarte",
     "totalLabel": "Lacznie",
     "remainingLabel": "Pozostalo",
-    "workingNow": "Teraz pracuje"
+    "workingNow": "Teraz pracuje",
+    "fiberTrench": "Trasa światłowodu",
+    "fiberDrilling": "Przewiert sterowany (HDD)",
+    "fiberHouseConnection": "Przyłącza światłowodowe"
   },
   "report": {
     "daily": "Raport dzienny",

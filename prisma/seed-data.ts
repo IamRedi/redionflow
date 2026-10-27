@@ -1,7 +1,14 @@
 // Fictitious demo data. Every name, address, phone number and plate below is
 // invented. Coordinates lie in a real German city only so the maps look real.
 
-import type { AssistantLanguage, BaustelleType, MachineCategory, WorkerLevel } from "../src/generated/prisma/client";
+import type {
+  AssistantLanguage,
+  BaustelleType,
+  CompanyInventoryCategory,
+  MachineCategory,
+  SiteEquipmentCategory,
+  WorkerLevel,
+} from "../src/generated/prisma/client";
 import type { CompanyMode } from "../src/lib/mode-config";
 
 export type DemoCompany = {
@@ -109,6 +116,8 @@ export type DemoSite = {
   crew: string[];
   machines: string[];
   tasks: string[];
+  /** Safety material currently on site, shown on the site page. */
+  safety?: Partial<Record<"SIGN" | "PLATE" | "FENCE", number>>;
 };
 
 export const SITES: DemoSite[] = [
@@ -210,6 +219,15 @@ export type DemoOffer = {
   };
 };
 
+export type DemoInventory = {
+  /** Site equipment pools (signs, steel plates, barriers), one per category. */
+  catalogs: Array<{ name: string; category: SiteEquipmentCategory; totalQuantity: number }>;
+  /** Tools, clothing and equipment with an inventory code. */
+  items: Array<{ code: string; name: string; category: CompanyInventoryCategory; sizeLabel?: string; note?: string }>;
+  /** Items handed over to a worker (worker key -> item codes). */
+  handovers: Record<string, string[]>;
+};
+
 /** Everything one demo company needs. `prisma/seed.ts` picks one by `DEMO_SEED_MODE`. */
 export type DemoDataset = {
   mode: CompanyMode;
@@ -228,6 +246,9 @@ export type DemoDataset = {
   /** Word used in the seed log line, e.g. "trees" or "work items". */
   itemLabel: string;
   offer: DemoOffer;
+  inventory?: DemoInventory;
+  /** Company knowledge for the assistant (materials, procedures). */
+  knowledge?: Array<{ key: string; title: string; content: string; tags: string[] }>;
 };
 
 export const BAUMDIENST_DEMO: DemoDataset = {

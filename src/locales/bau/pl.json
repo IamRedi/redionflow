@@ -21,7 +21,10 @@
     "treeListFileDescription": "Lista zadan (.xlsx, .xls, .csv)",
     "importRequirementHint": "Wymagany jest co najmniej jeden plik. Ponowny import na istniejaca budowe aktualizuje pasujace zadania bez resetowania wykonanej pracy.",
     "importNoTreesFound": "Nie znaleziono zadan mozliwych do importu w wgranych plikach.",
-    "importSuccessSummary": "Zaimportowano {created} nowych zadan, zaktualizowano {updated}, bez zmian {unchanged}."
+    "importSuccessSummary": "Zaimportowano {created} nowych zadan, zaktualizowano {updated}, bez zmian {unchanged}.",
+    "baustelleTypeFiberTrench": "Trasa światłowodu",
+    "baustelleTypeFiberDrilling": "Przewiert sterowany (HDD)",
+    "baustelleTypeFiberHouseConnection": "Przyłącza światłowodowe"
   },
   "report": {
     "crownWidth": "Szerokosc / miara"
