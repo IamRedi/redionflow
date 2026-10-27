@@ -92,14 +92,11 @@ production data.
 Do not enable deployment-required rules until the CI flow is stable and the
 production deployment provider has been reviewed.
 
-## Current Verified CI Run
+## Current CI Status
 
-The CI workflow was verified on GitHub for branch `i18n-admin-worker-ci`.
-
-- Commit: `be0a2eb`
-- Workflow: `CI`
-- Result: success
-- Run: `https://github.com/IamRedi/baumkalk/actions/runs/29241893105`
+The current CI result for `main` is shown by the badge in the README and on the
+[Actions page](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml).
+Test counts and the latest verified runs are recorded in [EVIDENCE.md](../EVIDENCE.md).
 
 ## Deployment
 
