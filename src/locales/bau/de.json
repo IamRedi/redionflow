@@ -21,7 +21,10 @@
     "treeListFileDescription": "Arbeitsliste (.xlsx, .xls, .csv)",
     "importRequirementHint": "Mindestens eine Datei ist erforderlich. Re-Import auf eine bestehende Baustelle aktualisiert passende Arbeiten, ohne erledigte Arbeit zurückzusetzen.",
     "importNoTreesFound": "Keine importierbaren Arbeiten in den hochgeladenen Dateien gefunden.",
-    "importSuccessSummary": "{created} neue Arbeiten importiert, {updated} aktualisiert, {unchanged} unverändert."
+    "importSuccessSummary": "{created} neue Arbeiten importiert, {updated} aktualisiert, {unchanged} unverändert.",
+    "baustelleTypeFiberTrench": "Glasfaser-Trasse",
+    "baustelleTypeFiberDrilling": "Spülbohrung (HDD)",
+    "baustelleTypeFiberHouseConnection": "Glasfaser-Hausanschlüsse"
   },
   "report": {
     "crownWidth": "Breite / Maß"

@@ -192,6 +192,10 @@ function typeIcon(type: string) {
   if (type === "PAVING") return "▦";
   if (type === "PAINTING") return "▰";
   if (type === "RENOVATION") return "◫";
+  if (type === "FIBER_TRENCH") return "〰";
+  if (type === "FIBER_DRILLING") return "⤳";
+  if (type === "FIBER_HOUSE_CONNECTION") return "⌂";
+  if (type === "OTHER") return "⬛";
   if (type === "WATERING") return "🐘";
   if (type === "EXCAVATOR") return "🚜";
   if (type === "TRUCK_CRANE") return "🏗️";
@@ -225,6 +229,9 @@ function typeLabel(type: string, lang: string) {
   if (type === "PAVING") return t("workzone.paving", lang, "bau");
   if (type === "PAINTING") return t("workzone.painting", lang, "bau");
   if (type === "RENOVATION") return t("workzone.renovation", lang, "bau");
+  if (type === "FIBER_TRENCH") return t("workzone.fiberTrench", lang, "bau");
+  if (type === "FIBER_DRILLING") return t("workzone.fiberDrilling", lang, "bau");
+  if (type === "FIBER_HOUSE_CONNECTION") return t("workzone.fiberHouseConnection", lang, "bau");
   if (type === "OTHER") return t("workzone.otherType", lang, "bau");
   return t("workzone.climbingShort", lang);
 }

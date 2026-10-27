@@ -44,6 +44,8 @@ docker compose down -v
 DEMO_SEED_MODE=bau docker compose up --build
 ```
 
+`DEMO_SEED_MODE=glasfaser` legt stattdessen die **Glasfaserbau Beispieltal GmbH** an, einen Glasfaser-Tiefbau-Nachunternehmer mit Trassen im Gehweg, Hausanschlüssen, Spülbohrung, Spleißarbeiten, Maschinen und Werkzeuginventar.
+
 ## Schnellstart (Entwicklung)
 
 Voraussetzungen: Node.js 22 (siehe `.nvmrc`), npm 10, Docker für eine lokale PostgreSQL.

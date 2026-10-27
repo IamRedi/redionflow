@@ -10,6 +10,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { resolveDatabaseConnectionString } from "../src/lib/db/connection-string";
 import { BAUMDIENST_DEMO, type DemoDataset, type DemoSite } from "./seed-data";
 import { BAU_DEMO } from "./seed-data-bau";
+import { GLASFASER_DEMO } from "./seed-data-glasfaser";
 
 // Seed is for local/demo bootstrap only, not runtime execution. It creates
 // no administrator: use the gated demo bootstrap (`ALLOW_DEMO_ADMIN_BOOTSTRAP`)
@@ -19,8 +20,10 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
-// `DEMO_SEED_MODE=bau` seeds the BauFlow demo company, anything else BaumdienstFlow.
-const data: DemoDataset = process.env.DEMO_SEED_MODE?.trim().toLowerCase() === "bau" ? BAU_DEMO : BAUMDIENST_DEMO;
+// `DEMO_SEED_MODE` picks the demo company: `bau` (BauFlow), `glasfaser`
+// (BauFlow fiber-optic civil works), anything else BaumdienstFlow.
+const DATASETS: Record<string, DemoDataset> = { bau: BAU_DEMO, glasfaser: GLASFASER_DEMO };
+const data: DemoDataset = DATASETS[process.env.DEMO_SEED_MODE?.trim().toLowerCase() ?? ""] ?? BAUMDIENST_DEMO;
 
 // Deterministic pseudo-random numbers so every reset produces the same demo.
 function hashToUnit(seed: string) {
@@ -218,6 +221,7 @@ async function main() {
         description: site.description,
         documents: site.documents,
         coordinates: site.path[Math.floor(site.path.length / 2)],
+        activeEquipmentStatus: site.safety ? safetyStatus(site.safety, workerIds.get(site.crew[0]!)!.name, shiftStart) : undefined,
       },
     });
 
@@ -291,6 +295,10 @@ async function main() {
   });
 
   await createDemoProject(company.id, machineIds.get(data.offer.project.position.machineKey)!);
+  if (data.inventory) await createInventory(company.id, workerIds, data.inventory);
+  for (const entry of data.knowledge ?? []) {
+    await prisma.companyKnowledge.create({ data: { companyProfileId: company.id, language: "DE", ...entry } });
+  }
 
   // Link admins created earlier by the gated bootstrap to the demo company.
   await prisma.user.updateMany({
@@ -301,6 +309,59 @@ async function main() {
   console.log(
     `Seed completed: ${data.company.displayName}, ${data.workers.length} workers, ${data.sites.length} sites, ${treeTotal} ${data.itemLabel}, ${data.machines.length} machines.`,
   );
+}
+
+/** Same shape the Workzone safety panel writes to `Baustelle.activeEquipmentStatus`. */
+function safetyStatus(safety: NonNullable<DemoSite["safety"]>, workerName: string, dateSet: Date) {
+  return Object.fromEntries(
+    Object.entries(safety).map(([category, quantity]) => [
+      category,
+      { requested: false, quantity, workerName, dateSet: dateSet.toISOString() },
+    ]),
+  );
+}
+
+async function createInventory(
+  companyProfileId: string,
+  workerIds: Map<string, { id: string; name: string }>,
+  inventory: NonNullable<DemoDataset["inventory"]>,
+) {
+  await prisma.companyInventoryCatalog.createMany({
+    data: inventory.catalogs.map((catalog) => ({ companyProfileId, ...catalog })),
+  });
+
+  const items = new Map<string, { id: string; name: string; category: string; sizeLabel: string | null }>();
+  for (const item of inventory.items) {
+    const created = await prisma.companyInventoryItem.create({
+      data: { companyProfileId, itemCode: item.code, name: item.name, category: item.category, sizeLabel: item.sizeLabel, note: item.note },
+    });
+    items.set(item.code, created);
+  }
+
+  for (const [workerKey, codes] of Object.entries(inventory.handovers)) {
+    const worker = workerIds.get(workerKey);
+    if (!worker) throw new Error(`Seed inventory hands over to unknown worker "${workerKey}"`);
+    for (const code of codes) {
+      const item = items.get(code);
+      if (!item) throw new Error(`Seed inventory hands over unknown item "${code}"`);
+      await prisma.workerAssetItem.create({
+        data: {
+          workerId: worker.id,
+          companyInventoryItemId: item.id,
+          kind: item.category === "CLOTHING" ? "CLOTHING" : "EQUIPMENT",
+          itemName: item.name,
+          itemCode: code,
+          sizeLabel: item.sizeLabel,
+          status: "ACTIVE",
+          createdByRole: "SYSTEM",
+          createdByName: "Büro",
+          confirmedAt: new Date(),
+          confirmedByRole: "WORKER",
+          confirmedByName: worker.name,
+        },
+      });
+    }
+  }
 }
 
 async function createDemoProject(companyProfileId: string, machine: { id: string; name: string }) {

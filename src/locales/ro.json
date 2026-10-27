@@ -358,7 +358,10 @@
     "pendingStatus": "Deschis",
     "totalLabel": "Total",
     "remainingLabel": "Ramas",
-    "workingNow": "Lucrează acum"
+    "workingNow": "Lucrează acum",
+    "fiberTrench": "Traseu fibră optică",
+    "fiberDrilling": "Foraj orizontal dirijat (HDD)",
+    "fiberHouseConnection": "Branșamente fibră optică"
   },
   "report": {
     "daily": "Raport zilnic",

@@ -21,7 +21,10 @@
     "treeListFileDescription": "Lista attività (.xlsx, .xls, .csv)",
     "importRequirementHint": "È richiesto almeno un file. Reimportare su un cantiere esistente aggiorna le attività corrispondenti senza reimpostare il lavoro completato.",
     "importNoTreesFound": "Nessuna attività importabile trovata nei file caricati.",
-    "importSuccessSummary": "{created} nuove attività importate, {updated} aggiornate, {unchanged} invariate."
+    "importSuccessSummary": "{created} nuove attività importate, {updated} aggiornate, {unchanged} invariate.",
+    "baustelleTypeFiberTrench": "Tracciato fibra ottica",
+    "baustelleTypeFiberDrilling": "Perforazione orizzontale (HDD)",
+    "baustelleTypeFiberHouseConnection": "Allacciamenti fibra"
   },
   "report": {
     "crownWidth": "Larghezza / misura"
