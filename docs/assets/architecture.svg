@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="t d">
+  <title id="t">Architektur von RediOnFlow</title>
+  <desc id="d">Drei Oberflächen (Workzone, Admin, Display) laufen in einer Next.js-Anwendung. Ein Modus pro Firma schaltet BaumdienstFlow oder BauFlow. Server Actions und API-Routen prüfen Herkunft, Rolle und Mandant, bevor Prisma auf PostgreSQL mit Row-Level Security zugreift. Externe Dienste sind optional.</desc>
+  <style>
+    .box{fill:#ffffff;stroke:#cfd6d1;stroke-width:1.5}
+    .accent{fill:#f2f7f4;stroke:#2f9e66;stroke-width:1.5}
+    .warm{fill:#fff6ef;stroke:#e8590c;stroke-width:1.5}
+    .opt{fill:#fafafa;stroke:#b8bfba;stroke-width:1.5;stroke-dasharray:6 5}
+    .h{font:700 18px Inter,Segoe UI,Helvetica,Arial,sans-serif;fill:#14211a}
+    .t{font:15px Inter,Segoe UI,Helvetica,Arial,sans-serif;fill:#47524b}
+    .s{font:13px Inter,Segoe UI,Helvetica,Arial,sans-serif;fill:#6b756f}
+    .cap{font:600 12px Inter,Segoe UI,Helvetica,Arial,sans-serif;letter-spacing:2px;fill:#6b756f}
+    .line{stroke:#8a948e;stroke-width:1.5;fill:none;marker-end:url(#a)}
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a948e"/></marker>
+  </defs>
+  <rect width="1200" height="560" rx="20" fill="#f7f8f6"/>
+
+  <text x="40" y="44" class="cap">OBERFLÄCHEN</text>
+  <rect x="40" y="60" width="350" height="92" rx="14" class="box"/>
+  <text x="62" y="92" class="h">Workzone (Baustelle, mobil)</text>
+  <text x="62" y="118" class="t">Arbeitsliste, Karte, Start/Stopp,</text>
+  <text x="62" y="138" class="t">Absicherung, Profil, Berichte</text>
+  <rect x="425" y="60" width="350" height="92" rx="14" class="box"/>
+  <text x="447" y="92" class="h">Admin (Büro, Chef)</text>
+  <text x="447" y="118" class="t">Dashboard, Personal, Fuhrpark,</text>
+  <text x="447" y="138" class="t">Tagesplan, Kalkulation, Inventar</text>
+  <rect x="810" y="60" width="350" height="92" rx="14" class="box"/>
+  <text x="832" y="92" class="h">Display &amp; öffentliche Demo</text>
+  <text x="832" y="118" class="t">Lesende Ansichten für Halle,</text>
+  <text x="832" y="138" class="t">Monitor und Präsentation</text>
+
+  <path d="M215 152v36" class="line"/><path d="M600 152v36" class="line"/><path d="M985 152v36" class="line"/>
+
+  <text x="40" y="214" class="cap">NEXT.JS 16 · REACT 19 · TYPESCRIPT STRICT</text>
+  <rect x="40" y="228" width="1120" height="128" rx="14" class="accent"/>
+  <text x="62" y="262" class="h">Server Actions und API-Routen</text>
+  <text x="62" y="288" class="t">Same-Origin-Prüfung · Rolle (Admin, Mitarbeiter, Display) · Mandant aus der Sitzung · Zod an jeder Grenze</text>
+  <rect x="62" y="304" width="250" height="36" rx="10" fill="#ffffff" stroke="#2f9e66"/>
+  <text x="80" y="328" class="t">Modus: BaumdienstFlow</text>
+  <rect x="326" y="304" width="190" height="36" rx="10" fill="#ffffff" stroke="#e8590c"/>
+  <text x="344" y="328" class="t">Modus: BauFlow</text>
+  <text x="536" y="328" class="s">pro Firma, mit zentralen Feature-Flags und eigenem Wortschatz in 6 Sprachen</text>
+
+  <path d="M600 356v36" class="line"/>
+
+  <text x="40" y="414" class="cap">DATEN</text>
+  <rect x="40" y="428" width="540" height="96" rx="14" class="warm"/>
+  <text x="62" y="460" class="h">PostgreSQL + Prisma 7</text>
+  <text x="62" y="486" class="t">Row-Level Security pro Mandant, 49 Migrationen,</text>
+  <text x="62" y="506" class="t">Audit-Log, widerrufbare Sitzungen</text>
+
+  <rect x="620" y="428" width="540" height="96" rx="14" class="opt"/>
+  <text x="642" y="460" class="h">Optionale Dienste</text>
+  <text x="642" y="486" class="t">Dateispeicher, Push, Stripe (SaaS), KI-Assistent,</text>
+  <text x="642" y="506" class="t">Fahrzeug-GPS. Ohne sie läuft der Kern vollständig.</text>
+</svg>
