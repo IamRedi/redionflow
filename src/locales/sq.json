@@ -537,7 +537,7 @@
     "externalWorkerTitle": "Punetor i jashtem",
     "externalWorkerDescription": "Shto ndihmes te perkohshem per kete kantier.",
     "recentTasksTitle": "Detyrat e fundit",
-    "recentTasksDescription": "Vetem lexim per Admin, live per Workzone.",
+    "recentTasksDescription": "Detyrat e fundit, të hapura dhe të kryera.",
     "noTasksYet": "Ende nuk ka detyra.",
     "manualTaskPermission": "Hyni si punetor ose admin per te shtuar detyra nga kantieri.",
     "manualTaskSavedBy": "Detyra po ruhet nga",
@@ -671,7 +671,9 @@
     "workingNow": "Duke punuar",
     "fiberTrench": "Trase fibre optike",
     "fiberDrilling": "Shpim horizontal (HDD)",
-    "fiberHouseConnection": "Lidhje fibre në shtëpi"
+    "fiberHouseConnection": "Lidhje fibre në shtëpi",
+    "settingsFold": "Gjuha & njoftimet",
+    "recentShiftsFold": "Shfaq turnet e fundit"
   },
   "report": {
     "daily": "Raporti ditor",
@@ -1111,7 +1113,7 @@
     "newerWeek": "Java me e re",
     "previousWeek": "Java e kaluar",
     "topWorkersByHours": "Punonjesit kryesore sipas oreve",
-    "topWorkersByHoursSub": "Gjithmone e dukshme per jave dhe muaj, me gjeresi fikse si blloqet e tjera te dashboard-it.",
+    "topWorkersByHoursSub": "Orët e punuara për punonjës.",
     "workerHoursSummary": "{count} punonjes / {hours} h",
     "workerHoursEmpty": "Nuk ka ende ore per kete pamje.",
     "safetyStock": "Stoku i sigurise",

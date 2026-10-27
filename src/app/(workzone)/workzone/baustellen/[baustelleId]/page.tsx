@@ -288,37 +288,33 @@ export default async function BaustelleDetailPage({
         </Card>
 
         <div className="min-w-0 space-y-4">
+          {/* Rarely used forms stay folded so the work list stays the focus. */}
           <Card className="min-w-0 overflow-hidden">
-            <CardHeader>
-              <CardTitle>{t("workzone.manualTaskTitle", currentLang, mode)}</CardTitle>
-              <CardDescription>{t("workzone.manualTaskDescription", currentLang, mode)}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ManualTaskForm baustelleId={baustelle.id} currentWorker={currentActorView} />
-            </CardContent>
-          </Card>
-
-          <Card className="min-w-0 overflow-hidden">
-            <CardHeader>
-              <CardTitle>{t("workzone.externalWorkerTitle", currentLang, mode)}</CardTitle>
-              <CardDescription>{t("workzone.externalWorkerDescription", currentLang, mode)}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ExternalWorkerForm baustelleId={baustelle.id} currentWorker={currentActorView} />
+            <CardContent className="space-y-2 pt-4">
+              <details className="rounded-md border">
+                <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium">{t("workzone.manualTaskTitle", currentLang, mode)}</summary>
+                <div className="border-t p-3">
+                  <ManualTaskForm baustelleId={baustelle.id} currentWorker={currentActorView} />
+                </div>
+              </details>
+              <details className="rounded-md border">
+                <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium">{t("workzone.externalWorkerTitle", currentLang, mode)}</summary>
+                <div className="border-t p-3">
+                  <p className="mb-3 text-sm text-muted-foreground">{t("workzone.externalWorkerDescription", currentLang, mode)}</p>
+                  <ExternalWorkerForm baustelleId={baustelle.id} currentWorker={currentActorView} />
+                </div>
+              </details>
             </CardContent>
           </Card>
 
           {features.inventory ? <SafetyEquipmentPanel baustelleId={baustelle.id} rows={safetyRows} currentWorker={currentActorView} /> : null}
 
+          {baustelle.manualTasks.length > 0 ? (
           <Card className="min-w-0 overflow-hidden">
             <CardHeader>
               <CardTitle>{t("workzone.recentTasksTitle", currentLang, mode)}</CardTitle>
-              <CardDescription>{t("workzone.recentTasksDescription", currentLang, mode)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              {baustelle.manualTasks.length === 0 ? (
-                <p className="text-muted-foreground">{t("workzone.noTasksYet", currentLang, mode)}</p>
-              ) : (
                 <ul className="space-y-2">
                   {baustelle.manualTasks.slice(0, 10).map((task) => (
                     <li key={task.id} className="rounded-md border px-3 py-2">
@@ -334,9 +330,9 @@ export default async function BaustelleDetailPage({
                     </li>
                   ))}
                 </ul>
-              )}
             </CardContent>
           </Card>
+          ) : null}
         </div>
       </div>
     </div>

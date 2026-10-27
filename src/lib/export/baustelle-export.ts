@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { createStoredZip } from "@/lib/export/zip";
-import { EXPORT_TEXT, normalizeExportLang } from "./baustelle/text";
+import { getFeatures, type CompanyMode } from "@/lib/mode-config";
+import { BAU_EXPORT_TEXT, EXPORT_TEXT, normalizeExportLang } from "./baustelle/text";
 import {
   actorLabel,
   asText,
@@ -15,9 +16,13 @@ import {
 } from "./baustelle/format";
 import { buildTreeKml, htmlDocument } from "./baustelle/documents";
 
-export async function buildBaustelleExportZip(baustelleId: string, companyProfileId: string, lang?: string) {
+export async function buildBaustelleExportZip(baustelleId: string, companyProfileId: string, lang?: string, mode: CompanyMode = "baumdienst") {
   const exportLang = normalizeExportLang(lang);
-  const text = EXPORT_TEXT[exportLang];
+  // Same keys, only some strings swapped, so the narrow literal type still fits.
+  const text = (mode === "bau" ? { ...EXPORT_TEXT[exportLang], ...BAU_EXPORT_TEXT[exportLang] } : EXPORT_TEXT[exportLang]) as (typeof EXPORT_TEXT)[typeof exportLang];
+  // Branch cuts and the extra-work surcharge are tree data; BauFlow leaves them out.
+  const showTreeFields = getFeatures(mode).trees;
+  const headRows = showTreeFields ? 2 : 1;
   const baustelle = await prisma.baustelle.findFirst({
     where: { id: baustelleId, companyProfileId },
     include: {
@@ -131,21 +136,29 @@ export async function buildBaustelleExportZip(baustelleId: string, companyProfil
       <table>
         <thead>
           <tr>
-            <th rowspan="2">${htmlEscape(text.tree)}</th>
-            <th rowspan="2">${htmlEscape(text.status)}</th>
-            <th rowspan="2">${htmlEscape(text.species)}</th>
-            <th rowspan="2">${htmlEscape(text.diameter)}</th>
-            <th rowspan="2" class="col-worker">${htmlEscape(text.completedBy)}</th>
-            <th colspan="3">${htmlEscape(text.branches)} ⌀</th>
-            <th rowspan="2" class="col-extra">${htmlEscape(text.extraWork)}</th>
-            <th rowspan="2">${htmlEscape(text.action)}</th>
-            <th rowspan="2">${htmlEscape(text.note)}</th>
+            <th rowspan="${headRows}">${htmlEscape(text.tree)}</th>
+            <th rowspan="${headRows}">${htmlEscape(text.status)}</th>
+            <th rowspan="${headRows}">${htmlEscape(text.species)}</th>
+            <th rowspan="${headRows}">${htmlEscape(text.diameter)}</th>
+            <th rowspan="${headRows}" class="col-worker">${htmlEscape(text.completedBy)}</th>
+            ${
+              showTreeFields
+                ? `<th colspan="3">${htmlEscape(text.branches)} ⌀</th>
+            <th rowspan="2" class="col-extra">${htmlEscape(text.extraWork)}</th>`
+                : ""
+            }
+            <th rowspan="${headRows}">${htmlEscape(text.action)}</th>
+            <th rowspan="${headRows}">${htmlEscape(text.note)}</th>
           </tr>
-          <tr>
+          ${
+            showTreeFields
+              ? `<tr>
             <th class="col-tight">&gt;10cm</th>
             <th class="col-tight">&gt;20cm</th>
             <th class="col-tight">&gt;30cm</th>
-          </tr>
+          </tr>`
+              : ""
+          }
         </thead>
         <tbody>
           ${normalizedTrees
@@ -163,10 +176,14 @@ export async function buildBaustelleExportZip(baustelleId: string, companyProfil
                   <td>${htmlEscape(tree.species)}</td>
                   <td>${htmlEscape(tree.diameter)}</td>
                   <td>${htmlEscape(tree.completedByWorker || "-")}</td>
-                  <td class="col-tight">${htmlEscape(tree.branchCutsOver10 || "")}</td>
+                  ${
+                    showTreeFields
+                      ? `<td class="col-tight">${htmlEscape(tree.branchCutsOver10 || "")}</td>
                   <td class="col-tight">${htmlEscape(tree.branchCutsOver20 || "")}</td>
                   <td class="col-tight">${htmlEscape(tree.branchCutsOver30 || "")}</td>
-                  <td class="col-extra">${htmlEscape(tree.extraWork || "")}</td>
+                  <td class="col-extra">${htmlEscape(tree.extraWork || "")}</td>`
+                      : ""
+                  }
                   <td>${htmlEscape(tree.action)}</td>
                   <td>${htmlEscape(tree.note)}</td>
                 </tr>`;
