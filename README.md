@@ -1,95 +1,134 @@
+<p align="center"><img src="docs/assets/hero.svg" alt="RediOnFlow: eine Codebasis, zwei Produkte. BaumdienstFlow für Baumpflege, BauFlow für Bau und Tiefbau." width="100%"></p>
+
 # RediOnFlow
 
-Eine Codebasis, zwei Produkte für Betriebe, die draußen arbeiten:
+**Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 
-- **BaumdienstFlow** – Planung, Kalkulation und Dokumentation für Baumpflege- und Baumdienstbetriebe (Baumkataster, Baustellen, Tagesplanung, Fuhrpark).
-- **BauFlow** – dieselbe Plattform für Bau- und Regiebetriebe (Baustellen, Regieberichte, Einsatzplanung).
+- **BaumdienstFlow** für Baumpflege- und Baumdienstbetriebe: Baumlisten mit Koordinaten, Fällungen, Kronenpflege, Hubsteiger und Häcksler.
+- **BauFlow** für Bau-, Tiefbau- und Glasfaserbetriebe: Arbeitslisten statt Bäume, Trassen, Hausanschlüsse, Spülbohrung, Werkzeug und Absicherung.
 
-Das Produkt wird pro Firma über `company.mode` und zentrale Feature-Flags gesteuert, nicht über getrennte Apps.
+**[English version](README.en.md)** · **Stand: 27. Oktober 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
-> **Status:** Dieses Repository wird gerade als saubere, öffentlich präsentierbare Fassung aufgebaut. Ausführliche Doku, Screenshots und eine öffentliche Live-Demo folgen.
+## Live ausprobieren
 
-## Stack
+| Produkt | Demo | Fiktive Firma |
+|---|---|---|
+| BaumdienstFlow | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 Mitarbeitende, 3 Baustellen, 152 Bäume, 5 Maschinen |
+| BauFlow | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 Mitarbeitende, 4 Glasfaser-Baustellen, 114 Arbeiten, 8 Maschinen, Werkzeuginventar |
 
-- Next.js 16 (App Router), React 19, TypeScript (strict)
-- PostgreSQL + Prisma 7 (Driver Adapter `@prisma/adapter-pg`), Row-Level Security
-- Tailwind CSS, Radix UI, React Hook Form, Zod
-- Vitest (Unit + Integration), Playwright (E2E), GitHub Actions
-- Supabase Storage, Firebase Cloud Messaging, Stripe (SaaS-Modus), OpenAI (Assistent)
-- Mehrsprachig: Deutsch, Englisch, Albanisch, Italienisch, Polnisch, Rumänisch
+Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Alle Namen, Adressen, Kennzeichen und Firmen sind erfunden. Beide Demos werden jede Nacht um 02:00 UTC auf den Ausgangsstand zurückgesetzt. Einen Admin-Zugang zum Ausprobieren gibt es auf Anfrage.
 
-## Demo in drei Minuten
+## Was heute umgesetzt ist
 
-Voraussetzung: Docker.
+| Status | Bedeutung und Umfang |
+|---|---|
+| **Umgesetzt und live** | Workzone für die Baustelle (Arbeitsliste oder Baumliste, Karte, Arbeitszeit mit Start, Pause und Stopp, Zusatzarbeiten, Hinweise, Absicherung), Admin-Dashboard, Personal und Fuhrpark, Tagesplan mit Versionen, Barcode-Inventar mit Ausgabe an Mitarbeitende, Kalkulation (Projekte, Positionen, Vorlagen, Lohnrollen, Rezepte), Tages- und Monatsberichte, Baustellen-Export (ZIP mit HTML, CSV, KML), Urlaub, Admin-Login mit Passwort, 6 Sprachen |
+| **Verifiziert** | 711 automatisierte Tests in CI auf jedem Pull Request (423 Unit, 263 Integration gegen echte PostgreSQL, 25 Ende-zu-Ende im Browser), Secret-Scan, Docker-Demo-Smoke-Test, Lighthouse mobil 96/100/100/100. Details im [Prüfprotokoll](EVIDENCE.md). |
+| **Umgesetzt, in der Demo nicht aktiv** | KI-Assistent (braucht einen OpenAI-Schlüssel), Push-Benachrichtigungen (Firebase), Dateispeicher für Dokumente und Fotos (Supabase), Abos und Rechnungen im SaaS-Modus (Stripe), Fahrzeug-GPS. Der Code ist vorhanden und getestet; die öffentliche Demo läuft bewusst ohne diese Dienste. |
+| **In Arbeit** | Offline-Modus für Feldaktionen (Warteschlange im Browser ist angelegt, noch nicht im Feld erprobt), Content Security Policy von „Report-Only“ auf „blockierend“, echter Virenscanner für Uploads |
+| **Vision** | Pilotbetriebe in beiden Branchen, weitere Gewerke als eigener Modus, Auswertung über mehrere Saisons |
+
+## Warum dieses Projekt?
+
+Kleine und mittlere Betriebe planen ihre Baustellen oft mit Zetteln, WhatsApp-Gruppen und Excel. Was draußen passiert (wer arbeitet wo, was ist erledigt, wo fehlt Absicherung, welches Werkzeug ist bei wem), kommt spät oder gar nicht im Büro an, und Stunden werden am Monatsende aus dem Gedächtnis rekonstruiert. RediOnFlow bringt beides auf einen Bildschirm: Die Mitarbeitenden tippen auf der Baustelle zwei, drei Mal, und das Büro sieht es sofort.
+
+> **Upgrade humans. Not replace them.** Die Software nimmt Schreibarbeit ab. Entscheiden, planen und verantworten bleibt beim Menschen.
+
+## Einblick in die Anwendung
+
+Alle Bilder stammen aus der laufenden Anwendung mit den fiktiven Demo-Daten. Es sind keine Mockups.
+
+### BaumdienstFlow
+
+| Workzone: alle Baustellen auf einen Blick | Baustelle mit Baumliste |
+|---|---|
+| ![Workzone von BaumdienstFlow mit drei Baustellen als Karten](docs/assets/screenshots/baumdienst-workzone.webp) | ![Baustelle Friedhof Nord mit Baumliste, Absicherung und Aufgaben](docs/assets/screenshots/baumdienst-baustelle.webp) |
+
+| Tagesplan für morgen | Kalkulation eines Angebots |
+|---|---|
+| ![Tagesplan mit Mitarbeitenden, Baustellen und Maschinen](docs/assets/screenshots/baumdienst-tagesplan.webp) | ![Projekt mit Kundendaten und Rezepten für typische Arbeiten](docs/assets/screenshots/baumdienst-kalkulation.webp) |
+
+### BauFlow (Glasfaser-Tiefbau)
+
+| Dashboard für den Chef | Barcode-Inventar mit Werkzeug und Kleidung |
+|---|---|
+| ![BauFlow-Dashboard mit Stunden, Baustellenfortschritt und Sicherheitsbestand](docs/assets/screenshots/bauflow-dashboard.webp) | ![Inventar mit Werkzeug, Kleidung und Baustellenausrüstung](docs/assets/screenshots/bauflow-inventar.webp) |
+
+![BauFlow-Workzone mit vier Glasfaser-Baustellen und Absicherungsmaterial](docs/assets/screenshots/bauflow-workzone.webp)
+
+### Auf der Baustelle (Handy, 390 px)
+
+| BaumdienstFlow: Baustelle | BauFlow: Baustelle | BauFlow: Übersicht |
+|---|---|---|
+| ![Baustelle Stadtpark am Handy mit Start- und Stopp-Knopf](docs/assets/screenshots/baumdienst-mobil-baustelle.webp) | ![Glasfaser-Baustelle am Handy mit Arbeitsliste](docs/assets/screenshots/bauflow-mobil-baustelle.webp) | ![Übersicht der Glasfaser-Baustellen am Handy](docs/assets/screenshots/bauflow-mobil-workzone.webp) |
+
+## Architektur
+
+![Architektur: drei Oberflächen, eine Next.js-Anwendung mit Modus pro Firma, PostgreSQL mit Row-Level Security, optionale Dienste](docs/assets/architecture.svg)
+
+- **Eine Anwendung, zwei Produkte.** `CompanyProfile.mode` entscheidet pro Firma zwischen BaumdienstFlow und BauFlow. Zentrale Feature-Flags blenden baumspezifische Teile aus, und BauFlow hat einen eigenen Wortschatz in allen 6 Sprachen. Es gibt keine zwei Codebasen, die auseinanderlaufen.
+- **Mandantentrennung in der Datenbank.** PostgreSQL Row-Level Security trennt die Firmen auch dann, wenn ein Anwendungsfilter fehlen sollte. Die Browser-Tests laufen mit erzwungener Row-Level Security und prüfen, dass ein Mandant die Daten eines anderen nicht sieht.
+- **Zwei Betriebsarten.** Als SaaS mit vielen Firmen in einer Datenbank, oder als eigene Instanz für einen einzelnen Kunden.
+- **Stack:** Next.js 16 (App Router, Server Actions), React 19, TypeScript strict, Prisma 7, PostgreSQL 16, Tailwind CSS, Radix UI, Zod, Vitest, Playwright, GitHub Actions, Docker, Railway.
+
+Mehr dazu in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
+
+## Qualität und Sicherheit
+
+- **CI auf jedem Pull Request:** Lint ohne Warnungen, TypeScript strict, 423 Unit-Tests, 263 Integrationstests gegen eine wegwerfbare PostgreSQL, Produktionsbuild, 25 Browser-Tests, gitleaks und ein Docker-Smoke-Test der Demo.
+- **Sicherheit:** Passwörter und Codes mit scrypt, Rate-Limit beim Login, widerrufbare Sitzungen, Same-Origin-Prüfung für jede Änderung, private Dateien nur über eine geprüfte Route, Sicherheits-Header. Bedrohungsmodell und bekannte Restrisiken stehen offen in [SECURITY.md](SECURITY.md).
+- **Barrierefreiheit und Tempo:** Lighthouse mobil auf der Startseite 96 Performance, 100 Barrierefreiheit, 100 Best Practices, 100 SEO.
+- **Keine echten Daten.** Das Repository wurde als Schnappschuss ohne Git-Verlauf aus dem privaten Produktivsystem erstellt. Echte Firmen- und Personendaten wurden entfernt, die Demo-Daten sind selbst erfunden.
+
+## Selbst starten
+
+**Demo in drei Minuten** (Voraussetzung: Docker):
 
 ```bash
-docker compose up --build
+docker compose up --build                      # BaumdienstFlow-Demo
+docker compose down -v && DEMO_SEED_MODE=glasfaser docker compose up --build   # BauFlow-Demo
 ```
 
-Danach `http://localhost:3000/demo` öffnen. Der Container führt die Migrationen aus und legt die fiktive Firma **Baumdienst Musterstadt GmbH** an: 8 Mitarbeitende, 3 Baustellen, 152 Bäume mit Koordinaten, 5 Maschinen, ein Tagesplan und laufende Arbeitszeiten. Alle Namen, Adressen und Kennzeichen sind erfunden ([`prisma/seed-data.ts`](prisma/seed-data.ts)).
+Danach `http://localhost:3000/demo` öffnen. Für den Admin-Bereich vor dem Start `DEMO_ADMIN_PASSWORD='ein-langes-passwort'` setzen und unter `/admin-login` mit `admin@baumdienst-musterstadt.example` (bzw. `admin@glasfaserbau-beispieltal.example`) anmelden. `DEMO_SEED_MODE=bau` startet eine allgemeine Baufirma (Pflaster, Beschilderung, Entwässerung). Frische Daten: `docker compose exec app npm run demo:reset`.
 
-Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Wer zusätzlich den Admin-Bereich sehen will, setzt vor dem Start ein Passwort:
-
-```bash
-DEMO_ADMIN_PASSWORD='ein-langes-passwort' docker compose up --build
-# Login unter /admin-login mit admin@baumdienst-musterstadt.example
-```
-
-Frische Demo-Daten: `docker compose exec app npm run demo:reset`.
-
-Die BauFlow-Variante mit der fiktiven **Bau Beispielstadt GmbH** (Pflaster, Beschilderung, Entwässerung) startet mit einer frischen Datenbank:
+**Entwicklung** (Node.js 22, npm 10, PostgreSQL 16):
 
 ```bash
-docker compose down -v
-DEMO_SEED_MODE=bau docker compose up --build
-```
-
-`DEMO_SEED_MODE=glasfaser` legt stattdessen die **Glasfaserbau Beispieltal GmbH** an, einen Glasfaser-Tiefbau-Nachunternehmer mit Trassen im Gehweg, Hausanschlüssen, Spülbohrung, Spleißarbeiten, Maschinen und Werkzeuginventar.
-
-## Schnellstart (Entwicklung)
-
-Voraussetzungen: Node.js 22 (siehe `.nvmrc`), npm 10, Docker für eine lokale PostgreSQL.
-
-```bash
-docker run -d --name redionflow-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=redionflow -p 5432:5432 postgres:16
 cp .env.example .env
 npm ci
-npm run db:migrate
-npm run db:seed     # fiktive Demo-Daten
+npm run db:migrate && npm run db:seed
 npm run dev
 ```
 
-Den ersten Admin legst du über den gesicherten First-Boot-Flow oder den lokalen Demo-Bootstrap an (siehe `.env.example`).
-
-## Qualität
-
 ```bash
-npm run lint        # ESLint, 0 Warnungen erlaubt
-npm run typecheck   # TypeScript strict
-npm test            # Unit-Tests
-npm run build       # Produktionsbuild
+npm run lint && npm run typecheck && npm test && npm run build
+npm run test:integration:local   # braucht Docker
+npm run test:e2e:local           # braucht Docker
 ```
 
-Integrations- und E2E-Tests laufen in CI gegen eine frische, wegwerfbare PostgreSQL (`npm run test:integration:local`, `npm run test:e2e:local`). Jeder Push wird zusätzlich mit gitleaks auf Secrets geprüft.
+Betrieb, Auth-Details und Deployment: [docs/OPERATIONS.md](docs/OPERATIONS.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-### Lighthouse (mobil)
+## Wie dieses Projekt entsteht
 
-Gemessen am 26.10.2026 mit Lighthouse 12, Mobil-Profil (gedrosselte CPU und Netzwerk), gegen einen lokalen Produktionsbuild (`npm run build && npm start`).
-
-| Seite | Performance | Barrierefreiheit | Best Practices | SEO |
-|---|---|---|---|---|
-| Startseite `/` | 96 | 100 | 100 | 100 |
-| Zugang `/zugang` | 99 | 100 | 100 | 60¹ |
-| Admin-Login `/admin-login` | 98 | 100 | 100 | 60¹ |
-
-¹ Login-Seiten sind absichtlich `noindex`, damit sie nicht in Suchmaschinen landen.
+RediOnFlow wird von Redion Cekrezi entwickelt, mit KI-Agenten als Werkzeug: Der Mensch entscheidet, was gebaut wird, prüft jedes Ergebnis und gibt es frei; die Agenten schreiben Code, Tests und Dokumentation in kleinen Pull Requests, die nur mit grüner CI gemergt werden. Wie das konkret abläuft und wo die Grenzen liegen: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md).
 
 ## Dokumentation
 
-- [Betriebshandbuch](docs/OPERATIONS.md) – lokale Entwicklung, Auth, Tests, Deployment
-- [Architektur & SaaS](docs/SAAS_ARCHITECTURE.md), [Row-Level Security](docs/RLS.md), [CSP](docs/CSP.md)
-- [Architekturentscheidungen](docs/DECISIONS.md), [ADRs](docs/adr/)
-- [Sicherheit & Bedrohungsmodell](SECURITY.md)
+| Thema | Dokument |
+|---|---|
+| Wo das Projekt steht, was bisher passiert ist | [docs/PROJEKTSTAND.md](docs/PROJEKTSTAND.md) |
+| Was geprüft wurde und wie | [EVIDENCE.md](EVIDENCE.md) |
+| Architektur im Überblick | [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md), [SaaS-Architektur](docs/SAAS_ARCHITECTURE.md), [Row-Level Security](docs/RLS.md) |
+| Sicherheit | [SECURITY.md](SECURITY.md), [CSP](docs/CSP.md), [Sitzungen widerrufen](docs/SESSION_REVOCATION.md) |
+| Entscheidungen | [docs/DECISIONS.md](docs/DECISIONS.md), [ADRs](docs/adr/) |
+| Betrieb und Deployment | [docs/OPERATIONS.md](docs/OPERATIONS.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Arbeitsweise mit KI | [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md) |
+
+## Zusammenarbeit
+
+Interessant für Baumdienste, Bau-, Tiefbau- und Glasfaserbetriebe, die ihre Baustellen digital führen wollen, und für Partner, die einen Pilotbetrieb begleiten möchten. Kontakt über [GitHub](https://github.com/IamRedi).
+
+**Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
 
 ## Lizenz
 

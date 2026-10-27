@@ -77,9 +77,9 @@ function canvasMetrics(viewport: CanvasViewport, count: number) {
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
   const columnGap = mobile ? 166 : count > 9 ? 250 : 285;
-  // Mobile cards carry badges and a note, so rows need room to avoid overlap.
-  const rowGap = mobile ? 252 : 192;
-  const cardHeight = mobile ? 236 : 172;
+  // Cards carry badges and a note, so rows need room to avoid overlap.
+  const rowGap = mobile ? 252 : 224;
+  const cardHeight = mobile ? 236 : 204;
   const rows = Math.max(1, Math.ceil(Math.max(count, 1) / columns));
 
   return {
