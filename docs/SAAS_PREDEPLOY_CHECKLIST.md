@@ -34,7 +34,7 @@ short version — `docs/DEPLOY_SAAS_RUNBOOK.md` has the full step-by-step.
 
 ## Vercel
 
-- [ ] Repo `IamRedi/baumkalk` imported into a NEW Vercel project (not the demo)
+- [ ] Repo `IamRedi/redionflow` imported into a NEW Vercel project (not the demo)
 - [ ] Production branch set to `main`
 - [ ] `prod` branch marked as ignored (via Vercel git settings or `vercel.json`)
 - [ ] All env vars from `.env.saas.example` filled in

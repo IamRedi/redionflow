@@ -10,7 +10,7 @@ architectural background.
 
 ## 0. Prerequisites
 
-- GitHub repo access (`IamRedi/baumkalk`).
+- GitHub repo access (`IamRedi/redionflow`).
 - A Vercel account with the target team selected.
 - A Supabase account with billing plan appropriate for production
   (pooler + Storage require paid tier for production traffic).
@@ -66,7 +66,7 @@ that path is only for local development.
 
 ## 3. Vercel project
 
-3.1 Import the GitHub repo `IamRedi/baumkalk` into Vercel. Name the project
+3.1 Import the GitHub repo `IamRedi/redionflow` into Vercel. Name the project
     something distinct from any demo/dedicated projects (e.g. `redionflow-saas`).
 
 3.2 In **Project Settings → Git**:
