@@ -1,6 +1,6 @@
 # Workzone Offline Sync Plan
 
-Status: planned, not implemented yet.
+Status: first version implemented in the Workzone (browser queue in `src/lib/workzone/offline`, sync route `src/app/api/workzone/sync`, status bar). Not yet tested in the field with poor mobile coverage.
 
 ## Goal
 

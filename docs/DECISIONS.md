@@ -1,5 +1,7 @@
 # BaumdienstFlow / RediOnFlow - DECISIONS
 
+> Die Einträge sind chronologisch und nicht nachträglich geändert. Einträge vor dem 26.10.2026 stammen aus dem privaten Vorgänger *baumkalk*; Verweise auf `WORKLOG.md`, `HANDOFF.md`, PersonalFlow oder lokale Test-Admins gelten dort, nicht in diesem Repository. Den aktuellen Stand beschreibt [PROJEKTSTAND.md](PROJEKTSTAND.md).
+
 ## 2026-10-26 - Admins sign in with a password, workers keep their PIN
 
 - **Decision**: `/admin-login` takes e-mail + password instead of a 6-digit code. Admin passwords set in the app need 12+ characters; editing an admin with an empty password field keeps the current one. Workers and the display login keep 6-digit codes for fast sign-in on site.
