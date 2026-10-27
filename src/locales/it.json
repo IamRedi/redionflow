@@ -479,7 +479,7 @@
     "notEnoughConesMachine": "Coni non sufficienti sulla macchina. Disponibili:",
     "notEnoughConesSite": "Coni non sufficienti in cantiere. In cantiere:",
     "sessionLoginRequiredPrefix": "START/STOP della sessione richiede il login worker. Gli admin possono gestire alberi e attività senza sessione worker. Per START/STOP accedi come worker da",
-    "workerActive": "Worker attivo",
+    "workerActive": "Lavoratore attivo",
     "externalShort": "esterno",
     "workHere": "Lavora qui",
     "whenDidWorkStart": "Quando hai iniziato il lavoro?",
@@ -538,7 +538,7 @@
     "externalWorkerTitle": "Collaboratore esterno",
     "externalWorkerDescription": "Aggiungi aiutanti temporanei per questo cantiere.",
     "recentTasksTitle": "Ultime attività",
-    "recentTasksDescription": "Sola lettura per admin, live per Workzone.",
+    "recentTasksDescription": "Ultime attività aperte e completate.",
     "noTasksYet": "Ancora nessuna attività.",
     "manualTaskPermission": "Accedi come lavoratore o admin per aggiungere attività dal cantiere.",
     "manualTaskSavedBy": "Attività salvata da",
@@ -678,7 +678,9 @@
     "workingNow": "Al lavoro",
     "fiberTrench": "Tracciato fibra ottica",
     "fiberDrilling": "Perforazione orizzontale (HDD)",
-    "fiberHouseConnection": "Allacciamenti fibra"
+    "fiberHouseConnection": "Allacciamenti fibra",
+    "settingsFold": "Lingua e notifiche",
+    "recentShiftsFold": "Mostra ultimi turni"
   },
   "report": {
     "daily": "Report giornaliero",
@@ -1123,7 +1125,7 @@
     "newerWeek": "Settimana più recente",
     "previousWeek": "Settimana precedente",
     "topWorkersByHours": "Personale top per ore",
-    "topWorkersByHoursSub": "Sempre visibile per settimana e mese, con larghezza fissa come gli altri blocchi dashboard.",
+    "topWorkersByHoursSub": "Ore lavorate per dipendente.",
     "workerHoursSummary": "{count} persone / {hours} h",
     "workerHoursEmpty": "Ancora nessuna ora per questa vista.",
     "safetyStock": "Scorta sicurezza",

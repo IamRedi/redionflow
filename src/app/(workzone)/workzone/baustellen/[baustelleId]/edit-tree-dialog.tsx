@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { t } from "@/lib/i18n";
-import type { CompanyMode } from "@/lib/mode-config";
+import { getFeatures, type CompanyMode } from "@/lib/mode-config";
 import { editTreeItemAction } from "../../actions";
 
 import { TreeListItem, readTreeMeta } from "./tree-list-model";
@@ -24,6 +24,8 @@ export function EditTreeDialog({
 }) {
   const router = useRouter();
   const tx = (path: string) => t(path, lang, companyMode);
+  // Branch cuts and the extra-work surcharge only make sense for trees.
+  const showTreeFields = getFeatures(companyMode).trees;
   const [species, setSpecies] = useState(tree.species);
   const [diameter, setDiameter] = useState(String(tree.diameter));
   const initialMeta = readTreeMeta(tree.notes);
@@ -115,74 +117,78 @@ export function EditTreeDialog({
             />
           </div>
 
-          <div className="space-y-2 rounded-md border bg-muted/20 p-3">
-            <div className="text-xs font-medium">{tx("workzone.branchCutSection")}</div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium" htmlFor={`branch-over-10-${tree.id}`}>
-                  {tx("workzone.branchOver10")}
-                </label>
-                <input
-                  id={`branch-over-10-${tree.id}`}
-                  type="number"
-                  min="0"
-                  max="99"
-                  inputMode="numeric"
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  value={branchCutsOver10}
-                  onChange={(event) => setBranchCutsOver10(event.target.value)}
-                />
+          {showTreeFields ? (
+            <>
+              <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+                <div className="text-xs font-medium">{tx("workzone.branchCutSection")}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium" htmlFor={`branch-over-10-${tree.id}`}>
+                      {tx("workzone.branchOver10")}
+                    </label>
+                    <input
+                      id={`branch-over-10-${tree.id}`}
+                      type="number"
+                      min="0"
+                      max="99"
+                      inputMode="numeric"
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      value={branchCutsOver10}
+                      onChange={(event) => setBranchCutsOver10(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium" htmlFor={`branch-over-20-${tree.id}`}>
+                      {tx("workzone.branchOver20")}
+                    </label>
+                    <input
+                      id={`branch-over-20-${tree.id}`}
+                      type="number"
+                      min="0"
+                      max="99"
+                      inputMode="numeric"
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      value={branchCutsOver20}
+                      onChange={(event) => setBranchCutsOver20(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium" htmlFor={`branch-over-30-${tree.id}`}>
+                      {tx("workzone.branchOver30")}
+                    </label>
+                    <input
+                      id={`branch-over-30-${tree.id}`}
+                      type="number"
+                      min="0"
+                      max="99"
+                      inputMode="numeric"
+                      className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                      value={branchCutsOver30}
+                      onChange={(event) => setBranchCutsOver30(event.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium" htmlFor={`branch-over-20-${tree.id}`}>
-                  {tx("workzone.branchOver20")}
-                </label>
-                <input
-                  id={`branch-over-20-${tree.id}`}
-                  type="number"
-                  min="0"
-                  max="99"
-                  inputMode="numeric"
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  value={branchCutsOver20}
-                  onChange={(event) => setBranchCutsOver20(event.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium" htmlFor={`branch-over-30-${tree.id}`}>
-                  {tx("workzone.branchOver30")}
-                </label>
-                <input
-                  id={`branch-over-30-${tree.id}`}
-                  type="number"
-                  min="0"
-                  max="99"
-                  inputMode="numeric"
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  value={branchCutsOver30}
-                  onChange={(event) => setBranchCutsOver30(event.target.value)}
-                />
-              </div>
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium" htmlFor={`extra-work-${tree.id}`}>
-              {tx("workzone.extraWork")}
-            </label>
-            <select
-              id={`extra-work-${tree.id}`}
-              className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-              value={extraWork}
-              onChange={(event) => setExtraWork(event.target.value)}
-            >
-              <option value="">{tx("workzone.extraWorkNone")}</option>
-              <option value="25% +">{tx("workzone.extraWork25")}</option>
-              <option value="50% +">{tx("workzone.extraWork50")}</option>
-              <option value="75% +">{tx("workzone.extraWork75")}</option>
-              <option value="100% +">{tx("workzone.extraWork100")}</option>
-            </select>
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium" htmlFor={`extra-work-${tree.id}`}>
+                  {tx("workzone.extraWork")}
+                </label>
+                <select
+                  id={`extra-work-${tree.id}`}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  value={extraWork}
+                  onChange={(event) => setExtraWork(event.target.value)}
+                >
+                  <option value="">{tx("workzone.extraWorkNone")}</option>
+                  <option value="25% +">{tx("workzone.extraWork25")}</option>
+                  <option value="50% +">{tx("workzone.extraWork50")}</option>
+                  <option value="75% +">{tx("workzone.extraWork75")}</option>
+                  <option value="100% +">{tx("workzone.extraWork100")}</option>
+                </select>
+              </div>
+            </>
+          ) : null}
 
           <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             {tree.isEdited ? (

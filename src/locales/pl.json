@@ -303,7 +303,7 @@
     "externalWorkerTitle": "Pracownik zewnetrzny",
     "externalWorkerDescription": "Dodaj tymczasowych pomocnikow do tej budowy.",
     "recentTasksTitle": "Ostatnie zadania",
-    "recentTasksDescription": "Tylko odczyt dla admina, na zywo dla Workzone.",
+    "recentTasksDescription": "Ostatnie otwarte i zakończone zadania.",
     "noTasksYet": "Brak zadan.",
     "manualTaskPermission": "Zaloguj sie jako pracownik lub admin, aby dodawac zadania z budowy.",
     "manualTaskSavedBy": "Zadanie zapisywane przez",
@@ -360,7 +360,9 @@
     "workingNow": "Teraz pracuje",
     "fiberTrench": "Trasa światłowodu",
     "fiberDrilling": "Przewiert sterowany (HDD)",
-    "fiberHouseConnection": "Przyłącza światłowodowe"
+    "fiberHouseConnection": "Przyłącza światłowodowe",
+    "settingsFold": "Język i powiadomienia",
+    "recentShiftsFold": "Pokaż ostatnie zmiany"
   },
   "report": {
     "daily": "Raport dzienny",

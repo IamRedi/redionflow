@@ -533,7 +533,7 @@
     "externalWorkerTitle": "External worker",
     "externalWorkerDescription": "Add temporary helpers for this site.",
     "recentTasksTitle": "Recent tasks",
-    "recentTasksDescription": "Read-only for admin, live for Workzone.",
+    "recentTasksDescription": "Latest open and completed tasks.",
     "noTasksYet": "No tasks yet.",
     "manualTaskPermission": "Sign in as worker or admin to add tasks from the site.",
     "manualTaskSavedBy": "Task saved by",
@@ -670,7 +670,9 @@
     "workingNow": "Working now",
     "fiberTrench": "Fiber route (trench)",
     "fiberDrilling": "Directional drilling (HDD)",
-    "fiberHouseConnection": "Fiber house connections"
+    "fiberHouseConnection": "Fiber house connections",
+    "settingsFold": "Language & notifications",
+    "recentShiftsFold": "Show recent shifts"
   },
   "report": {
     "daily": "Daily report",
@@ -1098,7 +1100,7 @@
     "newerWeek": "Newer week",
     "previousWeek": "Previous week",
     "topWorkersByHours": "Top staff by hours",
-    "topWorkersByHoursSub": "Always visible for week and month, with a fixed card width like the other dashboard blocks.",
+    "topWorkersByHoursSub": "Hours worked per employee.",
     "workerHoursSummary": "{count} staff / {hours} h",
     "workerHoursEmpty": "No hours for this view yet.",
     "safetyStock": "Safety stock",

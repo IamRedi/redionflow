@@ -27,13 +27,24 @@
     "baustelleTypeFiberHouseConnection": "Lidhje fibre në shtëpi"
   },
   "report": {
-    "crownWidth": "Gjerësia / Masat"
+    "crownWidth": "Gjerësia / Masat",
+    "brandName": "BauFlow",
+    "species": "Detyra",
+    "diameter": "Sasia",
+    "work": "Statusi"
   },
   "form": {
     "quickStartTreeRemoval": "Fillim i shpejtë: detyrë standarde",
     "quickStartTreeRemovalSubmit": "Krijo detyrën standarde",
     "skilledWorker": "Punëtor i kualifikuar",
-    "titleExample": "p.sh. sinjalistikë oborri"
+    "titleExample": "p.sh. sinjalistikë oborri",
+    "machineCategory": {
+      "TRUCK": "Automjete / kamionë",
+      "AWP": "Platformë ngritëse",
+      "CHAINSAW": "Pajisje të vogla / vegla",
+      "CHIPPER": "Pajisje të tjera",
+      "OTHER": "Makineri ndërtimi"
+    }
   },
   "validation": {
     "standardTreeRemovalCreated": "Pozicioni standard për detyrën u krijua.",
@@ -61,7 +72,7 @@
     "confirmTreeUndo": "Të kthehet detyra {treeId}?",
     "collectSafetyPrompt": "Sa të mblidhen? (Detyra {treeId}, aktualisht {qty} në vend):",
     "targetSafetyPrompt": "Sasia e synuar në vend (Detyra {treeId}):",
-    "treeSummaryCompact": "{id} · {species} · {diameter}",
+    "treeSummaryCompact": "{id} · {species} · Sasia {diameter}",
     "extraTree": "Detyrë ekstra",
     "extraTreeTitle": "Shto detyrë ekstra",
     "extraTreeDescription": "Ruhet dukshëm si detyrë ekstra me shënim.",

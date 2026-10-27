@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { prisma } from "@/lib/db/prisma";
 import { getTranslator } from "@/lib/i18n";
+import { getCompanyMode } from "@/lib/db/company";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
-import { MACHINE_CATEGORY_OPTIONS, machineOptionLabel, type MachineCategoryCode } from "@/lib/machines/display";
+import { machineCategoryOptions, machineOptionLabel, type MachineCategoryCode } from "@/lib/machines/display";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 
 function cleanText(value: FormDataEntryValue | null) {
@@ -38,9 +39,9 @@ function machineCategoryLabel(category: MachineCategoryCode, t: (path: string) =
 export default async function MachineEditPage({ params }: { params: Promise<{ machineId: string }> }) {
   const companyProfileId = await requireAdminTenant();
   const { machineId } = await params;
-  const [machine, currentLang] = await Promise.all([prisma.machine.findFirst({ where: { id: machineId, companyProfileId } }), resolveRequestLanguage()]);
+  const [machine, currentLang, mode] = await Promise.all([prisma.machine.findFirst({ where: { id: machineId, companyProfileId } }), resolveRequestLanguage(), getCompanyMode()]);
   if (!machine) notFound();
-  const t = getTranslator(currentLang);
+  const t = getTranslator(currentLang, mode);
 
   async function save(formData: FormData) {
     "use server";
@@ -128,7 +129,7 @@ export default async function MachineEditPage({ params }: { params: Promise<{ ma
                 defaultValue={machine.category}
                 className="h-9 w-full rounded-md border bg-background px-3 text-sm"
               >
-                {MACHINE_CATEGORY_OPTIONS.map((c) => (
+                {machineCategoryOptions(mode, machine.category).map((c) => (
                   <option key={c.value} value={c.value}>
                     {machineCategoryLabel(c.value, t)}
                   </option>

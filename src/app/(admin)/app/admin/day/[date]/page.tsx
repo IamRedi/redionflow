@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { getCompanyMode } from "@/lib/db/company";
+import { getFeatures } from "@/lib/mode-config";
 import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import {
@@ -32,6 +33,7 @@ export default async function AdminOwnDayReportPage({
   if (!currentAdmin) notFound();
   const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
   const t = getTranslator(currentLang, mode);
+  const showTreeFields = getFeatures(mode).trees;
 
   const { date } = await params;
   const report = await getAdminDailyReport(currentAdmin.id, date);
@@ -137,8 +139,12 @@ export default async function AdminOwnDayReportPage({
                       <th className="border px-3 py-2 font-semibold print:border-black">{t("report.id")}</th>
                       <th className="border px-3 py-2 font-semibold print:border-black">{t("report.species")}</th>
                       <th className="border px-3 py-2 font-semibold print:border-black">{t("report.diameter")}</th>
-                      <th className="border px-3 py-2 font-semibold print:border-black">{t("report.crownWidth")}</th>
-                      <th className="border px-3 py-2 font-semibold print:border-black">{t("report.height")}</th>
+                      {showTreeFields ? (
+                        <>
+                          <th className="border px-3 py-2 font-semibold print:border-black">{t("report.crownWidth")}</th>
+                          <th className="border px-3 py-2 font-semibold print:border-black">{t("report.height")}</th>
+                        </>
+                      ) : null}
                       <th className="border px-3 py-2 font-semibold print:border-black">{t("report.note")}</th>
                       <th className="border px-3 py-2 font-semibold print:border-black">{t("report.halt")}</th>
                       <th className="border px-3 py-2 font-semibold print:border-black">{t("report.work")}</th>
@@ -153,8 +159,12 @@ export default async function AdminOwnDayReportPage({
                         </td>
                         <td className="border px-3 py-2 print:border-black">{tree.species || "-"}</td>
                         <td className="border px-3 py-2 print:border-black">{tree.diameter ?? "-"}</td>
-                        <td className="border px-3 py-2 print:border-black">{treeExtra(tree, ["crownWidth", "kronenbreite", "kronenBreite"])}</td>
-                        <td className="border px-3 py-2 print:border-black">{treeExtra(tree, ["height", "hoehe", "lartesi"])}</td>
+                        {showTreeFields ? (
+                          <>
+                            <td className="border px-3 py-2 print:border-black">{treeExtra(tree, ["crownWidth", "kronenbreite", "kronenBreite"])}</td>
+                            <td className="border px-3 py-2 print:border-black">{treeExtra(tree, ["height", "hoehe", "lartesi"])}</td>
+                          </>
+                        ) : null}
                         <td className="border px-3 py-2 print:border-black">{treeWorkerNote(tree)}</td>
                         <td className="border px-3 py-2 print:border-black">{treeHaltverbot(tree) ? "🅿️🚫" : "-"}</td>
                         <td className="border px-3 py-2 print:border-black">{treeAction(tree, currentLang)}</td>
