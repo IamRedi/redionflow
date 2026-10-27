@@ -68,6 +68,7 @@ README auf Deutsch und Englisch, Screenshots aus den Demos, Architekturbild, [Pr
 
 | Punkt | Warum offen |
 |---|---|
+| Row-Level Security auf alle Bereiche ausweiten | Policies sind angelegt, durchgesetzt mit eingeschränkter Rolle nur im Pilot für Baustellen und Tagesplan |
 | Content Security Policy blockierend schalten | Läuft im Report-Only-Modus, bis die Berichte ausgewertet sind |
 | Offline-Modus im Feld erproben | Die Warteschlange im Browser ist angelegt, ein Test mit schlechtem Netz auf der Baustelle fehlt |
 | Echten Virenscanner anbinden | Die Schnittstelle existiert, standardmäßig prüft sie nur die EICAR-Testdatei |
