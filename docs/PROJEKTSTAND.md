@@ -8,6 +8,7 @@ RediOnFlow ist eine lauffähige Betriebssoftware für Baumdienste (BaumdienstFlo
 
 | | |
 |---|---|
+| Produktwebsites | [BaumdienstFlow](https://www.baumdienstflow.de/) · [BauFlow](https://www.baumdienstflow.de/bauflow/) |
 | Live-Demos | [BaumdienstFlow](https://redionflow-production.up.railway.app/demo) · [BauFlow (Glasfaser-Tiefbau)](https://bauflow-production-1344.up.railway.app/demo) |
 | Hosting | Railway, Region EU West (Niederlande), je Demo eine eigene PostgreSQL, nächtlicher Reset um 02:00 UTC |
 | Umfang | rund 55.000 Zeilen TypeScript, 59 Datenbankmodelle, 49 Migrationen, rund 70 Seiten und API-Routen, 6 Sprachen |

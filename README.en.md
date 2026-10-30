@@ -13,12 +13,12 @@
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
-## Try it live
+## Product websites and live demos
 
-| Product | Demo | Fictitious company |
-|---|---|---|
-| BaumdienstFlow | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 employees, 3 job sites, 152 trees, 5 machines |
-| BauFlow | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
+| Product | Website | Demo | Fictitious company |
+|---|---|---|---|
+| BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 employees, 3 job sites, 152 trees, 5 machines |
+| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
 
 The `/demo` pages are read-only and need no login. All names, addresses, licence plates and companies are made up. Both demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
 
