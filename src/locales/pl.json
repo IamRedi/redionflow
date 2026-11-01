@@ -428,6 +428,9 @@
     "statusTodo": "otwarte",
     "statusDone": "gotowe",
     "statusBlocked": "zablokowane",
-    "workzoneDescription": "Podgląd na żywo (tylko odczyt) budów, ekip, floty i bieżącego stanu."
+    "workzoneDescription": "Podgląd na żywo (tylko odczyt) budów, ekip, floty i bieżącego stanu.",
+    "kidrahtTitle": "Wiedza firmy · KiDraht",
+    "kidrahtDescription": "Zasady i instruktaż dla tej budowy, zatwierdzone przez szefa. Pracownicy logują się PIN-em.",
+    "kidrahtOpen": "Otwórz instruktaż"
   }
 }

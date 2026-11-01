@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookOpenCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { getCompanyMode } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { kidrahtBriefingUrl, kidrahtDemoUrl } from "@/lib/kidraht-demo";
 import { isRecord, readLatLng } from "@/lib/workzone/site-json";
 import { WorkingBadge } from "@/app/(workzone)/workzone/working-badge";
 import { BaustelleMap } from "@/app/(workzone)/workzone/baustellen/[baustelleId]/baustelle-map";
@@ -21,6 +23,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   const { baustelleId } = await params;
   const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
   const tr = (key: string) => t(key, currentLang, mode);
+  const kidraht = mode === "baumdienst" ? kidrahtDemoUrl() : null;
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId },
     include: {
@@ -124,6 +127,27 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
         </Card>
 
         <div className="space-y-4">
+          {kidraht ? (
+            <Card className="border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-orange-300/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpenCheck className="size-5 text-teal-600 dark:text-teal-300" />
+                  {tr("demo.kidrahtTitle")}
+                </CardTitle>
+                <CardDescription>{tr("demo.kidrahtDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <a
+                  href={kidrahtBriefingUrl(kidraht)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-teal-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700"
+                >
+                  {tr("demo.kidrahtOpen")} ↗
+                </a>
+              </CardContent>
+            </Card>
+          ) : null}
           <Card>
             <CardHeader>
               <CardTitle>{tr("demo.liveCrewTitle")}</CardTitle>

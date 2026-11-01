@@ -1576,6 +1576,9 @@
     "statusTodo": "offen",
     "statusDone": "erledigt",
     "statusBlocked": "blockiert",
-    "workzoneDescription": "Schreibgeschützte Live-Ansicht von Baustellen, Teams, Fuhrpark und aktuellem Stand."
+    "workzoneDescription": "Schreibgeschützte Live-Ansicht von Baustellen, Teams, Fuhrpark und aktuellem Stand.",
+    "kidrahtTitle": "Firmenwissen · KiDraht",
+    "kidrahtDescription": "Regeln und Unterweisung für diese Baustelle, freigegeben vom Chef. Mitarbeiter melden sich mit PIN an.",
+    "kidrahtOpen": "Unterweisung öffnen"
   }
 }
