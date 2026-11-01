@@ -9,7 +9,7 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[Deutsche Version](README.md)** · **As of 27 October 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **As of 1 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
@@ -21,6 +21,8 @@ The user interface, the demo data and most documents are in German, because the 
 | BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
 
 The `/demo` pages are read-only and need no login. All names, addresses, licence plates and companies are made up. Both demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
+
+Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
 
 ## What is built today
 
