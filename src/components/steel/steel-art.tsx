@@ -274,7 +274,53 @@ function Coating({ animate }: { animate: boolean }) {
   );
 }
 
-const PHASE_SCENES: Record<SteelPhaseKey, (props: { animate: boolean }) => React.ReactElement> = {
+function Laser({ animate }: { animate: boolean }) {
+  return (
+    <g>
+      <rect x="12" y="84" width="136" height="6" fill={C.steelDark} />
+      <rect x="18" y="90" width="5" height="10" fill={C.steelDark} />
+      <rect x="137" y="90" width="5" height="10" fill={C.steelDark} />
+      <rect x="16" y="76" width="128" height="8" fill={C.steelLight} />
+      {/* Cut contour already traced on the plate */}
+      <path d="M40 80 h28 a4 4 0 0 0 4 -4" fill="none" stroke={C.steelDark} strokeWidth="1.2" strokeDasharray="2 2" opacity="0.7" />
+      <rect x="10" y="14" width="140" height="7" rx="2" fill={C.steelDark} />
+      <g className={cls(animate, "sa-roll")}>
+        <rect x="58" y="21" width="22" height="18" rx="3" fill={C.orange} />
+        <polygon points="64,39 74,39 71,50 67,50" fill={C.steel} />
+        <line x1="69" y1="50" x2="69" y2="76" stroke="#ef4444" strokeWidth="1.8" className={cls(animate, "sa-glow")} />
+        <circle cx="69" cy="77" r="4.5" fill={C.spark} opacity="0.55" className={cls(animate, "sa-glow")} />
+        <line x1="69" y1="77" x2="62" y2="72" stroke={C.spark} strokeWidth="1.2" className={cls(animate, "sa-spark")} />
+        <line x1="69" y1="77" x2="77" y2="73" stroke={C.spark} strokeWidth="1.2" className={cls(animate, "sa-spark2")} />
+      </g>
+    </g>
+  );
+}
+
+function Final({ animate }: { animate: boolean }) {
+  return (
+    <g>
+      <Ground />
+      {[0, 1, 2].map((row) => (
+        <g key={row}>
+          <rect x={30 + row * 4} y={86 - row * 12} width={92 - row * 8} height="10" fill={C.primer} stroke={C.steelDark} strokeWidth="0.8" />
+          <rect x={30 + row * 4} y={86 - row * 12} width={92 - row * 8} height="2.5" fill="#000" opacity="0.15" />
+        </g>
+      ))}
+      <rect x="40" y="96" width="8" height="4" fill={C.ground} />
+      <rect x="104" y="96" width="8" height="4" fill={C.ground} />
+      {/* Ready tag */}
+      <g className={cls(animate, "sa-bob")}>
+        <line x1="118" y1="62" x2="128" y2="40" stroke={C.steelDark} strokeWidth="1" />
+        <rect x="120" y="22" width="30" height="20" rx="4" fill="#16a34a" />
+        <path d="M128 32 l4 4 l8 -8" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </g>
+  );
+}
+
+export type SteelArtKey = SteelPhaseKey | "laser" | "assembly" | "final";
+
+const PHASE_SCENES: Record<SteelArtKey, (props: { animate: boolean }) => React.ReactElement> = {
   foundation: Foundation,
   columns: Columns,
   trusses: Trusses,
@@ -283,9 +329,12 @@ const PHASE_SCENES: Record<SteelPhaseKey, (props: { animate: boolean }) => React
   drilling: Drilling,
   welding: Welding,
   coating: Coating,
+  laser: Laser,
+  assembly: Welding,
+  final: Final,
 };
 
-export function SteelPhaseArt({ phase, animate = true, className }: { phase: SteelPhaseKey; animate?: boolean; className?: string }) {
+export function SteelPhaseArt({ phase, animate = true, className }: { phase: SteelArtKey; animate?: boolean; className?: string }) {
   const Scene = PHASE_SCENES[phase];
   return (
     <svg viewBox="0 0 160 120" className={className} role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">

@@ -20,7 +20,10 @@ import { WorkzoneCreateBaustelleModal } from "./workzone-create-baustelle-modal"
 import { WorkzoneMissionControl } from "./workzone-mission-control";
 import { SteelProgressRing, SteelSiteArt } from "@/components/steel/steel-art";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
-import { isSteelSiteType, STEEL_SITE_TYPES } from "@/lib/workzone/steel-phases";
+import { isSteelSiteType } from "@/lib/workzone/steel-phases";
+import { withTenantContext } from "@/lib/db/tenant-context";
+import { readFactorySteps } from "@/lib/factory/production";
+import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -92,14 +95,14 @@ export default async function WorkzoneHomePage() {
     },
     take: 90,
   }));
-  // Steel sites get their work phases before the counters below read them.
+  // Steel assembly sites get their work phases before the counters below read them.
   const steelSites = await prisma.baustelle.findMany({
-    where: { companyProfileId: company.id, status: "active", type: { in: [...STEEL_SITE_TYPES] } },
+    where: { companyProfileId: company.id, status: "active", type: "STEEL_ASSEMBLY" },
     select: { id: true, type: true },
     take: 50,
   });
   await Promise.all(steelSites.map((site) => ensureSteelPhases(site)));
-  const [baustellen, coneMoves] = await Promise.all([
+  const [allSites, coneMoves] = await Promise.all([
     withPilotDbContext(company.id, tx => tx.baustelle.findMany({
       // Inactive sites (finished projects, archive) stay in the admin list only;
       // the field board shows what people can work on today.
@@ -139,6 +142,44 @@ export default async function WorkzoneHomePage() {
       orderBy: { createdAt: "asc" },
     }),
   ]);
+
+  // The factory (a STEEL_WORKSHOP entry) is not a construction site: it gets its
+  // own production panel below the board and never appears as a site card.
+  const factorySite = allSites.find((site) => site.type === "STEEL_WORKSHOP") ?? null;
+  const baustellen = allSites.filter((site) => site.type !== "STEEL_WORKSHOP");
+  const factoryBatches: FactoryBatchView[] = factorySite
+    ? (
+        await withTenantContext(company.id, (tx) =>
+          tx.productionBatch.findMany({
+            where: { companyProfileId: company.id },
+            orderBy: { createdAt: "asc" },
+            take: 200,
+            select: {
+              id: true,
+              title: true,
+              quantity: true,
+              unit: true,
+              steps: true,
+              baustelle: { select: { id: true, name: true } },
+              events: {
+                orderBy: { createdAt: "desc" },
+                take: 30,
+                select: { id: true, action: true, stepKey: true, note: true, actorName: true, createdAt: true },
+              },
+            },
+          }),
+        )
+      ).map((batch) => ({
+        id: batch.id,
+        title: batch.title,
+        quantity: batch.quantity,
+        unit: batch.unit,
+        siteId: batch.baustelle.id,
+        siteName: batch.baustelle.name,
+        steps: readFactorySteps(batch.steps),
+        events: batch.events.map((event) => ({ ...event, createdAt: event.createdAt.toISOString() })),
+      }))
+    : [];
 
   const coneQtyByBaustelle = new Map<string, number>();
   for (const movement of coneMoves) {
@@ -323,6 +364,17 @@ export default async function WorkzoneHomePage() {
           ) : null
         }
       />
+
+      {factorySite ? (
+        <FactoryPanel
+          factoryName={factorySite.name}
+          factoryAddress={(factorySite.address ?? "").trim()}
+          batches={factoryBatches}
+          sites={baustellen.map((site) => ({ id: site.id, name: site.name }))}
+          canManage={Boolean(admin)}
+          canEdit={Boolean(admin || worker)}
+        />
+      ) : null}
 
       <div className="grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {baustellen.map((b) => {

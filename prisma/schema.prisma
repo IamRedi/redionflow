@@ -266,6 +266,8 @@ model CompanyProfile {
   machines                  Machine[]
   workers                   Worker[]
   inventoryItems            CompanyInventoryItem[]
+  productionBatches         ProductionBatch[]
+  productionEvents          ProductionEvent[]
   inventoryCatalog          CompanyInventoryCatalog[]
   inventoryMovements        InventoryMovement[]
   inventoryAssetMovements   InventoryAssetMovement[]
@@ -898,6 +900,7 @@ model Baustelle {
   canvasMobileY         Int?
 
   treeItems                 TreeItem[]
+  productionBatches         ProductionBatch[]
   workLogs                  WorkLog[]
   workSessions              WorkSession[]
   manualTasks               ManualTask[]
@@ -1345,4 +1348,48 @@ model LoginAttempt {
 
   @@unique([scope, clientKey])
   @@index([updatedAt])
+}
+
+/// Factory production (BauFlow "Stahlbau mit Produktion"): a group of
+/// material processed in the factory for one construction site.
+model ProductionBatch {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  title            String
+  quantity         Float?
+  unit             String         @default("t")
+  /// Ordered line: [{ key, status, note, by, at }]
+  steps            Json
+  readyAt          DateTime?
+  createdByName    String         @default("")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  events           ProductionEvent[]
+
+  @@index([companyProfileId])
+  @@index([baustelleId])
+}
+
+/// Append-only history of every change on a production batch.
+model ProductionEvent {
+  id               String          @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile  @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  batchId          String
+  batch            ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  stepKey          String?
+  action           String
+  fromStatus       String?
+  toStatus         String?
+  note             String?
+  actorName        String
+  actorUserId      String?
+  actorWorkerId    String?
+  createdAt        DateTime        @default(now())
+
+  @@index([batchId])
+  @@index([companyProfileId])
 }

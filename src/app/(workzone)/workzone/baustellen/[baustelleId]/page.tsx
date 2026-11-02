@@ -1,6 +1,6 @@
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
@@ -25,6 +25,8 @@ import { SafetyEquipmentPanel } from "./safety-equipment-panel";
 import { SteelPhaseBoard } from "./steel-phase-board";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
+import { withTenantContext } from "@/lib/db/tenant-context";
+import { batchState, currentStepIndex, formatQuantity, readFactorySteps, readySummary } from "@/lib/factory/production";
 import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhasesFor } from "@/lib/workzone/steel-phases";
 
 export default async function BaustelleDetailPage({
@@ -46,6 +48,8 @@ export default async function BaustelleDetailPage({
     where: { id: baustelleId, companyProfileId: currentCompanyId },
     select: { id: true, type: true },
   });
+  // The factory has its own production panel on the field board.
+  if (siteHead?.type === "STEEL_WORKSHOP") redirect("/workzone#fabrika");
   if (siteHead && isSteelSiteType(siteHead.type)) await ensureSteelPhases(siteHead);
   const baustelle = await withPilotDbContext(currentCompanyId, tx => tx.baustelle.findFirst({
     where: { id: baustelleId, companyProfileId: currentCompanyId },
@@ -209,6 +213,19 @@ export default async function BaustelleDetailPage({
     : [];
   const steelPct = steelPhases.length > 0 ? Math.round((steelPhases.filter((p) => p.status === "done").length / steelPhases.length) * 100) : 0;
 
+  const factoryMaterial = isSteel
+    ? (
+        await withTenantContext(currentCompanyId, (tx) =>
+          tx.productionBatch.findMany({
+            where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, title: true, quantity: true, unit: true, steps: true },
+          }),
+        )
+      ).map((batch) => ({ ...batch, steps: readFactorySteps(batch.steps) }))
+    : [];
+  const materialSummary = readySummary(factoryMaterial);
+
   if (isSteel) {
     return (
       <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
@@ -249,6 +266,64 @@ export default async function BaustelleDetailPage({
         />
 
         <SteelPhaseBoard phases={steelPhases} canEdit={Boolean(currentActorView)} />
+
+        {factoryMaterial.length > 0 ? (
+          <section className="rounded-2xl border bg-card p-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-base font-semibold">{t("factory.siteSection", currentLang)}</h2>
+              <span
+                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                  materialSummary.ready === materialSummary.total
+                    ? "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300"
+                    : "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                }`}
+              >
+                {t("factory.siteSummary", currentLang).replace("{ready}", String(materialSummary.ready)).replace("{total}", String(materialSummary.total))}
+              </span>
+            </div>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {factoryMaterial.map((batch) => {
+                const state = batchState(batch.steps);
+                const current = batch.steps[currentStepIndex(batch.steps)];
+                return (
+                  <li
+                    key={batch.id}
+                    className={`rounded-xl border-2 p-3 ${
+                      state === "ready" ? "border-green-500/50 bg-green-500/[0.06]" : state === "blocked" ? "border-amber-500/60" : "border-border"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-semibold">{batch.title}</span>
+                      {batch.quantity !== null ? (
+                        <span className="shrink-0 text-sm font-semibold tabular-nums">
+                          {formatQuantity(batch.quantity, currentLang)} {t(`factory.units.${batch.unit}`, currentLang)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-1 text-xs font-medium">
+                      {state === "ready" ? (
+                        <span className="text-green-700 dark:text-green-300">✓ {t("factory.ready", currentLang)}</span>
+                      ) : current ? (
+                        <span className={state === "blocked" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}>
+                          {t(`factory.steps.${current.key}`, currentLang)} ·{" "}
+                          {current.status === "active" ? t("factory.inProgress", currentLang) : current.status === "blocked" ? `${t("factory.stepBlock", currentLang)}${current.note ? `: ${current.note}` : ""}` : t("factory.waiting", currentLang)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex gap-1" aria-hidden="true">
+                      {batch.steps.map((step) => (
+                        <span
+                          key={step.key}
+                          className={`h-1.5 flex-1 rounded-full ${step.status === "done" ? "bg-green-500" : step.status === "active" ? "bg-orange-500" : step.status === "blocked" ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"}`}
+                        />
+                      ))}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
 
         {baustelle.description ? (
           <details className="rounded-2xl border bg-card">
