@@ -1478,6 +1478,7 @@
     "workzoneDescription": "Pamje live vetëm për lexim e kantiereve, ekipeve, flotës dhe gjendjes aktuale.",
     "kidrahtTitle": "Dija e firmës · KiDraht",
     "kidrahtDescription": "Rregullat dhe udhëzimi për këtë kantier, të miratuara nga shefi. Punëtorët hyjnë me PIN.",
-    "kidrahtOpen": "Hap udhëzimin"
+    "kidrahtOpen": "Hap udhëzimin",
+    "kidrahtNewTab": "Hape në skedë të re"
   }
 }

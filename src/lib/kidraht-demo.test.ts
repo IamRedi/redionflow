@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { kidrahtBriefingUrl, kidrahtDemoUrl } from "./kidraht-demo";
+import { kidrahtAppUrl, kidrahtBriefingUrl, kidrahtDemoUrl } from "./kidraht-demo";
 
 describe("kidrahtDemoUrl", () => {
   it("defaults to the Musterstadt company in KiDraht", () => {
@@ -14,5 +14,13 @@ describe("kidrahtDemoUrl", () => {
   });
   it("opens the briefings tab", () => {
     expect(kidrahtBriefingUrl("https://k.test/f/a")).toBe("https://k.test/f/a#briefing");
+  });
+});
+
+describe("kidrahtAppUrl", () => {
+  it("is hidden until the company sets its own link", () => {
+    expect(kidrahtAppUrl({})).toBeNull();
+    expect(kidrahtAppUrl({ KIDRAHT_URL: "https://k.test/f/firma/" })).toBe("https://k.test/f/firma");
+    expect(kidrahtAppUrl({ KIDRAHT_URL: "http://evil.test" })).toBeNull();
   });
 });

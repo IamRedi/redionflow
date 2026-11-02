@@ -40,6 +40,7 @@ const CSP_REPORT_ONLY = [
   "connect-src 'self' https: wss:",
   "media-src 'self' data: blob:",
   "worker-src 'self' blob:",
+  "frame-src 'self' https:",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpenCheck, Bot, Home, LayoutDashboard } from "lucide-react";
+import { Bot, Home, LayoutDashboard } from "lucide-react";
 
 import { AppBrand } from "@/components/branding/AppBrand";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -8,6 +8,7 @@ import { t } from "@/lib/i18n";
 import type { CompanyMode } from "@/lib/mode-config";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { kidrahtDemoUrl } from "@/lib/kidraht-demo";
+import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { DemoReadonlyBadge } from "./demo-readonly-badge";
 
 type DemoWorker = {
@@ -40,6 +41,7 @@ export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mod
               <Bot className="size-3.5" />
               AI
             </span>
+            {kidraht ? <KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle", currentLang)} /> : null}
             <div className="grid gap-1">
               <Link
                 href="/demo/workzone"
@@ -57,18 +59,6 @@ export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mod
               >
                 <LayoutDashboard className="size-4" />
               </Link>
-              {kidraht ? (
-                <a
-                  href={kidraht}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={t("demo.kidrahtTitle", currentLang)}
-                  aria-label={t("demo.kidrahtTitle", currentLang)}
-                  className="inline-flex size-8 items-center justify-center rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-700 shadow-sm transition hover:bg-teal-500/20 dark:text-teal-300"
-                >
-                  <BookOpenCheck className="size-4" />
-                </a>
-              ) : null}
               <LanguageSwitcher />
             </div>
           </div>

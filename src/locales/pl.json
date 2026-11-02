@@ -431,6 +431,7 @@
     "workzoneDescription": "Podgląd na żywo (tylko odczyt) budów, ekip, floty i bieżącego stanu.",
     "kidrahtTitle": "Wiedza firmy · KiDraht",
     "kidrahtDescription": "Zasady i instruktaż dla tej budowy, zatwierdzone przez szefa. Pracownicy logują się PIN-em.",
-    "kidrahtOpen": "Otwórz instruktaż"
+    "kidrahtOpen": "Otwórz instruktaż",
+    "kidrahtNewTab": "Otwórz w nowej karcie"
   }
 }
