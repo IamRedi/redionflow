@@ -8,8 +8,8 @@ import { t } from "@/lib/i18n";
 import type { CompanyMode } from "@/lib/mode-config";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { kidrahtDemoUrl } from "@/lib/kidraht-demo";
+import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { DemoReadonlyBadge } from "./demo-readonly-badge";
-import { KidrahtLauncher } from "./kidraht-launcher";
 
 type DemoWorker = {
   id: string;
@@ -41,6 +41,7 @@ export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mod
               <Bot className="size-3.5" />
               AI
             </span>
+            {kidraht ? <KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle", currentLang)} /> : null}
             <div className="grid gap-1">
               <Link
                 href="/demo/workzone"
@@ -58,15 +59,6 @@ export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mod
               >
                 <LayoutDashboard className="size-4" />
               </Link>
-              {kidraht ? (
-                <KidrahtLauncher
-                  variant="icon"
-                  url={kidraht}
-                  label={t("demo.kidrahtTitle", currentLang)}
-                  closeLabel={t("demo.kidrahtClose", currentLang)}
-                  newTabLabel={t("demo.kidrahtNewTab", currentLang)}
-                />
-              ) : null}
               <LanguageSwitcher />
             </div>
           </div>
