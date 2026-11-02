@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CalendarDays, CalendarRange } from "lucide-react";
 
 type ReportPeriodPickerProps = {
   mode: "worker" | "admin";
@@ -35,23 +34,28 @@ export function ReportPeriodPicker({
   const router = useRouter();
   const [value, setValue] = useState(initialValue);
 
-  function go() {
-    const href = buildHref(mode, reportType, value, workerId);
-    if (!href || !value) return;
+  function go(next: string) {
+    const href = buildHref(mode, reportType, next, workerId);
+    if (!href || !next) return;
     router.push(href);
   }
 
+  // Picking a date opens the report at once: no extra button.
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Input
+    <label className="inline-flex h-9 min-w-0 items-center gap-2 rounded-full border bg-card pl-3 pr-1 text-xs font-medium text-muted-foreground transition focus-within:border-primary hover:border-primary/40">
+      {reportType === "day" ? <CalendarDays className="size-4 text-primary" /> : <CalendarRange className="size-4 text-primary" />}
+      <span className="sr-only">{buttonLabel}</span>
+      <input
         type={reportType === "day" ? "date" : "month"}
         value={value}
-        onChange={(event) => setValue(event.currentTarget.value)}
-        className="h-9 w-auto min-w-36"
+        aria-label={buttonLabel}
+        onChange={(event) => {
+          const next = event.currentTarget.value;
+          setValue(next);
+          go(next);
+        }}
+        className="h-8 min-w-0 flex-1 rounded-full bg-transparent pr-2 text-sm text-foreground outline-none [color-scheme:light] dark:[color-scheme:dark]"
       />
-      <Button type="button" variant="outline" size="sm" onClick={go} disabled={!value}>
-        {buttonLabel}
-      </Button>
-    </div>
+    </label>
   );
 }

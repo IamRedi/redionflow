@@ -714,7 +714,14 @@
     "settingsFold": "Sprache & Benachrichtigungen",
     "recentShiftsFold": "Letzte Schichten anzeigen",
     "steelWorkshop": "Stahlbau-Werkstatt",
-    "steelAssembly": "Stahlbau-Montage"
+    "steelAssembly": "Stahlbau-Montage",
+    "startShort": "Start",
+    "stopShort": "Stopp",
+    "addDocumentShort": "Hinzufügen",
+    "tileToday": "Heute",
+    "tileMonth": "Monat",
+    "tileVacation": "Urlaub",
+    "moreAboutMe": "Daten, Kleidung und Einstellungen"
   },
   "report": {
     "brandName": "Baumdienst Flow",

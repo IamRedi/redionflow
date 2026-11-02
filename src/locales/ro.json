@@ -368,7 +368,14 @@
     "settingsFold": "Limbă și notificări",
     "recentShiftsFold": "Arată turele recente",
     "steelWorkshop": "Atelier construcții metalice",
-    "steelAssembly": "Montaj pe șantier"
+    "steelAssembly": "Montaj pe șantier",
+    "startShort": "Start",
+    "stopShort": "Stop",
+    "addDocumentShort": "Adaugă",
+    "tileToday": "Azi",
+    "tileMonth": "Luna",
+    "tileVacation": "Concediu",
+    "moreAboutMe": "Date, îmbrăcăminte și setări"
   },
   "report": {
     "daily": "Raport zilnic",

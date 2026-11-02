@@ -367,7 +367,14 @@
     "settingsFold": "Język i powiadomienia",
     "recentShiftsFold": "Pokaż ostatnie zmiany",
     "steelWorkshop": "Warsztat konstrukcji stalowych",
-    "steelAssembly": "Montaż na budowie"
+    "steelAssembly": "Montaż na budowie",
+    "startShort": "Start",
+    "stopShort": "Stop",
+    "addDocumentShort": "Dodaj",
+    "tileToday": "Dziś",
+    "tileMonth": "Miesiąc",
+    "tileVacation": "Urlop",
+    "moreAboutMe": "Dane, odzież i ustawienia"
   },
   "report": {
     "daily": "Raport dzienny",

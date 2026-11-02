@@ -685,7 +685,14 @@
     "settingsFold": "Lingua e notifiche",
     "recentShiftsFold": "Mostra ultimi turni",
     "steelWorkshop": "Officina carpenteria",
-    "steelAssembly": "Montaggio in cantiere"
+    "steelAssembly": "Montaggio in cantiere",
+    "startShort": "Avvia",
+    "stopShort": "Stop",
+    "addDocumentShort": "Aggiungi",
+    "tileToday": "Oggi",
+    "tileMonth": "Mese",
+    "tileVacation": "Ferie",
+    "moreAboutMe": "Dati, abbigliamento e impostazioni"
   },
   "report": {
     "daily": "Report giornaliero",

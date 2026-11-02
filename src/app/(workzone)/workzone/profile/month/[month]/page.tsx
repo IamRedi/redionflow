@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -52,10 +53,11 @@ export default async function MonthlyReportPage({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto max-w-6xl space-y-4 print:max-w-none print:text-black">
       <div className="flex items-center justify-between gap-2 print:hidden">
-        <Button asChild variant="outline">
-          <Link href="/workzone/profile">{t("report.back")}</Link>
-        </Button>
-        <div className="flex flex-wrap items-center gap-2">
+        <Link href="/workzone/profile" title={t("report.back")} aria-label={t("report.back")} className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
+          <ArrowLeft className="size-4" />
+          <span className="hidden sm:inline">{t("report.back")}</span>
+        </Link>
+        <div className="flex items-center gap-1.5">
           <ReportPeriodPicker mode="worker" reportType="month" initialValue={month} buttonLabel={t("report.showMonth")} />
           <PrintButton />
         </div>

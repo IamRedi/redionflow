@@ -688,7 +688,14 @@
     "documentFallback": "Dokument",
     "inventoryStatusPrivate": "PRIVAT",
     "inventoryStatusActive": "AKTIV",
-    "inventoryPrivate": "Privat"
+    "inventoryPrivate": "Privat",
+    "startShort": "Nis",
+    "stopShort": "Ndalo",
+    "addDocumentShort": "Shto",
+    "tileToday": "Sot",
+    "tileMonth": "Muaji",
+    "tileVacation": "Pushime",
+    "moreAboutMe": "Të dhënat, veshjet dhe cilësimet"
   },
   "report": {
     "daily": "Raporti ditor",

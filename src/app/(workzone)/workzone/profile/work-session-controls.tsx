@@ -33,6 +33,25 @@ function defaultBreakMinutes(startIso: string, endLocal: string) {
   return rawHours > 4 ? 30 : 0;
 }
 
+/** Time since the shift started, ticking once a minute. */
+function LiveClock({ startIso, paused }: { startIso: string; paused: boolean }) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const id = window.setInterval(tick, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const minutes = now === null ? 0 : Math.max(0, Math.floor((now - new Date(startIso).getTime()) / 60_000));
+  const label = `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
+  return (
+    <span className="inline-flex h-8 items-center gap-1.5 rounded-full border bg-card px-3 font-mono text-sm font-semibold tabular-nums">
+      <span className={`size-2 rounded-full ${paused ? "bg-amber-500" : "animate-pulse bg-green-500"}`} />
+      {label}
+    </span>
+  );
+}
+
 export function WorkSessionControls({
   workerId,
   workerPhoneGpsEnabled,
@@ -165,31 +184,39 @@ export function WorkSessionControls({
 
   return (
     <div className="space-y-3">
+      {/* Two small buttons the crew uses every day: start and stop. */}
       <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={openStart}
+          disabled={isPending || Boolean(activeSession)}
+          aria-label={t("workzone.startWork", currentLang)}
+          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-green-600 pl-3 pr-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 active:scale-95 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+        >
+          <Play className="size-4 fill-current" /> {t("workzone.startShort", currentLang)}
+        </button>
+        <button
+          type="button"
+          onClick={openStop}
+          disabled={isPending || !activeSession}
+          aria-label={t("workzone.stopWork", currentLang)}
+          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-red-600 pl-3 pr-4 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 active:scale-95 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+        >
+          <Square className="size-3.5 fill-current" /> {t("workzone.stopShort", currentLang)}
+        </button>
         {activeSession ? (
-          <>
-            <Button type="button" variant={activeSession.isPaused ? "default" : "outline"} onClick={togglePause} disabled={isPending}>
-              {activeSession.isPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
-              {activeSession.isPaused ? t("workzone.endPause", currentLang) : t("workzone.startPause", currentLang)}
-            </Button>
-            <Button type="button" variant="destructive" onClick={openStop} disabled={isPending}>
-              <Square className="size-4" />
-              {t("workzone.stopWork", currentLang)}
-            </Button>
-          </>
-        ) : (
-          <Button type="button" onClick={openStart} disabled={isPending}>
-            <Play className="size-4" />
-            {t("workzone.startWork", currentLang)}
-          </Button>
-        )}
-        <span className="text-sm text-muted-foreground">
-          {activeSession?.isPaused
-            ? t("workzone.pauseStatusOn", currentLang)
-            : activeSession
-              ? t("workzone.liveStatusOn", currentLang)
-              : t("workzone.liveStatusOff", currentLang)}
-        </span>
+          <button
+            type="button"
+            onClick={togglePause}
+            disabled={isPending}
+            title={activeSession.isPaused ? t("workzone.endPause", currentLang) : t("workzone.startPause", currentLang)}
+            aria-label={activeSession.isPaused ? t("workzone.endPause", currentLang) : t("workzone.startPause", currentLang)}
+            className={`grid size-10 place-items-center rounded-full border transition active:scale-95 ${activeSession.isPaused ? "border-amber-500 bg-amber-500/15 text-amber-600" : "bg-card text-muted-foreground hover:text-foreground"}`}
+          >
+            {activeSession.isPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
+          </button>
+        ) : null}
+        {activeSession ? <LiveClock startIso={activeSession.startTime} paused={activeSession.isPaused} /> : null}
       </div>
 
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}

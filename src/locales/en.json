@@ -677,7 +677,14 @@
     "settingsFold": "Language & notifications",
     "recentShiftsFold": "Show recent shifts",
     "steelWorkshop": "Steel workshop",
-    "steelAssembly": "Steel assembly on site"
+    "steelAssembly": "Steel assembly on site",
+    "startShort": "Start",
+    "stopShort": "Stop",
+    "addDocumentShort": "Add",
+    "tileToday": "Today",
+    "tileMonth": "Month",
+    "tileVacation": "Holidays",
+    "moreAboutMe": "Details, clothing and settings"
   },
   "report": {
     "daily": "Daily report",
