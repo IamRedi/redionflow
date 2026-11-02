@@ -24,7 +24,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   const { baustelleId } = await params;
   const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
   const tr = (key: string) => t(key, currentLang, mode);
-  const kidraht = mode === "baumdienst" ? kidrahtDemoUrl() : null;
+  const kidraht = kidrahtDemoUrl(mode);
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId },
     include: {

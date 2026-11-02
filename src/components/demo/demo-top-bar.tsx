@@ -25,7 +25,7 @@ type DemoWorker = {
 
 export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mode?: CompanyMode }) {
   const currentLang = await resolveRequestLanguage();
-  const kidraht = mode === "baumdienst" ? kidrahtDemoUrl() : null;
+  const kidraht = kidrahtDemoUrl(mode);
 
   return (
     <div className="mx-auto grid max-w-6xl gap-2 px-5 pb-1 pt-8">

@@ -10,7 +10,6 @@ import { getCurrentWorker } from "@/lib/workzone/worker-session";
 export default async function WorkzoneKidrahtPage() {
   const [admin, worker, currentLang] = await Promise.all([getCurrentAdmin(), getCurrentWorker(), resolveRequestLanguage()]);
   if (!admin && !worker) redirect("/workzone/login");
-  // BaumdienstFlow and BauFlow alike: shown once this installation has its KiDraht link (KIDRAHT_URL).
   const url = kidrahtAppUrl();
   if (!url) notFound();
   return (

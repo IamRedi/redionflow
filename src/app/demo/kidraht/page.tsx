@@ -8,7 +8,7 @@ import { kidrahtDemoUrl } from "@/lib/kidraht-demo";
 
 export default async function DemoKidrahtPage() {
   const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
-  const url = mode === "baumdienst" ? kidrahtDemoUrl() : null;
+  const url = kidrahtDemoUrl(mode);
   if (!url) notFound();
   return (
     <KidrahtFrame
