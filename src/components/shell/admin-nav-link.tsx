@@ -64,7 +64,7 @@ export function AdminNavLink({ href, label, activePrefixes = [], inset = false, 
       aria-current={isActive ? "page" : undefined}
       onClick={onNavigate}
       className={cn(
-        "group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground",
+        "group relative flex h-9 shrink-0 items-center gap-2.5 rounded-lg px-2.5 max-md:border max-md:bg-card/70 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground",
         inset ? "ml-3" : "",
         isActive ? "bg-primary/10 text-foreground hover:bg-primary/10" : "",
       )}

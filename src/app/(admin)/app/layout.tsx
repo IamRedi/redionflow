@@ -92,35 +92,24 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <MachineSidebar machines={machines} isAdmin showCones={showCones} />
       <div className="grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24">
         <aside className="min-w-0 print:hidden">
-          {/* Phone: one scrollable row of links instead of the full menu. */}
-          <nav className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:hidden">
-            {[
-              { href: "/app/dashboard", label: t("admin.navDashboard", currentLang, mode), activePrefixes: [] as string[] },
-              ...visibleNavSections.flatMap((section) => section.items.map((item) => ({ ...item, activePrefixes: item.activePrefixes ?? [] }))),
-              { href: "/app/settings", label: t("admin.navSettings", currentLang, mode), activePrefixes: [] as string[] },
-            ].map((item) => (
-              <div key={item.href} className="shrink-0 rounded-lg border bg-card/70">
-                <AdminNavLink href={item.href} label={item.label} activePrefixes={item.activePrefixes} />
-              </div>
-            ))}
-          </nav>
-          <nav className="no-scrollbar sticky top-24 hidden max-h-[calc(100dvh-7rem)] flex-col gap-4 md:flex overflow-y-auto overscroll-contain rounded-2xl border bg-card/70 p-2 shadow-sm backdrop-blur">
-            <div className="flex items-center gap-2.5 rounded-xl px-2 pt-1.5">
+          {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}
+          <nav className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:sticky md:top-24 md:mx-0 md:max-h-[calc(100dvh-7rem)] md:flex-col md:gap-4 md:overflow-y-auto md:overscroll-contain md:rounded-2xl md:border md:bg-card/70 md:p-2 md:shadow-sm md:backdrop-blur">
+            <div className="hidden items-center gap-2.5 rounded-xl px-2 pt-1.5 md:flex">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                 {(admin.name ?? admin.email ?? "?").trim().slice(0, 1).toUpperCase()}
               </span>
               <div className="min-w-0">
                 <div className="truncate text-[13px] font-semibold leading-tight text-foreground">{admin.name ?? admin.email}</div>
-                <div className="truncate text-[11px] leading-tight text-muted-foreground">{t("admin.panelTitle", currentLang, mode)}</div>
+                <div className="truncate text-[11px] leading-tight text-muted-foreground">{admin.name && admin.email ? admin.email : t("admin.panelTitle", currentLang, mode)}</div>
               </div>
             </div>
-            <div className="flex flex-col gap-0.5">
+            <div className="contents md:flex md:flex-col md:gap-0.5">
               <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
             </div>
             {visibleNavSections.map((section, index) => (
-              <div key={section.title ?? `section-${index}`} className="flex flex-col gap-0.5">
+              <div key={section.title ?? `section-${index}`} className="contents md:flex md:flex-col md:gap-0.5">
                 {section.title === null ? (
-                  <div className="px-2.5 pb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                  <div className="hidden px-2.5 pb-1 font-mono text-[10px] md:block font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
                     {t("admin.operations", currentLang, mode)}
                   </div>
                 ) : null}
@@ -131,10 +120,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 )}
               </div>
             ))}
-            <div className="mt-auto flex flex-col gap-0.5 border-t pt-2">
+            <div className="contents md:mt-auto md:flex md:flex-col md:gap-0.5 md:border-t md:pt-2">
               <AdminNavLink href="/app/settings" label={t("admin.navSettings", currentLang, mode)} />
               <AdminNavLink href="/app/audit" label={t("admin.auditLog", currentLang, mode)} activePrefixes={["/app/audit"]} />
-              <div className="flex items-center gap-1 pt-1">
+              <div className="hidden items-center gap-1 pt-1 md:flex">
                 <div className="min-w-0 flex-1">
                   <LanguageDropdown />
                 </div>

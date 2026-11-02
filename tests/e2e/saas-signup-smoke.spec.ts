@@ -35,13 +35,15 @@ async function createSiteWithInitialWork(
   diameter: string,
 ) {
   await page.goto("/app/baustellen");
+  // The new-site form is folded away until opened.
+  await page.locator("details summary").first().click();
   await page.locator('input[name="name"]').first().fill(siteName);
   await page.locator('input[name="createFirstTreeItem"]').check();
   await page.locator('input[name="firstTreeSpecies"]').fill(species);
   await page.locator('input[name="firstTreeDiameter"]').fill(diameter);
   await page.locator('button[type="submit"]').last().click();
 
-  const siteRow = page.getByRole("row").filter({ hasText: siteName });
+  const siteRow = page.getByRole("listitem").filter({ hasText: siteName });
   await expect(siteRow).toBeVisible();
   await expect(siteRow.getByText(/1\s+(Arbeiten|Aufgabe|Task|Compito|Detyre|B[aä]ume|Trees|Alberi|Peme)/i)).toBeVisible();
   return siteRow;
@@ -109,8 +111,8 @@ async function startWorkOnSite(page: Page) {
 }
 
 async function openWorkzoneForSite(page: Page, siteName: string) {
-  const siteRow = page.getByRole("row").filter({ hasText: siteName });
-  await siteRow.getByRole("link", { name: /Workzone/i }).click();
+  const siteRow = page.getByRole("listitem").filter({ hasText: siteName });
+  await siteRow.getByRole("link", { name: /Workzone|öffnen|Open site|Hap kantierin/i }).click();
   await expect(page).toHaveURL(/\/workzone\/baustellen\//);
   return new URL(page.url()).pathname;
 }

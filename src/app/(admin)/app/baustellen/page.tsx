@@ -156,7 +156,9 @@ export default async function BaustellenAdminPage() {
                   <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                     <span className="rounded-md bg-muted px-1.5 py-0.5">{typeLabel(b.type, currentLang, mode)}</span>
                     <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5">
-                      <ListChecks className="size-3.5" strokeWidth={1.8} /> {done}/{total}
+                      <ListChecks className="size-3.5" strokeWidth={1.8} />
+                      {total > 0 ? `${done}/` : ""}
+                      {tx("admin.baustelleTreesCount").replace("{count}", formatCount(total, currentLang))}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5">
                       <Paperclip className="size-3.5" strokeWidth={1.8} /> {formatCount(b.documents.length, currentLang)}
