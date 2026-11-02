@@ -32,7 +32,7 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
     getCurrentCompanyId(),
   ]);
   const currentWorkerId = (await getCurrentWorker())?.id;
-  const kidraht = companyMode === "baumdienst" && (admin || currentWorkerId) ? kidrahtAppUrl() : null;
+  const kidraht = admin || currentWorkerId ? kidrahtAppUrl() : null;
 
   // T-025b / SaaS: scope workers + admin profiles to the caller's tenant so
   // the top bar never leaks staff from another company.
