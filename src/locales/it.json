@@ -1710,5 +1710,9 @@
     "resolveDefect": "Fixed",
     "block": "Block machine",
     "noDefect": "No open defects"
+  },
+  "kidraht": {
+    "unreachable": "KiDraht non risponde in questo momento. Riprova tra poco.",
+    "description": "Regole dell'azienda, manuali e test, nella tua lingua."
   }
 }

@@ -1726,5 +1726,9 @@
     "resolveDefect": "U rregullua",
     "block": "Blloko mjetin",
     "noDefect": "Pa defekte të hapura"
+  },
+  "kidraht": {
+    "unreachable": "KiDraht nuk po përgjigjet tani. Provo përsëri pas pak.",
+    "description": "Rregullat e firmës, manualet dhe testet, në gjuhën tënde."
   }
 }

@@ -1792,5 +1792,9 @@
     "resolveDefect": "Behoben",
     "block": "Gerät sperren",
     "noDefect": "Keine offenen Mängel"
+  },
+  "kidraht": {
+    "unreachable": "KiDraht antwortet gerade nicht. Bitte gleich nochmal versuchen.",
+    "description": "Regeln der Firma, Handbücher und Tests, in deiner Sprache."
   }
 }

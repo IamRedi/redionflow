@@ -256,6 +256,10 @@ model CompanyProfile {
   logoDataUrl           String?
   fleetGpsEnabled       Boolean @default(false)
   workerPhoneGpsEnabled Boolean @default(false)
+  /// KiDraht (company knowledge, rules and briefings): the company's workspace id and API key there.
+  /// Created automatically on first open; the key signs the short sign-in links and is never shown.
+  kidrahtWorkspaceId    String?
+  kidrahtApiKey         String?
 
   street String?
   zip    String?

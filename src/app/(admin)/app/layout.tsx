@@ -12,8 +12,10 @@ import { LanguageDropdown } from "@/components/i18n/language-dropdown";
 import { logoutAdminAction } from "@/app/admin-login/actions";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { getCompanyMode } from "@/lib/db/company";
+import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { kidrahtAvailable } from "@/lib/kidraht/company-link";
 import { getFeatures, productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
 import { fleetShowsCones, getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
@@ -33,14 +35,18 @@ type AdminNavSection = {
   items: AdminNavItem[];
 };
 
+/** Product name, not translated. */
+const KIDRAHT_NAME = "KiDraht";
+
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect(isSaasMode ? "/login" : "/admin-login");
-  const [machines, mode, currentLang, showCones] = await Promise.all([
+  const [machines, mode, currentLang, showCones, kidrahtOn] = await Promise.all([
     getMachineSidebarData(),
     getCompanyMode(),
     resolveRequestLanguage(),
     fleetShowsCones(),
+    getCurrentCompanyId().then(kidrahtAvailable),
   ]);
   const features = getFeatures(mode);
   const branding = productBranding(mode);
@@ -105,6 +111,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="contents md:flex md:flex-col md:gap-0.5">
               <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
+              {kidrahtOn ? <AdminNavLink href="/workzone/kidraht" label={KIDRAHT_NAME} /> : null}
             </div>
             {visibleNavSections.map((section, index) => (
               <div key={section.title ?? `section-${index}`} className="contents md:flex md:flex-col md:gap-0.5">

@@ -24,9 +24,9 @@ export type RegionConfig = {
 
 const REGIONS: Record<CompanyCountry, RegionConfig> = {
   DE: { country: "DE", currency: "EUR", defaultVacationDays: 26, defaultVatPct: 19, defaultLanguage: "de" },
-  // Albania: Labour Code art. 92 gives at least four calendar weeks of paid
-  // leave (20 working days on a five-day week); VAT is 20 %.
-  AL: { country: "AL", currency: "ALL", defaultVacationDays: 20, defaultVatPct: 20, defaultLanguage: "sq" },
+  // Albania: Labour Code art. 92(2) (as amended, State Labour Inspectorate
+  // summary 2025) gives at least 22 working days of paid leave; VAT is 20 %.
+  AL: { country: "AL", currency: "ALL", defaultVacationDays: 22, defaultVatPct: 20, defaultLanguage: "sq" },
 };
 
 export function resolveCountry(raw: string | null | undefined): CompanyCountry {

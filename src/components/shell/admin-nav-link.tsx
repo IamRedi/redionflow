@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpenCheck,
   Building2,
   Circle,
   FolderKanban,
@@ -32,6 +33,7 @@ const ICONS: Array<[string, LucideIcon]> = [
   ["/app/machines", Truck],
   ["/app/audit", ScrollText],
   ["/app/settings", Settings],
+  ["/workzone/kidraht", BookOpenCheck],
 ];
 
 export function adminNavIcon(href: string): LucideIcon {

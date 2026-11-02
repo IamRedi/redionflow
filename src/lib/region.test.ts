@@ -12,7 +12,7 @@ describe("region config", () => {
     expect(resolveCountry("fr")).toBe("DE");
     expect(resolveCountry("al")).toBe("AL");
     expect(regionConfig("DE")).toMatchObject({ currency: "EUR", defaultVacationDays: 26, defaultVatPct: 19, defaultLanguage: "de" });
-    expect(regionConfig("AL")).toMatchObject({ currency: "ALL", defaultVacationDays: 20, defaultVatPct: 20, defaultLanguage: "sq" });
+    expect(regionConfig("AL")).toMatchObject({ currency: "ALL", defaultVacationDays: 22, defaultVatPct: 20, defaultLanguage: "sq" });
   });
 
   it("computes Western and Orthodox Easter", () => {

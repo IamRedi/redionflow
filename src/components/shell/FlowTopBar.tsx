@@ -12,7 +12,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
-import { kidrahtAppUrl } from "@/lib/kidraht-demo";
+import { kidrahtAvailable } from "@/lib/kidraht/company-link";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { safeCompanyLogo } from "@/lib/company-logo";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -33,7 +33,7 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
     getCurrentCompanyId(),
   ]);
   const currentWorkerId = (await getCurrentWorker())?.id;
-  const kidraht = admin || currentWorkerId ? kidrahtAppUrl() : null;
+  const kidraht = admin || currentWorkerId ? await kidrahtAvailable(tenantId) : false;
 
   // T-025b / SaaS: scope workers + admin profiles to the caller's tenant so
   // the top bar never leaks staff from another company.
