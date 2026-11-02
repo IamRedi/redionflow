@@ -221,7 +221,7 @@ export function CreateBaustelleForm({
               <div className="flex items-center gap-3">
                 <UploadCloud className="h-5 w-5 text-brand-green" />
                 <div>
-                  <div className="text-sm font-medium">{tx("admin.addDocument")}</div>
+                  <div className="text-sm font-medium">{tx("workzone.addDocument")}</div>
                   <div className="text-xs text-muted-foreground">{tx("admin.documentDropHint")}</div>
                 </div>
               </div>

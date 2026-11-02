@@ -712,7 +712,9 @@
     "fiberDrilling": "Spülbohrung (HDD)",
     "fiberHouseConnection": "Glasfaser-Hausanschlüsse",
     "settingsFold": "Sprache & Benachrichtigungen",
-    "recentShiftsFold": "Letzte Schichten anzeigen"
+    "recentShiftsFold": "Letzte Schichten anzeigen",
+    "steelWorkshop": "Stahlbau-Werkstatt",
+    "steelAssembly": "Stahlbau-Montage"
   },
   "report": {
     "brandName": "Baumdienst Flow",
@@ -1562,7 +1564,12 @@
     "confirmRemoveAdmin": "{name} wirklich als Admin entfernen? Dieser Zugang kann danach nicht mehr einloggen.",
     "adminPassword": "Passwort",
     "adminPasswordHint": "Mindestens 12 Zeichen.",
-    "adminPasswordKeepHint": "Leer lassen, um das bisherige Passwort zu behalten."
+    "adminPasswordKeepHint": "Leer lassen, um das bisherige Passwort zu behalten.",
+    "settingsLogoTitle": "Firmenlogo",
+    "settingsLogoDescription": "Erscheint oben in der App für alle Mitarbeitenden. PNG, JPG, WebP oder SVG, bis 150 KB.",
+    "settingsLogoEmpty": "Noch kein Logo",
+    "settingsLogoRemove": "Logo entfernen",
+    "settingsLogoInvalid": "Das Logo konnte nicht gespeichert werden. Erlaubt sind PNG, JPG, WebP oder SVG bis 150 KB."
   },
   "language": {
     "de": "Deutsch",

@@ -72,6 +72,9 @@ enum BaustelleType {
   FIBER_TRENCH
   FIBER_DRILLING
   FIBER_HOUSE_CONNECTION
+  // Metal construction (Stahlbau)
+  STEEL_WORKSHOP
+  STEEL_ASSEMBLY
   OTHER
 }
 
@@ -249,6 +252,8 @@ model CompanyProfile {
   mode                  String  @default("baumdienst")
   /// "DE" | "AL" — currency, public holidays and defaults (DB CHECK constraint)
   country               String  @default("DE")
+  /// Company logo as a data: URL (png, jpeg, webp or svg), shown in the top bar
+  logoDataUrl           String?
   fleetGpsEnabled       Boolean @default(false)
   workerPhoneGpsEnabled Boolean @default(false)
 

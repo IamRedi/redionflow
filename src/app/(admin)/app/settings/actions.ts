@@ -8,6 +8,7 @@ import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorizati
 import { t, type Language } from "@/lib/i18n";
 import { settingsFormSchema } from "@/lib/validation/schemas";
 import type { ActionResult } from "@/lib/validation/action-result";
+import { companyLogoDataUrl } from "@/lib/company-logo";
 
 function isGpsColumnMissing(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) return error.code === "P2022";
@@ -87,5 +88,28 @@ export async function saveSettingsAction(input: unknown, lang?: Language): Promi
   }
 
   revalidatePath("/app/settings");
+  return { ok: true, message: t("validation.saved", lang) };
+}
+
+/** Upload or remove the company logo shown in the top bar. */
+export async function saveCompanyLogoAction(formData: FormData): Promise<ActionResult> {
+  const lang = (String(formData.get("lang") ?? "") || undefined) as Language | undefined;
+  if (!(await getCurrentAdmin())) return { ok: false, message: t("validation.noCompanyAccess", lang) };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: t("validation.noCompanyAccess", lang) };
+
+  if (formData.get("remove") === "1") {
+    await prisma.companyProfile.update({ where: { id: companyId }, select: { id: true }, data: { logoDataUrl: null } });
+  } else {
+    const file = formData.get("logo");
+    if (!(file instanceof File)) return { ok: false, message: t("admin.settingsLogoInvalid", lang) };
+    const checked = companyLogoDataUrl(file.type, new Uint8Array(await file.arrayBuffer()));
+    if (!checked.ok) return { ok: false, message: t("admin.settingsLogoInvalid", lang) };
+    await prisma.companyProfile.update({ where: { id: companyId }, select: { id: true }, data: { logoDataUrl: checked.dataUrl } });
+  }
+
+  revalidatePath("/app/settings");
+  revalidatePath("/workzone", "layout");
+  revalidatePath("/app", "layout");
   return { ok: true, message: t("validation.saved", lang) };
 }

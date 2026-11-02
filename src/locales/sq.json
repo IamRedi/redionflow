@@ -676,7 +676,9 @@
     "fiberDrilling": "Shpim horizontal (HDD)",
     "fiberHouseConnection": "Lidhje fibre në shtëpi",
     "settingsFold": "Gjuha & njoftimet",
-    "recentShiftsFold": "Shfaq turnet e fundit"
+    "recentShiftsFold": "Shfaq turnet e fundit",
+    "steelWorkshop": "Punishtja (fabrikim)",
+    "steelAssembly": "Montim në kantier"
   },
   "report": {
     "daily": "Raporti ditor",
@@ -1241,7 +1243,7 @@
     "baustellenEmpty": "Ende nuk ka kantier. Krijo te parin permes butonit lart.",
     "baustellenEmptyShort": "Ende nuk ka kantiere.",
     "createBaustelleDescription": "Zgjidh tipin, pastaj shfaqet ne Workzone flow.",
-    "siteNamePlaceholder": "p.sh. Stadtgarten Essen - Sektori B",
+    "siteNamePlaceholder": "p.sh. Kapanon industrial Vorë - Faza 2",
     "templateType": "Template / tipi",
     "baustelleTypeTruckPlatform": "Platforme",
     "baustelleTypeTruckPlatformLong": "Platforme kamioni (kujdes + prerje)",
@@ -1256,7 +1258,7 @@
     "inactive": "joaktiv",
     "siteAddress": "Adresa e kantierit",
     "siteAddressPlaceholder": "Adresa e kantierit",
-    "siteAddressExample": "p.sh. Musterstraße 12, 12345 Musterstadt",
+    "siteAddressExample": "p.sh. Rruga Tiranë–Durrës, km 12, Vorë",
     "descriptionAddress": "Pershkrim / adrese",
     "shortDescriptionOptional": "Pershkrim i shkurter (opsional)",
     "addDirectTaskTree": "Shto pune / dru direkt",
@@ -1463,7 +1465,12 @@
     "confirmRemoveAdmin": "{name} te hiqet vertet si admin? Ky akses nuk mund te logohet me.",
     "adminPassword": "Fjalëkalimi",
     "adminPasswordHint": "Të paktën 12 shenja.",
-    "adminPasswordKeepHint": "Lëre bosh për të mbajtur fjalëkalimin aktual."
+    "adminPasswordKeepHint": "Lëre bosh për të mbajtur fjalëkalimin aktual.",
+    "settingsLogoTitle": "Logoja e firmës",
+    "settingsLogoDescription": "Shfaqet lart në aplikacion për të gjithë. PNG, JPG, WebP ose SVG, deri në 150 KB.",
+    "settingsLogoEmpty": "Ende pa logo",
+    "settingsLogoRemove": "Hiq logon",
+    "settingsLogoInvalid": "Logoja nuk u ruajt. Lejohen PNG, JPG, WebP ose SVG deri në 150 KB."
   },
   "language": {
     "de": "Gjermanisht",

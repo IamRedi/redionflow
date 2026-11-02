@@ -91,7 +91,9 @@ export default async function WorkzoneHomePage() {
   }));
   const [baustellen, coneMoves] = await Promise.all([
     withPilotDbContext(company.id, tx => tx.baustelle.findMany({
-      where: { companyProfileId: company.id },
+      // Inactive sites (finished projects, archive) stay in the admin list only;
+      // the field board shows what people can work on today.
+      where: { companyProfileId: company.id, status: "active" },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true,
@@ -165,6 +167,10 @@ export default async function WorkzoneHomePage() {
         return { icon: "⤳", label: t("workzone.fiberDrilling", currentLang, "bau"), watermark: "BOHRUNG" };
       case "FIBER_HOUSE_CONNECTION":
         return { icon: "⌂", label: t("workzone.fiberHouseConnection", currentLang, "bau"), watermark: "HA" };
+      case "STEEL_WORKSHOP":
+        return { icon: "⚒", label: t("workzone.steelWorkshop", currentLang, "bau"), watermark: "WERKSTATT" };
+      case "STEEL_ASSEMBLY":
+        return { icon: "🏗️", label: t("workzone.steelAssembly", currentLang, "bau"), watermark: "MONTAGE" };
       case "OTHER":
         return { icon: "⬛", label: t("workzone.otherType", currentLang, "bau"), watermark: "SONST" };
       default:

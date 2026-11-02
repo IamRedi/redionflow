@@ -29,6 +29,8 @@ const BAUSTELLE_TYPES_BY_MODE: Record<CompanyMode, Array<{ value: string; labelK
     { value: "FIBER_TRENCH", labelKey: "workzone.fiberTrench", defaultLabel: "Glasfaser-Trasse" },
     { value: "FIBER_DRILLING", labelKey: "workzone.fiberDrilling", defaultLabel: "Spülbohrung" },
     { value: "FIBER_HOUSE_CONNECTION", labelKey: "workzone.fiberHouseConnection", defaultLabel: "Glasfaser-Hausanschlüsse" },
+    { value: "STEEL_WORKSHOP", labelKey: "workzone.steelWorkshop", defaultLabel: "Stahlbau-Werkstatt" },
+    { value: "STEEL_ASSEMBLY", labelKey: "workzone.steelAssembly", defaultLabel: "Stahlbau-Montage" },
     { value: "OTHER", labelKey: "workzone.otherType", defaultLabel: "Sonstige" },
   ],
 };

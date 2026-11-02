@@ -18,6 +18,7 @@ const companyProfileSelect = {
   zip: true,
   city: true,
   country: true,
+  logoDataUrl: true,
   createdAt: true,
   updatedAt: true,
   overheadSettings: true,

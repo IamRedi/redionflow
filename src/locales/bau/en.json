@@ -24,7 +24,9 @@
     "importSuccessSummary": "{created} new tasks imported, {updated} updated, {unchanged} unchanged.",
     "baustelleTypeFiberTrench": "Fiber route (trench)",
     "baustelleTypeFiberDrilling": "Directional drilling (HDD)",
-    "baustelleTypeFiberHouseConnection": "Fiber house connections"
+    "baustelleTypeFiberHouseConnection": "Fiber house connections",
+    "baustelleTypeSteelWorkshop": "Steel workshop",
+    "baustelleTypeSteelAssembly": "Steel assembly on site"
   },
   "report": {
     "crownWidth": "Width / dimension",

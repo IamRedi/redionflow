@@ -24,7 +24,9 @@
     "importSuccessSummary": "{created} sarcini noi importate, {updated} actualizate, {unchanged} neschimbate.",
     "baustelleTypeFiberTrench": "Traseu fibră optică",
     "baustelleTypeFiberDrilling": "Foraj orizontal dirijat (HDD)",
-    "baustelleTypeFiberHouseConnection": "Branșamente fibră optică"
+    "baustelleTypeFiberHouseConnection": "Branșamente fibră optică",
+    "baustelleTypeSteelWorkshop": "Atelier construcții metalice",
+    "baustelleTypeSteelAssembly": "Montaj pe șantier"
   },
   "report": {
     "crownWidth": "Latime / masura",

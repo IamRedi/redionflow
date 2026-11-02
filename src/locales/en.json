@@ -675,7 +675,9 @@
     "fiberDrilling": "Directional drilling (HDD)",
     "fiberHouseConnection": "Fiber house connections",
     "settingsFold": "Language & notifications",
-    "recentShiftsFold": "Show recent shifts"
+    "recentShiftsFold": "Show recent shifts",
+    "steelWorkshop": "Steel workshop",
+    "steelAssembly": "Steel assembly on site"
   },
   "report": {
     "daily": "Daily report",
@@ -1441,7 +1443,12 @@
     "confirmRemoveAdmin": "Really remove {name} as admin? That account cannot sign in afterwards.",
     "adminPassword": "Password",
     "adminPasswordHint": "At least 12 characters.",
-    "adminPasswordKeepHint": "Leave empty to keep the current password."
+    "adminPasswordKeepHint": "Leave empty to keep the current password.",
+    "settingsLogoTitle": "Company logo",
+    "settingsLogoDescription": "Shown at the top of the app for everyone. PNG, JPG, WebP or SVG, up to 150 KB.",
+    "settingsLogoEmpty": "No logo yet",
+    "settingsLogoRemove": "Remove logo",
+    "settingsLogoInvalid": "The logo could not be saved. Use PNG, JPG, WebP or SVG up to 150 KB."
   },
   "language": {
     "de": "German",

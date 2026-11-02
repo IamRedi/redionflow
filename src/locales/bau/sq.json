@@ -24,7 +24,9 @@
     "importSuccessSummary": "{created} detyra të reja të importuara, {updated} të përditësuara, {unchanged} të pandryshuara.",
     "baustelleTypeFiberTrench": "Trase fibre optike",
     "baustelleTypeFiberDrilling": "Shpim horizontal (HDD)",
-    "baustelleTypeFiberHouseConnection": "Lidhje fibre në shtëpi"
+    "baustelleTypeFiberHouseConnection": "Lidhje fibre në shtëpi",
+    "baustelleTypeSteelWorkshop": "Punishtja (fabrikim)",
+    "baustelleTypeSteelAssembly": "Montim në kantier"
   },
   "report": {
     "crownWidth": "Gjerësia / Masat",

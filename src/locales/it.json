@@ -683,7 +683,9 @@
     "fiberDrilling": "Perforazione orizzontale (HDD)",
     "fiberHouseConnection": "Allacciamenti fibra",
     "settingsFold": "Lingua e notifiche",
-    "recentShiftsFold": "Mostra ultimi turni"
+    "recentShiftsFold": "Mostra ultimi turni",
+    "steelWorkshop": "Officina carpenteria",
+    "steelAssembly": "Montaggio in cantiere"
   },
   "report": {
     "daily": "Report giornaliero",
@@ -1481,7 +1483,12 @@
     "confirmRemoveAdmin": "Rimuovere davvero {name} come admin? Questo account non potrà più accedere.",
     "adminPassword": "Password",
     "adminPasswordHint": "Almeno 12 caratteri.",
-    "adminPasswordKeepHint": "Lascia vuoto per mantenere la password attuale."
+    "adminPasswordKeepHint": "Lascia vuoto per mantenere la password attuale.",
+    "settingsLogoTitle": "Logo aziendale",
+    "settingsLogoDescription": "Appare in alto nell'app per tutti. PNG, JPG, WebP o SVG, fino a 150 KB.",
+    "settingsLogoEmpty": "Nessun logo",
+    "settingsLogoRemove": "Rimuovi logo",
+    "settingsLogoInvalid": "Impossibile salvare il logo. Usa PNG, JPG, WebP o SVG fino a 150 KB."
   },
   "language": {
     "de": "Tedesco",

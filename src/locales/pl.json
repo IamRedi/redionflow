@@ -365,7 +365,9 @@
     "fiberDrilling": "Przewiert sterowany (HDD)",
     "fiberHouseConnection": "Przyłącza światłowodowe",
     "settingsFold": "Język i powiadomienia",
-    "recentShiftsFold": "Pokaż ostatnie zmiany"
+    "recentShiftsFold": "Pokaż ostatnie zmiany",
+    "steelWorkshop": "Warsztat konstrukcji stalowych",
+    "steelAssembly": "Montaż na budowie"
   },
   "report": {
     "daily": "Raport dzienny",
@@ -417,7 +419,12 @@
     "settingsCountry": "Kraj",
     "settingsCountryHint": "Określa walutę, święta, dni urlopu i język dla nowych pracowników.",
     "countryDE": "Niemcy (EUR)",
-    "countryAL": "Albania (ALL, lek)"
+    "countryAL": "Albania (ALL, lek)",
+    "settingsLogoTitle": "Logo firmy",
+    "settingsLogoDescription": "Widoczne u góry aplikacji dla wszystkich. PNG, JPG, WebP lub SVG, do 150 KB.",
+    "settingsLogoEmpty": "Brak logo",
+    "settingsLogoRemove": "Usuń logo",
+    "settingsLogoInvalid": "Nie udało się zapisać logo. Dozwolone PNG, JPG, WebP lub SVG do 150 KB."
   },
   "language": {
     "de": "Niemiecki",

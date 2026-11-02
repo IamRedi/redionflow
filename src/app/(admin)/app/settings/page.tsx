@@ -1,4 +1,6 @@
 import { SettingsForm } from "./settings-form";
+import { CompanyLogoForm } from "./company-logo-form";
+import { safeCompanyLogo } from "@/lib/company-logo";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { decimalToNumber } from "@/lib/db/prisma-types";
 import { t } from "@/lib/i18n";
@@ -39,6 +41,8 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsForm companyId={company.id} currentLang={currentLang} defaultValues={defaultValues} />
+
+      <CompanyLogoForm currentLang={currentLang} logo={safeCompanyLogo(company.logoDataUrl)} companyName={company.displayName} />
 
       <div className="rounded-xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">

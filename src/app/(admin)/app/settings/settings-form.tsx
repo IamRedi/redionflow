@@ -96,7 +96,7 @@ export function SettingsForm({
             <select
               id="country"
               {...form.register("country")}
-              className="h-9 w-full rounded-md border bg-background px-3 text-sm md:max-w-xs"
+              className="block h-9 w-full rounded-md border bg-background px-3 text-sm md:max-w-xs"
             >
               <option value="DE">{t("admin.countryDE", currentLang)}</option>
               <option value="AL">{t("admin.countryAL", currentLang)}</option>

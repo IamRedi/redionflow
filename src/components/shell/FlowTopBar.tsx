@@ -12,6 +12,7 @@ import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { safeCompanyLogo } from "@/lib/company-logo";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
 import { notifyTeamAction } from "@/app/(workzone)/workzone/announcement-actions";
 import { TopbarAnnouncementButton } from "@/app/(workzone)/workzone/topbar-announcement-button";
@@ -113,6 +114,10 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
     });
 
   const mobileAdminProfiles = adminProfiles.slice(0, 3);
+  const companyBrand = tenantId
+    ? await prisma.companyProfile.findUnique({ where: { id: tenantId }, select: { displayName: true, logoDataUrl: true } })
+    : null;
+  const companyLogo = safeCompanyLogo(companyBrand?.logoDataUrl);
 
   return (
     <div className="mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]">
@@ -148,6 +153,15 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
               {!admin ? <LanguageSwitcher /> : null}
             </div>
           </div>
+
+          {companyLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small data: URL, nothing to optimise
+            <img
+              src={companyLogo}
+              alt={companyBrand?.displayName ?? t("common.companyLogoAlt", currentLang)}
+              className="h-8 w-auto max-w-[150px] rounded-md border bg-white object-contain px-2 py-1 shadow-sm"
+            />
+          ) : null}
 
           {admin || mobileAdminProfiles.length > 0 ? (
             <div className="flex items-center gap-2 lg:hidden">

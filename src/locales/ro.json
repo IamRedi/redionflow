@@ -366,7 +366,9 @@
     "fiberDrilling": "Foraj orizontal dirijat (HDD)",
     "fiberHouseConnection": "Branșamente fibră optică",
     "settingsFold": "Limbă și notificări",
-    "recentShiftsFold": "Arată turele recente"
+    "recentShiftsFold": "Arată turele recente",
+    "steelWorkshop": "Atelier construcții metalice",
+    "steelAssembly": "Montaj pe șantier"
   },
   "report": {
     "daily": "Raport zilnic",
@@ -418,7 +420,12 @@
     "settingsCountry": "Țara",
     "settingsCountryHint": "Stabilește moneda, sărbătorile legale, zilele de concediu și limba pentru angajații noi.",
     "countryDE": "Germania (EUR)",
-    "countryAL": "Albania (ALL, lek)"
+    "countryAL": "Albania (ALL, lek)",
+    "settingsLogoTitle": "Logo firmă",
+    "settingsLogoDescription": "Apare sus în aplicație pentru toți. PNG, JPG, WebP sau SVG, până la 150 KB.",
+    "settingsLogoEmpty": "Încă fără logo",
+    "settingsLogoRemove": "Elimină logo",
+    "settingsLogoInvalid": "Logo-ul nu a putut fi salvat. Folosește PNG, JPG, WebP sau SVG până la 150 KB."
   },
   "language": {
     "de": "Germana",

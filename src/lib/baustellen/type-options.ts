@@ -25,6 +25,8 @@ export const BAU_BAUSTELLE_TYPES: BaustelleTypeOption[] = [
   { value: "FIBER_TRENCH", labelKey: "admin.baustelleTypeFiberTrench" },
   { value: "FIBER_DRILLING", labelKey: "admin.baustelleTypeFiberDrilling" },
   { value: "FIBER_HOUSE_CONNECTION", labelKey: "admin.baustelleTypeFiberHouseConnection" },
+  { value: "STEEL_WORKSHOP", labelKey: "admin.baustelleTypeSteelWorkshop" },
+  { value: "STEEL_ASSEMBLY", labelKey: "admin.baustelleTypeSteelAssembly" },
   { value: "OTHER", labelKey: "admin.baustelleTypeOther" },
 ];
 
