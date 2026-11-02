@@ -56,7 +56,9 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
         </span>
         <div className="min-w-[12rem] flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <div className="text-sm font-semibold">{worker.firstName} {worker.lastName}</div>
+            <Link href={`/app/admin/workers/${worker.id}`} className="text-sm font-semibold hover:text-primary">
+              {worker.firstName} {worker.lastName}
+            </Link>
             <span className={cn("rounded-md border px-2 py-0.5 text-[11px] font-medium", worker.availabilityClass)}>
               {worker.availabilityLabel}
             </span>
