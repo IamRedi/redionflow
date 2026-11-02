@@ -17,7 +17,9 @@ export type SteelPhaseKey =
   | "cutting"
   | "drilling"
   | "welding"
-  | "coating";
+  | "coating"
+  /** A task the office added to one site (its own name, no fixed scene). */
+  | "task";
 
 export type SteelPhaseDef = { key: SteelPhaseKey; treeId: string };
 
@@ -39,8 +41,11 @@ export function steelPhasesFor(type: string | null | undefined): SteelPhaseDef[]
   return PHASES[type].map((key) => ({ key, treeId: `${PREFIX}${key}` }));
 }
 
+export const STEEL_TASK_PREFIX = `${PREFIX}task-`;
+
 export function steelPhaseKeyFromTreeId(treeId: string): SteelPhaseKey | null {
   if (!treeId.startsWith(PREFIX)) return null;
+  if (treeId.startsWith(STEEL_TASK_PREFIX)) return "task";
   const key = treeId.slice(PREFIX.length);
   const all = [...PHASES.STEEL_ASSEMBLY, ...PHASES.STEEL_WORKSHOP] as string[];
   return all.includes(key) ? (key as SteelPhaseKey) : null;
@@ -54,9 +59,11 @@ export type SteelPhaseMeta = {
   materialBy: string;
   materialAt: string;
   doneBy: string;
+  /** Name of an office-added task; empty for the fixed phases. */
+  label: string;
 };
 
-const EMPTY_META: SteelPhaseMeta = { note: "", noteBy: "", noteAt: "", material: "", materialBy: "", materialAt: "", doneBy: "" };
+const EMPTY_META: SteelPhaseMeta = { note: "", noteBy: "", noteAt: "", material: "", materialBy: "", materialAt: "", doneBy: "", label: "" };
 
 export function readSteelPhaseMeta(notes: string | null | undefined): SteelPhaseMeta {
   if (!notes) return { ...EMPTY_META };
@@ -72,6 +79,7 @@ export function readSteelPhaseMeta(notes: string | null | undefined): SteelPhase
       materialBy: text("materialBy"),
       materialAt: text("materialAt"),
       doneBy: text("doneBy"),
+      label: text("label"),
     };
   } catch {
     return { ...EMPTY_META };
@@ -110,4 +118,18 @@ export function applySteelPhaseCommand(
     case "materialArrived":
       return { status: current.status === "blocked" ? "todo" : current.status, meta: { ...meta, material: "", materialBy: "", materialAt: "" } };
   }
+}
+
+export type SteelSiteShape = "hall" | "bridge" | "building";
+
+/**
+ * Picks the drawing for a site card from its name and description: a bridge,
+ * a multi-storey steel frame (hotel, theatre, tower ...) or an industrial hall.
+ */
+export function steelSiteShape(name: string, description?: string | null): SteelSiteShape {
+  const words = `${name} ${description ?? ""}`.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const has = (pattern: RegExp) => words.some((word) => pattern.test(word));
+  if (has(/^(ur[aëe]|urës|bridge|brücke|viadukt|viaduct|pasarel|mbikalim)/)) return "bridge";
+  if (has(/^(hotel|teat|kull|pallat|ndërtes|ndertes|godin|resort|building|tower|shkoll|spital|qendr|mall$|rezidenc|apartament|stadium)/)) return "building";
+  return "hall";
 }

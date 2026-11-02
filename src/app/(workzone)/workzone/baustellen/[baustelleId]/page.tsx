@@ -26,8 +26,11 @@ import { SteelPhaseBoard } from "./steel-phase-board";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { batchState, currentStepIndex, formatQuantity, readFactorySteps, readySummary } from "@/lib/factory/production";
-import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhasesFor } from "@/lib/workzone/steel-phases";
+import { canAdvanceProduction, readFactorySteps } from "@/lib/factory/production";
+import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhasesFor, steelSiteShape } from "@/lib/workzone/steel-phases";
+import { SiteProductionPanel } from "../../production/site-production-panel";
+import type { FactoryBatchView } from "../../production/production-ui";
+import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
 
 export default async function BaustelleDetailPage({
   params,
@@ -213,43 +216,65 @@ export default async function BaustelleDetailPage({
     : [];
   const steelPct = steelPhases.length > 0 ? Math.round((steelPhases.filter((p) => p.status === "done").length / steelPhases.length) * 100) : 0;
 
-  const factoryMaterial = isSteel
-    ? (
-        await withTenantContext(currentCompanyId, (tx) =>
-          tx.productionBatch.findMany({
-            where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id },
-            orderBy: { createdAt: "asc" },
-            select: { id: true, title: true, quantity: true, unit: true, steps: true },
-          }),
-        )
-      ).map((batch) => ({ ...batch, steps: readFactorySteps(batch.steps) }))
-    : [];
-  const materialSummary = readySummary(factoryMaterial);
-
   if (isSteel) {
+    const isAdmin = Boolean(currentActorView?.isAdmin);
+    const canAdvance = canAdvanceProduction(currentActorView ? { isAdmin, level: currentActorView.level } : null);
+    const [batchRows, fileRows] = await withTenantContext(currentCompanyId, (tx) =>
+      Promise.all([
+        tx.productionBatch.findMany({
+          where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id },
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            title: true,
+            quantity: true,
+            unit: true,
+            steps: true,
+            orderRef: true,
+            events: { orderBy: { createdAt: "desc" }, take: 30, select: { id: true, action: true, stepKey: true, note: true, actorName: true, createdAt: true } },
+          },
+        }),
+        tx.siteFile.findMany({
+          // Prices and invoices never leave the server for non-office users.
+          where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id, ...(isAdmin ? {} : { officeOnly: false }) },
+          orderBy: { createdAt: "desc" },
+          select: { id: true, kind: true, fileName: true, mime: true, size: true, amount: true, currency: true, supplier: true, reference: true, uploadedByName: true, createdAt: true },
+        }),
+      ]),
+    );
+    const batches: FactoryBatchView[] = batchRows.map((batch) => ({
+      id: batch.id,
+      title: batch.title,
+      quantity: batch.quantity,
+      unit: batch.unit,
+      siteId: baustelle.id,
+      siteName: baustelle.name,
+      orderRef: batch.orderRef,
+      steps: readFactorySteps(batch.steps),
+      events: batch.events.map((event) => ({ ...event, createdAt: event.createdAt.toISOString() })),
+    }));
+    const files: SiteFileView[] = fileRows.map((file) => ({ ...file, createdAt: file.createdAt.toISOString() }));
+    const shape = steelSiteShape(baustelle.name, baustelle.description);
+
     return (
       <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
         <div className="relative overflow-hidden rounded-3xl border bg-card">
-          <SteelSiteArt type={baustelle.type} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" />
+          <SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
-          <div className="relative flex min-h-[150px] flex-col justify-end gap-2 p-4 sm:min-h-[180px] sm:p-6">
+          <div className="relative flex min-h-[160px] flex-col justify-end gap-2 p-4 sm:min-h-[190px] sm:p-6">
             <Link className="w-fit text-xs text-muted-foreground hover:underline" href="/workzone">
               ← {t("workzone.siteListBack", currentLang, mode)}
             </Link>
             <h1 className="max-w-xl break-words text-2xl font-bold tracking-tight sm:text-3xl">{baustelle.name}</h1>
             {baustelle.address ? <p className="max-w-xl text-sm text-muted-foreground">{baustelle.address}</p> : null}
             <div className="flex flex-wrap items-center gap-2">
+              <SiteFilesButton
+                site={{ id: baustelle.id, name: baustelle.name, address: baustelle.address ?? "", description: baustelle.description ?? "" }}
+                files={files}
+                isAdmin={isAdmin}
+                canUpload={Boolean(currentActorView)}
+              />
               <WorkingBadge workers={activeWorkerNames} />
-              {currentActorView ? (
-                <BaustelleDocumentationModal
-                  baustelleId={baustelle.id}
-                  baustelleName={baustelle.name}
-                  documents={baustelle.documents}
-                  actorId={currentActorView.id}
-                  actorKind={currentActorView.isAdmin ? "ADMIN" : "WORKER"}
-                  companyProfileId={currentActorView.companyProfileId}
-                />
-              ) : null}
             </div>
           </div>
         </div>
@@ -265,72 +290,12 @@ export default async function BaustelleDetailPage({
           }
         />
 
-        <SteelPhaseBoard phases={steelPhases} canEdit={Boolean(currentActorView)} />
-
-        {factoryMaterial.length > 0 ? (
-          <section className="rounded-2xl border bg-card p-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-base font-semibold">{t("factory.siteSection", currentLang)}</h2>
-              <span
-                className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                  materialSummary.ready === materialSummary.total
-                    ? "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300"
-                    : "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300"
-                }`}
-              >
-                {t("factory.siteSummary", currentLang).replace("{ready}", String(materialSummary.ready)).replace("{total}", String(materialSummary.total))}
-              </span>
-            </div>
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {factoryMaterial.map((batch) => {
-                const state = batchState(batch.steps);
-                const current = batch.steps[currentStepIndex(batch.steps)];
-                return (
-                  <li
-                    key={batch.id}
-                    className={`rounded-xl border-2 p-3 ${
-                      state === "ready" ? "border-green-500/50 bg-green-500/[0.06]" : state === "blocked" ? "border-amber-500/60" : "border-border"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-semibold">{batch.title}</span>
-                      {batch.quantity !== null ? (
-                        <span className="shrink-0 text-sm font-semibold tabular-nums">
-                          {formatQuantity(batch.quantity, currentLang)} {t(`factory.units.${batch.unit}`, currentLang)}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-1 text-xs font-medium">
-                      {state === "ready" ? (
-                        <span className="text-green-700 dark:text-green-300">✓ {t("factory.ready", currentLang)}</span>
-                      ) : current ? (
-                        <span className={state === "blocked" ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}>
-                          {t(`factory.steps.${current.key}`, currentLang)} ·{" "}
-                          {current.status === "active" ? t("factory.inProgress", currentLang) : current.status === "blocked" ? `${t("factory.stepBlock", currentLang)}${current.note ? `: ${current.note}` : ""}` : t("factory.waiting", currentLang)}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="mt-2 flex gap-1" aria-hidden="true">
-                      {batch.steps.map((step) => (
-                        <span
-                          key={step.key}
-                          className={`h-1.5 flex-1 rounded-full ${step.status === "done" ? "bg-green-500" : step.status === "active" ? "bg-orange-500" : step.status === "blocked" ? "bg-amber-500" : "bg-slate-300 dark:bg-slate-700"}`}
-                        />
-                      ))}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
-
-        {baustelle.description ? (
-          <details className="rounded-2xl border bg-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">{t("steel.siteInfo", currentLang)}</summary>
-            <p className="border-t px-4 py-3 text-sm text-muted-foreground">{baustelle.description}</p>
-          </details>
-        ) : null}
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+          <SteelPhaseBoard phases={steelPhases} canEdit={Boolean(currentActorView)} canManage={isAdmin} baustelleId={baustelle.id} />
+          <div className="lg:sticky lg:top-4">
+            <SiteProductionPanel site={{ id: baustelle.id, name: baustelle.name }} batches={batches} canAdvance={canAdvance} canManage={isAdmin} />
+          </div>
+        </div>
       </div>
     );
   }

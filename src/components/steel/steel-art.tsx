@@ -5,7 +5,7 @@
  * for reduced motion.
  */
 
-import type { SteelPhaseKey } from "@/lib/workzone/steel-phases";
+import type { SteelPhaseKey, SteelSiteShape } from "@/lib/workzone/steel-phases";
 
 const C = {
   steel: "#475569",
@@ -318,6 +318,30 @@ function Final({ animate }: { animate: boolean }) {
   );
 }
 
+
+function Task({ animate }: { animate: boolean }) {
+  return (
+    <g>
+      <Ground />
+      {/* Clipboard with a checklist and a hard hat */}
+      <rect x="48" y="22" width="56" height="74" rx="5" fill="#fff" stroke={C.steel} strokeWidth="2" />
+      <rect x="64" y="16" width="24" height="10" rx="3" fill={C.steel} />
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x="56" y={36 + i * 18} width="9" height="9" rx="2" fill="none" stroke={C.steel} strokeWidth="1.6" />
+          <rect x="70" y={39 + i * 18} width="26" height="3.5" rx="1.5" fill={C.steelLight} />
+        </g>
+      ))}
+      <path d="M57.5 40.5 l2.5 2.5 l5 -6" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <g className={cls(animate, "sa-bob")}>
+        <path d="M108 86 a18 15 0 0 1 36 0 z" fill={C.orange} />
+        <rect x="104" y="85" width="44" height="5" rx="2" fill={C.primer} />
+        <rect x="124" y="70" width="4" height="15" fill="#fff" opacity="0.35" />
+      </g>
+    </g>
+  );
+}
+
 export type SteelArtKey = SteelPhaseKey | "laser" | "assembly" | "final";
 
 const PHASE_SCENES: Record<SteelArtKey, (props: { animate: boolean }) => React.ReactElement> = {
@@ -332,6 +356,7 @@ const PHASE_SCENES: Record<SteelArtKey, (props: { animate: boolean }) => React.R
   laser: Laser,
   assembly: Welding,
   final: Final,
+  task: Task,
 };
 
 export function SteelPhaseArt({ phase, animate = true, className }: { phase: SteelArtKey; animate?: boolean; className?: string }) {
@@ -351,8 +376,11 @@ export function SteelSiteArt({
   live,
   className,
   fit = "slice",
+  shape = "hall",
 }: {
   type: string;
+  /** Drawing for an on-site job: industrial hall, bridge or multi-storey frame. */
+  shape?: SteelSiteShape;
   pct: number;
   live: boolean;
   className?: string;
@@ -370,7 +398,15 @@ export function SteelSiteArt({
       </defs>
       <rect x="0" y="0" width="240" height="110" fill="url(#sa-sky)" />
       <rect x="0" y="96" width="240" height="14" fill={C.ground} opacity="0.28" />
-      {type === "STEEL_WORKSHOP" ? <WorkshopScene live={live} pct={pct} /> : <AssemblyScene live={live} pct={pct} />}
+      {type === "STEEL_WORKSHOP" ? (
+        <WorkshopScene live={live} pct={pct} />
+      ) : shape === "bridge" ? (
+        <BridgeScene live={live} pct={pct} />
+      ) : shape === "building" ? (
+        <BuildingScene live={live} pct={pct} />
+      ) : (
+        <AssemblyScene live={live} pct={pct} />
+      )}
     </svg>
   );
 }
@@ -414,6 +450,107 @@ function AssemblyScene({ live, pct }: { live: boolean; pct: number }) {
         <g className={cls(live, "sa-swing")}>
           <line x1="150" y1="12" x2="150" y2="34" stroke={C.steelDark} strokeWidth="1" />
           <Hook x={150} y={36} />
+        </g>
+      </g>
+      {live ? <circle cx="10" cy="10" r="4" fill="#22c55e" className="sa-blink" /> : null}
+    </g>
+  );
+}
+
+
+/** Steel girder bridge: piers, deck, then the arch truss and paint, built up with progress. */
+function BridgeScene({ live, pct }: { live: boolean; pct: number }) {
+  const deckOn = pct >= 25;
+  const archOn = pct >= 50;
+  const painted = pct >= 75;
+  const steel = painted ? C.primer : C.steel;
+  return (
+    <g>
+      {/* River */}
+      <rect x="0" y="92" width="240" height="18" fill="#7dd3fc" opacity="0.45" />
+      <path d="M0 96 q15 -3 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" fill="none" stroke="#e0f2fe" strokeWidth="1.2" className={cls(live, "sa-dash")} />
+      {/* Banks */}
+      <polygon points="0,70 24,70 34,96 0,96" fill={C.concrete} />
+      <polygon points="240,70 216,70 206,96 240,96" fill={C.concrete} />
+      {/* Piers */}
+      {[84, 156].map((x) => (
+        <g key={x}>
+          <rect x={x - 6} y="70" width="12" height="28" fill={C.concrete} />
+          <rect x={x - 9} y="66" width="18" height="5" fill={C.concreteTop} />
+        </g>
+      ))}
+      {/* Deck */}
+      {deckOn ? (
+        <g>
+          <rect x="18" y="64" width="204" height="6" fill={steel} />
+          <rect x="18" y="64" width="204" height="1.6" fill="#fff" opacity="0.25" />
+        </g>
+      ) : (
+        <rect x="18" y="64" width="204" height="6" fill="none" stroke={C.steel} strokeDasharray="4 3" opacity="0.5" />
+      )}
+      {/* Arch truss */}
+      <g stroke={archOn ? steel : C.steel} strokeLinecap="round" fill="none" opacity={archOn ? 1 : 0.35} strokeDasharray={archOn ? undefined : "4 3"}>
+        <path d="M30 64 Q120 6 210 64" strokeWidth="3.2" />
+        {[50, 70, 90, 110, 130, 150, 170, 190].map((x) => {
+          const t = (x - 30) / 180;
+          const y = 64 - 4 * 29 * t * (1 - t) * 2;
+          return <line key={x} x1={x} y1="64" x2={x} y2={y} strokeWidth="1.3" />;
+        })}
+      </g>
+      {/* Mobile crane on the bank */}
+      <g>
+        <rect x="222" y="60" width="16" height="9" rx="1.5" fill={C.orange} />
+        <line x1="230" y1="60" x2="196" y2="18" stroke={C.orange} strokeWidth="2.4" />
+        <g className={cls(live, "sa-swing")}>
+          <line x1="196" y1="18" x2="196" y2="38" stroke={C.steelDark} strokeWidth="1" />
+          <Hook x={196} y={40} />
+        </g>
+      </g>
+      {live ? <circle cx="10" cy="10" r="4" fill="#22c55e" className="sa-blink" /> : null}
+    </g>
+  );
+}
+
+/** Multi-storey steel frame (hotel, theatre, tower): storeys rise with progress. */
+function BuildingScene({ live, pct }: { live: boolean; pct: number }) {
+  const storeys = 5;
+  const built = Math.max(1, Math.round((pct / 100) * storeys));
+  const painted = pct >= 75;
+  const xs = [40, 80, 120, 160];
+  return (
+    <g>
+      <rect x="32" y="93" width="144" height="4" fill={C.concrete} />
+      {Array.from({ length: storeys }).map((_, i) => {
+        const yTop = 93 - (i + 1) * 15;
+        const on = i < built;
+        const fill = painted ? C.primer : C.steel;
+        return (
+          <g key={i} opacity={on ? 1 : 0.35}>
+            {xs.map((x) =>
+              on ? (
+                <rect key={x} x={x - 2} y={yTop} width="4" height="15" fill={fill} />
+              ) : (
+                <rect key={x} x={x - 2} y={yTop} width="4" height="15" fill="none" stroke={C.steel} strokeWidth="0.8" strokeDasharray="2 2" />
+              ),
+            )}
+            <rect x="38" y={yTop} width="126" height="3" fill={on ? fill : "none"} stroke={on ? undefined : C.steel} strokeWidth="0.8" strokeDasharray={on ? undefined : "3 2"} />
+            {on && i % 2 === 0 ? <line x1="42" y1={yTop + 15} x2="78" y2={yTop + 3} stroke={C.steelLight} strokeWidth="1" /> : null}
+            {on && i % 2 === 1 ? <line x1="122" y1={yTop + 3} x2="158" y2={yTop + 15} stroke={C.steelLight} strokeWidth="1" /> : null}
+            {on && i < built - 1 ? <rect x="84" y={yTop + 5} width="32" height="7" fill="#bae6fd" opacity="0.6" /> : null}
+          </g>
+        );
+      })}
+      {/* Tower crane */}
+      <g>
+        <rect x="196" y="8" width="7" height="89" fill="none" stroke={C.orange} strokeWidth="1.6" />
+        {[16, 28, 40, 52, 64, 76].map((y) => (
+          <line key={y} x1="196" y1={y} x2="203" y2={y + 10} stroke={C.orange} strokeWidth="1" />
+        ))}
+        <line x1="110" y1="8" x2="236" y2="8" stroke={C.orange} strokeWidth="3" />
+        <rect x="222" y="8" width="12" height="7" fill={C.steelDark} />
+        <g className={cls(live, "sa-swing")}>
+          <line x1="140" y1="8" x2="140" y2={Math.max(14, 93 - built * 15 - 14)} stroke={C.steelDark} strokeWidth="1" />
+          <Hook x={140} y={Math.max(16, 93 - built * 15 - 12)} />
         </g>
       </g>
       {live ? <circle cx="10" cy="10" r="4" fill="#22c55e" className="sa-blink" /> : null}

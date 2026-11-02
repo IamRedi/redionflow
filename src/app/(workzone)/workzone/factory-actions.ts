@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import {
@@ -18,19 +17,9 @@ import {
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import type { ActionResult } from "@/lib/validation/action-result";
-import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { currentCompanyActor } from "@/lib/site-files/actor";
 
-/** The signed-in person of the current company: a worker or an office admin. */
-async function currentActor(companyId: string) {
-  const [worker, admin] = await Promise.all([getCurrentWorker(), getCurrentAdmin()]);
-  if (worker && worker.companyProfileId === companyId) {
-    return { name: `${worker.firstName} ${worker.lastName}`.trim(), workerId: worker.id, userId: null, isAdmin: false };
-  }
-  if (admin && admin.companyProfileId === companyId) {
-    return { name: (admin.name ?? admin.email ?? "Admin").trim(), workerId: null, userId: admin.id, isAdmin: true };
-  }
-  return null;
-}
+const currentActor = currentCompanyActor;
 
 function revalidateFactory(baustelleId: string) {
   revalidatePath("/workzone");
@@ -106,6 +95,8 @@ export async function updateProductionStepAction(input: unknown): Promise<Action
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentActor(companyId);
   if (!actor) return { ok: false, message: tr("notSignedIn") };
+  // Office, foreman or master only: the person responsible for the process.
+  if (!actor.canAdvance) return { ok: false, message: tr("accessDenied") };
 
   const { batchId, stepIndex, command: kind, text } = parsed.data;
   const command: StepCommand = kind === "block" || kind === "note" ? { kind, text } : { kind };

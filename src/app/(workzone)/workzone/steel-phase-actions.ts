@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -12,6 +14,8 @@ import type { ActionResult } from "@/lib/validation/action-result";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import {
   applySteelPhaseCommand,
+  isSteelSiteType,
+  STEEL_TASK_PREFIX,
   readSteelPhaseMeta,
   steelPhaseKeyFromTreeId,
   type SteelPhaseCommand,
@@ -89,6 +93,64 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
     },
   });
 
+  revalidatePath(`/workzone/baustellen/${item.baustelleId}`);
+  revalidatePath("/workzone");
+  notifyRealtimeUpdate("tree.updated", ["tree-list", "baustelle-progress"]);
+  return { ok: true, message: "OK" };
+}
+
+const addTaskSchema = z.object({
+  baustelleId: z.string().min(1).max(64),
+  label: z.string().trim().min(1).max(80),
+});
+
+/** Office only: add an own work step to one steel site (e.g. "Montim shkallësh"). */
+export async function addSteelTaskAction(input: unknown): Promise<ActionResult> {
+  const tr = await getActionTranslator();
+  const parsed = addTaskSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: tr("invalidInput") };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: tr("notSignedIn") };
+  const admin = await getCurrentAdmin();
+  if (!admin || admin.companyProfileId !== companyId) return { ok: false, message: tr("accessDenied") };
+  const site = await prisma.baustelle.findFirst({
+    where: { id: parsed.data.baustelleId, companyProfileId: companyId },
+    select: { id: true, type: true },
+  });
+  if (!site || !isSteelSiteType(site.type)) return { ok: false, message: tr("siteNotFound") };
+  await prisma.treeItem.create({
+    data: {
+      baustelleId: site.id,
+      treeId: `${STEEL_TASK_PREFIX}${randomUUID().slice(0, 8)}`,
+      species: "task",
+      diameter: 0,
+      status: "todo",
+      notes: JSON.stringify({ label: parsed.data.label }),
+    },
+  });
+  revalidatePath(`/workzone/baustellen/${site.id}`);
+  revalidatePath("/workzone");
+  notifyRealtimeUpdate("tree.updated", ["tree-list", "baustelle-progress"]);
+  return { ok: true, message: "OK" };
+}
+
+/** Office only: remove an own work step again (the fixed phases stay). */
+export async function removeSteelTaskAction(input: unknown): Promise<ActionResult> {
+  const tr = await getActionTranslator();
+  const parsed = z.object({ phaseItemId: z.string().min(1).max(64) }).safeParse(input);
+  if (!parsed.success) return { ok: false, message: tr("invalidInput") };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: tr("notSignedIn") };
+  const admin = await getCurrentAdmin();
+  if (!admin || admin.companyProfileId !== companyId) return { ok: false, message: tr("accessDenied") };
+  const item = await prisma.treeItem.findUnique({
+    where: { id: parsed.data.phaseItemId },
+    include: { baustelle: { select: { id: true, companyProfileId: true } } },
+  });
+  if (!item || !item.treeId.startsWith(STEEL_TASK_PREFIX) || !isOwnedByCurrentCompany(item.baustelle, companyId)) {
+    return { ok: false, message: tr("treeNotFound") };
+  }
+  await prisma.treeItem.delete({ where: { id: item.id } });
   revalidatePath(`/workzone/baustellen/${item.baustelleId}`);
   revalidatePath("/workzone");
   notifyRealtimeUpdate("tree.updated", ["tree-list", "baustelle-progress"]);

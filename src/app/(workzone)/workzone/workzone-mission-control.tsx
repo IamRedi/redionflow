@@ -11,7 +11,7 @@ import { HubsteigerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { t } from "@/lib/i18n";
-import { isSteelSiteType } from "@/lib/workzone/steel-phases";
+import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
 type MissionItem = {
   id: string;
@@ -32,6 +32,7 @@ type MissionItem = {
   canvasMobileY: number | null;
   liveSince: string | null;
   standortAddress: string;
+  shape?: SteelSiteShape;
   pendingSiteTask?: string | null;
 };
 
@@ -538,7 +539,7 @@ export function WorkzoneMissionControl({
               >
                 {isSteelSiteType(item.type) ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
-                    <SteelSiteArt type={item.type} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />
+                    <SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                       {typeLabel(item.type, currentLang)}
                     </span>

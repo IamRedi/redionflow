@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, PackageCheck, PackageX, PenLine, RotateCcw, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, PackageCheck, PackageX, PenLine, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -17,7 +17,7 @@ import {
   type SteelPhaseStatus,
 } from "@/lib/workzone/steel-phases";
 
-import { updateSteelPhaseAction } from "../../steel-phase-actions";
+import { addSteelTaskAction, removeSteelTaskAction, updateSteelPhaseAction } from "../../steel-phase-actions";
 
 export type SteelPhaseView = {
   id: string;
@@ -56,7 +56,26 @@ function fill(template: string, values: Record<string, string | number>) {
   return Object.entries(values).reduce((out, [key, value]) => out.replaceAll(`{${key}}`, String(value)), template);
 }
 
-export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[]; canEdit: boolean }) {
+function phaseName(item: SteelPhaseView, lang: string) {
+  return item.key === "task" ? item.meta.label || t("steel.task", lang) : t(`steel.${item.key}`, lang);
+}
+
+function phaseHint(item: SteelPhaseView, lang: string) {
+  return t(item.key === "task" ? "steel.taskHint" : `steel.${item.key}Hint`, lang);
+}
+
+export function SteelPhaseBoard({
+  phases,
+  canEdit,
+  canManage = false,
+  baustelleId,
+}: {
+  phases: SteelPhaseView[];
+  canEdit: boolean;
+  /** Office: may add and remove own work steps. */
+  canManage?: boolean;
+  baustelleId: string;
+}) {
   const { currentLang } = useLanguage();
   const router = useRouter();
   const [items, setItems] = useState(phases);
@@ -65,6 +84,35 @@ export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[];
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [adding, setAdding] = useState(false);
+  const [newTask, setNewTask] = useState("");
+
+  function addTask() {
+    const label = newTask.trim();
+    if (!label) return;
+    startTransition(async () => {
+      const result = await addSteelTaskAction({ baustelleId, label });
+      if (!result.ok) {
+        setError(t("steel.error", currentLang));
+        return;
+      }
+      setNewTask("");
+      setAdding(false);
+      router.refresh();
+    });
+  }
+
+  function removeTask(id: string) {
+    startTransition(async () => {
+      const result = await removeSteelTaskAction({ phaseItemId: id });
+      if (!result.ok) {
+        setError(t("steel.error", currentLang));
+        return;
+      }
+      closeSheet();
+      router.refresh();
+    });
+  }
 
   // Fresh server data (after router.refresh or a realtime update) replaces the optimistic copy.
   const [syncedPhases, setSyncedPhases] = useState(phases);
@@ -209,8 +257,8 @@ export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[];
                 ) : null}
               </div>
               <div className="flex flex-1 flex-col gap-1 p-3">
-                <span className="text-[15px] font-semibold leading-tight sm:text-base">{t(`steel.${item.key}`, currentLang)}</span>
-                <span className="line-clamp-2 text-xs text-muted-foreground">{t(`steel.${item.key}Hint`, currentLang)}</span>
+                <span className="text-[15px] font-semibold leading-tight sm:text-base">{phaseName(item, currentLang)}</span>
+                <span className="line-clamp-2 text-xs text-muted-foreground">{phaseHint(item, currentLang)}</span>
                 <span className={`mt-auto inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${style.chip}`}>
                   {statusLabel(item.status, currentLang)}
                 </span>
@@ -224,6 +272,48 @@ export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[];
             </button>
           );
         })}
+        {canManage ? (
+          adding ? (
+            <div className="flex min-h-[200px] flex-col gap-2 rounded-2xl border-2 border-dashed border-orange-500/50 bg-card p-3">
+              <span className="text-sm font-semibold">{t("steel.addTask", currentLang)}</span>
+              <input
+                autoFocus
+                value={newTask}
+                onChange={(event) => setNewTask(event.target.value.slice(0, 80))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") addTask();
+                  if (event.key === "Escape") setAdding(false);
+                }}
+                placeholder={t("steel.taskPlaceholder", currentLang)}
+                className="h-12 w-full rounded-xl border-2 bg-background px-3 text-base outline-none focus:border-orange-500"
+              />
+              <div className="mt-auto grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setAdding(false)} className="h-12 rounded-xl border-2 bg-card text-sm font-semibold active:scale-95">
+                  {t("steel.cancel", currentLang)}
+                </button>
+                <button
+                  type="button"
+                  disabled={pending || !newTask.trim()}
+                  onClick={addTask}
+                  className="h-12 rounded-xl bg-orange-600 text-sm font-bold text-white active:scale-95 disabled:opacity-50"
+                >
+                  {t("steel.save", currentLang)}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition hover:border-orange-500/60 hover:text-orange-600 active:scale-[0.98]"
+            >
+              <span className="grid size-12 place-items-center rounded-full border-2 border-current">
+                <Plus className="size-6" />
+              </span>
+              <span className="text-sm font-semibold">{t("steel.addTask", currentLang)}</span>
+            </button>
+          )
+        ) : null}
       </div>
 
       {typeof document !== "undefined"
@@ -234,7 +324,7 @@ export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[];
             key="sheet"
             role="dialog"
             aria-modal="true"
-            aria-label={t(`steel.${open.key}`, currentLang)}
+            aria-label={phaseName(open, currentLang)}
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 28 }}
@@ -288,12 +378,12 @@ export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[];
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t(`steel.${open.key}`, currentLang)}</h2>
+                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{phaseName(open, currentLang)}</h2>
                     <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[open.status].chip}`}>
                       {statusLabel(open.status, currentLang)}
                     </span>
                   </div>
-                  <p className="mt-1 text-base text-muted-foreground">{t(`steel.${open.key}Hint`, currentLang)}</p>
+                  <p className="mt-1 text-base text-muted-foreground">{phaseHint(open, currentLang)}</p>
                   <div className="mt-3 space-y-2 text-sm">
                     {open.status === "done" && open.meta.doneBy && open.meta.doneBy !== "…" ? (
                       <p className="font-medium text-green-700 dark:text-green-300">{fill(t("steel.doneBy", currentLang), { name: open.meta.doneBy })}</p>
@@ -417,6 +507,16 @@ export function SteelPhaseBoard({ phases, canEdit }: { phases: SteelPhaseView[];
                       )}
                     </div>
                   )}
+                  {canManage && open.key === "task" && !editor ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => removeTask(open.id)}
+                      className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-red-600 active:scale-[0.98] disabled:opacity-50"
+                    >
+                      <Trash2 className="size-4" /> {t("steel.removeTask", currentLang)}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </div>

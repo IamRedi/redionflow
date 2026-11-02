@@ -141,3 +141,22 @@ export function formatQuantity(value: number, lang: string) {
   const text = Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
   return lang === "en" ? text : text.replace(".", ",");
 }
+
+/** Who may move a material group through the factory: the office, a foreman or a master. */
+export function canAdvanceProduction(actor: { isAdmin: boolean; level?: string | null } | null) {
+  if (!actor) return false;
+  return actor.isAdmin || actor.level === "VORARBEITER" || actor.level === "MEISTER";
+}
+
+/** Whole amount with dot thousands, same on server and client: 1806000 → "1.806.000". */
+export function formatAmount(value: number) {
+  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+/** Short date dd.mm.yyyy without locale data. */
+export function formatShortDate(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}

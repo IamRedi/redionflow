@@ -20,9 +20,9 @@ import { WorkzoneCreateBaustelleModal } from "./workzone-create-baustelle-modal"
 import { WorkzoneMissionControl } from "./workzone-mission-control";
 import { SteelProgressRing, SteelSiteArt } from "@/components/steel/steel-art";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
-import { isSteelSiteType } from "@/lib/workzone/steel-phases";
+import { isSteelSiteType, steelSiteShape } from "@/lib/workzone/steel-phases";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { readFactorySteps } from "@/lib/factory/production";
+import { batchState, readFactorySteps } from "@/lib/factory/production";
 import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
@@ -160,12 +160,8 @@ export default async function WorkzoneHomePage() {
               quantity: true,
               unit: true,
               steps: true,
+              orderRef: true,
               baustelle: { select: { id: true, name: true } },
-              events: {
-                orderBy: { createdAt: "desc" },
-                take: 30,
-                select: { id: true, action: true, stepKey: true, note: true, actorName: true, createdAt: true },
-              },
             },
           }),
         )
@@ -176,10 +172,19 @@ export default async function WorkzoneHomePage() {
         unit: batch.unit,
         siteId: batch.baustelle.id,
         siteName: batch.baustelle.name,
+        orderRef: batch.orderRef,
         steps: readFactorySteps(batch.steps),
-        events: batch.events.map((event) => ({ ...event, createdAt: event.createdAt.toISOString() })),
+        events: [],
       }))
     : [];
+
+  const materialBySite = new Map<string, { ready: number; total: number }>();
+  for (const batch of factoryBatches) {
+    const entry = materialBySite.get(batch.siteId) ?? { ready: 0, total: 0 };
+    entry.total += 1;
+    if (batchState(batch.steps) === "ready") entry.ready += 1;
+    materialBySite.set(batch.siteId, entry);
+  }
 
   const coneQtyByBaustelle = new Map<string, number>();
   for (const movement of coneMoves) {
@@ -287,6 +292,7 @@ export default async function WorkzoneHomePage() {
       canvasMobileY: b.canvasMobileY,
       liveSince,
       standortAddress: (b.address ?? "").trim(),
+      shape: steelSiteShape(b.name, b.description),
       pendingCollection,
       pendingSiteTask,
       equipmentIndicators,
@@ -372,7 +378,6 @@ export default async function WorkzoneHomePage() {
           batches={factoryBatches}
           sites={baustellen.map((site) => ({ id: site.id, name: site.name }))}
           canManage={Boolean(admin)}
-          canEdit={Boolean(admin || worker)}
         />
       ) : null}
 
@@ -415,6 +420,66 @@ export default async function WorkzoneHomePage() {
             .map((item) => item.labelSnapshot);
 
           const isLocked = b.status !== "active";
+          if (isSteelSiteType(b.type)) {
+            const material = materialBySite.get(b.id);
+            const finished = total > 0 && done >= total;
+            return (
+              <Link
+                key={b.id}
+                href={isLocked ? "#" : `/workzone/baustellen/${b.id}`}
+                aria-disabled={isLocked}
+                className={`group block min-w-0 ${isLocked ? "pointer-events-none opacity-70" : ""}`}
+              >
+                <article
+                  className={`relative overflow-hidden rounded-3xl border-2 bg-card shadow-sm transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${
+                    finished ? "border-green-500/50" : "border-border"
+                  }`}
+                >
+                  <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+                    <SteelSiteArt
+                      type={b.type}
+                      shape={steelSiteShape(b.name, b.description)}
+                      pct={pct}
+                      live={b.workSessions.length > 0}
+                      className="absolute inset-0 h-full w-full"
+                    />
+                    {/* Site name on a plate in the top corner, like a site board. */}
+                    <div className="absolute left-3 top-3 max-w-[75%] rounded-xl border border-white/60 bg-white/85 px-3 py-2 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/80">
+                      <div className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">{meta.label}</div>
+                      <h3 className="line-clamp-2 text-lg font-bold leading-tight tracking-tight">{b.name}</h3>
+                    </div>
+                    <div className="absolute bottom-2 right-2 rounded-full bg-background/85 text-orange-600 shadow-sm backdrop-blur dark:text-orange-400">
+                      <SteelProgressRing pct={pct} size={52} />
+                    </div>
+                  </div>
+                  <div className="space-y-2 p-4">
+                    {b.address ? <p className="truncate text-xs text-muted-foreground">📍 {b.address}</p> : null}
+                    <WorkingBadge workers={workers} />
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">{t("steel.phasesTitle", currentLang)}</span>
+                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                        <span className={`block h-full rounded-full ${finished ? "bg-green-500" : "bg-orange-500"}`} style={{ width: `${pct}%` }} />
+                      </span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {done}/{total}
+                      </span>
+                    </div>
+                    {material && material.total > 0 ? (
+                      <div
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+                          material.ready === material.total
+                            ? "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300"
+                            : "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                        }`}
+                      >
+                        ⚒ {t("factory.cardMaterial", currentLang).replace("{ready}", String(material.ready)).replace("{total}", String(material.total))}
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              </Link>
+            );
+          }
           return (
             <Link
               key={b.id}

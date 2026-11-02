@@ -268,6 +268,7 @@ model CompanyProfile {
   inventoryItems            CompanyInventoryItem[]
   productionBatches         ProductionBatch[]
   productionEvents          ProductionEvent[]
+  siteFiles                 SiteFile[]
   inventoryCatalog          CompanyInventoryCatalog[]
   inventoryMovements        InventoryMovement[]
   inventoryAssetMovements   InventoryAssetMovement[]
@@ -901,6 +902,7 @@ model Baustelle {
 
   treeItems                 TreeItem[]
   productionBatches         ProductionBatch[]
+  siteFiles                 SiteFile[]
   workLogs                  WorkLog[]
   workSessions              WorkSession[]
   manualTasks               ManualTask[]
@@ -1365,6 +1367,8 @@ model ProductionBatch {
   steps            Json
   readyAt          DateTime?
   createdByName    String         @default("")
+  /// Supplier order this material came from (order number), if any.
+  orderRef         String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   events           ProductionEvent[]
@@ -1392,4 +1396,31 @@ model ProductionEvent {
 
   @@index([batchId])
   @@index([companyProfileId])
+}
+
+/// Files of one construction site kept in the database (pilot storage):
+/// documents and photos for the team, orders and invoices for the office.
+model SiteFile {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  /// document | photo | order | invoice
+  kind             String
+  /// true: only the office (admins) may see it (prices, invoices).
+  officeOnly       Boolean        @default(false)
+  fileName         String
+  mime             String
+  size             Int
+  data             Bytes
+  amount           Float?
+  currency         String?
+  supplier         String?
+  reference        String?
+  uploadedByName   String         @default("")
+  createdAt        DateTime       @default(now())
+
+  @@index([companyProfileId])
+  @@index([baustelleId, kind])
 }

@@ -70,3 +70,15 @@ describe("steel phases", () => {
     expect(cleared.meta).toMatchObject({ note: "", noteBy: "", noteAt: "" });
   });
 });
+
+describe("steel site shape and tasks", () => {
+  it("picks a drawing from the site name", async () => {
+    const { steelSiteShape, steelPhaseKeyFromTreeId } = await import("./steel-phases");
+    expect(steelSiteShape("Ura e Tabakëve")).toBe("bridge");
+    expect(steelSiteShape("Mbikalimi Kashar")).toBe("bridge");
+    expect(steelSiteShape("Richmond Hotel")).toBe("building");
+    expect(steelSiteShape("Teatri Kombëtar")).toBe("building");
+    expect(steelSiteShape("Kapanon Logistik Vorë")).toBe("hall");
+    expect(steelPhaseKeyFromTreeId("steel-task-abc")).toBe("task");
+  });
+});
