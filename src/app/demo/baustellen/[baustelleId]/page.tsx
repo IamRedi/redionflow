@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { kidrahtBriefingUrl, kidrahtDemoUrl } from "@/lib/kidraht-demo";
+import { KidrahtLauncher } from "@/components/demo/kidraht-launcher";
 import { isRecord, readLatLng } from "@/lib/workzone/site-json";
 import { WorkingBadge } from "@/app/(workzone)/workzone/working-badge";
 import { BaustelleMap } from "@/app/(workzone)/workzone/baustellen/[baustelleId]/baustelle-map";
@@ -23,7 +24,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   const { baustelleId } = await params;
   const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
   const tr = (key: string) => t(key, currentLang, mode);
-  const kidraht = mode === "baumdienst" ? kidrahtDemoUrl() : null;
+  const kidraht = kidrahtDemoUrl(mode);
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId },
     include: {
@@ -137,14 +138,12 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
                 <CardDescription>{tr("demo.kidrahtDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
-                <a
-                  href={kidrahtBriefingUrl(kidraht)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-teal-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700"
-                >
-                  {tr("demo.kidrahtOpen")} ↗
-                </a>
+                <KidrahtLauncher
+                  url={kidrahtBriefingUrl(kidraht)}
+                  label={tr("demo.kidrahtOpen")}
+                  closeLabel={tr("demo.kidrahtClose")}
+                  newTabLabel={tr("demo.kidrahtNewTab")}
+                />
               </CardContent>
             </Card>
           ) : null}
