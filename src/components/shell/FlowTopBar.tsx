@@ -3,6 +3,7 @@ import { Bell, Home, LayoutDashboard } from "lucide-react";
 
 import { TeamAssistantLogoTrigger, WorkerAssistantTrigger } from "@/components/assistant/team-assistant";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { AppBrand } from "@/components/branding/AppBrand";
 import { Button } from "@/components/ui/button";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
@@ -11,6 +12,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { kidrahtAppUrl } from "@/lib/kidraht-demo";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { safeCompanyLogo } from "@/lib/company-logo";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -31,6 +33,7 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
     getCurrentCompanyId(),
   ]);
   const currentWorkerId = (await getCurrentWorker())?.id;
+  const kidraht = admin || currentWorkerId ? kidrahtAppUrl() : null;
 
   // T-025b / SaaS: scope workers + admin profiles to the caller's tenant so
   // the top bar never leaks staff from another company.
@@ -131,6 +134,7 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
             ) : (
               <AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t("common.companyLogoAlt", currentLang)} />
             )}
+            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", currentLang)} /> : null}
             <div className="grid gap-1">
               <Link
                 href="/workzone"

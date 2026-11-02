@@ -1492,7 +1492,8 @@
     "workzoneDescription": "Read-only live view of sites, crews, fleet and current field status.",
     "kidrahtTitle": "Company knowledge · KiDraht",
     "kidrahtDescription": "Rules and briefing for this site, approved by the owner. Workers sign in with a PIN.",
-    "kidrahtOpen": "Open briefing"
+    "kidrahtOpen": "Open briefing",
+    "kidrahtNewTab": "Open in new tab"
   },
   "steel": {
     "phasesTitle": "Work phases",
