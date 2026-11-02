@@ -6,7 +6,7 @@ export const settingsFormSchema = z.object({
   companyId: z.string().min(1),
   displayName: z.string().min(1, t("validation.displayNameRequired")),
   legalName: z.string().min(1, t("validation.legalNameRequired")),
-  country: z.enum(["DE", "AL"]),
+  country: z.enum(["DE", "AL"]).optional(),
   bgkPct: z.coerce.number().min(0).max(100),
   agkPct: z.coerce.number().min(0).max(100),
   riskPct: z.coerce.number().min(0).max(100),
