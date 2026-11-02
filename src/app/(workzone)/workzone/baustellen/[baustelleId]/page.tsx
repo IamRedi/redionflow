@@ -22,6 +22,10 @@ import { WorkingBadge } from "../../working-badge";
 import { ExternalWorkerForm } from "./external-worker-form";
 import { BaustelleDocumentationModal } from "./baustelle-documentation-modal";
 import { SafetyEquipmentPanel } from "./safety-equipment-panel";
+import { SteelPhaseBoard } from "./steel-phase-board";
+import { SteelSiteArt } from "@/components/steel/steel-art";
+import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
+import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhasesFor } from "@/lib/workzone/steel-phases";
 
 export default async function BaustelleDetailPage({
   params,
@@ -38,6 +42,11 @@ export default async function BaustelleDetailPage({
     getCurrentCompanyId(),
   ]);
   if (!currentCompanyId) notFound();
+  const siteHead = await prisma.baustelle.findFirst({
+    where: { id: baustelleId, companyProfileId: currentCompanyId },
+    select: { id: true, type: true },
+  });
+  if (siteHead && isSteelSiteType(siteHead.type)) await ensureSteelPhases(siteHead);
   const baustelle = await withPilotDbContext(currentCompanyId, tx => tx.baustelle.findFirst({
     where: { id: baustelleId, companyProfileId: currentCompanyId },
     include: {
@@ -186,6 +195,70 @@ export default async function BaustelleDetailPage({
       available,
     };
   });
+
+  const isSteel = isSteelSiteType(baustelle.type);
+  const phaseOrder = steelPhasesFor(baustelle.type).map((phase) => phase.treeId);
+  const steelPhases = isSteel
+    ? baustelle.treeItems
+        .flatMap((item) => {
+          const key = steelPhaseKeyFromTreeId(item.treeId);
+          return key ? [{ id: item.id, key, status: item.status, meta: readSteelPhaseMeta(item.notes), order: phaseOrder.indexOf(item.treeId) }] : [];
+        })
+        .sort((a, b) => (a.order < 0 ? 99 : a.order) - (b.order < 0 ? 99 : b.order))
+        .map(({ order: _order, ...phase }) => phase)
+    : [];
+  const steelPct = steelPhases.length > 0 ? Math.round((steelPhases.filter((p) => p.status === "done").length / steelPhases.length) * 100) : 0;
+
+  if (isSteel) {
+    return (
+      <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
+        <div className="relative overflow-hidden rounded-3xl border bg-card">
+          <SteelSiteArt type={baustelle.type} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
+          <div className="relative flex min-h-[150px] flex-col justify-end gap-2 p-4 sm:min-h-[180px] sm:p-6">
+            <Link className="w-fit text-xs text-muted-foreground hover:underline" href="/workzone">
+              ← {t("workzone.siteListBack", currentLang, mode)}
+            </Link>
+            <h1 className="max-w-xl break-words text-2xl font-bold tracking-tight sm:text-3xl">{baustelle.name}</h1>
+            {baustelle.address ? <p className="max-w-xl text-sm text-muted-foreground">{baustelle.address}</p> : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <WorkingBadge workers={activeWorkerNames} />
+              {currentActorView ? (
+                <BaustelleDocumentationModal
+                  baustelleId={baustelle.id}
+                  baustelleName={baustelle.name}
+                  documents={baustelle.documents}
+                  actorId={currentActorView.id}
+                  actorKind={currentActorView.isAdmin ? "ADMIN" : "WORKER"}
+                  companyProfileId={currentActorView.companyProfileId}
+                />
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <WorkingControls
+          baustelleId={baustelle.id}
+          currentWorker={currentWorker ? currentActorView : null}
+          activeWorkerIds={activeWorkerIds}
+          activeSession={
+            currentWorkerLiveSession
+              ? { startTime: currentWorkerLiveSession.startTime.toISOString(), baustelleId: currentWorkerLiveSession.baustelleId }
+              : null
+          }
+        />
+
+        <SteelPhaseBoard phases={steelPhases} canEdit={Boolean(currentActorView)} />
+
+        {baustelle.description ? (
+          <details className="rounded-2xl border bg-card">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">{t("steel.siteInfo", currentLang)}</summary>
+            <p className="border-t px-4 py-3 text-sm text-muted-foreground">{baustelle.description}</p>
+          </details>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">

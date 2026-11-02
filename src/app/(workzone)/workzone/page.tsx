@@ -18,6 +18,9 @@ import { WorkingBadge } from "./working-badge";
 import { WorkzoneCalendarModal } from "./workzone-calendar-modal";
 import { WorkzoneCreateBaustelleModal } from "./workzone-create-baustelle-modal";
 import { WorkzoneMissionControl } from "./workzone-mission-control";
+import { SteelProgressRing, SteelSiteArt } from "@/components/steel/steel-art";
+import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
+import { isSteelSiteType, STEEL_SITE_TYPES } from "@/lib/workzone/steel-phases";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -89,6 +92,13 @@ export default async function WorkzoneHomePage() {
     },
     take: 90,
   }));
+  // Steel sites get their work phases before the counters below read them.
+  const steelSites = await prisma.baustelle.findMany({
+    where: { companyProfileId: company.id, status: "active", type: { in: [...STEEL_SITE_TYPES] } },
+    select: { id: true, type: true },
+    take: 50,
+  });
+  await Promise.all(steelSites.map((site) => ensureSteelPhases(site)));
   const [baustellen, coneMoves] = await Promise.all([
     withPilotDbContext(company.id, tx => tx.baustelle.findMany({
       // Inactive sites (finished projects, archive) stay in the admin list only;
@@ -361,17 +371,26 @@ export default async function WorkzoneHomePage() {
               className={`group block min-w-0 ${isLocked ? "pointer-events-none opacity-70" : ""}`}
             >
               <Card
-                className={`relative min-w-0 transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${cardTone(
-                  b.status,
-                  done,
-                  total,
-                )}`}
+                className={`relative min-w-0 transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md ${
+                  isSteelSiteType(b.type)
+                    ? `overflow-hidden rounded-2xl bg-card ${total > 0 && done >= total ? "border-emerald-500/50" : "border-border"}`
+                    : cardTone(b.status, done, total)
+                }`}
               >
-                <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
-                  <div className="absolute -right-4 top-10 select-none text-6xl font-black tracking-widest text-foreground/5">
-                    {meta.watermark}
+                {isSteelSiteType(b.type) ? (
+                  <div className="relative h-28 overflow-hidden rounded-t-lg border-b">
+                    <SteelSiteArt type={b.type} pct={pct} live={b.workSessions.length > 0} className="absolute inset-0 h-full w-full" />
+                    <div className="absolute bottom-2 right-2 rounded-full bg-background/85 text-orange-600 shadow-sm backdrop-blur dark:text-orange-400">
+                      <SteelProgressRing pct={pct} size={48} />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+                    <div className="absolute -right-4 top-10 select-none text-6xl font-black tracking-widest text-foreground/5">
+                      {meta.watermark}
+                    </div>
+                  </div>
+                )}
               <CardHeader>
                   <CardTitle className="flex items-center justify-between gap-2 text-base">
                     <span className="min-w-0 truncate">{b.name}</span>
@@ -382,7 +401,7 @@ export default async function WorkzoneHomePage() {
                       </span>
                     </span>
                   </CardTitle>
-                <CardDescription>{b.description ?? "—"}</CardDescription>
+                <CardDescription className="line-clamp-2">{b.description ?? "—"}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-xs text-muted-foreground">
                   <WorkingBadge workers={workers} />

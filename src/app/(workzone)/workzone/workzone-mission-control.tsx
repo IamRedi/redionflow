@@ -9,7 +9,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { HubsteigerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { SteelSiteArt } from "@/components/steel/steel-art";
 import { t } from "@/lib/i18n";
+import { isSteelSiteType } from "@/lib/workzone/steel-phases";
 
 type MissionItem = {
   id: string;
@@ -532,9 +534,17 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"}`}
+                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${isSteelSiteType(item.type) ? "overflow-hidden pt-0" : ""}`}
               >
-                <div className="flex items-center justify-between gap-2">
+                {isSteelSiteType(item.type) ? (
+                  <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
+                    <SteelSiteArt type={item.type} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />
+                    <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      {typeLabel(item.type, currentLang)}
+                    </span>
+                  </div>
+                ) : null}
+                <div className={`flex items-center justify-between gap-2 ${isSteelSiteType(item.type) ? "hidden" : ""}`}>
                   <ItemTypeIcon type={item.type} pct={item.pct} />
                   <div className={`flex flex-wrap items-center justify-end gap-1 ${isCompactCanvas ? "max-w-[88px]" : "max-w-[150px]"}`}>
                     {item.equipmentIndicators.slice(0, 3).map((indicator) => (
@@ -554,6 +564,14 @@ export function WorkzoneMissionControl({
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
                 </p>
+                {isSteelSiteType(item.type) ? (
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full transition-[width] duration-700 ${item.pct >= 100 ? "bg-emerald-500" : "bg-orange-500"}`}
+                      style={{ width: `${item.pct}%` }}
+                    />
+                  </div>
+                ) : null}
                 {item.haltCount > 0 ? <p className="text-[11px] font-semibold text-red-500">🅿️🚫 {item.haltCount}</p> : null}
                 {item.pendingSiteTask ? (
                   <p className="mt-1 line-clamp-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-700 dark:text-sky-200">
