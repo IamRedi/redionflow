@@ -40,12 +40,13 @@ export function AppBrand({
       <div className={cn("relative flex min-w-0 items-center", className)}>
         <div
           className={cn(
-            "flex items-center justify-center overflow-hidden rounded-2xl bg-white px-3 shadow-sm ring-1 ring-border",
-            compact ? "h-[60px] w-[150px]" : "h-[72px] w-[180px]",
+            "flex items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-border",
+            compact ? "size-[60px] p-[5px]" : "size-[72px] p-[6px]",
           )}
         >
+          {/* Same round mark as the product logo: white circle, the company logo fitted inside. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- small data: URL */}
-          <img src={companyLogo} alt={logoAlt} className="max-h-full w-full object-contain py-2" />
+          <img src={companyLogo} alt={logoAlt} className="size-full object-contain" />
         </div>
         {aiBadge ? (
           <span className="absolute -right-1 -top-1 rounded-full border bg-background px-1.5 py-0.5 text-[10px] font-bold leading-none text-brand-green shadow-sm">

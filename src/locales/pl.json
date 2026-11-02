@@ -433,7 +433,12 @@
       "OFFICE": "Office",
       "FIELD_WORKER": "Site worker",
       "FACTORY_WORKER": "Factory worker"
-    }
+    },
+    "navDashboard": "Przegląd",
+    "navSettings": "Ustawienia",
+    "baustellenSummary": "{active} active of {total} total",
+    "openSite": "Open site",
+    "editAndManage": "Edit and manage"
   },
   "language": {
     "de": "Niemiecki",

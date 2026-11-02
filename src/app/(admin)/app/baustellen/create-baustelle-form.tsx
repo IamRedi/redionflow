@@ -63,9 +63,9 @@ export function CreateBaustelleForm({
   const createFirstTreeItem = form.watch("createFirstTreeItem");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{tx("admin.baustellenCreateButton")}</CardTitle>
+    <Card className="border-0 bg-transparent shadow-none">
+      <CardHeader className="pb-3">
+        <CardTitle className="sr-only">{tx("admin.baustellenCreateButton")}</CardTitle>
         <CardDescription>{tx("admin.createBaustelleDescription")}</CardDescription>
       </CardHeader>
       <CardContent>

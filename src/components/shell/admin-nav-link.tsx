@@ -1,9 +1,50 @@
 "use client";
 
+import {
+  Building2,
+  Circle,
+  FolderKanban,
+  LayoutDashboard,
+  type LucideIcon,
+  Satellite,
+  ScanBarcode,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  Truck,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createElement } from "react";
 
 import { cn } from "@/lib/ui/cn";
+
+/** Icons by route, so server layouts can pass plain hrefs. */
+const ICONS: Array<[string, LucideIcon]> = [
+  ["/app/dashboard", LayoutDashboard],
+  ["/app/admin/inventory", ScanBarcode],
+  ["/app/admin", UsersRound],
+  ["/app/fleet-gps", Satellite],
+  ["/app/safety", ShieldCheck],
+  ["/app/baustellen", Building2],
+  ["/app/projects", FolderKanban],
+  ["/app/machines", Truck],
+  ["/app/audit", ScrollText],
+  ["/app/settings", Settings],
+];
+
+export function adminNavIcon(href: string): LucideIcon {
+  return ICONS.find(([prefix]) => href === prefix || href.startsWith(`${prefix}/`))?.[1] ?? Circle;
+}
+
+export function adminNavIsActive(pathname: string, href: string, activePrefixes: string[] = []) {
+  return (
+    pathname === href ||
+    activePrefixes.some((prefix) => pathname.startsWith(prefix)) ||
+    (href !== "/app/admin" && pathname.startsWith(`${href}/`))
+  );
+}
 
 type AdminNavLinkProps = {
   href: string;
@@ -15,10 +56,7 @@ type AdminNavLinkProps = {
 
 export function AdminNavLink({ href, label, activePrefixes = [], inset = false, onNavigate }: AdminNavLinkProps) {
   const pathname = usePathname();
-  const isActive =
-    pathname === href ||
-    activePrefixes.some((prefix) => pathname.startsWith(prefix)) ||
-    (href !== "/app/admin" && pathname.startsWith(`${href}/`));
+  const isActive = adminNavIsActive(pathname, href, activePrefixes);
 
   return (
     <Link
@@ -26,12 +64,18 @@ export function AdminNavLink({ href, label, activePrefixes = [], inset = false, 
       aria-current={isActive ? "page" : undefined}
       onClick={onNavigate}
       className={cn(
-        "block rounded-xl border bg-background/80 px-3 py-2 text-[13px] leading-5 font-medium text-foreground/90 shadow-sm backdrop-blur transition hover:bg-muted hover:text-foreground",
-        inset ? "ml-2" : "",
-        isActive ? "border-foreground/20 bg-foreground text-background shadow-none hover:bg-foreground hover:text-background" : "",
+        "group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground",
+        inset ? "ml-3" : "",
+        isActive ? "bg-primary/10 text-foreground hover:bg-primary/10" : "",
       )}
     >
-      {label}
+      {isActive ? <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-primary" aria-hidden /> : null}
+      {createElement(adminNavIcon(href), {
+        className: cn("size-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"),
+        strokeWidth: 1.8,
+        "aria-hidden": true,
+      })}
+      <span className="truncate">{label}</span>
     </Link>
   );
 }

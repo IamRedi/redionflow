@@ -44,7 +44,8 @@
     "add": "Shto",
     "active": "aktive",
     "error": "Gabim",
-    "none": "Asnjë"
+    "none": "Asnjë",
+    "photo": "Foto"
   },
   "public": {
     "loginTitle": "Hyr",
@@ -678,7 +679,16 @@
     "settingsFold": "Gjuha & njoftimet",
     "recentShiftsFold": "Shfaq turnet e fundit",
     "steelWorkshop": "Punishtja (fabrikim)",
-    "steelAssembly": "Montim në kantier"
+    "steelAssembly": "Montim në kantier",
+    "baustelleStatusActive": "aktiv",
+    "defectResolvedButton": "U rregullua?",
+    "confirmDefectResolved": "Je i sigurt që defekti u rregullua? Ti je përgjegjës për këtë veprim.",
+    "focus": "Fokus",
+    "documentsTitle": "Dokumentet",
+    "documentFallback": "Dokument",
+    "inventoryStatusPrivate": "PRIVAT",
+    "inventoryStatusActive": "AKTIV",
+    "inventoryPrivate": "Privat"
   },
   "report": {
     "daily": "Raporti ditor",
@@ -721,7 +731,8 @@
     "total": "Totali",
     "employerCompany": "Kompania e punedhenesit",
     "employeeCompany": "Kompania e punetorit",
-    "fromAdminInline": "nga Admini"
+    "fromAdminInline": "nga Admini",
+    "number": "Nr."
   },
   "form": {
     "action": "Veprimi",
@@ -863,7 +874,7 @@
     "wageType": "Lloji i pages",
     "workerLogin": "Login i punetorit",
     "projectStartDescription": "Klienti dhe titulli mjaftojne per te filluar.",
-    "statusDraft": "Draft",
+    "statusDraft": "Draft (skicë)",
     "statusReview": "Ne shqyrtim",
     "statusSent": "Derguar",
     "statusAccepted": "Pranuar",
@@ -905,7 +916,12 @@
       "CHIPPER": "Copa druri",
       "CHAINSAW": "Motorsharra / pajisje te vogla",
       "OTHER": "Makina te tjera"
-    }
+    },
+    "active": "aktiv",
+    "addPreset": "Shto shabllon",
+    "direct": "direkt",
+    "hourlyRate": "Lek/orë",
+    "hourlyOverride": "Lek/orë i veçantë"
   },
   "validation": {
     "checkInputs": "Kontrollo te dhenat.",
@@ -945,7 +961,7 @@
     "signedInAs": "I lidhur si",
     "operations": "Operacione",
     "navPersonalFleet": "Personel & Flota",
-    "navFleetGps": "GPS Flota",
+    "navFleetGps": "Flota GPS",
     "navBarcodeInventory": "Inventar Barkodi",
     "navSafetyEquipment": "Siguri & Pajisje",
     "navBaustellenGroup": "Kantieri",
@@ -1151,7 +1167,7 @@
     "settingsFleetGpsDescription": "Makinerite mund te dergojne GPS dhe te krijojne automatikisht prezence ne kantier.",
     "settingsWorkerGpsEnable": "Lejo teknikisht Worker GPS",
     "settingsWorkerGpsDescription": "Vetem kur puna eshte nisur, app eshte hapur dhe nuk eshte ne pauze. Pa harte live admin per worker-at.",
-    "settingsOverheadsTitle": "Overheads & mode",
+    "settingsOverheadsTitle": "Shpenzimet e përgjithshme",
     "settingsOverheadsDescription": "Vlera ne perqindje % (p.sh. 18 per 18%).",
     "settingsVat": "TVSH %",
     "settingsRisk": "Rrezik %",
@@ -1274,7 +1290,7 @@
     "baustelleTreesCount": "{count} drunj",
     "baustelleFilesCount": "{count} skedare",
     "management": "Menaxhim",
-    "reImport": "Re-import",
+    "reImport": "Importo përsëri",
     "deleteImportData": "Fshi te dhenat e importit",
     "deleteBaustelle": "Fshi kantierin",
     "baustellenImportHeading": "Import kantieri",
@@ -1479,14 +1495,38 @@
       "OFFICE": "Punonjës zyre",
       "FIELD_WORKER": "Punëtor terreni",
       "FACTORY_WORKER": "Punëtor fabrike"
-    }
+    },
+    "navDashboard": "Paneli",
+    "navSettings": "Cilësimet",
+    "baustellenSummary": "{active} aktive nga {total} gjithsej",
+    "openSite": "Hap kantierin",
+    "editAndManage": "Ndrysho dhe menaxho",
+    "navProjectsGroup": "Projektet",
+    "navProjects": "Projektet",
+    "auditLog": "Regjistri i veprimeve",
+    "gpsActive": "GPS aktiv",
+    "gpsDeviceId": "ID e pajisjes",
+    "calculationHourlyRate": "Kalk. lek/orë",
+    "focus": "FOKUS",
+    "settingsCompanyTitle": "Kompania",
+    "inventoryDefaultSort": "Standard",
+    "inventoryStatusPrivate": "Privat",
+    "auditHeading": "Regjistri i veprimeve",
+    "hrStaffLabel": "Stafi",
+    "moneyPlaceholder": "65,00",
+    "active": "Aktiv",
+    "workers": "Punëtorët",
+    "machines": "Mjetet",
+    "projects": "Projektet"
   },
   "language": {
     "de": "Gjermanisht",
     "en": "Anglisht",
     "it": "Italisht",
     "pl": "Polonisht",
-    "ro": "Rumanisht"
+    "ro": "Rumanisht",
+    "sq": "Shqip",
+    "switchLabel": "Gjuha"
   },
   "demo": {
     "liveCrewTitle": "Tani në kantier",

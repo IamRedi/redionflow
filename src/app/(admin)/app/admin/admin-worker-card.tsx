@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, CalendarRange, Eye, Pencil, Trash2 } from "lucide-react";
 
 import { deleteWorkerAction, updateWorkerAction } from "@/app/(admin)/app/admin/worker-admin-actions";
 import { Button } from "@/components/ui/button";
@@ -49,10 +49,13 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
   const tx = (path: string) => t(path, currentLang, companyMode);
 
   return (
-    <div className="rounded-2xl border bg-card/40 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
+    <div className="rounded-xl border bg-card px-3 py-2.5 transition hover:border-primary/30">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary ring-1 ring-primary/20">
+          {`${worker.firstName[0] ?? ""}${worker.lastName[0] ?? ""}`.toUpperCase()}
+        </span>
+        <div className="min-w-[12rem] flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
             <div className="text-sm font-semibold">{worker.firstName} {worker.lastName}</div>
             <span className={cn("rounded-md border px-2 py-0.5 text-[11px] font-medium", worker.availabilityClass)}>
               {worker.availabilityLabel}
@@ -64,7 +67,7 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
               </span>
             ) : null}
           </div>
-          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
             {/* Only filled fields; empty ones are edited via the pencil. */}
             {(
               [
@@ -86,21 +89,30 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="icon" aria-label={tx("common.edit")} onClick={() => setIsEditing((value) => !value)}>
-            <Pencil className="size-4" />
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/app/admin/workers/${worker.id}`}>
-              <Eye className="size-4" />
-              {tx("admin.profile")}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/app/admin/workers/${worker.id}/day/${reportTodayKey}`}>{tx("common.today")}</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/app/admin/workers/${worker.id}/month/${reportMonthKey}`}>{tx("common.month")}</Link>
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
+          {(
+            [
+              [`/app/admin/workers/${worker.id}`, tx("admin.profile"), Eye],
+              [`/app/admin/workers/${worker.id}/day/${reportTodayKey}`, tx("common.today"), CalendarDays],
+              [`/app/admin/workers/${worker.id}/month/${reportMonthKey}`, tx("common.month"), CalendarRange],
+            ] as const
+          ).map(([href, label, Icon]) => (
+            <Button key={href} asChild variant="ghost" size="icon" className="size-8 rounded-lg text-muted-foreground hover:text-foreground" title={label}>
+              <Link href={href} aria-label={label}>
+                <Icon className="size-4" strokeWidth={1.8} />
+              </Link>
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant={isEditing ? "secondary" : "ghost"}
+            size="icon"
+            className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+            title={tx("common.edit")}
+            aria-label={tx("common.edit")}
+            onClick={() => setIsEditing((value) => !value)}
+          >
+            <Pencil className="size-4" strokeWidth={1.8} />
           </Button>
         </div>
       </div>

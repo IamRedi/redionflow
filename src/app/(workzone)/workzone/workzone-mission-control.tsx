@@ -44,7 +44,7 @@ type SavedCanvasLayout = {
   positionsByViewport: Record<CanvasViewport, CanvasPositions>;
 };
 
-const CANVAS_LAYOUT_STORAGE_KEY = "workzone:mission-control-canvas:v3";
+const CANVAS_LAYOUT_STORAGE_KEY = "workzone:mission-control-canvas:v4";
 
 const WorkzoneMissionMap = dynamic(
   () => import("./workzone-mission-map").then((module) => module.WorkzoneMissionMap),
@@ -78,15 +78,15 @@ function orderedCanvasItems(items: MissionItem[]) {
 function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
   const count = items.length;
   const mobile = viewport === "mobile";
-  // Steel site cards carry a drawing on top, so they are taller.
+  // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
   const tall = items.some((item) => isSteelSiteType(item.type));
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
   const columnGap = mobile ? 166 : count > 9 ? 250 : 285;
   // Cards carry badges and a note, so rows need room to avoid overlap.
-  const rowGap = tall ? (mobile ? 296 : 300) : mobile ? 252 : 224;
-  const cardHeight = tall ? (mobile ? 280 : 284) : mobile ? 236 : 204;
+  const rowGap = tall ? (mobile ? 276 : 270) : mobile ? 252 : 224;
+  const cardHeight = tall ? (mobile ? 262 : 254) : mobile ? 236 : 204;
   const rows = Math.max(1, Math.ceil(Math.max(count, 1) / columns));
 
   return {
@@ -542,14 +542,11 @@ export function WorkzoneMissionControl({
                 className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${isSteelSiteType(item.type) ? "overflow-hidden pt-0" : ""}`}
               >
                 {isSteelSiteType(item.type) ? (
-                  <div className={`relative -mx-3 mb-2 border-b bg-gradient-to-br from-orange-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 ${isCompactCanvas ? "h-24" : "h-32"}`}>
+                  <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
                     <SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />
-                    {/* Site name on a plate in the corner, like a site board. */}
-                    <div className="absolute left-1.5 top-1.5 max-w-[85%] rounded-lg border border-white/60 bg-white/90 px-2 py-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
-                      <div className="font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-orange-600 dark:text-orange-400">{typeLabel(item.type, currentLang)}</div>
-                      <div className={`line-clamp-2 font-bold leading-tight tracking-tight ${isCompactCanvas ? "text-[11px]" : "text-[13px]"}`}>{item.name}</div>
-                    </div>
-                    {item.activeLiveCount > 0 ? <span className="absolute bottom-1.5 right-1.5 size-2.5 animate-pulse rounded-full bg-green-500 ring-2 ring-white" /> : null}
+                    <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      {typeLabel(item.type, currentLang)}
+                    </span>
                   </div>
                 ) : null}
                 <div className={`flex items-center justify-between gap-2 ${isSteelSiteType(item.type) ? "hidden" : ""}`}>
@@ -567,9 +564,7 @@ export function WorkzoneMissionControl({
                     <span className={`h-2.5 w-2.5 rounded-full ${item.activeLiveCount > 0 ? "animate-pulse bg-green-500" : "bg-zinc-400"}`} />
                   </div>
                 </div>
-                {isSteelSiteType(item.type) ? null : (
-                  <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
-                )}
+                <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
                 {item.workers.length > 0 ? <p className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)

@@ -1,3 +1,4 @@
+import { LogOut, SunMoon } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -78,7 +79,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .filter((section) => featureEnabled(section.requires))
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => featureEnabled(item.requires)),
+      // Road-work safety stock (signs, plates, fences) is not used by steel companies.
+      items: section.items.filter((item) => featureEnabled(item.requires) && (showCones || item.href !== "/app/safety")),
     }))
     .filter((section) => section.items.length > 0);
 
@@ -88,75 +90,75 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <FlowTopBar />
       </header>
       <MachineSidebar machines={machines} isAdmin showCones={showCones} />
-      <div className="grid min-h-dvh min-w-[430px] grid-cols-1 gap-5 px-4 py-5 sm:min-w-0 md:grid-cols-[196px_1fr] md:px-5 lg:pr-16">
-        <aside className="print:hidden">
-          <nav className="no-scrollbar sticky top-24 flex max-h-[calc(100dvh-7rem)] flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
-            <div className="rounded-2xl border bg-background/70 p-3 shadow-sm backdrop-blur">
-              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.panelTitle", currentLang, mode)}</div>
-              <div className="mt-1.5 flex items-center gap-1.5">
-                <span className="text-[13px] font-medium leading-5 text-foreground">{t("admin.panelTitle", currentLang, mode)}</span>
-                <span className="rounded-full border border-brand-green/30 bg-brand-green/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-brand-green/80">
-                  {branding.name}{branding.suffix}<sup>{branding.superscript}</sup>
-                </span>
+      <div className="grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24">
+        <aside className="min-w-0 print:hidden">
+          {/* Phone: one scrollable row of links instead of the full menu. */}
+          <nav className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:hidden">
+            {[
+              { href: "/app/dashboard", label: t("admin.navDashboard", currentLang, mode), activePrefixes: [] as string[] },
+              ...visibleNavSections.flatMap((section) => section.items.map((item) => ({ ...item, activePrefixes: item.activePrefixes ?? [] }))),
+              { href: "/app/settings", label: t("admin.navSettings", currentLang, mode), activePrefixes: [] as string[] },
+            ].map((item) => (
+              <div key={item.href} className="shrink-0 rounded-lg border bg-card/70">
+                <AdminNavLink href={item.href} label={item.label} activePrefixes={item.activePrefixes} />
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {mode === "bau"
-                  ? t("admin.panelBauDescription", currentLang, mode)
-                  : t("admin.panelBaumdienstDescription", currentLang, mode)}
-              </p>
-              <div className="mt-2.5 rounded-xl border bg-background/80 px-2.5 py-2">
-                <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.signedInAs", currentLang, mode)}</div>
-                <div className="mt-1 truncate text-sm font-medium text-foreground">{admin.name ?? admin.email}</div>
-                {admin.name && admin.email ? <div className="truncate text-xs text-muted-foreground">{admin.email}</div> : null}
+            ))}
+          </nav>
+          <nav className="no-scrollbar sticky top-24 hidden max-h-[calc(100dvh-7rem)] flex-col gap-4 md:flex overflow-y-auto overscroll-contain rounded-2xl border bg-card/70 p-2 shadow-sm backdrop-blur">
+            <div className="flex items-center gap-2.5 rounded-xl px-2 pt-1.5">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                {(admin.name ?? admin.email ?? "?").trim().slice(0, 1).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-[13px] font-semibold leading-tight text-foreground">{admin.name ?? admin.email}</div>
+                <div className="truncate text-[11px] leading-tight text-muted-foreground">{t("admin.panelTitle", currentLang, mode)}</div>
               </div>
             </div>
-            <div className="flex flex-col gap-2.5">
-              {visibleNavSections.map((section, index) => (
-                <div key={section.title ?? `section-${index}`} className="space-y-2">
-                  {section.title && section.items.length === 1 ? (
-                    <ul className="flex flex-col gap-1.5">
-                      {section.items.map((item) => (
-                        <li key={item.href}>
-                          <AdminNavLink href={item.href} label={item.label} activePrefixes={item.activePrefixes} />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : section.title ? (
-                    <AdminNavGroup title={section.title} items={section.items} />
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="px-1 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.operations", currentLang, mode)}</div>
-                      <ul className="flex flex-col gap-1.5">
-                      {section.items.map((item) => (
-                        <li key={item.href}>
-                          <AdminNavLink href={item.href} label={item.label} activePrefixes={item.activePrefixes} />
-                        </li>
-                      ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="flex flex-col gap-0.5">
+              <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
             </div>
-            <div className="mt-1 flex flex-col gap-1.5">
+            {visibleNavSections.map((section, index) => (
+              <div key={section.title ?? `section-${index}`} className="flex flex-col gap-0.5">
+                {section.title === null ? (
+                  <div className="px-2.5 pb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                    {t("admin.operations", currentLang, mode)}
+                  </div>
+                ) : null}
+                {section.title && section.items.length > 1 ? (
+                  <AdminNavGroup title={section.title} items={section.items} />
+                ) : (
+                  section.items.map((item) => <AdminNavLink key={item.href} href={item.href} label={item.label} activePrefixes={item.activePrefixes} />)
+                )}
+              </div>
+            ))}
+            <div className="mt-auto flex flex-col gap-0.5 border-t pt-2">
+              <AdminNavLink href="/app/settings" label={t("admin.navSettings", currentLang, mode)} />
               <AdminNavLink href="/app/audit" label={t("admin.auditLog", currentLang, mode)} activePrefixes={["/app/audit"]} />
-              <LanguageDropdown />
-              <form action={logoutAdminAction}>
-                <button
-                  type="submit"
-                  className="w-full rounded-xl border bg-background/80 px-3 py-2 text-[13px] font-medium shadow-sm backdrop-blur transition hover:bg-muted"
-                >
-                  {t("admin.logout", currentLang, mode)}
-                </button>
-              </form>
-              <form action="/app/toggle-theme" method="post">
-                <button
-                  type="submit"
-                  className="w-full rounded-xl border bg-background/80 px-3 py-2 text-[13px] font-medium shadow-sm backdrop-blur transition hover:bg-muted"
-                >
-                  {t("admin.themeToggle", currentLang, mode)}
-                </button>
-              </form>
+              <div className="flex items-center gap-1 pt-1">
+                <div className="min-w-0 flex-1">
+                  <LanguageDropdown />
+                </div>
+                <form action="/app/toggle-theme" method="post">
+                  <button
+                    type="submit"
+                    title={t("admin.themeToggle", currentLang, mode)}
+                    aria-label={t("admin.themeToggle", currentLang, mode)}
+                    className="grid size-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-foreground/[0.05] hover:text-foreground"
+                  >
+                    <SunMoon className="size-4" strokeWidth={1.8} />
+                  </button>
+                </form>
+                <form action={logoutAdminAction}>
+                  <button
+                    type="submit"
+                    title={t("admin.logout", currentLang, mode)}
+                    aria-label={t("admin.logout", currentLang, mode)}
+                    className="grid size-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-red-500/10 hover:text-red-600"
+                  >
+                    <LogOut className="size-4" strokeWidth={1.8} />
+                  </button>
+                </form>
+              </div>
             </div>
           </nav>
         </aside>

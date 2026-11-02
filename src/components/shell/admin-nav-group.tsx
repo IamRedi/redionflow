@@ -33,19 +33,19 @@ export function AdminNavGroup({ title, items }: AdminNavGroupProps) {
   const open = hasActiveItem || manuallyOpen;
 
   return (
-    <div className="rounded-2xl border bg-background/70 p-2 shadow-sm backdrop-blur">
+    <div>
       <button
         type="button"
         onClick={() => setManuallyOpen((value) => !value)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-left text-[13px] font-medium text-foreground/90 transition hover:bg-muted hover:text-foreground"
+        className="flex h-9 w-full items-center justify-between rounded-lg px-2.5 text-left text-[13px] font-medium text-muted-foreground transition hover:bg-foreground/[0.05] hover:text-foreground"
       >
         <span>{title}</span>
         <ChevronDown className={cn("size-4 transition-transform", open ? "rotate-180" : "")} />
       </button>
 
       {open ? (
-        <ul className="mt-1.5 flex flex-col gap-1.5">
+        <ul className="mt-0.5 flex flex-col gap-0.5">
           {items.map((item) => (
             <li key={item.href}>
               <AdminNavLink

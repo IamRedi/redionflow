@@ -1,3 +1,4 @@
+import { fleetShowsCones } from "@/lib/workzone/machine-sidebar-data";
 import Link from "next/link";
 import { BriefcaseBusiness, ChevronLeft, ChevronRight, HardHat, MapPinned, Wrench } from "lucide-react";
 
@@ -325,10 +326,12 @@ export default async function DashboardPage({
   const params = await searchParams;
   const rawWeek = Number(params.week ?? "0");
   const weekOffset = Number.isFinite(rawWeek) ? Math.min(0, Math.trunc(rawWeek)) : 0;
-  const [company, mode, currentLang] = await Promise.all([
+  const [company, mode, currentLang, showSafetyStock] = await Promise.all([
     getOrCreateDefaultCompany(),
     getCompanyMode(),
     resolveRequestLanguage(),
+    // Signs, plates and fences are road-work stock; a steel company has none.
+    fleetShowsCones(),
   ]);
   const snapshot = await getDashboardSnapshotForWeek(company.id, weekOffset, currentLang);
 
@@ -546,7 +549,8 @@ export default async function DashboardPage({
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className={`grid gap-4 ${showSafetyStock ? "xl:grid-cols-2" : ""}`}>
+        {showSafetyStock ? (
         <Card className="overflow-hidden border-border/80 bg-card/85 shadow-sm shadow-black/5">
           <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">
             <div className="min-w-0">
@@ -580,6 +584,7 @@ export default async function DashboardPage({
             </div>
           </CardContent>
         </Card>
+        ) : null}
 
         <Card className="overflow-hidden border-border/80 bg-card/85 shadow-sm shadow-black/5">
           <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3">

@@ -1578,7 +1578,12 @@
       "OFFICE": "Büro",
       "FIELD_WORKER": "Monteur",
       "FACTORY_WORKER": "Werkstattmitarbeiter"
-    }
+    },
+    "navDashboard": "Übersicht",
+    "navSettings": "Einstellungen",
+    "baustellenSummary": "{active} aktiv von {total} insgesamt",
+    "openSite": "Baustelle öffnen",
+    "editAndManage": "Bearbeiten und verwalten"
   },
   "language": {
     "de": "Deutsch",

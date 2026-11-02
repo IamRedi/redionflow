@@ -110,7 +110,7 @@ export default async function FleetGpsPage() {
               <div key={machine.id} className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-3 px-4 py-3 text-sm">
                 <div>
                   <div className="font-medium">{machine.nickname ?? machine.name}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{machine.targe ?? machine.category}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{machine.targe ?? ""}</div>
                 </div>
                 <div className="text-muted-foreground">
                   {presence ? (
