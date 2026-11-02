@@ -1569,7 +1569,16 @@
     "settingsLogoDescription": "Erscheint oben in der App für alle Mitarbeitenden. PNG, JPG, WebP oder SVG, bis 150 KB.",
     "settingsLogoEmpty": "Noch kein Logo",
     "settingsLogoRemove": "Logo entfernen",
-    "settingsLogoInvalid": "Das Logo konnte nicht gespeichert werden. Erlaubt sind PNG, JPG, WebP oder SVG bis 150 KB."
+    "settingsLogoInvalid": "Das Logo konnte nicht gespeichert werden. Erlaubt sind PNG, JPG, WebP oder SVG bis 150 KB.",
+    "crewRole": "Rolle im Team",
+    "crewRoleNone": "Keine Rolle",
+    "crewRoles": {
+      "FIELD_ENGINEER": "Bauleiter Montage",
+      "FACTORY_ENGINEER": "Werkstattleiter",
+      "OFFICE": "Büro",
+      "FIELD_WORKER": "Monteur",
+      "FACTORY_WORKER": "Werkstattmitarbeiter"
+    }
   },
   "language": {
     "de": "Deutsch",
@@ -1643,7 +1652,8 @@
     "taskHint": "Vom Büro für diese Baustelle hinzugefügt",
     "addTask": "Aufgabe hinzufügen",
     "taskPlaceholder": "z. B. Treppenmontage",
-    "removeTask": "Aufgabe entfernen"
+    "removeTask": "Aufgabe entfernen",
+    "onlyEngineer": "Phasen schaltet der Bauleiter weiter. Du kannst fehlendes Material melden."
   },
   "factory": {
     "title": "Werk",
@@ -1715,7 +1725,7 @@
       "unblock": "Fortgesetzt",
       "note": "Notiz"
     },
-    "onlyResponsible": "Schritte setzen nur Büro, Vorarbeiter oder Meister.",
+    "onlyResponsible": "Schritte schaltet nur der Werkstattleiter oder der Admin weiter.",
     "order": "Bestellung",
     "forSites": "für {n} Baustellen",
     "importOrder": "Bestellung hochladen (PDF)",
@@ -1736,7 +1746,7 @@
     "otherPdf": "Anderes PDF",
     "saveOrder": "Bestellung speichern",
     "siteHintEdit": "Tippe auf eine Gruppe, um den Schritt zu setzen.",
-    "siteHintView": "Die Schritte setzt der Verantwortliche.",
+    "siteHintView": "Die Werkstatt-Schritte schaltet der Werkstattleiter weiter.",
     "cardMaterial": "Material {ready}/{total} fertig"
   },
   "siteFiles": {
@@ -1760,5 +1770,14 @@
     "noCosts": "Noch keine Bestellungen oder Rechnungen.",
     "delete": "Löschen",
     "error": "Nicht gespeichert. Bitte erneut versuchen."
+  },
+  "machineSheet": {
+    "statusOk": "Einsatzbereit",
+    "statusDefect": "Mangel offen",
+    "statusBlocked": "Gesperrt",
+    "reportDefect": "Mangel melden",
+    "resolveDefect": "Behoben",
+    "block": "Gerät sperren",
+    "noDefect": "Keine offenen Mängel"
   }
 }

@@ -42,7 +42,7 @@ export async function createProductionBatchAction(input: unknown): Promise<Actio
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentActor(companyId);
-  if (!actor?.isAdmin) return { ok: false, message: tr("accessDenied") };
+  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
 
   const { baustelleId, title, quantity, unit } = parsed.data;
   const created = await withTenantContext(companyId, async (tx) => {
@@ -95,8 +95,8 @@ export async function updateProductionStepAction(input: unknown): Promise<Action
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentActor(companyId);
   if (!actor) return { ok: false, message: tr("notSignedIn") };
-  // Office, foreman or master only: the person responsible for the process.
-  if (!actor.canAdvance) return { ok: false, message: tr("accessDenied") };
+  // Factory engineer or admin only: the person responsible for the process.
+  if (!actor.can.factorySteps) return { ok: false, message: tr("accessDenied") };
 
   const { batchId, stepIndex, command: kind, text } = parsed.data;
   const command: StepCommand = kind === "block" || kind === "note" ? { kind, text } : { kind };

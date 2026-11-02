@@ -425,7 +425,16 @@
     "settingsLogoDescription": "Apare sus în aplicație pentru toți. PNG, JPG, WebP sau SVG, până la 150 KB.",
     "settingsLogoEmpty": "Încă fără logo",
     "settingsLogoRemove": "Elimină logo",
-    "settingsLogoInvalid": "Logo-ul nu a putut fi salvat. Folosește PNG, JPG, WebP sau SVG până la 150 KB."
+    "settingsLogoInvalid": "Logo-ul nu a putut fi salvat. Folosește PNG, JPG, WebP sau SVG până la 150 KB.",
+    "crewRole": "Team role",
+    "crewRoleNone": "No role",
+    "crewRoles": {
+      "FIELD_ENGINEER": "Site engineer",
+      "FACTORY_ENGINEER": "Factory engineer",
+      "OFFICE": "Office",
+      "FIELD_WORKER": "Site worker",
+      "FACTORY_WORKER": "Factory worker"
+    }
   },
   "language": {
     "de": "Germana",
@@ -496,7 +505,8 @@
     "taskHint": "Added by the office for this site",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
-    "removeTask": "Remove task"
+    "removeTask": "Remove task",
+    "onlyEngineer": "The site engineer moves the phases. You can report missing material."
   },
   "factory": {
     "title": "Factory",
@@ -613,5 +623,14 @@
     "noCosts": "No orders or invoices yet.",
     "delete": "Delete",
     "error": "Not saved. Please try again."
+  },
+  "machineSheet": {
+    "statusOk": "Ready to work",
+    "statusDefect": "Defect open",
+    "statusBlocked": "Blocked",
+    "reportDefect": "Report defect",
+    "resolveDefect": "Fixed",
+    "block": "Block machine",
+    "noDefect": "No open defects"
   }
 }

@@ -15,7 +15,7 @@ import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { getFeatures, productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
-import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
+import { fleetShowsCones, getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 
 type RequiredFeature = "trees" | "machines" | "reports" | "baustellen" | "calculation" | "inventory" | "gps";
 
@@ -35,10 +35,11 @@ type AdminNavSection = {
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect(isSaasMode ? "/login" : "/admin-login");
-  const [machines, mode, currentLang] = await Promise.all([
+  const [machines, mode, currentLang, showCones] = await Promise.all([
     getMachineSidebarData(),
     getCompanyMode(),
     resolveRequestLanguage(),
+    fleetShowsCones(),
   ]);
   const features = getFeatures(mode);
   const branding = productBranding(mode);
@@ -86,7 +87,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-10 print:hidden">
         <FlowTopBar />
       </header>
-      <MachineSidebar machines={machines} isAdmin />
+      <MachineSidebar machines={machines} isAdmin showCones={showCones} />
       <div className="grid min-h-dvh min-w-[430px] grid-cols-1 gap-5 px-4 py-5 sm:min-w-0 md:grid-cols-[196px_1fr] md:px-5 lg:pr-16">
         <aside className="print:hidden">
           <nav className="no-scrollbar sticky top-24 flex max-h-[calc(100dvh-7rem)] flex-col gap-2 overflow-y-auto overscroll-contain pr-1">

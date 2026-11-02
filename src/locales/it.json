@@ -1488,7 +1488,16 @@
     "settingsLogoDescription": "Appare in alto nell'app per tutti. PNG, JPG, WebP o SVG, fino a 150 KB.",
     "settingsLogoEmpty": "Nessun logo",
     "settingsLogoRemove": "Rimuovi logo",
-    "settingsLogoInvalid": "Impossibile salvare il logo. Usa PNG, JPG, WebP o SVG fino a 150 KB."
+    "settingsLogoInvalid": "Impossibile salvare il logo. Usa PNG, JPG, WebP o SVG fino a 150 KB.",
+    "crewRole": "Team role",
+    "crewRoleNone": "No role",
+    "crewRoles": {
+      "FIELD_ENGINEER": "Site engineer",
+      "FACTORY_ENGINEER": "Factory engineer",
+      "OFFICE": "Office",
+      "FIELD_WORKER": "Site worker",
+      "FACTORY_WORKER": "Factory worker"
+    }
   },
   "language": {
     "de": "Tedesco",
@@ -1561,7 +1570,8 @@
     "taskHint": "Added by the office for this site",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
-    "removeTask": "Remove task"
+    "removeTask": "Remove task",
+    "onlyEngineer": "The site engineer moves the phases. You can report missing material."
   },
   "factory": {
     "title": "Factory",
@@ -1678,5 +1688,14 @@
     "noCosts": "No orders or invoices yet.",
     "delete": "Delete",
     "error": "Not saved. Please try again."
+  },
+  "machineSheet": {
+    "statusOk": "Ready to work",
+    "statusDefect": "Defect open",
+    "statusBlocked": "Blocked",
+    "reportDefect": "Report defect",
+    "resolveDefect": "Fixed",
+    "block": "Block machine",
+    "noDefect": "No open defects"
   }
 }

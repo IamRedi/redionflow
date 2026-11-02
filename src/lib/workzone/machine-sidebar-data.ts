@@ -128,3 +128,9 @@ export async function getMachineSidebarData() {
       return fleetLabel(a).localeCompare(fleetLabel(b), "de", { numeric: true });
     }) satisfies MachineSidebarRow[];
 }
+
+/** Traffic cones belong to tree and road work; a steel company (one with a workshop site) has none. */
+export async function fleetShowsCones() {
+  const workshops = await prisma.baustelle.count({ where: { type: "STEEL_WORKSHOP" } });
+  return workshops === 0;
+}

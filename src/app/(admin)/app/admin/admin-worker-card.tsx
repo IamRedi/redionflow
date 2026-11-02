@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
 import type { CompanyMode } from "@/lib/mode-config";
 import { cn } from "@/lib/ui/cn";
+import { CREW_ROLES } from "@/lib/workzone/crew-roles";
 
 type AdminWorkerCardProps = {
   worker: {
@@ -33,6 +34,7 @@ type AdminWorkerCardProps = {
     status: string;
     vacationAllowanceDays: number;
     level: string;
+    crewRole: string | null;
     motherTongue: string;
     preferredLanguage: string;
   };
@@ -56,6 +58,11 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
               {worker.availabilityLabel}
             </span>
             {worker.isTemporary ? <span className="rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground">{tx("admin.colTemporary")}</span> : null}
+            {companyMode === "bau" && worker.crewRole ? (
+              <span className="rounded-md border border-orange-500/40 bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:text-orange-300">
+                {tx(`admin.crewRoles.${worker.crewRole}`)}
+              </span>
+            ) : null}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             {/* Only filled fields; empty ones are edited via the pencil. */}
@@ -135,6 +142,19 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
               {tx("admin.vacationDays")}
               <Input name="vacationAllowanceDays" type="number" min="0" defaultValue={worker.vacationAllowanceDays} className="h-8 text-sm" />
             </label>
+            {companyMode === "bau" ? (
+              <label className="grid gap-1 text-[11px] font-medium text-muted-foreground">
+                {tx("admin.crewRole")}
+                <select name="crewRole" defaultValue={worker.crewRole ?? ""} className="h-8 w-full rounded-md border bg-background px-2 text-sm">
+                  <option value="">{tx("admin.crewRoleNone")}</option>
+                  {CREW_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {tx(`admin.crewRoles.${role}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="grid gap-1 text-[11px] font-medium text-muted-foreground">
               {tx("admin.colLevel")}
               <select name="level" defaultValue={worker.level} className="h-8 w-full rounded-md border bg-background px-2 text-sm">

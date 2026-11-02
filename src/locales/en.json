@@ -1448,7 +1448,16 @@
     "settingsLogoDescription": "Shown at the top of the app for everyone. PNG, JPG, WebP or SVG, up to 150 KB.",
     "settingsLogoEmpty": "No logo yet",
     "settingsLogoRemove": "Remove logo",
-    "settingsLogoInvalid": "The logo could not be saved. Use PNG, JPG, WebP or SVG up to 150 KB."
+    "settingsLogoInvalid": "The logo could not be saved. Use PNG, JPG, WebP or SVG up to 150 KB.",
+    "crewRole": "Team role",
+    "crewRoleNone": "No role",
+    "crewRoles": {
+      "FIELD_ENGINEER": "Site engineer",
+      "FACTORY_ENGINEER": "Factory engineer",
+      "OFFICE": "Office",
+      "FIELD_WORKER": "Site worker",
+      "FACTORY_WORKER": "Factory worker"
+    }
   },
   "language": {
     "de": "German",
@@ -1521,7 +1530,8 @@
     "taskHint": "Added by the office for this site",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
-    "removeTask": "Remove task"
+    "removeTask": "Remove task",
+    "onlyEngineer": "The site engineer moves the phases. You can report missing material."
   },
   "factory": {
     "title": "Factory",
@@ -1593,7 +1603,7 @@
       "unblock": "Continued",
       "note": "Note"
     },
-    "onlyResponsible": "Only the office, a foreman or a master moves the steps.",
+    "onlyResponsible": "Only the factory engineer or the admin moves the steps.",
     "order": "Order",
     "forSites": "for {n} sites",
     "importOrder": "Upload order (PDF)",
@@ -1614,7 +1624,7 @@
     "otherPdf": "Other PDF",
     "saveOrder": "Save order",
     "siteHintEdit": "Tap a group to move its step.",
-    "siteHintView": "The person responsible moves the steps.",
+    "siteHintView": "The factory engineer moves the factory steps.",
     "cardMaterial": "Material {ready}/{total} ready"
   },
   "siteFiles": {
@@ -1638,5 +1648,14 @@
     "noCosts": "No orders or invoices yet.",
     "delete": "Delete",
     "error": "Not saved. Please try again."
+  },
+  "machineSheet": {
+    "statusOk": "Ready to work",
+    "statusDefect": "Defect open",
+    "statusBlocked": "Blocked",
+    "reportDefect": "Report defect",
+    "resolveDefect": "Fixed",
+    "block": "Block machine",
+    "noDefect": "No open defects"
   }
 }

@@ -142,11 +142,6 @@ export function formatQuantity(value: number, lang: string) {
   return lang === "en" ? text : text.replace(".", ",");
 }
 
-/** Who may move a material group through the factory: the office, a foreman or a master. */
-export function canAdvanceProduction(actor: { isAdmin: boolean; level?: string | null } | null) {
-  if (!actor) return false;
-  return actor.isAdmin || actor.level === "VORARBEITER" || actor.level === "MEISTER";
-}
 
 /** Whole amount with dot thousands, same on server and client: 1806000 → "1.806.000". */
 export function formatAmount(value: number) {

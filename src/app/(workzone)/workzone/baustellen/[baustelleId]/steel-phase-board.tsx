@@ -68,10 +68,14 @@ export function SteelPhaseBoard({
   phases,
   canEdit,
   canManage = false,
+  canReport = false,
   baustelleId,
 }: {
   phases: SteelPhaseView[];
+  /** Field engineer or office: finish, reopen, note. */
   canEdit: boolean;
+  /** Everyone signed in: report missing material. */
+  canReport?: boolean;
   /** Office: may add and remove own work steps. */
   canManage?: boolean;
   baustelleId: string;
@@ -163,7 +167,7 @@ export function SteelPhaseBoard({
   }
 
   function run(command: "done" | "reopen" | "note" | "missing" | "materialArrived", value = "") {
-    if (!open || !canEdit) return;
+    if (!open || (command === "missing" ? !canReport : !canEdit)) return;
     const target = open;
     const local: SteelPhaseCommand =
       command === "note" || command === "missing"
@@ -409,7 +413,7 @@ export function SteelPhaseBoard({
                 </div>
 
                 <div className="mt-auto pb-[env(safe-area-inset-bottom)]">
-                  {!canEdit ? (
+                  {!canEdit && !canReport ? (
                     <p className="rounded-xl border bg-muted/40 p-4 text-center text-sm text-muted-foreground">{t("steel.needsLogin", currentLang)}</p>
                   ) : editor ? (
                     <div className="space-y-3">
@@ -454,6 +458,20 @@ export function SteelPhaseBoard({
                           {t("steel.save", currentLang)}
                         </button>
                       </div>
+                    </div>
+                  ) : !canEdit ? (
+                    <div className="space-y-3">
+                      {open.status !== "done" && open.status !== "blocked" ? (
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => openEditor("missing")}
+                          className="flex h-20 w-full items-center justify-center gap-3 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 text-lg font-semibold text-amber-800 active:scale-[0.98] disabled:opacity-50 dark:text-amber-200"
+                        >
+                          <PackageX className="size-6" /> {t("steel.missing", currentLang)}
+                        </button>
+                      ) : null}
+                      <p className="rounded-xl border bg-muted/40 p-3 text-center text-sm text-muted-foreground">{t("steel.onlyEngineer", currentLang)}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -26,7 +26,8 @@ import { SteelPhaseBoard } from "./steel-phase-board";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { canAdvanceProduction, readFactorySteps } from "@/lib/factory/production";
+import { readFactorySteps } from "@/lib/factory/production";
+import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhasesFor, steelSiteShape } from "@/lib/workzone/steel-phases";
 import { SiteProductionPanel } from "../../production/site-production-panel";
 import type { FactoryBatchView } from "../../production/production-ui";
@@ -217,8 +218,15 @@ export default async function BaustelleDetailPage({
   const steelPct = steelPhases.length > 0 ? Math.round((steelPhases.filter((p) => p.status === "done").length / steelPhases.length) * 100) : 0;
 
   if (isSteel) {
-    const isAdmin = Boolean(currentActorView?.isAdmin);
-    const canAdvance = canAdvanceProduction(currentActorView ? { isAdmin, level: currentActorView.level } : null);
+    const can = crewPermissions(
+      currentAdmin && !currentWorker
+        ? { isAdmin: true }
+        : currentWorker
+          ? { isAdmin: false, crewRole: currentWorker.crewRole, level: currentWorker.level }
+          : null,
+    );
+    const isAdmin = can.office;
+    const canAdvance = can.factorySteps;
     const [batchRows, fileRows] = await withTenantContext(currentCompanyId, (tx) =>
       Promise.all([
         tx.productionBatch.findMany({
@@ -291,7 +299,7 @@ export default async function BaustelleDetailPage({
         />
 
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-          <SteelPhaseBoard phases={steelPhases} canEdit={Boolean(currentActorView)} canManage={isAdmin} baustelleId={baustelle.id} />
+          <SteelPhaseBoard phases={steelPhases} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={can.siteSteps} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
             <SiteProductionPanel site={{ id: baustelle.id, name: baustelle.name }} batches={batches} canAdvance={canAdvance} canManage={isAdmin} />
           </div>

@@ -1470,7 +1470,16 @@
     "settingsLogoDescription": "Shfaqet lart në aplikacion për të gjithë. PNG, JPG, WebP ose SVG, deri në 150 KB.",
     "settingsLogoEmpty": "Ende pa logo",
     "settingsLogoRemove": "Hiq logon",
-    "settingsLogoInvalid": "Logoja nuk u ruajt. Lejohen PNG, JPG, WebP ose SVG deri në 150 KB."
+    "settingsLogoInvalid": "Logoja nuk u ruajt. Lejohen PNG, JPG, WebP ose SVG deri në 150 KB.",
+    "crewRole": "Roli në punë",
+    "crewRoleNone": "Pa rol",
+    "crewRoles": {
+      "FIELD_ENGINEER": "Inxhinier terreni",
+      "FACTORY_ENGINEER": "Inxhinier fabrike",
+      "OFFICE": "Punonjës zyre",
+      "FIELD_WORKER": "Punëtor terreni",
+      "FACTORY_WORKER": "Punëtor fabrike"
+    }
   },
   "language": {
     "de": "Gjermanisht",
@@ -1542,7 +1551,8 @@
     "taskHint": "Detyrë e shtuar nga zyra për këtë kantier",
     "addTask": "Shto detyrë",
     "taskPlaceholder": "p.sh. Montim shkallësh",
-    "removeTask": "Hiq detyrën"
+    "removeTask": "Hiq detyrën",
+    "onlyEngineer": "Fazat i kalon inxhinieri i terrenit. Ti mund të raportosh mungesë materiali."
   },
   "factory": {
     "title": "Fabrika",
@@ -1614,7 +1624,7 @@
       "unblock": "Vazhdoi",
       "note": "Shënim"
     },
-    "onlyResponsible": "Hapat i kalon vetëm zyra, kryepunëtori ose mjeshtri.",
+    "onlyResponsible": "Hapat i kalon vetëm inxhinieri i fabrikës ose admini.",
     "order": "Porosia",
     "forSites": "për {n} kantiere",
     "importOrder": "Ngarko porosi (PDF)",
@@ -1635,7 +1645,7 @@
     "otherPdf": "PDF tjetër",
     "saveOrder": "Ruaj porosinë",
     "siteHintEdit": "Prek një grup për të kaluar hapin.",
-    "siteHintView": "Hapat i kalon përgjegjësi i procesit.",
+    "siteHintView": "Hapat e fabrikës i kalon inxhinieri i fabrikës.",
     "cardMaterial": "Materiali {ready}/{total} gati"
   },
   "siteFiles": {
@@ -1659,5 +1669,14 @@
     "noCosts": "Ende pa porosi apo fatura.",
     "delete": "Fshi",
     "error": "Nuk u ruajt. Provo përsëri."
+  },
+  "machineSheet": {
+    "statusOk": "Gati për punë",
+    "statusDefect": "Ka defekt",
+    "statusBlocked": "I bllokuar",
+    "reportDefect": "Raporto defekt",
+    "resolveDefect": "U rregullua",
+    "block": "Blloko mjetin",
+    "noDefect": "Pa defekte të hapura"
   }
 }

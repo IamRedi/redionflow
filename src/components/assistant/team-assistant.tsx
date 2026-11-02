@@ -389,10 +389,12 @@ export function TeamAssistantLogoTrigger({
   compact = false,
   className,
   mode,
+  companyLogo,
 }: {
   compact?: boolean;
   className?: string;
   mode?: import("@/lib/mode-config").CompanyMode;
+  companyLogo?: string | null;
 }) {
   const { currentLang } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -457,7 +459,7 @@ export function TeamAssistantLogoTrigger({
         aria-label={t("admin.aiAssistantOpen", currentLang)}
         onClick={togglePanel}
       >
-        <AppBrand compact={compact} className={className} aiBadge mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} />
+        <AppBrand compact={compact} className={className} aiBadge mode={mode} companyLogo={companyLogo} logoAlt={t("common.companyLogoAlt", currentLang)} />
       </button>
 
       {open ? (
@@ -503,9 +505,11 @@ export function TeamAssistantLogoTrigger({
 export function WorkerAssistantTrigger({
   compact = false,
   mode,
+  companyLogo,
 }: {
   compact?: boolean;
   mode?: import("@/lib/mode-config").CompanyMode;
+  companyLogo?: string | null;
 }) {
   const { currentLang } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -562,7 +566,7 @@ export function WorkerAssistantTrigger({
         aria-label={t("workzone.aiHelperButton", currentLang)}
         onClick={togglePanel}
       >
-        <AppBrand compact={compact} aiBadge mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} />
+        <AppBrand compact={compact} aiBadge mode={mode} companyLogo={companyLogo} logoAlt={t("common.companyLogoAlt", currentLang)} />
       </button>
 
       {open ? (

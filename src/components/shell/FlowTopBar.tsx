@@ -125,11 +125,11 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             {admin ? (
-              <TeamAssistantLogoTrigger compact mode={companyMode} />
+              <TeamAssistantLogoTrigger compact mode={companyMode} companyLogo={companyLogo} />
             ) : currentWorkerId ? (
-              <WorkerAssistantTrigger compact mode={companyMode} />
+              <WorkerAssistantTrigger compact mode={companyMode} companyLogo={companyLogo} />
             ) : (
-              <AppBrand compact mode={companyMode} logoAlt={t("common.companyLogoAlt", currentLang)} />
+              <AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t("common.companyLogoAlt", currentLang)} />
             )}
             <div className="grid gap-1">
               <Link
@@ -153,15 +153,6 @@ export async function FlowTopBar({ announcementMessage = null }: { announcementM
               {!admin ? <LanguageSwitcher /> : null}
             </div>
           </div>
-
-          {companyLogo ? (
-            // eslint-disable-next-line @next/next/no-img-element -- small data: URL, nothing to optimise
-            <img
-              src={companyLogo}
-              alt={companyBrand?.displayName ?? t("common.companyLogoAlt", currentLang)}
-              className="h-8 w-auto max-w-[150px] rounded-md border bg-white object-contain px-2 py-1 shadow-sm"
-            />
-          ) : null}
 
           {admin || mobileAdminProfiles.length > 0 ? (
             <div className="flex items-center gap-2 lg:hidden">

@@ -1,10 +1,12 @@
 /**
- * Test data for a pilot company, once: three "Muster" workers and three
- * "Muster" construction sites with ordered material on the factory line, so
+ * Test data for a pilot company, once: one "Muster" worker per crew role,
+ * three "Muster" construction sites with ordered material on the factory line
+ * and four "Muster" machines, so
  * the office can try the processes before real data arrives.
  *
  *   PILOT_SAMPLES_COMPANY  legal name of the company
- *   PILOT_SAMPLES_CODES    three 6-digit login codes, comma separated
+ *   PILOT_SAMPLES_CODES    6-digit login codes, comma separated, one per worker
+ *                          (workers without a code are skipped)
  *
  * Without both variables it does nothing. Everything it creates carries
  * "Muster" in the name, so it is easy to find and delete. Running it again
@@ -17,15 +19,33 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/auth/password";
 import { resolveDatabaseConnectionString } from "../src/lib/db/connection-string";
 import { initialFactorySteps, type FactoryStep } from "../src/lib/factory/production";
+import { type CrewRole } from "../src/lib/workzone/crew-roles";
 import { steelPhasesFor } from "../src/lib/workzone/steel-phases";
 
 type Level = "MEISTER" | "VORARBEITER" | "WORKER";
 
-const WORKERS: Array<{ firstName: string; lastName: string; level: Level; position: string }> = [
-  { firstName: "Arben", lastName: "Muster", level: "MEISTER", position: "Përgjegjës prodhimi" },
-  { firstName: "Dritan", lastName: "Muster", level: "VORARBEITER", position: "Kryepunëtor montimi" },
-  { firstName: "Elton", lastName: "Muster", level: "WORKER", position: "Saldator" },
+/** One worker per crew role, so every role can be tried. The code at the same index logs them in. */
+const WORKERS: Array<{ firstName: string; lastName: string; level: Level; position: string; crewRole: CrewRole }> = [
+  { firstName: "Arben", lastName: "Muster", level: "MEISTER", position: "Inxhinier fabrike", crewRole: "FACTORY_ENGINEER" },
+  { firstName: "Dritan", lastName: "Muster", level: "VORARBEITER", position: "Inxhinier terreni", crewRole: "FIELD_ENGINEER" },
+  { firstName: "Elton", lastName: "Muster", level: "WORKER", position: "Montator", crewRole: "FIELD_WORKER" },
+  { firstName: "Besnik", lastName: "Muster", level: "WORKER", position: "Saldator në fabrikë", crewRole: "FACTORY_WORKER" },
+  { firstName: "Klea", lastName: "Muster", level: "WORKER", position: "Zyra teknike", crewRole: "OFFICE" },
 ];
+
+function inMonths(months: number) {
+  const date = new Date();
+  date.setMonth(date.getMonth() + months);
+  date.setHours(12, 0, 0, 0);
+  return date;
+}
+
+const MACHINES = [
+  { name: "Autovinç 50 t (Muster)", category: "OTHER", hourlyRateCents: 1_200_000, model: "Liebherr LTM 1050-3.1", targe: "TR 501 AL", funksioni: "Vinç montimi", patentaEnevojshme: "C + operator vinçi", vitiProdhimit: 2016, tuv: 8, sp: 2, uvv: 5 },
+  { name: "Platformë ngritëse 18 m (Muster)", category: "AWP", hourlyRateCents: 350_000, model: "Genie GS-5390", targe: null, funksioni: "Punë në lartësi", patentaEnevojshme: "Trajnim IPAF", vitiProdhimit: 2019, tuv: 11, sp: 6, uvv: -1 },
+  { name: "Kamion me vinç (Muster)", category: "TRUCK", hourlyRateCents: 600_000, model: "MAN TGS 26.440 + Palfinger", targe: "AA 744 KT", funksioni: "Transport materiali", patentaEnevojshme: "CE", vitiProdhimit: 2018, tuv: 3, sp: 9, uvv: 7 },
+  { name: "Aparat saldimi MIG 400 (Muster)", category: "OTHER", hourlyRateCents: 80_000, model: "Fronius TPS 400i", targe: null, funksioni: "Saldim në kantier", patentaEnevojshme: "Certifikatë saldatori", vitiProdhimit: 2021, tuv: null, sp: null, uvv: 10 },
+] as const;
 
 type Batch = { title: string; quantity: number; unit: string; doneSteps: number; activeStep?: boolean };
 
@@ -79,7 +99,7 @@ function stepsWith(doneSteps: number, activeStep: boolean | undefined, now: Date
 export async function runPilotSamples() {
   const legalName = process.env.PILOT_SAMPLES_COMPANY?.trim();
   const codes = (process.env.PILOT_SAMPLES_CODES ?? "").split(",").map((code) => code.trim()).filter((code) => /^\d{6}$/.test(code));
-  if (!legalName || codes.length < WORKERS.length) {
+  if (!legalName || codes.length < 3) {
     console.log("[samples] PILOT_SAMPLES_* not set, nothing to do.");
     return;
   }
@@ -93,9 +113,22 @@ export async function runPilotSamples() {
     const now = new Date();
     let workers = 0;
     let sites = 0;
+    let roles = 0;
+    let machines = 0;
     for (const [index, w] of WORKERS.entries()) {
-      const exists = await prisma.worker.findFirst({ where: { companyProfileId: company.id, firstName: w.firstName, lastName: w.lastName }, select: { id: true } });
-      if (exists) continue;
+      const exists = await prisma.worker.findFirst({
+        where: { companyProfileId: company.id, firstName: w.firstName, lastName: w.lastName },
+        select: { id: true, crewRole: true },
+      });
+      if (exists) {
+        if (!exists.crewRole) {
+          await prisma.worker.update({ where: { id: exists.id }, data: { crewRole: w.crewRole, position: w.position } });
+          roles += 1;
+        }
+        continue;
+      }
+      const code = codes[index];
+      if (!code) continue;
       await prisma.worker.create({
         data: {
           companyProfileId: company.id,
@@ -103,7 +136,8 @@ export async function runPilotSamples() {
           lastName: w.lastName,
           position: w.position,
           level: w.level,
-          loginCodeHash: hashPassword(codes[index]!),
+          crewRole: w.crewRole,
+          loginCodeHash: hashPassword(code),
           vacationAllowanceDays: 20,
           preferredLanguage: "SQ",
           motherTongue: "SQ",
@@ -155,7 +189,29 @@ export async function runPilotSamples() {
       });
       sites += 1;
     }
-    console.log(`[samples] added ${workers} workers and ${sites} sites.`);
+    for (const m of MACHINES) {
+      const exists = await prisma.machine.findFirst({ where: { companyProfileId: company.id, name: m.name }, select: { id: true } });
+      if (exists) continue;
+      await prisma.machine.create({
+        data: {
+          companyProfileId: company.id,
+          name: m.name,
+          category: m.category,
+          hourlyRateCents: m.hourlyRateCents,
+          model: m.model,
+          targe: m.targe,
+          funksioni: m.funksioni,
+          patentaEnevojshme: m.patentaEnevojshme,
+          vitiProdhimit: m.vitiProdhimit,
+          tuvDate: m.tuv === null ? null : inMonths(m.tuv),
+          spDate: m.sp === null ? null : inMonths(m.sp),
+          uvvDate: m.uvv === null ? null : inMonths(m.uvv),
+          notes: "Mjet prove (Muster).",
+        },
+      });
+      machines += 1;
+    }
+    console.log(`[samples] added ${workers} workers (${roles} roles set), ${sites} sites and ${machines} machines.`);
   } finally {
     await prisma.$disconnect();
   }

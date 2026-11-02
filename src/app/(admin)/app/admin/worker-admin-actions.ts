@@ -9,6 +9,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { WorkerAvailability, WorkerLevel } from "@/generated/prisma/enums";
+import { readCrewRole } from "@/lib/workzone/crew-roles";
 import { parseEnumInput } from "@/lib/validation/enum-input";
 
 function cleanText(value: FormDataEntryValue | null) {
@@ -62,6 +63,8 @@ export async function updateWorkerAction(formData: FormData) {
       birthDate: cleanDate(formData.get("birthDate")),
       startedAtCompany: cleanDate(formData.get("startedAtCompany")),
       level: parseEnumInput(formData.get("level"), WorkerLevel, WorkerLevel.JUNIOR),
+      // Only forms that show the role send it; others must not clear it.
+      ...(formData.has("crewRole") ? { crewRole: readCrewRole(formData.get("crewRole")) } : {}),
       preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
       motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
     },

@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       select: { data: true, mime: true, fileName: true, officeOnly: true },
     }),
   );
-  if (!file || (file.officeOnly && !actor.isAdmin)) return notFound();
+  if (!file || (file.officeOnly && !actor.can.office)) return notFound();
 
   const download = new URL(request.url).searchParams.has("download");
   const inline = !download && (file.mime.startsWith("image/") || file.mime === "application/pdf");

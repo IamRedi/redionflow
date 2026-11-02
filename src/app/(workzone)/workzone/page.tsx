@@ -21,6 +21,7 @@ import { WorkzoneMissionControl } from "./workzone-mission-control";
 import { SteelProgressRing, SteelSiteArt } from "@/components/steel/steel-art";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
 import { isSteelSiteType, steelSiteShape } from "@/lib/workzone/steel-phases";
+import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { batchState, readFactorySteps } from "@/lib/factory/production";
 import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
@@ -293,6 +294,7 @@ export default async function WorkzoneHomePage() {
       liveSince,
       standortAddress: (b.address ?? "").trim(),
       shape: steelSiteShape(b.name, b.description),
+      material: materialBySite.get(b.id),
       pendingCollection,
       pendingSiteTask,
       equipmentIndicators,
@@ -377,12 +379,13 @@ export default async function WorkzoneHomePage() {
           factoryAddress={(factorySite.address ?? "").trim()}
           batches={factoryBatches}
           sites={baustellen.map((site) => ({ id: site.id, name: site.name }))}
-          canManage={Boolean(admin)}
+          canManage={crewPermissions(worker ? { isAdmin: false, crewRole: worker.crewRole, level: worker.level } : admin ? { isAdmin: true } : null).office}
         />
       ) : null}
 
-      <div className="grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {baustellen.map((b) => {
+      {/* With a factory panel the sites live on the board above only; the list would repeat them. */}
+      <div className={`grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 ${factorySite ? "hidden" : ""}`}>
+        {(factorySite ? [] : baustellen).map((b) => {
           const total = b.treeItems.length;
           const done = b.treeItems.filter((t) => t.status === "done").length;
           const blocked = b.treeItems.filter((t) => t.status === "blocked").length;

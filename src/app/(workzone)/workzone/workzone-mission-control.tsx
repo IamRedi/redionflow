@@ -33,6 +33,7 @@ type MissionItem = {
   liveSince: string | null;
   standortAddress: string;
   shape?: SteelSiteShape;
+  material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
 };
 
@@ -43,7 +44,7 @@ type SavedCanvasLayout = {
   positionsByViewport: Record<CanvasViewport, CanvasPositions>;
 };
 
-const CANVAS_LAYOUT_STORAGE_KEY = "workzone:mission-control-canvas:v2";
+const CANVAS_LAYOUT_STORAGE_KEY = "workzone:mission-control-canvas:v3";
 
 const WorkzoneMissionMap = dynamic(
   () => import("./workzone-mission-map").then((module) => module.WorkzoneMissionMap),
@@ -74,15 +75,18 @@ function orderedCanvasItems(items: MissionItem[]) {
   });
 }
 
-function canvasMetrics(viewport: CanvasViewport, count: number) {
+function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
+  const count = items.length;
   const mobile = viewport === "mobile";
+  // Steel site cards carry a drawing on top, so they are taller.
+  const tall = items.some((item) => isSteelSiteType(item.type));
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
   const columnGap = mobile ? 166 : count > 9 ? 250 : 285;
   // Cards carry badges and a note, so rows need room to avoid overlap.
-  const rowGap = mobile ? 252 : 224;
-  const cardHeight = mobile ? 236 : 204;
+  const rowGap = tall ? (mobile ? 296 : 300) : mobile ? 252 : 224;
+  const cardHeight = tall ? (mobile ? 280 : 284) : mobile ? 236 : 204;
   const rows = Math.max(1, Math.ceil(Math.max(count, 1) / columns));
 
   return {
@@ -116,7 +120,7 @@ function softOffset(index: number, viewport: CanvasViewport) {
 }
 
 function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport): CanvasPositions {
-  const metrics = canvasMetrics(viewport, items.length);
+  const metrics = canvasMetrics(viewport, items);
   return Object.fromEntries(
     orderedCanvasItems(items).map((item, index) => {
       const column = index % metrics.columns;
@@ -152,7 +156,7 @@ function sameViewportLayouts(a: Record<CanvasViewport, CanvasPositions>, b: Reco
 }
 
 function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, viewport: CanvasViewport, fallbackPositions = autoCanvasLayout(items, viewport)) {
-  const metrics = canvasMetrics(viewport, items.length);
+  const metrics = canvasMetrics(viewport, items);
   return Object.fromEntries(
     items.map((item) => {
       const position = positions[item.id] ?? fallbackPositions[item.id] ?? { x: metrics.left, y: metrics.top };
@@ -275,7 +279,7 @@ export function WorkzoneMissionControl({
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => readSavedCanvasLayout(canvasSignature(items)) ?? autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
   const positions = positionsByViewport[canvasViewport];
-  const canvasHeight = canvasMetrics(canvasViewport, items.length).height;
+  const canvasHeight = canvasMetrics(canvasViewport, items).height;
   const isBauMode = mode !== "baumdienst";
   const canvasBackground = isDarkTheme
     ? isBauMode
@@ -510,7 +514,7 @@ export function WorkzoneMissionControl({
                 onDragEnd={(_, info) => {
                   if (readOnly && !allowCanvasDrag) return;
                   const current = positions[item.id] ?? { x: 20, y: 20 };
-                  const { maxX, maxY } = canvasMetrics(canvasViewport, items.length);
+                  const { maxX, maxY } = canvasMetrics(canvasViewport, items);
                   const next = {
                     x: clamp(Math.round(current.x + info.offset.x), 10, maxX),
                     y: clamp(Math.round(current.y + info.offset.y), 10, maxY),
@@ -538,11 +542,14 @@ export function WorkzoneMissionControl({
                 className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${isSteelSiteType(item.type) ? "overflow-hidden pt-0" : ""}`}
               >
                 {isSteelSiteType(item.type) ? (
-                  <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
+                  <div className={`relative -mx-3 mb-2 border-b bg-gradient-to-br from-orange-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 ${isCompactCanvas ? "h-24" : "h-32"}`}>
                     <SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />
-                    <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                      {typeLabel(item.type, currentLang)}
-                    </span>
+                    {/* Site name on a plate in the corner, like a site board. */}
+                    <div className="absolute left-1.5 top-1.5 max-w-[85%] rounded-lg border border-white/60 bg-white/90 px-2 py-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
+                      <div className="font-mono text-[8px] font-bold uppercase tracking-[0.16em] text-orange-600 dark:text-orange-400">{typeLabel(item.type, currentLang)}</div>
+                      <div className={`line-clamp-2 font-bold leading-tight tracking-tight ${isCompactCanvas ? "text-[11px]" : "text-[13px]"}`}>{item.name}</div>
+                    </div>
+                    {item.activeLiveCount > 0 ? <span className="absolute bottom-1.5 right-1.5 size-2.5 animate-pulse rounded-full bg-green-500 ring-2 ring-white" /> : null}
                   </div>
                 ) : null}
                 <div className={`flex items-center justify-between gap-2 ${isSteelSiteType(item.type) ? "hidden" : ""}`}>
@@ -560,7 +567,9 @@ export function WorkzoneMissionControl({
                     <span className={`h-2.5 w-2.5 rounded-full ${item.activeLiveCount > 0 ? "animate-pulse bg-green-500" : "bg-zinc-400"}`} />
                   </div>
                 </div>
-                <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
+                {isSteelSiteType(item.type) ? null : (
+                  <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
+                )}
                 {item.workers.length > 0 ? <p className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
@@ -572,6 +581,17 @@ export function WorkzoneMissionControl({
                       style={{ width: `${item.pct}%` }}
                     />
                   </div>
+                ) : null}
+                {item.material && item.material.total > 0 ? (
+                  <p
+                    className={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${
+                      item.material.ready === item.material.total
+                        ? "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300"
+                        : "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                    }`}
+                  >
+                    ⚒ {t("factory.cardMaterial", currentLang).replace("{ready}", String(item.material.ready)).replace("{total}", String(item.material.total))}
+                  </p>
                 ) : null}
                 {item.haltCount > 0 ? <p className="text-[11px] font-semibold text-red-500">🅿️🚫 {item.haltCount}</p> : null}
                 {item.pendingSiteTask ? (

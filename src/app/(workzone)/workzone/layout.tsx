@@ -7,7 +7,7 @@ import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { getFeatures } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
 import { prisma } from "@/lib/db/prisma";
-import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
+import { fleetShowsCones, getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { autoCloseForgottenDaySessions } from "@/lib/workzone/session-rules";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { MachineSidebar } from "./machine-sidebar";
@@ -29,7 +29,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
     );
   }
   const company = await getOrCreateDefaultCompany();
-  const [machines, announcement, mode] = await Promise.all([
+  const [machines, announcement, mode, showCones] = await Promise.all([
     getMachineSidebarData(),
     prisma.workzoneAnnouncement.findFirst({
       where: { companyProfileId: company.id, isActive: true },
@@ -37,6 +37,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
       orderBy: { createdAt: "desc" },
     }),
     getCompanyMode(),
+    fleetShowsCones(),
   ]);
   const features = getFeatures(mode);
 
@@ -58,7 +59,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
           </div>
         </div>
       </header>
-      {features.machines ? <MachineSidebar machines={machines} isAdmin={Boolean(admin)} /> : null}
+      {features.machines ? <MachineSidebar machines={machines} isAdmin={Boolean(admin)} showCones={showCones} /> : null}
       <WorkzoneSyncRunner />
       <LiveRefreshListener enabled />
       <div className="mx-auto w-full max-w-6xl lg:pr-20">

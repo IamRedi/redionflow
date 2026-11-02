@@ -27,6 +27,7 @@ import { reportLocale } from "@/lib/workzone/date-utils";
 import { dateKey, monthKey } from "@/lib/workzone/reporting";
 import { WorkerAvailability, WorkerLevel } from "@/generated/prisma/enums";
 import { parseEnumInput } from "@/lib/validation/enum-input";
+import { CREW_ROLES, readCrewRole } from "@/lib/workzone/crew-roles";
 
 function cleanText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -227,6 +228,7 @@ async function createWorker(formData: FormData) {
       birthDate: cleanDate(formData.get("birthDate")),
       startedAtCompany: cleanDate(formData.get("startedAtCompany")),
       level: parseEnumInput(formData.get("level"), WorkerLevel, WorkerLevel.JUNIOR),
+      crewRole: readCrewRole(formData.get("crewRole")),
       preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
       motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
     },
@@ -445,6 +447,19 @@ export default async function AdminHrFleetPage() {
               <Label htmlFor="vacationAllowanceDays">{t("admin.vacationDays", currentLang, mode)}</Label>
               <Input id="vacationAllowanceDays" name="vacationAllowanceDays" type="number" min="0" defaultValue={region.defaultVacationDays} />
             </div>
+            {mode === "bau" ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="crewRole">{t("admin.crewRole", currentLang, mode)}</Label>
+                <select id="crewRole" name="crewRole" defaultValue="FIELD_WORKER" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+                  <option value="">{t("admin.crewRoleNone", currentLang, mode)}</option>
+                  {CREW_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {t(`admin.crewRoles.${role}`, currentLang, mode)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="level">{t("admin.colLevel", currentLang, mode)}</Label>
               <select id="level" name="level" defaultValue="JUNIOR" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
@@ -534,6 +549,7 @@ export default async function AdminHrFleetPage() {
                     status: worker.status,
                     vacationAllowanceDays: worker.vacationAllowanceDays ?? region.defaultVacationDays,
                     level: worker.level,
+                    crewRole: worker.crewRole ?? null,
                     motherTongue: worker.motherTongue ?? "DE",
                     preferredLanguage: worker.preferredLanguage ?? "DE",
                   }}

@@ -642,6 +642,8 @@ model Worker {
   profileImageUrl       String?
   documents             Json?
   level                 WorkerLevel        @default(JUNIOR)
+  /// Metal construction role (see src/lib/workzone/crew-roles.ts); null = plain worker.
+  crewRole              String?
   preferredLanguage     AssistantLanguage  @default(DE)
   motherTongue          AssistantLanguage  @default(DE)
   aiPersonalityNote     String?

@@ -43,7 +43,7 @@ export async function uploadSiteFileAction(formData: FormData): Promise<ActionRe
   const kind = uploadKinds.safeParse(formData.get("kind"));
   const baustelleId = String(formData.get("baustelleId") ?? "");
   if (!kind.success || !baustelleId) return { ok: false, message: tr("invalidInput") };
-  if (kind.data === "invoice" && !actor.isAdmin) return { ok: false, message: tr("accessDenied") };
+  if (kind.data === "invoice" && !actor.can.office) return { ok: false, message: tr("accessDenied") };
 
   const upload = await readUpload(formData.get("file"), kind.data);
   if (!upload) return { ok: false, message: tr("documentTypeAllowed") };
@@ -85,7 +85,7 @@ export async function deleteSiteFileAction(input: unknown): Promise<ActionResult
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
-  if (!actor?.isAdmin) return { ok: false, message: tr("accessDenied") };
+  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
   const removed = await withTenantContext(companyId, async (tx) => {
     const file = await tx.siteFile.findFirst({ where: { id: parsed.data.id, companyProfileId: companyId }, select: { id: true, baustelleId: true } });
     if (!file) return null;
@@ -111,7 +111,7 @@ export async function updateSiteInfoAction(input: unknown): Promise<ActionResult
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
-  if (!actor?.isAdmin) return { ok: false, message: tr("accessDenied") };
+  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
   const { baustelleId, address, description } = parsed.data;
   const updated = await withTenantContext(companyId, async (tx) => {
     const result = await tx.baustelle.updateMany({
@@ -143,7 +143,7 @@ export async function parseOrderAction(formData: FormData): Promise<ParseOrderRe
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") ?? "" };
   const actor = await currentCompanyActor(companyId);
-  if (!actor?.isAdmin) return { ok: false, message: tr("accessDenied") ?? "" };
+  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") ?? "" };
   const upload = await readUpload(formData.get("file"), "order");
   if (!upload) return { ok: false, message: tr("documentTypeAllowed") ?? "" };
   let draft: OrderDraft;
@@ -192,7 +192,7 @@ export async function importOrderAction(formData: FormData): Promise<ActionResul
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
-  if (!actor?.isAdmin) return { ok: false, message: tr("accessDenied") };
+  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
   let json: unknown;
   try {
     json = JSON.parse(String(formData.get("draft") ?? ""));

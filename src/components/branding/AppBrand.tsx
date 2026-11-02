@@ -22,6 +22,7 @@ export function AppBrand({
   logoSrc = brandLogoSrc,
   mode,
   logoAlt = "Firmenlogo",
+  companyLogo,
 }: {
   compact?: boolean;
   className?: string;
@@ -31,7 +32,29 @@ export function AppBrand({
   /** Alt text for the logo image. Callers with i18n access should pass
    * the translated string (e.g. t("common.companyLogoAlt", lang)). */
   logoAlt?: string;
+  /** The customer's own logo (data: URL). When set it replaces the product mark. */
+  companyLogo?: string | null;
 }) {
+  if (companyLogo) {
+    return (
+      <div className={cn("relative flex min-w-0 items-center", className)}>
+        <div
+          className={cn(
+            "flex items-center justify-center overflow-hidden rounded-2xl bg-white px-3 shadow-sm ring-1 ring-border",
+            compact ? "h-[60px] w-[150px]" : "h-[72px] w-[180px]",
+          )}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- small data: URL */}
+          <img src={companyLogo} alt={logoAlt} className="max-h-full w-full object-contain py-2" />
+        </div>
+        {aiBadge ? (
+          <span className="absolute -right-1 -top-1 rounded-full border bg-background px-1.5 py-0.5 text-[10px] font-bold leading-none text-brand-green shadow-sm">
+            {AI_BADGE_TEXT}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
   const isBaumdienst = !mode || mode === "baumdienst";
   const branding = productBranding(mode ?? "baumdienst");
 

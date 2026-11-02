@@ -1,5 +1,5 @@
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
-import { canAdvanceProduction } from "@/lib/factory/production";
+import { crewPermissions, type CrewPermissions } from "@/lib/workzone/crew-roles";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 
 export type CompanyActor = {
@@ -7,24 +7,28 @@ export type CompanyActor = {
   workerId: string | null;
   userId: string | null;
   isAdmin: boolean;
-  /** Office, foreman or master: may move material through the factory. */
+  /** Office, factory engineer: may move material through the factory. */
   canAdvance: boolean;
+  can: CrewPermissions;
 };
 
 /** The signed-in person of the given company: a worker or an office admin. */
 export async function currentCompanyActor(companyId: string): Promise<CompanyActor | null> {
   const [worker, admin] = await Promise.all([getCurrentWorker(), getCurrentAdmin()]);
   if (worker && worker.companyProfileId === companyId) {
+    const can = crewPermissions({ isAdmin: false, crewRole: worker.crewRole, level: worker.level });
     return {
       name: `${worker.firstName} ${worker.lastName}`.trim(),
       workerId: worker.id,
       userId: null,
       isAdmin: false,
-      canAdvance: canAdvanceProduction({ isAdmin: false, level: worker.level }),
+      canAdvance: can.factorySteps,
+      can,
     };
   }
   if (admin && admin.companyProfileId === companyId) {
-    return { name: (admin.name ?? admin.email ?? "Admin").trim(), workerId: null, userId: admin.id, isAdmin: true, canAdvance: true };
+    const can = crewPermissions({ isAdmin: true });
+    return { name: (admin.name ?? admin.email ?? "Admin").trim(), workerId: null, userId: admin.id, isAdmin: true, canAdvance: true, can };
   }
   return null;
 }

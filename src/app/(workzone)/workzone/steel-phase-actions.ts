@@ -12,6 +12,8 @@ import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import type { ActionResult } from "@/lib/validation/action-result";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { crewPermissions } from "@/lib/workzone/crew-roles";
+import { currentCompanyActor } from "@/lib/site-files/actor";
 import {
   applySteelPhaseCommand,
   isSteelSiteType,
@@ -47,6 +49,9 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
   const actorName = actorWorker
     ? `${actorWorker.firstName} ${actorWorker.lastName}`.trim()
     : (actorAdmin!.name ?? actorAdmin!.email ?? "Admin").trim();
+  // Workers only report missing material; the field engineer (or the office) moves the phases.
+  const can = crewPermissions(actorWorker ? { isAdmin: false, crewRole: actorWorker.crewRole, level: actorWorker.level } : { isAdmin: true });
+  if (parsed.data.command === "missing" ? !can.reportMissing : !can.siteSteps) return { ok: false, message: tr("accessDenied") };
 
   const item = await prisma.treeItem.findUnique({
     where: { id: parsed.data.phaseItemId },
@@ -111,8 +116,8 @@ export async function addSteelTaskAction(input: unknown): Promise<ActionResult> 
   if (!parsed.success) return { ok: false, message: tr("invalidInput") };
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
-  const admin = await getCurrentAdmin();
-  if (!admin || admin.companyProfileId !== companyId) return { ok: false, message: tr("accessDenied") };
+  const actor = await currentCompanyActor(companyId);
+  if (!actor?.can.siteSteps) return { ok: false, message: tr("accessDenied") };
   const site = await prisma.baustelle.findFirst({
     where: { id: parsed.data.baustelleId, companyProfileId: companyId },
     select: { id: true, type: true },
@@ -141,8 +146,8 @@ export async function removeSteelTaskAction(input: unknown): Promise<ActionResul
   if (!parsed.success) return { ok: false, message: tr("invalidInput") };
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
-  const admin = await getCurrentAdmin();
-  if (!admin || admin.companyProfileId !== companyId) return { ok: false, message: tr("accessDenied") };
+  const actor = await currentCompanyActor(companyId);
+  if (!actor?.can.siteSteps) return { ok: false, message: tr("accessDenied") };
   const item = await prisma.treeItem.findUnique({
     where: { id: parsed.data.phaseItemId },
     include: { baustelle: { select: { id: true, companyProfileId: true } } },
