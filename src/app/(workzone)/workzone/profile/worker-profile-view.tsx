@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { getCompanyCountry } from "@/lib/db/company";
 import { reportLocale } from "@/lib/workzone/date-utils";
 import { dateKey, monthKey } from "@/lib/workzone/reporting";
 import { hasOpenPause, isReportableSession, totalPauseMinutes } from "@/lib/workzone/session-rules";
@@ -203,7 +204,7 @@ export async function WorkerProfileView({
     item: { id: string; name: string; itemCode: string } | null;
   }>;
 }) {
-  const currentLang = await resolveRequestLanguage();
+  const [currentLang, companyCountry] = await Promise.all([resolveRequestLanguage(), getCompanyCountry()]);
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
   const activePauseIntervals = activeSession?.pauseIntervals ?? [];
   const history = worker.sessions.filter((session) => (!session.isLive || session.endTime) && isReportableSession(session)).slice(0, 15);
@@ -637,7 +638,7 @@ export async function WorkerProfileView({
                 </div>
               </div>
               {mode === "worker" ? (
-                <VacationRequestForm workerId={worker.id} currentLang={currentLang} action={requestVacationFormAction} />
+                <VacationRequestForm workerId={worker.id} currentLang={currentLang} country={companyCountry} action={requestVacationFormAction} />
               ) : null}
             </div>
 

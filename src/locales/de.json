@@ -77,7 +77,10 @@
     "legalNameOptional": "Rechtlicher Name (optional)",
     "legalNamePlaceholder": "z. B. Mustermann GmbH",
     "yourName": "Dein Name",
-    "signupPending": "Konto wird angelegt..."
+    "signupPending": "Konto wird angelegt...",
+    "signupCountry": "Land der Firma",
+    "signupInviteCode": "Einladungscode",
+    "signupInviteInvalid": "Der Einladungscode stimmt nicht."
   },
   "workzone": {
     "startWork": "Arbeit starten",
@@ -1207,6 +1210,10 @@
     "settingsCompanyDescription": "Basisdaten für interne Nutzung und spätere Ausgabe.",
     "settingsDisplayName": "Anzeigename",
     "settingsLegalName": "Rechtsname",
+    "settingsCountry": "Land",
+    "settingsCountryHint": "Bestimmt Währung, Feiertage, Urlaubstage und Sprache für neue Mitarbeitende.",
+    "countryDE": "Deutschland (EUR)",
+    "countryAL": "Albanien (ALL, Lek)",
     "settingsGpsTitle": "GPS & Nachweise",
     "settingsGpsDescription": "Optionale Live-Daten für Flotte und technische Tagesbericht-Zuordnung.",
     "settingsFleetGpsEnable": "Fleet GPS aktivieren",

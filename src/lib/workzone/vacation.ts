@@ -1,3 +1,5 @@
+import { publicHolidayKeys } from "@/lib/region";
+
 function localDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -12,24 +14,6 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
-function easterSunday(year: number) {
-  const a = year % 19;
-  const b = Math.floor(year / 100);
-  const c = year % 100;
-  const d = Math.floor(b / 4);
-  const e = b % 4;
-  const f = Math.floor((b + 8) / 25);
-  const g = Math.floor((b - f + 1) / 3);
-  const h = (19 * a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4);
-  const k = c % 4;
-  const l = (32 + 2 * e + 2 * i - h - k) % 7;
-  const m = Math.floor((a + 11 * h + 22 * l) / 451);
-  const month = Math.floor((h + l - 7 * m + 114) / 31);
-  const day = ((h + l - 7 * m + 114) % 31) + 1;
-  return new Date(year, month - 1, day);
-}
-
 export function parseVacationDate(value: FormDataEntryValue | string | null | undefined) {
   const raw = String(value ?? "").trim();
   const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -40,35 +24,22 @@ export function parseVacationDate(value: FormDataEntryValue | string | null | un
 }
 
 export function nrwPublicHolidayKeys(year: number) {
-  const easter = easterSunday(year);
-  return new Set([
-    `${year}-01-01`,
-    `${year}-05-01`,
-    `${year}-10-03`,
-    `${year}-11-01`,
-    `${year}-12-25`,
-    `${year}-12-26`,
-    localDateKey(addDays(easter, -2)),
-    localDateKey(addDays(easter, 1)),
-    localDateKey(addDays(easter, 39)),
-    localDateKey(addDays(easter, 50)),
-    localDateKey(addDays(easter, 60)),
-  ]);
+  return publicHolidayKeys(year, "DE");
 }
 
 export const germanPublicHolidayKeys = nrwPublicHolidayKeys;
 
-export function isVacationWorkday(date: Date) {
+export function isVacationWorkday(date: Date, country: string | null | undefined = "DE") {
   const day = date.getDay();
   if (day === 0 || day === 6) return false;
-  return !nrwPublicHolidayKeys(date.getFullYear()).has(localDateKey(date));
+  return !publicHolidayKeys(date.getFullYear(), country).has(localDateKey(date));
 }
 
-export function countVacationWorkdays(start: Date, end: Date) {
+export function countVacationWorkdays(start: Date, end: Date, country: string | null | undefined = "DE") {
   if (end.getTime() < start.getTime()) return 0;
   let count = 0;
   for (let day = new Date(start); day.getTime() <= end.getTime(); day = addDays(day, 1)) {
-    if (isVacationWorkday(day)) count += 1;
+    if (isVacationWorkday(day, country)) count += 1;
   }
   return count;
 }

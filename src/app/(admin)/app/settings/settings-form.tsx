@@ -91,6 +91,18 @@ export function SettingsForm({
             <Input id="legalName" {...form.register("legalName")} />
             <FieldError message={form.formState.errors.legalName?.message} />
           </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="country">{t("admin.settingsCountry", currentLang)}</Label>
+            <select
+              id="country"
+              {...form.register("country")}
+              className="h-9 w-full rounded-md border bg-background px-3 text-sm md:max-w-xs"
+            >
+              <option value="DE">{t("admin.countryDE", currentLang)}</option>
+              <option value="AL">{t("admin.countryAL", currentLang)}</option>
+            </select>
+            <p className="text-xs text-muted-foreground">{t("admin.settingsCountryHint", currentLang)}</p>
+          </div>
         </CardContent>
       </Card>
 

@@ -44,6 +44,22 @@ export function unitLabel(unit: string, lang: string = "de"): string {
   return trimmed;
 }
 
+/**
+ * Format an amount stored in minor units (cents) in the company currency.
+ * Albanian lek is shown without decimals, as on Albanian invoices.
+ */
+export function formatMoney(cents: Cents, lang: string = "de", currency: string = "EUR"): string {
+  if (currency === "EUR") return formatEUR(cents, lang);
+  const digits = currency === "ALL" ? 0 : 2;
+  return new Intl.NumberFormat(currencyLocale(lang), {
+    style: "currency",
+    currency,
+    currencyDisplay: "code",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format((cents ?? 0) / 100);
+}
+
 export function formatEUR(cents: Cents, lang: string = "de"): string {
   const value = (cents ?? 0) / 100;
   return new Intl.NumberFormat(currencyLocale(lang), {

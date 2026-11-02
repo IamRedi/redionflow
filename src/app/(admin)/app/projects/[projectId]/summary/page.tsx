@@ -11,13 +11,16 @@ import { calculatePositionTotals } from "@/lib/calculation/position";
 import { calculateProjectTotals } from "@/lib/calculation/project";
 import { positionDirectCostsFromDb } from "@/lib/calculation/position-from-db";
 import { overheadSettingsToEngine } from "@/lib/calculation/overhead-map";
-import { formatEUR } from "@/lib/calculation/formatters";
+import { formatMoney } from "@/lib/calculation/formatters";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { getCompanyCountry } from "@/lib/db/company";
+import { regionConfig } from "@/lib/region";
 
 export default async function ProjectSummaryPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
   const [currentCompanyId, currentLang] = await Promise.all([getCurrentCompanyId(), resolveRequestLanguage()]);
+  const currency = regionConfig(await getCompanyCountry()).currency;
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
@@ -94,15 +97,15 @@ export default async function ProjectSummaryPage({ params }: { params: Promise<{
                     <div className="font-medium">
                       {idx + 1}. {pos.title}
                     </div>
-                    <div className="tabular-nums text-sm font-semibold">{formatEUR(pt.offer.netCents, currentLang)} {t("form.net")}</div>
+                    <div className="tabular-nums text-sm font-semibold">{formatMoney(pt.offer.netCents, currentLang, currency)} {t("form.net")}</div>
                   </div>
                   {pos.description ? <p className="mt-1 text-sm text-muted-foreground">{pos.description}</p> : null}
                   <div className="mt-3 grid gap-1 text-xs text-muted-foreground md:grid-cols-2">
-                    <div>{t("form.costEk")}: {formatEUR(pt.direct.ekCents, currentLang)}</div>
-                    <div>{t("form.costHk")}: {formatEUR(pt.overhead.hkCents, currentLang)}</div>
-                    <div>{t("form.costSk")}: {formatEUR(pt.overhead.skCents, currentLang)}</div>
+                    <div>{t("form.costEk")}: {formatMoney(pt.direct.ekCents, currentLang, currency)}</div>
+                    <div>{t("form.costHk")}: {formatMoney(pt.overhead.hkCents, currentLang, currency)}</div>
+                    <div>{t("form.costSk")}: {formatMoney(pt.overhead.skCents, currentLang, currency)}</div>
                     <div>
-                      {t("form.vatGross")}: {formatEUR(pt.offer.vatCents, currentLang)} / {formatEUR(pt.offer.grossCents, currentLang)}
+                      {t("form.vatGross")}: {formatMoney(pt.offer.vatCents, currentLang, currency)} / {formatMoney(pt.offer.grossCents, currentLang, currency)}
                     </div>
                   </div>
                 </div>
@@ -117,15 +120,15 @@ export default async function ProjectSummaryPage({ params }: { params: Promise<{
             <div className="grid gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("form.sumNet")}</span>
-                <span className="tabular-nums font-semibold">{formatEUR(projectCalc.sum.netCents, currentLang)}</span>
+                <span className="tabular-nums font-semibold">{formatMoney(projectCalc.sum.netCents, currentLang, currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("form.vat")}</span>
-                <span className="tabular-nums">{formatEUR(projectCalc.sum.vatCents, currentLang)}</span>
+                <span className="tabular-nums">{formatMoney(projectCalc.sum.vatCents, currentLang, currency)}</span>
               </div>
               <div className="flex justify-between text-base font-semibold">
                 <span>{t("form.gross")}</span>
-                <span className="tabular-nums">{formatEUR(projectCalc.sum.grossCents, currentLang)}</span>
+                <span className="tabular-nums">{formatMoney(projectCalc.sum.grossCents, currentLang, currency)}</span>
               </div>
             </div>
           </div>

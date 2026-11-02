@@ -30,6 +30,21 @@ infrastructure — not in application code.
 | Fleet GPS token | Env fallback | Env fallback | Per-tenant `FleetIngestToken` |
 | RLS enforcement | Optional | Optional | Progressive (`RLS_ENFORCE=true` in staging first) |
 
+### SaaS pilot on Railway (since November 2026)
+
+The first real customers run on the Railway project `redionflow-app` (EU West),
+`SAAS_MODE=true`, `APP_ENV=saas`, own PostgreSQL, Stripe not connected yet.
+
+- Start command **must not** run `prisma/seed.ts` (the Dockerfile default does,
+  for demos): `npx prisma migrate deploy && npx next start -H 0.0.0.0 -p ${PORT}`.
+- `SIGNUP_INVITE_CODE` set: `/signup` only creates a company with that code,
+  which is handed to each pilot customer personally.
+- Each company has a country (`DE` or `AL`, settings page): it sets the
+  currency (EUR / ALL), public holidays for vacation days, the default vacation
+  allowance, the default VAT and the language of new workers.
+- Plan limits: a pilot company with more than 5 workers needs a Subscription
+  row on the `enterprise` plan (set once by the operator).
+
 ## Branch strategy
 
 - `main` — integration branch for verified application changes. Future SaaS

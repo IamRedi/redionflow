@@ -68,7 +68,10 @@
     "legalNameOptional": "Nome legale (opzionale)",
     "legalNamePlaceholder": "es. Mustermann GmbH",
     "yourName": "Il tuo nome",
-    "signupPending": "Creazione account..."
+    "signupPending": "Creazione account...",
+    "signupCountry": "Paese dell'azienda",
+    "signupInviteCode": "Codice di invito",
+    "signupInviteInvalid": "Il codice di invito non è valido."
   },
   "workzone": {
     "startWork": "Inizia lavoro",
@@ -1149,6 +1152,10 @@
     "settingsCompanyDescription": "Dati base per uso interno e output successivi.",
     "settingsDisplayName": "Nome visualizzato",
     "settingsLegalName": "Ragione sociale",
+    "settingsCountry": "Paese",
+    "settingsCountryHint": "Definisce valuta, festività, giorni di ferie e lingua per i nuovi dipendenti.",
+    "countryDE": "Germania (EUR)",
+    "countryAL": "Albania (ALL, lek)",
     "settingsGpsTitle": "GPS & prove",
     "settingsGpsDescription": "Dati live opzionali per flotta e assegnazione tecnica nei report giornalieri.",
     "settingsFleetGpsEnable": "Attiva Fleet GPS",

@@ -14,7 +14,7 @@ import { decimalToNumber } from "@/lib/db/prisma-types";
 import { calculatePositionTotals } from "@/lib/calculation/position";
 import { positionDirectCostsFromDb } from "@/lib/calculation/position-from-db";
 import { overheadSettingsToEngine } from "@/lib/calculation/overhead-map";
-import { formatEUR } from "@/lib/calculation/formatters";
+import { formatMoney } from "@/lib/calculation/formatters";
 import { EXTERNAL_SERVICE_PRESETS, externalServiceGroupLabel, externalServiceTitle } from "@/lib/external-services/catalog";
 import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -36,6 +36,8 @@ import {
   updateMaterialRow,
   updatePositionMeta,
 } from "./actions";
+import { getCompanyCountry } from "@/lib/db/company";
+import { regionConfig } from "@/lib/region";
 
 function machineCategoryLabel(category: MachineCategoryCode, t: (path: string) => string) {
   return t(`form.machineCategory.${category}`);
@@ -163,6 +165,7 @@ export default async function PositionEditPage({ params }: { params: Promise<{ p
     getCurrentCompanyId(),
   ]);
   const t = getTranslator(currentLang);
+  const currency = regionConfig(await getCompanyCountry()).currency;
 
   const position = await prisma.projectPosition.findUnique({
     where: { id: positionId },
@@ -351,7 +354,7 @@ export default async function PositionEditPage({ params }: { params: Promise<{ p
                           </Button>
                         </form>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums align-top pt-8">{formatEUR(laborRowCents(row), currentLang)}</TableCell>
+                      <TableCell className="text-right tabular-nums align-top pt-8">{formatMoney(laborRowCents(row), currentLang, currency)}</TableCell>
                       <TableCell className="text-right align-top pt-6">
                         <form action={deleteLaborRow}>
                           <input type="hidden" name="id" value={row.id} />
@@ -461,7 +464,7 @@ export default async function PositionEditPage({ params }: { params: Promise<{ p
                           </Button>
                         </form>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums align-top pt-8">{formatEUR(machineRowCents(row), currentLang)}</TableCell>
+                      <TableCell className="text-right tabular-nums align-top pt-8">{formatMoney(machineRowCents(row), currentLang, currency)}</TableCell>
                       <TableCell className="text-right align-top pt-6">
                         <form action={deleteMachineRow}>
                           <input type="hidden" name="id" value={row.id} />
@@ -547,7 +550,7 @@ export default async function PositionEditPage({ params }: { params: Promise<{ p
                           </Button>
                         </form>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums align-top pt-8">{formatEUR(materialRowCents(row), currentLang)}</TableCell>
+                      <TableCell className="text-right tabular-nums align-top pt-8">{formatMoney(materialRowCents(row), currentLang, currency)}</TableCell>
                       <TableCell className="text-right align-top pt-6">
                         <form action={deleteMaterialRow}>
                           <input type="hidden" name="id" value={row.id} />
@@ -627,7 +630,7 @@ export default async function PositionEditPage({ params }: { params: Promise<{ p
                           </Button>
                         </form>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{formatEUR(row.amountCents, currentLang)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{formatMoney(row.amountCents, currentLang, currency)}</TableCell>
                       <TableCell className="text-right">
                         <form action={deleteExternalRow}>
                           <input type="hidden" name="id" value={row.id} />
@@ -670,7 +673,7 @@ export default async function PositionEditPage({ params }: { params: Promise<{ p
         </div>
 
         <div className="space-y-4">
-          <BreakdownPanel title={t("form.calculationPosition")} totals={totals} t={t} currentLang={currentLang} />
+          <BreakdownPanel title={t("form.calculationPosition")} totals={totals} t={t} currentLang={currentLang} currency={currency} />
           <Card>
             <CardHeader>
               <CardTitle>{t("common.note")}</CardTitle>

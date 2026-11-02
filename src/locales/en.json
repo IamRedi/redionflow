@@ -68,7 +68,10 @@
     "legalNameOptional": "Legal name (optional)",
     "legalNamePlaceholder": "e.g. Mustermann GmbH",
     "yourName": "Your name",
-    "signupPending": "Creating account..."
+    "signupPending": "Creating account...",
+    "signupCountry": "Company country",
+    "signupInviteCode": "Invite code",
+    "signupInviteInvalid": "The invite code is not valid."
   },
   "workzone": {
     "startWork": "Start work",
@@ -1124,6 +1127,10 @@
     "settingsCompanyDescription": "Base data for internal use and later output.",
     "settingsDisplayName": "Display name",
     "settingsLegalName": "Legal name",
+    "settingsCountry": "Country",
+    "settingsCountryHint": "Sets currency, public holidays, vacation days and the language for new workers.",
+    "countryDE": "Germany (EUR)",
+    "countryAL": "Albania (ALL, lek)",
     "settingsGpsTitle": "GPS & records",
     "settingsGpsDescription": "Optional live data for fleet and technical daily-report assignment.",
     "settingsFleetGpsEnable": "Enable Fleet GPS",

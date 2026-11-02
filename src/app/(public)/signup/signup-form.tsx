@@ -18,10 +18,14 @@ const PRODUCT_LABEL: Record<Mode, string> = {
   bau: "BauFlow — Bau",
 };
 
-export function SignupForm({ preselectedMode }: { preselectedMode: Mode }) {
+type Country = "DE" | "AL";
+
+export function SignupForm({ preselectedMode, inviteRequired }: { preselectedMode: Mode; inviteRequired: boolean }) {
   const { currentLang } = useLanguage();
   const hydrated = useHydrated();
   const [mode, setMode] = useState<Mode>(preselectedMode);
+  const [country, setCountry] = useState<Country>(currentLang === "sq" ? "AL" : "DE");
+  const [inviteCode, setInviteCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [legalName, setLegalName] = useState("");
   const [fullName, setFullName] = useState("");
@@ -40,6 +44,8 @@ export function SignupForm({ preselectedMode }: { preselectedMode: Mode }) {
         displayName,
         legalName: legalName || displayName,
         mode,
+        country,
+        inviteCode: inviteRequired ? inviteCode : undefined,
         email,
         password,
         fullName,
@@ -70,6 +76,20 @@ export function SignupForm({ preselectedMode }: { preselectedMode: Mode }) {
               {PRODUCT_LABEL[option]}
             </option>
           ))}
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium" htmlFor="signup-country">{t("public.signupCountry", currentLang)}</label>
+        <select
+          id="signup-country"
+          name="country"
+          className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+          value={country}
+          onChange={(event) => setCountry(event.target.value === "AL" ? "AL" : "DE")}
+        >
+          <option value="DE">{t("admin.countryDE", currentLang)}</option>
+          <option value="AL">{t("admin.countryAL", currentLang)}</option>
         </select>
       </div>
 
@@ -114,6 +134,14 @@ export function SignupForm({ preselectedMode }: { preselectedMode: Mode }) {
         />
         {fieldError("password") ? <p className="text-xs text-destructive">{fieldError("password")}</p> : null}
       </div>
+
+      {inviteRequired ? (
+        <div className="space-y-1">
+          <label className="text-sm font-medium" htmlFor="signup-invite">{t("public.signupInviteCode", currentLang)}</label>
+          <Input id="signup-invite" name="inviteCode" value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} autoComplete="off" required />
+          {fieldError("inviteCode") ? <p className="text-xs text-destructive">{fieldError("inviteCode")}</p> : null}
+        </div>
+      ) : null}
 
       {message ? <p className="text-sm text-destructive">{message}</p> : null}
 

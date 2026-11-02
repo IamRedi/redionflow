@@ -37,6 +37,7 @@ export async function saveSettingsAction(input: unknown, lang?: Language): Promi
   const baseData = {
     displayName: v.displayName,
     legalName: v.legalName,
+    country: v.country,
     overheadSettings: {
       upsert: {
         create: {

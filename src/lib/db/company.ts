@@ -5,6 +5,7 @@ import { getPilotCompanyId, isRuntimePilotEnabled } from "@/lib/auth/pilot-sessi
 import { withPilotDbContext } from "./tenant-runtime";
 import { resolveMode, type CompanyMode } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
+import { resolveCountry, type CompanyCountry } from "@/lib/region";
 
 const companyProfileSelect = {
   id: true,
@@ -16,6 +17,7 @@ const companyProfileSelect = {
   street: true,
   zip: true,
   city: true,
+  country: true,
   createdAt: true,
   updatedAt: true,
   overheadSettings: true,
@@ -58,6 +60,32 @@ export async function getCompanyMode(): Promise<CompanyMode> {
   } catch (error) {
     if (isRuntimePilotEnabled()) throw error;
     return "baumdienst";
+  }
+}
+
+/**
+ * Country of the caller's tenant (currency, holidays, vacation defaults).
+ * Same resolution as `getCompanyMode`; never throws, falls back to `DE`.
+ */
+export async function getCompanyCountry(): Promise<CompanyCountry> {
+  try {
+    const currentCompanyId = await getPilotCompanyId();
+    if (currentCompanyId) {
+      const company = await withPilotDbContext(currentCompanyId, tx => tx.companyProfile.findUnique({
+        where: { id: currentCompanyId },
+        select: { country: true },
+      }));
+      if (company) return resolveCountry(company.country);
+    }
+    if (isSaasMode) return "DE";
+    const company = await prisma.companyProfile.findFirst({
+      select: { country: true },
+      orderBy: { createdAt: "asc" },
+    });
+    return resolveCountry(company?.country);
+  } catch (error) {
+    if (isRuntimePilotEnabled()) throw error;
+    return "DE";
   }
 }
 

@@ -60,7 +60,10 @@
     "legalNameOptional": "Nazwa prawna (opcjonalnie)",
     "legalNamePlaceholder": "np. Mustermann GmbH",
     "yourName": "Twoje imie",
-    "signupPending": "Tworzenie konta..."
+    "signupPending": "Tworzenie konta...",
+    "signupCountry": "Kraj firmy",
+    "signupInviteCode": "Kod zaproszenia",
+    "signupInviteInvalid": "Kod zaproszenia jest nieprawidłowy."
   },
   "workzone": {
     "startWork": "Rozpocznij prace",
@@ -410,7 +413,11 @@
     "vacationDays": "Dni urlopu",
     "adminPassword": "Hasło",
     "adminPasswordHint": "Co najmniej 12 znaków.",
-    "adminPasswordKeepHint": "Pozostaw puste, aby zachować obecne hasło."
+    "adminPasswordKeepHint": "Pozostaw puste, aby zachować obecne hasło.",
+    "settingsCountry": "Kraj",
+    "settingsCountryHint": "Określa walutę, święta, dni urlopu i język dla nowych pracowników.",
+    "countryDE": "Niemcy (EUR)",
+    "countryAL": "Albania (ALL, lek)"
   },
   "language": {
     "de": "Niemiecki",

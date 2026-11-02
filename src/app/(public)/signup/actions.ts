@@ -20,12 +20,15 @@ import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { logger } from "@/lib/observability/logger";
 import { resolveMode } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
+import { isValidSignupInvite } from "@/lib/auth/signup-invite";
 import type { ActionResult } from "@/lib/validation/action-result";
 
 const signupSchema = z.object({
   displayName: z.string().trim().min(2).max(120),
   legalName: z.string().trim().min(2).max(200),
   mode: z.enum(["baumdienst", "bau"]),
+  country: z.enum(["DE", "AL"]).default("DE"),
+  inviteCode: z.string().max(200).optional(),
   email: z.string().email().max(200),
   password: z.string().min(8).max(200),
   fullName: z.string().trim().min(2).max(120),
@@ -74,6 +77,10 @@ export async function signupAction(input: unknown): Promise<ActionResult> {
   }
 
   const v = parsed.data;
+  if (!isValidSignupInvite(v.inviteCode)) {
+    await registerFailedLogin("signup", clientIp);
+    return { ok: false, message: tr("signupInviteInvalid"), fieldErrors: { inviteCode: [tr("signupInviteInvalid")] } };
+  }
   const email = v.email.trim().toLowerCase();
   const mode = resolveMode(v.mode);
 
@@ -83,7 +90,7 @@ export async function signupAction(input: unknown): Promise<ActionResult> {
   try {
     created = await bootstrapSignupTenant({
       displayName: v.displayName, legalName: v.legalName, fullName: v.fullName,
-      email, mode, passwordHash, trialEndsAt,
+      email, mode, country: v.country, passwordHash, trialEndsAt,
     });
   } catch (error) {
     // Concurrent duplicate signups roll back company + membership + audit together.
@@ -118,7 +125,7 @@ export async function signupAction(input: unknown): Promise<ActionResult> {
     actorType: "ADMIN",
     actorId: admin.id,
     action: "signup.completed",
-    payload: { mode, trialEndsAt: trialEndsAt.toISOString() },
+    payload: { mode, country: v.country, trialEndsAt: trialEndsAt.toISOString() },
   }).catch((error) => {
     logger.error({ event: "signup.audit_failed", companyId }, "signup audit failed", error);
   });

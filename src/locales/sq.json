@@ -68,7 +68,10 @@
     "legalNameOptional": "Emri ligjor (opsional)",
     "legalNamePlaceholder": "p.sh. Mustermann GmbH",
     "yourName": "Emri yt",
-    "signupPending": "Po krijohet konto..."
+    "signupPending": "Po krijohet konto...",
+    "signupCountry": "Shteti i firmës",
+    "signupInviteCode": "Kodi i ftesës",
+    "signupInviteInvalid": "Kodi i ftesës nuk është i saktë."
   },
   "workzone": {
     "startWork": "Fillo punen",
@@ -1136,6 +1139,10 @@
     "settingsCompanyDescription": "Te dhenat baze per perdorim te brendshem dhe dalje te mevonshme.",
     "settingsDisplayName": "Emri i shfaqur",
     "settingsLegalName": "Emri ligjor",
+    "settingsCountry": "Shteti",
+    "settingsCountryHint": "Përcakton monedhën, festat zyrtare, ditët e pushimit dhe gjuhën për punëtorët e rinj.",
+    "countryDE": "Gjermani (EUR)",
+    "countryAL": "Shqipëri (ALL, lekë)",
     "settingsGpsTitle": "GPS & deshmi",
     "settingsGpsDescription": "Te dhena live opsionale per floten dhe lidhjen teknike ne raportin ditor.",
     "settingsFleetGpsEnable": "Aktivizo Fleet GPS",

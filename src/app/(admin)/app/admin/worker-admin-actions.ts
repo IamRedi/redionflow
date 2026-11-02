@@ -1,5 +1,7 @@
 "use server";
 
+import { regionConfig } from "@/lib/region";
+
 import { revalidatePath } from "next/cache";
 
 import { normalizeAssistantLanguage } from "@/lib/assistant/language";
@@ -40,6 +42,7 @@ export async function updateWorkerAction(formData: FormData) {
   if (!currentCompanyId) return;
   const owned = await prisma.worker.findUnique({ where: { id }, select: { companyProfileId: true } });
   if (!owned || owned.companyProfileId !== currentCompanyId) return;
+  const company = await prisma.companyProfile.findUnique({ where: { id: currentCompanyId }, select: { country: true } });
 
   await prisma.worker.update({
     where: { id },
@@ -52,7 +55,7 @@ export async function updateWorkerAction(formData: FormData) {
       licenses: cleanText(formData.get("licenses")),
       status: formData.get("status") === "inactive" ? "inactive" : "active",
       availability: parseEnumInput(formData.get("availability"), WorkerAvailability, WorkerAvailability.AVAILABLE),
-      vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), 26),
+      vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), regionConfig(company?.country).defaultVacationDays),
       // Blank profile fields preserve both hashed and legacy credentials.
       ...(loginCode ? { loginCode: null, loginCodeHash: hashPassword(loginCode) } : {}),
       isTemporary: formData.get("isTemporary") === "on",

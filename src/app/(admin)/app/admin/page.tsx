@@ -14,6 +14,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { ASSISTANT_LANGUAGE_OPTIONS, normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { checkLimit } from "@/lib/billing/limits";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
+import { regionConfig } from "@/lib/region";
 import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { t } from "@/lib/i18n";
@@ -202,6 +203,8 @@ async function createWorker(formData: FormData) {
   const enteredLoginCode = normalizeLoginCode(formData.get("loginCode"));
   const loginCode = enteredLoginCode || (isTemporary ? "" : generatedLoginCode());
   if (loginCode && loginCode.length !== 6) return;
+  const companyRow = await prisma.companyProfile.findUnique({ where: { id: companyId }, select: { country: true } });
+  const regionDefaults = regionConfig(companyRow?.country);
 
   await prisma.worker.create({
     data: {
@@ -214,7 +217,7 @@ async function createWorker(formData: FormData) {
       licenses: cleanText(formData.get("licenses")),
       status: formData.get("status") === "inactive" ? "inactive" : "active",
       availability: parseEnumInput(formData.get("availability"), WorkerAvailability, WorkerAvailability.AVAILABLE),
-      vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), 26),
+      vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), regionDefaults.defaultVacationDays),
       // BDF-P1-005: hash the raw code into `loginCodeHash`; never persist
       // it verbatim into `loginCode` (the legacy plaintext column is
       // read-only from here on).
@@ -291,6 +294,7 @@ export default async function AdminHrFleetPage() {
     getCompanyMode(),
     resolveRequestLanguage(),
   ]);
+  const region = regionConfig(company.country);
   const reportTodayKey = todayKey();
   const reportMonthKey = currentMonthKey();
   const [workers, machines] = await Promise.all([
@@ -439,7 +443,7 @@ export default async function AdminHrFleetPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="vacationAllowanceDays">{t("admin.vacationDays", currentLang, mode)}</Label>
-              <Input id="vacationAllowanceDays" name="vacationAllowanceDays" type="number" min="0" defaultValue={26} />
+              <Input id="vacationAllowanceDays" name="vacationAllowanceDays" type="number" min="0" defaultValue={region.defaultVacationDays} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="level">{t("admin.colLevel", currentLang, mode)}</Label>
@@ -462,7 +466,7 @@ export default async function AdminHrFleetPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="motherTongue">{t("admin.colMotherTongue", currentLang, mode)}</Label>
-              <select id="motherTongue" name="motherTongue" defaultValue="DE" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <select id="motherTongue" name="motherTongue" defaultValue={region.defaultLanguage.toUpperCase()} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
                 {ASSISTANT_LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.code} value={option.code}>{option.label}</option>
                 ))}
@@ -470,7 +474,7 @@ export default async function AdminHrFleetPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="preferredLanguage">{t("admin.colResponseLanguage", currentLang, mode)}</Label>
-              <select id="preferredLanguage" name="preferredLanguage" defaultValue="DE" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <select id="preferredLanguage" name="preferredLanguage" defaultValue={region.defaultLanguage.toUpperCase()} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
                 {ASSISTANT_LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.code} value={option.code}>{option.label}</option>
                 ))}
@@ -528,7 +532,7 @@ export default async function AdminHrFleetPage() {
                     availabilityClass: workerAvailabilityClass(worker.availability),
                     isTemporary: worker.isTemporary,
                     status: worker.status,
-                    vacationAllowanceDays: worker.vacationAllowanceDays ?? 26,
+                    vacationAllowanceDays: worker.vacationAllowanceDays ?? region.defaultVacationDays,
                     level: worker.level,
                     motherTongue: worker.motherTongue ?? "DE",
                     preferredLanguage: worker.preferredLanguage ?? "DE",

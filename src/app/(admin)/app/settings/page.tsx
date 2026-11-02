@@ -3,6 +3,7 @@ import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { decimalToNumber } from "@/lib/db/prisma-types";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { regionConfig, resolveCountry } from "@/lib/region";
 
 export default async function SettingsPage() {
   const [company, mode, currentLang] = await Promise.all([
@@ -15,11 +16,12 @@ export default async function SettingsPage() {
   const defaultValues = {
     displayName: company.displayName,
     legalName: company.legalName,
+    country: resolveCountry(company.country),
     bgkPct: overhead ? decimalToNumber(overhead.bgkPct) * 100 : 18,
     agkPct: overhead ? decimalToNumber(overhead.agkPct) * 100 : 10,
     riskPct: overhead ? decimalToNumber(overhead.riskPct) * 100 : 3,
     profitPct: overhead ? decimalToNumber(overhead.profitPct) * 100 : 6,
-    vatPct: overhead ? decimalToNumber(overhead.vatPct) * 100 : 19,
+    vatPct: overhead ? decimalToNumber(overhead.vatPct) * 100 : regionConfig(company.country).defaultVatPct,
     bgkBase: (overhead?.bgkBase ?? "EK_TOTAL") as "EK_TOTAL" | "LABOR_ONLY",
     riskProfitMode: (overhead?.riskProfitMode ?? "SEPARATE") as "SEPARATE" | "COMBINED",
     applyVatByDefault: overhead?.applyVatByDefault ?? true,
