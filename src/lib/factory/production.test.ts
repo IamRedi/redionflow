@@ -76,7 +76,7 @@ describe("factory production line", () => {
     expect(migrated.map((s) => [s.key, s.status])).toEqual([
       ["cutting", "done"],
       ["assembly", "active"],
-      ["welding", "active"],
+      ["welding", "todo"],
       ["cleaning", "todo"],
       ["coating", "todo"],
       ["loading", "todo"],

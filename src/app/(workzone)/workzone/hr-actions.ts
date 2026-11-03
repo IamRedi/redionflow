@@ -405,7 +405,20 @@ export async function changeOwnLoginCodeAction(_prev: ChangeCodeState, formData:
   if (newCode === currentCode) return { ok: false, message: tr("loginCodeSame") };
   if (await isLoginCodeTaken(prisma, newCode, worker.id)) return { ok: false, message: tr("loginCodeTaken") };
 
-  await prisma.worker.update({ where: { id: worker.id }, data: { loginCode: null, loginCodeHash: hashPassword(newCode) } });
+  // The database bumps sessionEpoch on every credential change, which signs
+  // the worker out everywhere; this phone gets a fresh cookie so it stays in.
+  const updated = await prisma.worker.update({
+    where: { id: worker.id },
+    data: { loginCode: null, loginCodeHash: hashPassword(newCode) },
+    select: { sessionEpoch: true },
+  });
+  (await cookies()).set(WORKER_COOKIE, await createSessionCookie("worker", worker.id, updated.sessionEpoch), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
   await clearFailedLogin("worker", clientIp);
   revalidateWorkerProfile(worker.id);
   return { ok: true, message: tr("loginCodeChanged") };

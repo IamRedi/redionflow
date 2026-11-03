@@ -57,9 +57,13 @@ export function migrateLegacySteps(steps: FactoryStep[]): FactoryStep[] {
     coating: old("final"),
     loading: old("final"),
   };
+  // One old step became several: only the first of them carries open work,
+  // the later ones are done only when the old step was done.
+  const followers = new Set<FactoryStepKey>(["welding", "coating", "loading"]);
   return FACTORY_STEP_KEYS.map((key) => {
     const from = source[key];
-    return from ? { ...from, key } : { key, status: "todo", note: "", by: "", at: "" };
+    if (!from || (followers.has(key) && from.status !== "done")) return { key, status: "todo", note: "", by: "", at: "" };
+    return { ...from, key };
   });
 }
 
