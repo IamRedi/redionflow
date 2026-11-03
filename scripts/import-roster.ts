@@ -4,6 +4,7 @@
  *   ROSTER_IMPORT_JSON  base64 of gzipped JSON with the rows; remove it after the run.
  *   ROSTER_IMPORT_JSON_2, _3 ...  further pieces of the same base64 text, for inputs with
  *                       project files (one variable must stay under the 128 KB a process accepts).
+ *   ROSTER_IMPORT_SHA256  optional sha256 (hex) of the joined text; on a mismatch nothing is imported.
  *
  * Runs again without changing anything: workers are matched by name, machines by
  * plate (or by name when there is none); existing rows only get empty fields filled.
@@ -12,6 +13,8 @@
  * Each run ends with a check of what the company holds (counts, workers not on the list, all sites).
  */
 import 'dotenv/config';
+
+import { createHash } from 'node:crypto';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
@@ -25,7 +28,16 @@ import { regionConfig } from '../src/lib/region';
 export async function runRosterImport() {
   const pieces = [process.env.ROSTER_IMPORT_JSON ?? ''];
   for (let n = 2; process.env[`ROSTER_IMPORT_JSON_${n}`]; n += 1) pieces.push(process.env[`ROSTER_IMPORT_JSON_${n}`]!.trim());
-  const input = parseRosterInput(pieces.map((piece) => piece.trim()).join(''));
+  const joined = pieces.map((piece) => piece.trim()).join('');
+  const expected = process.env.ROSTER_IMPORT_SHA256?.trim().toLowerCase();
+  if (joined && expected) {
+    const actual = createHash('sha256').update(joined).digest('hex');
+    if (actual !== expected) {
+      console.log(`[roster] checksum mismatch (${pieces.length} pieces, ${pieces.map((piece) => piece.trim().length).join('+')} chars), nothing changed.`);
+      return;
+    }
+  }
+  const input = parseRosterInput(joined);
   if (!input) {
     console.log('[roster] ROSTER_IMPORT_JSON not set, nothing to do.');
     return;
