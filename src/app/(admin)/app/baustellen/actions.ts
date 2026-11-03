@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
+import { geocodeAddress } from "@/lib/geo/geocode";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -54,6 +55,8 @@ export async function createBaustelleAction(input: unknown): Promise<ActionResul
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const point = await siteMapPoint(currentCompanyId, address);
+
   const result = await withPilotDbContext(currentCompanyId, async tx => {
     if (v.status === "active") {
       const limit = await checkLimit(currentCompanyId, "activeBaustellen", tx);
@@ -68,6 +71,7 @@ export async function createBaustelleAction(input: unknown): Promise<ActionResul
         address,
         description,
         documents,
+        ...(point ? { coordinates: point } : {}),
       },
     });
 
@@ -124,6 +128,8 @@ export async function createBaustelleWithDocumentsAction(formData: FormData): Pr
     if (!isAllowedDocument(file)) return { ok: false, message: tr("documentTypeNotAllowedNamed", { name: file.name }) };
   }
 
+  const point = await siteMapPoint(currentCompanyId, address);
+
   const result = await withPilotDbContext(currentCompanyId, async tx => {
     if (v.status === "active") {
       const limit = await checkLimit(currentCompanyId, "activeBaustellen", tx);
@@ -138,6 +144,7 @@ export async function createBaustelleWithDocumentsAction(formData: FormData): Pr
         address,
         description,
         documents: [],
+        ...(point ? { coordinates: point } : {}),
       },
       select: { id: true },
     });
@@ -327,4 +334,11 @@ export async function deleteBaustelleAction(formData: FormData): Promise<void> {
   revalidatePath("/app/baustellen/import");
   revalidatePath("/workzone");
   notifyRealtimeUpdate("baustelle.updated", ["workzone-cards", "mission-control"]);
+}
+
+/** The site's map point from its address, by the company's country; null when not found. */
+async function siteMapPoint(companyId: string, address: string | null) {
+  if (!address) return null;
+  const company = await withPilotDbContext(companyId, (tx) => tx.companyProfile.findFirst({ where: { id: companyId }, select: { country: true } }));
+  return geocodeAddress(address, company?.country ?? null);
 }

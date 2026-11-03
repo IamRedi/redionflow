@@ -25,7 +25,7 @@ beforeEach(async () => {
     await db.query(await readFile(`${folder}/${name}/migration.sql`, "utf8"));
   }
   revocationSql = await readFile(`${folder}/${revocation}/migration.sql`, "utf8");
-  integritySql = await readFile(`${folder}/${integrity}/migration.sql`, "utf8");
+  integritySql = (await readFile(`${folder}/${integrity}/migration.sql`, "utf8")).replaceAll("\r\n", "\n");
 });
 afterEach(async () => {
   if (db) { await db.query("ROLLBACK"); await db.end(); }

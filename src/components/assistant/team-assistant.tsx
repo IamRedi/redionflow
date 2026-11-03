@@ -1,5 +1,7 @@
 "use client";
 
+import { assistantHistory, ASSISTANT_MAX_MESSAGE_CHARS } from "@/lib/assistant/limits";
+
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Send, Sparkles, Square, Trash2, X } from "lucide-react";
@@ -187,7 +189,7 @@ function AssistantChat({
 
   async function sendMessage() {
     const text = input.trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || text.length > ASSISTANT_MAX_MESSAGE_CHARS) return;
 
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text };
     const assistantMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
@@ -200,7 +202,7 @@ function AssistantChat({
 
     try {
       const payload = {
-        messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
+        messages: assistantHistory([...messages, userMsg].map((m) => ({ role: m.role, content: m.content }))),
       };
       const res = await fetch(endpoint, {
         method: "POST",
@@ -209,6 +211,10 @@ function AssistantChat({
         signal: controller.signal,
       });
       if (!res.ok || !res.body) {
+        if ([400, 408, 413, 429, 503].includes(res.status)) {
+          const data = await res.json().catch(() => null);
+          if (typeof data?.error === "string") throw new Error(data.error.slice(0, 300));
+        }
         throw new Error(
           res.status === 403 ? noAccessMessage : errorMessage,
         );
@@ -276,6 +282,7 @@ function AssistantChat({
         <input
           className="h-11 min-w-0 flex-1 rounded-full bg-white px-4 text-[15px] text-[#111b21] outline-none placeholder:text-[#667781] dark:bg-[#2a3942] dark:text-[#e9edef] dark:placeholder:text-[#8696a0]"
           value={input}
+          maxLength={ASSISTANT_MAX_MESSAGE_CHARS}
           onChange={(e) => setInput(e.target.value)}
           placeholder={inputPlaceholder}
           title={speechSupported ? voiceHint : undefined}

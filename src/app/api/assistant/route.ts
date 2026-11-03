@@ -1,8 +1,10 @@
 import { rejectCrossOriginMutation } from "@/lib/auth/same-origin";
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { stepCountIs, streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
+import { readAssistantBody } from "@/lib/assistant/request-body";
+import { reserveAssistantQuota, assistantQuotaResponse } from "@/lib/assistant/quota";
+import { assistantGeneration } from "@/lib/assistant/generation";
 
 import {
   adminGetDashboardSnapshot,
@@ -42,15 +44,6 @@ import {
 } from "@/lib/assistant/tools";
 
 export const runtime = "nodejs";
-
-const bodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["system", "user", "assistant"]),
-      content: z.string(),
-    }),
-  ),
-});
 
 function todayKey() {
   const date = new Date();
@@ -194,7 +187,7 @@ export async function POST(req: Request) {
   if (originDenied) return originDenied;
   const requester = await getRequesterContext();
   const fallbackLanguage = requester.preferredLanguage;
-  if ((requester as { kind: string }).kind !== "admin") {
+  if (requester.kind !== "admin") {
     return NextResponse.json({ error: adminOnlyError(fallbackLanguage) }, { status: 403 });
   }
 
@@ -218,11 +211,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
+  const parsed = await readAssistantBody(req);
+  if (!parsed.ok) {
     await registerFailedLogin("assistant", clientIp);
-    return NextResponse.json({ error: invalidRequestError(fallbackLanguage) }, { status: 400 });
+    return NextResponse.json({ error: invalidRequestError(fallbackLanguage) }, { status: parsed.status });
   }
+
+  const quota = await reserveAssistantQuota(requester);
+  if (!quota.ok) return assistantQuotaResponse(quota, fallbackLanguage);
 
   const lastUser = [...parsed.data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const recentUsers = previousUserMessages(parsed.data.messages);
@@ -253,16 +249,12 @@ export async function POST(req: Request) {
     target?.aiPersonalityNote?.trim() ||
     defaultAssistantStyle(turnLanguage, target?.type);
 
-  const workerScope =
-    requester.kind === "worker"
-      ? `\nWORKER SCOPE (strict):\n- Current date: ${currentDate}. Current month: ${currentMonth}.\n- For "sot/heute/today", always use ${currentDate}; do not guess an old date.\n- Own hours: getMyHoursSummary (days optional).\n- Own daily report: getMyDailyReport (date YYYY-MM-DD optional, default today).\n- Own monthly timesheet: getMyMonthlyTimesheet (month YYYY-MM optional, default current month).\n- Own live location/plan: getMyOperationalSnapshot for "ku je?" / "wo bin ich?" / "where am I?".\n- Public Workzone directory: getCompanyBaustellenDirectory.\n- Colleagues: only operational info such as live location, assigned machine, equipment. Never expose other workers' hours, HR data, daily reports, timesheets, or private notes.\n- Do not use adminGet* tools. Do not expose team totals, rankings, project internals, or full license lists.\nRequester: "${requester.displayName}".\n`
-      : `\nADMIN SCOPE (full read-only data through tools; never invent data):\n- Current date: ${currentDate}. Current month: ${currentMonth}.\n- For "sot/heute/today", always use ${currentDate}; do not guess an old date.\n- For dashboard/KPI/panel questions, first use adminGetDashboardSnapshot. It is the preferred source for numbers shown in the admin dashboard.\n- If dashboard snapshot data is available, do not invent other totals or mix in unrelated numbers. State clearly when numbers come from the snapshot.\n- Who is working now / how many are live? -> adminGetLiveWorkforce.\n- Daily plan: who is assigned to which machine and site? -> adminQueryDailyPlan.\n- Check daily plan against worker licenses/machine requirements -> adminAnalyzeDailyPlanLicenses.\n- If the question asks for worker + machine + site in the daily plan, always use adminQueryDailyPlan and mention worker, machines, and site.\n- Hours today / this month / range totals -> adminGetHoursAggregate.\n- Hours for all workers in a range -> adminGetHoursAggregate with period range + groupByWorker.\n- Worker profile link -> derive from adminGetWorkerDailyReport/adminGetWorkerMonthlyTimesheet or getWorkerHrProfile when asked.\n- Worker daily report -> adminGetWorkerDailyReport (workerName, date optional). For "sot/heute/today", omit date or use ${currentDate}.\n- Team daily report / who did trees today / who did what today -> adminGetTeamDailyReport. For details about one person, then use adminGetWorkerDailyReport.\n- Worker monthly timesheet -> adminGetWorkerMonthlyTimesheet (workerName, month optional). For current month, omit month or use ${currentMonth}.\n- Own admin daily report -> adminGetOwnDailyReport (date optional).\n- Who worked the most in a month -> adminGetHoursRanking (yearMonth YYYY-MM).\n- Who has license X (for example CE) -> adminSearchWorkersByLicense.\n- Single worker private hours summary -> getWorkerPrivateSummary.\n- HR/license/profile text -> getWorkerHrProfile.\n- Single live location or assigned machine -> getLiveLocation / getAssignedMachine.\n- Site overview, open/done trees, documents -> adminListBaustellenOverview.\n- Calculation projects -> adminListProjects.\n- Open/manual site tasks -> adminListOpenManualTasks.\n- There is no fixed deadline field per site. Deadlines only exist if they are in description, notes, or documents; say honestly when none is stored.\n`;
+  const workerScope = `\nADMIN SCOPE (full read-only data through tools; never invent data):\n- Current date: ${currentDate}. Current month: ${currentMonth}.\n- For "sot/heute/today", always use ${currentDate}; do not guess an old date.\n- For dashboard/KPI/panel questions, first use adminGetDashboardSnapshot. It is the preferred source for numbers shown in the admin dashboard.\n- If dashboard snapshot data is available, do not invent other totals or mix in unrelated numbers. State clearly when numbers come from the snapshot.\n- Who is working now / how many are live? -> adminGetLiveWorkforce.\n- Daily plan: who is assigned to which machine and site? -> adminQueryDailyPlan.\n- Check daily plan against worker licenses/machine requirements -> adminAnalyzeDailyPlanLicenses.\n- If the question asks for worker + machine + site in the daily plan, always use adminQueryDailyPlan and mention worker, machines, and site.\n- Hours today / this month / range totals -> adminGetHoursAggregate.\n- Hours for all workers in a range -> adminGetHoursAggregate with period range + groupByWorker.\n- Worker profile link -> derive from adminGetWorkerDailyReport/adminGetWorkerMonthlyTimesheet or getWorkerHrProfile when asked.\n- Worker daily report -> adminGetWorkerDailyReport (workerName, date optional). For "sot/heute/today", omit date or use ${currentDate}.\n- Team daily report / who did trees today / who did what today -> adminGetTeamDailyReport. For details about one person, then use adminGetWorkerDailyReport.\n- Worker monthly timesheet -> adminGetWorkerMonthlyTimesheet (workerName, month optional). For current month, omit month or use ${currentMonth}.\n- Own admin daily report -> adminGetOwnDailyReport (date optional).\n- Who worked the most in a month -> adminGetHoursRanking (yearMonth YYYY-MM).\n- Who has license X (for example CE) -> adminSearchWorkersByLicense.\n- Single worker private hours summary -> getWorkerPrivateSummary.\n- HR/license/profile text -> getWorkerHrProfile.\n- Single live location or assigned machine -> getLiveLocation / getAssignedMachine.\n- Site overview, open/done trees, documents -> adminListBaustellenOverview.\n- Calculation projects -> adminListProjects.\n- Open/manual site tasks -> adminListOpenManualTasks.\n- There is no fixed deadline field per site. Deadlines only exist if they are in description, notes, or documents; say honestly when none is stored.\n`;
 
   const contextLogic = `\nWORK-CONTEXT LOGIC:\n- Most questions are about work, statistics, hours, daily plan, workers, sites, machines, and reports. Treat short questions in that operational context, not as small talk.\n- Recent user questions: ${recentUsers.map((m) => `"${m.replace(/\s+/g, " ").slice(0, 120)}"`).join(" | ") || "(none)"}.\n- Current user question is ${shortFollowUp ? "a short follow-up" : "a standalone question"}. Inferred topic: ${inferredTopic}.\n- Relative dates: today=${currentDate}, yesterday=${yesterdayDate}, tomorrow=${tomorrowDate}. If the question contains "dje/gestern/yesterday", use ${yesterdayDate}. If it contains "neser/morgen/tomorrow", use ${tomorrowDate}.\n- Short follow-ups like "po dje", "edhe dje", "und gestern", or "sot?" inherit the intent of the previous user question. Example: after "sa ore punuan punetoret?", "po dje" means the same hours analysis for yesterday.\n- For questions about hours, who worked, or what was done, always use a data tool. Do not answer with generic excuses.\n- Never say "capacity maximum" or similar fallback text unless the API request itself truly failed. If data is missing, say briefly which data was not found.\n`;
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
-    stopWhen: stepCountIs(14),
+    ...assistantGeneration(req, "admin", quota.settle),
     system: `You are the identity-aware Team Assistant. Always speak as the addressed persona when a persona is addressed.\n\nRequester: ${requester.displayName} (${requester.kind})\nPersona: ${targetName}${target?.type ? ` (${target.type})` : ""}\nPersona note: ${systemStyle}\n${workerScope}${contextLogic}\nDual-Identity Privacy Logic (STRICT):\n- Decide every answer from Requester identity (bk_admin_id / bk_worker_id) and Target Persona.\n- Admin: may use admin, HR, project, and report tools listed above, but remains read-only.\n- Worker: only own person + public Workzone sites + operational team info.\n- Worker to worker: only operational data such as location, machine, and material. Never expose sensitive HR data, hours, daily reports, timesheets, or private notes of another person.\n- Worker to admin: only answer within worker scope; no admin-only internals.\n- If unsure, ask a clarifying question or give a short safe answer.\n\nWording:\n- Answer naturally in first person of the persona when a persona was addressed.\n- Keep answers short, human, and clear. Do not list tool names stiffly.\n- For vacation/availability, do not output links unless the user explicitly asks for a link.\n\nSystem Flags:\n- allowSensitiveWorkerData: ${policy.allowSensitiveWorkerData ? "yes" : "no"}\n- allowSensitiveAdminData: ${policy.allowSensitiveAdminData ? "yes" : "no"}\n\nRules:\n- Read-only: never write or change data.\n- Use tools for data; do not hallucinate numbers.\n- Core principle: the assistant may see what the same logged-in user/admin could see in the UI with the mouse, but not more.\n- Response language: ${assistantLanguagePromptLabel(turnLanguage)}.\n`,
     messages: parsed.data.messages,
     tools: {

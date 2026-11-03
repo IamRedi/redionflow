@@ -33,6 +33,16 @@ async function restricted<T>(tenant: string | null, fn: (tx: Tx) => Promise<T>) 
 }
 for (const flag of ["false", "true"]) {
   describe(`DB RLS runtime, RLS_ENFORCE=${flag}`, () => {
+    it("assistant quota policy permits own buckets and rejects foreign/no-context access", async () => {
+      const [a, b] = tenants;
+      const data = { companyProfileId: a.company.id, actorKey: `synthetic-${flag}`, window: "day", windowStart: new Date("2026-11-03T00:00:00Z") };
+      const bucket = await restricted(a.company.id, tx => tx.assistantQuotaBucket.create({ data }));
+      expect(await restricted(null, tx => tx.assistantQuotaBucket.findMany())).toEqual([]);
+      expect(await restricted(b.company.id, tx => tx.assistantQuotaBucket.findMany())).toEqual([]);
+      expect(await restricted(b.company.id, tx => tx.assistantQuotaBucket.updateMany({ where: { id: bucket.id }, data: { tokens: 0 } }))).toEqual({ count: 0 });
+      await expect(restricted(b.company.id, tx => tx.assistantQuotaBucket.create({ data: { ...data, actorKey: "forged" } }))).rejects.toThrow(/row.level security/i);
+      expect((await restricted(a.company.id, tx => tx.assistantQuotaBucket.delete({ where: { id: bucket.id } }))).id).toBe(bucket.id);
+    });
     it("probe role is non-superuser and NOBYPASSRLS", async () => {
       vi.stubEnv("RLS_ENFORCE", flag); expect(isRlsEnforced()).toBe(flag === "true");
       const rows = await restricted(null, tx => tx.$queryRawUnsafe<Array<{rolsuper:boolean;rolbypassrls:boolean}>>(`SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user`));

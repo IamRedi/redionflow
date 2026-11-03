@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { Prisma } from "@/generated/prisma/client";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
+import { geocodeAddress } from "@/lib/geo/geocode";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { parseOrderText, sameSiteName, type OrderDraft } from "@/lib/factory/order-parse";
 import { initialFactorySteps, PRODUCTION_UNITS } from "@/lib/factory/production";
@@ -113,10 +115,21 @@ export async function updateSiteInfoAction(input: unknown): Promise<ActionResult
   const actor = await currentCompanyActor(companyId);
   if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
   const { baustelleId, address, description } = parsed.data;
+  const site = await withTenantContext(companyId, (tx) =>
+    tx.baustelle.findFirst({ where: { id: baustelleId, companyProfileId: companyId }, select: { address: true, companyProfile: { select: { country: true } } } }),
+  );
+  if (!site) return { ok: false, message: tr("siteNotFound") };
+  // A new address puts the site on the map at once; a cleared one takes it off.
+  const moved = (site.address ?? "").trim() !== (address ?? "").trim();
+  const point = moved && address ? await geocodeAddress(address, site.companyProfile.country) : null;
   const updated = await withTenantContext(companyId, async (tx) => {
     const result = await tx.baustelle.updateMany({
       where: { id: baustelleId, companyProfileId: companyId },
-      data: { address: address || null, description: description || null },
+      data: {
+        address: address || null,
+        description: description || null,
+        ...(moved ? { coordinates: point ?? Prisma.JsonNull } : {}),
+      },
     });
     return result.count > 0;
   });

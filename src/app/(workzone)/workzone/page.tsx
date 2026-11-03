@@ -25,6 +25,7 @@ import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { batchState, readFactorySteps } from "@/lib/factory/production";
 import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
+import { factoryOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -178,6 +179,19 @@ export default async function WorkzoneHomePage() {
         steps: readFactorySteps(batch.steps),
         events: [],
       }))
+    : [];
+
+  // What the factory produced per site and per process, from the element lists.
+  const siteOutput: SiteFactoryOutput[] = factorySite
+    ? factoryOutput(
+        await withTenantContext(company.id, (tx) =>
+          tx.siteElement.findMany({
+            where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
+            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true, pieces: true } } },
+          }),
+        ),
+        baustellen,
+      )
     : [];
 
   const materialBySite = new Map<string, { ready: number; total: number }>();
@@ -378,8 +392,7 @@ export default async function WorkzoneHomePage() {
         <FactoryPanel
           factoryName={factorySite.name}
           factoryAddress={(factorySite.address ?? "").trim()}
-          batches={factoryBatches}
-          sites={baustellen.map((site) => ({ id: site.id, name: site.name }))}
+          siteOutput={siteOutput}
           canManage={crewPermissions(worker ? { isAdmin: false, crewRole: worker.crewRole, level: worker.level } : admin ? { isAdmin: true } : null).office}
         />
       ) : null}

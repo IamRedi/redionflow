@@ -7,7 +7,7 @@ vi.mock("next/headers", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));
 import { prisma } from "@/lib/db/prisma";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { setElementWorkAction } from "@/app/(workzone)/workzone/element-actions";
+import { addElementWorkAction, removeElementWorkAction, setElementDoneAction } from "@/app/(workzone)/workzone/element-actions";
 import { seedSecurityTenants, removeSecurityTenants, createTestSession } from "../../../tests/security/fixtures";
 import { importElementList } from "./import";
 import type { ParsedElementList } from "./tekla-list";
@@ -53,25 +53,46 @@ it("re-import updates in place, keeps checked elements and drops unchecked ones"
   expect(after.find((row) => row.mark === "B/10")?._count.work).toBe(1);
 });
 
-it("admin records who worked a stage, only with own workers and own elements", async () => {
+it("admin records who did how many pieces of a step, and finished pieces go to the site", async () => {
   const [a, b] = tenants;
   await importFor(a, ["B/1"]);
   await importFor(b, ["B/1"]);
   const own = await prisma.siteElement.findFirstOrThrow({ where: { baustelleId: a.site.id } });
   const foreign = await prisma.siteElement.findFirstOrThrow({ where: { baustelleId: b.site.id } });
   request.values.set("bk_admin_id", await createTestSession("admin", a.admin.id));
+  const add = (stage: string, pieces: number, elementId = own.id, workerIds = [a.worker.id]) => addElementWorkAction({ elementId, stage, workerIds, pieces });
 
-  expect((await setElementWorkAction({ elementId: own.id, stage: "welding", workerIds: [b.worker.id] })).ok).toBe(false);
-  expect((await setElementWorkAction({ elementId: foreign.id, stage: "welding", workerIds: [a.worker.id] })).ok).toBe(false);
-  expect((await setElementWorkAction({ elementId: own.id, stage: "laser", workerIds: [a.worker.id] })).ok).toBe(false);
+  expect((await add("cutting", 1, own.id, [b.worker.id])).ok).toBe(false);
+  expect((await add("cutting", 1, foreign.id)).ok).toBe(false);
+  expect((await add("laser", 1)).ok).toBe(false);
+  expect((await addElementWorkAction({ elementId: own.id, stage: "cutting", workerIds: [], pieces: 1 })).ok).toBe(false);
   expect(await prisma.siteElementWork.count({ where: { elementId: { in: [own.id, foreign.id] } } })).toBe(0);
 
-  expect((await setElementWorkAction({ elementId: own.id, stage: "welding", workerIds: [a.worker.id] })).ok).toBe(true);
-  expect((await setElementWorkAction({ elementId: own.id, stage: "mounted", workerIds: [a.worker.id] })).ok).toBe(true);
-  const work = await prisma.siteElementWork.findMany({ where: { elementId: own.id }, orderBy: { stage: "asc" } });
-  expect(work.map((row) => [row.stage, row.workerIds])).toEqual([["mounted", [a.worker.id]], ["welding", [a.worker.id]]]);
-  expect(work[0]?.workerNames).toBe(`${a.worker.firstName} ${a.worker.lastName}`.trim());
+  // 2 pieces: cut 1 now, 1 later; a third is refused (step full).
+  expect(await add("cutting", 1)).toMatchObject({ ok: true, pieces: 1 });
+  expect(await add("cutting", 5)).toMatchObject({ ok: true, pieces: 1 });
+  expect((await add("cutting", 1)).ok).toBe(false);
+  expect(await add("assembly", 1)).toMatchObject({ ok: true, pieces: 1 });
+  const entries = await prisma.siteElementWork.findMany({ where: { elementId: own.id }, orderBy: { checkedAt: "asc" } });
+  expect(entries.map((row) => [row.stage, row.pieces])).toEqual([["cutting", 1], ["cutting", 1], ["assembly", 1]]);
+  expect(entries[0]?.workerNames).toBe(`${a.worker.firstName} ${a.worker.lastName}`.trim());
 
-  expect((await setElementWorkAction({ elementId: own.id, stage: "welding", workerIds: [] })).ok).toBe(true);
-  expect(await prisma.siteElementWork.count({ where: { elementId: own.id } })).toBe(1);
+  // Not on the field list until finished.
+  expect((await add("mounted", 1)).ok).toBe(false);
+  expect((await setElementDoneAction({ elementId: own.id, side: "field", done: true })).ok).toBe(false);
+  expect((await setElementDoneAction({ elementId: foreign.id, side: "factory", done: true })).ok).toBe(false);
+  // Finish: route = cutting + assembly; 1 piece passed both, so 1 goes to the site.
+  expect((await setElementDoneAction({ elementId: own.id, side: "factory", done: true })).ok).toBe(true);
+  expect(await add("mounted", 2)).toMatchObject({ ok: true, pieces: 1 });
+  expect((await add("mounted", 1)).ok).toBe(false);
+  // The factory cannot take back the piece the site already mounted.
+  const assemblyEntry = entries.find((row) => row.stage === "assembly")!;
+  expect((await removeElementWorkAction({ workId: assemblyEntry.id })).ok).toBe(false);
+  expect((await setElementDoneAction({ elementId: own.id, side: "factory", done: false })).ok).toBe(false);
+  // The second piece passes assembly: now both are out, the site may mount it.
+  expect(await add("assembly", 1)).toMatchObject({ ok: true, pieces: 1 });
+  expect(await add("mounted", 1)).toMatchObject({ ok: true, pieces: 1 });
+  // A mistaken cutting entry can go while nothing depends on it... here both are needed.
+  const firstCut = entries.find((row) => row.stage === "cutting")!;
+  expect((await removeElementWorkAction({ workId: firstCut.id })).ok).toBe(false);
 });
