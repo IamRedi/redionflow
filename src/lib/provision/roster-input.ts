@@ -10,7 +10,9 @@
  *     "retireSamples": true,
  *     "workers":  [[group, firstName, lastName, "dd.mm.yyyy", position, license, extra, nationalId], ...],
  *     "machines": [[type, plate, brand, model, owner, tonnage, kolaudim, insurance, tax, permit, tachograph, note], ...],
- *     "sites":    [[name, STEEL_WORKSHOP | STEEL_ASSEMBLY | OTHER, address], ...] }   (optional; added when the name is new)
+ *     "sites":    [[name, STEEL_WORKSHOP | STEEL_ASSEMBLY | OTHER, address, description, [[fileName, base64], ...]], ...] }
+ *                 (optional; added when the name is new. The files go into the site documents;
+ *                  element lists among them also fill the factory and field lists.)
  *
  * group is office | factory | field. Dates are dd.mm.yyyy or mm.yyyy (start of that month).
  */
@@ -54,6 +56,8 @@ export type RosterSite = {
   name: string;
   type: 'STEEL_WORKSHOP' | 'STEEL_ASSEMBLY' | 'OTHER';
   address: string | null;
+  description: string | null;
+  files: Array<{ fileName: string; bytes: Uint8Array<ArrayBuffer> }>;
 };
 
 export type RosterInput = {
@@ -223,10 +227,17 @@ export function parseRosterInput(raw: string | undefined): RosterInput | null {
     .filter((m): m is RosterMachine => m !== null);
   const sites = (Array.isArray(data.sites) ? data.sites : []).flatMap((row): RosterSite[] => {
     if (!Array.isArray(row)) return [];
-    const [name, type, address] = row.map(clean);
+    const [name, type, address, description] = row.slice(0, 4).map(clean);
     if (!name) return [];
     const kind = type === 'STEEL_WORKSHOP' || type === 'STEEL_ASSEMBLY' ? type : 'OTHER';
-    return [{ name, type: kind, address: address || null }];
+    const files = (Array.isArray(row[4]) ? row[4] : []).flatMap((file: unknown) => {
+      if (!Array.isArray(file)) return [];
+      const fileName = clean(file[0]);
+      const data = typeof file[1] === 'string' ? Buffer.from(file[1], 'base64') : null;
+      if (!fileName || !data || data.byteLength === 0) return [];
+      return [{ fileName, bytes: new Uint8Array(data) }];
+    });
+    return [{ name, type: kind, address: address || null, description: description || null, files }];
   });
   return {
     company,

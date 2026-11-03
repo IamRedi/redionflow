@@ -32,6 +32,8 @@ import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhas
 import { SiteProductionPanel } from "../../production/site-production-panel";
 import type { FactoryBatchView } from "../../production/production-ui";
 import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
+import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
+import { compareMarks } from "@/lib/elements/tekla-list";
 
 export default async function BaustelleDetailPage({
   params,
@@ -227,7 +229,7 @@ export default async function BaustelleDetailPage({
     );
     const isAdmin = can.office;
     const canAdvance = can.factorySteps;
-    const [batchRows, fileRows] = await withTenantContext(currentCompanyId, (tx) =>
+    const [batchRows, fileRows, elementRows, workerRows] = await withTenantContext(currentCompanyId, (tx) =>
       Promise.all([
         tx.productionBatch.findMany({
           where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id },
@@ -248,6 +250,27 @@ export default async function BaustelleDetailPage({
           orderBy: { createdAt: "desc" },
           select: { id: true, kind: true, fileName: true, mime: true, size: true, amount: true, currency: true, supplier: true, reference: true, uploadedByName: true, createdAt: true },
         }),
+        tx.siteElement.findMany({
+          where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id },
+          select: {
+            id: true,
+            list: true,
+            mark: true,
+            kind: true,
+            profile: true,
+            material: true,
+            quantity: true,
+            lengthMm: true,
+            weightKg: true,
+            areaM2: true,
+            work: { select: { stage: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } },
+          },
+        }),
+        tx.worker.findMany({
+          where: { companyProfileId: currentCompanyId, status: "active" },
+          orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+          select: { id: true, firstName: true, lastName: true, crewRole: true },
+        }),
       ]),
     );
     const batches: FactoryBatchView[] = batchRows.map((batch) => ({
@@ -262,6 +285,18 @@ export default async function BaustelleDetailPage({
       events: batch.events.map((event) => ({ ...event, createdAt: event.createdAt.toISOString() })),
     }));
     const files: SiteFileView[] = fileRows.map((file) => ({ ...file, createdAt: file.createdAt.toISOString() }));
+    const elements: ElementView[] = elementRows
+      .map((element) => ({
+        ...element,
+        list: element.list === "part" ? ("part" as const) : ("assembly" as const),
+        work: element.work.map((work) => ({ ...work, checkedAt: work.checkedAt.toISOString() })),
+      }))
+      .sort((a, b) => (a.list === b.list ? compareMarks(a.mark, b.mark) : a.list === "assembly" ? -1 : 1));
+    const elementWorkers: ElementWorkerOption[] = workerRows.map((worker) => ({
+      id: worker.id,
+      name: `${worker.firstName} ${worker.lastName}`.trim(),
+      crewRole: worker.crewRole,
+    }));
     const shape = steelSiteShape(baustelle.name, baustelle.description);
 
     return (
@@ -284,6 +319,14 @@ export default async function BaustelleDetailPage({
               />
               <WorkingBadge workers={activeWorkerNames} />
             </div>
+            {baustelle.type !== "STEEL_WORKSHOP" ? (
+              <ElementListButtons
+                site={{ id: baustelle.id, name: baustelle.name }}
+                elements={elements}
+                workers={elementWorkers}
+                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin }}
+              />
+            ) : null}
           </div>
         </div>
 
