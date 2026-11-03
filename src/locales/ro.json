@@ -1,5 +1,6 @@
 {
   "common": {
+    "fileSizeKb": "{size} KB",
     "save": "Salveaza",
     "cancel": "Anuleaza",
     "delete": "Sterge",

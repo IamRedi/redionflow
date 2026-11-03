@@ -2,6 +2,47 @@
 
 **Stand: 3. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 3 November 2026 — encrypted backup and assistant cost-limit candidate
+
+Scope: `fix/pilot-backup-ai-limits-20261103`, based on exact pilot revision
+`482b9920211e054ecc8105ad5baa1e6a34b852c0`. This is preparation for the
+Railway-connected pilot branch, not a production application rollout. The
+existing business migrations and customer data remain unchanged.
+
+| Local gate | Verified result |
+| --- | --- |
+| ESLint / TypeScript | PASS, zero lint warnings; added test files checked again after the final assertions |
+| Unit tests | **523 PASS**, 71 files; mock AI provider and authenticated encryption/tamper checks |
+| PostgreSQL integration | **287 PASS**, 19 files; concurrent durable quotas, token reservations/refund, invalid-config fail-closed, restricted-role quota RLS and consistent encrypted dump/restore |
+| Chromium E2E | **27 PASS** with SaaS/RLS pilot and synthetic storage/GPS; includes bounded chat history and visible HTTP 429 error, no paid inference |
+| Production build | PASS, also through the managed browser-test server |
+| Migrations / schema | **63** applied in disposable PostgreSQL 16; Prisma comparison: **No difference detected** |
+| Secret scan | Gitleaks 8.30.1 on the complete staged candidate diff: **no leaks found** |
+
+Execution: owner's Windows laptop, locally through WSL Ubuntu, Node 22.19.0,
+PostgreSQL 16.15, current dependencies and fresh native loopback test clusters.
+The existing restricted runtime pilot remained enabled in browser tests. No
+cloud Actions were dispatched and no gates/assertions were removed. The
+inherited migration concurrency fixture now normalizes CRLF before its exact
+test-only pause injection; inherited hardcoded KB/kg labels use translations
+so the required lint gate passes.
+
+The private operator separately verified a real read-only pilot snapshot with
+matching PostgreSQL 18.6, authenticated decryption, full isolated local restore,
+all public-table counts and encrypted Drive download SHA-256 roundtrip. A
+second real run exercised tunnel/config refresh, full restore and disposable
+clone cleanup. Customer data, credentials, private keys, hashes/Drive receipts
+and operator paths remain in private operational records, not this public repo.
+The source was never restored into and no public database proxy was opened.
+
+The configured daily local job requires the operator host and Codex desktop
+to be running. Its next unattended run is **NOT YET OBSERVED**. Database-only
+coverage, external object-storage exclusions and private-key recovery needs
+are explicit in [DATABASE_BACKUP.md](docs/DATABASE_BACKUP.md). AI limits and
+fail-closed semantics are documented in [AI_COST_LIMITS.md](docs/AI_COST_LIMITS.md).
+No load benchmark, real paid-provider evaluation, independent review, owner
+acceptance or production application deployment is claimed by these checks.
+
 ## 3 November 2026 — WanWay feature candidate (local, not deployed)
 
 Scope: `feat/wanway-gps-integration`, based on active pilot revision

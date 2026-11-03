@@ -106,7 +106,7 @@ function NewProjectSheet({ onClose }: { onClose: () => void }) {
             {files.map((file) => (
               <li key={`${file.name}-${file.size}`} className="flex items-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate font-medium">{file.name}</span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{Math.max(1, Math.round(file.size / 1024))} KB</span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{t("common.fileSizeKb", lang).replace("{size}", String(Math.max(1, Math.round(file.size / 1024))))}</span>
                 <button type="button" onClick={() => setFiles((current) => current.filter((entry) => entry !== file))} className="grid size-8 shrink-0 place-items-center rounded-lg" aria-label={t("factory.cancel", lang)}>
                   <X className="size-4" />
                 </button>

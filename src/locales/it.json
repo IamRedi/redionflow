@@ -1,5 +1,6 @@
 {
   "common": {
+    "fileSizeKb": "{size} KB",
     "companyLogoAlt": "Logo aziendale",
     "save": "Salva",
     "cancel": "Annulla",

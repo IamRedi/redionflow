@@ -37,14 +37,14 @@ function Totals({ output }: { output: Omit<SiteFactoryOutput, "siteId" | "siteNa
           {amount(output.donePieces)}
           <span className="text-xs font-semibold text-muted-foreground">/{amount(output.pieces)} {pcs}</span>
         </div>
-        <div className="truncate text-muted-foreground">{amount(output.doneKg)} kg</div>
+        <div className="truncate text-muted-foreground">{amount(output.doneKg)} {t("factory.units.kg", lang)}</div>
       </div>
       <div className="min-w-0 rounded-xl bg-muted/70 px-2.5 py-2">
         <div className="truncate font-semibold">{t("elements.inFactory", lang)}</div>
         <div className="text-base font-bold leading-tight">
           {amount(waitingPieces)} <span className="text-xs font-semibold text-muted-foreground">{pcs}</span>
         </div>
-        <div className="truncate text-muted-foreground">{amount(output.kg - output.doneKg)} kg</div>
+        <div className="truncate text-muted-foreground">{amount(output.kg - output.doneKg)} {t("factory.units.kg", lang)}</div>
       </div>
       <div className="min-w-0 rounded-xl bg-muted/70 px-2.5 py-2">
         <div className="truncate font-semibold">{t("elements.finishedOnSite", lang)}</div>
