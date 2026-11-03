@@ -717,7 +717,9 @@
     "projectNeedsFiles": "Zgjidh të paktën një dokument.",
     "projectNeedsName": "Shkruaj emrin e kantierit (lista nuk e ka).",
     "projectDescription": "Projekti {number}",
-    "projectSiteReady": "{name} u krijua: {elements} elemente, {parts} pjesë, {files} dokumente."
+    "projectSiteReady": "{name} u krijua: {elements} elemente, {parts} pjesë, {files} dokumente.",
+    "elementStepFull": "Të gjitha copët e këtij procesi janë bërë.",
+    "elementNeedsStep": "Konfirmo të paktën një proces para se ta përfundosh."
   },
   "report": {
     "daily": "Raporti ditor",
@@ -1845,7 +1847,7 @@
     "reopen": "Rihap",
     "finishFactory": "Përfundo elementin",
     "finishField": "Përfundo elementin në kantier",
-    "finishFactoryHint": "Proceset e tjera nuk i duhen? Përfundoje: elementi kalon te lista e terrenit.",
+    "finishFactoryHint": "Proceset e tjera nuk i duhen? Përfundoje: copët që kaluan të gjitha proceset e tij shkojnë në terren.",
     "finishFieldHint": "Proceset e tjera nuk i duhen? Përfundoje elementin.",
     "pickFactoryWorkers": "Zgjidh punëtorët e fabrikës që e bënë",
     "pickFieldWorkers": "Zgjidh punëtorët e terrenit që e bënë",
@@ -1865,14 +1867,11 @@
     "siteNamePlaceholder": "Merret nga lista nëse e lë bosh",
     "createProject": "Krijo kantierin",
     "creatingProject": "Po krijohet…",
-    "changePieces": "Ndrysho copët",
-    "confirmPieces": "Konfirmo {n} copë",
     "factoryOutputAll": "Gjithsej për të gjithë kantieret",
     "factoryOutputEmpty": "Ende asnjë kantier me listë elementesh. Krijo një projekt të ri nga dokumentet.",
-    "finishMore": "Përfundo copë të tjera",
     "finishedOnSite": "Montuar",
-    "howManyPieces": "Sa copë u përfunduan?",
-    "howManyHint": "Elementi ka {total} copë. Zgjidh sa janë gati gjithsej (deri në {max}).",
+    "howManyPieces": "Sa copë u bënë në këtë proces?",
+    "howManyHint": "Mbeten {open} nga {total} copë për këtë proces.",
     "inFactory": "Në fabrikë",
     "ofArrived": "nga {n} ardhur",
     "piecesAllOut": "Të gjitha {total} copët kaluan në terren.",
@@ -1885,6 +1884,13 @@
     "piecesTitle": "Copët",
     "siteOutputLine": "{done}/{total} copë prodhuar ({kg} kg) · {waiting} në pritje · {mounted} montuar",
     "stepDone": "U bë",
-    "stepNotNeeded": "Nuk iu desh"
+    "stepNotNeeded": "Nuk iu desh",
+    "backToElement": "Kthehu te elementi",
+    "confirmStepPieces": "Konfirmo {step} · {n} copë",
+    "finishNeedsStep": "Konfirmo të paktën një proces para se ta përfundosh.",
+    "piecesOut": "Copët e dala nga fabrika",
+    "piecesWaitFor": "Copët e tjera presin: {steps}",
+    "stepAllPieces": "Të gjitha copët e këtij procesi janë bërë.",
+    "stepPieces": "{done} nga {total} copë"
   }
 }

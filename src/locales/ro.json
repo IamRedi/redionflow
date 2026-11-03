@@ -397,7 +397,9 @@
     "projectNeedsFiles": "Alege cel puțin un document.",
     "projectNeedsName": "Scrie numele șantierului (lista nu îl are).",
     "projectDescription": "Proiect {number}",
-    "projectSiteReady": "{name} creat: {elements} elemente, {parts} piese, {files} documente."
+    "projectSiteReady": "{name} creat: {elements} elemente, {parts} piese, {files} documente.",
+    "elementStepFull": "Toate bucățile acestei etape sunt gata.",
+    "elementNeedsStep": "Confirmă cel puțin o etapă înainte de finalizare."
   },
   "report": {
     "daily": "Raport zilnic",
@@ -764,7 +766,7 @@
     "reopen": "Redeschide",
     "finishFactory": "Finalizează elementul",
     "finishField": "Finalizează elementul pe șantier",
-    "finishFactoryHint": "Celelalte etape nu sunt necesare? Finalizează: elementul trece pe lista de șantier.",
+    "finishFactoryHint": "Celelalte etape nu sunt necesare? Finalizează: bucățile trecute prin toate etapele lor merg pe șantier.",
     "finishFieldHint": "Celelalte etape nu sunt necesare? Finalizează elementul.",
     "pickFactoryWorkers": "Alege muncitorii din fabrică care l-au făcut",
     "pickFieldWorkers": "Alege muncitorii de șantier care l-au făcut",
@@ -784,14 +786,11 @@
     "siteNamePlaceholder": "Gol: preluat din listă",
     "createProject": "Creează șantierul",
     "creatingProject": "Se creează…",
-    "changePieces": "Schimbă bucățile",
-    "confirmPieces": "Confirmă {n} bucăți",
     "factoryOutputAll": "Total pentru toate șantierele",
     "factoryOutputEmpty": "Încă niciun șantier cu listă de elemente. Creează un proiect nou din documente.",
-    "finishMore": "Finalizează alte bucăți",
     "finishedOnSite": "Montate",
-    "howManyPieces": "Câte bucăți sunt gata?",
-    "howManyHint": "Elementul are {total} bucăți. Alege câte sunt gata în total (până la {max}).",
+    "howManyPieces": "Câte bucăți s-au făcut în această etapă?",
+    "howManyHint": "Mai sunt {open} din {total} bucăți pentru această etapă.",
     "inFactory": "În fabrică",
     "ofArrived": "din {n} sosite",
     "piecesAllOut": "Toate cele {total} bucăți merg pe șantier.",
@@ -804,6 +803,13 @@
     "piecesTitle": "Bucăți",
     "siteOutputLine": "{done}/{total} bucăți produse ({kg} kg) · {waiting} în așteptare · {mounted} montate",
     "stepDone": "Făcut",
-    "stepNotNeeded": "Nu a fost nevoie"
+    "stepNotNeeded": "Nu a fost nevoie",
+    "backToElement": "Înapoi la element",
+    "confirmStepPieces": "Confirmă {step} · {n} buc.",
+    "finishNeedsStep": "Confirmă cel puțin o etapă înainte de finalizare.",
+    "piecesOut": "Bucăți ieșite din fabrică",
+    "piecesWaitFor": "Celelalte bucăți așteaptă: {steps}",
+    "stepAllPieces": "Toate bucățile acestei etape sunt gata.",
+    "stepPieces": "{done} din {total} bucăți"
   }
 }

@@ -187,7 +187,7 @@ export default async function WorkzoneHomePage() {
         await withTenantContext(company.id, (tx) =>
           tx.siteElement.findMany({
             where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
-            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneQty: true, fieldDoneQty: true, work: { select: { stage: true } } },
+            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true, pieces: true } } },
           }),
         ),
         baustellen,

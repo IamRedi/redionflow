@@ -743,7 +743,9 @@
     "projectNeedsFiles": "Mindestens ein Dokument wählen.",
     "projectNeedsName": "Name der Baustelle eingeben (die Liste enthält keinen).",
     "projectDescription": "Projekt {number}",
-    "projectSiteReady": "{name} angelegt: {elements} Elemente, {parts} Teile, {files} Dokumente."
+    "projectSiteReady": "{name} angelegt: {elements} Elemente, {parts} Teile, {files} Dokumente.",
+    "elementStepFull": "Alle Stück dieses Schritts sind erledigt.",
+    "elementNeedsStep": "Erst mindestens einen Schritt bestätigen."
   },
   "report": {
     "brandName": "Baumdienst Flow",
@@ -1911,7 +1913,7 @@
     "reopen": "Wieder öffnen",
     "finishFactory": "Element abschließen",
     "finishField": "Element auf der Baustelle abschließen",
-    "finishFactoryHint": "Weitere Schritte nicht nötig? Abschließen: das Element geht auf die Baustellenliste.",
+    "finishFactoryHint": "Weitere Schritte nicht nötig? Abschließen: Stück, die alle ihre Schritte durchlaufen haben, gehen auf die Baustelle.",
     "finishFieldHint": "Weitere Schritte nicht nötig? Element abschließen.",
     "pickFactoryWorkers": "Werkarbeiter wählen, die es gemacht haben",
     "pickFieldWorkers": "Baustellenarbeiter wählen, die es gemacht haben",
@@ -1931,14 +1933,11 @@
     "siteNamePlaceholder": "Leer lassen: aus der Liste übernommen",
     "createProject": "Baustelle anlegen",
     "creatingProject": "Wird angelegt…",
-    "changePieces": "Stückzahl ändern",
-    "confirmPieces": "{n} Stück bestätigen",
     "factoryOutputAll": "Gesamt für alle Baustellen",
     "factoryOutputEmpty": "Noch keine Baustelle mit Elementliste. Neues Projekt aus den Unterlagen anlegen.",
-    "finishMore": "Weitere Stück abschließen",
     "finishedOnSite": "Montiert",
-    "howManyPieces": "Wie viele Stück sind fertig?",
-    "howManyHint": "Das Element hat {total} Stück. Wähle, wie viele insgesamt fertig sind (bis {max}).",
+    "howManyPieces": "Wie viele Stück wurden in diesem Schritt gemacht?",
+    "howManyHint": "Offen: {open} von {total} Stück in diesem Schritt.",
     "inFactory": "Im Werk",
     "ofArrived": "von {n} da",
     "piecesAllOut": "Alle {total} Stück gehen auf die Baustelle.",
@@ -1951,6 +1950,13 @@
     "piecesTitle": "Stück",
     "siteOutputLine": "{done}/{total} Stück produziert ({kg} kg) · {waiting} wartend · {mounted} montiert",
     "stepDone": "Erledigt",
-    "stepNotNeeded": "Nicht nötig"
+    "stepNotNeeded": "Nicht nötig",
+    "backToElement": "Zurück zum Element",
+    "confirmStepPieces": "{step} bestätigen · {n} Stück",
+    "finishNeedsStep": "Erst mindestens einen Schritt bestätigen.",
+    "piecesOut": "Stück aus dem Werk",
+    "piecesWaitFor": "Die übrigen Stück warten auf: {steps}",
+    "stepAllPieces": "Alle Stück dieses Schritts sind erledigt.",
+    "stepPieces": "{done} von {total} Stück"
   }
 }

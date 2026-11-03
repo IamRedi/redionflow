@@ -706,7 +706,9 @@
     "projectNeedsFiles": "Choose at least one document.",
     "projectNeedsName": "Type the site name (the list has none).",
     "projectDescription": "Project {number}",
-    "projectSiteReady": "{name} created: {elements} elements, {parts} parts, {files} documents."
+    "projectSiteReady": "{name} created: {elements} elements, {parts} parts, {files} documents.",
+    "elementStepFull": "Every piece of this step is done.",
+    "elementNeedsStep": "Confirm at least one step before finishing."
   },
   "report": {
     "daily": "Daily report",
@@ -1789,7 +1791,7 @@
     "reopen": "Reopen",
     "finishFactory": "Finish element",
     "finishField": "Finish element on site",
-    "finishFactoryHint": "Other steps not needed? Finish it: the element moves to the field list.",
+    "finishFactoryHint": "Other steps not needed? Finish it: pieces that passed all its steps go to the site.",
     "finishFieldHint": "Other steps not needed? Finish the element.",
     "pickFactoryWorkers": "Pick the factory workers who did it",
     "pickFieldWorkers": "Pick the field workers who did it",
@@ -1809,14 +1811,11 @@
     "siteNamePlaceholder": "Leave empty to take it from the list",
     "createProject": "Create site",
     "creatingProject": "Creating…",
-    "changePieces": "Change pieces",
-    "confirmPieces": "Confirm {n} pieces",
     "factoryOutputAll": "Total for all sites",
     "factoryOutputEmpty": "No site with an element list yet. Start a new project from its documents.",
-    "finishMore": "Finish more pieces",
     "finishedOnSite": "Mounted",
-    "howManyPieces": "How many pieces are finished?",
-    "howManyHint": "The element has {total} pieces. Choose how many are ready in total (up to {max}).",
+    "howManyPieces": "How many pieces were done in this step?",
+    "howManyHint": "{open} of {total} pieces still open in this step.",
     "inFactory": "In factory",
     "ofArrived": "of {n} arrived",
     "piecesAllOut": "All {total} pieces go to the site.",
@@ -1829,6 +1828,13 @@
     "piecesTitle": "Pieces",
     "siteOutputLine": "{done}/{total} pieces produced ({kg} kg) · {waiting} waiting · {mounted} mounted",
     "stepDone": "Done",
-    "stepNotNeeded": "Not needed"
+    "stepNotNeeded": "Not needed",
+    "backToElement": "Back to the element",
+    "confirmStepPieces": "Confirm {step} · {n} pcs",
+    "finishNeedsStep": "Confirm at least one step before finishing.",
+    "piecesOut": "Pieces out of the factory",
+    "piecesWaitFor": "The other pieces wait for: {steps}",
+    "stepAllPieces": "Every piece of this step is done.",
+    "stepPieces": "{done} of {total} pieces"
   }
 }

@@ -5,15 +5,15 @@
  */
 import { FACTORY_STEP_KEYS } from "@/lib/factory/production";
 
-import { doneQty, pieces, type ElementState } from "./stages";
+import { doneQty, pieces, stagePieces, type ElementState } from "./stages";
 
 export type OutputRow = {
   baustelleId: string;
   quantity: number;
   weightKg: number | null;
-  factoryDoneQty: number;
-  fieldDoneQty: number;
-  work: Array<{ stage: string }>;
+  factoryDoneAt: Date | string | null;
+  fieldDoneAt: Date | string | null;
+  work: Array<{ stage: string; pieces: number }>;
 };
 
 export type StageOutput = { marks: number; pieces: number };
@@ -46,7 +46,7 @@ export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name
     const entry =
       bySite.get(site.id) ??
       ({ siteId: site.id, siteName: site.name, marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, mountedPieces: 0, stages: emptyStages() } satisfies SiteFactoryOutput);
-    const state: ElementState = { list: "assembly", quantity: row.quantity, work: row.work, factoryDoneQty: row.factoryDoneQty, fieldDoneQty: row.fieldDoneQty };
+    const state: ElementState = { list: "assembly", quantity: row.quantity, work: row.work, factoryDoneAt: row.factoryDoneAt, fieldDoneAt: row.fieldDoneAt };
     const count = pieces(state);
     const kgPiece = row.weightKg ?? 0;
     const out = doneQty(state, "factory");
@@ -57,11 +57,11 @@ export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name
     entry.doneKg += kgPiece * out;
     if (out >= count) entry.doneMarks += 1;
     entry.mountedPieces += doneQty(state, "field");
-    for (const work of row.work) {
-      const stage = entry.stages[work.stage];
-      if (!stage) continue;
-      stage.marks += 1;
-      stage.pieces += count;
+    for (const key of FACTORY_STEP_KEYS) {
+      const through = stagePieces(state, key);
+      if (through === 0) continue;
+      entry.stages[key].marks += through >= count ? 1 : 0;
+      entry.stages[key].pieces += through;
     }
     bySite.set(site.id, entry);
   }

@@ -1518,13 +1518,12 @@ model SiteElement {
   areaM2           Float?
   sortIndex        Int            @default(0)
   sourceFile       String?
-  /// Pieces the factory engineer finished (of quantity); those are on the
-  /// field list, the rest stays in the factory. At = last finish, By = who.
-  factoryDoneQty   Int            @default(0)
+  /// The factory engineer finished the element: the steps it went through are
+  /// its route, the others are not needed. Pieces that passed every step of
+  /// the route are on the field list, the rest stays in the factory.
   factoryDoneAt    DateTime?
   factoryDoneBy    String?
-  /// Pieces the field engineer finished on site (of factoryDoneQty).
-  fieldDoneQty     Int            @default(0)
+  /// The same on site, for the field steps.
   fieldDoneAt      DateTime?
   fieldDoneBy      String?
   createdAt        DateTime       @default(now())
@@ -1544,6 +1543,9 @@ model SiteElementWork {
   elementId         String
   element           SiteElement    @relation(fields: [elementId], references: [id], onDelete: Cascade)
   stage             String
+  /// Pieces of the element done in this entry (0 = all, older checks). One
+  /// step may have several entries: 2 pieces today, 2 tomorrow by others.
+  pieces            Int            @default(0)
   workerIds         String[]
   /// Names at the time of checking, so the record stays readable.
   workerNames       String         @default("")
@@ -1552,6 +1554,6 @@ model SiteElementWork {
   checkedByWorkerId String?
   checkedAt         DateTime       @default(now())
 
-  @@unique([elementId, stage])
+  @@index([elementId, stage])
   @@index([companyProfileId])
 }

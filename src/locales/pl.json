@@ -396,7 +396,9 @@
     "projectNeedsFiles": "Wybierz co najmniej jeden dokument.",
     "projectNeedsName": "Wpisz nazwę budowy (lista jej nie zawiera).",
     "projectDescription": "Projekt {number}",
-    "projectSiteReady": "Utworzono {name}: {elements} elementów, {parts} części, {files} dokumentów."
+    "projectSiteReady": "Utworzono {name}: {elements} elementów, {parts} części, {files} dokumentów.",
+    "elementStepFull": "Wszystkie sztuki tego etapu są gotowe.",
+    "elementNeedsStep": "Najpierw potwierdź co najmniej jeden etap."
   },
   "report": {
     "daily": "Raport dzienny",
@@ -763,7 +765,7 @@
     "reopen": "Otwórz ponownie",
     "finishFactory": "Zakończ element",
     "finishField": "Zakończ element na budowie",
-    "finishFactoryHint": "Inne etapy niepotrzebne? Zakończ: element trafia na listę budowy.",
+    "finishFactoryHint": "Inne etapy niepotrzebne? Zakończ: sztuki po wszystkich swoich etapach trafiają na budowę.",
     "finishFieldHint": "Inne etapy niepotrzebne? Zakończ element.",
     "pickFactoryWorkers": "Wybierz pracowników zakładu, którzy to wykonali",
     "pickFieldWorkers": "Wybierz pracowników budowy, którzy to wykonali",
@@ -783,14 +785,11 @@
     "siteNamePlaceholder": "Puste: z listy",
     "createProject": "Utwórz budowę",
     "creatingProject": "Tworzenie…",
-    "changePieces": "Zmień liczbę",
-    "confirmPieces": "Potwierdź {n} szt.",
     "factoryOutputAll": "Razem dla wszystkich budów",
     "factoryOutputEmpty": "Brak budowy z listą elementów. Utwórz nowy projekt z dokumentów.",
-    "finishMore": "Zakończ kolejne sztuki",
     "finishedOnSite": "Zamontowano",
-    "howManyPieces": "Ile sztuk ukończono?",
-    "howManyHint": "Element ma {total} szt. Wybierz, ile jest gotowych łącznie (do {max}).",
+    "howManyPieces": "Ile sztuk wykonano w tym etapie?",
+    "howManyHint": "Zostało {open} z {total} szt. w tym etapie.",
     "inFactory": "W zakładzie",
     "ofArrived": "z {n} dostarcz.",
     "piecesAllOut": "Wszystkie {total} szt. trafiają na budowę.",
@@ -803,6 +802,13 @@
     "piecesTitle": "Sztuki",
     "siteOutputLine": "{done}/{total} szt. wyprodukowano ({kg} kg) · {waiting} czeka · {mounted} zamontowano",
     "stepDone": "Zrobione",
-    "stepNotNeeded": "Niepotrzebne"
+    "stepNotNeeded": "Niepotrzebne",
+    "backToElement": "Wróć do elementu",
+    "confirmStepPieces": "Potwierdź {step} · {n} szt.",
+    "finishNeedsStep": "Najpierw potwierdź co najmniej jeden etap.",
+    "piecesOut": "Sztuki z zakładu",
+    "piecesWaitFor": "Pozostałe sztuki czekają na: {steps}",
+    "stepAllPieces": "Wszystkie sztuki tego etapu są gotowe.",
+    "stepPieces": "{done} z {total} szt."
   }
 }

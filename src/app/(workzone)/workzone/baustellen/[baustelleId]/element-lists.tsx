@@ -6,15 +6,17 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
-import { availableQty, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, sideOfStage, stageProgress, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
+import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed, routeStages, sideOfStage, stagePieces, stageProgress, stageRemaining, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
-import { importElementListsAction, setElementDoneAction, setElementWorkAction } from "../../element-actions";
+import { addElementWorkAction, importElementListsAction, removeElementWorkAction, setElementDoneAction } from "../../element-actions";
 import { Sheet } from "../../production/production-ui";
 
 export type ElementWorkView = {
+  id: string;
   stage: string;
+  pieces: number;
   workerIds: string[];
   workerNames: string;
   checkedByName: string;
@@ -32,10 +34,8 @@ export type ElementView = {
   lengthMm: number | null;
   weightKg: number | null;
   areaM2: number | null;
-  factoryDoneQty: number;
   factoryDoneAt: string | null;
   factoryDoneBy: string | null;
-  fieldDoneQty: number;
   fieldDoneAt: string | null;
   fieldDoneBy: string | null;
   work: ElementWorkView[];
@@ -235,29 +235,27 @@ function ElementListSheet({
               canEdit={canEdit}
               onBack={() => setView({ kind: "list" })}
               onStage={(stage) => setView({ kind: "stage", id: current.id, stage })}
-              onDone={(count, doneAt, doneBy) =>
+              onDone={(doneAt, doneBy) =>
                 patch(current.id, (element) =>
-                  side === "factory"
-                    ? { ...element, factoryDoneQty: count, factoryDoneAt: doneAt, factoryDoneBy: doneBy }
-                    : { ...element, fieldDoneQty: count, fieldDoneAt: doneAt, fieldDoneBy: doneBy },
+                  side === "factory" ? { ...element, factoryDoneAt: doneAt, factoryDoneBy: doneBy } : { ...element, fieldDoneAt: doneAt, fieldDoneBy: doneBy },
                 )
               }
             />
           ) : (
-            <WorkerPicker
+            <StageView
+              key={`${current.id}-${view.stage}-${current.work.length}`}
               element={current}
               stage={view.stage}
               side={side}
+              canEdit={canEdit}
               workers={workers}
               lastPick={lastPick}
               onBack={() => setView({ kind: "element", id: current.id })}
-              onSaved={(work) => {
-                patch(current.id, (element) => ({
-                  ...element,
-                  work: [...element.work.filter((entry) => entry.stage !== view.stage), ...(work ? [work] : [])],
-                }));
+              onAdded={(work) => {
+                patch(current.id, (element) => ({ ...element, work: [...element.work, work] }));
                 setView({ kind: "element", id: current.id });
               }}
+              onRemoved={(workId) => patch(current.id, (element) => ({ ...element, work: element.work.filter((entry) => entry.id !== workId) }))}
             />
           )}
         </motion.div>
@@ -482,12 +480,22 @@ function ListView({
   );
 }
 
+/** Segment per step: full green when every piece passed it, half when some did. */
+function stepTone(element: ElementView, stage: string, status: Status) {
+  if (status === "done") return "bg-green-600";
+  const side = sideOfStage(stage) ?? "factory";
+  const through = stagePieces(element, stage);
+  const cap = side === "factory" ? element.quantity : capFor(element, "field");
+  if (through === 0) return "bg-muted-foreground/20";
+  return through >= cap ? "bg-green-600" : "bg-green-600/45";
+}
+
 function ElementRow({ element, stages, side, onOpen }: { element: ElementView; stages: readonly string[]; side: ElementSide; onOpen: () => void }) {
   const { currentLang: lang } = useLanguage();
   const status = elementStatus(element, side);
   const total = (element.weightKg ?? 0) * element.quantity;
   const done = doneQty(element, side);
-  const arrived = availableQty(element, side);
+  const arrived = capFor(element, side);
   return (
     <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 rounded-2xl border bg-card p-2.5 text-left active:scale-[0.99]">
       <span className={`grid h-11 min-w-14 shrink-0 place-items-center rounded-xl px-2 text-base font-bold tabular-nums ${STATUS_STYLE[status].badge}`}>{element.mark}</span>
@@ -512,11 +520,7 @@ function ElementRow({ element, stages, side, onOpen }: { element: ElementView; s
         {stages.length > 1 ? (
           <span className="mt-1.5 flex gap-1">
             {stages.map((stage) => (
-              <span
-                key={stage}
-                title={stageLabel(stage, lang)}
-                className={`h-1.5 min-w-0 flex-1 rounded-full ${status === "done" || element.work.some((work) => work.stage === stage) ? "bg-green-600" : "bg-muted-foreground/20"}`}
-              />
+              <span key={stage} title={stageLabel(stage, lang)} className={`h-1.5 min-w-0 flex-1 rounded-full ${stepTone(element, stage, status)}`} />
             ))}
           </span>
         ) : null}
@@ -532,8 +536,9 @@ function PieceStrip({ element, side }: { element: ElementView; side: ElementSide
   const total = element.quantity;
   const done = doneQty(element, side);
   // Orange: on site but not finished there yet. In the factory there is no such state.
-  const arrived = side === "field" ? availableQty(element, side) : done;
+  const arrived = side === "field" ? capFor(element, side) : done;
   const rest = total - doneQty(element, "factory");
+  const waiting = routeStages(element, side).filter((stage) => stagePieces(element, stage) < capFor(element, side));
   const line =
     side === "factory"
       ? done === 0
@@ -547,7 +552,7 @@ function PieceStrip({ element, side }: { element: ElementView; side: ElementSide
   return (
     <div className="rounded-2xl border bg-card p-3">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="text-sm font-bold">{t("elements.piecesTitle", lang)}</span>
+        <span className="text-sm font-bold">{side === "factory" ? t("elements.piecesOut", lang) : t("elements.piecesTitle", lang)}</span>
         <span className="text-sm font-bold tabular-nums">
           {done}
           <span className="text-xs text-muted-foreground">/{total}</span>
@@ -569,89 +574,11 @@ function PieceStrip({ element, side }: { element: ElementView; side: ElementSide
         </span>
       )}
       <p className="mt-2 text-xs text-muted-foreground">{line}</p>
-    </div>
-  );
-}
-
-/** How many pieces are finished (in total on this side). */
-function PiecesPicker({
-  element,
-  side,
-  pending,
-  onCancel,
-  onConfirm,
-}: {
-  element: ElementView;
-  side: ElementSide;
-  pending: boolean;
-  onCancel: () => void;
-  onConfirm: (count: number) => void;
-}) {
-  const { currentLang: lang } = useLanguage();
-  const max = availableQty(element, side);
-  const min = Math.max(1, side === "factory" ? doneQty(element, "field") : 0);
-  const [count, setCount] = useState(max);
-  const rest = element.quantity - count;
-  return (
-    <div className="space-y-3 rounded-2xl border-2 border-green-600/60 bg-green-600/[0.06] p-3">
-      <div>
-        <div className="text-base font-bold">{t("elements.howManyPieces", lang)}</div>
-        <div className="text-xs text-muted-foreground">{fill(t("elements.howManyHint", lang), { total: element.quantity, max })}</div>
-      </div>
-      {max <= 12 ? (
-        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
-          {Array.from({ length: max - min + 1 }, (_, index) => min + index).map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setCount(value)}
-              aria-pressed={count === value}
-              className={`h-12 rounded-xl border-2 text-lg font-bold tabular-nums active:scale-95 ${count === value ? "border-green-600 bg-green-600 text-white" : "bg-card"}`}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setCount((value) => Math.max(min, value - 1))} className="grid size-12 place-items-center rounded-xl border-2 bg-card text-2xl font-bold active:scale-95">
-            −
-          </button>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={min}
-            max={max}
-            value={count}
-            onChange={(event) => setCount(Math.max(min, Math.min(max, Number(event.target.value) || min)))}
-            className="h-12 w-full rounded-xl border-2 bg-card text-center text-xl font-bold tabular-nums outline-none focus:border-green-600"
-          />
-          <button type="button" onClick={() => setCount((value) => Math.min(max, value + 1))} className="grid size-12 place-items-center rounded-xl border-2 bg-card text-2xl font-bold active:scale-95">
-            +
-          </button>
-        </div>
-      )}
-      <p className="rounded-xl bg-card px-3 py-2 text-sm font-semibold">
-        {side === "factory"
-          ? rest > 0
-            ? fill(t("elements.piecesSplit", lang), { done: count, rest })
-            : fill(t("elements.piecesAllOut", lang), { total: count })
-          : fill(t("elements.piecesFieldAll", lang), { done: count, total: max })}
-      </p>
-      <div className="grid grid-cols-[1fr_2fr] gap-2">
-        <button type="button" onClick={onCancel} className="h-12 rounded-xl border-2 bg-card font-semibold active:scale-95">
-          {t("factory.cancel", lang)}
-        </button>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => onConfirm(count)}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm active:scale-95 disabled:opacity-50"
-        >
-          {pending ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-5" />}
-          {fill(t("elements.confirmPieces", lang), { n: count })}
-        </button>
-      </div>
+      {routeClosed(element, side) && waiting.length > 0 ? (
+        <p className="mt-1 text-xs font-semibold text-orange-700 dark:text-orange-300">
+          {fill(t("elements.piecesWaitFor", lang), { steps: waiting.map((stage) => stageLabel(stage, lang)).join(", ") })}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -669,19 +596,18 @@ function ElementDetail({
   canEdit: boolean;
   onBack: () => void;
   onStage: (stage: string) => void;
-  onDone: (count: number, doneAt: string | null, doneBy: string | null) => void;
+  onDone: (doneAt: string | null, doneBy: string | null) => void;
 }) {
   const { currentLang: lang } = useLanguage();
   const [error, setError] = useState<string | null>(null);
-  const [choosing, setChoosing] = useState(false);
   const [pending, startTransition] = useTransition();
   const stages = stagesFor(side, element.list);
   const status = elementStatus(element, side);
-  const done = doneQty(element, side);
+  const closed = routeClosed(element, side);
   const closedAt = side === "factory" ? element.factoryDoneAt : element.fieldDoneAt;
   const closedBy = side === "factory" ? element.factoryDoneBy : element.fieldDoneBy;
-  const checked = stages.filter((stage) => element.work.some((work) => work.stage === stage)).length;
-  const canMore = done < availableQty(element, side);
+  const route = routeStages(element, side);
+  const cap = capFor(element, side);
   const facts = [
     `${element.quantity}×`,
     element.profile,
@@ -691,22 +617,17 @@ function ElementDetail({
     element.areaM2 !== null ? `${kg(element.areaM2 * element.quantity)} m²` : null,
   ].filter(Boolean);
 
-  function finish(count: number) {
+  function close(done: boolean) {
     setError(null);
     startTransition(async () => {
-      const result = await setElementDoneAction({ elementId: element.id, side, pieces: count });
+      const result = await setElementDoneAction({ elementId: element.id, side, done });
       if (!result.ok) {
         setError(result.message || t("factory.error", lang));
         return;
       }
-      const saved = result.pieces ?? count;
-      setChoosing(false);
-      onDone(saved, saved > 0 ? new Date().toISOString() : null, saved > 0 ? result.doneByName ?? "" : null);
+      onDone(done ? new Date().toISOString() : null, done ? result.doneByName ?? "" : null);
     });
   }
-
-  // One piece: nothing to count. More: ask how many.
-  const startFinish = () => (availableQty(element, side) <= 1 ? finish(1) : setChoosing(true));
 
   return (
     <>
@@ -729,35 +650,38 @@ function ElementDetail({
 
       <div className="flex items-baseline justify-between px-1">
         <span className="text-sm font-bold">{side === "factory" ? t("elements.factorySteps", lang) : t("elements.fieldSteps", lang)}</span>
-        <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: checked, total: stages.length })}</span>
+        <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: route.length, total: stages.length })}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stages.map((stage, index) => {
-          const work = element.work.find((entry) => entry.stage === stage) ?? null;
-          const skipped = !work && status === "done";
+          const entries = element.work.filter((entry) => entry.stage === stage);
+          const through = stagePieces(element, stage);
+          const full = through >= cap && through > 0;
+          const skipped = entries.length === 0 && closed;
+          const last = entries[entries.length - 1] ?? null;
           return (
             <button
               key={stage}
               type="button"
-              disabled={!canEdit}
+              disabled={!canEdit && entries.length === 0}
               onClick={() => onStage(stage)}
-              className={`flex min-h-[96px] flex-col rounded-2xl border-2 p-3 text-left transition active:scale-[0.98] disabled:active:scale-100 ${
-                work ? "border-green-600/60 bg-green-600/[0.06]" : skipped ? "border-dashed bg-muted/40 opacity-70" : `bg-card ${canEdit ? "hover:border-orange-500/60" : ""}`
+              className={`flex min-h-[104px] flex-col rounded-2xl border-2 p-3 text-left transition active:scale-[0.98] disabled:active:scale-100 ${
+                full ? "border-green-600/60 bg-green-600/[0.06]" : entries.length > 0 ? "border-orange-500/50 bg-orange-500/[0.05]" : skipped ? "border-dashed bg-muted/40 opacity-70" : `bg-card ${canEdit ? "hover:border-orange-500/60" : ""}`
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${work ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                  {work ? <Check className="size-4" /> : skipped ? <Minus className="size-4" /> : index + 1}
+                <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${full ? "bg-green-600 text-white" : entries.length > 0 ? "bg-orange-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                  {full ? <Check className="size-4" /> : skipped ? <Minus className="size-4" /> : index + 1}
                 </span>
                 <span className={`min-w-0 truncate text-base font-bold ${skipped ? "text-muted-foreground line-through decoration-1" : ""}`}>{stageLabel(stage, lang)}</span>
               </span>
-              {work ? (
+              {entries.length > 0 ? (
                 <span className="mt-2 min-w-0">
-                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-green-700 dark:text-green-400">{t("elements.stepDone", lang)}</span>
-                  <span className="line-clamp-2 text-sm font-semibold">{work.workerNames}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
-                    {fill(t("elements.confirmedBy", lang), { name: work.checkedByName, date: formatShortDate(work.checkedAt) })}
+                  <span className={`block text-sm font-bold tabular-nums ${full ? "text-green-700 dark:text-green-400" : "text-orange-700 dark:text-orange-300"}`}>
+                    {fill(t("elements.stepPieces", lang), { done: through, total: cap })}
                   </span>
+                  <span className="line-clamp-2 text-xs font-semibold">{[...new Set(entries.flatMap((entry) => entry.workerNames.split(", ")))].join(", ")}</span>
+                  {last ? <span className="block truncate text-[11px] text-muted-foreground">{fill(t("elements.confirmedBy", lang), { name: last.checkedByName, date: formatShortDate(last.checkedAt) })}</span> : null}
                 </span>
               ) : skipped ? (
                 <span className="mt-2 text-xs font-semibold text-muted-foreground">{t("elements.stepNotNeeded", lang)}</span>
@@ -770,75 +694,80 @@ function ElementDetail({
       </div>
 
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
-      {done > 0 ? (
+      {closed && closedAt ? (
         <div className={`flex items-center gap-3 rounded-2xl border-2 p-3 ${status === "done" ? "border-green-600/50 bg-green-600/10" : "border-orange-500/40 bg-orange-500/[0.06]"}`}>
           <CheckCheck className={`size-6 shrink-0 ${status === "done" ? "text-green-700 dark:text-green-400" : "text-orange-600"}`} />
           <div className="min-w-0 flex-1">
-            <div className={`font-bold ${status === "done" ? "text-green-800 dark:text-green-300" : ""}`}>
-              {status === "done"
-                ? side === "factory"
-                  ? t("elements.factoryDone", lang)
-                  : t("elements.fieldDone", lang)
-                : fill(t("elements.piecesDone", lang), { done, total: element.quantity })}
-            </div>
-            {closedAt ? <div className="truncate text-xs text-muted-foreground">{fill(t("elements.confirmedBy", lang), { name: closedBy ?? "", date: formatShortDate(closedAt) })}</div> : null}
+            <div className={`font-bold ${status === "done" ? "text-green-800 dark:text-green-300" : ""}`}>{side === "factory" ? t("elements.factoryDone", lang) : t("elements.fieldDone", lang)}</div>
+            <div className="truncate text-xs text-muted-foreground">{fill(t("elements.confirmedBy", lang), { name: closedBy ?? "", date: formatShortDate(closedAt) })}</div>
           </div>
-          {canEdit && !choosing ? (
-            <button type="button" disabled={pending} onClick={() => (element.quantity > 1 ? setChoosing(true) : finish(0))} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold active:scale-95 disabled:opacity-50">
-              <RotateCcw className="size-3.5" /> {element.quantity > 1 ? t("elements.changePieces", lang) : t("elements.reopen", lang)}
+          {canEdit ? (
+            <button type="button" disabled={pending} onClick={() => close(false)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold active:scale-95 disabled:opacity-50">
+              <RotateCcw className="size-3.5" /> {t("elements.reopen", lang)}
             </button>
           ) : null}
         </div>
-      ) : null}
-      {choosing ? (
-        <PiecesPicker element={element} side={side} pending={pending} onCancel={() => setChoosing(false)} onConfirm={finish} />
-      ) : canEdit && canMore ? (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={startFinish}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-green-600 text-base font-bold text-white shadow-md active:scale-[0.99] disabled:opacity-50"
-        >
-          {pending ? <Loader2 className="size-5 animate-spin" /> : <CheckCheck className="size-5" />}
-          {done > 0 ? t("elements.finishMore", lang) : side === "factory" ? t("elements.finishFactory", lang) : t("elements.finishField", lang)}
-        </button>
-      ) : null}
-      {canEdit && canMore && !choosing ? (
-        <p className="text-center text-xs text-muted-foreground">{side === "factory" ? t("elements.finishFactoryHint", lang) : t("elements.finishFieldHint", lang)}</p>
+      ) : canEdit && !closed ? (
+        <>
+          <button
+            type="button"
+            disabled={pending || route.length === 0}
+            onClick={() => close(true)}
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-green-600 text-base font-bold text-white shadow-md active:scale-[0.99] disabled:opacity-50"
+          >
+            {pending ? <Loader2 className="size-5 animate-spin" /> : <CheckCheck className="size-5" />}
+            {side === "factory" ? t("elements.finishFactory", lang) : t("elements.finishField", lang)}
+          </button>
+          <p className="text-center text-xs text-muted-foreground">
+            {route.length === 0 ? t("elements.finishNeedsStep", lang) : side === "factory" ? t("elements.finishFactoryHint", lang) : t("elements.finishFieldHint", lang)}
+          </p>
+        </>
       ) : null}
       {!canEdit ? <p className="text-center text-sm text-muted-foreground">{side === "factory" ? t("elements.onlyFactoryEngineer", lang) : t("elements.onlyFieldEngineer", lang)}</p> : null}
     </>
   );
 }
 
-function WorkerPicker({
+/**
+ * One step of one element: who did how many pieces so far (each entry on its
+ * own line), and a new entry: how many pieces, which workers, confirm.
+ */
+function StageView({
   element,
   stage,
   side,
+  canEdit,
   workers,
   lastPick,
   onBack,
-  onSaved,
+  onAdded,
+  onRemoved,
 }: {
   element: ElementView;
   stage: string;
   side: ElementSide;
+  canEdit: boolean;
   workers: ElementWorkerOption[];
   lastPick: React.MutableRefObject<Record<string, string[]>>;
   onBack: () => void;
-  onSaved: (work: ElementWorkView | null) => void;
+  onAdded: (work: ElementWorkView) => void;
+  onRemoved: (workId: string) => void;
 }) {
   const { currentLang: lang } = useLanguage();
-  const existing = element.work.find((entry) => entry.stage === stage) ?? null;
-  const [picked, setPicked] = useState<string[]>(existing?.workerIds ?? []);
+  const entries = element.work.filter((entry) => entry.stage === stage);
+  const cap = capFor(element, side);
+  const through = stagePieces(element, stage);
+  const open = stageRemaining(element, stage);
+  const [count, setCount] = useState(open);
+  const [picked, setPicked] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const crew = CREW_FOR_SIDE[side];
   const ownCrew = workers.filter((worker) => worker.crewRole && crew.includes(worker.crewRole));
-  // Only this side's crew; when no roles are set yet, everybody (and anyone already picked).
-  const base = ownCrew.length > 0 ? [...ownCrew, ...workers.filter((worker) => picked.includes(worker.id) && !ownCrew.includes(worker))] : workers;
+  // Only this side's crew; when no roles are set yet, everybody.
+  const base = ownCrew.length > 0 ? ownCrew : workers;
   const q = query.trim().toLowerCase();
   const options = base.filter((worker) => !q || worker.name.toLowerCase().includes(q));
   const last = (lastPick.current[stage] ?? []).filter((id) => workers.some((worker) => worker.id === id));
@@ -848,20 +777,36 @@ function WorkerPicker({
     setPicked((current) => (current.includes(id) ? current.filter((value) => value !== id) : current.length >= 20 ? current : [...current, id]));
   }
 
-  function save(ids: string[]) {
+  function save() {
     setError(null);
     startTransition(async () => {
-      const result = await setElementWorkAction({ elementId: element.id, stage, workerIds: ids });
+      const result = await addElementWorkAction({ elementId: element.id, stage, workerIds: picked, pieces: count });
+      if (!result.ok || !result.workId) {
+        setError(result.message || t("factory.error", lang));
+        return;
+      }
+      lastPick.current[stage] = picked;
+      onAdded({
+        id: result.workId,
+        stage,
+        pieces: result.pieces ?? count,
+        workerIds: picked,
+        workerNames: picked.map(nameOf).join(", "),
+        checkedByName: result.checkedByName ?? "",
+        checkedAt: new Date().toISOString(),
+      });
+    });
+  }
+
+  function remove(workId: string) {
+    setError(null);
+    startTransition(async () => {
+      const result = await removeElementWorkAction({ workId });
       if (!result.ok) {
         setError(result.message || t("factory.error", lang));
         return;
       }
-      if (ids.length > 0) lastPick.current[stage] = ids;
-      onSaved(
-        ids.length > 0
-          ? { stage, workerIds: ids, workerNames: ids.map(nameOf).join(", "), checkedByName: result.checkedByName ?? "", checkedAt: new Date().toISOString() }
-          : null,
-      );
+      onRemoved(workId);
     });
   }
 
@@ -871,76 +816,146 @@ function WorkerPicker({
         <button type="button" onClick={onBack} className="grid size-10 shrink-0 place-items-center rounded-full border bg-card active:scale-95" aria-label={t("elements.backToList", lang)}>
           <ArrowLeft className="size-4" />
         </button>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-lg font-bold leading-tight">
             {element.mark} · {stageLabel(stage, lang)}
           </div>
-          <div className="text-xs text-muted-foreground">{side === "factory" ? t("elements.pickFactoryWorkers", lang) : t("elements.pickFieldWorkers", lang)}</div>
+          <div className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepPieces", lang), { done: through, total: cap })}</div>
         </div>
       </div>
 
-      {last.length > 0 && last.join() !== picked.join() ? (
-        <button type="button" onClick={() => setPicked(last)} className="flex w-full items-center gap-2 rounded-xl border-2 border-dashed border-orange-500/50 px-3 py-2 text-left text-sm active:scale-[0.99]">
-          <Users className="size-4 shrink-0 text-orange-600" />
-          <span className="min-w-0 flex-1 truncate">
-            <span className="font-semibold">{t("elements.sameAsLast", lang)}</span> {last.map(nameOf).join(", ")}
-          </span>
-        </button>
-      ) : null}
-      {base.length > 8 ? (
-        <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value.slice(0, 40))}
-            placeholder={t("elements.searchWorker", lang)}
-            className="h-11 w-full rounded-xl border-2 bg-card pl-9 pr-3 text-base outline-none focus:border-orange-500"
-          />
-        </label>
+      {/* Done so far: one line per entry, each with its pieces. */}
+      {entries.length > 0 ? (
+        <ul className="space-y-1.5">
+          {entries.map((entry) => (
+            <li key={entry.id} className="flex items-center gap-3 rounded-xl border-2 border-green-600/40 bg-green-600/[0.06] p-2.5">
+              <span className="grid h-11 min-w-12 shrink-0 place-items-center rounded-lg bg-green-600 px-2 text-center text-white">
+                <span className="text-base font-bold leading-none tabular-nums">{entry.pieces > 0 ? entry.pieces : element.quantity}</span>
+                <span className="text-[9px] font-semibold uppercase leading-none">{t("elements.pieceShort", lang)}</span>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="line-clamp-2 text-sm font-semibold">{entry.workerNames}</span>
+                <span className="block truncate text-[11px] text-muted-foreground">{fill(t("elements.confirmedBy", lang), { name: entry.checkedByName, date: formatShortDate(entry.checkedAt) })}</span>
+              </span>
+              {canEdit ? (
+                <button type="button" disabled={pending} onClick={() => remove(entry.id)} className="grid size-9 shrink-0 place-items-center rounded-lg text-red-600 active:scale-95 disabled:opacity-50" aria-label={t("elements.uncheck", lang)}>
+                  <X className="size-4" />
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       ) : null}
 
-      <ul className="grid gap-1.5 sm:grid-cols-2">
-        {options.map((worker) => {
-          const on = picked.includes(worker.id);
-          return (
-            <li key={worker.id}>
-              <button
-                type="button"
-                onClick={() => toggle(worker.id)}
-                aria-pressed={on}
-                className={`flex h-12 w-full items-center gap-3 rounded-xl border-2 px-3 text-left active:scale-[0.99] ${on ? "border-green-600 bg-green-600/10" : "bg-card"}`}
-              >
-                <span className={`grid size-6 shrink-0 place-items-center rounded-md border-2 ${on ? "border-green-600 bg-green-600 text-white" : "border-muted-foreground/40"}`}>{on ? <Check className="size-4" /> : null}</span>
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold">{worker.name}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      {options.length === 0 ? <p className="text-center text-sm text-muted-foreground">{t("elements.noWorker", lang)}</p> : null}
+      {!canEdit ? null : open === 0 ? (
+        <p className="rounded-xl bg-green-600/10 px-3 py-2 text-center text-sm font-semibold text-green-800 dark:text-green-300">{t("elements.stepAllPieces", lang)}</p>
+      ) : (
+        <>
+          {/* New entry: 1. how many pieces */}
+          <div className="space-y-2 rounded-2xl border bg-card p-3">
+            <div className="text-sm font-bold">{t("elements.howManyPieces", lang)}</div>
+            <div className="text-xs text-muted-foreground">{fill(t("elements.howManyHint", lang), { open, total: cap })}</div>
+            {open <= 12 ? (
+              <div className="grid grid-cols-6 gap-1.5">
+                {Array.from({ length: open }, (_, index) => index + 1).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setCount(value)}
+                    aria-pressed={count === value}
+                    className={`h-11 rounded-xl border-2 text-base font-bold tabular-nums active:scale-95 ${count === value ? "border-green-600 bg-green-600 text-white" : "bg-background"}`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setCount(Math.max(1, count - 1))} className="grid size-11 place-items-center rounded-xl border-2 bg-background text-2xl font-bold active:scale-95">
+                  −
+                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={open}
+                  value={count}
+                  onChange={(event) => setCount(Math.max(1, Math.min(open, Number(event.target.value) || 1)))}
+                  className="h-11 w-full rounded-xl border-2 bg-background text-center text-lg font-bold tabular-nums outline-none focus:border-green-600"
+                />
+                <button type="button" onClick={() => setCount(Math.min(open, count + 1))} className="grid size-11 place-items-center rounded-xl border-2 bg-background text-2xl font-bold active:scale-95">
+                  +
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 2. who did them */}
+          <div className="px-1 text-sm font-bold">{side === "factory" ? t("elements.pickFactoryWorkers", lang) : t("elements.pickFieldWorkers", lang)}</div>
+          {last.length > 0 && last.join() !== picked.join() ? (
+            <button type="button" onClick={() => setPicked(last)} className="flex w-full items-center gap-2 rounded-xl border-2 border-dashed border-orange-500/50 px-3 py-2 text-left text-sm active:scale-[0.99]">
+              <Users className="size-4 shrink-0 text-orange-600" />
+              <span className="min-w-0 flex-1 truncate">
+                <span className="font-semibold">{t("elements.sameAsLast", lang)}</span> {last.map(nameOf).join(", ")}
+              </span>
+            </button>
+          ) : null}
+          {base.length > 8 ? (
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value.slice(0, 40))}
+                placeholder={t("elements.searchWorker", lang)}
+                className="h-11 w-full rounded-xl border-2 bg-card pl-9 pr-3 text-base outline-none focus:border-orange-500"
+              />
+            </label>
+          ) : null}
+          <ul className="grid gap-1.5 sm:grid-cols-2">
+            {options.map((worker) => {
+              const on = picked.includes(worker.id);
+              return (
+                <li key={worker.id}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(worker.id)}
+                    aria-pressed={on}
+                    data-worker
+                    className={`flex h-12 w-full items-center gap-3 rounded-xl border-2 px-3 text-left active:scale-[0.99] ${on ? "border-green-600 bg-green-600/10" : "bg-card"}`}
+                  >
+                    <span className={`grid size-6 shrink-0 place-items-center rounded-md border-2 ${on ? "border-green-600 bg-green-600 text-white" : "border-muted-foreground/40"}`}>{on ? <Check className="size-4" /> : null}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">{worker.name}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {options.length === 0 ? <p className="text-center text-sm text-muted-foreground">{t("elements.noWorker", lang)}</p> : null}
+        </>
+      )}
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
 
-      <div className="sticky bottom-0 -mx-4 space-y-2 border-t bg-background/95 px-4 pb-1 pt-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <div className="grid grid-cols-[1fr_2fr] gap-2">
-          <button type="button" onClick={onBack} className="h-12 rounded-xl border-2 bg-card font-semibold active:scale-95">
-            {t("factory.cancel", lang)}
+      <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 pb-1 pt-3 backdrop-blur sm:-mx-6 sm:px-6">
+        {canEdit && open > 0 ? (
+          <div className="grid grid-cols-[1fr_2fr] gap-2">
+            <button type="button" onClick={onBack} className="h-12 rounded-xl border-2 bg-card font-semibold active:scale-95">
+              {t("factory.cancel", lang)}
+            </button>
+            <button
+              type="button"
+              disabled={pending || picked.length === 0}
+              onClick={save}
+              className="inline-flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl bg-green-600 px-2 font-bold text-white shadow-sm active:scale-95 disabled:opacity-50"
+            >
+              {pending ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <Check className="size-5 shrink-0" />}
+              <span className="truncate">{fill(t("elements.confirmStepPieces", lang), { step: stageLabel(stage, lang), n: count })}</span>
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={onBack} className="h-12 w-full rounded-xl border-2 bg-card font-semibold active:scale-95">
+            {t("elements.backToElement", lang)}
           </button>
-          <button
-            type="button"
-            disabled={pending || picked.length === 0}
-            onClick={() => save(picked)}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm active:scale-95 disabled:opacity-50"
-          >
-            {pending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-5" />}
-            {fill(t("elements.confirmStep", lang), { step: stageLabel(stage, lang) })}
-            {picked.length > 0 ? <span className="tabular-nums opacity-85">({picked.length})</span> : null}
-          </button>
-        </div>
-        {existing ? (
-          <button type="button" disabled={pending} onClick={() => save([])} className="h-9 w-full rounded-xl text-sm font-semibold text-red-600 active:scale-95 disabled:opacity-50">
-            {t("elements.uncheck", lang)}
-          </button>
-        ) : null}
+        )}
       </div>
     </>
   );

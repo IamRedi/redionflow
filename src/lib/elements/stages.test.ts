@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { availableQty, canCheck, doneQty, elementDone, elementStatus, onFieldList, sideOfStage, stageProgress, stagesFor } from "./stages";
+import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, routeStages, stagePieces, stageRemaining, sideOfStage, stageProgress, stagesFor } from "./stages";
 
 const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office: boolean; reportMissing: boolean }>) => ({
   siteSteps: false,
@@ -40,30 +40,45 @@ describe("element stages", () => {
     const factory = stageProgress(elements, "factory");
     expect(factory.cutting).toMatchObject({ done: 2, total: 3 });
     expect(factory.welding).toMatchObject({ done: 0, total: 2 });
-    expect(stageProgress(elements, "field").mounted).toMatchObject({ done: 1, total: 2 });
+    // Mounting counts only pieces that came from the factory.
+    expect(stageProgress(elements, "field").mounted).toMatchObject({ done: 0, total: 2 });
     expect(elementDone(elements[0], "field")).toBe(false);
     expect(elementDone(elements[0], "factory")).toBe(false);
     expect(elementDone(elements[2], "factory")).toBe(true);
     expect(elementDone(elements[2], "field")).toBe(false);
   });
 
-  it("finished pieces go to the field list, the rest stay in the factory", () => {
-    const open = { list: "assembly" as const, quantity: 4, work: [{ stage: "cutting" }] };
-    expect(elementStatus(open, "factory")).toBe("working");
-    expect(elementStatus({ list: "assembly", quantity: 4, work: [] }, "factory")).toBe("waiting");
-    expect(onFieldList(open)).toBe(false);
-    const half = { ...open, factoryDoneQty: 2 };
-    expect(doneQty(half, "factory")).toBe(2);
-    expect(elementStatus(half, "factory")).toBe("working");
-    expect(onFieldList(half)).toBe(true);
-    expect(availableQty(half, "field")).toBe(2);
-    expect(elementStatus({ ...half, fieldDoneQty: 2 }, "field")).toBe("working");
-    const all = { ...open, factoryDoneQty: 4, fieldDoneQty: 9 };
-    expect(elementStatus(all, "factory")).toBe("done");
-    expect(doneQty(all, "field")).toBe(4);
-    expect(elementStatus(all, "field")).toBe("done");
-    // A cut part is finished by checking cutting; parts never go to the field list.
-    expect(elementDone({ list: "part", quantity: 12, work: [{ stage: "cutting" }] }, "factory")).toBe(true);
+  it("pieces are counted per step; finished pieces passed the whole route", () => {
+    const base = { list: "assembly" as const, quantity: 4 };
+    const started = { ...base, work: [{ stage: "cutting", pieces: 2 }] };
+    expect(stagePieces(started, "cutting")).toBe(2);
+    expect(stageRemaining(started, "cutting")).toBe(2);
+    expect(elementStatus(started, "factory")).toBe("working");
+    expect(elementStatus({ ...base, work: [] }, "factory")).toBe("waiting");
+    // Not finished: nothing leaves the factory yet.
+    expect(doneQty(started, "factory")).toBe(0);
+    expect(onFieldList(started)).toBe(false);
+    // Finished with cutting 4 and assembly 2: 2 pieces out, 2 stay.
+    const closed = { ...base, factoryDoneAt: "2026-11-03T10:00:00Z", work: [{ stage: "cutting", pieces: 2 }, { stage: "cutting", pieces: 2 }, { stage: "assembly", pieces: 2 }] };
+    expect(routeStages(closed, "factory")).toEqual(["cutting", "assembly"]);
+    expect(doneQty(closed, "factory")).toBe(2);
+    expect(elementStatus(closed, "factory")).toBe("working");
+    expect(onFieldList(closed)).toBe(true);
+    expect(capFor(closed, "field")).toBe(2);
+    expect(stageRemaining(closed, "mounted")).toBe(2);
+    // Entries without a count (older checks) mean every piece.
+    const legacy = { ...base, factoryDoneAt: new Date(), work: [{ stage: "welding" }] };
+    expect(elementDone(legacy, "factory")).toBe(true);
+    // Every step worked on all pieces closes the route by itself.
+    const full = { ...base, work: ["cutting", "assembly", "welding", "cleaning", "coating", "loading"].map((stage) => ({ stage, pieces: 4 })) };
+    expect(elementDone(full, "factory")).toBe(true);
+    // Field: capped by what came, done when all came and passed the site route.
+    const site = { ...closed, fieldDoneAt: new Date(), work: [...closed.work, { stage: "mounted", pieces: 5 }] };
+    expect(doneQty(site, "field")).toBe(2);
+    expect(elementStatus(site, "field")).toBe("working");
+    // A cut part is finished by its cutting pieces; parts never go to the field list.
+    expect(elementDone({ list: "part", quantity: 12, work: [{ stage: "cutting", pieces: 12 }] }, "factory")).toBe(true);
+    expect(doneQty({ list: "part", quantity: 12, work: [{ stage: "cutting", pieces: 5 }] }, "factory")).toBe(5);
     expect(onFieldList({ list: "part", work: [{ stage: "cutting" }] })).toBe(false);
   });
 });

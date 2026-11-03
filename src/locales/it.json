@@ -714,7 +714,9 @@
     "projectNeedsFiles": "Scegli almeno un documento.",
     "projectNeedsName": "Scrivi il nome del cantiere (la lista non lo ha).",
     "projectDescription": "Progetto {number}",
-    "projectSiteReady": "{name} creato: {elements} elementi, {parts} parti, {files} documenti."
+    "projectSiteReady": "{name} creato: {elements} elementi, {parts} parti, {files} documenti.",
+    "elementStepFull": "Tutti i pezzi di questa fase sono fatti.",
+    "elementNeedsStep": "Conferma almeno una fase prima di completare."
   },
   "report": {
     "daily": "Report giornaliero",
@@ -1829,7 +1831,7 @@
     "reopen": "Riapri",
     "finishFactory": "Completa elemento",
     "finishField": "Completa elemento in cantiere",
-    "finishFactoryHint": "Le altre fasi non servono? Completalo: l'elemento passa alla lista del cantiere.",
+    "finishFactoryHint": "Le altre fasi non servono? Completalo: i pezzi che hanno passato tutte le sue fasi vanno in cantiere.",
     "finishFieldHint": "Le altre fasi non servono? Completa l'elemento.",
     "pickFactoryWorkers": "Scegli gli operai d'officina che l'hanno fatto",
     "pickFieldWorkers": "Scegli gli operai di cantiere che l'hanno fatto",
@@ -1849,14 +1851,11 @@
     "siteNamePlaceholder": "Se vuoto, preso dalla lista",
     "createProject": "Crea cantiere",
     "creatingProject": "Creazione…",
-    "changePieces": "Cambia pezzi",
-    "confirmPieces": "Conferma {n} pezzi",
     "factoryOutputAll": "Totale per tutti i cantieri",
     "factoryOutputEmpty": "Ancora nessun cantiere con lista elementi. Crea un nuovo progetto dai documenti.",
-    "finishMore": "Completa altri pezzi",
     "finishedOnSite": "Montati",
-    "howManyPieces": "Quanti pezzi sono completati?",
-    "howManyHint": "L'elemento ha {total} pezzi. Scegli quanti sono pronti in totale (fino a {max}).",
+    "howManyPieces": "Quanti pezzi sono stati fatti in questa fase?",
+    "howManyHint": "Restano {open} di {total} pezzi per questa fase.",
     "inFactory": "In officina",
     "ofArrived": "di {n} arrivati",
     "piecesAllOut": "Tutti i {total} pezzi vanno in cantiere.",
@@ -1869,6 +1868,13 @@
     "piecesTitle": "Pezzi",
     "siteOutputLine": "{done}/{total} pezzi prodotti ({kg} kg) · {waiting} in attesa · {mounted} montati",
     "stepDone": "Fatto",
-    "stepNotNeeded": "Non serviva"
+    "stepNotNeeded": "Non serviva",
+    "backToElement": "Torna all'elemento",
+    "confirmStepPieces": "Conferma {step} · {n} pz",
+    "finishNeedsStep": "Conferma almeno una fase prima di completare.",
+    "piecesOut": "Pezzi usciti dall'officina",
+    "piecesWaitFor": "Gli altri pezzi attendono: {steps}",
+    "stepAllPieces": "Tutti i pezzi di questa fase sono fatti.",
+    "stepPieces": "{done} di {total} pezzi"
   }
 }
