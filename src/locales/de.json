@@ -1902,7 +1902,7 @@
     "statusDone": "Fertig",
     "fieldButton": "{done} von {total} Stück montiert · {waiting} im Werk",
     "fieldEmpty": "Noch kein Element aus dem Werk. Sobald das Werk ein Element abschließt, erscheint es hier.",
-    "stillInFactory": "{n} Elemente sind noch im Werk.",
+    "stillInFactory": "{n} Stück sind noch im Werk.",
     "upload": "Hochladen",
     "factorySteps": "Arbeitsschritte im Werk",
     "fieldSteps": "Arbeitsschritte auf der Baustelle",
@@ -1957,6 +1957,7 @@
     "piecesOut": "Stück aus dem Werk",
     "piecesWaitFor": "Die übrigen Stück warten auf: {steps}",
     "stepAllPieces": "Alle Stück dieses Schritts sind erledigt.",
-    "stepPieces": "{done} von {total} Stück"
+    "stepPieces": "{done} von {total} Stück",
+    "lockedInFactory": "Noch im Werk, öffnet sich, wenn das Werk Stück abschließt."
   }
 }

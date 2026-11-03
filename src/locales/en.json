@@ -1780,7 +1780,7 @@
     "statusDone": "Done",
     "fieldButton": "{done} of {total} pieces mounted · {waiting} in factory",
     "fieldEmpty": "No element from the factory yet. When the factory finishes an element, it appears here.",
-    "stillInFactory": "{n} elements are still in the factory.",
+    "stillInFactory": "{n} pieces are still in the factory.",
     "upload": "Upload",
     "factorySteps": "Factory steps",
     "fieldSteps": "Site steps",
@@ -1835,6 +1835,7 @@
     "piecesOut": "Pieces out of the factory",
     "piecesWaitFor": "The other pieces wait for: {steps}",
     "stepAllPieces": "Every piece of this step is done.",
-    "stepPieces": "{done} of {total} pieces"
+    "stepPieces": "{done} of {total} pieces",
+    "lockedInFactory": "Still in the factory, opens when the factory finishes pieces."
   }
 }

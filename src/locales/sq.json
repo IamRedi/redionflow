@@ -1836,7 +1836,7 @@
     "statusDone": "Përfunduar",
     "fieldButton": "{done} nga {total} copë montuar · {waiting} në fabrikë",
     "fieldEmpty": "Ende asnjë element nga fabrika. Kur fabrika përfundon një element, ai shfaqet këtu.",
-    "stillInFactory": "{n} elemente janë ende në fabrikë.",
+    "stillInFactory": "{n} copë janë ende në fabrikë.",
     "upload": "Ngarko",
     "factorySteps": "Proceset e fabrikës",
     "fieldSteps": "Proceset në kantier",
@@ -1891,6 +1891,7 @@
     "piecesOut": "Copët e dala nga fabrika",
     "piecesWaitFor": "Copët e tjera presin: {steps}",
     "stepAllPieces": "Të gjitha copët e këtij procesi janë bërë.",
-    "stepPieces": "{done} nga {total} copë"
+    "stepPieces": "{done} nga {total} copë",
+    "lockedInFactory": "Ende në fabrikë, hapet kur fabrika përfundon copët."
   }
 }

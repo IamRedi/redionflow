@@ -755,7 +755,7 @@
     "statusDone": "Gata",
     "fieldButton": "{done} din {total} bucăți montate · {waiting} în fabrică",
     "fieldEmpty": "Încă niciun element din fabrică. Când fabrica termină un element, apare aici.",
-    "stillInFactory": "{n} elemente sunt încă în fabrică.",
+    "stillInFactory": "{n} bucăți sunt încă în fabrică.",
     "upload": "Încarcă",
     "factorySteps": "Etapele din fabrică",
     "fieldSteps": "Etapele pe șantier",
@@ -810,6 +810,7 @@
     "piecesOut": "Bucăți ieșite din fabrică",
     "piecesWaitFor": "Celelalte bucăți așteaptă: {steps}",
     "stepAllPieces": "Toate bucățile acestei etape sunt gata.",
-    "stepPieces": "{done} din {total} bucăți"
+    "stepPieces": "{done} din {total} bucăți",
+    "lockedInFactory": "Încă în fabrică, se deschide când fabrica termină bucăți."
   }
 }

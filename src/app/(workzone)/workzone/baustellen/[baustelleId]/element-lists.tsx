@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, Lock, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
@@ -43,7 +43,7 @@ export type ElementView = {
 
 export type ElementWorkerOption = { id: string; name: string; crewRole: string | null };
 
-type Filter = "all" | "waiting" | "working" | "done" | "COLUMN" | "BEAM";
+type Filter = "all" | "waiting" | "working" | "done" | "factory" | "COLUMN" | "BEAM";
 type Status = "waiting" | "working" | "done";
 
 const STATUS_STYLE: Record<Status, { badge: string; pill: string }> = {
@@ -298,7 +298,8 @@ function ListView({
   const lists: ElementList[] = side === "factory" ? ["assembly", "part"] : ["assembly"];
   const activeList = side === "field" ? "assembly" : list;
   const ofList = items.filter((element) => element.list === activeList);
-  const shown = side === "field" ? ofList.filter(onFieldList) : ofList;
+  // The field list shows every element; those still in the factory are visible but locked.
+  const shown = ofList;
   // Pieces not yet out of the factory (also of elements partly on site).
   const stillInFactory = side === "field" ? ofList.reduce((sum, element) => sum + element.quantity - doneQty(element, "factory"), 0) : 0;
   const stages = stagesFor(side, activeList);
@@ -306,11 +307,17 @@ function ListView({
   const pieces = shown.reduce((sum, element) => sum + element.quantity, 0);
   const totalKg = shown.reduce((sum, element) => sum + (element.weightKg ?? 0) * element.quantity, 0);
   const counts: Record<Status, number> = { waiting: 0, working: 0, done: 0 };
-  for (const element of shown) counts[elementStatus(element, side)] += 1;
+  const isLocked = (element: ElementView) => side === "field" && !onFieldList(element);
+  let lockedCount = 0;
+  for (const element of shown) {
+    if (isLocked(element)) lockedCount += 1;
+    else counts[elementStatus(element, side)] += 1;
+  }
 
   const q = query.trim().toLowerCase();
   const visible = shown.filter((element) => {
-    if ((filter === "waiting" || filter === "working" || filter === "done") && elementStatus(element, side) !== filter) return false;
+    if (filter === "factory" && !isLocked(element)) return false;
+    if ((filter === "waiting" || filter === "working" || filter === "done") && (isLocked(element) || elementStatus(element, side) !== filter)) return false;
     if ((filter === "COLUMN" || filter === "BEAM") && element.kind !== filter) return false;
     if (!q) return true;
     return [element.mark, element.profile, element.material, element.kind].some((value) => value?.toLowerCase().includes(q));
@@ -334,6 +341,7 @@ function ListView({
     { key: "waiting", label: `${t("elements.statusWaiting", lang)} ${counts.waiting}` },
     { key: "working", label: `${t("elements.statusWorking", lang)} ${counts.working}` },
     { key: "done", label: `${t("elements.statusDone", lang)} ${counts.done}` },
+    ...(side === "field" ? [{ key: "factory" as const, label: `${t("elements.inFactory", lang)} ${lockedCount}` }] : []),
     ...(activeList === "assembly"
       ? [
           { key: "COLUMN" as const, label: t("elements.columns", lang) },
@@ -413,8 +421,6 @@ function ListView({
 
       {items.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{canImport ? t("elements.emptyOffice", lang) : t("elements.empty", lang)}</p>
-      ) : shown.length === 0 && side === "field" ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("elements.fieldEmpty", lang)}</p>
       ) : (
         <>
           {lists.length > 1 ? (
@@ -469,7 +475,7 @@ function ListView({
           <ul className="space-y-1.5">
             {visible.map((element) => (
               <li key={element.id}>
-                <ElementRow element={element} stages={stages} side={side} onOpen={() => onOpen(element.id)} />
+                <ElementRow element={element} stages={stages} side={side} locked={side === "field" && !onFieldList(element)} onOpen={() => onOpen(element.id)} />
               </li>
             ))}
           </ul>
@@ -490,26 +496,39 @@ function stepTone(element: ElementView, stage: string, status: Status) {
   return through >= cap ? "bg-green-600" : "bg-green-600/45";
 }
 
-function ElementRow({ element, stages, side, onOpen }: { element: ElementView; stages: readonly string[]; side: ElementSide; onOpen: () => void }) {
+function ElementRow({ element, stages, side, locked = false, onOpen }: { element: ElementView; stages: readonly string[]; side: ElementSide; locked?: boolean; onOpen: () => void }) {
   const { currentLang: lang } = useLanguage();
   const status = elementStatus(element, side);
   const total = (element.weightKg ?? 0) * element.quantity;
   const done = doneQty(element, side);
   const arrived = capFor(element, side);
   return (
-    <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 rounded-2xl border bg-card p-2.5 text-left active:scale-[0.99]">
-      <span className={`grid h-11 min-w-14 shrink-0 place-items-center rounded-xl px-2 text-base font-bold tabular-nums ${STATUS_STYLE[status].badge}`}>{element.mark}</span>
+    <button
+      type="button"
+      onClick={onOpen}
+      disabled={locked}
+      aria-disabled={locked}
+      title={locked ? t("elements.lockedInFactory", lang) : undefined}
+      className={`flex w-full items-center gap-3 rounded-2xl border p-2.5 text-left ${locked ? "cursor-not-allowed border-dashed bg-muted/40 opacity-60" : "bg-card active:scale-[0.99]"}`}
+    >
+      <span className={`grid h-11 min-w-14 shrink-0 place-items-center rounded-xl px-2 text-base font-bold tabular-nums ${locked ? "bg-muted text-muted-foreground" : STATUS_STYLE[status].badge}`}>{element.mark}</span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
           <span className="min-w-0 truncate text-sm font-semibold">{[kindLabel(element.kind, lang), element.profile].filter(Boolean).join(" · ") || element.mark}</span>
-          <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_STYLE[status].pill}`}>{statusLabel(status, lang)}</span>
+          {locked ? (
+            <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+              <Lock className="size-3" /> {t("elements.inFactory", lang)}
+            </span>
+          ) : (
+            <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_STYLE[status].pill}`}>{statusLabel(status, lang)}</span>
+          )}
         </span>
         <span className="flex items-center gap-1.5 truncate text-xs tabular-nums text-muted-foreground">
           <span className="truncate">
             {element.quantity}× {element.weightKg !== null ? `· ${kg(total)} kg` : ""}
             {element.material ? ` · ${element.material}` : ""}
           </span>
-          {element.quantity > 1 && status !== "done" && (done > 0 || (side === "field" && arrived < element.quantity)) ? (
+          {!locked && element.quantity > 1 && status !== "done" && (done > 0 || (side === "field" && arrived < element.quantity)) ? (
             <span className="ml-auto shrink-0 font-semibold text-foreground">
               {side === "field" && arrived < element.quantity
                 ? fill(t("elements.piecesArrived", lang), { done, arrived, total: element.quantity })
@@ -525,7 +544,7 @@ function ElementRow({ element, stages, side, onOpen }: { element: ElementView; s
           </span>
         ) : null}
       </span>
-      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+      {locked ? <Lock className="size-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-5 shrink-0 text-muted-foreground" />}
     </button>
   );
 }

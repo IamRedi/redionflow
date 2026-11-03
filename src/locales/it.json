@@ -1820,7 +1820,7 @@
     "statusDone": "Completato",
     "fieldButton": "{done} di {total} pezzi montati · {waiting} in officina",
     "fieldEmpty": "Ancora nessun elemento dall'officina. Quando l'officina completa un elemento, compare qui.",
-    "stillInFactory": "{n} elementi sono ancora in officina.",
+    "stillInFactory": "{n} pezzi sono ancora in officina.",
     "upload": "Carica",
     "factorySteps": "Fasi in officina",
     "fieldSteps": "Fasi in cantiere",
@@ -1875,6 +1875,7 @@
     "piecesOut": "Pezzi usciti dall'officina",
     "piecesWaitFor": "Gli altri pezzi attendono: {steps}",
     "stepAllPieces": "Tutti i pezzi di questa fase sono fatti.",
-    "stepPieces": "{done} di {total} pezzi"
+    "stepPieces": "{done} di {total} pezzi",
+    "lockedInFactory": "Ancora in officina, si apre quando l'officina completa i pezzi."
   }
 }

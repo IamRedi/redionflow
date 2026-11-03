@@ -754,7 +754,7 @@
     "statusDone": "Gotowe",
     "fieldButton": "{done} z {total} sztuk zamontowano · {waiting} w zakładzie",
     "fieldEmpty": "Brak elementów z zakładu. Gdy zakład ukończy element, pojawi się tutaj.",
-    "stillInFactory": "{n} elementów jest jeszcze w zakładzie.",
+    "stillInFactory": "{n} szt. jest jeszcze w zakładzie.",
     "upload": "Wgraj",
     "factorySteps": "Etapy w zakładzie",
     "fieldSteps": "Etapy na budowie",
@@ -809,6 +809,7 @@
     "piecesOut": "Sztuki z zakładu",
     "piecesWaitFor": "Pozostałe sztuki czekają na: {steps}",
     "stepAllPieces": "Wszystkie sztuki tego etapu są gotowe.",
-    "stepPieces": "{done} z {total} szt."
+    "stepPieces": "{done} z {total} szt.",
+    "lockedInFactory": "Jeszcze w zakładzie, otworzy się, gdy zakład ukończy sztuki."
   }
 }
