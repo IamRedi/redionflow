@@ -150,6 +150,8 @@ it("OR-02 post-commit journal deletion failure keeps a successful import and rec
   expect(await prisma.baustelle.findUniqueOrThrow({ where: { id: result.baustelleId } })).toEqual(site);
 });
 it.each(["12345", "1234567", "12x3456"])("OR-03 invalid replacement %s preserves the credential and epoch", async code => {
-  const before = await workerCredential(); await updateWorkerAction(profile(code));
+  const before = await workerCredential();
+  // The office is sent back with a notice; nothing is written.
+  await expect(updateWorkerAction(profile(code))).rejects.toMatchObject({ digest: expect.stringContaining("/app/admin?code=format") });
   expect(await prisma.worker.findUniqueOrThrow({ where: { id: before.id } })).toEqual(before);
 });
