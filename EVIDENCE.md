@@ -1,8 +1,51 @@
 # Prüfprotokoll / Verification record
 
-**Stand: 27. Oktober 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
+**Stand: 3. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
-## Automatisierte Prüfungen (CI)
+## 3 November 2026 — WanWay feature candidate (local, not deployed)
+
+Scope: `feat/wanway-gps-integration`, based on active pilot revision
+`000ebf1cc4310de770b0efb4ccf2e7df69b50a19` (PR #27), reconciled locally
+in commit `9868ecd080cbd76b4be2342bad149241468e32cd`. The pilot advanced during
+verification; its new site-element features were preserved and the combined
+source was rechecked. Production is still on
+its existing pilot deployment; no merge, production migration, environment
+change or real-provider authentication was performed for this feature.
+
+| Local gate | Verified result |
+| --- | --- |
+| ESLint / TypeScript | PASS, zero lint warnings |
+| Unit tests | **505 PASS**, 67 files |
+| PostgreSQL integration | **277 PASS**, 17 files, including 12 WanWay security/service tests |
+| Production build | PASS, including the WanWay-enabled managed E2E build |
+| Chromium E2E | **26 PASS**, including discovery, confirmed mapping to an existing vehicle, offline telemetry, transient history/map initialization and disconnect with **37 synthetic vehicles preserved** |
+| Additive migrations | 59 migrations applied to a fresh isolated PostgreSQL 16; schema comparison: **No difference detected** |
+| Secret scan | Gitleaks 8.30.1 on the complete staged feature diff: **no leaks found** |
+| Responsive visual review | Integration panel at 1440 px and 390 px; key cleared after submit, no full IMEI/secret in rendered HTML, phone panel has no horizontal overflow |
+
+Execution: the owner's Windows laptop, locally through WSL Ubuntu, Node 22.19,
+PostgreSQL 16.15. Docker Desktop was unavailable, so fresh native loopback
+clusters were used, with the same migrations and restricted runtime role rather
+than a shared DB. No cloud Actions were dispatched. Existing required gates
+were retained; automatic ordinary CI triggers are opt-in on this branch.
+
+Initial Windows-wide unit execution exposed three inherited platform-specific
+failures; full checks passed in Linux. A timing-sensitive new token-cache test
+was corrected to use a controlled clock. The new composite device/vehicle FK
+was corrected and regression-tested to preserve existing deletion behaviour.
+No unrelated production code was changed to hide test failures.
+
+The map layer and route geometry initialized; external tile rendering was not an
+acceptance assertion. Real GS900-Wired data, account licence/IP restrictions,
+real-route accuracy, production keyring setup, privacy sign-off and owner
+acceptance remain **NOT VERIFIED / PENDING APPROVAL**. Workzone and tenant
+regression suites passed; no real KiDraht/provider calls were made.
+
+Architecture, endpoint contracts, security, rollout boundaries and reproducible
+local commands: [WANWAY_GPS.md](docs/WANWAY_GPS.md). The earlier CI baseline below
+is historical evidence, not a cloud run on this feature.
+
+## Automatisierte Prüfungen (CI — historische Baseline)
 
 Quelle: GitHub Actions auf dem letzten gemergten Pull Request ([#16](https://github.com/IamRedi/redionflow/pull/16), Commit `37ddb90`). Dieselben Schritte laufen auf jedem Pull Request; gemergt wird nur mit grüner CI.
 

@@ -7,3 +7,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Local verification
+
+Read [docs/LOCAL_CI_POLICY.md](docs/LOCAL_CI_POLICY.md). Routine checks run on
+the laptop/mini PC; cloud verification requires explicit selection. Preserve
+required assertions and branch protection. Do not merge or deploy this pilot
+without owner approval. Never push to its Railway-connected pilot branch as
+part of feature preparation.

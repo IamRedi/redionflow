@@ -9,7 +9,7 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[Deutsche Version](README.md)** · **As of 1 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **As of 3 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
@@ -29,7 +29,8 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 | Status | Meaning and scope |
 |---|---|
 | **Built and live** | Workzone for the job site (task or tree list, map, time tracking with start, pause and stop, extra work, notes, traffic safety), admin dashboard, staff and fleet, daily plan with versions, barcode inventory with checkout to employees, cost estimating (projects, line items, templates, wage roles, recipes), daily and monthly reports, job site export (ZIP with HTML, CSV, KML), leave requests, admin password login, 6 languages |
-| **Verified** | 711 automated tests in CI on every pull request (423 unit, 263 integration against real PostgreSQL, 25 end-to-end in the browser), secret scan, Docker demo smoke test, Lighthouse mobile 96/100/100/100. Details in the [verification record](EVIDENCE.md). |
+| **Verified** | Earlier CI baseline: 711 tests, secret scan and Docker demo smoke. Current local results and their exact scope are recorded in the [verification record](EVIDENCE.md). Cloud verification is explicitly opt-in on this branch. |
+| **Prepared, awaiting release approval** | Read-only WanWay/IOPGPS: encrypted per-company credentials, connection test, confirmed links to existing vehicles, manual sync and last reported telemetry. Not enabled in production or public demos; real-device acceptance remains pending. [Architecture and limits](docs/WANWAY_GPS.md). |
 | **Built, not active in the demo** | AI assistant (needs an OpenAI key), push notifications (Firebase), file storage for documents and photos (Supabase), subscriptions and invoices in SaaS mode (Stripe), vehicle GPS. The code exists and is tested; the public demo deliberately runs without these services. |
 | **In progress** | Offline mode for field actions (browser queue exists, not yet tested in the field), Content Security Policy from report-only to enforcing, a real virus scanner for uploads |
 | **Vision** | Pilot companies in both industries, more trades as their own mode, analysis across several seasons |
@@ -81,7 +82,7 @@ More in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md) (German).
 
 ## Quality and security
 
-- **CI on every pull request:** lint with zero warnings, TypeScript strict, 423 unit tests, 263 integration tests against a throwaway PostgreSQL, production build, 25 browser tests, gitleaks and a Docker smoke test of the demo.
+- **Verification:** local lint, TypeScript, unit/PostgreSQL integration, build and browser gates. Cloud verification requires explicit selection (`workflow_dispatch`); required checks and merge protection remain in place. [Policy](docs/LOCAL_CI_POLICY.md).
 - **Security:** passwords and codes hashed with scrypt, login rate limiting, revocable sessions, same-origin checks on every mutation, private files only through a checked route, security headers. Threat model and known residual risks are documented openly in [SECURITY.md](SECURITY.md).
 - **Accessibility and speed:** Lighthouse mobile on the landing page: 96 performance, 100 accessibility, 100 best practices, 100 SEO.
 - **No real data.** The repository was created as a snapshot without git history from the private production system. Real company and personal data was removed; the demo data is invented.

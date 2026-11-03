@@ -7,6 +7,9 @@ import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { t, type Language } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { findFleetGpsMachines, findOpenMachinePresences, isFleetGpsStoreReady } from "@/lib/workzone/fleet-gps";
+import { freshness } from "@/lib/fleet/wanway/adapter";
+import { readFleet } from "@/lib/fleet/wanway/service";
+import { WanwayTelemetry } from "@/components/fleet/wanway-telemetry";
 
 function localeForLanguage(lang: Language) {
   if (lang === "en") return "en-US";
@@ -30,14 +33,16 @@ export default async function FleetGpsPage() {
   const currentLang = await resolveRequestLanguage();
   const company = await getOrCreateDefaultCompany();
   const storeReady = isFleetGpsStoreReady();
-  const [machines, openPresences] = await Promise.all([
+  const [machines, openPresences, wanwayDevices] = await Promise.all([
     findFleetGpsMachines(company.id),
     findOpenMachinePresences(company.id),
+    readFleet(),
   ]);
 
   const presenceByMachineId = new Map(openPresences.map((presence) => [presence.machineId, presence]));
-  const gpsMachines = machines.filter((machine) => machine.gpsEnabled);
-  const liveMachines = gpsMachines.filter((machine) => machine.lastGpsAt);
+  const wanwayByMachine = new Map(wanwayDevices.map(d => [d.machineId, d]));
+  const gpsMachines = machines.filter((machine) => machine.gpsEnabled || wanwayByMachine.has(machine.id));
+  const liveMachines = gpsMachines.filter((machine) => wanwayByMachine.has(machine.id) ? wanwayByMachine.get(machine.id)!.online : freshness("stationary", machine.lastGpsAt, machine.lastGpsAt).online);
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -104,6 +109,7 @@ export default async function FleetGpsPage() {
         </div>
         <div className="divide-y">
           {machines.map((machine) => {
+            const wanway = wanwayByMachine.get(machine.id);
             const presence = presenceByMachineId.get(machine.id);
             const href = mapsHref(machine.lastGpsLat, machine.lastGpsLng);
             return (
@@ -111,6 +117,7 @@ export default async function FleetGpsPage() {
                 <div>
                   <div className="font-medium">{machine.nickname ?? machine.name}</div>
                   <div className="mt-0.5 text-xs text-muted-foreground">{machine.targe ?? ""}</div>
+                  {wanway && <WanwayTelemetry data={wanway} lang={currentLang} compact />}
                 </div>
                 <div className="text-muted-foreground">
                   {presence ? (
