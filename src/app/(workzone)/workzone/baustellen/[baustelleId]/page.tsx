@@ -30,6 +30,8 @@ import { readFactorySteps } from "@/lib/factory/production";
 import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { isSteelSiteType, readSteelPhaseMeta, steelPhaseKeyFromTreeId, steelPhasesFor, steelSiteShape } from "@/lib/workzone/steel-phases";
 import { SiteProductionPanel } from "../../production/site-production-panel";
+import { SiteFactoryView } from "../../production/factory-output-view";
+import { factoryOutput } from "@/lib/elements/factory-output";
 import type { FactoryBatchView } from "../../production/production-ui";
 import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
 import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
@@ -263,8 +265,10 @@ export default async function BaustelleDetailPage({
             lengthMm: true,
             weightKg: true,
             areaM2: true,
+            factoryDoneQty: true,
             factoryDoneAt: true,
             factoryDoneBy: true,
+            fieldDoneQty: true,
             fieldDoneAt: true,
             fieldDoneBy: true,
             work: { select: { stage: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } },
@@ -303,6 +307,11 @@ export default async function BaustelleDetailPage({
       name: `${worker.firstName} ${worker.lastName}`.trim(),
       crewRole: worker.crewRole,
     }));
+    const factoryView =
+      factoryOutput(
+        elementRows.filter((element) => element.list === "assembly").map((element) => ({ ...element, baustelleId: baustelle.id })),
+        [{ id: baustelle.id, name: baustelle.name }],
+      )[0] ?? null;
     const shape = steelSiteShape(baustelle.name, baustelle.description);
 
     return (
@@ -350,7 +359,12 @@ export default async function BaustelleDetailPage({
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <SteelPhaseBoard phases={steelPhases} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={can.siteSteps} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
-            <SiteProductionPanel site={{ id: baustelle.id, name: baustelle.name }} batches={batches} canAdvance={canAdvance} canManage={isAdmin} />
+            {/* The factory here is only to look at: what it produced for this site, per process. */}
+            {factoryView ? (
+              <SiteFactoryView output={factoryView} />
+            ) : batches.length > 0 ? (
+              <SiteProductionPanel site={{ id: baustelle.id, name: baustelle.name }} batches={batches} canAdvance={canAdvance} canManage={isAdmin} />
+            ) : null}
           </div>
         </div>
       </div>

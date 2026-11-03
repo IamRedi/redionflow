@@ -67,17 +67,22 @@ it("admin records who worked a stage, only with own workers and own elements", a
   expect(await prisma.siteElementWork.count({ where: { elementId: { in: [own.id, foreign.id] } } })).toBe(0);
 
   expect((await setElementWorkAction({ elementId: own.id, stage: "welding", workerIds: [a.worker.id] })).ok).toBe(true);
-  // Not on the field list until the factory finishes it.
+  // Not on the field list until the factory finishes pieces of it.
   expect((await setElementWorkAction({ elementId: own.id, stage: "mounted", workerIds: [a.worker.id] })).ok).toBe(false);
-  expect((await setElementDoneAction({ elementId: own.id, side: "field", done: true })).ok).toBe(false);
-  expect((await setElementDoneAction({ elementId: foreign.id, side: "factory", done: true })).ok).toBe(false);
-  expect((await setElementDoneAction({ elementId: own.id, side: "factory", done: true })).ok).toBe(true);
-  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: own.id } })).factoryDoneAt).not.toBeNull();
+  expect((await setElementDoneAction({ elementId: own.id, side: "field", pieces: 1 })).ok).toBe(false);
+  expect((await setElementDoneAction({ elementId: foreign.id, side: "factory", pieces: 1 })).ok).toBe(false);
+  // 1 of 2 pieces done: it goes to the field list, the other stays in the factory.
+  expect(await setElementDoneAction({ elementId: own.id, side: "factory", pieces: 1 })).toMatchObject({ ok: true, pieces: 1 });
+  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: own.id } })).factoryDoneQty).toBe(1);
   expect((await setElementWorkAction({ elementId: own.id, stage: "mounted", workerIds: [a.worker.id] })).ok).toBe(true);
-  // Once work started on site, the factory cannot take it back.
-  expect((await setElementDoneAction({ elementId: own.id, side: "factory", done: false })).ok).toBe(false);
-  expect((await setElementDoneAction({ elementId: own.id, side: "field", done: true })).ok).toBe(true);
-  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: own.id } })).fieldDoneAt).not.toBeNull();
+  // The site may finish only what came; more than the quantity is capped.
+  expect(await setElementDoneAction({ elementId: own.id, side: "field", pieces: 5 })).toMatchObject({ ok: true, pieces: 1 });
+  expect(await setElementDoneAction({ elementId: own.id, side: "factory", pieces: 9 })).toMatchObject({ ok: true, pieces: 2 });
+  // The factory cannot take back pieces the site already worked on.
+  expect((await setElementDoneAction({ elementId: own.id, side: "factory", pieces: 0 })).ok).toBe(false);
+  const row = await prisma.siteElement.findUniqueOrThrow({ where: { id: own.id } });
+  expect([row.factoryDoneQty, row.fieldDoneQty]).toEqual([2, 1]);
+  expect(row.fieldDoneAt).not.toBeNull();
   const work = await prisma.siteElementWork.findMany({ where: { elementId: own.id }, orderBy: { stage: "asc" } });
   expect(work.map((row) => [row.stage, row.workerIds])).toEqual([["mounted", [a.worker.id]], ["welding", [a.worker.id]]]);
   expect(work[0]?.workerNames).toBe(`${a.worker.firstName} ${a.worker.lastName}`.trim());

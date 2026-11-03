@@ -4,8 +4,8 @@
  * Factory list: assemblies pass the factory line (cutting ... loading); cut
  * parts only need "cutting", since they are welded into an assembly. Not every
  * element needs every step: the factory engineer checks the steps it went
- * through and then closes it ("finished"). An element with every step checked
- * counts as finished too.
+ * through and then finishes it, saying how many pieces ("2 of 4"). Finished
+ * pieces go to the field list, the rest stay in the factory.
  *
  * Field list: only assemblies the factory finished. On site they are received,
  * mounted, bolted or welded in place and touched up, closed the same way.
@@ -44,40 +44,65 @@ export const CREW_FOR_SIDE: Record<ElementSide, readonly string[]> = {
 
 export type ElementState = {
   list: ElementList;
+  quantity?: number;
   work: Array<{ stage: string }>;
-  factoryDoneAt?: string | Date | null;
-  fieldDoneAt?: string | Date | null;
+  factoryDoneQty?: number;
+  fieldDoneQty?: number;
 };
 
-/** Finished on that list: closed by the engineer, or every stage checked. */
+/** Pieces of the element (at least 1). */
+export function pieces(element: ElementState) {
+  return Math.max(1, element.quantity ?? 1);
+}
+
+/**
+ * Pieces finished on that side. The engineer says how many when finishing
+ * ("2 of 4"). A cut part needs only cutting: checking it finishes all pieces.
+ */
+export function doneQty(element: ElementState, side: ElementSide): number {
+  if (side === "field") return Math.min(element.fieldDoneQty ?? 0, doneQty(element, "factory"));
+  const qty = Math.min(element.factoryDoneQty ?? 0, pieces(element));
+  if (qty === 0 && element.list === "part" && element.work.some((work) => work.stage === "cutting")) return pieces(element);
+  return qty;
+}
+
+/** Pieces the side can still finish: in the factory all, on site only those that came. */
+export function availableQty(element: ElementState, side: ElementSide) {
+  return side === "factory" ? pieces(element) : doneQty(element, "factory");
+}
+
+/** Every piece finished on that list. */
 export function elementDone(element: ElementState, side: ElementSide) {
-  if (side === "factory" ? element.factoryDoneAt : element.fieldDoneAt) return true;
-  const stages = stagesFor(side, element.list);
-  return stages.length > 0 && stages.every((stage) => element.work.some((work) => work.stage === stage));
+  return doneQty(element, side) >= pieces(element);
 }
 
-/** On the field list: assemblies the factory finished. */
+/** On the field list: assemblies with at least one piece out of the factory. */
 export function onFieldList(element: ElementState) {
-  return element.list === "assembly" && elementDone(element, "factory");
+  return element.list === "assembly" && doneQty(element, "factory") > 0;
 }
 
-/** waiting: nothing checked yet; working: some steps; done: finished. */
+/** waiting: nothing yet; working: some steps or pieces; done: every piece finished. */
 export function elementStatus(element: ElementState, side: ElementSide): "waiting" | "working" | "done" {
   if (elementDone(element, side)) return "done";
+  if (doneQty(element, side) > 0) return "working";
   const stages = stagesFor(side, element.list);
   return element.work.some((work) => stages.includes(work.stage)) ? "working" : "waiting";
 }
 
-export type ElementProgress = { done: number; total: number };
+export type ElementProgress = { done: number; total: number; pieces: number; totalPieces: number };
 
-/** Per stage: how many elements are checked, out of those on the list. */
+/** Per stage: how many elements (and their pieces) went through it, out of those on the list. */
 export function stageProgress(elements: ElementState[], side: ElementSide): Record<string, ElementProgress> {
   const result: Record<string, ElementProgress> = {};
   for (const element of elements) {
     for (const stage of stagesFor(side, element.list)) {
-      const entry = (result[stage] ??= { done: 0, total: 0 });
+      const entry = (result[stage] ??= { done: 0, total: 0, pieces: 0, totalPieces: 0 });
       entry.total += 1;
-      if (element.work.some((work) => work.stage === stage)) entry.done += 1;
+      entry.totalPieces += pieces(element);
+      if (element.work.some((work) => work.stage === stage)) {
+        entry.done += 1;
+        entry.pieces += pieces(element);
+      }
     }
   }
   return result;

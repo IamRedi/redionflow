@@ -24,8 +24,8 @@ import { isSteelSiteType, steelSiteShape } from "@/lib/workzone/steel-phases";
 import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { batchState, readFactorySteps } from "@/lib/factory/production";
-import { FactoryPanel, type FactoryBatchView, type FactorySiteOutput } from "./factory-panel";
-import { elementDone, onFieldList } from "@/lib/elements/stages";
+import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
+import { factoryOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -181,35 +181,18 @@ export default async function WorkzoneHomePage() {
       }))
     : [];
 
-  // What the factory produced per site, from the element lists (assemblies only).
-  const siteOutput: FactorySiteOutput[] = [];
-  if (factorySite) {
-    const rows = await withTenantContext(company.id, (tx) =>
-      tx.siteElement.findMany({
-        where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
-        select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true } } },
-      }),
-    );
-    const bySite = new Map<string, FactorySiteOutput>();
-    for (const row of rows) {
-      const site = baustellen.find((entry) => entry.id === row.baustelleId);
-      if (!site) continue;
-      const entry = bySite.get(site.id) ?? { siteId: site.id, siteName: site.name, marks: 0, pieces: 0, kg: 0, doneMarks: 0, donePieces: 0, doneKg: 0, mountedMarks: 0 };
-      const state = { list: "assembly" as const, work: row.work, factoryDoneAt: row.factoryDoneAt, fieldDoneAt: row.fieldDoneAt };
-      const weight = (row.weightKg ?? 0) * row.quantity;
-      entry.marks += 1;
-      entry.pieces += row.quantity;
-      entry.kg += weight;
-      if (elementDone(state, "factory")) {
-        entry.doneMarks += 1;
-        entry.donePieces += row.quantity;
-        entry.doneKg += weight;
-      }
-      if (onFieldList(state) && elementDone(state, "field")) entry.mountedMarks += 1;
-      bySite.set(site.id, entry);
-    }
-    siteOutput.push(...[...bySite.values()].sort((a, b) => a.siteName.localeCompare(b.siteName)));
-  }
+  // What the factory produced per site and per process, from the element lists.
+  const siteOutput: SiteFactoryOutput[] = factorySite
+    ? factoryOutput(
+        await withTenantContext(company.id, (tx) =>
+          tx.siteElement.findMany({
+            where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
+            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneQty: true, fieldDoneQty: true, work: { select: { stage: true } } },
+          }),
+        ),
+        baustellen,
+      )
+    : [];
 
   const materialBySite = new Map<string, { ready: number; total: number }>();
   for (const batch of factoryBatches) {
@@ -409,9 +392,7 @@ export default async function WorkzoneHomePage() {
         <FactoryPanel
           factoryName={factorySite.name}
           factoryAddress={(factorySite.address ?? "").trim()}
-          batches={factoryBatches}
           siteOutput={siteOutput}
-          sites={baustellen.map((site) => ({ id: site.id, name: site.name }))}
           canManage={crewPermissions(worker ? { isAdmin: false, crewRole: worker.crewRole, level: worker.level } : admin ? { isAdmin: true } : null).office}
         />
       ) : null}

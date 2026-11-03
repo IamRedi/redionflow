@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canCheck, elementDone, elementStatus, onFieldList, sideOfStage, stageProgress, stagesFor } from "./stages";
+import { availableQty, canCheck, doneQty, elementDone, elementStatus, onFieldList, sideOfStage, stageProgress, stagesFor } from "./stages";
 
 const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office: boolean; reportMissing: boolean }>) => ({
   siteSteps: false,
@@ -38,25 +38,32 @@ describe("element stages", () => {
       { list: "part" as const, work: [{ stage: "cutting" }] },
     ];
     const factory = stageProgress(elements, "factory");
-    expect(factory.cutting).toEqual({ done: 2, total: 3 });
-    expect(factory.welding).toEqual({ done: 0, total: 2 });
-    expect(stageProgress(elements, "field").mounted).toEqual({ done: 1, total: 2 });
+    expect(factory.cutting).toMatchObject({ done: 2, total: 3 });
+    expect(factory.welding).toMatchObject({ done: 0, total: 2 });
+    expect(stageProgress(elements, "field").mounted).toMatchObject({ done: 1, total: 2 });
     expect(elementDone(elements[0], "field")).toBe(false);
     expect(elementDone(elements[0], "factory")).toBe(false);
     expect(elementDone(elements[2], "factory")).toBe(true);
     expect(elementDone(elements[2], "field")).toBe(false);
   });
 
-  it("closing an element finishes it and puts it on the field list", () => {
-    const open = { list: "assembly" as const, work: [{ stage: "cutting" }] };
+  it("finished pieces go to the field list, the rest stay in the factory", () => {
+    const open = { list: "assembly" as const, quantity: 4, work: [{ stage: "cutting" }] };
     expect(elementStatus(open, "factory")).toBe("working");
-    expect(elementStatus({ list: "assembly", work: [] }, "factory")).toBe("waiting");
+    expect(elementStatus({ list: "assembly", quantity: 4, work: [] }, "factory")).toBe("waiting");
     expect(onFieldList(open)).toBe(false);
-    const closed = { ...open, factoryDoneAt: "2026-11-03T10:00:00Z" };
-    expect(elementStatus(closed, "factory")).toBe("done");
-    expect(onFieldList(closed)).toBe(true);
-    expect(elementStatus(closed, "field")).toBe("waiting");
-    expect(elementStatus({ ...closed, fieldDoneAt: new Date() }, "field")).toBe("done");
+    const half = { ...open, factoryDoneQty: 2 };
+    expect(doneQty(half, "factory")).toBe(2);
+    expect(elementStatus(half, "factory")).toBe("working");
+    expect(onFieldList(half)).toBe(true);
+    expect(availableQty(half, "field")).toBe(2);
+    expect(elementStatus({ ...half, fieldDoneQty: 2 }, "field")).toBe("working");
+    const all = { ...open, factoryDoneQty: 4, fieldDoneQty: 9 };
+    expect(elementStatus(all, "factory")).toBe("done");
+    expect(doneQty(all, "field")).toBe(4);
+    expect(elementStatus(all, "field")).toBe("done");
+    // A cut part is finished by checking cutting; parts never go to the field list.
+    expect(elementDone({ list: "part", quantity: 12, work: [{ stage: "cutting" }] }, "factory")).toBe(true);
     expect(onFieldList({ list: "part", work: [{ stage: "cutting" }] })).toBe(false);
   });
 });

@@ -1518,11 +1518,13 @@ model SiteElement {
   areaM2           Float?
   sortIndex        Int            @default(0)
   sourceFile       String?
-  /// The factory engineer closed the element (the remaining steps are not
-  /// needed); from then on it is on the field list.
+  /// Pieces the factory engineer finished (of quantity); those are on the
+  /// field list, the rest stays in the factory. At = last finish, By = who.
+  factoryDoneQty   Int            @default(0)
   factoryDoneAt    DateTime?
   factoryDoneBy    String?
-  /// The field engineer closed the element on site.
+  /// Pieces the field engineer finished on site (of factoryDoneQty).
+  fieldDoneQty     Int            @default(0)
   fieldDoneAt      DateTime?
   fieldDoneBy      String?
   createdAt        DateTime       @default(now())

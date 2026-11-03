@@ -1,12 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
-import { CREW_FOR_SIDE, elementDone, elementStatus, onFieldList, sideOfStage, stageProgress, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
+import { availableQty, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, sideOfStage, stageProgress, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
@@ -32,8 +32,10 @@ export type ElementView = {
   lengthMm: number | null;
   weightKg: number | null;
   areaM2: number | null;
+  factoryDoneQty: number;
   factoryDoneAt: string | null;
   factoryDoneBy: string | null;
+  fieldDoneQty: number;
   fieldDoneAt: string | null;
   fieldDoneBy: string | null;
   work: ElementWorkView[];
@@ -99,9 +101,10 @@ export function ElementListButtons({
   }
 
   const assemblies = items.filter((element) => element.list === "assembly");
-  const fromFactory = assemblies.filter(onFieldList);
-  const factoryDone = fromFactory.length;
-  const fieldDone = fromFactory.filter((element) => elementDone(element, "field")).length;
+  const sum = (count: (element: ElementView) => number) => assemblies.reduce((total, element) => total + count(element), 0);
+  const allPieces = sum((element) => element.quantity);
+  const factoryDone = sum((element) => doneQty(element, "factory"));
+  const fieldDone = sum((element) => doneQty(element, "field"));
 
   if (items.length === 0 && !can.office) return null;
 
@@ -109,15 +112,15 @@ export function ElementListButtons({
     {
       side: "factory",
       label: t("elements.factoryList", lang),
-      sub: assemblies.length ? fill(t("elements.doneOf", lang), { done: factoryDone, total: assemblies.length }) : t("elements.noList", lang),
-      pct: assemblies.length ? (factoryDone / assemblies.length) * 100 : 0,
+      sub: assemblies.length ? fill(t("elements.doneOf", lang), { done: factoryDone, total: allPieces }) : t("elements.noList", lang),
+      pct: allPieces ? (factoryDone / allPieces) * 100 : 0,
       icon: <Factory className="size-6" />,
     },
     {
       side: "field",
       label: t("elements.fieldList", lang),
-      sub: assemblies.length ? fill(t("elements.fieldButton", lang), { done: fieldDone, total: fromFactory.length, waiting: assemblies.length - fromFactory.length }) : t("elements.noList", lang),
-      pct: assemblies.length ? (fieldDone / assemblies.length) * 100 : 0,
+      sub: assemblies.length ? fill(t("elements.fieldButton", lang), { done: fieldDone, total: factoryDone, waiting: allPieces - factoryDone }) : t("elements.noList", lang),
+      pct: allPieces ? (fieldDone / allPieces) * 100 : 0,
       icon: <HardHat className="size-6" />,
     },
   ];
@@ -232,9 +235,11 @@ function ElementListSheet({
               canEdit={canEdit}
               onBack={() => setView({ kind: "list" })}
               onStage={(stage) => setView({ kind: "stage", id: current.id, stage })}
-              onDone={(doneAt, doneBy) =>
+              onDone={(count, doneAt, doneBy) =>
                 patch(current.id, (element) =>
-                  side === "factory" ? { ...element, factoryDoneAt: doneAt, factoryDoneBy: doneBy } : { ...element, fieldDoneAt: doneAt, fieldDoneBy: doneBy },
+                  side === "factory"
+                    ? { ...element, factoryDoneQty: count, factoryDoneAt: doneAt, factoryDoneBy: doneBy }
+                    : { ...element, fieldDoneQty: count, fieldDoneAt: doneAt, fieldDoneBy: doneBy },
                 )
               }
             />
@@ -296,7 +301,8 @@ function ListView({
   const activeList = side === "field" ? "assembly" : list;
   const ofList = items.filter((element) => element.list === activeList);
   const shown = side === "field" ? ofList.filter(onFieldList) : ofList;
-  const stillInFactory = side === "field" ? ofList.length - shown.length : 0;
+  // Pieces not yet out of the factory (also of elements partly on site).
+  const stillInFactory = side === "field" ? ofList.reduce((sum, element) => sum + element.quantity - doneQty(element, "factory"), 0) : 0;
   const stages = stagesFor(side, activeList);
   const progress = stageProgress(shown, side);
   const pieces = shown.reduce((sum, element) => sum + element.quantity, 0);
@@ -480,6 +486,8 @@ function ElementRow({ element, stages, side, onOpen }: { element: ElementView; s
   const { currentLang: lang } = useLanguage();
   const status = elementStatus(element, side);
   const total = (element.weightKg ?? 0) * element.quantity;
+  const done = doneQty(element, side);
+  const arrived = availableQty(element, side);
   return (
     <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 rounded-2xl border bg-card p-2.5 text-left active:scale-[0.99]">
       <span className={`grid h-11 min-w-14 shrink-0 place-items-center rounded-xl px-2 text-base font-bold tabular-nums ${STATUS_STYLE[status].badge}`}>{element.mark}</span>
@@ -488,9 +496,18 @@ function ElementRow({ element, stages, side, onOpen }: { element: ElementView; s
           <span className="min-w-0 truncate text-sm font-semibold">{[kindLabel(element.kind, lang), element.profile].filter(Boolean).join(" · ") || element.mark}</span>
           <span className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_STYLE[status].pill}`}>{statusLabel(status, lang)}</span>
         </span>
-        <span className="block truncate text-xs tabular-nums text-muted-foreground">
-          {element.quantity}× {element.weightKg !== null ? `· ${kg(total)} kg` : ""}
-          {element.material ? ` · ${element.material}` : ""}
+        <span className="flex items-center gap-1.5 truncate text-xs tabular-nums text-muted-foreground">
+          <span className="truncate">
+            {element.quantity}× {element.weightKg !== null ? `· ${kg(total)} kg` : ""}
+            {element.material ? ` · ${element.material}` : ""}
+          </span>
+          {element.quantity > 1 && status !== "done" && (done > 0 || (side === "field" && arrived < element.quantity)) ? (
+            <span className="ml-auto shrink-0 font-semibold text-foreground">
+              {side === "field" && arrived < element.quantity
+                ? fill(t("elements.piecesArrived", lang), { done, arrived, total: element.quantity })
+                : fill(t("elements.piecesDone", lang), { done, total: element.quantity })}
+            </span>
+          ) : null}
         </span>
         {stages.length > 1 ? (
           <span className="mt-1.5 flex gap-1">
@@ -498,7 +515,7 @@ function ElementRow({ element, stages, side, onOpen }: { element: ElementView; s
               <span
                 key={stage}
                 title={stageLabel(stage, lang)}
-                className={`h-1.5 min-w-0 flex-1 rounded-full ${element.work.some((work) => work.stage === stage) ? "bg-green-600" : "bg-muted-foreground/20"}`}
+                className={`h-1.5 min-w-0 flex-1 rounded-full ${status === "done" || element.work.some((work) => work.stage === stage) ? "bg-green-600" : "bg-muted-foreground/20"}`}
               />
             ))}
           </span>
@@ -506,6 +523,136 @@ function ElementRow({ element, stages, side, onOpen }: { element: ElementView; s
       </span>
       <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
     </button>
+  );
+}
+
+/** The element's pieces as small blocks: finished, arrived on site, still in the factory. */
+function PieceStrip({ element, side }: { element: ElementView; side: ElementSide }) {
+  const { currentLang: lang } = useLanguage();
+  const total = element.quantity;
+  const done = doneQty(element, side);
+  // Orange: on site but not finished there yet. In the factory there is no such state.
+  const arrived = side === "field" ? availableQty(element, side) : done;
+  const rest = total - doneQty(element, "factory");
+  const line =
+    side === "factory"
+      ? done === 0
+        ? fill(t("elements.piecesNoneOut", lang), { total })
+        : rest > 0
+          ? fill(t("elements.piecesSplit", lang), { done, rest })
+          : fill(t("elements.piecesAllOut", lang), { total })
+      : arrived < total
+        ? fill(t("elements.piecesFieldSplit", lang), { done, arrived, rest: total - arrived })
+        : fill(t("elements.piecesFieldAll", lang), { done, total });
+  return (
+    <div className="rounded-2xl border bg-card p-3">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <span className="text-sm font-bold">{t("elements.piecesTitle", lang)}</span>
+        <span className="text-sm font-bold tabular-nums">
+          {done}
+          <span className="text-xs text-muted-foreground">/{total}</span>
+        </span>
+      </div>
+      {total <= 40 ? (
+        <div className="flex flex-wrap gap-1">
+          {Array.from({ length: total }, (_, index) => (
+            <span
+              key={index}
+              className={`h-5 min-w-5 flex-1 rounded-md ${index < done ? "bg-green-600" : index < arrived ? "bg-orange-500/70" : "bg-muted-foreground/20"}`}
+              style={{ maxWidth: 40 }}
+            />
+          ))}
+        </div>
+      ) : (
+        <span className="block h-3 overflow-hidden rounded-full bg-muted-foreground/20">
+          <span className="block h-full bg-green-600" style={{ width: `${Math.round((done / total) * 100)}%` }} />
+        </span>
+      )}
+      <p className="mt-2 text-xs text-muted-foreground">{line}</p>
+    </div>
+  );
+}
+
+/** How many pieces are finished (in total on this side). */
+function PiecesPicker({
+  element,
+  side,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  element: ElementView;
+  side: ElementSide;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: (count: number) => void;
+}) {
+  const { currentLang: lang } = useLanguage();
+  const max = availableQty(element, side);
+  const min = Math.max(1, side === "factory" ? doneQty(element, "field") : 0);
+  const [count, setCount] = useState(max);
+  const rest = element.quantity - count;
+  return (
+    <div className="space-y-3 rounded-2xl border-2 border-green-600/60 bg-green-600/[0.06] p-3">
+      <div>
+        <div className="text-base font-bold">{t("elements.howManyPieces", lang)}</div>
+        <div className="text-xs text-muted-foreground">{fill(t("elements.howManyHint", lang), { total: element.quantity, max })}</div>
+      </div>
+      {max <= 12 ? (
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
+          {Array.from({ length: max - min + 1 }, (_, index) => min + index).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setCount(value)}
+              aria-pressed={count === value}
+              className={`h-12 rounded-xl border-2 text-lg font-bold tabular-nums active:scale-95 ${count === value ? "border-green-600 bg-green-600 text-white" : "bg-card"}`}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setCount((value) => Math.max(min, value - 1))} className="grid size-12 place-items-center rounded-xl border-2 bg-card text-2xl font-bold active:scale-95">
+            −
+          </button>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={min}
+            max={max}
+            value={count}
+            onChange={(event) => setCount(Math.max(min, Math.min(max, Number(event.target.value) || min)))}
+            className="h-12 w-full rounded-xl border-2 bg-card text-center text-xl font-bold tabular-nums outline-none focus:border-green-600"
+          />
+          <button type="button" onClick={() => setCount((value) => Math.min(max, value + 1))} className="grid size-12 place-items-center rounded-xl border-2 bg-card text-2xl font-bold active:scale-95">
+            +
+          </button>
+        </div>
+      )}
+      <p className="rounded-xl bg-card px-3 py-2 text-sm font-semibold">
+        {side === "factory"
+          ? rest > 0
+            ? fill(t("elements.piecesSplit", lang), { done: count, rest })
+            : fill(t("elements.piecesAllOut", lang), { total: count })
+          : fill(t("elements.piecesFieldAll", lang), { done: count, total: max })}
+      </p>
+      <div className="grid grid-cols-[1fr_2fr] gap-2">
+        <button type="button" onClick={onCancel} className="h-12 rounded-xl border-2 bg-card font-semibold active:scale-95">
+          {t("factory.cancel", lang)}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => onConfirm(count)}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm active:scale-95 disabled:opacity-50"
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-5" />}
+          {fill(t("elements.confirmPieces", lang), { n: count })}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -522,16 +669,19 @@ function ElementDetail({
   canEdit: boolean;
   onBack: () => void;
   onStage: (stage: string) => void;
-  onDone: (doneAt: string | null, doneBy: string | null) => void;
+  onDone: (count: number, doneAt: string | null, doneBy: string | null) => void;
 }) {
   const { currentLang: lang } = useLanguage();
   const [error, setError] = useState<string | null>(null);
+  const [choosing, setChoosing] = useState(false);
   const [pending, startTransition] = useTransition();
   const stages = stagesFor(side, element.list);
   const status = elementStatus(element, side);
+  const done = doneQty(element, side);
   const closedAt = side === "factory" ? element.factoryDoneAt : element.fieldDoneAt;
   const closedBy = side === "factory" ? element.factoryDoneBy : element.fieldDoneBy;
   const checked = stages.filter((stage) => element.work.some((work) => work.stage === stage)).length;
+  const canMore = done < availableQty(element, side);
   const facts = [
     `${element.quantity}×`,
     element.profile,
@@ -541,17 +691,22 @@ function ElementDetail({
     element.areaM2 !== null ? `${kg(element.areaM2 * element.quantity)} m²` : null,
   ].filter(Boolean);
 
-  function close(done: boolean) {
+  function finish(count: number) {
     setError(null);
     startTransition(async () => {
-      const result = await setElementDoneAction({ elementId: element.id, side, done });
+      const result = await setElementDoneAction({ elementId: element.id, side, pieces: count });
       if (!result.ok) {
         setError(result.message || t("factory.error", lang));
         return;
       }
-      onDone(done ? new Date().toISOString() : null, done ? result.doneByName ?? "" : null);
+      const saved = result.pieces ?? count;
+      setChoosing(false);
+      onDone(saved, saved > 0 ? new Date().toISOString() : null, saved > 0 ? result.doneByName ?? "" : null);
     });
   }
+
+  // One piece: nothing to count. More: ask how many.
+  const startFinish = () => (availableQty(element, side) <= 1 ? finish(1) : setChoosing(true));
 
   return (
     <>
@@ -570,6 +725,8 @@ function ElementDetail({
         </div>
       </div>
 
+      {element.quantity > 1 || side === "field" ? <PieceStrip element={element} side={side} /> : null}
+
       <div className="flex items-baseline justify-between px-1">
         <span className="text-sm font-bold">{side === "factory" ? t("elements.factorySteps", lang) : t("elements.fieldSteps", lang)}</span>
         <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: checked, total: stages.length })}</span>
@@ -577,27 +734,33 @@ function ElementDetail({
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stages.map((stage, index) => {
           const work = element.work.find((entry) => entry.stage === stage) ?? null;
+          const skipped = !work && status === "done";
           return (
             <button
               key={stage}
               type="button"
               disabled={!canEdit}
               onClick={() => onStage(stage)}
-              className={`flex min-h-[104px] flex-col rounded-2xl border-2 bg-card p-3 text-left transition active:scale-[0.98] disabled:active:scale-100 ${work ? "border-green-600/60 bg-green-600/[0.05]" : canEdit ? "hover:border-orange-500/60" : ""}`}
+              className={`flex min-h-[96px] flex-col rounded-2xl border-2 p-3 text-left transition active:scale-[0.98] disabled:active:scale-100 ${
+                work ? "border-green-600/60 bg-green-600/[0.06]" : skipped ? "border-dashed bg-muted/40 opacity-70" : `bg-card ${canEdit ? "hover:border-orange-500/60" : ""}`
+              }`}
             >
               <span className="flex items-center gap-2">
                 <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${work ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}`}>
-                  {work ? <Check className="size-4" /> : index + 1}
+                  {work ? <Check className="size-4" /> : skipped ? <Minus className="size-4" /> : index + 1}
                 </span>
-                <span className="min-w-0 truncate text-base font-bold">{stageLabel(stage, lang)}</span>
+                <span className={`min-w-0 truncate text-base font-bold ${skipped ? "text-muted-foreground line-through decoration-1" : ""}`}>{stageLabel(stage, lang)}</span>
               </span>
               {work ? (
                 <span className="mt-2 min-w-0">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-green-700 dark:text-green-400">{t("elements.stepDone", lang)}</span>
                   <span className="line-clamp-2 text-sm font-semibold">{work.workerNames}</span>
                   <span className="block truncate text-[11px] text-muted-foreground">
                     {fill(t("elements.confirmedBy", lang), { name: work.checkedByName, date: formatShortDate(work.checkedAt) })}
                   </span>
                 </span>
+              ) : skipped ? (
+                <span className="mt-2 text-xs font-semibold text-muted-foreground">{t("elements.stepNotNeeded", lang)}</span>
               ) : (
                 <span className="mt-2 text-xs text-muted-foreground">{canEdit ? t("elements.tapToPick", lang) : t("elements.notChecked", lang)}</span>
               )}
@@ -607,31 +770,40 @@ function ElementDetail({
       </div>
 
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
-      {status === "done" ? (
-        <div className="flex items-center gap-3 rounded-2xl border-2 border-green-600/50 bg-green-600/10 p-3">
-          <CheckCheck className="size-6 shrink-0 text-green-700 dark:text-green-400" />
+      {done > 0 ? (
+        <div className={`flex items-center gap-3 rounded-2xl border-2 p-3 ${status === "done" ? "border-green-600/50 bg-green-600/10" : "border-orange-500/40 bg-orange-500/[0.06]"}`}>
+          <CheckCheck className={`size-6 shrink-0 ${status === "done" ? "text-green-700 dark:text-green-400" : "text-orange-600"}`} />
           <div className="min-w-0 flex-1">
-            <div className="font-bold text-green-800 dark:text-green-300">{side === "factory" ? t("elements.factoryDone", lang) : t("elements.fieldDone", lang)}</div>
+            <div className={`font-bold ${status === "done" ? "text-green-800 dark:text-green-300" : ""}`}>
+              {status === "done"
+                ? side === "factory"
+                  ? t("elements.factoryDone", lang)
+                  : t("elements.fieldDone", lang)
+                : fill(t("elements.piecesDone", lang), { done, total: element.quantity })}
+            </div>
             {closedAt ? <div className="truncate text-xs text-muted-foreground">{fill(t("elements.confirmedBy", lang), { name: closedBy ?? "", date: formatShortDate(closedAt) })}</div> : null}
           </div>
-          {canEdit && closedAt ? (
-            <button type="button" disabled={pending} onClick={() => close(false)} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold active:scale-95 disabled:opacity-50">
-              <RotateCcw className="size-3.5" /> {t("elements.reopen", lang)}
+          {canEdit && !choosing ? (
+            <button type="button" disabled={pending} onClick={() => (element.quantity > 1 ? setChoosing(true) : finish(0))} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold active:scale-95 disabled:opacity-50">
+              <RotateCcw className="size-3.5" /> {element.quantity > 1 ? t("elements.changePieces", lang) : t("elements.reopen", lang)}
             </button>
           ) : null}
         </div>
-      ) : canEdit ? (
+      ) : null}
+      {choosing ? (
+        <PiecesPicker element={element} side={side} pending={pending} onCancel={() => setChoosing(false)} onConfirm={finish} />
+      ) : canEdit && canMore ? (
         <button
           type="button"
           disabled={pending}
-          onClick={() => close(true)}
+          onClick={startFinish}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-green-600 text-base font-bold text-white shadow-md active:scale-[0.99] disabled:opacity-50"
         >
           {pending ? <Loader2 className="size-5 animate-spin" /> : <CheckCheck className="size-5" />}
-          {side === "factory" ? t("elements.finishFactory", lang) : t("elements.finishField", lang)}
+          {done > 0 ? t("elements.finishMore", lang) : side === "factory" ? t("elements.finishFactory", lang) : t("elements.finishField", lang)}
         </button>
       ) : null}
-      {canEdit && status !== "done" ? (
+      {canEdit && canMore && !choosing ? (
         <p className="text-center text-xs text-muted-foreground">{side === "factory" ? t("elements.finishFactoryHint", lang) : t("elements.finishFieldHint", lang)}</p>
       ) : null}
       {!canEdit ? <p className="text-center text-sm text-muted-foreground">{side === "factory" ? t("elements.onlyFactoryEngineer", lang) : t("elements.onlyFieldEngineer", lang)}</p> : null}

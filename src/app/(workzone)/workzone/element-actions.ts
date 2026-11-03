@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { importElementList, type ElementImportResult } from "@/lib/elements/import";
-import { canCheck, onFieldList, sideOfStage, stagesFor, type ElementList } from "@/lib/elements/stages";
+import { availableQty, canCheck, doneQty, onFieldList, sideOfStage, stagesFor, type ElementList } from "@/lib/elements/stages";
 import { ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
 import { geocodeAddress } from "@/lib/geo/geocode";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
@@ -112,7 +112,7 @@ export async function setElementWorkAction(input: unknown): Promise<ActionResult
   const result = await withTenantContext(companyId, async (tx) => {
     const element = await tx.siteElement.findFirst({
       where: { id: elementId, companyProfileId: companyId },
-      select: { id: true, list: true, baustelleId: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true } } },
+      select: { id: true, list: true, baustelleId: true, quantity: true, factoryDoneQty: true, fieldDoneQty: true, work: { select: { stage: true } } },
     });
     if (!element || !stagesFor(side, element.list as ElementList).includes(stage)) return null;
     const state = { ...element, list: element.list as ElementList };
@@ -152,15 +152,17 @@ export async function setElementWorkAction(input: unknown): Promise<ActionResult
 const doneSchema = z.object({
   elementId: z.string().min(1).max(64),
   side: z.enum(["factory", "field"]),
-  done: z.boolean(),
+  /** Pieces finished in total on that side (0 reopens). */
+  pieces: z.number().int().min(0).max(100000),
 });
 
 /**
- * Engineer closes an element on their list: the steps it went through are
- * checked, the others are not needed. Closing in the factory puts it on the
- * field list. Reopening in the factory is refused once the site worked on it.
+ * Engineer finishes an element on their list and says how many pieces are
+ * done ("2 of 4"): the steps it went through are checked, the others are not
+ * needed. Finished pieces in the factory go to the field list, the rest stay.
+ * The factory cannot take back pieces the site already finished.
  */
-export async function setElementDoneAction(input: unknown): Promise<ActionResult & { doneByName?: string }> {
+export async function setElementDoneAction(input: unknown): Promise<ActionResult & { doneByName?: string; pieces?: number }> {
   const tr = await getActionTranslator();
   const parsed = doneSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: tr("invalidInput") };
@@ -168,34 +170,39 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
   if (!actor) return { ok: false, message: tr("notSignedIn") };
-  const { elementId, side, done } = parsed.data;
+  const { elementId, side } = parsed.data;
   if (!canCheck(actor.can, side)) return { ok: false, message: tr("elementCheckOnlyEngineer") };
 
   const result = await withTenantContext(companyId, async (tx) => {
     const element = await tx.siteElement.findFirst({
       where: { id: elementId, companyProfileId: companyId },
-      select: { id: true, list: true, baustelleId: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true } } },
+      select: { id: true, list: true, baustelleId: true, quantity: true, factoryDoneQty: true, fieldDoneQty: true, work: { select: { stage: true } } },
     });
     if (!element) return null;
     const state = { ...element, list: element.list as ElementList };
     if (side === "field" && !onFieldList(state)) return "notReady" as const;
-    if (side === "factory" && !done) {
-      const fieldWork = element.fieldDoneAt || element.work.some((work) => sideOfStage(work.stage) === "field");
-      if (fieldWork) return "onSite" as const;
-      // Reopen: also the steps that made it count as finished stay, only the close goes.
+    const count = Math.min(parsed.data.pieces, availableQty(state, side));
+    if (side === "factory") {
+      const onSite = doneQty(state, "field");
+      const siteStarted = onSite > 0 || element.work.some((work) => sideOfStage(work.stage) === "field");
+      // Pieces already worked on site cannot go back to the factory.
+      if (count < Math.max(onSite, siteStarted ? 1 : 0)) return "onSite" as const;
     }
-    const stamp = done ? { at: new Date(), by: actor.name } : { at: null, by: null };
+    const stamp = count > 0 ? { at: new Date(), by: actor.name } : { at: null, by: null };
     await tx.siteElement.update({
       where: { id: element.id },
-      data: side === "factory" ? { factoryDoneAt: stamp.at, factoryDoneBy: stamp.by } : { fieldDoneAt: stamp.at, fieldDoneBy: stamp.by },
+      data:
+        side === "factory"
+          ? { factoryDoneQty: count, factoryDoneAt: stamp.at, factoryDoneBy: stamp.by }
+          : { fieldDoneQty: count, fieldDoneAt: stamp.at, fieldDoneBy: stamp.by },
     });
-    return element.baustelleId;
+    return { siteId: element.baustelleId, count };
   });
   if (!result) return { ok: false, message: tr("invalidInput") };
   if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };
-  revalidateSite(result);
-  return { ok: true, message: "OK", doneByName: actor.name };
+  revalidateSite(result.siteId);
+  return { ok: true, message: "OK", doneByName: actor.name, pieces: result.count };
 }
 
 export type ProjectSiteState = { ok: boolean; message: string; siteId?: string };
