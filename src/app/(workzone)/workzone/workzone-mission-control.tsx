@@ -10,6 +10,7 @@ import { useLanguage } from "@/components/i18n/language-provider";
 import { HubsteigerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { SteelSiteArt } from "@/components/steel/steel-art";
+import { SteelSiteScene } from "@/components/steel/steel-site-scene";
 import { t } from "@/lib/i18n";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
@@ -281,32 +282,18 @@ export function WorkzoneMissionControl({
   const positions = positionsByViewport[canvasViewport];
   const canvasHeight = canvasMetrics(canvasViewport, items).height;
   const isBauMode = mode !== "baumdienst";
-  const canvasBackground = isDarkTheme
-    ? isBauMode
+  // Steel firms get the site panorama (SteelSiteScene) on a plain yard colour; Baumdienst keeps its green field.
+  const canvasBackground = isBauMode
+    ? isDarkTheme
+      ? "linear-gradient(#14171d, #14171d)"
+      : "linear-gradient(#e4e1db, #e4e1db)"
+    : isDarkTheme
       ? [
-          // Neutral concrete grey with a subtle safety-orange top-left tint
-          "radial-gradient(circle at 18% 18%, rgba(255, 132, 40, 0.10), transparent 28%)",
-          "radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.03), transparent 26%)",
-          "linear-gradient(135deg, rgba(28, 28, 30, 0.96), rgba(38, 38, 40, 0.88) 46%, rgba(46, 46, 48, 0.94))",
-          "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
-          "linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-        ].join(", ")
-      : [
           "radial-gradient(circle at 18% 18%, rgba(70, 119, 91, 0.32), transparent 28%)",
           "radial-gradient(circle at 82% 16%, rgba(166, 145, 93, 0.18), transparent 26%)",
           "linear-gradient(135deg, rgba(15, 40, 31, 0.95), rgba(22, 56, 43, 0.86) 46%, rgba(32, 47, 38, 0.94))",
           "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
           "linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-        ].join(", ")
-    : isBauMode
-      ? [
-          // Light concrete grey with safety orange highlight
-          "radial-gradient(circle at 16% 18%, rgba(255, 132, 40, 0.10), transparent 30%)",
-          "radial-gradient(circle at 84% 14%, rgba(100, 100, 105, 0.10), transparent 28%)",
-          "radial-gradient(circle at 52% 92%, rgba(120, 120, 125, 0.08), transparent 34%)",
-          "linear-gradient(135deg, rgba(240, 240, 242, 0.98), rgba(228, 228, 232, 0.92) 48%, rgba(220, 220, 224, 0.88))",
-          "linear-gradient(rgba(80, 80, 85, 0.045) 1px, transparent 1px)",
-          "linear-gradient(90deg, rgba(80, 80, 85, 0.04) 1px, transparent 1px)",
         ].join(", ")
       : [
           "radial-gradient(circle at 16% 18%, rgba(73, 135, 96, 0.16), transparent 30%)",
@@ -316,7 +303,7 @@ export function WorkzoneMissionControl({
           "linear-gradient(rgba(53, 83, 65, 0.045) 1px, transparent 1px)",
           "linear-gradient(90deg, rgba(53, 83, 65, 0.04) 1px, transparent 1px)",
         ].join(", ");
-  const canvasBackgroundSize = isDarkTheme ? "auto, auto, auto, 34px 34px, 34px 34px" : "auto, auto, auto, auto, 34px 34px, 34px 34px";
+  const canvasBackgroundSize = isBauMode ? "auto" : isDarkTheme ? "auto, auto, auto, 34px 34px, 34px 34px" : "auto, auto, auto, auto, 34px 34px, 34px 34px";
   const mapItems = useMemo(
     () =>
       items
@@ -473,8 +460,18 @@ export function WorkzoneMissionControl({
             contain: "layout paint",
           }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.34),transparent_34%,rgba(31,72,50,0.06)_64%,transparent),radial-gradient(ellipse_at_center,transparent_42%,rgba(87,69,40,0.10))] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(82,135,97,0.08)_64%,transparent),radial-gradient(ellipse_at_center,transparent_44%,rgba(0,0,0,0.24))]" />
-          <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(30deg,transparent_0_47%,rgba(67,100,78,0.09)_48%_52%,transparent_53%_100%)] [background-size:180px_180px] dark:opacity-35 dark:[background-image:linear-gradient(30deg,transparent_0_47%,rgba(190,210,179,0.08)_48%_52%,transparent_53%_100%)]" />
+          {isBauMode ? (
+            <>
+              {/* A steel site at dusk (dark) or morning (light) along the top, fading into the yard. */}
+              <SteelSiteScene dark={isDarkTheme} className="pointer-events-none absolute inset-x-0 top-0 h-[520px] w-full opacity-60 dark:opacity-80 lg:h-[600px]" />
+              <div className="pointer-events-none absolute inset-x-0 top-[360px] h-[240px] bg-gradient-to-b from-transparent to-[#e4e1db] dark:to-[#14171d] lg:top-[420px]" />
+            </>
+          ) : (
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.34),transparent_34%,rgba(31,72,50,0.06)_64%,transparent),radial-gradient(ellipse_at_center,transparent_42%,rgba(87,69,40,0.10))] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(82,135,97,0.08)_64%,transparent),radial-gradient(ellipse_at_center,transparent_44%,rgba(0,0,0,0.24))]" />
+              <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(30deg,transparent_0_47%,rgba(67,100,78,0.09)_48%_52%,transparent_53%_100%)] [background-size:180px_180px] dark:opacity-35 dark:[background-image:linear-gradient(30deg,transparent_0_47%,rgba(190,210,179,0.08)_48%_52%,transparent_53%_100%)]" />
+            </>
+          )}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5">
             {!readOnly || allowCanvasDrag ? (
               <Button

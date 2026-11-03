@@ -85,10 +85,13 @@ export function WorkerIconStrip({
   workers,
   admin,
   profileHrefBase,
+  insetClassName = "",
 }: {
   workers: WorkerBadge[];
   admin: boolean;
   profileHrefBase?: string;
+  /** Room on the left for what floats above the strip (the logo); scrolled items pass under it. */
+  insetClassName?: string;
 }) {
   const { currentLang } = useLanguage();
   const pathname = usePathname();
@@ -164,7 +167,7 @@ export function WorkerIconStrip({
 
   return (
     <div ref={wrapRef} className="no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1">
-      <div className="flex min-w-max items-start gap-2 pr-5">
+      <div className={`flex min-w-max items-start gap-2 pr-5 ${insetClassName}`}>
         {workers.map((worker) => {
           const badge = workerBadgeLabel(worker.lastName);
           const nameLabel = firstNameLabel(worker.firstName);

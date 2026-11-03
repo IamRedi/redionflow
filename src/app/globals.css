@@ -328,3 +328,18 @@ body.mode-bau [class*="emerald-950"] {
     box-shadow: none !important;
   }
 }
+
+/* Assistant chat: quiet chat-app wallpaper (doodle dots) in both themes. */
+.chat-wallpaper {
+  background-color: #efeae2;
+  background-image:
+    radial-gradient(circle at 12px 12px, rgb(0 0 0 / 0.035) 1.5px, transparent 1.6px),
+    radial-gradient(circle at 36px 30px, rgb(0 0 0 / 0.03) 1px, transparent 1.1px);
+  background-size: 48px 48px;
+}
+.dark .chat-wallpaper {
+  background-color: #0b141a;
+  background-image:
+    radial-gradient(circle at 12px 12px, rgb(255 255 255 / 0.03) 1.5px, transparent 1.6px),
+    radial-gradient(circle at 36px 30px, rgb(255 255 255 / 0.025) 1px, transparent 1.1px);
+}

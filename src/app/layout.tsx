@@ -3,9 +3,13 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
+import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { appName, appSuffix, appSuperscript, brandAppleIconSrc, brandIconSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
 import { getCompanyMode } from "@/lib/db/company";
+import { getCurrentCompanyId } from "@/lib/db/tenant";
+import { kidrahtAvailable } from "@/lib/kidraht/company-link";
+import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { t } from "@/lib/i18n";
 import { productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
@@ -41,6 +45,8 @@ export default async function RootLayout({
   const initialLang = await resolveRequestLanguage();
   const admin = await getCurrentAdmin();
   const companyMode = await getCompanyMode();
+  const worker = admin ? null : await getCurrentWorker();
+  const kidraht = admin || worker ? await kidrahtAvailable(await getCurrentCompanyId()) : false;
   const brand = productBranding(companyMode);
   const showSaasPublicBrand = isSaasMode && !admin;
   // Fall back to the static brand for pre-session pages where no company is
@@ -72,18 +78,18 @@ export default async function RootLayout({
     >
       <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
-          <div
-            className={`fixed right-2 top-2 z-[1000] border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${
-              admin ? "" : "pointer-events-none"
-            }`}
-          >
-            {admin ? (
-              <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle} className="block transition hover:text-brand-green">
-                {brandBadge}
-              </Link>
-            ) : (
-              brandBadge
-            )}
+          {/* Top-right corner, scrolls away with the page: KiDraht (company rule book) and the product mark. */}
+          <div className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
+            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} /> : null}
+            <div className={`border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${admin ? "" : "pointer-events-none"}`}>
+              {admin ? (
+                <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle} className="block transition hover:text-brand-green">
+                  {brandBadge}
+                </Link>
+              ) : (
+                brandBadge
+              )}
+            </div>
           </div>
           {children}
         </LanguageProvider>
