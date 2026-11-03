@@ -1518,6 +1518,13 @@ model SiteElement {
   areaM2           Float?
   sortIndex        Int            @default(0)
   sourceFile       String?
+  /// The factory engineer closed the element (the remaining steps are not
+  /// needed); from then on it is on the field list.
+  factoryDoneAt    DateTime?
+  factoryDoneBy    String?
+  /// The field engineer closed the element on site.
+  fieldDoneAt      DateTime?
+  fieldDoneBy      String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   work             SiteElementWork[]

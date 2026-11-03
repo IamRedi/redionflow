@@ -6,12 +6,13 @@ import { z } from "zod";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { importElementList, type ElementImportResult } from "@/lib/elements/import";
-import { canCheck, sideOfStage, stagesFor, type ElementList } from "@/lib/elements/stages";
+import { canCheck, onFieldList, sideOfStage, stagesFor, type ElementList } from "@/lib/elements/stages";
 import { ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
+import { geocodeAddress } from "@/lib/geo/geocode";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { currentCompanyActor } from "@/lib/site-files/actor";
-import { safeFileName, SITE_FILE_MAX_BYTES } from "@/lib/site-files/validate";
+import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime } from "@/lib/site-files/validate";
 import type { ActionResult } from "@/lib/validation/action-result";
 
 function revalidateSite(baustelleId: string) {
@@ -109,8 +110,14 @@ export async function setElementWorkAction(input: unknown): Promise<ActionResult
   const workerIds = [...new Set(parsed.data.workerIds)];
 
   const result = await withTenantContext(companyId, async (tx) => {
-    const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: { id: true, list: true, baustelleId: true } });
+    const element = await tx.siteElement.findFirst({
+      where: { id: elementId, companyProfileId: companyId },
+      select: { id: true, list: true, baustelleId: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true } } },
+    });
     if (!element || !stagesFor(side, element.list as ElementList).includes(stage)) return null;
+    const state = { ...element, list: element.list as ElementList };
+    // The field list starts where the factory ends.
+    if (side === "field" && !onFieldList(state)) return "notReady" as const;
     if (workerIds.length === 0) {
       await tx.siteElementWork.deleteMany({ where: { elementId, stage, companyProfileId: companyId } });
       return element.baustelleId;
@@ -137,6 +144,171 @@ export async function setElementWorkAction(input: unknown): Promise<ActionResult
     return element.baustelleId;
   });
   if (!result) return { ok: false, message: tr("invalidInput") };
+  if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   revalidateSite(result);
   return { ok: true, message: "OK", checkedByName: actor.name };
+}
+
+const doneSchema = z.object({
+  elementId: z.string().min(1).max(64),
+  side: z.enum(["factory", "field"]),
+  done: z.boolean(),
+});
+
+/**
+ * Engineer closes an element on their list: the steps it went through are
+ * checked, the others are not needed. Closing in the factory puts it on the
+ * field list. Reopening in the factory is refused once the site worked on it.
+ */
+export async function setElementDoneAction(input: unknown): Promise<ActionResult & { doneByName?: string }> {
+  const tr = await getActionTranslator();
+  const parsed = doneSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: tr("invalidInput") };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: tr("notSignedIn") };
+  const actor = await currentCompanyActor(companyId);
+  if (!actor) return { ok: false, message: tr("notSignedIn") };
+  const { elementId, side, done } = parsed.data;
+  if (!canCheck(actor.can, side)) return { ok: false, message: tr("elementCheckOnlyEngineer") };
+
+  const result = await withTenantContext(companyId, async (tx) => {
+    const element = await tx.siteElement.findFirst({
+      where: { id: elementId, companyProfileId: companyId },
+      select: { id: true, list: true, baustelleId: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true } } },
+    });
+    if (!element) return null;
+    const state = { ...element, list: element.list as ElementList };
+    if (side === "field" && !onFieldList(state)) return "notReady" as const;
+    if (side === "factory" && !done) {
+      const fieldWork = element.fieldDoneAt || element.work.some((work) => sideOfStage(work.stage) === "field");
+      if (fieldWork) return "onSite" as const;
+      // Reopen: also the steps that made it count as finished stay, only the close goes.
+    }
+    const stamp = done ? { at: new Date(), by: actor.name } : { at: null, by: null };
+    await tx.siteElement.update({
+      where: { id: element.id },
+      data: side === "factory" ? { factoryDoneAt: stamp.at, factoryDoneBy: stamp.by } : { fieldDoneAt: stamp.at, fieldDoneBy: stamp.by },
+    });
+    return element.baustelleId;
+  });
+  if (!result) return { ok: false, message: tr("invalidInput") };
+  if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
+  if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };
+  revalidateSite(result);
+  return { ok: true, message: "OK", doneByName: actor.name };
+}
+
+export type ProjectSiteState = { ok: boolean; message: string; siteId?: string };
+
+/**
+ * Office: a new project arrives as documents. The element lists inside name
+ * the project ("Progetto Pllum Stafuka", number 0132); the site is created
+ * with that name (or the one typed), its address placed on the map, the
+ * elements filled in and every file kept in the site documents. A project
+ * that already has a site is updated there instead of created twice.
+ */
+export async function createSiteFromProjectAction(formData: FormData): Promise<ProjectSiteState> {
+  const tr = await getActionTranslator();
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: tr("notSignedIn") };
+  const actor = await currentCompanyActor(companyId);
+  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
+  const typedName = String(formData.get("name") ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+  const address = String(formData.get("address") ?? "").replace(/\s+/g, " ").trim().slice(0, 240);
+  const files = formData.getAll("file").filter((entry): entry is File => entry instanceof File && entry.size > 0).slice(0, 10);
+  if (files.length === 0) return { ok: false, message: tr("projectNeedsFiles") };
+
+  const lists: Array<{ list: ParsedElementList; bytes: Uint8Array<ArrayBuffer>; fileName: string }> = [];
+  const others: Array<{ bytes: Uint8Array<ArrayBuffer>; fileName: string; mime: string }> = [];
+  for (const file of files) {
+    if (file.size > SITE_FILE_MAX_BYTES) return { ok: false, message: tr("elementListUnreadable", { file: file.name }) };
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const fileName = safeFileName(file.name);
+    try {
+      lists.push({ list: parseElementList(bytes), bytes, fileName });
+      continue;
+    } catch (error) {
+      if (!(error instanceof ElementListError)) throw error;
+    }
+    const mime = spreadsheetMime(fileName) ?? sniffSiteFileMime(bytes, file.name);
+    if (!mime || !allowedForKind(mime, "document") && !spreadsheetMime(fileName)) return { ok: false, message: tr("documentTypeAllowed") };
+    others.push({ bytes, fileName, mime });
+  }
+  const projectName = lists.find((item) => item.list.projectName)?.list.projectName ?? null;
+  const projectNumber = lists.find((item) => item.list.projectNumber)?.list.projectNumber ?? null;
+  const name = typedName || projectName || "";
+  if (!name) return { ok: false, message: tr("projectNeedsName") };
+
+  const company = await withTenantContext(companyId, (tx) => tx.companyProfile.findFirst({ where: { id: companyId }, select: { country: true } }));
+  const coordinates = address ? await geocodeAddress(address, company?.country ?? null) : null;
+
+  const siteId = await withTenantContext(
+    companyId,
+    async (tx) => {
+      const existing = await tx.baustelle.findFirst({ where: { companyProfileId: companyId, name: { equals: name, mode: "insensitive" } }, select: { id: true, type: true, address: true, description: true } });
+      if (existing?.type === "STEEL_WORKSHOP") return null;
+      const description = projectNumber ? tr("projectDescription", { number: projectNumber }) : null;
+      const site = existing
+        ? await tx.baustelle.update({
+            where: { id: existing.id },
+            data: {
+              ...(address ? { address, ...(coordinates ? { coordinates } : {}) } : {}),
+              ...(!existing.description && description ? { description } : {}),
+            },
+            select: { id: true },
+          })
+        : await tx.baustelle.create({
+            data: {
+              companyProfileId: companyId,
+              name,
+              type: "STEEL_ASSEMBLY",
+              status: "active",
+              address: address || null,
+              description,
+              documents: [],
+              ...(coordinates ? { coordinates } : {}),
+            },
+            select: { id: true },
+          });
+      for (const item of lists) {
+        await importElementList(tx, { companyId, baustelleId: site.id, parsed: item.list, fileName: item.fileName });
+      }
+      const known = new Set((await tx.siteFile.findMany({ where: { companyProfileId: companyId, baustelleId: site.id }, select: { fileName: true } })).map((file) => file.fileName));
+      const keep = [
+        ...lists.map((item) => ({ bytes: item.bytes, fileName: item.fileName, mime: spreadsheetMime(item.fileName) ?? "application/vnd.ms-excel", reference: item.list.projectNumber })),
+        ...others.map((item) => ({ ...item, reference: projectNumber })),
+      ];
+      for (const file of keep) {
+        if (known.has(file.fileName)) continue;
+        await tx.siteFile.create({
+          data: {
+            companyProfileId: companyId,
+            baustelleId: site.id,
+            kind: "document",
+            fileName: file.fileName,
+            mime: file.mime,
+            size: file.bytes.byteLength,
+            data: file.bytes,
+            reference: file.reference,
+            uploadedByName: actor.name,
+          },
+        });
+      }
+      return site.id;
+    },
+    { timeout: 30_000, maxWait: 10_000 },
+  );
+  if (!siteId) return { ok: false, message: tr("invalidInput") };
+  revalidatePath("/workzone");
+  revalidateSite(siteId);
+  const elements = lists.filter((item) => item.list.list === "assembly").reduce((sum, item) => sum + item.list.elements.length, 0);
+  const parts = lists.filter((item) => item.list.list === "part").reduce((sum, item) => sum + item.list.elements.length, 0);
+  return { ok: true, message: tr("projectSiteReady", { name, elements, parts, files: lists.length + others.length }), siteId };
+}
+
+function spreadsheetMime(fileName: string) {
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  if (lower.endsWith(".xls")) return "application/vnd.ms-excel";
+  return null;
 }

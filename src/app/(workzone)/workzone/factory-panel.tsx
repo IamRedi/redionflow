@@ -1,18 +1,35 @@
 "use client";
 
-import { FileUp } from "lucide-react";
+import { ChevronRight, FileUp } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelPhaseArt, SteelSiteArt } from "@/components/steel/steel-art";
-import { batchState, currentStepIndex, FACTORY_STEP_KEYS } from "@/lib/factory/production";
+import { batchState, currentStepIndex, FACTORY_STEP_KEYS, formatAmount } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
+import { NewProjectButton } from "./new-project";
 import { OrderImportSheet } from "./production/order-import";
 import { artKey, BatchCard, BELT_STYLE, type FactoryBatchView } from "./production/production-ui";
 
 export type { FactoryBatchView } from "./production/production-ui";
+
+/** Per site: assemblies on its element list and how many the factory finished. */
+export type FactorySiteOutput = {
+  siteId: string;
+  siteName: string;
+  marks: number;
+  pieces: number;
+  kg: number;
+  doneMarks: number;
+  donePieces: number;
+  doneKg: number;
+  mountedMarks: number;
+};
+
+const amount = (value: number) => formatAmount(Math.round(value));
 
 /**
  * The factory on the field board: only to look at. It shows what is on the
@@ -24,12 +41,14 @@ export function FactoryPanel({
   factoryName,
   factoryAddress,
   batches,
+  siteOutput = [],
   sites,
   canManage,
 }: {
   factoryName: string;
   factoryAddress: string;
   batches: FactoryBatchView[];
+  siteOutput?: FactorySiteOutput[];
   sites: Array<{ id: string; name: string }>;
   canManage: boolean;
 }) {
@@ -74,17 +93,71 @@ export function FactoryPanel({
               {t("factory.ready", lang)}: {counts.ready}
             </span>
             {canManage ? (
-              <button
-                type="button"
-                onClick={() => setImporting(true)}
-                className="ml-auto inline-flex h-11 items-center gap-2 rounded-full bg-orange-600 px-4 text-sm font-bold text-white shadow-md shadow-orange-600/20 active:scale-95"
-              >
-                <FileUp className="size-5" /> {t("factory.importOrder", lang)}
-              </button>
+              <span className="ml-auto flex gap-1.5">
+                <NewProjectButton />
+                <button
+                  type="button"
+                  onClick={() => setImporting(true)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border bg-background/80 px-3 text-xs font-semibold active:scale-95"
+                >
+                  <FileUp className="size-4 text-orange-600" /> {t("factory.importOrder", lang)}
+                </button>
+              </span>
             ) : null}
           </div>
         </div>
       </div>
+
+      {/* Elements produced per construction site: only to look at, the steps are checked on the site. */}
+      {siteOutput.length > 0 ? (
+        <div className="border-b p-4">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <h3 className="text-sm font-bold">{t("elements.factoryOutput", lang)}</h3>
+            <span className="text-[11px] text-muted-foreground">{t("elements.factoryOutputHint", lang)}</span>
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {siteOutput.map((site) => {
+              const pct = site.marks > 0 ? Math.round((site.doneMarks / site.marks) * 100) : 0;
+              const waiting = site.marks - site.doneMarks;
+              return (
+                <li key={site.siteId}>
+                  <Link href={`/workzone/baustellen/${site.siteId}`} className="block rounded-2xl border bg-background p-3 active:scale-[0.99]">
+                    <div className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm font-bold">{site.siteName}</span>
+                      <span className={`shrink-0 text-sm font-bold tabular-nums ${pct === 100 ? "text-green-700 dark:text-green-400" : "text-orange-600"}`}>{pct}%</span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </div>
+                    <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-muted">
+                      <span className={`block h-full rounded-full ${pct === 100 ? "bg-green-600" : "bg-orange-500"}`} style={{ width: `${pct}%` }} />
+                    </span>
+                    <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] tabular-nums">
+                      <div className="rounded-lg bg-green-600/10 px-2 py-1.5">
+                        <div className="font-semibold text-green-800 dark:text-green-300">{t("elements.produced", lang)}</div>
+                        <div className="text-sm font-bold">
+                          {site.doneMarks}/{site.marks}
+                        </div>
+                        <div className="truncate text-muted-foreground">
+                          {amount(site.donePieces)} {t("elements.pieces", lang).toLowerCase()} · {amount(site.doneKg)} kg
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-muted/70 px-2 py-1.5">
+                        <div className="font-semibold">{t("elements.statusWaiting", lang)}</div>
+                        <div className="text-sm font-bold">{waiting}</div>
+                        <div className="truncate text-muted-foreground">
+                          {amount(site.pieces - site.donePieces)} {t("elements.pieces", lang).toLowerCase()} · {amount(site.kg - site.doneKg)} kg
+                        </div>
+                      </div>
+                    </div>
+                    {site.mountedMarks > 0 ? (
+                      <div className="mt-1.5 text-[11px] text-muted-foreground">{t("elements.mountedOnSite", lang).replace("{n}", String(site.mountedMarks))}</div>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       {/* The production line: stations left to right, ready dock at the end. Tap a group to open its site. */}
       <div className="relative overflow-x-auto">

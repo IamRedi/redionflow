@@ -263,6 +263,10 @@ export default async function BaustelleDetailPage({
             lengthMm: true,
             weightKg: true,
             areaM2: true,
+            factoryDoneAt: true,
+            factoryDoneBy: true,
+            fieldDoneAt: true,
+            fieldDoneBy: true,
             work: { select: { stage: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } },
           },
         }),
@@ -289,6 +293,8 @@ export default async function BaustelleDetailPage({
       .map((element) => ({
         ...element,
         list: element.list === "part" ? ("part" as const) : ("assembly" as const),
+        factoryDoneAt: element.factoryDoneAt?.toISOString() ?? null,
+        fieldDoneAt: element.fieldDoneAt?.toISOString() ?? null,
         work: element.work.map((work) => ({ ...work, checkedAt: work.checkedAt.toISOString() })),
       }))
       .sort((a, b) => (a.list === b.list ? compareMarks(a.mark, b.mark) : a.list === "assembly" ? -1 : 1));
