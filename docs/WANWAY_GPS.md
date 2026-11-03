@@ -137,17 +137,17 @@ The pilot's outstanding processing agreement remains outstanding. This PR does
 not enable employee tracking, payroll decisions or automatic site presences.
 No real location/device data is used in public demos or test fixtures.
 
-Before approved deployment: verify current pilot revision/branch and Railway
-project, additive migration and rollback/recovery readiness; install the new
-independent encryption variables securely, enable the module, deploy the exact
-reviewed revision without changing the Railway source, and verify the private
-admin route. Agent performs those steps only after owner approval and with
-provider access. CLI access was unavailable during preparation; the authenticated Railway browser
-confirmed source branch, successful deployment, EU/Amsterdam, one replica and
-37 active vehicles. The health endpoint returned ok. No environment values or
-live database were changed. Rollback disables the feature and deploys
-the prior application revision; retain additive tables/keyring for recovery,
-rather than dropping data. No destructive rollback SQL runs automatically.
+Approved rollout completed on 3 November 2026 after explicit owner approval.
+PR #28 was merged into the existing pilot branch, without changing the Railway
+source. The additive migration succeeded; the final active container at
+`32add653c6d3a816e95fad0cc24324c1dfb50dcb` reports no pending migrations.
+The independent encryption variables and feature flag are configured, health
+returns ok and the private admin setup panel opens ready for owner entry.
+No provider credentials or real location data were entered by the agent.
+Rollback disables the feature and deploys the prior application revision;
+retain additive tables/keyring for recovery rather than dropping data.
+No destructive rollback SQL runs automatically. Existing backup and privacy
+follow-ups remain open. See [deployment evidence](../EVIDENCE.md).
 
 Owner acceptance sequence: enter APPID/KEY personally → Test Connection → confirm
 a GPS mapping to one existing vehicle → Manual Sync → verify position/report time,
