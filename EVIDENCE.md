@@ -5,18 +5,21 @@
 ## 3 November 2026 — WanWay feature candidate (local, not deployed)
 
 Scope: `feat/wanway-gps-integration`, based on active pilot revision
-`a01245877e7c6afc485112cea97c9667ed29aeab` (PR #27). Production is still on
+`000ebf1cc4310de770b0efb4ccf2e7df69b50a19` (PR #27), reconciled locally
+in commit `9868ecd080cbd76b4be2342bad149241468e32cd`. The pilot advanced during
+verification; its new site-element features were preserved and the combined
+source was rechecked. Production is still on
 its existing pilot deployment; no merge, production migration, environment
 change or real-provider authentication was performed for this feature.
 
 | Local gate | Verified result |
 | --- | --- |
 | ESLint / TypeScript | PASS, zero lint warnings |
-| Unit tests | **496 PASS**, 65 files |
-| PostgreSQL integration | **275 PASS**, 16 files, including 12 WanWay security/service tests |
+| Unit tests | **505 PASS**, 67 files |
+| PostgreSQL integration | **277 PASS**, 17 files, including 12 WanWay security/service tests |
 | Production build | PASS, including the WanWay-enabled managed E2E build |
 | Chromium E2E | **26 PASS**, including discovery, confirmed mapping to an existing vehicle, offline telemetry, transient history/map initialization and disconnect with **37 synthetic vehicles preserved** |
-| Additive migrations | 58 migrations applied to a fresh isolated PostgreSQL 16; schema comparison: **No difference detected** |
+| Additive migrations | 59 migrations applied to a fresh isolated PostgreSQL 16; schema comparison: **No difference detected** |
 | Secret scan | Gitleaks 8.30.1 on the complete staged feature diff: **no leaks found** |
 | Responsive visual review | Integration panel at 1440 px and 390 px; key cleared after submit, no full IMEI/secret in rendered HTML, phone panel has no horizontal overflow |
 
