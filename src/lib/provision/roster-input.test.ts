@@ -86,9 +86,18 @@ describe('parseRosterInput', () => {
       JSON.stringify({ company: 'X shpk', sites: [['Punishtja', 'STEEL_WORKSHOP', 'Rruga 1'], ['Kantier', 'weird', ''], ['', 'OTHER', '']] }),
     )!;
     expect(roster.sites).toEqual([
-      { name: 'Punishtja', type: 'STEEL_WORKSHOP', address: 'Rruga 1' },
-      { name: 'Kantier', type: 'OTHER', address: null },
+      { name: 'Punishtja', type: 'STEEL_WORKSHOP', address: 'Rruga 1', description: null, files: [] },
+      { name: 'Kantier', type: 'OTHER', address: null, description: null, files: [] },
     ]);
+  });
+
+  it('reads site description and attached files', () => {
+    const data = Buffer.from('<table></table>').toString('base64');
+    const roster = parseRosterInput(
+      JSON.stringify({ company: 'X shpk', sites: [['Projekt', 'STEEL_ASSEMBLY', '', 'Projekti 0001', [['Lista.xls', data], ['', data], ['Bosh.xls', '']]]] }),
+    )!;
+    expect(roster.sites[0]).toMatchObject({ name: 'Projekt', description: 'Projekti 0001' });
+    expect(roster.sites[0]?.files.map((file) => [file.fileName, Buffer.from(file.bytes).toString()])).toEqual([['Lista.xls', '<table></table>']]);
   });
 
   it('maps staff to roles, levels, licences and language', () => {

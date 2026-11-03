@@ -274,6 +274,8 @@ model CompanyProfile {
   productionBatches         ProductionBatch[]
   productionEvents          ProductionEvent[]
   siteFiles                 SiteFile[]
+  siteElements              SiteElement[]
+  siteElementWork           SiteElementWork[]
   inventoryCatalog          CompanyInventoryCatalog[]
   inventoryMovements        InventoryMovement[]
   inventoryAssetMovements   InventoryAssetMovement[]
@@ -968,6 +970,7 @@ model Baustelle {
   treeItems                 TreeItem[]
   productionBatches         ProductionBatch[]
   siteFiles                 SiteFile[]
+  siteElements              SiteElement[]
   workLogs                  WorkLog[]
   workSessions              WorkSession[]
   manualTasks               ManualTask[]
@@ -1488,4 +1491,58 @@ model SiteFile {
 
   @@index([companyProfileId])
   @@index([baustelleId, kind])
+}
+
+/// One element of a steel project as the drawing office lists it (Tekla
+/// "Lista assemblaggi" = assemblies like B/12 or C/40, "Lista parti" = cut
+/// parts like plate 1001). The factory and the field team check off, per
+/// element and stage, which workers made or mounted it.
+model SiteElement {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  /// assembly | part
+  list             String
+  /// Drawing mark: "B/12", "C/40", "1001".
+  mark             String
+  /// BEAM, COLUMN, ... (assemblies only).
+  kind             String?
+  profile          String?
+  material         String?
+  quantity         Int            @default(1)
+  lengthMm         Float?
+  /// Per piece.
+  weightKg         Float?
+  areaM2           Float?
+  sortIndex        Int            @default(0)
+  sourceFile       String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  work             SiteElementWork[]
+
+  @@unique([baustelleId, list, mark])
+  @@index([companyProfileId])
+}
+
+/// Who did one stage of one element: factory steps (cutting ... loading) or
+/// "mounted" on site. Saved by the engineer who checked it.
+model SiteElementWork {
+  id                String         @id @default(cuid())
+  companyProfileId  String
+  companyProfile    CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  elementId         String
+  element           SiteElement    @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  stage             String
+  workerIds         String[]
+  /// Names at the time of checking, so the record stays readable.
+  workerNames       String         @default("")
+  checkedByName     String
+  checkedByUserId   String?
+  checkedByWorkerId String?
+  checkedAt         DateTime       @default(now())
+
+  @@unique([elementId, stage])
+  @@index([companyProfileId])
 }
