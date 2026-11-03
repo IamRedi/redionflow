@@ -1,5 +1,6 @@
 {
   "common": {
+    "fileSizeKb": "{size} KB",
     "save": "Zapisz",
     "cancel": "Anuluj",
     "delete": "Usun",

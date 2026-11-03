@@ -1,8 +1,9 @@
 import { rejectCrossOriginMutation } from "@/lib/auth/same-origin";
 import { NextResponse } from "next/server";
-import { stepCountIs, streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { z } from "zod";
+import { streamText } from "ai";
+import { readAssistantBody } from "@/lib/assistant/request-body";
+import { reserveAssistantQuota, assistantQuotaResponse } from "@/lib/assistant/quota";
+import { assistantGeneration } from "@/lib/assistant/generation";
 
 import { assistantLanguagePromptLabel, type AssistantLanguageCode, languageForTurn } from "@/lib/assistant/language";
 import { getRequesterContext } from "@/lib/assistant/requester";
@@ -10,15 +11,6 @@ import { getWorkerAssistantContext } from "@/lib/assistant/worker-context";
 import { ensureLoginAllowed, getClientIp, registerFailedLogin } from "@/lib/auth/login-guard";
 
 export const runtime = "nodejs";
-
-const bodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["system", "user", "assistant"]),
-      content: z.string(),
-    }),
-  ),
-});
 
 function workerOnlyError(lang: AssistantLanguageCode) {
   if (lang === "SQ") return "Nuk ka akses: ky ndihmes eshte vetem per worker-at e loguar ne Workzone.";
@@ -78,19 +70,20 @@ export async function POST(req: Request) {
     );
   }
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
+  const parsed = await readAssistantBody(req);
+  if (!parsed.ok) {
     await registerFailedLogin("assistant", clientIp);
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request." }, { status: parsed.status });
   }
 
   const lastUser = [...parsed.data.messages].reverse().find((message) => message.role === "user")?.content ?? "";
   const turnLanguage = languageForTurn(requester, lastUser);
   const docs = await getWorkerAssistantContext();
+  const quota = await reserveAssistantQuota(requester);
+  if (!quota.ok) return assistantQuotaResponse(quota, fallbackLanguage);
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
-    stopWhen: stepCountIs(8),
+    ...assistantGeneration(req, "worker", quota.settle),
     system: `Du bist der Worker Assistant fuer die Workzone.
 
 Du hilfst nur eingeloggten Workern.

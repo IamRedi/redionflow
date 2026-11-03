@@ -19,6 +19,8 @@
     "db:migrate": "prisma migrate dev && prisma generate",
     "db:studio": "prisma studio",
     "db:export": "tsx scripts/export-local-data.ts",
+    "backup:create": "tsx scripts/database-backup.ts create",
+    "backup:verify": "tsx scripts/database-backup.ts verify",
     "storage:migrate-local": "tsx scripts/migrate-local-uploads-to-storage.ts",
     "db:reset:workzone": "tsx scripts/reset-workzone-data.ts",
     "db:reset:cones": "tsx scripts/reset-cones-data.ts",

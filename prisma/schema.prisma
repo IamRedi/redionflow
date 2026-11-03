@@ -242,6 +242,7 @@ model User {
 }
 
 model CompanyProfile {
+  assistantQuotaBuckets AssistantQuotaBucket[]
   wanwayIntegration WanwayIntegration?
   id                    String  @id @default(cuid())
   legalName             String
@@ -304,6 +305,21 @@ model CompanyProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Per-tenant cost limits only; never contains prompts, transcripts or API keys.
+model AssistantQuotaBucket {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  actorKey         String
+  window           String
+  windowStart      DateTime
+  requests         Int            @default(0)
+  tokens           Int            @default(0)
+
+  @@unique([companyProfileId, actorKey, window, windowStart], map: "AssistantQuotaBucket_scope_window_key")
+  @@index([companyProfileId, windowStart])
 }
 
 enum PlanTier {

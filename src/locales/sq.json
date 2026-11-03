@@ -1,5 +1,6 @@
 {
   "common": {
+    "fileSizeKb": "{size} KB",
     "companyLogoAlt": "Logo e firmes",
     "save": "Ruaj",
     "cancel": "Anulo",
