@@ -557,6 +557,15 @@ model Machine {
   funksioni         String?
   patentaEnevojshme String?
   imageUrl          String?
+  /// Albanian vehicle papers (Kolaudimi uses tuvDate): insurance, road tax,
+  /// transport permit and tachograph check, each the day it runs out.
+  insuranceDate       DateTime?
+  taxDate             DateTime?
+  transportPermitDate DateTime?
+  tachographDate      DateTime?
+  /// Registered owner when it is not the company itself (leased, private car).
+  ownership           String?
+  tonnage             Float?
 
   notes       String?
   isActive    Boolean   @default(true)

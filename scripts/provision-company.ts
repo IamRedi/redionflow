@@ -17,10 +17,12 @@ import { hashPassword } from "../src/lib/auth/password";
 import { safeCompanyLogo } from "../src/lib/company-logo";
 import { regionConfig } from "../src/lib/region";
 import { parseProvisionInput } from "../src/lib/provision/company-input";
+import { runRosterImport } from "./import-roster";
 import { runPilotSamples } from "./pilot-samples";
 
 async function main() {
   await runPilotSamples().catch((error) => console.error("[samples] failed:", error instanceof Error ? error.message : error));
+  await runRosterImport().catch((error) => console.error("[roster] failed:", error instanceof Error ? error.message : error));
   const input = parseProvisionInput(process.env.PROVISION_COMPANY_JSON, process.env.PROVISION_OWNER_PASSWORD);
   if (!input) {
     console.log("[provision] PROVISION_COMPANY_JSON not set, nothing to do.");

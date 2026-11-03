@@ -152,7 +152,8 @@ export default async function WorkzoneHomePage() {
     ? (
         await withTenantContext(company.id, (tx) =>
           tx.productionBatch.findMany({
-            where: { companyProfileId: company.id },
+            // Material of archived sites leaves the factory line.
+            where: { companyProfileId: company.id, baustelle: { status: "active" } },
             orderBy: { createdAt: "asc" },
             take: 200,
             select: {

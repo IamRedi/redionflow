@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/ui/cn";
+import { machineDeadlines } from "@/lib/workzone/machine-deadlines";
 import { getActiveMachineDefect, getVisibleMachineNotes, parseMachineNotes, type MachineDefect } from "@/lib/workzone/machine-notes";
 import { addMachineDefectAction, blockMachineAction, resolveMachineDefectAction } from "./machine-actions";
 import { getMachineConeHistoryAction, setMachineConeTotalAction, transferConesAction } from "./cone-actions";
@@ -32,6 +33,12 @@ type MachineSideItem = {
   spStatus: string | null;
   uvvDate: Date | string | null;
   uvvStatus: string | null;
+  insuranceDate?: Date | string | null;
+  taxDate?: Date | string | null;
+  transportPermitDate?: Date | string | null;
+  tachographDate?: Date | string | null;
+  ownership?: string | null;
+  tonnage?: number | null;
   funksioni: string | null;
   patentaEnevojshme: string | null;
   imageUrl: string | null;
@@ -44,6 +51,12 @@ type MachineSideItem = {
 
 function machineLabel(machine: MachineSideItem) {
   return machine.nickname ?? machine.name;
+}
+
+/** Tile caption in the fleet rail. Albanian fleets have many vehicles of one brand, so the plate tells them apart. */
+function tileLabel(machine: MachineSideItem, country: string) {
+  if (country === "AL") return machine.targe ?? machineLabel(machine);
+  return machineLabel(machine).split(/\s+/)[0];
 }
 
 function initials(value: string) {
@@ -107,7 +120,17 @@ function InspectionChip({ label, date }: { label: string; date: Date | string | 
   );
 }
 
-export function MachineSidebar({ machines, isAdmin, showCones = true }: { machines: MachineSideItem[]; isAdmin: boolean; showCones?: boolean }) {
+export function MachineSidebar({
+  machines,
+  isAdmin,
+  showCones = true,
+  country = "DE",
+}: {
+  machines: MachineSideItem[];
+  isAdmin: boolean;
+  showCones?: boolean;
+  country?: string;
+}) {
   const { currentLang: lang } = useLanguage();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fleetOpen, setFleetOpen] = useState(true);
@@ -240,7 +263,7 @@ export function MachineSidebar({ machines, isAdmin, showCones = true }: { machin
                   ) : (
                     <MachineArt kind={machineKind(machine)} animate={false} className="size-full p-0.5" />
                   )}
-                  <span className="absolute inset-x-0 bottom-0 truncate bg-background/85 px-1 text-center text-[9px] font-semibold leading-[14px]">{label.split(/\s+/)[0] || initials(label)}</span>
+                  <span className="absolute inset-x-0 bottom-0 truncate bg-background/85 px-1 text-center text-[9px] font-semibold leading-[14px]">{tileLabel(machine, country) || initials(label)}</span>
                   <span
                     className={cn(
                       "absolute right-1 top-1 size-2.5 rounded-full ring-2 ring-background",
@@ -306,10 +329,17 @@ export function MachineSidebar({ machines, isAdmin, showCones = true }: { machin
                     <Detail label={t("workzone.productionYear", lang)} value={selected.vitiProdhimit} />
                   </div>
 
+                  {selected.ownership || selected.tonnage ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {selected.tonnage ? <Detail label={t("machineSheet.papers.tonnage", lang)} value={`${selected.tonnage} t`} /> : null}
+                      {selected.ownership ? <Detail label={t("machineSheet.papers.ownership", lang)} value={selected.ownership} /> : null}
+                    </div>
+                  ) : null}
+
                   <div className="grid grid-cols-3 gap-2">
-                    <InspectionChip label="HU" date={selected.tuvDate} />
-                    <InspectionChip label="SP" date={selected.spDate} />
-                    <InspectionChip label="UVV" date={selected.uvvDate} />
+                    {machineDeadlines(selected, country).map((deadline) => (
+                      <InspectionChip key={deadline.key} label={t(`machineSheet.papers.${deadline.key}`, lang)} date={deadline.date} />
+                    ))}
                   </div>
 
                   {message ? <div className="rounded-xl border bg-muted/40 px-3 py-2 text-sm">{message}</div> : null}

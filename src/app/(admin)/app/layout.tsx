@@ -11,7 +11,7 @@ import { RediOnFooter } from "@/components/branding/RediOnFooter";
 import { LanguageDropdown } from "@/components/i18n/language-dropdown";
 import { logoutAdminAction } from "@/app/admin-login/actions";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
-import { getCompanyMode } from "@/lib/db/company";
+import { getCompanyCountry, getCompanyMode } from "@/lib/db/company";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -41,12 +41,13 @@ const KIDRAHT_NAME = "KiDraht";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect(isSaasMode ? "/login" : "/admin-login");
-  const [machines, mode, currentLang, showCones, kidrahtOn] = await Promise.all([
+  const [machines, mode, currentLang, showCones, kidrahtOn, country] = await Promise.all([
     getMachineSidebarData(),
     getCompanyMode(),
     resolveRequestLanguage(),
     fleetShowsCones(),
     getCurrentCompanyId().then(kidrahtAvailable),
+    getCompanyCountry(),
   ]);
   const features = getFeatures(mode);
   const branding = productBranding(mode);
@@ -95,7 +96,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-10 print:hidden">
         <FlowTopBar />
       </header>
-      <MachineSidebar machines={machines} isAdmin showCones={showCones} />
+      <MachineSidebar machines={machines} isAdmin showCones={showCones} country={country} />
       <div className="grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24">
         <aside className="min-w-0 print:hidden">
           {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}

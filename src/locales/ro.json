@@ -644,7 +644,19 @@
     "reportDefect": "Report defect",
     "resolveDefect": "Fixed",
     "block": "Block machine",
-    "noDefect": "No open defects"
+    "noDefect": "No open defects",
+    "papers": {
+      "hu": "Inspecție HU",
+      "sp": "Verificare SP",
+      "uvv": "Verificare UVV",
+      "kolaudim": "Inspecție tehnică",
+      "insurance": "Asigurare",
+      "tax": "Taxă auto",
+      "permit": "Permis de transport",
+      "tachograph": "Tahograf",
+      "ownership": "Proprietar",
+      "tonnage": "Tonaj"
+    }
   },
   "kidraht": {
     "unreachable": "KiDraht nu răspunde acum. Încearcă din nou puțin mai târziu.",

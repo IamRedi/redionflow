@@ -1669,7 +1669,19 @@
     "reportDefect": "Report defect",
     "resolveDefect": "Fixed",
     "block": "Block machine",
-    "noDefect": "No open defects"
+    "noDefect": "No open defects",
+    "papers": {
+      "hu": "HU",
+      "sp": "SP",
+      "uvv": "UVV",
+      "kolaudim": "Inspection",
+      "insurance": "Insurance",
+      "tax": "Road tax",
+      "permit": "Transport permit",
+      "tachograph": "Tachograph",
+      "ownership": "Owner",
+      "tonnage": "Tonnage"
+    }
   },
   "kidraht": {
     "unreachable": "KiDraht is not answering right now. Please try again shortly.",

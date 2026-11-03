@@ -1725,7 +1725,19 @@
     "reportDefect": "Raporto defekt",
     "resolveDefect": "U rregullua",
     "block": "Blloko mjetin",
-    "noDefect": "Pa defekte të hapura"
+    "noDefect": "Pa defekte të hapura",
+    "papers": {
+      "hu": "HU",
+      "sp": "SP",
+      "uvv": "UVV",
+      "kolaudim": "Kolaudimi",
+      "insurance": "Siguracioni",
+      "tax": "Taksat",
+      "permit": "Leja e transportit",
+      "tachograph": "Tahografi",
+      "ownership": "Pronësia",
+      "tonnage": "Tonazhi"
+    }
   },
   "kidraht": {
     "unreachable": "KiDraht nuk po përgjigjet tani. Provo përsëri pas pak.",

@@ -16,6 +16,12 @@ type MachineSidebarRow = {
   spStatus: string | null;
   uvvDate: Date | null;
   uvvStatus: string | null;
+  insuranceDate: Date | null;
+  taxDate: Date | null;
+  transportPermitDate: Date | null;
+  tachographDate: Date | null;
+  ownership: string | null;
+  tonnage: number | null;
   funksioni: string | null;
   patentaEnevojshme: string | null;
   imageUrl: string | null;
@@ -80,6 +86,12 @@ export async function getMachineSidebarData() {
         spStatus: true,
         uvvDate: true,
         uvvStatus: true,
+        insuranceDate: true,
+        taxDate: true,
+        transportPermitDate: true,
+        tachographDate: true,
+        ownership: true,
+        tonnage: true,
         funksioni: true,
         patentaEnevojshme: true,
         imageUrl: true,
