@@ -81,6 +81,16 @@ describe('parseRosterInput', () => {
     );
   });
 
+  it('reads optional sites and defaults unknown types to OTHER', () => {
+    const roster = parseRosterInput(
+      JSON.stringify({ company: 'X shpk', sites: [['Punishtja', 'STEEL_WORKSHOP', 'Rruga 1'], ['Kantier', 'weird', ''], ['', 'OTHER', '']] }),
+    )!;
+    expect(roster.sites).toEqual([
+      { name: 'Punishtja', type: 'STEEL_WORKSHOP', address: 'Rruga 1' },
+      { name: 'Kantier', type: 'OTHER', address: null },
+    ]);
+  });
+
   it('maps staff to roles, levels, licences and language', () => {
     const roster = parseRosterInput(JSON.stringify(sample))!;
     expect(roster.retireSamples).toBe(true);

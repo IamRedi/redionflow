@@ -46,6 +46,15 @@ export async function runRosterImport() {
       samplesRetired: 0,
     };
 
+    let sitesAdded = 0;
+    for (const site of input.sites) {
+      const exists = await prisma.baustelle.findFirst({ where: { companyProfileId: company.id, name: site.name }, select: { id: true } });
+      if (exists) continue;
+      await prisma.baustelle.create({ data: { companyProfileId: company.id, name: site.name, type: site.type, status: 'active', address: site.address } });
+      sitesAdded += 1;
+    }
+    if (input.sites.length) console.log(`[roster] sites +${sitesAdded}.`);
+
     for (const w of input.workers) {
       const existing = await prisma.worker.findFirst({
         where: {
@@ -187,7 +196,7 @@ export async function runRosterImport() {
       prisma.machine.findMany({ where: { companyProfileId: company.id }, select: { name: true, isActive: true, tuvDate: true } }),
       prisma.baustelle.findMany({ where: { companyProfileId: company.id }, select: { name: true, status: true, productionBatches: { select: { title: true } } }, orderBy: { name: 'asc' } }),
     ]);
-    const notListed = allWorkers.filter((w) => !listed.has(`${w.firstName} ${w.lastName}`.toLowerCase()));
+    const notListed = input.workers.length === 0 ? [] : allWorkers.filter((w) => !listed.has(`${w.firstName} ${w.lastName}`.toLowerCase()));
     const roles = allWorkers.reduce<Record<string, number>>((acc, w) => ({ ...acc, [w.crewRole ?? 'none']: (acc[w.crewRole ?? 'none'] ?? 0) + 1 }), {});
     console.log(
       `[roster] check: workers ${allWorkers.length} (active ${allWorkers.filter((w) => w.status === 'active').length}, with ID ${allWorkers.filter((w) => w.nationalId).length}, with birth date ${allWorkers.filter((w) => w.birthDate).length}, with login code ${allWorkers.filter((w) => w.loginCodeHash).length}), roles ${JSON.stringify(roles)}; not on the list: ${notListed.map((w) => `${w.firstName} ${w.lastName}`).join(', ') || 'none'}.`,

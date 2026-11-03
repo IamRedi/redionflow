@@ -9,7 +9,8 @@
  *   { "company": "<legal name>",
  *     "retireSamples": true,
  *     "workers":  [[group, firstName, lastName, "dd.mm.yyyy", position, license, extra, nationalId], ...],
- *     "machines": [[type, plate, brand, model, owner, tonnage, kolaudim, insurance, tax, permit, tachograph, note], ...] }
+ *     "machines": [[type, plate, brand, model, owner, tonnage, kolaudim, insurance, tax, permit, tachograph, note], ...],
+ *     "sites":    [[name, STEEL_WORKSHOP | STEEL_ASSEMBLY | OTHER, address], ...] }   (optional; added when the name is new)
  *
  * group is office | factory | field. Dates are dd.mm.yyyy or mm.yyyy (start of that month).
  */
@@ -49,9 +50,16 @@ export type RosterMachine = {
   notes: string | null;
 };
 
+export type RosterSite = {
+  name: string;
+  type: 'STEEL_WORKSHOP' | 'STEEL_ASSEMBLY' | 'OTHER';
+  address: string | null;
+};
+
 export type RosterInput = {
   company: string;
   retireSamples: boolean;
+  sites: RosterSite[];
   workers: RosterWorker[];
   machines: RosterMachine[];
 };
@@ -202,6 +210,7 @@ export function parseRosterInput(raw: string | undefined): RosterInput | null {
     retireSamples?: unknown;
     workers?: unknown;
     machines?: unknown;
+    sites?: unknown;
   };
   const company = clean(data.company);
   if (!company)
@@ -212,9 +221,17 @@ export function parseRosterInput(raw: string | undefined): RosterInput | null {
   const machines = (Array.isArray(data.machines) ? data.machines : [])
     .map((row) => parseMachine(row, company))
     .filter((m): m is RosterMachine => m !== null);
+  const sites = (Array.isArray(data.sites) ? data.sites : []).flatMap((row): RosterSite[] => {
+    if (!Array.isArray(row)) return [];
+    const [name, type, address] = row.map(clean);
+    if (!name) return [];
+    const kind = type === 'STEEL_WORKSHOP' || type === 'STEEL_ASSEMBLY' ? type : 'OTHER';
+    return [{ name, type: kind, address: address || null }];
+  });
   return {
     company,
     retireSamples: data.retireSamples === true,
+    sites,
     workers,
     machines,
   };
