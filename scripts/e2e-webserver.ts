@@ -2,6 +2,8 @@ import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { once } from "node:events";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { assertE2ETestDatabase, DEFAULT_E2E_BASE_URL, isE2EPortFree, validateE2ETarget } from "./lib/e2e-target";
 
 import { createOwnedNextReadiness, OWNED_E2E_READY } from "./lib/e2e-readiness";
@@ -117,6 +119,18 @@ async function main() {
   // BDF-P1-003: SaaS requires a valid salt. Own a fresh test-only value rather
   // than inheriting an operator's durable secret into this managed test app.
   env.LOGIN_GUARD_SALT = randomBytes(32).toString("hex");
+  // WanWay tests are explicit and synthetic. Never inherit real GPS keys or
+  // make live provider requests from the ordinary disposable browser suite.
+  env.WANWAY_GPS_ENABLED = "false";
+  env.WANWAY_ACTIVE_KEY_ID = "";
+  env.WANWAY_ENCRYPTION_KEYS = "";
+  if (process.env.WANWAY_E2E_MOCK === "true") {
+    env.WANWAY_GPS_ENABLED = "true";
+    env.WANWAY_ACTIVE_KEY_ID = "e2e";
+    env.WANWAY_ENCRYPTION_KEYS = JSON.stringify({ e2e: randomBytes(32).toString("hex") });
+    const mock = pathToFileURL(resolve("tests/fixtures/wanway-fetch-mock.mjs")).href;
+    env.NODE_OPTIONS = `${env.NODE_OPTIONS ?? ""} --import=${mock}`.trim();
+  }
   // Blank provider inputs also prevent Next/dotenv from loading local secrets.
   for (const key of ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "OPENAI_API_KEY",
     "FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY", "GOOGLE_APPLICATION_CREDENTIALS",

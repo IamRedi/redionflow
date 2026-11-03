@@ -6,6 +6,9 @@ import { decimalToNumber } from "@/lib/db/prisma-types";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { regionConfig, resolveCountry } from "@/lib/region";
+import Link from "next/link";
+import { wanwayEnabled } from "@/lib/fleet/wanway/service";
+import { wanwayCopy } from "@/lib/fleet/wanway/copy";
 
 export default async function SettingsPage() {
   const [company, mode, currentLang] = await Promise.all([
@@ -43,6 +46,8 @@ export default async function SettingsPage() {
       <SettingsForm companyId={company.id} currentLang={currentLang} defaultValues={defaultValues} />
 
       <CompanyLogoForm currentLang={currentLang} logo={safeCompanyLogo(company.logoDataUrl)} companyName={company.displayName} />
+
+      {wanwayEnabled() && <section className="rounded-xl border bg-card p-5"><h2 className="font-semibold">{wanwayCopy(currentLang).integrations}</h2><Link href="/app/settings/integrations/wanway" className="mt-3 inline-block text-sm font-medium text-primary underline">{`${wanwayCopy(currentLang).title} →`}</Link></section>}
 
       <div className="rounded-xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">

@@ -7,6 +7,8 @@ import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { t, type Language } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { findFleetGpsMachine, findMachineGpsPoints, findMachinePresences, isFleetGpsStoreReady } from "@/lib/workzone/fleet-gps";
+import { readFleet } from "@/lib/fleet/wanway/service";
+import { WanwayTelemetry } from "@/components/fleet/wanway-telemetry";
 
 function localeForLanguage(lang: Language) {
   if (lang === "en") return "en-US";
@@ -33,6 +35,7 @@ export default async function FleetGpsMachinePage({ params }: { params: Promise<
   const machine = await findFleetGpsMachine(company.id, machineId);
   if (!machine) notFound();
   const storeReady = isFleetGpsStoreReady();
+  const wanway = (await readFleet(machineId)).find(d => d.machineId === machineId);
 
   const [points, presences] = await Promise.all([
     findMachineGpsPoints(machine.id),
@@ -59,6 +62,7 @@ export default async function FleetGpsMachinePage({ params }: { params: Promise<
         </Button>
       </div>
 
+      {wanway && <WanwayTelemetry data={wanway} lang={currentLang} />}
       <section className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
         {!storeReady ? (
           <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground lg:col-span-2">

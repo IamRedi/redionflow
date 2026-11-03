@@ -9,7 +9,7 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[English version](README.en.md)** · **Stand: 1. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **Stand: 3. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
 ## Websites und Live-Demos
 
@@ -27,7 +27,8 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 | Status | Bedeutung und Umfang |
 |---|---|
 | **Umgesetzt und live** | Workzone für die Baustelle (Arbeitsliste oder Baumliste, Karte, Arbeitszeit mit Start, Pause und Stopp, Zusatzarbeiten, Hinweise, Absicherung), Admin-Dashboard, Personal und Fuhrpark, Tagesplan mit Versionen, Barcode-Inventar mit Ausgabe an Mitarbeitende, Kalkulation (Projekte, Positionen, Vorlagen, Lohnrollen, Rezepte), Tages- und Monatsberichte, Baustellen-Export (ZIP mit HTML, CSV, KML), Urlaub, Admin-Login mit Passwort, 6 Sprachen |
-| **Verifiziert** | 711 automatisierte Tests in CI auf jedem Pull Request (423 Unit, 263 Integration gegen echte PostgreSQL, 25 Ende-zu-Ende im Browser), Secret-Scan, Docker-Demo-Smoke-Test, Lighthouse mobil 96/100/100/100. Details im [Prüfprotokoll](EVIDENCE.md). |
+| **Verifiziert** | Frühere CI-Baseline: 711 Tests, Secret-Scan und Docker-Demo-Smoke. Aktuelle lokale Prüfungen und ihre exakte Abgrenzung stehen im [Prüfprotokoll](EVIDENCE.md). Cloud-Verifikation ist auf diesem Branch ausdrücklich wählbar. |
+| **Neu vorbereitet, Freigabe offen** | WanWay/IOPGPS nur lesend: verschlüsselte Zugangsdaten je Firma, Verbindungstest, bestätigte Zuordnung zu vorhandenen Fahrzeugen, manuelle Synchronisierung und letzte Positionsdaten. Nicht in Production oder öffentlicher Demo aktiviert; echter GPS-Test steht aus. [Technik und Grenzen](docs/WANWAY_GPS.md). |
 | **Umgesetzt, in der Demo nicht aktiv** | KI-Assistent (braucht einen OpenAI-Schlüssel), Push-Benachrichtigungen (Firebase), Dateispeicher für Dokumente und Fotos (Supabase), Abos und Rechnungen im SaaS-Modus (Stripe), Fahrzeug-GPS. Der Code ist vorhanden und getestet; die öffentliche Demo läuft bewusst ohne diese Dienste. |
 | **In Arbeit** | Offline-Modus für Feldaktionen (Warteschlange im Browser ist angelegt, noch nicht im Feld erprobt), Content Security Policy von „Report-Only“ auf „blockierend“, echter Virenscanner für Uploads |
 | **Vision** | Pilotbetriebe in beiden Branchen, weitere Gewerke als eigener Modus, Auswertung über mehrere Saisons |
@@ -79,7 +80,7 @@ Mehr dazu in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
 
 ## Qualität und Sicherheit
 
-- **CI auf jedem Pull Request:** Lint ohne Warnungen, TypeScript strict, 423 Unit-Tests, 263 Integrationstests gegen eine wegwerfbare PostgreSQL, Produktionsbuild, 25 Browser-Tests, gitleaks und ein Docker-Smoke-Test der Demo.
+- **Verifikation:** lokale Gates für Lint, TypeScript, Unit-/PostgreSQL-Integrationstests, Build und Browser-Tests. Cloud-Verifikation nur nach ausdrücklicher Auswahl (`workflow_dispatch`); erforderliche Checks und Merge-Schutz bleiben bestehen. [Regel](docs/LOCAL_CI_POLICY.md).
 - **Sicherheit:** Passwörter und Codes mit scrypt, Rate-Limit beim Login, widerrufbare Sitzungen, Same-Origin-Prüfung für jede Änderung, private Dateien nur über eine geprüfte Route, Sicherheits-Header. Bedrohungsmodell und bekannte Restrisiken stehen offen in [SECURITY.md](SECURITY.md).
 - **Barrierefreiheit und Tempo:** Lighthouse mobil auf der Startseite 96 Performance, 100 Barrierefreiheit, 100 Best Practices, 100 SEO.
 - **Keine echten Daten.** Das Repository wurde als Schnappschuss ohne Git-Verlauf aus dem privaten Produktivsystem erstellt. Echte Firmen- und Personendaten wurden entfernt, die Demo-Daten sind selbst erfunden.

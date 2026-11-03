@@ -242,6 +242,7 @@ model User {
 }
 
 model CompanyProfile {
+  wanwayIntegration WanwayIntegration?
   id                    String  @id @default(cuid())
   legalName             String
   displayName           String
@@ -532,6 +533,7 @@ model LaborRole {
 }
 
 model Machine {
+  wanwayDevices WanwayDevice[]
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -588,6 +590,51 @@ model Machine {
   updatedAt DateTime @updatedAt
 
   @@unique([companyProfileId, name])
+  @@unique([companyProfileId, id])
+}
+
+/// Server-only provider credentials and distributed operation/token cache.
+model WanwayIntegration {
+  companyProfileId String @id
+  companyProfile CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  appid String?
+  encryptedKey String?
+  encryptedToken String?
+  tokenExpiresAt DateTime?
+  status String @default("disconnected")
+  lastSuccessfulSync DateTime?
+  lastError String?
+  nextRequestAt DateTime @default(now())
+  busyUntil DateTime @default(now())
+  operationId String?
+  devices WanwayDevice[]
+  updatedAt DateTime @updatedAt
+}
+
+model WanwayDevice {
+  id String @id @default(cuid())
+  companyProfileId String
+  integration WanwayIntegration @relation(fields: [companyProfileId], references: [companyProfileId], onDelete: Cascade)
+  imei String
+  name String
+  model String?
+  machineId String?
+  machine Machine? @relation(fields: [companyProfileId, machineId], references: [companyProfileId, id], onDelete: Cascade, map: "WanwayDevice_machine_tenant_fkey")
+  available Boolean @default(true)
+  plate String?
+  lat Float?
+  lng Float?
+  reportedAt DateTime?
+  signalAt DateTime?
+  providerStatus String?
+  speedKmh Float?
+  voltage Float?
+  mileage24hKm Float?
+  mileageAt DateTime?
+  mileageError String?
+  syncedAt DateTime?
+  @@unique([companyProfileId, imei])
+  @@unique([companyProfileId, machineId])
 }
 
 model MachineConeMovement {

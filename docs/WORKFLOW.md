@@ -1,5 +1,18 @@
 # Development Workflow
 
+## Current local verification policy (3 November 2026)
+
+Read [LOCAL_CI_POLICY.md](LOCAL_CI_POLICY.md). Routine verification runs directly
+on the laptop/mini PC; this branch makes Actions verification opt-in via
+`workflow_dispatch`. Keep all required assertions and existing branch-protection
+gates; local results do not masquerade as remote required checks.
+
+Pilot-specific features are stacked on the active pilot branch for review. That
+branch auto-deploys to the real customer environment: do not push or merge into
+it without the owner's exact-revision deployment approval. New feature branches
+and their PRs do not authorize deployment. Older dedicated-production release
+notes below describe their separate environment, not the current SaaS pilot.
+
 This repo uses a protected-branch workflow for production safety.
 
 ## Branch Flow
