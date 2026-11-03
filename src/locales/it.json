@@ -692,7 +692,20 @@
     "tileToday": "Oggi",
     "tileMonth": "Mese",
     "tileVacation": "Ferie",
-    "moreAboutMe": "Dati, abbigliamento e impostazioni"
+    "moreAboutMe": "Dati, abbigliamento e impostazioni",
+    "loginCodeFormat": "Il codice deve avere esattamente 6 cifre.",
+    "loginCodeMismatch": "Il nuovo codice non coincide nei due campi.",
+    "loginCodeWrong": "Il codice attuale non è corretto.",
+    "loginCodeSame": "Il nuovo codice è uguale al vecchio.",
+    "loginCodeTaken": "Questo codice è già in uso. Scegline un altro.",
+    "loginCodeChanged": "Codice cambiato. La prossima volta accedi con il nuovo codice.",
+    "changeCodeTitle": "Cambia codice di accesso",
+    "changeCodeHint": "Qui puoi cambiare il codice ricevuto dall’ufficio. 6 cifre, non darlo ad altri.",
+    "changeCodeCurrent": "Codice attuale",
+    "changeCodeNew": "Nuovo codice",
+    "changeCodeRepeat": "Ripeti il nuovo codice",
+    "changeCodeSave": "Salva codice",
+    "nationalIdLabel": "Numero documento"
   },
   "report": {
     "daily": "Report giornaliero",
@@ -1509,7 +1522,9 @@
     "navSettings": "Impostazioni",
     "baustellenSummary": "{active} active of {total} total",
     "openSite": "Open site",
-    "editAndManage": "Edit and manage"
+    "editAndManage": "Edit and manage",
+    "loginCodeTaken": "Questo codice di accesso appartiene già a un altro lavoratore. Nulla è stato salvato; scegli un altro codice.",
+    "loginCodeFormat": "Il codice di accesso deve avere esattamente 6 cifre. Nulla è stato salvato."
   },
   "language": {
     "de": "Tedesco",
@@ -1636,16 +1651,22 @@
       "m2": "m²"
     },
     "steps": {
-      "cutting": "Cutting",
+      "cutting": "Taglio",
+      "assembly": "Montaggio",
+      "welding": "Saldatura",
+      "cleaning": "Pulizia",
+      "coating": "Verniciatura",
+      "loading": "Carico",
       "laser": "Laser",
-      "assembly": "Factory assembly",
-      "final": "Finishing"
+      "final": "Finitura"
     },
     "stepHints": {
-      "cutting": "Profiles to size",
-      "laser": "Plates and holes by laser",
-      "assembly": "Welding and assembling the parts",
-      "final": "Check, coating, ready to load"
+      "cutting": "Profili e lamiere a misura",
+      "assembly": "Assemblare i pezzi secondo il disegno",
+      "welding": "Saldare i giunti",
+      "cleaning": "Pulire la superficie prima della vernice",
+      "coating": "Verniciatura o zincatura",
+      "loading": "Controllo e carico per il cantiere"
     },
     "actions": {
       "create": "Put on the line",

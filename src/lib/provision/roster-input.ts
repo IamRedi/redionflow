@@ -3,12 +3,12 @@
  *
  * The operator puts the rows (as the company sent them in its spreadsheets) into
  * `ROSTER_IMPORT_JSON` on the hosting service: base64 of gzipped JSON. Personal
- * data never goes into the repository. National ID numbers are not imported:
- * the app does not need them.
+ * data never goes into the repository, including the national ID numbers
+ * (stored on the worker for HR, shown only to the office and the worker).
  *
  *   { "company": "<legal name>",
  *     "retireSamples": true,
- *     "workers":  [[group, firstName, lastName, "dd.mm.yyyy", position, license, extra], ...],
+ *     "workers":  [[group, firstName, lastName, "dd.mm.yyyy", position, license, extra, nationalId], ...],
  *     "machines": [[type, plate, brand, model, owner, tonnage, kolaudim, insurance, tax, permit, tachograph, note], ...] }
  *
  * group is office | factory | field. Dates are dd.mm.yyyy or mm.yyyy (start of that month).
@@ -26,6 +26,7 @@ export type RosterWorker = {
   birthDate: Date | null;
   position: string;
   licenses: string | null;
+  nationalId: string | null;
   crewRole: CrewRole | null;
   level: Level;
   language: 'SQ' | 'EN';
@@ -124,7 +125,7 @@ function machineCategory(type: string): RosterMachine['category'] {
 
 function parseWorker(row: unknown): RosterWorker | null {
   if (!Array.isArray(row)) return null;
-  const [group, first, last, birth, position, license, extra] = row.map(clean);
+  const [group, first, last, birth, position, license, extra, nationalId] = row.map(clean);
   if (group !== 'office' && group !== 'factory' && group !== 'field')
     return null;
   if (!first || !last) return null;
@@ -137,6 +138,7 @@ function parseWorker(row: unknown): RosterWorker | null {
     birthDate: parseRosterDate(birth),
     position: position ?? '',
     licenses,
+    nationalId: nationalId ? nationalId.toUpperCase() : null,
     ...roleFor(group, position ?? ''),
     language: foreign ? 'EN' : 'SQ',
   };

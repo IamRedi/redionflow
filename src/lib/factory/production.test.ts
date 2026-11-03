@@ -5,6 +5,7 @@ import {
   batchState,
   currentStepIndex,
   initialFactorySteps,
+  migrateLegacySteps,
   readFactorySteps,
   readySummary,
   StepCommandError,
@@ -15,7 +16,7 @@ const now = new Date("2026-11-03T07:30:00.000Z");
 describe("factory production line", () => {
   it("starts with every step waiting", () => {
     const steps = initialFactorySteps();
-    expect(steps.map((s) => s.key)).toEqual(["cutting", "laser", "assembly", "final"]);
+    expect(steps.map((s) => s.key)).toEqual(["cutting", "assembly", "welding", "cleaning", "coating", "loading"]);
     expect(batchState(steps)).toBe("waiting");
     expect(currentStepIndex(steps)).toBe(0);
   });
@@ -26,14 +27,14 @@ describe("factory production line", () => {
 
     steps = applyStepCommand(steps, 0, { kind: "start" }, "Ardit", now).steps;
     expect(batchState(steps)).toBe("inProgress");
-    for (const index of [0, 1, 2]) steps = applyStepCommand(steps, index, { kind: "done" }, "Ardit", now).steps;
+    for (const index of [0, 1, 2, 3, 4]) steps = applyStepCommand(steps, index, { kind: "done" }, "Ardit", now).steps;
     expect(batchState(steps)).toBe("inProgress");
-    expect(currentStepIndex(steps)).toBe(3);
+    expect(currentStepIndex(steps)).toBe(5);
 
-    const last = applyStepCommand(steps, 3, { kind: "done" }, "Megi", now);
+    const last = applyStepCommand(steps, 5, { kind: "done" }, "Megi", now);
     expect(batchState(last.steps)).toBe("ready");
-    expect(last.event).toMatchObject({ stepKey: "final", action: "done", fromStatus: "todo", toStatus: "done" });
-    expect(last.steps[3]).toMatchObject({ by: "Megi", at: now.toISOString() });
+    expect(last.event).toMatchObject({ stepKey: "loading", action: "done", fromStatus: "todo", toStatus: "done" });
+    expect(last.steps[5]).toMatchObject({ by: "Megi", at: now.toISOString() });
   });
 
   it("blocks with a reason and unblocks back to in progress", () => {
@@ -66,5 +67,23 @@ describe("factory production line", () => {
   it("counts ready groups per site without hiding a missing one", () => {
     const done = initialFactorySteps().map((s) => ({ ...s, status: "done" as const }));
     expect(readySummary([{ steps: done }, { steps: initialFactorySteps() }])).toEqual({ ready: 1, total: 2 });
+  });
+
+  it("moves a group from the first example line without losing progress", () => {
+    const legacy = initialFactorySteps(["cutting", "laser", "assembly", "final"]);
+    const done = (key: string) => ({ key, status: "done" as const, note: "", by: "A", at: now.toISOString() });
+    const migrated = migrateLegacySteps([done("cutting"), done("laser"), { ...legacy[2]!, status: "active" }, legacy[3]!]);
+    expect(migrated.map((s) => [s.key, s.status])).toEqual([
+      ["cutting", "done"],
+      ["assembly", "active"],
+      ["welding", "active"],
+      ["cleaning", "todo"],
+      ["coating", "todo"],
+      ["loading", "todo"],
+    ]);
+    const half = migrateLegacySteps([done("cutting"), legacy[1]!, legacy[2]!, legacy[3]!]);
+    expect(half[0]?.status).toBe("active");
+    const current = initialFactorySteps();
+    expect(migrateLegacySteps(current)).toBe(current);
   });
 });

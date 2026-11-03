@@ -4,12 +4,12 @@
  * processes material groups that are allocated to a construction site and
  * signals "ready for site" once every step of a group is done.
  *
- * The steps are an example line until the firm confirms its real process;
- * they are stored on each group, so a later per-company configuration does
- * not rewrite groups that are already on the line.
+ * The line is the one AL-Steel confirmed on 03.11.2026: cutting, assembly,
+ * welding, cleaning, painting, loading. Steps are stored on each group, so a
+ * later per-company configuration does not rewrite groups already on the line.
  */
 
-export const FACTORY_STEP_KEYS = ["cutting", "laser", "assembly", "final"] as const;
+export const FACTORY_STEP_KEYS = ["cutting", "assembly", "welding", "cleaning", "coating", "loading"] as const;
 export type FactoryStepKey = (typeof FACTORY_STEP_KEYS)[number];
 
 export type FactoryStepStatus = "todo" | "active" | "done" | "blocked";
@@ -31,17 +31,53 @@ export function initialFactorySteps(keys: readonly string[] = FACTORY_STEP_KEYS)
 
 const STATUSES: FactoryStepStatus[] = ["todo", "active", "done", "blocked"];
 
-/** Reads the JSON column defensively; unknown shapes become an empty line. */
+/**
+ * Moves a group from the first example line (cutting, laser, assembly,
+ * final) onto the current line without losing progress: laser folds into
+ * cutting, old assembly covered assembly and welding, old final covered
+ * cleaning, painting and loading. A line that is already current is
+ * returned unchanged.
+ */
+export function migrateLegacySteps(steps: FactoryStep[]): FactoryStep[] {
+  const keys = steps.map((step) => step.key);
+  if (!keys.includes("laser") && !keys.includes("final")) return steps;
+  const old = (key: string) => steps.find((step) => step.key === key);
+  const cut = old("cutting");
+  const laser = old("laser");
+  // Old cutting and laser fold into one step: done only when both were done.
+  const cutting: FactoryStep | undefined =
+    cut && laser && cut.status === "done" && laser.status !== "done"
+      ? { ...laser, status: laser.status === "todo" ? "active" : laser.status }
+      : (laser?.status === "done" ? laser : cut);
+  const source: Record<FactoryStepKey, FactoryStep | undefined> = {
+    cutting,
+    assembly: old("assembly"),
+    welding: old("assembly"),
+    cleaning: old("final"),
+    coating: old("final"),
+    loading: old("final"),
+  };
+  return FACTORY_STEP_KEYS.map((key) => {
+    const from = source[key];
+    return from ? { ...from, key } : { key, status: "todo", note: "", by: "", at: "" };
+  });
+}
+
+/**
+ * Reads the JSON column defensively; unknown shapes become an empty line.
+ * A group still on the first example line comes back on the current one,
+ * and the next write stores it that way.
+ */
 export function readFactorySteps(value: unknown): FactoryStep[] {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((raw) => {
+  return migrateLegacySteps(value.flatMap((raw) => {
     if (!raw || typeof raw !== "object") return [];
     const row = raw as Record<string, unknown>;
     if (typeof row.key !== "string" || !row.key) return [];
     const status = STATUSES.includes(row.status as FactoryStepStatus) ? (row.status as FactoryStepStatus) : "todo";
     const text = (key: string) => (typeof row[key] === "string" ? (row[key] as string) : "");
     return [{ key: row.key, status, note: text("note"), by: text("by"), at: text("at") }];
-  });
+  }));
 }
 
 /** Index of the first step that is not done, or -1 when the whole line is done. */

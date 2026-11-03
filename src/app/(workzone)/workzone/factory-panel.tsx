@@ -6,7 +6,7 @@ import { AnimatePresence } from "framer-motion";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelPhaseArt, SteelSiteArt } from "@/components/steel/steel-art";
-import { batchState, currentStepIndex } from "@/lib/factory/production";
+import { batchState, currentStepIndex, FACTORY_STEP_KEYS } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
 import { OrderImportSheet } from "./production/order-import";
@@ -36,7 +36,7 @@ export function FactoryPanel({
   const { currentLang: lang } = useLanguage();
   const [importing, setImporting] = useState(false);
   const items = batches;
-  const stepKeys = items[0]?.steps.map((step) => step.key) ?? ["cutting", "laser", "assembly", "final"];
+  const stepKeys: readonly string[] = FACTORY_STEP_KEYS;
   const counts = {
     line: items.filter((item) => batchState(item.steps) !== "ready").length,
     blocked: items.filter((item) => batchState(item.steps) === "blocked").length,

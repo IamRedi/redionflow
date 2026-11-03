@@ -20,6 +20,7 @@ const sample = {
       'Inxhiniere ndertimi-Zbatim',
       'B',
       '',
+      'j00000000a',
     ],
     ['factory', 'RAJ', 'KUMAR SINGH', '04.09.2003', 'Saldator', '', ''],
     [
@@ -90,6 +91,7 @@ describe('parseRosterInput', () => {
       level: 'VORARBEITER',
       language: 'SQ',
       licenses: 'B',
+      nationalId: 'J00000000A',
     });
     expect(engineer?.birthDate?.toISOString().slice(0, 10)).toBe('1998-07-07');
     expect(welder).toMatchObject({
@@ -98,6 +100,7 @@ describe('parseRosterInput', () => {
       crewRole: 'FACTORY_WORKER',
       language: 'EN',
       licenses: null,
+      nationalId: null,
     });
     expect(fitter).toMatchObject({
       crewRole: 'FIELD_WORKER',

@@ -374,7 +374,20 @@
     "tileToday": "Dziś",
     "tileMonth": "Miesiąc",
     "tileVacation": "Urlop",
-    "moreAboutMe": "Dane, odzież i ustawienia"
+    "moreAboutMe": "Dane, odzież i ustawienia",
+    "loginCodeFormat": "Kod musi mieć dokładnie 6 cyfr.",
+    "loginCodeMismatch": "Nowy kod nie jest taki sam w obu polach.",
+    "loginCodeWrong": "Obecny kod jest nieprawidłowy.",
+    "loginCodeSame": "Nowy kod jest taki sam jak stary.",
+    "loginCodeTaken": "Ten kod jest zajęty. Wybierz inny.",
+    "loginCodeChanged": "Kod zmieniony. Następnym razem zaloguj się nowym kodem.",
+    "changeCodeTitle": "Zmień kod logowania",
+    "changeCodeHint": "Tutaj możesz sam zmienić kod otrzymany z biura. 6 cyfr, nie podawaj go innym.",
+    "changeCodeCurrent": "Obecny kod",
+    "changeCodeNew": "Nowy kod",
+    "changeCodeRepeat": "Powtórz nowy kod",
+    "changeCodeSave": "Zapisz kod",
+    "nationalIdLabel": "Numer dowodu"
   },
   "report": {
     "daily": "Raport dzienny",
@@ -445,7 +458,9 @@
     "navSettings": "Ustawienia",
     "baustellenSummary": "{active} active of {total} total",
     "openSite": "Open site",
-    "editAndManage": "Edit and manage"
+    "editAndManage": "Edit and manage",
+    "loginCodeTaken": "Ten kod logowania należy już do innego pracownika. Nic nie zapisano; wybierz inny kod.",
+    "loginCodeFormat": "Kod logowania musi mieć dokładnie 6 cyfr. Nic nie zapisano."
   },
   "language": {
     "de": "Niemiecki",
@@ -570,16 +585,22 @@
       "m2": "m²"
     },
     "steps": {
-      "cutting": "Cutting",
+      "cutting": "Cięcie",
+      "assembly": "Montaż",
+      "welding": "Spawanie",
+      "cleaning": "Czyszczenie",
+      "coating": "Malowanie",
+      "loading": "Załadunek",
       "laser": "Laser",
-      "assembly": "Factory assembly",
-      "final": "Finishing"
+      "final": "Wykończenie"
     },
     "stepHints": {
-      "cutting": "Profiles to size",
-      "laser": "Plates and holes by laser",
-      "assembly": "Welding and assembling the parts",
-      "final": "Check, coating, ready to load"
+      "cutting": "Profile i blachy na wymiar",
+      "assembly": "Składanie części według rysunku",
+      "welding": "Spawanie złączy",
+      "cleaning": "Czyszczenie powierzchni przed malowaniem",
+      "coating": "Malowanie lub cynkowanie",
+      "loading": "Kontrola i załadunek na budowę"
     },
     "actions": {
       "create": "Put on the line",

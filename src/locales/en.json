@@ -684,7 +684,20 @@
     "tileToday": "Today",
     "tileMonth": "Month",
     "tileVacation": "Holidays",
-    "moreAboutMe": "Details, clothing and settings"
+    "moreAboutMe": "Details, clothing and settings",
+    "loginCodeFormat": "The code must be exactly 6 digits.",
+    "loginCodeMismatch": "The new code does not match in both fields.",
+    "loginCodeWrong": "The current code is not correct.",
+    "loginCodeSame": "The new code is the same as the old one.",
+    "loginCodeTaken": "This code is taken. Choose another one.",
+    "loginCodeChanged": "Code changed. Sign in with the new code next time.",
+    "changeCodeTitle": "Change login code",
+    "changeCodeHint": "You can change the code the office gave you here. 6 digits, keep it to yourself.",
+    "changeCodeCurrent": "Current code",
+    "changeCodeNew": "New code",
+    "changeCodeRepeat": "Repeat new code",
+    "changeCodeSave": "Save code",
+    "nationalIdLabel": "National ID"
   },
   "report": {
     "daily": "Daily report",
@@ -1469,7 +1482,9 @@
     "navSettings": "Settings",
     "baustellenSummary": "{active} active of {total} total",
     "openSite": "Open site",
-    "editAndManage": "Edit and manage"
+    "editAndManage": "Edit and manage",
+    "loginCodeTaken": "That login code already belongs to another worker. Nothing was saved; choose a different code.",
+    "loginCodeFormat": "The login code must be exactly 6 digits. Nothing was saved."
   },
   "language": {
     "de": "German",
@@ -1597,15 +1612,21 @@
     },
     "steps": {
       "cutting": "Cutting",
+      "assembly": "Assembly",
+      "welding": "Welding",
+      "cleaning": "Cleaning",
+      "coating": "Painting",
+      "loading": "Loading",
       "laser": "Laser",
-      "assembly": "Factory assembly",
       "final": "Finishing"
     },
     "stepHints": {
-      "cutting": "Profiles to size",
-      "laser": "Plates and holes by laser",
-      "assembly": "Welding and assembling the parts",
-      "final": "Check, coating, ready to load"
+      "cutting": "Profiles and plates to size",
+      "assembly": "Fitting the parts to the drawing",
+      "welding": "Welding the joints",
+      "cleaning": "Cleaning the surface before paint",
+      "coating": "Paint or galvanising",
+      "loading": "Check and load for the site"
     },
     "actions": {
       "create": "Put on the line",

@@ -29,6 +29,8 @@ import { closePauseInterval, createPauseInterval, findPauseIntervalsForSession }
 import { monthKey, parseReportMessages, serializeReportMessages, type ReportMessage } from "@/lib/workzone/reporting";
 import { hasOpenPause, isTrivialSession, stopBreakMinutes, totalPauseMinutes, totalWorkHours } from "@/lib/workzone/session-rules";
 import { getCurrentWorker, WORKER_COOKIE } from "@/lib/workzone/worker-session";
+import { isLoginCodeTaken, isValidLoginCode } from "@/lib/auth/login-code";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 type LoginState = { message?: string };
 
@@ -369,6 +371,44 @@ export async function loginWorkerAction(_prevState: LoginState, formData: FormDa
   jar.delete(DISPLAY_COOKIE);
 
   redirect("/workzone/profile");
+}
+
+export type ChangeCodeState = { ok: boolean; message: string } | null;
+
+/**
+ * A signed-in worker replaces the code the office gave them. The current
+ * code is asked again (a phone left unlocked is not enough), wrong tries
+ * count like failed logins, and the new code must not belong to anyone else.
+ */
+export async function changeOwnLoginCodeAction(_prev: ChangeCodeState, formData: FormData): Promise<ChangeCodeState> {
+  const tr = await getActionTranslator();
+  const worker = await getCurrentWorker();
+  if (!worker) return { ok: false, message: tr("loginRequired") };
+
+  const clientIp = getClientIp(await headers());
+  const access = await ensureLoginAllowed("worker", clientIp);
+  if (!access.ok) {
+    return { ok: false, message: tr("tooManyAttemptsRetryMinutes", { minutes: Math.ceil(access.retryAfterSeconds / 60) }) };
+  }
+
+  const currentCode = String(formData.get("currentCode") ?? "").trim();
+  const newCode = String(formData.get("newCode") ?? "").trim();
+  const repeatCode = String(formData.get("repeatCode") ?? "").trim();
+  if (!isValidLoginCode(newCode)) return { ok: false, message: tr("loginCodeFormat") };
+  if (newCode !== repeatCode) return { ok: false, message: tr("loginCodeMismatch") };
+
+  const row = await prisma.worker.findUnique({ where: { id: worker.id }, select: { loginCodeHash: true } });
+  if (!row?.loginCodeHash || !verifyPassword(currentCode, row.loginCodeHash)) {
+    await registerFailedLogin("worker", clientIp);
+    return { ok: false, message: tr("loginCodeWrong") };
+  }
+  if (newCode === currentCode) return { ok: false, message: tr("loginCodeSame") };
+  if (await isLoginCodeTaken(prisma, newCode, worker.id)) return { ok: false, message: tr("loginCodeTaken") };
+
+  await prisma.worker.update({ where: { id: worker.id }, data: { loginCode: null, loginCodeHash: hashPassword(newCode) } });
+  await clearFailedLogin("worker", clientIp);
+  revalidateWorkerProfile(worker.id);
+  return { ok: true, message: tr("loginCodeChanged") };
 }
 
 export async function logoutWorkerAction() {

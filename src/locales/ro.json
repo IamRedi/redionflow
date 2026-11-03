@@ -375,7 +375,20 @@
     "tileToday": "Azi",
     "tileMonth": "Luna",
     "tileVacation": "Concediu",
-    "moreAboutMe": "Date, îmbrăcăminte și setări"
+    "moreAboutMe": "Date, îmbrăcăminte și setări",
+    "loginCodeFormat": "Codul trebuie să aibă exact 6 cifre.",
+    "loginCodeMismatch": "Codul nou nu coincide în ambele câmpuri.",
+    "loginCodeWrong": "Codul actual nu este corect.",
+    "loginCodeSame": "Codul nou este la fel ca cel vechi.",
+    "loginCodeTaken": "Acest cod este ocupat. Alege altul.",
+    "loginCodeChanged": "Cod schimbat. Data viitoare intră cu codul nou.",
+    "changeCodeTitle": "Schimbă codul de acces",
+    "changeCodeHint": "Aici poți schimba singur codul primit de la birou. 6 cifre, nu-l da altora.",
+    "changeCodeCurrent": "Codul actual",
+    "changeCodeNew": "Codul nou",
+    "changeCodeRepeat": "Repetă codul nou",
+    "changeCodeSave": "Salvează codul",
+    "nationalIdLabel": "Număr act de identitate"
   },
   "report": {
     "daily": "Raport zilnic",
@@ -446,7 +459,9 @@
     "navSettings": "Setări",
     "baustellenSummary": "{active} active of {total} total",
     "openSite": "Open site",
-    "editAndManage": "Edit and manage"
+    "editAndManage": "Edit and manage",
+    "loginCodeTaken": "Acest cod de acces aparține deja altui lucrător. Nu s-a salvat nimic; alege alt cod.",
+    "loginCodeFormat": "Codul de acces trebuie să aibă exact 6 cifre. Nu s-a salvat nimic."
   },
   "language": {
     "de": "Germana",
@@ -571,16 +586,22 @@
       "m2": "m²"
     },
     "steps": {
-      "cutting": "Cutting",
+      "cutting": "Debitare",
+      "assembly": "Asamblare",
+      "welding": "Sudură",
+      "cleaning": "Curățare",
+      "coating": "Vopsire",
+      "loading": "Încărcare",
       "laser": "Laser",
-      "assembly": "Factory assembly",
-      "final": "Finishing"
+      "final": "Finisare"
     },
     "stepHints": {
-      "cutting": "Profiles to size",
-      "laser": "Plates and holes by laser",
-      "assembly": "Welding and assembling the parts",
-      "final": "Check, coating, ready to load"
+      "cutting": "Profile și table la dimensiune",
+      "assembly": "Asamblarea pieselor după desen",
+      "welding": "Sudarea îmbinărilor",
+      "cleaning": "Curățarea suprafeței înainte de vopsire",
+      "coating": "Vopsire sau zincare",
+      "loading": "Control și încărcare pentru șantier"
     },
     "actions": {
       "create": "Put on the line",

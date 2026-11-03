@@ -721,7 +721,20 @@
     "tileToday": "Heute",
     "tileMonth": "Monat",
     "tileVacation": "Urlaub",
-    "moreAboutMe": "Daten, Kleidung und Einstellungen"
+    "moreAboutMe": "Daten, Kleidung und Einstellungen",
+    "loginCodeFormat": "Der Code muss genau 6 Ziffern haben.",
+    "loginCodeMismatch": "Der neue Code stimmt in beiden Feldern nicht überein.",
+    "loginCodeWrong": "Der aktuelle Code ist falsch.",
+    "loginCodeSame": "Der neue Code ist derselbe wie der alte.",
+    "loginCodeTaken": "Dieser Code ist vergeben. Bitte einen anderen wählen.",
+    "loginCodeChanged": "Code geändert. Beim nächsten Mal mit dem neuen Code anmelden.",
+    "changeCodeTitle": "Anmeldecode ändern",
+    "changeCodeHint": "Den Code vom Büro kannst du hier selbst ändern. 6 Ziffern, nicht weitergeben.",
+    "changeCodeCurrent": "Aktueller Code",
+    "changeCodeNew": "Neuer Code",
+    "changeCodeRepeat": "Neuen Code wiederholen",
+    "changeCodeSave": "Code speichern",
+    "nationalIdLabel": "Ausweisnummer"
   },
   "report": {
     "brandName": "Baumdienst Flow",
@@ -1590,7 +1603,9 @@
     "navSettings": "Einstellungen",
     "baustellenSummary": "{active} aktiv von {total} insgesamt",
     "openSite": "Baustelle öffnen",
-    "editAndManage": "Bearbeiten und verwalten"
+    "editAndManage": "Bearbeiten und verwalten",
+    "loginCodeTaken": "Der Anmeldecode gehört schon einem anderen Mitarbeiter. Nichts wurde gespeichert; bitte einen anderen Code wählen.",
+    "loginCodeFormat": "Der Anmeldecode muss genau 6 Ziffern haben. Nichts wurde gespeichert."
   },
   "language": {
     "de": "Deutsch",
@@ -1719,15 +1734,21 @@
     },
     "steps": {
       "cutting": "Zuschnitt",
+      "assembly": "Montage",
+      "welding": "Schweißen",
+      "cleaning": "Reinigen",
+      "coating": "Lackieren",
+      "loading": "Verladen",
       "laser": "Laser",
-      "assembly": "Zusammenbau im Werk",
       "final": "Abschluss"
     },
     "stepHints": {
-      "cutting": "Profile auf Maß",
-      "laser": "Bleche und Löcher mit dem Laser",
-      "assembly": "Schweißen und Zusammenbau",
-      "final": "Kontrolle, Beschichtung, verladebereit"
+      "cutting": "Profile und Bleche auf Maß",
+      "assembly": "Teile nach Zeichnung zusammenstellen",
+      "welding": "Nähte schweißen",
+      "cleaning": "Oberfläche vor dem Anstrich reinigen",
+      "coating": "Lackieren oder verzinken",
+      "loading": "Kontrolle und Verladen zur Baustelle"
     },
     "actions": {
       "create": "In die Linie gestellt",

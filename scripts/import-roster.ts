@@ -6,8 +6,8 @@
  * Runs again without changing anything: workers are matched by name, machines by
  * plate (or by name when there is none); existing rows only get empty fields filled.
  * New workers get no login code; the office gives codes when the rollout starts.
- * With retireSamples, the "Muster" test workers and the "(Muster)"/"(test)" sites are set inactive and the
- * "Muster" test machines are removed.
+ * With retireSamples, every "Muster" test worker, site and machine and every "(test)" site is deleted.
+ * Each run ends with a check of what the company holds (counts, workers not on the list, all sites).
  */
 import 'dotenv/config';
 
@@ -58,6 +58,7 @@ export async function runRosterImport() {
           birthDate: true,
           position: true,
           licenses: true,
+          nationalId: true,
           crewRole: true,
         },
       });
@@ -69,6 +70,7 @@ export async function runRosterImport() {
           ...(existing.position || !w.position ? {} : { position: w.position }),
           ...(existing.licenses || !w.licenses ? {} : { licenses: w.licenses }),
           ...(existing.crewRole || !w.crewRole ? {} : { crewRole: w.crewRole }),
+          ...(existing.nationalId || !w.nationalId ? {} : { nationalId: w.nationalId }),
         };
         if (Object.keys(fill).length > 0) {
           await prisma.worker.update({
@@ -87,6 +89,7 @@ export async function runRosterImport() {
           birthDate: w.birthDate,
           position: w.position,
           licenses: w.licenses,
+          nationalId: w.nationalId,
           crewRole: w.crewRole,
           level: w.level,
           vacationAllowanceDays: vacationDays,
@@ -157,34 +160,40 @@ export async function runRosterImport() {
     }
 
     if (input.retireSamples) {
-      const workers = await prisma.worker.updateMany({
+      // Real data has arrived: every test row goes, not just out of sight.
+      // Sites cascade to their factory groups, files, logs and tasks; workers
+      // to their sessions and notes; machines to their site presence.
+      const sample = { contains: 'Muster', mode: 'insensitive' as const };
+      const sites = await prisma.baustelle.deleteMany({
         where: {
           companyProfileId: company.id,
-          lastName: 'Muster',
-          status: 'active',
+          OR: [{ name: sample }, { name: { contains: '(test)', mode: 'insensitive' } }],
         },
-        data: { status: 'inactive' },
       });
-      const sites = await prisma.baustelle.updateMany({
-        where: {
-          companyProfileId: company.id,
-          OR: [
-            { name: { endsWith: '(Muster)' } },
-            { name: { endsWith: '(test)' } },
-          ],
-          status: 'active',
-        },
-        data: { status: 'inactive' },
+      const workers = await prisma.worker.deleteMany({
+        where: { companyProfileId: company.id, OR: [{ lastName: sample }, { firstName: sample }] },
       });
       const machines = await prisma.machine.deleteMany({
-        where: {
-          companyProfileId: company.id,
-          name: { endsWith: '(Muster)' },
-          notes: 'Mjet prove (Muster).',
-        },
+        where: { companyProfileId: company.id, OR: [{ name: sample }, { notes: sample }] },
       });
       stats.samplesRetired = workers.count + sites.count + machines.count;
+      console.log(`[roster] deleted samples: sites ${sites.count}, workers ${workers.count}, machines ${machines.count}.`);
     }
+
+    // What the company now holds, for checking against its lists.
+    const listed = new Set(input.workers.map((w) => `${w.firstName} ${w.lastName}`.toLowerCase()));
+    const [allWorkers, allMachines, allSites] = await Promise.all([
+      prisma.worker.findMany({ where: { companyProfileId: company.id }, select: { firstName: true, lastName: true, status: true, crewRole: true, nationalId: true, birthDate: true, loginCodeHash: true } }),
+      prisma.machine.findMany({ where: { companyProfileId: company.id }, select: { name: true, isActive: true, tuvDate: true } }),
+      prisma.baustelle.findMany({ where: { companyProfileId: company.id }, select: { name: true, status: true, productionBatches: { select: { title: true } } }, orderBy: { name: 'asc' } }),
+    ]);
+    const notListed = allWorkers.filter((w) => !listed.has(`${w.firstName} ${w.lastName}`.toLowerCase()));
+    const roles = allWorkers.reduce<Record<string, number>>((acc, w) => ({ ...acc, [w.crewRole ?? 'none']: (acc[w.crewRole ?? 'none'] ?? 0) + 1 }), {});
+    console.log(
+      `[roster] check: workers ${allWorkers.length} (active ${allWorkers.filter((w) => w.status === 'active').length}, with ID ${allWorkers.filter((w) => w.nationalId).length}, with birth date ${allWorkers.filter((w) => w.birthDate).length}, with login code ${allWorkers.filter((w) => w.loginCodeHash).length}), roles ${JSON.stringify(roles)}; not on the list: ${notListed.map((w) => `${w.firstName} ${w.lastName}`).join(', ') || 'none'}.`,
+    );
+    console.log(`[roster] check: machines ${allMachines.length} (active ${allMachines.filter((m) => m.isActive).length}, with kolaudim ${allMachines.filter((m) => m.tuvDate).length}).`);
+    console.log(`[roster] check: sites ${allSites.length}: ${allSites.map((site) => `${site.name} [${site.status}${site.productionBatches.length ? `, groups: ${site.productionBatches.map((b) => b.title).join(' / ')}` : ''}]`).join('; ')}.`);
 
     console.log(
       `[roster] workers +${stats.workersAdded} (filled ${stats.workersFilled}), machines +${stats.machinesAdded} (filled ${stats.machinesFilled}), sample rows retired ${stats.samplesRetired}.`,

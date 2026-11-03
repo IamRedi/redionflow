@@ -12,7 +12,9 @@ import { MachineArt, machineKind } from "@/components/steel/machine-art";
 
 import { AdminWorkerCard } from "./admin-worker-card";
 import { deleteWorkerAction, updateWorkerAction } from "./worker-admin-actions";
+import { isLoginCodeTaken } from "@/lib/auth/login-code";
 import { hashPassword } from "@/lib/auth/password";
+import { redirect } from "next/navigation";
 import { ASSISTANT_LANGUAGE_OPTIONS, normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { checkLimit } from "@/lib/billing/limits";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
@@ -204,8 +206,13 @@ async function createWorker(formData: FormData) {
 
   const isTemporary = formData.get("isTemporary") === "on";
   const enteredLoginCode = normalizeLoginCode(formData.get("loginCode"));
-  const loginCode = enteredLoginCode || (isTemporary ? "" : generatedLoginCode());
-  if (loginCode && loginCode.length !== 6) return;
+  if (enteredLoginCode && enteredLoginCode.length !== 6) redirect("/app/admin?code=format");
+  if (enteredLoginCode && (await isLoginCodeTaken(prisma, enteredLoginCode))) redirect("/app/admin?code=taken");
+  let loginCode = enteredLoginCode;
+  if (!loginCode && !isTemporary) {
+    do loginCode = generatedLoginCode();
+    while (await isLoginCodeTaken(prisma, loginCode));
+  }
   const companyRow = await prisma.companyProfile.findUnique({ where: { id: companyId }, select: { country: true } });
   const regionDefaults = regionConfig(companyRow?.country);
 
@@ -292,7 +299,8 @@ async function deleteMachine(formData: FormData) {
   notifyRealtimeUpdate("machine.updated", ["machine-sidebar"]);
 }
 
-export default async function AdminHrFleetPage() {
+export default async function AdminHrFleetPage({ searchParams }: { searchParams?: Promise<{ code?: string }> } = {}) {
+  const codeNotice = (await searchParams)?.code;
   const [company, mode, currentLang] = await Promise.all([
     getOrCreateDefaultCompany(),
     getCompanyMode(),
@@ -353,6 +361,11 @@ export default async function AdminHrFleetPage() {
           </Button>
         </div>
       </div>
+      {codeNotice === "taken" || codeNotice === "format" ? (
+        <div role="alert" className="rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-900 dark:text-amber-100">
+          {t(codeNotice === "taken" ? "admin.loginCodeTaken" : "admin.loginCodeFormat", currentLang, mode)}
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
         {(
           [

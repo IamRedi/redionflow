@@ -647,6 +647,9 @@ model Worker {
   loginCodeHash         String?
   isTemporary           Boolean            @default(false)
   birthDate             DateTime?
+  /// National ID / personal number from the company's staff list. HR data:
+  /// shown only on the worker's own profile and to the office.
+  nationalId            String?
   startedAtCompany      DateTime?
   emailAccount          String?
   clothingTopSize       String?

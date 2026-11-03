@@ -695,7 +695,20 @@
     "tileToday": "Sot",
     "tileMonth": "Muaji",
     "tileVacation": "Pushime",
-    "moreAboutMe": "Të dhënat, veshjet dhe cilësimet"
+    "moreAboutMe": "Të dhënat, veshjet dhe cilësimet",
+    "loginCodeFormat": "Kodi duhet të ketë saktë 6 shifra.",
+    "loginCodeMismatch": "Kodi i ri nuk përputhet në të dyja fushat.",
+    "loginCodeWrong": "Kodi aktual nuk është i saktë.",
+    "loginCodeSame": "Kodi i ri është i njëjtë me të vjetrin.",
+    "loginCodeTaken": "Ky kod është i zënë. Zgjidh një tjetër.",
+    "loginCodeChanged": "Kodi u ndryshua. Herën tjetër hyr me kodin e ri.",
+    "changeCodeTitle": "Ndrysho kodin e hyrjes",
+    "changeCodeHint": "Kodi që të dha zyra mund ta ndryshosh vetë këtu. 6 shifra, mos e trego te të tjerët.",
+    "changeCodeCurrent": "Kodi aktual",
+    "changeCodeNew": "Kodi i ri",
+    "changeCodeRepeat": "Përsërit kodin e ri",
+    "changeCodeSave": "Ruaj kodin",
+    "nationalIdLabel": "Numri personal (ID)"
   },
   "report": {
     "daily": "Raporti ditor",
@@ -1524,7 +1537,9 @@
     "active": "Aktiv",
     "workers": "Punëtorët",
     "machines": "Mjetet",
-    "projects": "Projektet"
+    "projects": "Projektet",
+    "loginCodeTaken": "Kodi i hyrjes është i zënë nga një punonjës tjetër. Asgjë nuk u ruajt; zgjidh një kod tjetër.",
+    "loginCodeFormat": "Kodi i hyrjes duhet të ketë saktë 6 shifra. Asgjë nuk u ruajt."
   },
   "language": {
     "de": "Gjermanisht",
@@ -1652,16 +1667,22 @@
       "m2": "m²"
     },
     "steps": {
-      "cutting": "Prerja",
+      "cutting": "Prerje",
+      "assembly": "Montim",
+      "welding": "Saldim",
+      "cleaning": "Pastrim",
+      "coating": "Lyerje",
+      "loading": "Ngarkim",
       "laser": "Lazeri",
-      "assembly": "Montimi në fabrikë",
       "final": "Përfundimi"
     },
     "stepHints": {
-      "cutting": "Profilet në masë",
-      "laser": "Llamarinat dhe vrimat me lazer",
-      "assembly": "Saldimi dhe bashkimi i pjesëve",
-      "final": "Kontrolli, boja dhe gati për ngarkim"
+      "cutting": "Profilet dhe llamarinat në masë",
+      "assembly": "Bashkimi i pjesëve sipas vizatimit",
+      "welding": "Saldimi i nyjeve",
+      "cleaning": "Pastrimi i sipërfaqes para bojës",
+      "coating": "Bojë ose zinkim",
+      "loading": "Kontrolli dhe ngarkimi për kantier"
     },
     "actions": {
       "create": "U shtua në linjë",

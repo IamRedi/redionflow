@@ -32,6 +32,7 @@ import { hasOpenPause, isReportableSession, totalPauseMinutes } from "@/lib/work
 import { isRecord } from "@/lib/workzone/site-json";
 import { logoutWorkerAction } from "../hr-actions";
 import { updateWorkerContactDetailsFormAction } from "../hr-actions";
+import { ChangeCodeForm } from "./change-code-form";
 import { updateWorkerClothingSizesFormAction } from "../hr-actions";
 import { updateNotificationSettingsFormAction } from "../hr-actions";
 import { updateWorkerLanguagePreferencesFormAction } from "../hr-actions";
@@ -64,6 +65,7 @@ type WorkerProfile = {
   position: string | null;
   licenses: string | null;
   birthDate: Date | null;
+  nationalId?: string | null;
   level: string;
   availability: string;
   vacationAllowanceDays: number;
@@ -261,6 +263,7 @@ export async function WorkerProfileView({
     [
       [t("workzone.positionLabel", currentLang), worker.position],
       [t("workzone.birthDateLabel", currentLang), worker.birthDate ? formatProfileDate(worker.birthDate, currentLang) : null],
+      [t("workzone.nationalIdLabel", currentLang), worker.nationalId ?? null],
       [t("workzone.licensesLabel", currentLang), worker.licenses],
       [t("common.phone", currentLang), worker.phone],
       [t("workzone.emailAccount", currentLang), worker.emailAccount],
@@ -475,6 +478,7 @@ export async function WorkerProfileView({
               ))}
             </dl>
           ) : null}
+          {mode === "worker" ? <ChangeCodeForm currentLang={currentLang} /> : null}
           {mode === "admin" ? (
               <details className="rounded-md border bg-muted/20 px-3 py-2">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium">

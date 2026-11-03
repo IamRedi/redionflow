@@ -3,8 +3,10 @@
 import { regionConfig } from "@/lib/region";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { normalizeAssistantLanguage } from "@/lib/assistant/language";
+import { isLoginCodeTaken, isValidLoginCode } from "@/lib/auth/login-code";
 import { hashPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
@@ -37,12 +39,14 @@ export async function updateWorkerAction(formData: FormData) {
   const lastName = String(formData.get("lastName") ?? "").trim();
   const loginCode = normalizeLoginCode(formData.get("loginCode"));
   if (!id || !firstName || !lastName) return;
-  if (loginCode && !/^\d{6}$/.test(loginCode)) return;
+  if (loginCode && !isValidLoginCode(loginCode)) redirect("/app/admin?code=format");
 
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return;
   const owned = await prisma.worker.findUnique({ where: { id }, select: { companyProfileId: true } });
   if (!owned || owned.companyProfileId !== currentCompanyId) return;
+  // Two workers with one code could not sign in at all; nothing is saved.
+  if (loginCode && (await isLoginCodeTaken(prisma, loginCode, id))) redirect("/app/admin?code=taken");
   const company = await prisma.companyProfile.findUnique({ where: { id: currentCompanyId }, select: { country: true } });
 
   await prisma.worker.update({

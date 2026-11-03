@@ -34,10 +34,19 @@ export type FactoryBatchView = {
   events: Array<{ id: string; action: string; stepKey: string | null; note: string | null; actorName: string; createdAt: string }>;
 };
 
-const ART_KEYS = new Set(["cutting", "laser", "assembly", "final"]);
+const ART_FOR_STEP: Record<string, SteelArtKey> = {
+  cutting: "cutting",
+  laser: "laser",
+  assembly: "trusses",
+  welding: "welding",
+  cleaning: "drilling",
+  coating: "coating",
+  loading: "final",
+  final: "final",
+};
 
 export function artKey(key: string): SteelArtKey {
-  return (ART_KEYS.has(key) ? key : "cutting") as SteelArtKey;
+  return ART_FOR_STEP[key] ?? "cutting";
 }
 
 export function fill(template: string, values: Record<string, string | number>) {
