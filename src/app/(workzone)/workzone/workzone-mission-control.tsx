@@ -11,7 +11,9 @@ import { HubsteigerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { SteelSiteScene } from "@/components/steel/steel-site-scene";
+import { AssetPhoto } from "@/components/asset-photo";
 import { t } from "@/lib/i18n";
+import type { FleetLocation } from "@/lib/fleet/location";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
 type MissionItem = {
@@ -34,6 +36,7 @@ type MissionItem = {
   liveSince: string | null;
   standortAddress: string;
   shape?: SteelSiteShape;
+  photoUrl?: string | null;
   material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
 };
@@ -80,7 +83,7 @@ function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
   const count = items.length;
   const mobile = viewport === "mobile";
   // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
-  const tall = items.some((item) => isSteelSiteType(item.type));
+  const tall = items.some((item) => isSteelSiteType(item.type)||Boolean(item.photoUrl));
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
@@ -259,6 +262,10 @@ export function WorkzoneMissionControl({
   allowCanvasDrag = true,
   allowDetailNavigation = true,
   mode = "baumdienst",
+  fleetLocations = [],
+  gpsSyncAvailable = false,
+  initialMap = false,
+  canEditPhotos = false,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -269,9 +276,13 @@ export function WorkzoneMissionControl({
   allowCanvasDrag?: boolean;
   allowDetailNavigation?: boolean;
   mode?: import("@/lib/mode-config").CompanyMode;
+  fleetLocations?: FleetLocation[];
+  gpsSyncAvailable?: boolean;
+  initialMap?: boolean;
+  canEditPhotos?: boolean;
 }) {
   const { currentLang } = useLanguage();
-  const [isMapMode, setIsMapMode] = useState(false);
+  const [isMapMode, setIsMapMode] = useState(initialMap);
   const [isCompactCanvas, setIsCompactCanvas] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [focusBaustelleId, setFocusBaustelleId] = useState<string | null>(null);
@@ -414,7 +425,7 @@ export function WorkzoneMissionControl({
               <LayoutDashboard className="h-3.5 w-3.5" />
             </Button>
             {toolbar ? <div className="absolute right-3 top-3 z-[500] flex items-center gap-1.5">{toolbar}</div> : null}
-            <WorkzoneMissionMap items={mapItems} focusId={focusBaustelleId} onFocusChange={setFocusBaustelleId} />
+            <WorkzoneMissionMap items={mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focusId={focusBaustelleId} onFocusChange={setFocusBaustelleId} />
           </div>
 
           <div className="rounded-xl border bg-card p-3">
@@ -500,6 +511,7 @@ export function WorkzoneMissionControl({
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
           {items.map((item) => {
+            const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl);
             const target = positions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;
             return (
@@ -536,17 +548,20 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${isSteelSiteType(item.type) ? "overflow-hidden pt-0" : ""}`}
+                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
-                {isSteelSiteType(item.type) ? (
+                {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
-                    <SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />
+                    <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
+                    {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
+                    </AssetPhoto>
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                       {typeLabel(item.type, currentLang)}
                     </span>
                   </div>
                 ) : null}
-                <div className={`flex items-center justify-between gap-2 ${isSteelSiteType(item.type) ? "hidden" : ""}`}>
+                {!hasCover&&canEditPhotos&&!readOnly&&<AssetPhoto kind="site" id={item.id} alt={item.name} canEdit className="absolute right-1 top-1 h-10 w-10"><span/></AssetPhoto>}
+                <div className={`flex items-center justify-between gap-2 ${hasCover ? "hidden" : ""}`}>
                   <ItemTypeIcon type={item.type} pct={item.pct} />
                   <div className={`flex flex-wrap items-center justify-end gap-1 ${isCompactCanvas ? "max-w-[88px]" : "max-w-[150px]"}`}>
                     {item.equipmentIndicators.slice(0, 3).map((indicator) => (

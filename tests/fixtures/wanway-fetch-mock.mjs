@@ -13,6 +13,10 @@ if (process.env.WANWAY_E2E_MOCK === 'true') {
     const url = new URL(input instanceof Request ? input.url : String(input));
     if (url.hostname !== 'open.iopgps.com') return realFetch(input, init);
     const now = Math.floor(Date.now() / 1000) - 30;
+    const fuelTime =
+      url.searchParams.get('noFilter') === '1'
+        ? Number(url.searchParams.get('startTime')) + 1800
+        : null;
     const imei = '000000000000001';
     let body;
     if (url.pathname === '/api/auth' && init?.method === 'POST')
@@ -25,7 +29,11 @@ if (process.env.WANWAY_E2E_MOCK === 'true') {
       body = {
         code: 0,
         data: [
-          { imei, deviceName: 'Synthetic GPS [ZZ 123 YY]', deviceType: 'GS900-Wired' },
+          {
+            imei,
+            deviceName: 'Synthetic GPS [ZZ 123 YY]',
+            deviceType: 'GS900-Wired',
+          },
         ],
         page: { currentPage: 1, pageSize: 100, count: 1 },
       };
@@ -51,8 +59,16 @@ if (process.env.WANWAY_E2E_MOCK === 'true') {
       body = {
         code: 0,
         data: [
-          { lat: '41.2', lng: '19.7', gpsTime: now - 60 },
-          { lat: '41.201', lng: '19.701', gpsTime: now },
+          {
+            lat: '41.2',
+            lng: '19.7',
+            gpsTime: fuelTime === null ? now - 60 : fuelTime - 30,
+          },
+          {
+            lat: '41.201',
+            lng: '19.701',
+            gpsTime: fuelTime === null ? now : fuelTime + 60,
+          },
         ],
       };
     else throw new Error('Forbidden WanWay request in E2E');

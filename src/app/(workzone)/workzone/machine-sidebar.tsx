@@ -2,9 +2,15 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import type { FleetLocation } from "@/lib/fleet/location";
+import { mapsLink } from "@/lib/fleet/location-link";
+import { fleetCopy } from "@/lib/fleet/copy";
+import { fleetTime } from "@/lib/fleet/format";
+import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
+import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, Fuel, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { MachineArt, machineKind } from "@/components/steel/machine-art";
@@ -47,6 +53,7 @@ type MachineSideItem = {
   coneTotal?: number;
   coneAvailable?: number;
   category?: string | null;
+  gps?: FleetLocation | null;
 };
 
 function machineLabel(machine: MachineSideItem) {
@@ -123,15 +130,18 @@ function InspectionChip({ label, date }: { label: string; date: Date | string | 
 export function MachineSidebar({
   machines,
   isAdmin,
+  canEditPhotos = isAdmin,
   showCones = true,
   country = "DE",
 }: {
   machines: MachineSideItem[];
   isAdmin: boolean;
+  canEditPhotos?: boolean;
   showCones?: boolean;
   country?: string;
 }) {
   const { currentLang: lang } = useLanguage();
+  const c = fleetCopy(lang);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fleetOpen, setFleetOpen] = useState(true);
   const [message, setMessage] = useState<string>();
@@ -149,6 +159,14 @@ export function MachineSidebar({
   const selected = useMemo(() => machines.find((machine) => machine.id === selectedId) ?? null, [machines, selectedId]);
   const selectedNotes = useMemo(() => parseMachineNotes(selected?.notes ?? null), [selected?.notes]);
   const activeDefect = selectedNotes.defects.find((defect) => !defect.resolvedAt) ?? null;
+  useEffect(() => {
+    const open = (event: Event) => {
+      const id = (event as CustomEvent<{id?: string}>).detail?.id;
+      if (id && machines.some(m => m.id === id)) setSelectedId(id);
+    };
+    window.addEventListener("fleet:open-machine", open);
+    return () => window.removeEventListener("fleet:open-machine", open);
+  }, [machines]);
 
   function blockMachine() {
     if (!selected) return;
@@ -235,6 +253,7 @@ export function MachineSidebar({
       >
         {t("workzone.fleet", lang).toUpperCase()}
       </button>
+      <Link href="/workzone/fuel" className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-center text-[10px] font-semibold leading-tight shadow-sm" title={c.fuel}><Fuel className="size-5 text-orange-600"/><span>{c.fuel}</span></Link>
 
       {fleetOpen ? (
         <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 lg:max-h-[calc(100vh-13rem)] lg:flex-none lg:overflow-x-visible lg:overflow-y-auto lg:pr-1">
@@ -307,11 +326,9 @@ export function MachineSidebar({
               <div className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[minmax(150px,32vh)_auto] gap-3 overflow-y-auto p-3 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1 lg:gap-5 lg:overflow-hidden">
                 {/* Picture of the machine with its name on a plate in the corner */}
                 <div className="relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-                  {selected.imageUrl ? (
-                    <img src={selected.imageUrl} alt={machineLabel(selected)} className="size-full object-cover" />
-                  ) : (
+                  <AssetPhoto key={`${selected.id}:${selected.imageUrl}`} kind="machine" id={selected.id} src={selected.imageUrl} alt={machineLabel(selected)} canEdit={canEditPhotos}>
                     <MachineArt kind={machineKind(selected)} animate={selected.isActive} className="absolute inset-0 h-full w-full p-4 pt-14" />
-                  )}
+                  </AssetPhoto>
                   <div className="absolute left-3 top-3 max-w-[80%] rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
                     <div className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">{selected.funksioni ?? t("workzone.fleet", lang)}</div>
                     <div className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{machineLabel(selected)}</div>
@@ -323,6 +340,13 @@ export function MachineSidebar({
                 </div>
 
                 <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
+                  <div className="rounded-2xl border bg-card p-3">
+                    <div className="flex flex-wrap gap-2">
+                      {selected.gps ? <a href={mapsLink(selected.gps.lat, selected.gps.lng)} target="_blank" rel="noreferrer" className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-orange-600 px-4 font-semibold text-white">{c.maps}</a> : <span className="flex flex-1 items-center text-sm text-muted-foreground">{c.noGps}</span>}
+                      <Link onClick={() => setSelectedId(null)} href={'/workzone/fuel?machine=' + selected.id} className="flex min-h-12 flex-1 items-center justify-center rounded-xl border px-4 font-semibold">{c.fuel}</Link>
+                    </div>
+                    {selected.gps && <p className="mt-2 text-xs text-muted-foreground">{selected.gps.online ? c.online : selected.gps.stale ? c.stale : c.unknown} · {c.lastReport}: {fleetTime(selected.gps.reportedAt, "Europe/Berlin", true)}</p>}
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     <Detail label={t("workzone.model", lang)} value={selected.model} />
                     <Detail label={t("workzone.requiredLicense", lang)} value={selected.patentaEnevojshme} />

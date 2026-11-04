@@ -25,7 +25,11 @@ import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { batchState, readFactorySteps } from "@/lib/factory/production";
 import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
+import { AssetPhoto } from "@/components/asset-photo";
+import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 import { factoryOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
+import { readFleetLocations } from "@/lib/fleet/location";
+import { wanwayEnabled } from "@/lib/fleet/wanway/service";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -47,7 +51,8 @@ function materialIndicators(
   ].filter(Boolean) as Array<{ key: string; label: string; icon: string; qty: number }>;
 }
 
-export default async function WorkzoneHomePage() {
+export default async function WorkzoneHomePage({ searchParams }: { searchParams?: Promise<{view?: string}> } = {}) {
+  const initialMap = (await searchParams)?.view === 'map';
   await autoLockPastWorkLogs();
   const company = await getOrCreateDefaultCompany();
   const [admin, worker, mode] = await Promise.all([
@@ -56,6 +61,7 @@ export default async function WorkzoneHomePage() {
     getCompanyMode(),
   ]);
   const currentLang = await resolveRequestLanguage();
+  const fleetLocations = admin || worker ? await readFleetLocations() : [];
 
   const today = dateKey(new Date());
   const todayDate = dayRange(today).start;
@@ -114,6 +120,7 @@ export default async function WorkzoneHomePage() {
         id: true,
         name: true,
         type: true,
+        coverPhotoAt: true,
         address: true,
         description: true,
         status: true,
@@ -257,6 +264,7 @@ export default async function WorkzoneHomePage() {
   }
 
   const defaultAddress = [company.street, [company.zip, company.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  const photoPermissions=crewPermissions(worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:admin?{isAdmin:true}:null);
   const missionItems = baustellen.map((b) => {
     const total = b.treeItems.length;
     const done = b.treeItems.filter((t) => t.status === "done").length;
@@ -293,6 +301,7 @@ export default async function WorkzoneHomePage() {
     return {
       id: b.id,
       name: b.name,
+      photoUrl: assetPhotoUrl('site',b.id,b.coverPhotoAt),
       status: b.status,
       type: b.type,
       pct,
@@ -322,10 +331,14 @@ export default async function WorkzoneHomePage() {
   return (
     <div className="space-y-4">
       <WorkzoneMissionControl
+        fleetLocations={fleetLocations}
+        initialMap={initialMap}
+        gpsSyncAvailable={wanwayEnabled() && Boolean(admin || worker)}
         items={liveMission}
         archive={archivedMission}
         defaultAddress={defaultAddress}
         mode={mode}
+        canEditPhotos={photoPermissions.office||photoPermissions.siteSteps}
         toolbar={
           canOpenCalendar ? (
             <>
@@ -391,6 +404,9 @@ export default async function WorkzoneHomePage() {
       {factorySite ? (
         <FactoryPanel
           factoryName={factorySite.name}
+          factoryId={factorySite.id}
+          photoUrl={assetPhotoUrl('site',factorySite.id,factorySite.coverPhotoAt)}
+          canEditPhoto={photoPermissions.office||photoPermissions.factorySteps}
           factoryAddress={(factorySite.address ?? "").trim()}
           siteOutput={siteOutput}
           canManage={crewPermissions(worker ? { isAdmin: false, crewRole: worker.crewRole, level: worker.level } : admin ? { isAdmin: true } : null).office}
@@ -453,6 +469,7 @@ export default async function WorkzoneHomePage() {
                   }`}
                 >
                   <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+                    <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit={photoPermissions.office||photoPermissions.siteSteps}>
                     <SteelSiteArt
                       type={b.type}
                       shape={steelSiteShape(b.name, b.description)}
@@ -460,6 +477,7 @@ export default async function WorkzoneHomePage() {
                       live={b.workSessions.length > 0}
                       className="absolute inset-0 h-full w-full"
                     />
+                    </AssetPhoto>
                     {/* Site name on a plate in the top corner, like a site board. */}
                     <div className="absolute left-3 top-3 max-w-[75%] rounded-xl border border-white/60 bg-white/85 px-3 py-2 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/80">
                       <div className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">{meta.label}</div>
@@ -513,7 +531,9 @@ export default async function WorkzoneHomePage() {
               >
                 {isSteelSiteType(b.type) ? (
                   <div className="relative h-28 overflow-hidden rounded-t-lg border-b">
+                    <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit={photoPermissions.office||photoPermissions.siteSteps}>
                     <SteelSiteArt type={b.type} pct={pct} live={b.workSessions.length > 0} className="absolute inset-0 h-full w-full" />
+                    </AssetPhoto>
                     <div className="absolute bottom-2 right-2 rounded-full bg-background/85 text-orange-600 shadow-sm backdrop-blur dark:text-orange-400">
                       <SteelProgressRing pct={pct} size={48} />
                     </div>

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MachineArt, machineKind } from "@/components/steel/machine-art";
+import { AssetPhoto } from "@/components/asset-photo";
+import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 
 import { AdminWorkerCard } from "./admin-worker-card";
 import { deleteWorkerAction, updateWorkerAction } from "./worker-admin-actions";
@@ -321,6 +323,8 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
         id: true,
         name: true,
         nickname: true,
+        coverPhotoAt: true,
+        imageUrl: true,
         model: true,
         targe: true,
         category: true,
@@ -800,7 +804,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
                   <TableCell className="py-1.5">
                     <div className="flex items-center gap-3">
                       <span className="h-10 w-14 shrink-0 overflow-hidden rounded-lg border bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
-                        <MachineArt kind={machineKind(machine)} animate={false} className="size-full" />
+                        <AssetPhoto key={`${machine.id}:${machine.coverPhotoAt}`} kind="machine" id={machine.id} src={assetPhotoUrl('machine',machine.id,machine.coverPhotoAt)??machine.imageUrl} alt={machine.nickname??machine.name}><MachineArt kind={machineKind(machine)} animate={false} className="size-full" /></AssetPhoto>
                       </span>
                       <div className="min-w-0">
                         <div className="truncate font-medium">{machine.nickname ?? machine.name}</div>

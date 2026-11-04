@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { TrackPoint } from '@/lib/fleet/wanway/adapter';
 import {
   bindDevice,
+  createVehicleAndBind,
   disconnect,
   errorCode,
   loadHistory,
@@ -28,11 +29,15 @@ const schema = z.discriminatedUnion('action', [
     machineId: z.string().max(100).nullable(),
   }),
   z.object({ action: z.literal('history'), id: z.string().min(1).max(100) }),
+  z.object({
+    action: z.literal('createVehicle'),
+    id: z.string().min(1).max(100),
+    name: z.string().trim().min(2).max(160),
+    plate: z.string().trim().max(30),
+  }),
 ]);
 
-export async function wanwayAction(
-  input: unknown,
-): Promise<{
+export async function wanwayAction(input: unknown): Promise<{
   ok: boolean;
   code?: string;
   count?: number;
@@ -47,6 +52,8 @@ export async function wanwayAction(
     if (d.action === 'save') await saveCredentials(d.appid, d.key, d.approved);
     if (d.action === 'disconnect') await disconnect();
     if (d.action === 'link') await bindDevice(d.id, d.machineId);
+    if (d.action === 'createVehicle')
+      await createVehicleAndBind(d.id, d.name, d.plate);
     if (d.action === 'test' || d.action === 'sync')
       count = await syncDevices(d.action === 'test');
     if (d.action === 'history') {
@@ -55,6 +62,7 @@ export async function wanwayAction(
     }
     revalidatePath('/app/settings/integrations/wanway');
     revalidatePath('/app/fleet-gps', 'layout');
+    revalidatePath('/workzone', 'layout');
     return { ok: true, count };
   } catch (error) {
     return { ok: false, code: errorCode(error) };

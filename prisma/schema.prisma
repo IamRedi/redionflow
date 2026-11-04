@@ -270,6 +270,7 @@ model CompanyProfile {
   overheadSettings          OverheadSettings?
   laborRoles                LaborRole[]
   machines                  Machine[]
+  fuelReceipts              FuelReceipt[]
   workers                   Worker[]
   inventoryItems            CompanyInventoryItem[]
   productionBatches         ProductionBatch[]
@@ -294,6 +295,7 @@ model CompanyProfile {
   workzoneSyncActions WorkzoneSyncAction[]
   users               User[]               @relation("CompanyUsers")
   auditLogs           AuditLog[]
+  assetPhotos         AssetPhoto[]
 
   /// T-026: SaaS trial expiry. Null for dedicated deployments.
   trialEndsAt DateTime?
@@ -552,6 +554,7 @@ model LaborRole {
 
 model Machine {
   wanwayDevices WanwayDevice[]
+  fuelReceipts FuelReceipt[]
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -577,6 +580,8 @@ model Machine {
   funksioni         String?
   patentaEnevojshme String?
   imageUrl          String?
+  coverPhotoAt      DateTime?
+  coverPhoto        AssetPhoto?
   /// Albanian vehicle papers (Kolaudimi uses tuvDate): insurance, road tax,
   /// transport permit and tachograph check, each the day it runs out.
   insuranceDate       DateTime?
@@ -609,6 +614,50 @@ model Machine {
 
   @@unique([companyProfileId, name])
   @@unique([companyProfileId, id])
+}
+
+/// Private fuel evidence: immutable uploader/upload time, confirmed invoice time
+/// and only the nearest GPS evidence for that event, never a continuous archive.
+model FuelReceipt {
+  id                   String @id @default(cuid())
+  companyProfileId     String
+  companyProfile       CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  machineId            String
+  machine              Machine @relation(fields: [companyProfileId, machineId], references: [companyProfileId, id], onDelete: NoAction, map: "FuelReceipt_machine_tenant_fkey")
+  requestId            String
+  uploadedByUserId      String?
+  uploadedByWorkerId    String?
+  uploadedByName        String
+  uploadedAt           DateTime @default(now())
+  confirmedAt          DateTime?
+  fueledAt             DateTime?
+  fueledByWorkerId     String?
+  fueledByUserId       String?
+  fueledByName         String?
+  timeZone             String
+  receiptTime          String?
+  timeSource           String?
+  stationAddress       String?
+  liters               Float?
+  amount               Float?
+  currency             String
+  fileName             String
+  mime                 String
+  size                 Int
+  data                 Bytes
+  sha256               String
+  gpsStatus            String @default("pending")
+  gpsDeviceId          String?
+  gpsLat               Float?
+  gpsLng               Float?
+  gpsRecordedAt        DateTime?
+  gpsDeltaSeconds      Int?
+  gpsSource            String?
+  gpsEvidence          Json?
+  gpsResolvedAt        DateTime?
+
+  @@unique([companyProfileId, requestId])
+  @@index([companyProfileId, machineId, uploadedAt])
 }
 
 /// Server-only provider credentials and distributed operation/token cache.
@@ -982,6 +1031,8 @@ model Baustelle {
   canvasY               Int?
   canvasMobileX         Int?
   canvasMobileY         Int?
+  coverPhotoAt          DateTime?
+  coverPhoto            AssetPhoto?
 
   treeItems                 TreeItem[]
   productionBatches         ProductionBatch[]
@@ -1000,6 +1051,22 @@ model Baustelle {
   updatedAt DateTime @updatedAt
 
   @@index([companyProfileId])
+  @@unique([companyProfileId,id])
+}
+
+/// Bounded WebP covers kept out of ordinary machine/site row payloads.
+model AssetPhoto {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  machineId String?
+  machine Machine? @relation(fields:[companyProfileId,machineId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_machine_tenant_fkey")
+  baustelleId String?
+  baustelle Baustelle? @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_site_tenant_fkey")
+  data Bytes
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,machineId])
+  @@unique([companyProfileId,baustelleId])
 }
 
 model InventoryMovement {

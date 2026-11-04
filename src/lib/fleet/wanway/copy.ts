@@ -145,7 +145,8 @@ const de: typeof en = {
   unlink: 'Kein Fahrzeug / Trennen',
   unavailable: 'Vom Anbieter nicht mehr geliefert',
   vehicle: 'Vorhandenes Fahrzeug',
-  suggested: 'Passendes Fahrzeug ausgewählt. Bitte prüfen und die Verknüpfung bestätigen.',
+  suggested:
+    'Passendes Fahrzeug ausgewählt. Bitte prüfen und die Verknüpfung bestätigen.',
   suffix: 'Geräte-Endziffern',
   fleet: 'GPS-Flotte öffnen',
   back: 'Einstellungen',
@@ -212,6 +213,12 @@ export function wanwayError(code: string, lang: Language) {
       ? 'Mjeti është lidhur tashmë me një GPS tjetër.'
       : 'This vehicle already has a GPS link.',
     INVALID: sq ? 'Kontrollo fushat e formularit.' : 'Check the form fields.',
+    VEHICLE_EXISTS: sq
+      ? 'Mjeti me këtë emër ose targë ekziston. Zgjidhe nga lista.'
+      : 'A vehicle with this name or plate already exists. Choose it from the list.',
+    VEHICLE_LIMIT: sq
+      ? 'U arrit kufiri i mjeteve të planit të firmës.'
+      : 'The company plan vehicle limit has been reached.',
     DISABLED: sq
       ? 'Integrimi nuk është aktiv ose nuk ke autorizim.'
       : 'Integration unavailable or access denied.',

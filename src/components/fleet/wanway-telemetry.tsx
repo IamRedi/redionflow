@@ -9,6 +9,7 @@ import type { readFleet } from '@/lib/fleet/wanway/service';
 import { wanwayCopy, wanwayError } from '@/lib/fleet/wanway/copy';
 import { wanwayAction } from '@/app/(admin)/app/settings/integrations/wanway/actions';
 import { Button } from '@/components/ui/button';
+import { fleetTime } from '@/lib/fleet/format';
 
 const Map = dynamic(() => import('./wanway-map'), { ssr: false });
 type Snapshot = Awaited<ReturnType<typeof readFleet>>[number];
@@ -30,7 +31,7 @@ export function WanwayTelemetry({
   const [pending, start] = useTransition();
   const router = useRouter();
   const date = (s: string | null) =>
-    s ? new Date(s).toLocaleString(lang) : '—';
+    s ? fleetTime(s, 'Europe/Berlin', true) : '—';
   const hasPosition = d.lat !== null && d.lng !== null && d.reportedAt !== null;
   if (compact)
     return (

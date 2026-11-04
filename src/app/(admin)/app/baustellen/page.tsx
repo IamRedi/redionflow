@@ -20,6 +20,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SteelSiteArt } from "@/components/steel/steel-art";
+import { AssetPhoto } from "@/components/asset-photo";
+import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 import { baustelleTypeOptionsForMode } from "@/lib/baustellen/type-options";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { t } from "@/lib/i18n";
@@ -58,6 +60,7 @@ export default async function BaustellenAdminPage() {
       address: true,
       description: true,
       documents: true,
+      coverPhotoAt: true,
       updatedAt: true,
       _count: { select: { treeItems: true } },
     },
@@ -125,6 +128,7 @@ export default async function BaustellenAdminPage() {
             return (
               <li key={b.id} className="group/card flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-md">
                 <div className="relative h-24 border-b bg-gradient-to-br from-orange-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+                  <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit>
                   {steel ? (
                     <SteelSiteArt type={b.type} shape={steelSiteShape(b.name, b.description)} pct={pct} live={false} className="absolute inset-0 h-full w-full" />
                   ) : (
@@ -132,8 +136,9 @@ export default async function BaustellenAdminPage() {
                       <Building2 className="size-10" strokeWidth={1.4} />
                     </div>
                   )}
+                  </AssetPhoto>
                   <span
-                    className={`absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full border bg-background/90 px-2 py-0.5 text-[11px] font-semibold backdrop-blur ${
+                    className={`absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full border bg-background/90 px-2 py-0.5 text-[11px] font-semibold backdrop-blur ${
                       active ? "border-green-500/40 text-green-700 dark:text-green-300" : "text-muted-foreground"
                     }`}
                   >
