@@ -120,7 +120,7 @@ export default async function FleetGpsPage() {
                   {point ? (point.stale ? c.stale : c.lastKnown) : c.noGps}
                 </p>
               )}
-              {point && (
+              {point && !device && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   {c.lastReport}:{' '}
                   {fleetTime(point.reportedAt, 'Europe/Berlin', true)}

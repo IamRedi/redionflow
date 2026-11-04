@@ -206,6 +206,7 @@ test('fleet workflow: yellow/green confirmation → new vehicle → shared Workz
       ['phone', 390, 844],
     ] as const) {
       await page.setViewportSize({ width, height });
+      await expect(page.getByTestId('fleet-vehicle-card').first()).not.toContainText(/AM|PM/);
       await page.screenshot({
         path: info.outputPath(`fleet-overview-${label}.png`),
         fullPage: true,
@@ -229,14 +230,18 @@ test('fleet workflow: yellow/green confirmation → new vehicle → shared Workz
       ),
     ).toHaveText('🏗️');
     await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.waitForFunction(() => !document.querySelector('.leaflet-zoom-anim'));
     await page.screenshot({
       path: info.outputPath('fleet-workzone-map-desktop.png'),
       fullPage: true,
+      animations: 'disabled',
     });
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => !document.querySelector('.leaflet-zoom-anim'));
     await page.screenshot({
       path: info.outputPath('fleet-workzone-map-phone.png'),
       fullPage: true,
+      animations: 'disabled',
     });
     expect(
       await page.evaluate(
