@@ -11,18 +11,19 @@
 
 **[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
-## In review: production dashboard for steel operations
+## Live pilot: production dashboard for steel operations
 
 A calendar shows confirmed kg by day and project: parts cutting, assembly
 cutting and assembly stay separate. Day evidence, process progress, saved
 confirmation weights and a private read-only monitor complete the workflow.
 The monitor receives aggregate data without personal work evidence.
 
-This extension is locally verified and prepared for pilot approval.
+Published to the approved AL Steel pilot on 4 November 2026 (PR35, `44c5a7a`).
+The migration, health check and authenticated dashboard/monitor readback passed.
 [Definitions, limits and evidence](docs/STEEL_PRODUCTION_DASHBOARD.md).
 The capture contains only a fictional company and synthetic work records.
 
-![Local production dashboard candidate with calendar and project progress](docs/assets/screenshots/steel-dashboard-candidate.png)
+![Local demo of the deployed production dashboard with calendar and project progress](docs/assets/screenshots/steel-dashboard-candidate.png)
 
 ## Pilot extension: fleet map, fuel receipts and asset photos
 
