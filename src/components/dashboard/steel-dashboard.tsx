@@ -12,7 +12,7 @@ import { productionDate, productionNumber } from '@/lib/dashboard/steel-format';
 import styles from './steel-dashboard.module.css';
 const kgUnit = 'kg';
 const section = (n: number) => `${String(n).padStart(2, '0')} /`;
-const colors: Record<Series, string> = { cutParts: '#f5b770', cutAssemblies: '#8fc9f4', assembled: '#7ae3bc' };
+const colors: Record<Series, string> = { cutParts: 'var(--cut-parts)', cutAssemblies: 'var(--cut-assemblies)', assembled: 'var(--assembled)' };
 export function SteelDashboard({ data: d, lang }: {
     data: SteelDashboardData;
     lang: string;
@@ -66,7 +66,7 @@ export function SteelDashboard({ data: d, lang }: {
         <div className={styles.projectGrid}>{d.projectRows.map(p => {
             const pct = p.progress.totalPieces ? Math.round(100 * p.progress.readyPieces / p.progress.totalPieces) : 0;
             return <article key={p.id} className={styles.projectCard} data-testid={`production-project-${p.id}`}>
-            <div className={styles.projectTop}><div><span className={styles.projectOverline}>{c.project}</span><h3>{p.name}</h3><span className={styles.micro}>{n(p.progress.kg)} {kgUnit} · {n(p.progress.totalPieces, 0)} {c.pieces} · {c.planned}</span></div><div className={styles.ring} role="img" aria-label={`${pct}% ${c.percentHint}`} style={{ background: `conic-gradient(#7ae3bc ${pct}%, #ffffff0b 0)` }}><span>{pct}<small>%</small></span></div></div>
+            <div className={styles.projectTop}><div><span className={styles.projectOverline}>{c.project}</span><h3>{p.name}</h3><span className={styles.micro}>{n(p.progress.kg)} {kgUnit} · {n(p.progress.totalPieces, 0)} {c.pieces} · {c.planned}</span></div><div className={styles.ring} role="img" aria-label={`${pct}% ${c.percentHint}`} style={{ background: `conic-gradient(var(--green) ${pct}%, var(--track) 0)` }}><span>{pct}<small>%</small></span></div></div>
             <div className={styles.projectSummary}><span>{c.completed}<strong>{n(p.progress.readyKg)} {kgUnit}</strong></span><span>{c.mounted}<strong>{n(p.progress.mountedKg)} {kgUnit}</strong></span></div>
             <div className={styles.stageGroup} data-side="factory"><span>{c.factory}</span><div>{['cutting', 'assembly', 'welding', 'cleaning', 'coating', 'loading'].map(key => <div key={key} className={styles.stage}><span>{stageName(key)}</span><strong>{n(p.progress.stages[key].kg)}<small>{` ${kgUnit}`}</small></strong><div><i style={{ width: `${p.progress.totalPieces ? p.progress.stages[key].pieces / p.progress.totalPieces * 100 : 0}%` }}/></div><small>{n(p.progress.stages[key].pieces, 0)} {c.pieces}</small></div>)}</div></div>
             <div className={styles.stageGroup}><span>{c.field}</span><div>{['received', 'mounted', 'bolted', 'touchup'].map(key => <div key={key} className={styles.stage}><span>{stageName(key)}</span><strong>{n(p.progress.stages[key].kg)}<small>{` ${kgUnit}`}</small></strong><div><i style={{ width: `${p.progress.totalPieces ? p.progress.stages[key].pieces / p.progress.totalPieces * 100 : 0}%` }}/></div><small>{n(p.progress.stages[key].pieces, 0)} {c.pieces}</small></div>)}</div></div>
@@ -158,9 +158,9 @@ export function SteelDashboard({ data: d, lang }: {
             <div className={styles.chartLegend}>{SERIES.map(s => <button key={s} type="button" aria-pressed={visible.includes(s)} style={{ '--accent': colors[s] } as CSSProperties} onClick={() => setVisible(v => v.includes(s) ? v.length > 1 ? v.filter(k => k !== s) : v : [...v, s])}><i style={{ background: colors[s] }}/>{c[s]}</button>)}</div>
             <svg className={styles.chart} viewBox="0 0 730 245" role="img" aria-labelledby={`${graphId}-title ${graphId}-desc`}>
               <title id={`${graphId}-title`}>{c.trend}</title><desc id={`${graphId}-desc`}>{c.trendHint}. {SERIES.map(s => `${c[s]}: ${metricText(d.totals[s])} kg`).join('; ')}. {c.knowledge}.</desc>
-              {[0, 1, 2, 3].map(i => <g key={i}><line x1="50" x2="700" y1={y(max * i / 3)} y2={y(max * i / 3)} stroke="#ffffff10"/><text x="39" y={y(max * i / 3) + 4} textAnchor="end" fill="#899baf" fontSize="11">{calendarN(max * i / 3)}</text></g>)}
+              {[0, 1, 2, 3].map(i => <g key={i}><line x1="50" x2="700" y1={y(max * i / 3)} y2={y(max * i / 3)} stroke="var(--chart-grid)"/><text x="39" y={y(max * i / 3) + 4} textAnchor="end" fill="var(--chart-label)" fontSize="11">{calendarN(max * i / 3)}</text></g>)}
               {trendDays.length > 0 && visible.map(s => <path key={s} d={trendDays.map((day, i) => `${i ? 'L' : 'M'}${x(i)},${y(day.metrics[s].kg)}`).join(' ')} fill="none" stroke={colors[s]} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>)}
-              {trendDays.filter((_, i) => i % 7 === 0 || i === trendDays.length - 1).map(day => <text key={day.key} x={x(trendDays.indexOf(day))} y="233" fill="#899baf" fontSize="12" textAnchor="middle">{Number(day.key.slice(-2))}</text>)}
+              {trendDays.filter((_, i) => i % 7 === 0 || i === trendDays.length - 1).map(day => <text key={day.key} x={x(trendDays.indexOf(day))} y="233" fill="var(--chart-label)" fontSize="12" textAnchor="middle">{Number(day.key.slice(-2))}</text>)}
             </svg>
           </section>
           <section className={styles.dayPanel} aria-labelledby="production-selected-day">

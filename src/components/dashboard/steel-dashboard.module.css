@@ -1,26 +1,83 @@
 .root {
-  --ink: #edf3f8;
-  --muted: #9dabbc;
-  --edge: #ffffff12;
-  --green: #7ae3bc;
+  --ink: #172e3e;
+  --muted: #4a6071;
+  --subtle: #546b7b;
+  --edge: #cfdae3;
+  --control-edge: #7d94a4;
+  --green: #087455;
+  --cut-parts: #a34b12;
+  --cut-assemblies: #1759b8;
+  --assembled: #087455;
+  --canvas: radial-gradient(ellipse at 100% 0,#e0f2ea,transparent 42%),radial-gradient(ellipse at 0 10%,#fff5e8,transparent 36%),#f2f6f9;
+  --card: linear-gradient(135deg,#ffffff,#f7fafc);
+  --surface: #ffffff;
+  --control: #f6f9fb;
+  --hover: #e9f0f5;
+  --day: #f5f8fb;
+  --day-edge: #dce5ec;
+  --day-hover-edge: #8aa4b5;
+  --selected: #e2f2e9;
+  --selected-edge: #168563;
+  --selected-ink: #085b43;
+  --primary: #0b6e54;
+  --primary-ink: #ffffff;
+  --primary-edge: #085c46;
+  --track: #d5e1e8;
+  --ready: linear-gradient(135deg,#e6f5ed,#f6fbf8);
+  --chart-grid: #dce5ec;
+  --chart-label: #546b7b;
+  --warning: #8f490d;
+  color-scheme: light;
   color: var(--ink);
-  background: radial-gradient(ellipse at 100% 0,#24413755,transparent 38%),radial-gradient(ellipse at 0 10%,#59402c22,transparent 36%),#111b26;
-  border: 1px solid #ffffff12;
+  background: var(--canvas);
+  border: 1px solid var(--edge);
   border-radius: 26px;
   padding: clamp(18px,3vw,36px);
   font-variant-numeric: tabular-nums;
   box-shadow: 0 25px 85px #1019251a;
-  min-width: 0
+  min-width: 0;
+}
+:global(.dark) .root {
+  --ink: #edf3f8;
+  --muted: #b1c3d0;
+  --subtle: #9baebb;
+  --edge: #ffffff20;
+  --control-edge: #738696;
+  --green: #7ae3bc;
+  --cut-parts: #f5b770;
+  --cut-assemblies: #8fc9f4;
+  --assembled: #7ae3bc;
+  --canvas: radial-gradient(ellipse at 100% 0,#24413755,transparent 38%),radial-gradient(ellipse at 0 10%,#59402c22,transparent 36%),#111b26;
+  --card: linear-gradient(135deg,#1c2a37,#15212d);
+  --surface: #15232f;
+  --control: #1a2a36;
+  --hover: #243947;
+  --day: #192833;
+  --day-edge: #ffffff12;
+  --day-hover-edge: #8da2b2;
+  --selected: #203d38;
+  --selected-edge: #7ae3bc;
+  --selected-ink: #b6f6df;
+  --primary: #d8efe5;
+  --primary-ink: #14362b;
+  --primary-edge: #e7fff2;
+  --track: #344855;
+  --ready: linear-gradient(135deg,#213d36,#172d2b);
+  --chart-grid: #354a58;
+  --chart-label: #a9becd;
+  --warning: #e5c497;
+  color-scheme: dark;
 }
 .root button,.root a,.root input,.root select {
   touch-action: manipulation
 }
 .root button:focus-visible,.root a:focus-visible,.root input:focus-visible,.root select:focus-visible {
-  outline: 2px solid #f5b770;
+  outline: 2px solid var(--cut-parts);
   outline-offset: 3px
 }
 .root button:disabled {
-  opacity: .35;
+  opacity: 1;
+  color: var(--subtle);
   cursor: default
 }
 .hero {
@@ -33,7 +90,7 @@
 .eyebrow {
   font-size: 10px;
   letter-spacing: .16em;
-  color: #a3b5bc;
+  color: var(--muted);
   display: flex;
   align-items: center;
   gap: 9px;
@@ -44,12 +101,12 @@
   width: 6px;
   border-radius: 50%;
   background: var(--green);
-  box-shadow: 0 0 14px #7ae3bc88
+  box-shadow: 0 0 14px color-mix(in srgb,var(--green) 28%,transparent)
 }
 .company {
   letter-spacing: 0;
   color: var(--green);
-  border-left: 1px solid #ffffff25;
+  border-left: 1px solid var(--edge);
   padding-left: 12px;
   font-size: 11px
 }
@@ -78,7 +135,7 @@
   align-items: center;
   font-size: 10px;
   white-space: nowrap;
-  color: #a9b7c4
+  color: var(--muted)
 }
 .actionRow {
   display: flex;
@@ -91,22 +148,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ffffff19;
+  border: 1px solid var(--control-edge);
   border-radius: 10px;
-  background: #ffffff06;
+  background: var(--control);
   color: var(--ink);
   cursor: pointer
 }
 .iconButton:hover,.textButton:hover {
-  background: #ffffff10
+  background: var(--hover)
 }
 .primaryButton {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #d8efe5;
-  color: #14362b;
-  border: 1px solid #e7fff2;
+  background: var(--primary);
+  color: var(--primary-ink);
+  border: 1px solid var(--primary-edge);
   border-radius: 10px;
   padding: 10px 13px;
   font-size: 11px;
@@ -132,11 +189,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ffffff05;
-  border: 1px solid #ffffff19;
+  background: var(--control);
+  border: 1px solid var(--control-edge);
   border-radius: 9px;
   padding: 8px 10px;
-  color: #acbcca;
+  color: var(--muted);
   min-width: 0
 }
 .filterFields input,.filterFields select {
@@ -145,11 +202,11 @@
   color: var(--ink);
   border: 0;
   min-width: 0;
-  color-scheme: dark;
+  color-scheme: inherit;
   max-width: 250px
 }
 .filterFields select option {
-  background: #172433
+  background: var(--surface)
 }
 .filterMeta {
   font-size: 10px;
@@ -160,14 +217,14 @@
   color: var(--muted)
 }
 .zone {
-  border-left: 1px solid #ffffff18;
+  border-left: 1px solid var(--edge);
   padding-left: 10px
 }
 .dot {
-  color: #596a7b
+  color: var(--subtle)
 }
 .notice {
-  color: #7ae3bc;
+  color: var(--green);
   font-size: 11px;
   margin-bottom: 12px;
   overflow-wrap: anywhere
@@ -179,10 +236,10 @@
   margin-bottom: 24px
 }
 .kpi {
-  --accent: #7ae3bc;
+  --accent: var(--green);
   position: relative;
   min-width: 0;
-  background: linear-gradient(140deg,#ffffff06,#ffffff01);
+  background: var(--card);
   border: 1px solid var(--edge);
   border-radius: 16px;
   padding: 19px 17px 15px;
@@ -194,7 +251,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  color: #b9c5d1;
+  color: var(--muted);
   font-size: 11px;
   font-weight: 550
 }
@@ -212,7 +269,7 @@
   overflow-wrap: anywhere
 }
 .kpiNumber small {
-  color: #8093a2;
+  color: var(--subtle);
   font-size: 13px;
   margin-left: 7px;
   font-weight: 400;
@@ -220,7 +277,7 @@
 }
 .micro {
   font-size: 10px;
-  color: #9cadbd;
+  color: var(--muted);
   line-height: 1.6;
   display: block
 }
@@ -230,7 +287,7 @@
   align-items: flex-end;
   height: 30px;
   margin: 12px 0 -16px;
-  opacity: .36
+  opacity: .75
 }
 .spark i {
   background: var(--accent);
@@ -239,11 +296,11 @@
   border-radius: 2px 2px 0 0
 }
 .readyKpi {
-  background: linear-gradient(135deg,#7ae3bc13,#7ae3bc03)
+  background: var(--ready)
 }
 .progressTrack {
   height: 3px;
-  background: #ffffff0d;
+  background: var(--track);
   border-radius: 8px;
   margin: 15px 0 8px;
   overflow: hidden
@@ -255,7 +312,7 @@
 }
 .readyFoot {
   font-size: 9px;
-  color: #8ba99c;
+  color: var(--subtle);
   line-height: 1.5
 }
 .mainGrid {
@@ -267,12 +324,12 @@
 .panel,.dayPanel {
   border: 1px solid var(--edge);
   border-radius: 18px;
-  background: #ffffff02;
+  background: var(--surface);
   padding: 20px;
   min-width: 0
 }
 .panel {
-  background: #14212d99
+  background: var(--surface)
 }
 .panelHead {
   display: flex;
@@ -282,7 +339,7 @@
   margin-bottom: 18px
 }
 .sectionIndex {
-  color: #8094a5;
+  color: var(--subtle);
   text-transform: uppercase;
   font-size: 9px;
   letter-spacing: .16em;
@@ -296,7 +353,7 @@
   margin: 7px 0 5px
 }
 .panelIcon {
-  color: #6d9388;
+  color: var(--subtle);
   margin-top: 10px;
   flex-shrink: 0
 }
@@ -320,7 +377,7 @@
   height: 30px;
   min-width: 30px;
   border: 0;
-  background: #ffffff06
+  background: var(--control)
 }
 .textButton {
   height: 30px;
@@ -335,7 +392,7 @@
   gap: 6px 12px;
   margin: 0 0 13px;
   font-size: 9px;
-  color: #aebbc9;
+  color: var(--muted);
   align-items: center
 }
 .legend>span {
@@ -352,7 +409,7 @@
 }
 .legend>small {
   margin-left: auto;
-  color: #728599
+  color: var(--subtle)
 }
 .calendar {
   display: grid;
@@ -361,14 +418,14 @@
 }
 .weekday {
   text-align: center;
-  color: #74899b;
+  color: var(--subtle);
   font-size: 9px;
   text-transform: uppercase;
   padding: 3px 0 7px
 }
 .day {
-  background: #ffffff03;
-  border: 1px solid #ffffff04;
+  background: var(--day);
+  border: 1px solid var(--day-edge);
   border-radius: 9px;
   min-height: 91px;
   padding: 8px 7px;
@@ -378,20 +435,20 @@
   transition: background .15s,border-color .15s
 }
 .day:hover {
-  background: #ffffff09;
-  border-color: #ffffff26
+  background: var(--hover);
+  border-color: var(--day-hover-edge)
 }
 .dayNumber {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 10px;
-  color: #afbbc7
+  color: var(--muted)
 }
 .activityDot {
   width: 3px;
   height: 3px;
-  background: #9cadb8;
+  background: var(--subtle);
   border-radius: 50%
 }
 .dayValues {
@@ -416,19 +473,19 @@
   border-radius: 50%
 }
 .zero {
-  color: #344657
+  color: var(--subtle)
 }
 .today .dayNumber {
-  color: #f5b770;
+  color: var(--cut-parts);
   font-weight: 700
 }
 .selectedDay,.selectedDay:hover {
-  border-color: #7ae3bc66;
-  background: #7ae3bc0c;
-  box-shadow: inset 0 0 0 1px #7ae3bc0b
+  border-color: var(--selected-edge);
+  background: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--selected)
 }
 .selectedDay .dayNumber {
-  color: #b6f6df
+  color: var(--selected-ink)
 }
 .calendarFooter {
   display: flex;
@@ -436,7 +493,7 @@
   gap: 7px;
   font-size: 9px;
   line-height: 1.7;
-  color: #8397a7;
+  color: var(--subtle);
   margin-top: 15px
 }
 .calendarFooter svg {
@@ -460,7 +517,7 @@
   gap: 5px;
   color: var(--accent);
   font-size: 9px;
-  opacity: .45;
+  opacity: 1;
   min-height: 30px;
   cursor: pointer
 }
@@ -475,19 +532,19 @@
   overflow: visible
 }
 .dayPanel {
-  background: linear-gradient(140deg,#7ae3bc09,#ffffff01)
+  background: var(--ready)
 }
 .dayHeading {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: #91a59e;
+  color: var(--subtle);
   font-size: 9px
 }
 .selectedLabel {
   text-transform: uppercase;
   letter-spacing: .13em;
-  color: #7ae3bc
+  color: var(--green)
 }
 .dayPanel h2 {
   font-size: 20px;
@@ -522,11 +579,11 @@
 .dayMetrics strong small {
   font-size: 10px;
   font-weight: 400;
-  color: #91a79f
+  color: var(--subtle)
 }
 .smallHeading {
   font-size: 10px;
-  color: #a4b4ba;
+  color: var(--muted);
   margin: 15px 0 10px;
   font-weight: 500
 }
@@ -554,11 +611,11 @@
   font-size: 10px
 }
 .dayProjects small {
-  color: #6c838a;
+  color: var(--subtle);
   font-size: 8px
 }
 .empty {
-  color: #8fa1ad;
+  color: var(--subtle);
   font-size: 12px;
   line-height: 1.7;
   padding: 12px 0
@@ -576,7 +633,7 @@
 .sectionHead>span {
   font-size: 34px;
   letter-spacing: -.06em;
-  color: #3a505d;
+  color: var(--subtle);
   font-weight: 600
 }
 .projectGrid {
@@ -587,7 +644,7 @@
 .projectCard {
   border: 1px solid var(--edge);
   border-radius: 17px;
-  background: linear-gradient(135deg,#1c2a3788,#15212d88);
+  background: var(--card);
   padding: 20px;
   min-width: 0
 }
@@ -601,7 +658,7 @@
 .projectOverline {
   font-size: 8px;
   letter-spacing: .12em;
-  color: #7e94a4;
+  color: var(--subtle);
   text-transform: uppercase
 }
 .projectTop h3 {
@@ -624,7 +681,7 @@
 .ring>span {
   height: 58px;
   width: 58px;
-  background: #182633;
+  background: var(--surface);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -635,7 +692,7 @@
 .ring small {
   font-size: 9px;
   letter-spacing: 0;
-  color: #7b968b;
+  color: var(--subtle);
   margin: 5px 0 0 2px
 }
 .projectSummary {
@@ -651,19 +708,19 @@
   flex-direction: column;
   gap: 6px;
   font-size: 9px;
-  color: #91a4b1
+  color: var(--subtle)
 }
 .projectSummary strong {
   font-size: 17px;
   letter-spacing: -.035em;
-  color: #c8dbd2;
+  color: var(--ink);
   font-weight: 550
 }
 .stageGroup {
   margin-top: 16px
 }
 .stageGroup>span {
-  color: #6d8c86;
+  color: var(--subtle);
   font-size: 9px;
   letter-spacing: .1em;
   text-transform: uppercase
@@ -679,7 +736,7 @@
 }
 .stage>span {
   font-size: 9px;
-  color: #9fb1bb;
+  color: var(--subtle);
   display: block;
   line-height: 1.5
 }
@@ -691,47 +748,47 @@
 }
 .stage strong small {
   font-size: 8px;
-  color: #728995
+  color: var(--subtle)
 }
 .stage>div {
   height: 2px;
   border-radius: 4px;
-  background: #ffffff0b;
+  background: var(--track);
   margin-bottom: 4px;
   overflow: hidden
 }
 .stage i {
   display: block;
   height: 100%;
-  background: #74b9a1
+  background: var(--green)
 }
 .stage>small {
   font-size: 8px;
-  color: #647e8e
+  color: var(--subtle)
 }
 .projectLink {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 10px;
-  color: #a1cfba;
+  color: var(--green);
   padding-top: 16px;
   margin-top: 15px;
   border-top: 1px solid var(--edge)
 }
 .emptyState {
   padding: 45px 20px;
-  border: 1px dashed #ffffff18;
+  border: 1px dashed var(--edge);
   border-radius: 16px;
   text-align: center;
-  color: #829e94
+  color: var(--subtle)
 }
 .emptyState svg {
   margin: 0 auto 15px
 }
 .emptyState h3 {
   font-size: 20px;
-  color: #d8e4e8;
+  color: var(--ink);
   margin-bottom: 10px
 }
 .emptyState p {
@@ -762,12 +819,12 @@
 .mark>span {
   font-size: 13px;
   font-weight: 650;
-  color: #cbd8e5;
+  color: var(--ink);
   overflow-wrap: anywhere
 }
 .mark small {
   font-size: 8px;
-  color: #718b9b;
+  color: var(--subtle);
   line-height: 1.4
 }
 .evidenceMain {
@@ -783,12 +840,12 @@
   font-weight: 550
 }
 .evidenceMain>span {
-  color: #b9c9d7;
+  color: var(--muted);
   font-size: 10px
 }
 .evidenceMain>small {
   font-size: 9px;
-  color: #8fa0b2;
+  color: var(--subtle);
   line-height: 1.4
 }
 .evidenceWeight {
@@ -804,7 +861,7 @@
 }
 .evidenceWeight small {
   font-size: 10px;
-  color: #7a919d;
+  color: var(--subtle);
   font-weight: 400;
   letter-spacing: 0
 }
@@ -813,10 +870,10 @@
   max-width: 170px;
   text-align: right;
   line-height: 1.5;
-  color: #81b8a1
+  color: var(--green)
 }
 .legacyTag {
-  color: #c8ae88
+  color: var(--warning)
 }
 .evidencePagination {
   display: flex;
@@ -827,7 +884,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #a3cfbc;
+  color: var(--green);
   font-size: 11px;
   min-height: 36px
 }
@@ -835,7 +892,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: #7f96a6;
+  color: var(--subtle);
   font-size: 10px;
   line-height: 1.7;
   margin-top: 15px
@@ -850,7 +907,7 @@
   margin-top: 24px;
   border-top: 1px solid var(--edge);
   padding-top: 20px;
-  color: #7f9e91
+  color: var(--subtle)
 }
 .quality>svg {
   flex-shrink: 0;
@@ -858,18 +915,18 @@
 }
 .quality strong {
   font-size: 11px;
-  color: #a4bcae;
+  color: var(--muted);
   font-weight: 550
 }
 .quality p {
   font-size: 9px;
   line-height: 1.8;
   max-width: 900px;
-  color: #79909e;
+  color: var(--subtle);
   margin-top: 4px
 }
 .qualityInline {
-  color: #d1b18b!important;
+  color: var(--warning)!important;
   font-size: 10px;
   line-height: 1.7;
   margin-top: 10px
@@ -1178,7 +1235,7 @@
   border-top: 1px solid var(--edge);
   border-bottom: 1px solid var(--edge);
   font-size: 12px;
-  color: #b0d6c4;
+  color: var(--muted);
   cursor: pointer;
   list-style: none;
   padding: 10px 2px
@@ -1193,7 +1250,7 @@
   transform: rotate(90deg)
 }
 .evidenceDisclosure>summary:focus-visible {
-  outline: 2px solid #f5b770;
+  outline: 2px solid var(--cut-parts);
   outline-offset: 4px
 }
 @media(max-width:760px) {
@@ -1357,7 +1414,12 @@
   }
 }
 .dayProjects>div {flex-wrap:wrap}
-.dayProjects>div>.otherOperations {flex-basis:100%;flex-wrap:wrap;white-space:normal;color:#a6b6c3;font-size:9px;gap:6px 12px}
+.dayProjects>div>.otherOperations {flex-basis:100%;flex-wrap:wrap;white-space:normal;color:var(--muted);font-size:9px;gap:6px 12px}
 .dayProjects>div>.otherOperations {width:100%;min-width:0;max-width:100%;flex-shrink:1}
 .otherOperations>span {min-width:0;overflow-wrap:anywhere}
 @media(max-width:760px){.dayProjects>div{flex-wrap:nowrap}.dayProjects>div>.otherOperations{flex-basis:auto;align-self:stretch}}
+
+.chartLegend button:not([aria-pressed=true]) { color: var(--muted); }
+.day:disabled { cursor: default; }
+.day:disabled:hover { background: var(--day); border-color: var(--day-edge); }
+.day:disabled .dayNumber { color: var(--subtle); }
