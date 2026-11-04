@@ -143,3 +143,11 @@ Interessant für Baumdienste, Bau-, Tiefbau- und Glasfaserbetriebe, die ihre Bau
 ## Lizenz
 
 Source-available, alle Rechte vorbehalten. Der Code darf gelesen und zur Bewertung lokal ausgeführt werden, aber nicht kommerziell genutzt werden. Details in [LICENSE](LICENSE).
+
+<!-- PRESENTATION_FIRST_20261104 -->
+### Website-Kandidat
+
+Der kombinierte Website-Quellstand liegt unter `websites/baumdienstflow`:
+RediOnFlow-Vorstellung in vier Sprachen und klare Büro/Admin-, Mitarbeiter-PIN-
+und Demo-Zugänge für beide Produkte. Noch nicht veröffentlicht; keine Änderung
+am SaaS-Piloten oder an Firmendaten. Details: `websites/README.md`.

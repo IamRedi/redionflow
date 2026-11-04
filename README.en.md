@@ -132,3 +132,12 @@ Of interest to tree care, construction, civil works and fibre-optic companies th
 ## License
 
 Source-available, all rights reserved. The code may be read and run locally for evaluation, but not used commercially. Details in [LICENSE](LICENSE).
+
+<!-- PRESENTATION_FIRST_20261104 -->
+### Product website candidate
+
+The combined website source is now preserved in `websites/baumdienstflow`.
+It adds a four-language RediOnFlow introduction and explicit Office/Admin,
+worker PIN and demo entry points for both products. The active company's
+permissions determine the workspace. This is a static marketing candidate;
+no SaaS core, tenant data or pilot deployment changes are included.
