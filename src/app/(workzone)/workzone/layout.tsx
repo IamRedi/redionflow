@@ -15,6 +15,8 @@ import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { OfflineStatusBar } from "./offline-status-bar";
 import { WorkzoneAnnouncementBar } from "./workzone-announcement-bar";
 import { WorkzoneSyncRunner } from "./workzone-sync-runner";
+import { isSteelCompany } from "@/lib/dashboard/steel-access";
+import { WorkzoneMapFleet } from "./workzone-map-fleet";
 
 export default async function WorkzoneLayout({ children }: { children: ReactNode }) {
   await autoCloseForgottenDaySessions();
@@ -42,16 +44,18 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
     getCompanyCountry(),
   ]);
   const features = getFeatures(mode);
+  const production = mode === "bau" && await isSteelCompany(company.id);
 
   return (
+    <WorkzoneMapFleet vehicles={machines.filter(m => m.isActive).map(m => ({ id: m.id, name: m.nickname || m.name, plate: m.targe }))}>
     <div
       className={`min-h-dvh overflow-x-hidden bg-background text-foreground ${
         mode === "baumdienst" ? "dark:bg-[#10211a]" : ""
       }`}
     >
-      <header className="sticky top-0 z-10 print:hidden">
-        <div className="pt-3">
-          <FlowTopBar announcementMessage={announcement?.message ?? null} />
+      <header data-testid="workzone-topbar" className={production ? "relative z-10 border-b bg-background print:hidden" : "sticky top-0 z-10 print:hidden"}>
+        <div className={production ? "" : "pt-3"}>
+          <FlowTopBar contained={production} announcementMessage={announcement?.message ?? null} />
           <div className="mx-auto max-w-6xl space-y-1.5 px-5 pb-2 lg:pr-20">
             <WorkzoneAnnouncementBar
               message={announcement?.message ?? null}
@@ -69,5 +73,6 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
         <RediOnFooter />
       </div>
     </div>
+    </WorkzoneMapFleet>
   );
 }

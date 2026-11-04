@@ -12,7 +12,7 @@ import {
   useMap,
   ZoomControl,
 } from 'react-leaflet';
-import { RefreshCw, Truck } from 'lucide-react';
+import { HardHat, RefreshCw, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/i18n/language-provider';
 import { t } from '@/lib/i18n';
@@ -23,6 +23,7 @@ import { mapsLink } from '@/lib/fleet/location-link';
 import { siteMapSymbol } from '@/lib/fleet/map-symbol';
 import { wanwayError } from '@/lib/fleet/wanway/copy';
 import { refreshFleetAction } from './fleet-actions';
+import type { MissionMapFocus } from './workzone-map-index';
 
 type MissionItem = {
   id: string;
@@ -52,36 +53,35 @@ function marker(symbol: string, color: string) {
 function Focus({
   points,
   focus,
+  request,
 }: {
   points: LatLngTuple[];
   focus: LatLngTuple | null;
+  request: number;
 }) {
   const map = useMap();
   const key = JSON.stringify(points),
     focusKey = JSON.stringify(focus);
   useEffect(() => {
     const coords = JSON.parse(key) as LatLngTuple[];
-    if (coords.length)
-      map.fitBounds(coords, { padding: [40, 40], maxZoom: 14 });
-  }, [key, map]);
-  useEffect(() => {
     const point = JSON.parse(focusKey) as LatLngTuple | null;
     if (point) map.flyTo(point, Math.max(map.getZoom(), 15), { duration: 0.8 });
-  }, [focusKey, map]);
+    else if (coords.length) map.fitBounds(coords, { padding: [40, 40], maxZoom: 14 });
+  }, [key, focusKey, request, map]);
   return null;
 }
 export function WorkzoneMissionMap({
   items,
   vehicles = [],
-  focusId,
+  focus,
   onFocusChange,
   isBau = false,
   canRefresh = false,
 }: {
   items: MissionItem[];
   vehicles?: FleetLocation[];
-  focusId: string | null;
-  onFocusChange: (id: string | null) => void;
+  focus: MissionMapFocus | null;
+  onFocusChange: (kind: MissionMapFocus['kind'], id: string) => void;
   isBau?: boolean;
   canRefresh?: boolean;
 }) {
@@ -97,20 +97,23 @@ export function WorkzoneMissionMap({
     ),
     ...vehicles.map((v) => [v.lat, v.lng] as LatLngTuple),
   ];
-  const focused = sites.find((i) => i.id === focusId)?.coordinates;
+  const focusedSite = focus?.kind === 'site' ? sites.find(i => i.id === focus.id)?.coordinates : null;
+  const focusedVehicle = focus?.kind === 'vehicle' ? vehicles.find(v => v.id === focus.id) : null;
+  const focused = focusedSite ?? focusedVehicle;
   return (
     <div className="relative h-full w-full" data-testid="workzone-fleet-map">
-      <div className="absolute inset-x-3 top-14 z-[500] flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-2 shadow-sm">
-        <span className="text-xs font-semibold">
-          🏗️ {c.sites} {sites.length}
+      <div className="absolute left-3 top-14 z-[500] inline-flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-3 rounded-full border bg-background/95 px-3 py-1.5 shadow-sm">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold" title={`${c.sites}: ${sites.length}`}>
+          <HardHat className="size-3.5" aria-hidden="true" />{sites.length}<span className="sr-only">{c.sites}</span>
         </span>
-        <span className="flex items-center gap-1 text-xs font-semibold">
-          <Truck className="size-3.5" />
-          {c.vehicles} {vehicles.length}
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold" title={`${c.vehicles}: ${vehicles.length}`}>
+          <Truck className="size-3.5" aria-hidden="true" />{vehicles.length}<span className="sr-only">{c.vehicles}</span>
         </span>
         {canRefresh && (
           <button
             disabled={pending}
+            aria-label={`${c.refresh} ${c.gps}`}
+            title={`${c.refresh} ${c.gps}`}
             onClick={() =>
               start(async () => {
                 const result = await refreshFleetAction();
@@ -120,12 +123,11 @@ export function WorkzoneMissionMap({
                 if (result.ok) router.refresh();
               })
             }
-            className="ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-lg border bg-card px-3 text-xs font-semibold disabled:opacity-50"
+            className="inline-flex size-8 items-center justify-center rounded-full border bg-card disabled:opacity-50"
           >
             <RefreshCw
               className={`size-3.5 ${pending ? 'animate-spin' : ''}`}
             />
-            {c.refresh} {c.gps}
           </button>
         )}
         {message && (
@@ -161,6 +163,7 @@ export function WorkzoneMissionMap({
         <Focus
           points={points}
           focus={focused ? [focused.lat, focused.lng] : null}
+          request={focus?.request ?? 0}
         />
         {sites.map((item) => (
           <Marker
@@ -171,7 +174,7 @@ export function WorkzoneMissionMap({
               siteMapSymbol(item.type, isBau, item.pct),
               item.activeLiveCount ? '#16a34a' : '#64748b',
             )}
-            eventHandlers={{ click: () => onFocusChange(item.id) }}
+            eventHandlers={{ click: () => onFocusChange('site', item.id) }}
           >
             <Popup>
               <div className="space-y-2 text-xs">
@@ -182,7 +185,7 @@ export function WorkzoneMissionMap({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onFocusChange(item.id)}
+                  onClick={() => onFocusChange('site', item.id)}
                 >
                   {t('workzone.focus', currentLang)}
                 </Button>
@@ -199,6 +202,7 @@ export function WorkzoneMissionMap({
               '🚚',
               v.online ? '#16a34a' : v.stale ? '#d97706' : '#64748b',
             )}
+            eventHandlers={{ click: () => onFocusChange('vehicle', v.id) }}
           >
             <Popup>
               <div className="min-w-44 space-y-2 text-xs">
