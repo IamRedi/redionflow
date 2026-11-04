@@ -181,3 +181,18 @@ Interessant für Baumdienste, Bau-, Tiefbau- und Glasfaserbetriebe, die ihre Bau
 ## Lizenz
 
 Source-available, alle Rechte vorbehalten. Der Code darf gelesen und zur Bewertung lokal ausgeführt werden, aber nicht kommerziell genutzt werden. Details in [LICENSE](LICENSE).
+
+<!-- PRESENTATION_FIRST_20261104 -->
+### Website-Kandidat
+
+Die Plattform-Präsentation liegt unter `websites/redionflow`:
+RediOnFlow-Vorstellung in vier Sprachen und klare Büro/Admin-, Mitarbeiter-PIN-
+und Demo-Zugänge für beide Produkte. Noch nicht veröffentlicht; keine Änderung
+am SaaS-Piloten oder an Firmendaten. Details: `websites/README.md`.
+
+<!-- PRESENTATION_FIRST_PUBLICATION_76F8B3EAC1CF -->
+## Verifizierte öffentliche Plattformwebsite · 4 November 2026
+
+Die [RediOnFlow-Website](https://flow.redioncekrezi.de/de.html) ist jetzt öffentlich: vier Sprachen und getrennt beschriftete Büro/Admin-, Mitarbeiter/PIN- und Demo-Einstiege für BauFlow und BaumdienstFlow. Die bestehenden Produktwebsites, SaaS-Dienste und Demodaten bleiben unverändert.
+
+Verified packet `76f8b3eac1cf`; portfolio PR29/main `a12ab96`. This source PR remains separate from a Railway-connected application merge.
