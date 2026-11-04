@@ -27,7 +27,8 @@ function adminInitial(value: string | null | undefined) {
 
 export async function FlowTopBar({
   announcementMessage = null,
-}: { announcementMessage?: string | null } = {}) {
+  contained = false,
+}: { announcementMessage?: string | null; contained?: boolean } = {}) {
   const admin = await getCurrentAdmin();
   const currentLang = await resolveRequestLanguage();
   const [companyMode, tenantId] = await Promise.all([
@@ -146,11 +147,11 @@ export async function FlowTopBar({
   const companyLogo = safeCompanyLogo(companyBrand?.logoDataUrl);
 
   return (
-    <div className="mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]">
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
-        {/* The logo and its round buttons float above the team strip; the strip runs under them when scrolled sideways. */}
-        <div className="pointer-events-none relative z-10 col-start-1 row-start-1 flex flex-col gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
-          <div className="flex items-center gap-2">
+    <div className={contained ? "mx-auto w-full min-w-0 max-w-[2000px] px-4 py-3 sm:px-5 lg:pr-24" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
+      <div className={`grid grid-cols-[auto_minmax(0,1fr)] ${contained ? "items-center" : "items-start"} gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]`}>
+        {/* Admin production pages use separate columns; Workzone keeps its existing floating layout. */}
+        <div className={`pointer-events-none relative z-10 ${contained ? "col-span-2 flex-row items-center justify-between lg:col-span-1 lg:flex-col" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
+          <div className={`flex items-center gap-2 ${contained ? "shrink-0" : ""}`}>
             {admin ? (
               <TeamAssistantLogoTrigger
                 compact
@@ -194,7 +195,7 @@ export async function FlowTopBar({
           </div>
 
           {admin || mobileAdminProfiles.length > 0 ? (
-            <div className="flex items-center gap-2 lg:hidden">
+            <div className={contained ? "no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden [&>*]:shrink-0" : "flex items-center gap-2 lg:hidden"}>
               {admin ? (
                 <>
                   <TopbarAnnouncementButton message={announcementMessage} />
@@ -227,9 +228,9 @@ export async function FlowTopBar({
           ) : null}
         </div>
 
-        <div className="col-start-1 col-end-3 row-start-1 min-w-0">
+        <div data-testid="flow-team-strip" className={contained ? "col-span-2 min-w-0 rounded-2xl border bg-card/75 px-2 py-2 lg:col-span-1" : "col-start-1 col-end-3 row-start-1 min-w-0"}>
           <WorkerIconStrip
-            insetClassName="pl-[124px]"
+            insetClassName={contained ? "" : "pl-[124px]"}
             admin={Boolean(admin)}
             workers={workersSorted.map((worker) => ({
               id: worker.id,

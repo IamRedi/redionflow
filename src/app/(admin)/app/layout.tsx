@@ -95,14 +95,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="sticky top-0 z-10 print:hidden">
-        <FlowTopBar />
+      <header data-testid="admin-topbar" className={production ? "relative z-10 border-b bg-background print:hidden" : "sticky top-0 z-10 print:hidden"}>
+        <FlowTopBar contained={production} />
       </header>
       <AdminFleet production={production} machines={machines} isAdmin showCones={showCones} country={country} />
       <div className="grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24">
         <aside className="min-w-0 print:hidden">
           {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}
-          <nav className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:sticky md:top-24 md:mx-0 md:max-h-[calc(100dvh-7rem)] md:flex-col md:gap-4 md:overflow-y-auto md:overscroll-contain md:rounded-2xl md:border md:bg-card/70 md:p-2 md:shadow-sm md:backdrop-blur">
+          <nav className={`no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:sticky ${production ? "md:top-4 md:max-h-[calc(100dvh-2rem)]" : "md:top-24 md:max-h-[calc(100dvh-7rem)]"} md:mx-0 md:flex-col md:gap-4 md:overflow-y-auto md:overscroll-contain md:rounded-2xl md:border md:bg-card/70 md:p-2 md:shadow-sm md:backdrop-blur`}>
             <div className="hidden items-center gap-2.5 rounded-xl px-2 pt-1.5 md:flex">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                 {(admin.name ?? admin.email ?? "?").trim().slice(0, 1).toUpperCase()}
