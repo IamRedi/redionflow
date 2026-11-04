@@ -1,25 +1,22 @@
 import { cn } from "@/lib/ui/cn";
+import localFont from "next/font/local";
+import styles from "./RediOnFooter.module.css";
 
-const BRAND_RED = "Redi";
-const BRAND_GREEN = "ON";
-const BRAND_TAGLINE = "Upgrade humans. Not replace them.";
+const manrope = localFont({ src: "./fonts/manrope-variable.ttf", weight: "200 800", display: "swap", preload: false, fallback: ["system-ui", "sans-serif"] });
+// The author's wordmark keeps its approved spelling in every product language.
+const credit = { by: "by", blue: "R", red: "e", amber: "d", green: "i", ink: "ON" };
 
 /** `onDark` is for pages that paint their own dark background regardless of the theme (landing). */
 export function RediOnFooter({ onDark = false }: { onDark?: boolean }) {
   return (
     <footer
-      className={cn(
-        "px-5 pb-4 pt-8 text-center text-[10px] font-light tracking-wide print:hidden",
-        onDark ? "text-white/70" : "text-muted-foreground",
-      )}
+      className={cn(styles.footer, "print:hidden")}
+      data-theme={onDark ? "dark" : undefined}
     >
-      <div className="font-medium tracking-[0.08em]">
-        <span className={onDark ? "text-red-400" : "text-red-700 dark:text-red-400"}>{BRAND_RED}</span>
-        <span className={onDark ? "text-emerald-400" : "text-emerald-700 dark:text-emerald-400"}>{BRAND_GREEN}</span>
-      </div>
-      <div className="mt-0.5">
-        <span>{BRAND_TAGLINE}</span>
-      </div>
+      <span className={cn(styles.credit, manrope.className)} role="img" aria-label="by RediON">
+        <span aria-hidden="true">{credit.by}</span>
+        <span className={styles.name} aria-hidden="true"><span className={styles.blue}>{credit.blue}</span><span className={styles.red}>{credit.red}</span><span className={styles.amber}>{credit.amber}</span><span className={styles.green}>{credit.green}</span>{credit.ink}</span>
+      </span>
     </footer>
   );
 }

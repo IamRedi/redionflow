@@ -94,6 +94,24 @@ test('Workzone map has a compact site and fleet index without a floating team he
         await expect.poll(() => centerDistance('Kantieret: Aurora · Hangar demo')).toBeLessThan(8);
         await frame.scrollIntoViewIfNeeded();
         await page.screenshot({ path: info.outputPath(`workzone-compact-map-${theme}-${device}.png`), fullPage: false });
+        const signature = page.getByRole('img', { name: 'by RediON', exact: true });
+        await expect(signature).toHaveCount(1);
+        await signature.scrollIntoViewIfNeeded();
+        const loadedFonts = await signature.evaluate(async el => {
+          // Load the primary face, not optional OS-local fallback faces.
+          const font = getComputedStyle(el).fontFamily.split(',')[0];
+          const fonts = await document.fonts.load(`700 13px ${font}`, 'RediON');
+          return fonts.map(face => face.status);
+        });
+        expect(loadedFonts).toContain('loaded');
+        const contrast = await signature.evaluate(el => {
+          const rgb = (color: string) => color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+          const lum = (color: string) => rgb(color).map(v => { const s = v / 255; return s <= .04045 ? s / 12.92 : ((s + .055) / 1.055) ** 2.4; }).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+          const bg = lum(getComputedStyle(el.closest('footer')!).backgroundColor);
+          return [...el.querySelectorAll('span')].map(span => { const fg = lum(getComputedStyle(span).color); return (Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05); });
+        });
+        expect(Math.min(...contrast)).toBeGreaterThanOrEqual(4.5);
+        if (device === 'desktop' || device === 'phone') await signature.locator('..').screenshot({ path: info.outputPath(`workzone-signature-${theme}-${device}.png`) });
       }
     }
   } finally {
