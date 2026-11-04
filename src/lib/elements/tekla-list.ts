@@ -70,7 +70,30 @@ function detectList(header: string): ElementListKind | null {
   return null;
 }
 
+/** No "Assemb." / "Parte" label: assemblies carry a name (BEAM, COLUMN), parts do not. */
+function guessList(columns: Array<ReturnType<typeof fieldOf>>): ElementListKind {
+  return columns.includes("kind") ? "assembly" : "part";
+}
+
 export class ElementListError extends Error {}
+
+/**
+ * For the log when a file is not read: sheet names and the first cells of
+ * the first rows (column titles, marks), never more, so the reason shows
+ * without keeping the file.
+ */
+export function describeWorkbook(data: Uint8Array): string {
+  try {
+    const workbook = XLSX.read(data, { type: "array" });
+    return workbook.SheetNames.map((name) => {
+      const rows = XLSX.utils.sheet_to_json<Cell[]>(workbook.Sheets[name]!, { header: 1, raw: false, defval: "" }).filter((row) => row.some((cell) => text(cell)));
+      const head = rows.slice(0, 3).map((row) => row.slice(0, 6).map((cell) => text(cell).slice(0, 16)).join("|"));
+      return `${name}[${rows.length}]: ${head.join(" / ")}`;
+    }).join("; ").slice(0, 600);
+  } catch (error) {
+    return `unreadable: ${String(error).slice(0, 120)} · first bytes ${Array.from(data.slice(0, 8)).map((byte) => byte.toString(16).padStart(2, "0")).join(" ")}`;
+  }
+}
 
 /** Reads one exported list. Throws ElementListError when it is neither list. */
 export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementList {
@@ -98,14 +121,18 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
       if (/^(progetto numero|project number|nr\.? projekti)/.test(label)) projectNumber = text(shown[r]?.[1]) || projectNumber;
       else if (/^(progetto|project|projekti)$/.test(label)) projectName = text(row[1]) || projectName;
       if (found) continue;
-      const list = detectList(first);
-      if (!list) continue;
+      // The header row: a mark column and a quantity column, wherever they
+      // start (an export re-saved in Excel may shift or rename the first cell).
       const columns = row.map((cell) => fieldOf(text(cell)));
       if (!columns.includes("quantity")) continue;
+      const markAt = columns.indexOf("mark");
+      const list = detectList(first) ?? (markAt >= 0 ? detectList(text(row[markAt])) : null) ?? (markAt >= 0 ? guessList(columns) : null);
+      if (!list) continue;
+      const lead0 = markAt >= 0 ? markAt : 0;
       const elements: ParsedElement[] = [];
       for (let d = r + 1; d < rows.length; d += 1) {
         const cells = rows[d] ?? [];
-        const lead = text(cells[0]);
+        const lead = text(cells[lead0]);
         if (!lead) continue;
         if (/^(totale|total)/i.test(lead)) break;
         const entry: ParsedElement = { mark: lead, kind: null, profile: null, material: null, quantity: 1, lengthMm: null, weightKg: null, areaM2: null };

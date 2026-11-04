@@ -7,7 +7,8 @@ import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { importElementList, type ElementImportResult } from "@/lib/elements/import";
 import { canCheck, doneQty, FIELD_STAGES, onFieldList, pieces, routeStages, sideOfStage, stagePieces, stageRemaining, stagesFor, type ElementList } from "@/lib/elements/stages";
-import { ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
+import { describeWorkbook, ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
+import { logger } from "@/lib/observability/logger";
 import { geocodeAddress } from "@/lib/geo/geocode";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
@@ -43,7 +44,10 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
     try {
       parsed.push({ list: parseElementList(bytes), bytes, fileName: safeFileName(file.name) });
     } catch (error) {
-      if (error instanceof ElementListError) return { ok: false, message: tr("elementListUnreadable", { file: file.name }) };
+      if (error instanceof ElementListError) {
+        logger.warn({ event: "elements.list_unreadable", size: bytes.byteLength, shape: describeWorkbook(bytes) }, "element list not read");
+        return { ok: false, message: tr("elementListUnreadable", { file: file.name }) };
+      }
       throw error;
     }
   }
@@ -286,6 +290,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
       continue;
     } catch (error) {
       if (!(error instanceof ElementListError)) throw error;
+      if (spreadsheetMime(fileName)) logger.warn({ event: "elements.list_unreadable", size: bytes.byteLength, shape: describeWorkbook(bytes) }, "spreadsheet kept as a document");
     }
     const mime = spreadsheetMime(fileName) ?? sniffSiteFileMime(bytes, file.name);
     if (!mime || !allowedForKind(mime, "document") && !spreadsheetMime(fileName)) return { ok: false, message: tr("documentTypeAllowed") };

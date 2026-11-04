@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { compareMarks, ElementListError, parseElementList } from "./tekla-list";
+import * as XLSX from "xlsx";
+
+import { compareMarks, describeWorkbook, ElementListError, parseElementList } from "./tekla-list";
 
 /** The shape Tekla exports: an HTML ".xls" with a project table and a list table (fictitious rows). */
 function teklaHtml(header: string[], rows: Array<Array<string | number>>, total: Array<string | number>) {
@@ -44,8 +46,40 @@ describe("Tekla element lists", () => {
     ]);
   });
 
-  it("refuses a file that is neither list", () => {
+  it("refuses a file that is neither list, also a material order with quantities", () => {
     expect(() => parseElementList(new TextEncoder().encode("<HTML><TABLE><TR><TD>NR</TD><TD>PERSHKRIMI</TD></TR></TABLE></HTML>"))).toThrow(ElementListError);
+    const order = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(order, XLSX.utils.aoa_to_sheet([["NR", "PERSHKRIMI", "NJESIA", "SASIA"], [1, "HEA 200", "cope", 4]]), "Porosi");
+    expect(() => parseElementList(new Uint8Array(XLSX.write(order, { type: "array", bookType: "xlsx" })))).toThrow(ElementListError);
+  });
+
+  it("reads the list re-saved in Excel, with the table shifted right and English titles", () => {
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      book,
+      XLSX.utils.aoa_to_sheet([
+        ["", "Project number:", "0099"],
+        [],
+        ["", "Mark", "Qty", "Name", "Profile", "Weight(kg) tot."],
+        ["", "B/1", 2, "BEAM", "IPE200", 100],
+        ["", "C/1", 1, "COLUMN", "HEA200", 80],
+        ["", "Total", 3],
+      ]),
+      "Sheet1",
+    );
+    for (const bookType of ["xlsx", "biff8"] as const) {
+      const list = parseElementList(new Uint8Array(XLSX.write(book, { type: "array", bookType })));
+      expect(list.list).toBe("assembly");
+      expect(list.elements.map((e) => [e.mark, e.quantity, e.weightKg])).toEqual([
+        ["B/1", 2, 50],
+        ["C/1", 1, 80],
+      ]);
+    }
+  });
+
+  it("describes a file it could not read, only titles and the first cells", () => {
+    const shape = describeWorkbook(new TextEncoder().encode("<HTML><TABLE><TR><TD>NR</TD><TD>PERSHKRIMI</TD></TR></TABLE></HTML>"));
+    expect(shape).toContain("NR|PERSHKRIMI");
   });
 
   it("sorts marks the way people read them", () => {
