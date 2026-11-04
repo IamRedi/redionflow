@@ -57,3 +57,9 @@ October-30 archive. The new RediOnFlow parent is hosted as a fifth static
 product website on the existing portfolio Vercel project. Both existing
 product websites stay at their accepted addresses. Office/Admin, worker PIN
 and demo entrances are clearly available for each product on the parent.
+
+## Published receipt — packet76f8b3eac1cf
+
+The parent is live at https://flow.redioncekrezi.de/ in SQ/EN/DE/IT on the existing portfolio Vercel project. Approved portfolio head368e3ac was merged by PR29 as a12ab96 with the same source tree. Anonymous HTTPS, static source/body comparison, API404 isolation, responsive review, Office/Admin, worker/PIN and both demo destinations passed. The existing Cloudflare product websites are retained.
+
+Do not merge this source PR into the Railway-connected pilot as a side effect of website publication. Provider readback also shows main is connected to four demo/reset services; documentation integration belongs with a separately scoped app release. No app source/configuration, schema, seed or SaaS deployment was changed by this website delivery. About now points to the verified public parent; stage/readiness are unchanged.
