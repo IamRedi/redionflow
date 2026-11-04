@@ -61,7 +61,7 @@ Every read and mutation resolves the tenant and active ADMIN from the current
 session again. Worker, display, mixed and unauthenticated sessions have no
 credential/telemetry access. No tenant ID is accepted from the browser.
 
-Save/update, test, manual sync, confirmed manual device/vehicle linking and
+Save/update, test, manual sync, explicitly confirmed device/vehicle linking and
 disconnect are supported. An empty key keeps the current key only for the same
 APPID. Replacing credentials clears discovered devices and bindings. Test
 Connection authenticates and discovers devices; it does not set Last Successful
@@ -69,6 +69,13 @@ Sync. Manual Sync reads telemetry and updates that timestamp only on success.
 Missing optional fields show as unavailable. A failed sync preserves the previous
 snapshot/time and records a sanitized failure code. Missing provider devices
 become unavailable; retained last positions are explicitly offline/unknown.
+
+An unlinked available device preselects its matching active vehicle from the
+same company when its complete plate or normalized name/nickname identifies
+exactly one vehicle. Plate spacing, punctuation and letter case are ignored.
+Existing links stay selected. Ambiguous matches, competing devices and vehicles
+already using another GPS association stay manual. Suggestions only read cached
+data: the administrator checks the selection and clicks Confirm to save it.
 
 The existing Fleet GPS list and vehicle route view show linked WanWay data.
 Online means the provider reported stationary/driving at the last sync and both
@@ -157,7 +164,7 @@ code if rejected; never replace a failed real test with mock success.
 
 ## Local verification
 
-Unit tests: `npm test -- src/lib/fleet/wanway/adapter.test.ts src/lib/fleet/wanway/crypto.test.ts`.
+Unit tests: `npm test -- src/lib/fleet/wanway/adapter.test.ts src/lib/fleet/wanway/crypto.test.ts src/lib/fleet/wanway/matching.test.ts`.
 Integration tests are part of the existing disposable Postgres suite and cover
 authorization, mixed identities, tenant-safe binding, composite FK and forced
 RLS, encryption/DTO/audit redaction, cache reuse, cooldown/leases, failure atomicity,
@@ -172,7 +179,8 @@ Ordinary E2E runs disable WanWay and blank inherited encryption keys.
 anything except the disposable loopback `baumkalk_e2e/e2e` identity and intercepts
 only the documented host. It is never imported by app code. With the mock
 preloaded and module/keyring enabled using synthetic secrets, the WanWay browser
-test exercises 37 synthetic existing vehicles, save/discovery/manual binding,
+test exercises 37 synthetic existing vehicles, save/discovery/preselected binding
+with an explicit confirmation (including no persisted link before confirmation),
 offline telemetry, history/map, responsive layout and disconnect without network
 calls to WanWay. Real credentials are never required for local tests.
 

@@ -191,6 +191,27 @@ it('denies unauthenticated, worker and mixed identities before database/provider
   ).toBe(0);
 });
 
+it('suggests the owned matching vehicle without binding it until the admin confirms', async () => {
+  await ready();
+  const id = await deviceId();
+  await prisma.machine.update({ where: { id: tenants[0].machine.id }, data: { targe: 'ZZ 123 YY' } });
+  await prisma.machine.update({ where: { id: tenants[1].machine.id }, data: { targe: 'ZZ 123 YY' } });
+  await prisma.wanwayDevice.update({ where: { id }, data: { name: 'Synthetic van [ZZ123YY]' } });
+  const auditCount = await prisma.auditLog.count({ where: { companyProfileId: tenants[0].company.id } });
+  const calls = fetcher.mock.calls.length;
+
+  const panel = await readPanel();
+  expect(panel.devices[0]).toMatchObject({ machineId: null, suggestedMachineId: tenants[0].machine.id });
+  expect(panel.machines.some((machine) => machine.id === tenants[1].machine.id)).toBe(false);
+  expect((await prisma.wanwayDevice.findUniqueOrThrow({ where: { id } })).machineId).toBeNull();
+  expect(await prisma.auditLog.count({ where: { companyProfileId: tenants[0].company.id } })).toBe(auditCount);
+  expect(fetcher.mock.calls).toHaveLength(calls);
+
+  await bindDevice(id, panel.devices[0].suggestedMachineId);
+  expect((await readPanel()).devices[0]).toMatchObject({ machineId: tenants[0].machine.id, suggestedMachineId: null });
+  expect(fetcher.mock.calls).toHaveLength(calls);
+});
+
 it('enforces backend tenant ownership for both sides of every binding', async () => {
   await ready();
   const id = await deviceId();

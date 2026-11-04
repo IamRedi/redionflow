@@ -188,7 +188,7 @@ export function WanwayPanel({
         )}
         {data.devices.map((d) => (
           <form
-            key={`${d.id}:${d.machineId}`}
+            key={`${d.id}:${d.machineId}:${d.suggestedMachineId}`}
             className="space-y-3 rounded-xl border bg-card p-4"
             onSubmit={(e) => {
               e.preventDefault();
@@ -214,7 +214,8 @@ export function WanwayPanel({
                 {c.vehicle}
                 <select
                   name="machineId"
-                  defaultValue={d.machineId ?? ''}
+                  defaultValue={d.machineId ?? d.suggestedMachineId ?? ''}
+                  aria-describedby={!d.machineId && d.suggestedMachineId ? `suggestion-${d.id}` : undefined}
                   disabled={pending || !d.available}
                   className="mt-1 block w-full rounded-md border bg-background p-3 text-sm text-foreground"
                 >
@@ -226,6 +227,11 @@ export function WanwayPanel({
                     </option>
                   ))}
                 </select>
+                {!d.machineId && d.suggestedMachineId && (
+                  <span id={`suggestion-${d.id}`} className="mt-2 block text-xs text-muted-foreground">
+                    {c.suggested}
+                  </span>
+                )}
               </label>
               <Button
                 type="submit"

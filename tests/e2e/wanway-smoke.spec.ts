@@ -46,6 +46,10 @@ test('WanWay: saved credentials → discover → confirmed existing vehicle → 
     const machine = await prisma.machine.findFirstOrThrow({
       where: { companyProfileId: companyId },
     });
+    await prisma.machine.update({
+      where: { id: machine.id },
+      data: { name: 'Synthetic matched vehicle', targe: 'ZZ123YY' },
+    });
     await page.goto('/app/settings');
     await page.getByRole('link', { name: 'WanWay GPS →' }).click();
     await expect(
@@ -59,15 +63,23 @@ test('WanWay: saved credentials → discover → confirmed existing vehicle → 
     await expect(page.locator('input[name="key"]')).toHaveValue('');
     await page.getByRole('button', { name: 'Provo lidhjen' }).click();
     await expect(
-      page.getByText('Synthetic GPS', { exact: true }),
+      page.getByText('Synthetic GPS [ZZ 123 YY]', { exact: true }),
     ).toBeVisible();
     expect(await page.content()).not.toContain('000000000000001');
     expect(await page.content()).not.toContain('synthetic-wanway-key');
-    await page.locator('select[name="machineId"]').selectOption(machine.id);
+    await expect(page.locator('select[name="machineId"]')).toHaveValue(machine.id);
+    await expect(page.getByText('Mjeti përkatës u zgjodh. Kontrolloje dhe konfirmo lidhjen.', { exact: true })).toBeVisible();
+    expect((await prisma.wanwayDevice.findFirstOrThrow({ where: { companyProfileId: companyId } })).machineId).toBeNull();
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: info.outputPath('wanway-suggested-desktop.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: info.outputPath('wanway-suggested-phone.png'), fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page
       .getByRole('button', { name: 'Konfirmo lidhjen', exact: true })
       .click();
     await expect(page.getByRole('status')).toHaveText('U përfundua');
+    expect((await prisma.wanwayDevice.findFirstOrThrow({ where: { companyProfileId: companyId } })).machineId).toBe(machine.id);
     await prisma.wanwayIntegration.update({
       where: { companyProfileId: companyId },
       data: { nextRequestAt: new Date(0) },
