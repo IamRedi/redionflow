@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { LayoutDashboard, Map, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { HubsteigerIcon } from "@/components/icons";
@@ -14,6 +14,9 @@ import { SteelSiteScene } from "@/components/steel/steel-site-scene";
 import { AssetPhoto } from "@/components/asset-photo";
 import { t } from "@/lib/i18n";
 import type { FleetLocation } from "@/lib/fleet/location";
+import { WorkzoneMapIndex, type MissionMapFocus } from "./workzone-map-index";
+import mapStyles from "./workzone-map-index.module.css";
+import { useMapFleet, useSetWorkzoneMapMode } from "./workzone-map-fleet";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
 type MissionItem = {
@@ -282,10 +285,25 @@ export function WorkzoneMissionControl({
   canEditPhotos?: boolean;
 }) {
   const { currentLang } = useLanguage();
+  const mapFleet = useMapFleet();
+  const indexVehicles = (mapFleet ?? fleetLocations).map(v => {
+    const location = fleetLocations.find(p => p.id === v.id);
+    return { id: v.id, name: v.name, plate: v.plate, coordinates: location ? { lat: location.lat, lng: location.lng } : null };
+  });
   const [isMapMode, setIsMapMode] = useState(initialMap);
+  const setSharedMapMode = useSetWorkzoneMapMode();
+  useEffect(() => {
+    setSharedMapMode?.(isMapMode);
+    return () => setSharedMapMode?.(false);
+  }, [isMapMode, setSharedMapMode]);
   const [isCompactCanvas, setIsCompactCanvas] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [focusBaustelleId, setFocusBaustelleId] = useState<string | null>(null);
+  const [mapFocus, setMapFocus] = useState<MissionMapFocus | null>(null);
+  const mapFrameRef = useRef<HTMLDivElement>(null);
+  function focusOnMap(kind: MissionMapFocus['kind'], id: string) {
+    setMapFocus(current => ({ kind, id, request: (current?.request ?? 0) + 1 }));
+    if (window.innerWidth < 1024) mapFrameRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const canvasLayoutSignature = useMemo(() => canvasSignature(items), [items]);
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => readSavedCanvasLayout(canvasSignature(items)) ?? autoLayouts(items));
@@ -411,55 +429,24 @@ export function WorkzoneMissionControl({
   return (
     <div className="w-full min-w-0 space-y-4">
       {isMapMode ? (
-        <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
-          <div className="relative h-[680px] overflow-hidden rounded-xl border">
+        <div className={mapStyles.layout} data-testid="workzone-map-layout">
+          <div ref={mapFrameRef} className={mapStyles.frame} data-testid="workzone-map-frame">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="absolute left-14 top-3 z-[500] h-8 w-8 border-background/80 bg-background/88 shadow-sm backdrop-blur hover:bg-background"
+              className="absolute left-14 top-3 z-[500] h-8 w-8 border-border bg-card text-foreground shadow-sm hover:bg-muted"
               onClick={() => setIsMapMode(false)}
               title={t("workzone.planMode", currentLang)}
               aria-label={t("workzone.planMode", currentLang)}
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
             </Button>
-            {toolbar ? <div className="absolute right-3 top-3 z-[500] flex items-center gap-1.5">{toolbar}</div> : null}
-            <WorkzoneMissionMap items={mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focusId={focusBaustelleId} onFocusChange={setFocusBaustelleId} />
+            {toolbar ? <div className={`${mapStyles.toolbar} absolute right-3 top-3 z-[500] flex items-center gap-1.5`}>{toolbar}</div> : null}
+            <WorkzoneMissionMap items={mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focus={mapFocus} onFocusChange={focusOnMap} />
           </div>
 
-          <div className="rounded-xl border bg-card p-3">
-            <h3 className="text-sm font-semibold">{t("workzone.jumpToSite", currentLang)}</h3>
-            <div className="mt-2 space-y-2">
-              {items.map((item) => {
-                const standort = item.standortAddress || defaultAddress;
-                const resolvedCoords = item.coordinates ?? addressCoords[item.id] ?? null;
-                return (
-                  <div key={item.id} className="rounded-md border p-2">
-                    <p className="truncate text-xs font-semibold">{item.name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{resolvedCoords ? t("workzone.gpsOk", currentLang) : t("workzone.noGps", currentLang)}</p>
-                    <div className="mt-1 flex gap-1">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-[11px]"
-                        disabled={!resolvedCoords}
-                        onClick={() => setFocusBaustelleId(item.id)}
-                      >
-                        {t("workzone.zoom", currentLang)}
-                      </Button>
-                      <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[11px]">
-                        <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer">
-                          {t("common.location", currentLang)}
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <WorkzoneMapIndex items={items.map(item => ({ id: item.id, name: item.name, standortAddress: item.standortAddress, coordinates: item.coordinates ?? addressCoords[item.id] ?? null }))} vehicles={indexVehicles} focus={mapFocus} onFocus={focusOnMap} />
         </div>
       ) : (
         <div

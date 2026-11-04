@@ -1,5 +1,7 @@
 "use client";
 
+import { useWorkzoneMapMode } from './workzone-map-fleet';
+
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -143,7 +145,10 @@ export function MachineSidebar({
   const { currentLang: lang } = useLanguage();
   const c = fleetCopy(lang);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [fleetOpen, setFleetOpen] = useState(true);
+  const mapMode = useWorkzoneMapMode();
+  const [fleetVisibility, setFleetVisibility] = useState({ plan: true, map: false });
+  const fleetOpen = mapMode ? fleetVisibility.map : fleetVisibility.plan;
+  const compactMap = mapMode && !fleetOpen;
   const [message, setMessage] = useState<string>();
   const [defectDrafts, setDefectDrafts] = useState<Record<string, string>>({});
   const [defectFormOpen, setDefectFormOpen] = useState(false);
@@ -241,11 +246,13 @@ export function MachineSidebar({
   if (machines.length === 0) return null;
 
   return (
-    <aside className="fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center">
+    <aside data-testid="fleet-rail" className={compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
       <button
         type="button"
         title={t("workzone.fleet", lang)}
-        onClick={() => setFleetOpen((open) => !open)}
+        data-testid="fleet-rail-toggle"
+        aria-expanded={fleetOpen}
+        onClick={() => setFleetVisibility(current => mapMode ? { ...current, map: !current.map } : { ...current, plan: !current.plan })}
         className={cn(
           "flex size-12 shrink-0 items-center justify-center rounded-full border bg-muted text-[11px] font-semibold shadow-sm transition hover:scale-105",
           fleetOpen ? "ring-2 ring-brand-green ring-offset-2 ring-offset-background" : "",
@@ -253,10 +260,10 @@ export function MachineSidebar({
       >
         {t("workzone.fleet", lang).toUpperCase()}
       </button>
-      <Link href="/workzone/fuel" className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-center text-[10px] font-semibold leading-tight shadow-sm" title={c.fuel}><Fuel className="size-5 text-orange-600"/><span>{c.fuel}</span></Link>
+      <Link href="/workzone/fuel" className={compactMap ? "flex size-12 shrink-0 items-center justify-center rounded-full border bg-card shadow-sm" : "flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-center text-[10px] font-semibold leading-tight shadow-sm"} title={c.fuel}><Fuel className="size-5 text-orange-600"/><span className={compactMap ? "sr-only" : undefined}>{c.fuel}</span></Link>
 
       {fleetOpen ? (
-        <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 lg:max-h-[calc(100vh-13rem)] lg:flex-none lg:overflow-x-visible lg:overflow-y-auto lg:pr-1">
+        <div data-testid="fleet-rail-items" className="no-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 lg:max-h-[calc(100vh-13rem)] lg:flex-none lg:overflow-x-visible lg:overflow-y-auto lg:pr-1">
           <div className="flex items-center gap-2 lg:flex-col">
             {machines.map((machine) => {
               const label = machineLabel(machine);
