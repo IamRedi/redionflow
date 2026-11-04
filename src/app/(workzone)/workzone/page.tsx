@@ -26,6 +26,8 @@ import { withTenantContext } from "@/lib/db/tenant-context";
 import { batchState, readFactorySteps } from "@/lib/factory/production";
 import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
 import { factoryOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
+import { readFleetLocations } from "@/lib/fleet/location";
+import { wanwayEnabled } from "@/lib/fleet/wanway/service";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -47,7 +49,8 @@ function materialIndicators(
   ].filter(Boolean) as Array<{ key: string; label: string; icon: string; qty: number }>;
 }
 
-export default async function WorkzoneHomePage() {
+export default async function WorkzoneHomePage({ searchParams }: { searchParams?: Promise<{view?: string}> } = {}) {
+  const initialMap = (await searchParams)?.view === 'map';
   await autoLockPastWorkLogs();
   const company = await getOrCreateDefaultCompany();
   const [admin, worker, mode] = await Promise.all([
@@ -56,6 +59,7 @@ export default async function WorkzoneHomePage() {
     getCompanyMode(),
   ]);
   const currentLang = await resolveRequestLanguage();
+  const fleetLocations = admin || worker ? await readFleetLocations() : [];
 
   const today = dateKey(new Date());
   const todayDate = dayRange(today).start;
@@ -322,6 +326,9 @@ export default async function WorkzoneHomePage() {
   return (
     <div className="space-y-4">
       <WorkzoneMissionControl
+        fleetLocations={fleetLocations}
+        initialMap={initialMap}
+        gpsSyncAvailable={wanwayEnabled() && Boolean(admin || worker)}
         items={liveMission}
         archive={archivedMission}
         defaultAddress={defaultAddress}

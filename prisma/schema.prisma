@@ -270,6 +270,7 @@ model CompanyProfile {
   overheadSettings          OverheadSettings?
   laborRoles                LaborRole[]
   machines                  Machine[]
+  fuelReceipts              FuelReceipt[]
   workers                   Worker[]
   inventoryItems            CompanyInventoryItem[]
   productionBatches         ProductionBatch[]
@@ -552,6 +553,7 @@ model LaborRole {
 
 model Machine {
   wanwayDevices WanwayDevice[]
+  fuelReceipts FuelReceipt[]
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -609,6 +611,50 @@ model Machine {
 
   @@unique([companyProfileId, name])
   @@unique([companyProfileId, id])
+}
+
+/// Private fuel evidence: immutable uploader/upload time, confirmed invoice time
+/// and only the nearest GPS evidence for that event, never a continuous archive.
+model FuelReceipt {
+  id                   String @id @default(cuid())
+  companyProfileId     String
+  companyProfile       CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  machineId            String
+  machine              Machine @relation(fields: [companyProfileId, machineId], references: [companyProfileId, id], onDelete: NoAction, map: "FuelReceipt_machine_tenant_fkey")
+  requestId            String
+  uploadedByUserId      String?
+  uploadedByWorkerId    String?
+  uploadedByName        String
+  uploadedAt           DateTime @default(now())
+  confirmedAt          DateTime?
+  fueledAt             DateTime?
+  fueledByWorkerId     String?
+  fueledByUserId       String?
+  fueledByName         String?
+  timeZone             String
+  receiptTime          String?
+  timeSource           String?
+  stationAddress       String?
+  liters               Float?
+  amount               Float?
+  currency             String
+  fileName             String
+  mime                 String
+  size                 Int
+  data                 Bytes
+  sha256               String
+  gpsStatus            String @default("pending")
+  gpsDeviceId          String?
+  gpsLat               Float?
+  gpsLng               Float?
+  gpsRecordedAt        DateTime?
+  gpsDeltaSeconds      Int?
+  gpsSource            String?
+  gpsEvidence          Json?
+  gpsResolvedAt        DateTime?
+
+  @@unique([companyProfileId, requestId])
+  @@index([companyProfileId, machineId, uploadedAt])
 }
 
 /// Server-only provider credentials and distributed operation/token cache.

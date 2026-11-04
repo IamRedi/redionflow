@@ -9,7 +9,24 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[Deutsche Version](README.md)** · **As of 3 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+
+## In review: Workzone fleet map and fuel receipts
+
+The locally verified candidate puts confirmed vehicles beside job sites, opens
+their recorded position in Maps and stores original fuel receipts with uploader,
+actual fueler, invoice time and the nearest historical GPS report plus its time
+difference. Local OCR suggests the clock; a person checks and confirms it.
+Unclear vehicle matches remain the boss's decision.
+
+**Not yet published to the pilot.** 559 unit, 301 PostgreSQL and 28 Chromium tests
+passed locally; real-device and real-receipt acceptance remain pending.
+[Workflow, limits and release gate](docs/FLEET_MAP_FUEL.md). These captures contain
+only synthetic data from the local review candidate.
+
+![Local BauFlow candidate: vehicles and construction site on one map](docs/assets/screenshots/fleet-map-candidate.png)
+
+<img src="docs/assets/screenshots/fuel-receipt-candidate.png" alt="Synthetic fuel receipt candidate with separate upload, fueling and GPS clocks" width="300">
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 

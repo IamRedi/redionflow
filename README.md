@@ -9,7 +9,24 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[English version](README.en.md)** · **Stand: 3. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+
+## In Prüfung: Flotte auf der Workzone-Karte und Tankbelege
+
+Der lokal geprüfte Kandidat zeigt bestätigte Fahrzeuge neben Baustellen, öffnet
+ihre GPS-Position in Maps und erfasst Original-Tankbelege mit hochladender Person,
+tatsächlich tankender Person, Belegzeit und nächster historischer GPS-Meldung
+einschließlich Zeitabstand. Lokale OCR schlägt die Uhrzeit vor; der Mensch prüft
+und bestätigt sie. Unklare Fahrzeugzuordnungen bleiben beim Chef.
+
+**Noch nicht im Pilot veröffentlicht.** 559 Unit-, 301 PostgreSQL- und 28
+Chromium-Prüfungen bestanden lokal; echte Geräte-/Belegabnahme bleibt ausstehend.
+[Ablauf, Grenzen und Freigabe](docs/FLEET_MAP_FUEL.md). Die folgenden Aufnahmen
+zeigen ausschließlich synthetische Daten aus dem lokalen Review-Kandidaten.
+
+![Lokaler BauFlow-Kandidat: Fahrzeuge und Baustelle auf derselben Karte](docs/assets/screenshots/fleet-map-candidate.png)
+
+<img src="docs/assets/screenshots/fuel-receipt-candidate.png" alt="Synthetischer Tankbeleg im lokalen Kandidaten mit getrennten Upload-, Tank- und GPS-Zeiten" width="300">
 
 ## Websites und Live-Demos
 

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { generateKeyPairSync, randomUUID } from "node:crypto";
+import { createHash, generateKeyPairSync, randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -35,6 +35,10 @@ it("encrypted consistent snapshot restores all tables, 40 workers, 37 vehicles a
   const company = await prisma.companyProfile.create({ data: { legalName: "Synthetic steel fixture", displayName: "Synthetic steel fixture", mode: "bau", country: "AL" } }); companyId = company.id;
   await prisma.worker.createMany({ data: Array.from({ length: 40 }, (_, i) => ({ companyProfileId: companyId, firstName: "Synthetic", lastName: String(i) })) });
   await prisma.machine.createMany({ data: Array.from({ length: 37 }, (_, i) => ({ companyProfileId: companyId, name: `Synthetic vehicle ${i}`, category: "OTHER" as const, hourlyRateCents: 0 })) });
+  const worker = await prisma.worker.findFirstOrThrow({where:{companyProfileId:companyId}});
+  const machine = await prisma.machine.findFirstOrThrow({where:{companyProfileId:companyId}});
+  const receiptBytes = await readFile("tests/fixtures/synthetic-fuel-receipt.png");
+  await prisma.fuelReceipt.create({data:{companyProfileId:companyId, machineId:machine.id, requestId:randomUUID(), uploadedByWorkerId:worker.id, uploadedByName:"Synthetic worker", timeZone:"Europe/Tirane", currency:"ALL", fileName:"synthetic-receipt.png", mime:"image/png", size:receiptBytes.length, data:receiptBytes, sha256:createHash("sha256").update(receiptBytes).digest("hex")}});
   const site = await prisma.baustelle.create({ data: { companyProfileId: companyId, name: "Synthetic site", type: "STEEL_ASSEMBLY" } });
   const bytes = Buffer.from("%PDF-1.4\nsynthetic preserved file\n");
   await prisma.siteFile.create({ data: { companyProfileId: companyId, baustelleId: site.id, kind: "document", fileName: "synthetic.pdf", mime: "application/pdf", size: bytes.length, data: bytes } });
@@ -52,6 +56,7 @@ it("encrypted consistent snapshot restores all tables, 40 workers, 37 vehicles a
     expect((await check.query('SELECT count(*)::int AS n FROM "Worker"')).rows[0].n).toBe(40);
     expect((await check.query('SELECT count(*)::int AS n FROM "Machine"')).rows[0].n).toBe(37);
     expect((await check.query('SELECT data FROM "SiteFile"')).rows[0].data).toEqual(bytes);
+    expect((await check.query('SELECT data FROM "FuelReceipt"')).rows[0].data).toEqual(receiptBytes);
   } finally { await check.end(); }
   expect(await prisma.worker.count({ where: { companyProfileId: companyId } })).toBe(40);
   expect(await prisma.machine.count({ where: { companyProfileId: companyId } })).toBe(37);

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { SteelSiteScene } from "@/components/steel/steel-site-scene";
 import { t } from "@/lib/i18n";
+import type { FleetLocation } from "@/lib/fleet/location";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
 type MissionItem = {
@@ -259,6 +260,9 @@ export function WorkzoneMissionControl({
   allowCanvasDrag = true,
   allowDetailNavigation = true,
   mode = "baumdienst",
+  fleetLocations = [],
+  gpsSyncAvailable = false,
+  initialMap = false,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -269,9 +273,12 @@ export function WorkzoneMissionControl({
   allowCanvasDrag?: boolean;
   allowDetailNavigation?: boolean;
   mode?: import("@/lib/mode-config").CompanyMode;
+  fleetLocations?: FleetLocation[];
+  gpsSyncAvailable?: boolean;
+  initialMap?: boolean;
 }) {
   const { currentLang } = useLanguage();
-  const [isMapMode, setIsMapMode] = useState(false);
+  const [isMapMode, setIsMapMode] = useState(initialMap);
   const [isCompactCanvas, setIsCompactCanvas] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [focusBaustelleId, setFocusBaustelleId] = useState<string | null>(null);
@@ -414,7 +421,7 @@ export function WorkzoneMissionControl({
               <LayoutDashboard className="h-3.5 w-3.5" />
             </Button>
             {toolbar ? <div className="absolute right-3 top-3 z-[500] flex items-center gap-1.5">{toolbar}</div> : null}
-            <WorkzoneMissionMap items={mapItems} focusId={focusBaustelleId} onFocusChange={setFocusBaustelleId} />
+            <WorkzoneMissionMap items={mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focusId={focusBaustelleId} onFocusChange={setFocusBaustelleId} />
           </div>
 
           <div className="rounded-xl border bg-card p-3">

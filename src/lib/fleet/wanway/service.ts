@@ -6,6 +6,9 @@ import { withTenantContext } from '@/lib/db/tenant-context';
 import { encryptionReady, seal, unseal } from './crypto';
 import { WanwayAdapter, WanwayError, freshness, telemetry } from './adapter';
 import { suggestVehicleMatches } from './matching';
+import { fleetActor } from '../access';
+import { closestFuelEvidence } from '../fuel/evidence';
+import { checkLimit } from '@/lib/billing/limits';
 
 export function wanwayEnabled() {
   return (
@@ -16,12 +19,12 @@ export function wanwayEnabled() {
 }
 class OperationError extends Error {}
 type Tx = Prisma.TransactionClient;
-type Actor = { tenant: string; adminId: string };
+type Actor = { tenant: string; actorId: string; actorType: 'ADMIN' | 'WORKER' };
 async function actor(): Promise<Actor> {
   const tenant = await requireAdminTenant();
   const admin = await getCurrentAdmin();
   if (!admin || !wanwayEnabled()) throw new OperationError('DISABLED');
-  return { tenant, adminId: admin.id };
+  return { tenant, actorId: admin.id, actorType: 'ADMIN' };
 }
 async function locked<T>(tenant: string, fn: (tx: Tx) => Promise<T>) {
   return withTenantContext(tenant, async (tx) => {
@@ -48,8 +51,8 @@ async function audit(
   await tx.auditLog.create({
     data: {
       companyProfileId: a.tenant,
-      actorType: 'ADMIN',
-      actorId: a.adminId,
+      actorType: a.actorType,
+      actorId: a.actorId,
       action: `wanway.${action}`,
       payload,
     },
@@ -153,6 +156,60 @@ export async function bindDevice(id: string, machineId: string | null) {
   });
 }
 
+/** The boss explicitly creates and confirms a local vehicle in one transaction. */
+export async function createVehicleAndBind(
+  id: string,
+  name: string,
+  plate: string,
+) {
+  const a = await actor();
+  await locked(a.tenant, async (tx) => {
+    const integration = await idle(tx, a.tenant);
+    if (!integration?.encryptedKey) throw new OperationError('NOT_CONFIGURED');
+    const device = await tx.wanwayDevice.findFirst({
+      where: {
+        id,
+        companyProfileId: a.tenant,
+        available: true,
+        machineId: null,
+      },
+    });
+    if (!device) throw new OperationError('NOT_FOUND');
+    if (!(await checkLimit(a.tenant, 'machines', tx)).ok)
+      throw new OperationError('VEHICLE_LIMIT');
+    const key = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const existing = await tx.machine.findMany({
+      where: { companyProfileId: a.tenant },
+      select: { name: true, targe: true },
+    });
+    if (
+      existing.some(
+        (m) =>
+          key(m.name) === key(name) ||
+          (plate && m.targe && key(m.targe) === key(plate)),
+      )
+    )
+      throw new OperationError('VEHICLE_EXISTS');
+    const machine = await tx.machine.create({
+      data: {
+        companyProfileId: a.tenant,
+        name,
+        targe: plate || null,
+        category: 'TRUCK',
+        hourlyRateCents: 0,
+      },
+    });
+    await tx.wanwayDevice.update({
+      where: { id },
+      data: { machineId: machine.id },
+    });
+    await audit(tx, a, 'vehicle_created_and_bound', {
+      deviceId: id,
+      machineId: machine.id,
+    });
+  });
+}
+
 async function claim(a: Actor) {
   return locked(a.tenant, async (tx) => {
     const row = await idle(tx, a.tenant);
@@ -180,12 +237,14 @@ async function operation<T>(
     appid: string,
     a: Actor,
   ) => Promise<(tx: Tx) => Promise<T>>,
+  verifiedActor?: Actor,
+  budgetMs = 90_000,
 ) {
-  const a = await actor();
+  const a = verifiedActor ?? (await actor());
   if (!encryptionReady()) throw new OperationError('KEYRING');
   const row = await claim(a);
   try {
-    const api = new WanwayAdapter();
+    const api = new WanwayAdapter(undefined, undefined, budgetMs);
     let token: string;
     if (
       row.encryptedToken &&
@@ -355,6 +414,60 @@ export async function syncDevices(testOnly = false) {
   });
 }
 
+/** Workzone refresh only updates already-confirmed vehicles. Workers cannot
+ * discover devices, change credentials/bindings, or request arbitrary routes. */
+export async function syncFleetLocations() {
+  const who = await fleetActor();
+  if (!wanwayEnabled()) throw new OperationError('DISABLED');
+  const a: Actor = {
+    tenant: who.companyId,
+    actorId: (who.workerId ?? who.userId)!,
+    actorType: who.workerId ? 'WORKER' : 'ADMIN',
+  };
+  const devices = await withTenantContext(a.tenant, (tx) =>
+    tx.wanwayDevice.findMany({
+      where: {
+        companyProfileId: a.tenant,
+        machineId: { not: null },
+        available: true,
+        machine: { isActive: true },
+      },
+      select: { id: true, imei: true, machineId: true },
+    }),
+  );
+  if (!devices.length) return 0;
+  return operation(
+    async (api, token, appid) => {
+      const statuses = await api.statuses(token, appid);
+      return async (tx) => {
+        const now = new Date();
+        for (const d of devices) {
+          const status = statuses.find((s) => s.imei === d.imei);
+          await tx.wanwayDevice.updateMany({
+            where: {
+              id: d.id,
+              companyProfileId: a.tenant,
+              machineId: d.machineId,
+              available: true,
+            },
+            data: status
+              ? { ...telemetry(status), syncedAt: now }
+              : { providerStatus: 'unknown', syncedAt: now },
+          });
+        }
+        await tx.wanwayIntegration.update({
+          where: { companyProfileId: a.tenant },
+          data: { lastSuccessfulSync: now },
+        });
+        await audit(tx, a, 'map_synced', { deviceCount: devices.length });
+        return devices.length;
+      };
+    },
+    a,
+    20_000,
+  );
+}
+
 export async function loadHistory(id: string) {
   return operation(async (api, token, _appid, a) => {
     const d = await withTenantContext(a.tenant, (tx) =>
@@ -377,6 +490,190 @@ export async function loadHistory(id: string) {
       return { points, fetchedAt: new Date().toISOString() };
     };
   });
+}
+
+/** Event-scoped worker access: only a confirmed, owned fuel receipt can request
+ * its small time window. No worker route/archive or arbitrary machine/date API. */
+export async function captureFuelGps(receiptId: string) {
+  const who = await fleetActor();
+  const receipt = await withTenantContext(who.companyId, (tx) =>
+    tx.fuelReceipt.findFirst({
+      where: {
+        id: receiptId,
+        companyProfileId: who.companyId,
+        confirmedAt: { not: null },
+        ...(!who.can.office
+          ? {
+              OR: [
+                { uploadedByWorkerId: who.workerId },
+                { fueledByWorkerId: who.workerId },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        machineId: true,
+        fueledAt: true,
+        gpsEvidence: true,
+        gpsDeviceId: true,
+      },
+    }),
+  );
+  if (!receipt?.fueledAt) throw new OperationError('NOT_FOUND');
+  const at = receipt.fueledAt;
+  const d = wanwayEnabled()
+    ? await withTenantContext(who.companyId, (tx) =>
+        tx.wanwayDevice.findFirst({
+          where: {
+            companyProfileId: who.companyId,
+            machineId: receipt.machineId,
+            available: true,
+            ...(receipt.gpsDeviceId ? { id: receipt.gpsDeviceId } : {}),
+          },
+          select: {
+            id: true,
+            imei: true,
+            lat: true,
+            lng: true,
+            reportedAt: true,
+          },
+        }),
+      )
+    : null;
+  if (d && !receipt.gpsDeviceId) {
+    const pinned = await withTenantContext(who.companyId, async (tx) => {
+      await tx.fuelReceipt.updateMany({
+        where: {
+          id: receipt.id,
+          companyProfileId: who.companyId,
+          gpsDeviceId: null,
+        },
+        data: { gpsDeviceId: d.id },
+      });
+      return tx.fuelReceipt.findFirst({
+        where: { id: receipt.id, companyProfileId: who.companyId },
+        select: { gpsDeviceId: true },
+      });
+    });
+    if (pinned?.gpsDeviceId !== d.id) throw new OperationError('BUSY');
+  }
+  const cached = await withTenantContext(who.companyId, (tx) =>
+    tx.gpsLocationPoint.findMany({
+      where: {
+        companyProfileId: who.companyId,
+        machineId: receipt.machineId,
+        source: 'MACHINE',
+        recordedAt: {
+          gte: new Date(at.getTime() - 1800_000),
+          lte: new Date(Math.min(Date.now(), at.getTime() + 1800_000)),
+        },
+      },
+      select: { lat: true, lng: true, recordedAt: true },
+      orderBy: { recordedAt: 'desc' },
+      take: 10000,
+    }),
+  );
+  let points = cached.map((p) => ({
+    lat: Number(p.lat),
+    lng: Number(p.lng),
+    recordedAt: p.recordedAt.toISOString(),
+    source: 'ingest',
+  }));
+  if (Array.isArray(receipt.gpsEvidence))
+    for (const value of receipt.gpsEvidence) {
+      if (
+        value &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        typeof value.lat === 'number' &&
+        typeof value.lng === 'number' &&
+        typeof value.recordedAt === 'string' &&
+        typeof value.source === 'string'
+      )
+        points.push({
+          lat: value.lat,
+          lng: value.lng,
+          recordedAt: value.recordedAt,
+          source: value.source,
+        });
+    }
+  if (d?.reportedAt && d.lat !== null && d.lng !== null) {
+    points = [
+      {
+        lat: d.lat,
+        lng: d.lng,
+        recordedAt: d.reportedAt.toISOString(),
+        source: 'wanway_snapshot',
+      },
+      ...points,
+    ];
+  }
+  let unavailable = 'no_gps';
+  if (d) {
+    const a: Actor = {
+      tenant: who.companyId,
+      actorId: (who.workerId ?? who.userId)!,
+      actorType: who.workerId ? 'WORKER' : 'ADMIN',
+    };
+    try {
+      const history = await operation(
+        async (api, token) => {
+          const stillBound = await withTenantContext(a.tenant, (tx) =>
+            tx.wanwayDevice.findFirst({
+              where: {
+                id: d.id,
+                companyProfileId: a.tenant,
+                machineId: receipt.machineId,
+                available: true,
+              },
+              select: { id: true },
+            }),
+          );
+          if (!stillBound) throw new OperationError('NOT_FOUND');
+          const history = await api.history(token, d.imei, {
+            start: new Date(at.getTime() - 30 * 60_000),
+            end: new Date(Math.min(Date.now(), at.getTime() + 30 * 60_000)),
+          });
+          return async (tx) => {
+            await audit(tx, a, 'fuel_position_checked', {
+              receiptId,
+              deviceId: d.id,
+              pointCount: history.length,
+            });
+            return history;
+          };
+        },
+        a,
+        20_000,
+      );
+      points = [
+        ...history.map((p) => ({ ...p, source: 'wanway_history' })),
+        ...points,
+      ];
+      unavailable = 'no_history';
+    } catch (error) {
+      unavailable = ['BUSY', 'COOLDOWN'].includes(errorCode(error))
+        ? 'cooldown'
+        : 'unavailable';
+    }
+  }
+  const evidence = closestFuelEvidence(points, at);
+  await withTenantContext(who.companyId, (tx) =>
+    tx.fuelReceipt.updateMany({
+      where: { id: receipt.id, companyProfileId: who.companyId, fueledAt: at },
+      data: {
+        gpsStatus: evidence?.status ?? unavailable,
+        gpsSource: evidence?.source ?? null,
+        gpsLat: evidence?.lat ?? null,
+        gpsLng: evidence?.lng ?? null,
+        gpsRecordedAt: evidence ? new Date(evidence.recordedAt) : null,
+        gpsDeltaSeconds: evidence?.deltaSeconds ?? null,
+        gpsEvidence: evidence?.evidence ?? Prisma.JsonNull,
+        gpsResolvedAt: new Date(),
+      },
+    }),
+  );
 }
 
 // Explicit DTO: no encrypted secrets, tokens, SIM/ICCID or full IMEI returned.
@@ -407,7 +704,13 @@ export async function readPanel() {
     });
     const machines = await tx.machine.findMany({
       where: { companyProfileId: a.tenant, isActive: true },
-      select: { id: true, name: true, nickname: true, targe: true, gpsEnabled: true },
+      select: {
+        id: true,
+        name: true,
+        nickname: true,
+        targe: true,
+        gpsEnabled: true,
+      },
     });
     const suggestions = suggestVehicleMatches(
       devices.map((d) => ({ ...d, name: d.name.replaceAll(d.imei, 'GPS') })),

@@ -68,8 +68,9 @@ export class WanwayAdapter {
     private readonly fetcher: typeof fetch = fetch,
     private readonly pause = (ms: number) =>
       new Promise<void>((r) => setTimeout(r, ms)),
+    budgetMs = 90_000,
   ) {
-    this.deadline = Date.now() + 90_000;
+    this.deadline = Date.now() + Math.min(90_000, Math.max(1000, budgetMs));
   }
   private async request(
     path: Path,
@@ -232,14 +233,31 @@ export class WanwayAdapter {
     if (!parsed.success) throw new WanwayError('FORMAT');
     return parsed.data.miles ?? null;
   }
-  async history(token: string, imei: string): Promise<TrackPoint[]> {
-    const end = Math.floor(Date.now() / 1000) - 1;
+  async history(
+    token: string,
+    imei: string,
+    window?: { start: Date; end: Date },
+  ): Promise<TrackPoint[]> {
+    const end = Math.floor((window?.end.getTime() ?? Date.now()) / 1000) - 1;
+    const start = window
+      ? Math.floor(window.start.getTime() / 1000)
+      : end - 86400;
+    if (
+      !Number.isFinite(start) ||
+      !Number.isFinite(end) ||
+      start >= end ||
+      end > Date.now() / 1000 ||
+      end - start > 31 * 86400 ||
+      start < Date.now() / 1000 - 270 * 86400
+    )
+      throw new WanwayError('FORMAT');
     const raw = await this.request('/api/device/track/history', token, {
       imei,
-      startTime: String(end - 86400),
+      startTime: String(start),
       endTime: String(end),
       coordType: 'wgs84',
       onlyGps: '1',
+      ...(window ? { noFilter: '1' } : {}),
     });
     const parsed = z.object({ data: z.array(point).max(10000) }).safeParse(raw);
     if (!parsed.success) throw new WanwayError('FORMAT');
@@ -249,7 +267,10 @@ export class WanwayAdapter {
           p.lat !== undefined &&
           p.lng !== undefined &&
           p.gpsTime &&
-          p.gpsTime.getTime() <= Date.now() + 60_000,
+          p.gpsTime.getTime() <= Date.now() + 60_000 &&
+          (!window ||
+            (p.gpsTime.getTime() >= start * 1000 &&
+              p.gpsTime.getTime() <= end * 1000)),
       )
       .map((p) => ({
         lat: p.lat!,

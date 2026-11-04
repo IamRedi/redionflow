@@ -61,25 +61,58 @@ test('WanWay: saved credentials → discover → confirmed existing vehicle → 
     await page.getByRole('button', { name: 'Ruaj / Përditëso' }).click();
     await expect(page.getByRole('status')).toHaveText('U përfundua');
     await expect(page.locator('input[name="key"]')).toHaveValue('');
+    await page.getByText('Cilësimet e lidhjes', { exact: true }).click();
     await page.getByRole('button', { name: 'Provo lidhjen' }).click();
     await expect(
       page.getByText('Synthetic GPS [ZZ 123 YY]', { exact: true }),
     ).toBeVisible();
     expect(await page.content()).not.toContain('000000000000001');
     expect(await page.content()).not.toContain('synthetic-wanway-key');
-    await expect(page.locator('select[name="machineId"]')).toHaveValue(machine.id);
-    await expect(page.getByText('Mjeti përkatës u zgjodh. Kontrolloje dhe konfirmo lidhjen.', { exact: true })).toBeVisible();
-    expect((await prisma.wanwayDevice.findFirstOrThrow({ where: { companyProfileId: companyId } })).machineId).toBeNull();
+    await expect(page.locator('select[name="machineId"]')).toHaveValue(
+      machine.id,
+    );
+    await expect(
+      page.getByText(
+        'Mjeti përkatës u zgjodh. Kontrolloje dhe konfirmo lidhjen.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    expect(
+      (
+        await prisma.wanwayDevice.findFirstOrThrow({
+          where: { companyProfileId: companyId },
+        })
+      ).machineId,
+    ).toBeNull();
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.screenshot({ path: info.outputPath('wanway-suggested-desktop.png'), fullPage: true });
+    await page.screenshot({
+      path: info.outputPath('wanway-suggested-desktop.png'),
+      fullPage: true,
+    });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.screenshot({ path: info.outputPath('wanway-suggested-phone.png'), fullPage: true });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({
+      path: info.outputPath('wanway-suggested-phone.png'),
+      fullPage: true,
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
     await page
       .getByRole('button', { name: 'Konfirmo lidhjen', exact: true })
       .click();
     await expect(page.getByRole('status')).toHaveText('U përfundua');
-    expect((await prisma.wanwayDevice.findFirstOrThrow({ where: { companyProfileId: companyId } })).machineId).toBe(machine.id);
+    expect(
+      (
+        await prisma.wanwayDevice.findFirstOrThrow({
+          where: { companyProfileId: companyId },
+        })
+      ).machineId,
+    ).toBe(machine.id);
+    await page
+      .getByRole('button', { name: 'Të konfirmuara (1)', exact: true })
+      .click();
     await prisma.wanwayIntegration.update({
       where: { companyProfileId: companyId },
       data: { nextRequestAt: new Date(0) },
@@ -122,6 +155,7 @@ test('WanWay: saved credentials → discover → confirmed existing vehicle → 
       fullPage: true,
     });
     await page.goto('/app/settings/integrations/wanway');
+    await page.getByText('Cilësimet e lidhjes', { exact: true }).click();
     await page.getByRole('button', { name: 'Shkëput', exact: true }).click();
     await page
       .getByRole('button', { name: 'Konfirmo shkëputjen', exact: true })

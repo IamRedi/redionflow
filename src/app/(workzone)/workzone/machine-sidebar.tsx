@@ -2,9 +2,14 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import type { FleetLocation } from "@/lib/fleet/location";
+import { mapsLink } from "@/lib/fleet/location-link";
+import { fleetCopy } from "@/lib/fleet/copy";
+import { fleetTime } from "@/lib/fleet/format";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
+import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, Fuel, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { MachineArt, machineKind } from "@/components/steel/machine-art";
@@ -47,6 +52,7 @@ type MachineSideItem = {
   coneTotal?: number;
   coneAvailable?: number;
   category?: string | null;
+  gps?: FleetLocation | null;
 };
 
 function machineLabel(machine: MachineSideItem) {
@@ -132,6 +138,7 @@ export function MachineSidebar({
   country?: string;
 }) {
   const { currentLang: lang } = useLanguage();
+  const c = fleetCopy(lang);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fleetOpen, setFleetOpen] = useState(true);
   const [message, setMessage] = useState<string>();
@@ -149,6 +156,14 @@ export function MachineSidebar({
   const selected = useMemo(() => machines.find((machine) => machine.id === selectedId) ?? null, [machines, selectedId]);
   const selectedNotes = useMemo(() => parseMachineNotes(selected?.notes ?? null), [selected?.notes]);
   const activeDefect = selectedNotes.defects.find((defect) => !defect.resolvedAt) ?? null;
+  useEffect(() => {
+    const open = (event: Event) => {
+      const id = (event as CustomEvent<{id?: string}>).detail?.id;
+      if (id && machines.some(m => m.id === id)) setSelectedId(id);
+    };
+    window.addEventListener("fleet:open-machine", open);
+    return () => window.removeEventListener("fleet:open-machine", open);
+  }, [machines]);
 
   function blockMachine() {
     if (!selected) return;
@@ -235,6 +250,7 @@ export function MachineSidebar({
       >
         {t("workzone.fleet", lang).toUpperCase()}
       </button>
+      <Link href="/workzone/fuel" className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-center text-[10px] font-semibold leading-tight shadow-sm" title={c.fuel}><Fuel className="size-5 text-orange-600"/><span>{c.fuel}</span></Link>
 
       {fleetOpen ? (
         <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 lg:max-h-[calc(100vh-13rem)] lg:flex-none lg:overflow-x-visible lg:overflow-y-auto lg:pr-1">
@@ -323,6 +339,13 @@ export function MachineSidebar({
                 </div>
 
                 <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
+                  <div className="rounded-2xl border bg-card p-3">
+                    <div className="flex flex-wrap gap-2">
+                      {selected.gps ? <a href={mapsLink(selected.gps.lat, selected.gps.lng)} target="_blank" rel="noreferrer" className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-orange-600 px-4 font-semibold text-white">{c.maps}</a> : <span className="flex flex-1 items-center text-sm text-muted-foreground">{c.noGps}</span>}
+                      <Link onClick={() => setSelectedId(null)} href={'/workzone/fuel?machine=' + selected.id} className="flex min-h-12 flex-1 items-center justify-center rounded-xl border px-4 font-semibold">{c.fuel}</Link>
+                    </div>
+                    {selected.gps && <p className="mt-2 text-xs text-muted-foreground">{selected.gps.online ? c.online : selected.gps.stale ? c.stale : c.unknown} · {c.lastReport}: {fleetTime(selected.gps.reportedAt, "Europe/Berlin", true)}</p>}
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     <Detail label={t("workzone.model", lang)} value={selected.model} />
                     <Detail label={t("workzone.requiredLicense", lang)} value={selected.patentaEnevojshme} />

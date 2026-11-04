@@ -92,7 +92,12 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm test
+        # The receipt reader runs locally; no cloud OCR/AI credentials.
+        # Linux OCR assertions are mandatory in this explicit verification run.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends util-linux tesseract-ocr tesseract-ocr-eng
+          npm test
 
       - name: Integration tests
         # Same fresh Postgres16/migrations/restricted LOGIN role as local.
