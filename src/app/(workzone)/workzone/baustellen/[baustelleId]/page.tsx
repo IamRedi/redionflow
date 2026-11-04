@@ -24,6 +24,8 @@ import { BaustelleDocumentationModal } from "./baustelle-documentation-modal";
 import { SafetyEquipmentPanel } from "./safety-equipment-panel";
 import { SteelPhaseBoard } from "./steel-phase-board";
 import { SteelSiteArt } from "@/components/steel/steel-art";
+import { AssetPhoto } from "@/components/asset-photo";
+import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 import { ensureSteelPhases } from "@/lib/workzone/steel-phases-db";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { readFactorySteps } from "@/lib/factory/production";
@@ -315,7 +317,7 @@ export default async function BaustelleDetailPage({
     return (
       <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
         <div className="relative overflow-hidden rounded-3xl border bg-card">
-          <SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" />
+          <div className="absolute inset-0"><AssetPhoto key={`${baustelle.id}:${baustelle.coverPhotoAt}`} kind="site" id={baustelle.id} src={assetPhotoUrl('site',baustelle.id,baustelle.coverPhotoAt)} alt={baustelle.name} canEdit={can.office||can.siteSteps}><SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" /></AssetPhoto></div>
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
           <div className="relative flex min-h-[160px] flex-col justify-end gap-2 p-4 sm:min-h-[190px] sm:p-6">
             <Link className="w-fit text-xs text-muted-foreground hover:underline" href="/workzone">

@@ -8,6 +8,7 @@ import type { FleetLocation } from "@/lib/fleet/location";
 import { mapsLink } from "@/lib/fleet/location-link";
 import { fleetCopy } from "@/lib/fleet/copy";
 import { fleetTime } from "@/lib/fleet/format";
+import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, Fuel, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
 
@@ -129,11 +130,13 @@ function InspectionChip({ label, date }: { label: string; date: Date | string | 
 export function MachineSidebar({
   machines,
   isAdmin,
+  canEditPhotos = isAdmin,
   showCones = true,
   country = "DE",
 }: {
   machines: MachineSideItem[];
   isAdmin: boolean;
+  canEditPhotos?: boolean;
   showCones?: boolean;
   country?: string;
 }) {
@@ -323,11 +326,9 @@ export function MachineSidebar({
               <div className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[minmax(150px,32vh)_auto] gap-3 overflow-y-auto p-3 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1 lg:gap-5 lg:overflow-hidden">
                 {/* Picture of the machine with its name on a plate in the corner */}
                 <div className="relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-                  {selected.imageUrl ? (
-                    <img src={selected.imageUrl} alt={machineLabel(selected)} className="size-full object-cover" />
-                  ) : (
+                  <AssetPhoto key={`${selected.id}:${selected.imageUrl}`} kind="machine" id={selected.id} src={selected.imageUrl} alt={machineLabel(selected)} canEdit={canEditPhotos}>
                     <MachineArt kind={machineKind(selected)} animate={selected.isActive} className="absolute inset-0 h-full w-full p-4 pt-14" />
-                  )}
+                  </AssetPhoto>
                   <div className="absolute left-3 top-3 max-w-[80%] rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
                     <div className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">{selected.funksioni ?? t("workzone.fleet", lang)}</div>
                     <div className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{machineLabel(selected)}</div>

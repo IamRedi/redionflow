@@ -1,7 +1,9 @@
-# Workzone fleet map and fuel receipts — review candidate, 4 November 2026
+# Workzone fleet map, fuel receipts and asset photos — 4 November 2026
 
-Prepared over pilot `ea71fde`; the live pilot remains unchanged until owner
-approval of this feature PR. Real-provider and worker acceptance remain separate
+Prepared over pilot `ea71fde`. On 4 November the owner explicitly authorized
+publication after adding camera/upload covers, without repeating the previous
+full test suites. Runtime deployment/readback is recorded in the canonical
+project status. Real-provider and worker acceptance remain separate
 from the local synthetic tests. No real customer data or credentials are fixtures.
 
 ## Daily workflow
@@ -55,6 +57,24 @@ Sources: [WanWay API contract](https://www.wanwaygps.com/iop-docs/api/iop.json),
 
 ## Storage and access
 
+Vehicle, site and factory covers use a small 32px camera icon with separate
+camera and file choices. The company photo replaces the SVG, including detail
+and fleet views. Client-side resizing reduces the phone upload; Sharp on the
+server validates raster bytes, corrects orientation, removes EXIF/GPS metadata
+and stores a single WebP with aspect ratio preserved, at most 1024px / 180 KB.
+JPEG/PNG/WebP input is capped at 12 MB and 24 MP. No external image service or
+new credentials are required. Unsupported/failed replacements retain the old
+photo. Camera input uses the device's native capture support.
+
+`20261104200000_asset_cover_photos` adds a separate private `AssetPhoto` table
+with tenant-composite target FKs, exactly-one-target and byte-size checks, and
+forced RLS. Common machine/site queries return only the cover timestamp, never
+photo bytes. Office roles edit vehicles; field/factory engineers edit the
+appropriate site/workshop under existing permissions. Workers can view their
+company covers. Every read/write reauthenticates; image responses are
+private/no-store/nosniff. Replacing a cover records an audit event and is atomic.
+The image bytes are included in the existing PostgreSQL backup.
+
 `20261104170000_fuel_receipts` adds one table; it does not rewrite existing
 vehicles, device bindings or customer projects. Original image bytes and SHA-256
 are in PostgreSQL, covered by the existing encrypted database backup. The local
@@ -80,7 +100,7 @@ falls back to manual time. Upload requests are idempotent and company-limited.
 
 On the Windows laptop, Linux WSL / Node22.19.0 / isolated PostgreSQL16:
 `npm run lint`, `npm run typecheck`, **559 unit / 301 integration / 28 Chromium**
-passed. This includes real native OCR, forced RLS, exact private image retrieval,
+passed on baseline `962e83d`. This includes real native OCR, forced RLS, exact private image retrieval,
 office/worker separation, duplicate vehicle protection, historical GPS windows,
 replacement-device protection, DST handling, pagination and encrypted restore.
 All new browser images use synthetic companies, people, vehicles and receipts.
@@ -89,12 +109,22 @@ markers/links, not the availability or street accuracy of a third-party tile ser
 No GitHub Actions were dispatched. Exact commit and image/scan results accompany
 the PR; passing local checks does not imply a production release.
 
+Photo addition only: **3 Sharp unit / 4 PostgreSQL integration / 1 Chromium
+workflow PASS**, plus build/typecheck, changed-file lint and migration/schema
+comparison. These cover real WebP conversion, aspect/orientation, invalid and
+oversized input, exact private bytes, failed replacement preservation, role/tenant
+isolation, forced-RLS behavior and camera/upload flows for all three asset kinds
+at desktop and phone widths. The earlier full suites/Docker/OCR checks were not
+repeated, as explicitly requested by the owner. The new RLS probe was corrected
+to grant SELECT before testing no-context/foreign/own-tenant visibility; no
+production role permissions were changed.
+
 Deployment keeps the existing Railway service, source branch and secret values.
-After exact-version owner approval: merge into the pilot, verify the built image
-contains Tesseract, migration/health/readback, then check one boss-confirmed real
+Owner approval now covers PR32 including the photo addition. Merge into the pilot,
+verify migration/health/readback, then check one boss-confirmed real
 vehicle and a test receipt in the private application. Preserve existing data.
 Rollback deploys the prior application revision and retains the additive receipt
-table and stored images; never drop receipt data automatically.
+and cover tables and stored images; never drop receipt or photo data automatically.
 
 Presentation assessment: the feature PR updates the app-origin landing copy in
 all six existing locales. A bounded portfolio PR describes a locally reviewed

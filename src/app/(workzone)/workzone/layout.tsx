@@ -11,6 +11,7 @@ import { fleetShowsCones, getMachineSidebarData } from "@/lib/workzone/machine-s
 import { autoCloseForgottenDaySessions } from "@/lib/workzone/session-rules";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { MachineSidebar } from "./machine-sidebar";
+import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { OfflineStatusBar } from "./offline-status-bar";
 import { WorkzoneAnnouncementBar } from "./workzone-announcement-bar";
 import { WorkzoneSyncRunner } from "./workzone-sync-runner";
@@ -60,7 +61,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
           </div>
         </div>
       </header>
-      {features.machines ? <MachineSidebar machines={machines} isAdmin={Boolean(admin)} showCones={showCones} country={country} /> : null}
+      {features.machines ? <MachineSidebar machines={machines} isAdmin={Boolean(admin)} canEditPhotos={crewPermissions(admin?{isAdmin:true}:worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:null).office} showCones={showCones} country={country} /> : null}
       <WorkzoneSyncRunner />
       <LiveRefreshListener enabled />
       <div className="mx-auto w-full max-w-6xl lg:pr-20">

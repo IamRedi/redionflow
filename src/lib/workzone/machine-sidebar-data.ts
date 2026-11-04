@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db/prisma';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { readFleetLocations } from '@/lib/fleet/location';
 import { isSaasMode } from '@/lib/saas-config';
+import { assetPhotoUrl } from '@/lib/asset-photos/shared';
 
 type MachineSidebarRow = {
   id: string;
@@ -138,6 +139,7 @@ export async function getMachineSidebarData() {
         funksioni: true,
         patentaEnevojshme: true,
         imageUrl: true,
+        coverPhotoAt: true,
         notes: true,
         isActive: true,
         coneTotal: true,
@@ -196,6 +198,7 @@ export async function getMachineSidebarData() {
       const available = Math.max(0, base + delta);
       return {
         ...machine,
+        imageUrl: assetPhotoUrl('machine',machine.id,machine.coverPhotoAt) ?? machine.imageUrl,
         gps: locations.find((p) => p.id === machine.id) ?? null,
         usageCount: machine._count.machineItems,
         coneTotal: base,

@@ -15,6 +15,8 @@ import { mapsLink } from '@/lib/fleet/location-link';
 import { fleetTime } from '@/lib/fleet/format';
 import { fleetCopy } from '@/lib/fleet/copy';
 import { WanwayTelemetry } from '@/components/fleet/wanway-telemetry';
+import { AssetPhoto } from '@/components/asset-photo';
+import { assetPhotoUrl } from '@/lib/asset-photos/shared';
 
 export default async function FleetGpsPage() {
   const lang = await resolveRequestLanguage(),
@@ -99,8 +101,11 @@ export default async function FleetGpsPage() {
               data-testid="fleet-vehicle-card"
             >
               <div className="flex items-start gap-3">
-                <span className="rounded-xl bg-muted p-3">
+                <span className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <AssetPhoto key={`${machine.id}:${machine.coverPhotoAt}`} kind="machine" id={machine.id} src={assetPhotoUrl('machine',machine.id,machine.coverPhotoAt)??machine.imageUrl} alt={machine.nickname||machine.name} canEdit>
+                  <span className="grid h-full place-items-center">
                   <Truck className="size-5" />
+                  </span></AssetPhoto>
                 </span>
                 <div className="min-w-0">
                   <h2 className="break-words font-semibold">

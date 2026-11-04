@@ -11,22 +11,30 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
-## In Prüfung: Flotte auf der Workzone-Karte und Tankbelege
+## Pilot-Erweiterung: Flottenkarte, Tankbelege und eigene Fotos
 
-Der lokal geprüfte Kandidat zeigt bestätigte Fahrzeuge neben Baustellen, öffnet
+Die Pilot-Erweiterung zeigt bestätigte Fahrzeuge neben Baustellen, öffnet
 ihre GPS-Position in Maps und erfasst Original-Tankbelege mit hochladender Person,
 tatsächlich tankender Person, Belegzeit und nächster historischer GPS-Meldung
 einschließlich Zeitabstand. Lokale OCR schlägt die Uhrzeit vor; der Mensch prüft
 und bestätigt sie. Unklare Fahrzeugzuordnungen bleiben beim Chef.
 
-**Noch nicht im Pilot veröffentlicht.** 559 Unit-, 301 PostgreSQL- und 28
-Chromium-Prüfungen bestanden lokal; echte Geräte-/Belegabnahme bleibt ausstehend.
+Fahrzeuge, Baustellen und Werkstatt erhalten eigene Fotos über ein kleines
+Kamerasymbol: aufnehmen oder auswählen; automatisch WebP, maximal 1024 Pixel
+und 180 KB. Fotos bleiben innerhalb der Firma.
+
+Die Basis bestand 559 Unit-, 301 PostgreSQL- und 28 Chromium-Prüfungen. Für die
+Foto-Erweiterung wurden nur neue gezielte Prüfungen ausgeführt; die vollständigen
+älteren Tests wurden auf Wunsch des Eigentümers nicht wiederholt. Die Abnahme
+mit echten GPS-Geräten und Belegen bleibt separat ausstehend.
 [Ablauf, Grenzen und Freigabe](docs/FLEET_MAP_FUEL.md). Die folgenden Aufnahmen
 zeigen ausschließlich synthetische Daten aus dem lokalen Review-Kandidaten.
 
 ![Lokaler BauFlow-Kandidat: Fahrzeuge und Baustelle auf derselben Karte](docs/assets/screenshots/fleet-map-candidate.png)
 
 <img src="docs/assets/screenshots/fuel-receipt-candidate.png" alt="Synthetischer Tankbeleg im lokalen Kandidaten mit getrennten Upload-, Tank- und GPS-Zeiten" width="300">
+
+<img src="docs/assets/screenshots/asset-photos-phone.png" alt="Synthetic BauFlow photo upload workflow" width="260">
 
 ## Websites und Live-Demos
 

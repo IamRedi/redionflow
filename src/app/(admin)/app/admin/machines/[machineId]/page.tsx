@@ -1,4 +1,6 @@
 import { requireAdminTenant } from '@/lib/auth/authorization';
+import { AssetPhoto } from '@/components/asset-photo';
+import { assetPhotoUrl } from '@/lib/asset-photos/shared';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -25,8 +27,6 @@ import {
 } from '@/lib/machines/display';
 import { notifyRealtimeUpdate } from '@/lib/realtime/event-hub';
 import { dateKey } from '@/lib/workzone/reporting';
-
-/* eslint-disable @next/next/no-img-element */
 
 function cleanText(value: FormDataEntryValue | null) {
   const text = String(value ?? '').trim();
@@ -198,17 +198,11 @@ export default async function FleetMachineDetailPage({
             {machine.funksioni ?? t('workzone.fleet')}
           </p>
         </div>
-        {machine.imageUrl ? (
-          <img
-            src={machine.imageUrl}
-            alt={machine.nickname ?? machine.name}
-            className="h-20 w-28 rounded-md border object-cover"
-          />
-        ) : (
+        <div className="relative h-20 w-28 overflow-hidden rounded-md border"><AssetPhoto key={`${machine.id}:${machine.coverPhotoAt}`} kind="machine" id={machine.id} src={assetPhotoUrl('machine',machine.id,machine.coverPhotoAt)??machine.imageUrl} alt={machine.nickname??machine.name} canEdit>
           <div className="flex h-20 w-28 items-center justify-center rounded-md border bg-muted text-xs text-muted-foreground">
             {t('common.photo')}
           </div>
-        )}
+        </AssetPhoto></div>
       </div>
 
       <form action={saveMachine} className="space-y-4">

@@ -35,6 +35,8 @@ export type MachinePresenceForReport = MachinePresenceWithBaustelle & {
 };
 
 export type FleetGpsMachine = {
+  coverPhotoAt?: Date | null;
+  imageUrl?: string | null;
   id: string;
   companyProfileId: string;
   name: string;
@@ -98,6 +100,8 @@ export async function nearestBaustelleForPoint(companyProfileId: string, point: 
 }
 
 const fleetGpsMachineSelect = {
+  coverPhotoAt: true,
+  imageUrl: true,
   id: true,
   companyProfileId: true,
   name: true,

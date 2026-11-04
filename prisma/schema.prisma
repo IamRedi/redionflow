@@ -295,6 +295,7 @@ model CompanyProfile {
   workzoneSyncActions WorkzoneSyncAction[]
   users               User[]               @relation("CompanyUsers")
   auditLogs           AuditLog[]
+  assetPhotos         AssetPhoto[]
 
   /// T-026: SaaS trial expiry. Null for dedicated deployments.
   trialEndsAt DateTime?
@@ -579,6 +580,8 @@ model Machine {
   funksioni         String?
   patentaEnevojshme String?
   imageUrl          String?
+  coverPhotoAt      DateTime?
+  coverPhoto        AssetPhoto?
   /// Albanian vehicle papers (Kolaudimi uses tuvDate): insurance, road tax,
   /// transport permit and tachograph check, each the day it runs out.
   insuranceDate       DateTime?
@@ -1028,6 +1031,8 @@ model Baustelle {
   canvasY               Int?
   canvasMobileX         Int?
   canvasMobileY         Int?
+  coverPhotoAt          DateTime?
+  coverPhoto            AssetPhoto?
 
   treeItems                 TreeItem[]
   productionBatches         ProductionBatch[]
@@ -1046,6 +1051,22 @@ model Baustelle {
   updatedAt DateTime @updatedAt
 
   @@index([companyProfileId])
+  @@unique([companyProfileId,id])
+}
+
+/// Bounded WebP covers kept out of ordinary machine/site row payloads.
+model AssetPhoto {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  machineId String?
+  machine Machine? @relation(fields:[companyProfileId,machineId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_machine_tenant_fkey")
+  baustelleId String?
+  baustelle Baustelle? @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_site_tenant_fkey")
+  data Bytes
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,machineId])
+  @@unique([companyProfileId,baustelleId])
 }
 
 model InventoryMovement {
