@@ -27,7 +27,7 @@ function redirectWithPublicOrigin(req: Request, path: string) {
     process.env.APP_DOMAIN ??
     "localhost:3000";
 
-  return NextResponse.redirect(new URL(path, `${forwardedProto}://${forwardedHost}`));
+  return NextResponse.redirect(new URL(path, process.env.APP_BASE_URL || `${forwardedProto}://${forwardedHost}`), 303);
 }
 
 export async function POST(req: Request) {
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     }
 
     await clearFailedLogin("display", clientIp);
-    const response = redirectWithPublicOrigin(req, "/display/workzone");
+    const response = redirectWithPublicOrigin(req, "/display");
     response.cookies.set(DISPLAY_COOKIE, await createSessionCookie("display", result.userId, result.sessionEpoch), {
       httpOnly: true,
       sameSite: "lax",

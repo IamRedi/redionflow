@@ -1636,7 +1636,10 @@ model SiteElementWork {
   checkedByUserId   String?
   checkedByWorkerId String?
   checkedAt         DateTime       @default(now())
+  /// Immutable list/mark/quantity/unit-weight at confirmation. Null = legacy.
+  productionSnapshot Json?
 
   @@index([elementId, stage])
   @@index([companyProfileId])
+  @@index([companyProfileId, checkedAt, id])
 }

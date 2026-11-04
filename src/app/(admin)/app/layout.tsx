@@ -2,7 +2,8 @@ import { LogOut, SunMoon } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { MachineSidebar } from "@/app/(workzone)/workzone/machine-sidebar";
+import { AdminFleet } from "@/components/dashboard/admin-fleet";
+import { isSteelCompany } from "@/lib/dashboard/steel-access";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
 import { AdminNavGroup } from "@/components/shell/admin-nav-group";
 import { AdminNavLink } from "@/components/shell/admin-nav-link";
@@ -50,6 +51,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     getCompanyCountry(),
   ]);
   const features = getFeatures(mode);
+  const production = mode === 'bau' && Boolean(admin.companyProfileId) && await isSteelCompany(admin.companyProfileId!);
   const branding = productBranding(mode);
 
   const navSections: AdminNavSection[] = [
@@ -96,7 +98,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-10 print:hidden">
         <FlowTopBar />
       </header>
-      <MachineSidebar machines={machines} isAdmin showCones={showCones} country={country} />
+      <AdminFleet production={production} machines={machines} isAdmin showCones={showCones} country={country} />
       <div className="grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24">
         <aside className="min-w-0 print:hidden">
           {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}
