@@ -53,7 +53,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
         mode === "baumdienst" ? "dark:bg-[#10211a]" : ""
       }`}
     >
-      <header data-testid="workzone-topbar" className={production ? "relative z-10 border-b bg-background print:hidden" : "sticky top-0 z-10 print:hidden"}>
+      <header data-testid="workzone-topbar" className={production ? "relative z-10 print:hidden" : "sticky top-0 z-10 print:hidden"}>
         <div className={production ? "" : "pt-3"}>
           <FlowTopBar contained={production} announcementMessage={announcement?.message ?? null} />
           <div className="mx-auto max-w-6xl space-y-1.5 px-5 pb-2 lg:pr-20">

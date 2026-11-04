@@ -147,10 +147,10 @@ export async function FlowTopBar({
   const companyLogo = safeCompanyLogo(companyBrand?.logoDataUrl);
 
   return (
-    <div className={contained ? "mx-auto w-full min-w-0 max-w-[2000px] px-4 py-3 sm:px-5 lg:pr-24" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
+    <div className={contained ? "mx-auto w-full min-w-0 max-w-[2000px] px-4 pb-3 pt-14 sm:px-5 lg:py-3 lg:pr-48" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
       <div className={`grid grid-cols-[auto_minmax(0,1fr)] ${contained ? "items-center" : "items-start"} gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]`}>
-        {/* Admin production pages use separate columns; Workzone keeps its existing floating layout. */}
-        <div className={`pointer-events-none relative z-10 ${contained ? "col-span-2 flex-row items-center justify-between lg:col-span-1 lg:flex-col" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
+        {/* Keep the production logo and scrollable team side by side in normal flow. */}
+        <div className={`pointer-events-none relative z-10 ${contained ? "col-start-1 row-start-1 flex-row items-center" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
           <div className={`flex items-center gap-2 ${contained ? "shrink-0" : ""}`}>
             {admin ? (
               <TeamAssistantLogoTrigger
@@ -172,7 +172,7 @@ export async function FlowTopBar({
                 logoAlt={t('common.companyLogoAlt', currentLang)}
               />
             )}
-            <div className="grid gap-1">
+            <div className={contained ? "hidden gap-1 lg:grid" : "grid gap-1"}>
               <Link
                 href="/workzone"
                 title={t('workzone.title', currentLang)}
@@ -194,8 +194,8 @@ export async function FlowTopBar({
             </div>
           </div>
 
-          {admin || mobileAdminProfiles.length > 0 ? (
-            <div className={contained ? "no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden [&>*]:shrink-0" : "flex items-center gap-2 lg:hidden"}>
+          {!contained && (admin || mobileAdminProfiles.length > 0) ? (
+            <div className="flex items-center gap-2 lg:hidden">
               {admin ? (
                 <>
                   <TopbarAnnouncementButton message={announcementMessage} />
@@ -228,9 +228,10 @@ export async function FlowTopBar({
           ) : null}
         </div>
 
-        <div data-testid="flow-team-strip" className={contained ? "col-span-2 min-w-0 rounded-2xl border bg-card/75 px-2 py-2 lg:col-span-1" : "col-start-1 col-end-3 row-start-1 min-w-0"}>
+        <div data-testid="flow-team-strip" className={contained ? "col-start-2 row-start-1 min-w-0" : "col-start-1 col-end-3 row-start-1 min-w-0"}>
           <WorkerIconStrip
             insetClassName={contained ? "" : "pl-[124px]"}
+            comfortable={contained}
             admin={Boolean(admin)}
             workers={workersSorted.map((worker) => ({
               id: worker.id,
@@ -266,6 +267,10 @@ export async function FlowTopBar({
             }))}
           />
         </div>
+
+        {contained && mobileAdminProfiles.length > 0 ? <div className="no-scrollbar col-span-2 flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
+          {mobileAdminProfiles.map(profile => <Link key={profile.id} href={`/workzone/admin-profile/${profile.id}`} title={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} aria-label={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border bg-background/85 text-xs font-semibold text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground">{adminInitial(profile.name ?? profile.email)}</Link>)}
+        </div> : null}
 
         <div className="hidden items-center gap-2 lg:flex">
           {admin ? (

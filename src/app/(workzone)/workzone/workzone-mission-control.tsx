@@ -306,7 +306,8 @@ export function WorkzoneMissionControl({
   }
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const canvasLayoutSignature = useMemo(() => canvasSignature(items), [items]);
-  const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => readSavedCanvasLayout(canvasSignature(items)) ?? autoLayouts(items));
+  // Restore browser-only saved positions in the effect below, after hydration.
+  const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
   const positions = positionsByViewport[canvasViewport];
   const canvasHeight = canvasMetrics(canvasViewport, items).height;

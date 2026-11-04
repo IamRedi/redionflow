@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { Bell, Home, LayoutDashboard } from "lucide-react";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
+import { Button } from "@/components/ui/button";
+import { FlowMobileTools } from "@/components/shell/FlowMobileTools";
+import { TopbarAnnouncementButton } from "@/app/(workzone)/workzone/topbar-announcement-button";
+import { notifyTeamAction } from "@/app/(workzone)/workzone/announcement-actions";
+import { isSteelCompany } from "@/lib/dashboard/steel-access";
+import { prisma } from "@/lib/db/prisma";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { appName, appSuffix, appSuperscript, brandAppleIconSrc, brandIconSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
 import { getCompanyMode } from "@/lib/db/company";
@@ -46,7 +53,10 @@ export default async function RootLayout({
   const admin = await getCurrentAdmin();
   const companyMode = await getCompanyMode();
   const worker = admin ? null : await getCurrentWorker();
-  const kidraht = admin || worker ? await kidrahtAvailable(await getCurrentCompanyId()) : false;
+  const companyId = admin || worker ? await getCurrentCompanyId() : null;
+  const kidraht = await kidrahtAvailable(companyId);
+  const production = companyMode === "bau" && companyId !== null && await isSteelCompany(companyId);
+  const announcement = production && admin ? await prisma.workzoneAnnouncement.findFirst({ where: { companyProfileId: companyId!, isActive: true }, select: { message: true }, orderBy: { createdAt: "desc" } }) : null;
   const brand = productBranding(companyMode);
   const showSaasPublicBrand = isSaasMode && !admin;
   // Fall back to the static brand for pre-session pages where no company is
@@ -79,8 +89,16 @@ export default async function RootLayout({
       <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {/* Top-right corner, scrolls away with the page: KiDraht (company rule book) and the product mark. */}
-          <div className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
-            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} /> : null}
+          <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
+            {production ? <FlowMobileTools>
+              <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-11 items-center justify-center rounded-full border bg-background/80 text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
+              {admin ? <>
+                <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-11 items-center justify-center rounded-full border bg-background/80 text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>
+                <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-11" />
+                <form action={notifyTeamAction}><Button type="submit" variant="outline" size="icon" className="size-11 rounded-full bg-background/85 text-foreground/80 shadow-sm hover:bg-muted hover:text-foreground" title={t("workzone.notifyTeam", initialLang)} aria-label={t("workzone.notifyTeam", initialLang)}><Bell className="size-4" /></Button></form>
+              </> : null}
+            </FlowMobileTools> : null}
+            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} className={production ? "h-11 min-w-11 lg:h-8 lg:min-w-8" : undefined} /> : null}
             <div className={`border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${admin ? "" : "pointer-events-none"}`}>
               {admin ? (
                 <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle} className="block transition hover:text-brand-green">

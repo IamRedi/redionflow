@@ -86,19 +86,21 @@ export function WorkerIconStrip({
   admin,
   profileHrefBase,
   insetClassName = "",
+  comfortable = false,
 }: {
   workers: WorkerBadge[];
   admin: boolean;
   profileHrefBase?: string;
   /** Room on the left for what floats above the strip (the logo); scrolled items pass under it. */
   insetClassName?: string;
+  comfortable?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState<{ workerId: string; top: number; left: number } | null>(null);
   const [dismissedDecisionKey, setDismissedDecisionKey] = useState<string | null>(null);
-  const [decisionStateReady, setDecisionStateReady] = useState(false);
+  const [clientStateReady, setClientStateReady] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   function dismissOwnVacationSignal(worker: WorkerBadge) {
@@ -117,7 +119,7 @@ export function WorkerIconStrip({
       window.setTimeout(() => setDismissedDecisionKey(latestSeen), 0);
     }
     window.localStorage.removeItem(LEGACY_VACATION_DECISION_SEEN_KEY);
-    window.setTimeout(() => setDecisionStateReady(true), 0);
+    window.setTimeout(() => setClientStateReady(true), 0);
   }, []);
 
   function popupLeft(rightEdge: number) {
@@ -171,10 +173,12 @@ export function WorkerIconStrip({
         {workers.map((worker) => {
           const badge = workerBadgeLabel(worker.lastName);
           const nameLabel = firstNameLabel(worker.firstName);
-          const birthdayToday = isBirthdayToday(worker.birthDate);
+          // Browser-local dates can differ from the server. Add the birthday
+          // badge only after the shared server/first-client render has hydrated.
+          const birthdayToday = clientStateReady && isBirthdayToday(worker.birthDate);
           const hasVacationRequest = worker.pendingVacationRequest;
           const hasVacationDecision =
-            decisionStateReady &&
+            clientStateReady &&
             worker.activeProfile &&
             worker.vacationDecisionSignal &&
             Boolean(worker.vacationDecisionSignalKey) &&
@@ -205,7 +209,8 @@ export function WorkerIconStrip({
                   );
                 }}
                 className={cn(
-                  "relative flex size-10 flex-col items-center justify-center overflow-visible rounded-full border text-[8px] font-semibold leading-none tracking-tight shadow-sm",
+                  "relative flex flex-col items-center justify-center overflow-visible rounded-full border text-[8px] font-semibold leading-none tracking-tight shadow-sm",
+                  comfortable ? "size-11" : "size-10",
                   availabilityTone(worker.availability, worker.live),
                   worker.live && worker.availability === "AVAILABLE"
                     ? "after:absolute after:inset-0 after:-z-10 after:rounded-full after:bg-brand-green after:opacity-50 after:content-[''] after:animate-[workzone-worker-live-ping_1.6s_cubic-bezier(0,0,0.2,1)_infinite] motion-reduce:after:animate-none"

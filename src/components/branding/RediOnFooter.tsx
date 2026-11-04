@@ -13,10 +13,10 @@ export function RediOnFooter({ onDark = false }: { onDark?: boolean }) {
       className={cn(styles.footer, "print:hidden")}
       data-theme={onDark ? "dark" : undefined}
     >
-      <span className={cn(styles.credit, manrope.className)} role="img" aria-label="by RediON">
+      <a className={cn(styles.credit, manrope.className)} href="https://www.redioncekrezi.de/" aria-label="by RediON">
         <span aria-hidden="true">{credit.by}</span>
         <span className={styles.name} aria-hidden="true"><span className={styles.red}>{credit.red}</span><span className={styles.green}>{credit.green}</span><span className={styles.blue}>{credit.blue}</span><span className={styles.yellow}>{credit.yellow}</span>{credit.on}</span>
-      </span>
+      </a>
     </footer>
   );
 }
