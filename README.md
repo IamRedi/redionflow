@@ -147,7 +147,7 @@ Source-available, alle Rechte vorbehalten. Der Code darf gelesen und zur Bewertu
 <!-- PRESENTATION_FIRST_20261104 -->
 ### Website-Kandidat
 
-Der kombinierte Website-Quellstand liegt unter `websites/baumdienstflow`:
+Die Plattform-Präsentation liegt unter `websites/redionflow`:
 RediOnFlow-Vorstellung in vier Sprachen und klare Büro/Admin-, Mitarbeiter-PIN-
 und Demo-Zugänge für beide Produkte. Noch nicht veröffentlicht; keine Änderung
 am SaaS-Piloten oder an Firmendaten. Details: `websites/README.md`.
