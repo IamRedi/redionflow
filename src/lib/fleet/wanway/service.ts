@@ -5,6 +5,7 @@ import { getCurrentAdmin } from '@/lib/auth/admin-session';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { encryptionReady, seal, unseal } from './crypto';
 import { WanwayAdapter, WanwayError, freshness, telemetry } from './adapter';
+import { suggestVehicleMatches } from './matching';
 
 export function wanwayEnabled() {
   return (
@@ -400,13 +401,18 @@ export async function readPanel() {
         model: true,
         machineId: true,
         available: true,
+        plate: true,
       },
       orderBy: { name: 'asc' },
     });
     const machines = await tx.machine.findMany({
       where: { companyProfileId: a.tenant, isActive: true },
-      select: { id: true, name: true, targe: true },
+      select: { id: true, name: true, nickname: true, targe: true, gpsEnabled: true },
     });
+    const suggestions = suggestVehicleMatches(
+      devices.map((d) => ({ ...d, name: d.name.replaceAll(d.imei, 'GPS') })),
+      machines,
+    );
     return {
       appid: row?.appid ?? '',
       status: row?.status ?? 'disconnected',
@@ -418,10 +424,11 @@ export async function readPanel() {
         name: d.name.replaceAll(d.imei, 'GPS'),
         model: d.model,
         machineId: d.machineId,
+        suggestedMachineId: suggestions.get(d.id) ?? null,
         available: d.available,
         suffix: d.imei.slice(-4),
       })),
-      machines,
+      machines: machines.map(({ id, name, targe }) => ({ id, name, targe })),
     };
   });
 }

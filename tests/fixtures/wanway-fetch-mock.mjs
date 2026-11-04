@@ -25,7 +25,7 @@ if (process.env.WANWAY_E2E_MOCK === 'true') {
       body = {
         code: 0,
         data: [
-          { imei, deviceName: 'Synthetic GPS', deviceType: 'GS900-Wired' },
+          { imei, deviceName: 'Synthetic GPS [ZZ 123 YY]', deviceType: 'GS900-Wired' },
         ],
         page: { currentPage: 1, pageSize: 100, count: 1 },
       };
