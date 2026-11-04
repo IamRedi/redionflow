@@ -109,6 +109,7 @@ async function main() {
   if (!(await isE2EPortFree(target.port, target.hostname))) throw new Error("Managed E2E port occupied; existing process left untouched.");
   let storageServer: Server | undefined;
   const env: NodeJS.ProcessEnv = { ...process.env,
+    APP_BASE_URL: target.baseURL,
     // Freeze the validated fallback before dotenv/Next can fill a missing key.
     DIRECT_URL: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
     TENANT_DATABASE_URL: process.env.TENANT_DATABASE_URL ?? "",

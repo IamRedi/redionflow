@@ -1,3 +1,4 @@
+import { steelPresentation } from '@/lib/dashboard/steel-presentation';
 import { CalendarDays, ClipboardList, HardDriveDownload, HardHat, MapPinned, MonitorSmartphone, ScanLine, Truck, Users2, Workflow } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SupportedLanguage } from "@/lib/i18n/language";
@@ -825,3 +826,7 @@ export const landingContent: Record<LandingLanguage, LandingContent> = {
     footer: { text: "Platforma operationala pentru firme moderne de servicii arboricole.", access: "Acces intern" },
   },
 };
+
+for (const lang of ["sq", "en", "de", "it", "pl", "ro"] as const) {
+  landingContent[lang].features.cards.find(card => card.title === "Workzone")?.points.push(steelPresentation[lang]);
+}

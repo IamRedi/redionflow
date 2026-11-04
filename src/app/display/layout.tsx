@@ -6,12 +6,20 @@ import { DisplayTopBar } from "@/components/display/display-top-bar";
 import { getCurrentDisplayUser } from "@/lib/auth/display-session";
 import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
+import { isSteelCompany, productionAudience } from "@/lib/dashboard/steel-access";
+
+export const metadata = { robots: { index: false, follow: false } };
 
 export default async function DisplayLayout({ children }: { children: ReactNode }) {
   const displayUser = await getCurrentDisplayUser();
+  const audience = await productionAudience(true);
+  if (displayUser?.companyProfileId && !audience) redirect('/display-login');
+  if (audience && audience.company.mode === 'bau' && await isSteelCompany(audience.company.id)) {
+    return <div className="min-h-dvh bg-[#111b26]"><main className="mx-auto max-w-[2000px]">{children}</main></div>;
+  }
   if (!displayUser) redirect("/display-login");
 
-  const company = await getOrCreateDefaultCompany();
+  const company = audience?.company ?? await getOrCreateDefaultCompany();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date(todayStart);

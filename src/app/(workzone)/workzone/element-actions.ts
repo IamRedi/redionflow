@@ -100,6 +100,8 @@ const elementSelect = {
   list: true,
   baustelleId: true,
   quantity: true,
+  mark: true,
+  weightKg: true,
   factoryDoneAt: true,
   fieldDoneAt: true,
   work: { select: { id: true, stage: true, pieces: true } },
@@ -141,6 +143,9 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
   const workerIds = [...new Set(parsed.data.workerIds)];
 
   const result = await withTenantContext(companyId, async (tx) => {
+    // Serialize checks with other checks and list reimports for this element.
+    // Two engineers cannot both claim the same remaining pieces/weight.
+    await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: elementSelect });
     if (!element || !stagesFor(side, element.list as ElementList).includes(stage)) return null;
     const state = asState(element);
@@ -166,6 +171,7 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
         checkedByName: actor.name,
         checkedByUserId: actor.userId,
         checkedByWorkerId: actor.workerId,
+        productionSnapshot: { v: 1, list: element.list, mark: element.mark, quantity: element.quantity, unitWeightKg: element.weightKg },
       },
       select: { id: true },
     });

@@ -11,6 +11,19 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## In Prüfung: Produktionspanel für Stahlbetriebe
+
+Ein Kalender zeigt bestätigte kg pro Tag und Projekt: Teileschnitt,
+Baugruppenschnitt und Zusammenbau bleiben getrennt. Dazu kommen Tagesnachweise,
+Prozessfortschritt, gespeicherte Bestätigungsgewichte und eine private
+Monitoransicht ohne Bearbeitung oder personenbezogene Arbeitsnachweise.
+
+Dieser Erweiterungskandidat ist lokal geprüft und zur Pilotfreigabe vorbereitet.
+[Definitionen, Grenzen und Nachweise](docs/STEEL_PRODUCTION_DASHBOARD.md).
+Die Aufnahme zeigt ausschließlich eine fiktive Firma mit synthetischer Arbeit.
+
+![Lokaler Produktionspanel-Kandidat mit Kalender und Projektfortschritt](docs/assets/screenshots/steel-dashboard-candidate.png)
+
 ## Pilot-Erweiterung: Flottenkarte, Tankbelege und eigene Fotos
 
 Die Pilot-Erweiterung zeigt bestätigte Fahrzeuge neben Baustellen, öffnet

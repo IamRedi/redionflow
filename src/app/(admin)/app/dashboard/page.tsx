@@ -1,5 +1,10 @@
 import { fleetShowsCones } from "@/lib/workzone/machine-sidebar-data";
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { SteelDashboard } from "@/components/dashboard/steel-dashboard";
+import { isSteelCompany, productionAudience } from "@/lib/dashboard/steel-access";
+import { steelDashboardData, type SteelParams } from "@/lib/dashboard/steel-data";
+import { getAdminCompanyId } from '@/lib/auth/authorization';
 import { BriefcaseBusiness, ChevronLeft, ChevronRight, HardHat, MapPinned, Wrench } from "lucide-react";
 
 import { DashboardRefreshControls } from "./dashboard-refresh-controls";
@@ -321,8 +326,9 @@ function MonthlyHoursTrend({
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<SteelParams>;
 }) {
+  if (!await getAdminCompanyId()) redirect('/login');
   const params = await searchParams;
   const rawWeek = Number(params.week ?? "0");
   const weekOffset = Number.isFinite(rawWeek) ? Math.min(0, Math.trunc(rawWeek)) : 0;
@@ -333,6 +339,12 @@ export default async function DashboardPage({
     // Signs, plates and fences are road-work stock; a steel company has none.
     fleetShowsCones(),
   ]);
+  if (mode === 'bau' && await isSteelCompany(company.id)) {
+    const audience = await productionAudience();
+    if (!audience) redirect('/login');
+    const data = await steelDashboardData(audience.company, params, false).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
+    return <SteelDashboard data={data} lang={currentLang} />;
+  }
   const snapshot = await getDashboardSnapshotForWeek(company.id, weekOffset, currentLang);
 
   const statCards = [
