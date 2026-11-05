@@ -5,10 +5,13 @@ import { dateKey, formatReportTime } from "@/lib/workzone/reporting";
 import type { RequesterContext } from "../requester";
 import { normalizeAssistantLanguage, type AssistantLanguageCode } from "../language";
 import { assistantToolText } from "./text";
+import { assistantDayBounds } from '../turn-context';
 import {
   startOfLocalDay,
   todayKey,
-  findWorkerByName,
+  resolveWorkerByName,
+  workerLookupMessage,
+  incompleteAssistantResult,
   sessionPayload,
 } from "./shared";
 
@@ -35,8 +38,8 @@ export async function getMyOperationalSnapshot(
     };
   }
 
-  const worker = await prisma.worker.findUnique({
-    where: { id: requester.workerId },
+  const worker = await prisma.worker.findFirst({
+    where: { id: requester.workerId, companyProfileId: requester.companyId },
     select: { id: true, firstName: true, lastName: true },
   });
   if (!worker) return { ok: false, message: text.workerNotFound };
@@ -82,8 +85,9 @@ export async function getLiveLocation(
 > {
   const text = assistantToolText(requester);
   if (requester.kind === "anonymous") return { ok: false, message: text.notSignedIn };
-  const worker = await findWorkerByName(requester.companyId, input.workerName);
-  if (!worker) return { ok: false, message: text.workerNotFound };
+  const resolution = await resolveWorkerByName(requester.companyId, input.workerName);
+  if (resolution.status !== 'found') return { ok: false, message: workerLookupMessage(resolution, requester.preferredLanguage) };
+  const worker = resolution.worker;
 
   const live = await prisma.workSession.findFirst({
     where: { workerId: worker.id, isLive: true, endTime: null },
@@ -112,11 +116,12 @@ export async function getAssignedMachine(
 > {
   const text = assistantToolText(requester);
   if (requester.kind === "anonymous") return { ok: false, message: text.notSignedIn };
-  const worker = await findWorkerByName(requester.companyId, input.workerName);
-  if (!worker) return { ok: false, message: text.workerNotFound };
+  const resolution = await resolveWorkerByName(requester.companyId, input.workerName);
+  if (resolution.status !== 'found') return { ok: false, message: workerLookupMessage(resolution, requester.preferredLanguage) };
+  const worker = resolution.worker;
 
-  const key = (input.date ?? todayKey()).trim();
-  const day = startOfLocalDay(key);
+  const key = (input.date ?? todayKey(requester.timeZone)).trim();
+  const day = startOfLocalDay(key, requester.timeZone);
   if (!day) return { ok: false, message: text.invalidDate };
 
   const plan = await prisma.dailyWorkPlan.findUnique({
@@ -200,24 +205,26 @@ export async function getEquipmentStatus(
 export async function getKnowledge(
   requester: RequesterContext,
   input: { query: string; language?: AssistantLanguageCode },
-): Promise<{ ok: true; title: string; content: string } | { ok: false; message: string }> {
+) {
   const lang = normalizeAssistantLanguage(input.language ?? requester.preferredLanguage);
   const text = assistantToolText(lang);
   const q = input.query.trim();
   if (!q) return { ok: false, message: text.knowledgeQueryRequired };
 
-  const row = await prisma.companyKnowledge.findFirst({
-    where: {
+  const where = {
       companyProfileId: requester.companyId,
       isActive: true,
       language: lang,
-      OR: [{ key: { equals: q, mode: "insensitive" } }, { title: { contains: q, mode: "insensitive" } }],
-    },
-    orderBy: { updatedAt: "desc" },
-    select: { title: true, content: true },
-  });
-  if (!row) return { ok: false, message: text.knowledgeNotFound };
-  return { ok: true, title: row.title, content: row.content };
+      OR: [{ key: { equals: q, mode: 'insensitive' as const } }, { title: { contains: q, mode: 'insensitive' as const } }],
+  };
+  const [rows, totalMatches] = await Promise.all([
+    prisma.companyKnowledge.findMany({ where, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 3, select: { title: true, content: true, updatedAt: true } }),
+    prisma.companyKnowledge.count({ where }),
+  ]);
+  if (!rows.length) return { ok: false, message: text.knowledgeNotFound };
+  const matches = rows.map(row => ({ title: row.title, content: row.content.slice(0, 3000), contentTruncated: row.content.length > 3000, updatedAt: row.updatedAt.toISOString() }));
+  const complete = totalMatches <= matches.length && matches.every(row => !row.contentTruncated);
+  return { ok: true, title: matches[0].title, content: matches[0].content, matches, totalMatches, returnedCount: matches.length, complete, truncated: !complete };
 }
 
 /** Eingeloggter Mitarbeiter: eigene Stunden aus WorkSessions (letzte X Tage). */
@@ -229,12 +236,13 @@ export async function getMyHoursSummary(requester: RequesterContext, input: { da
   }
 
   const days = Math.min(31, Math.max(1, Math.floor(Number(input.days ?? 14) || 14)));
-  const since = new Date();
-  since.setDate(since.getDate() - (days - 1));
-  since.setHours(0, 0, 0, 0);
+  const zone = requester.timeZone ?? 'Europe/Berlin';
+  const today = todayKey(zone);
+  const sinceKey = new Date(Date.parse(`${today}T12:00:00Z`) - (days - 1) * 86400_000).toISOString().slice(0, 10);
+  const since = assistantDayBounds(sinceKey, zone)!.start;
 
   const sessions = await prisma.workSession.findMany({
-    where: { workerId: requester.workerId, startTime: { gte: since } },
+    where: { workerId: requester.workerId, worker: { companyProfileId: requester.companyId }, startTime: { gte: since } },
     orderBy: { startTime: "desc" },
     select: {
       startTime: true,
@@ -243,10 +251,11 @@ export async function getMyHoursSummary(requester: RequesterContext, input: { da
       totalHours: true,
       baustelle: { select: { name: true } },
     },
-    take: 300,
+    take: 301,
   });
 
-  const rows = sessions.map((s) => ({
+  const complete = sessions.length <= 300;
+  const rows = sessions.slice(0, 300).map((s) => ({
     date: dateKey(s.startTime),
     ...sessionPayload(s, new Date(), text, requester.preferredLanguage),
   }));
@@ -255,9 +264,13 @@ export async function getMyHoursSummary(requester: RequesterContext, input: { da
   return {
     ok: true as const,
     days,
-    totalHours,
+    totalHours: complete ? totalHours : null,
+    returnedHours: totalHours,
+    complete,
+    truncated: !complete,
+    totalSessions: complete ? sessions.length : null,
     sessions: rows,
-    message: text.myHoursSummary(days, totalHours),
+    message: complete ? text.myHoursSummary(days, totalHours) : incompleteAssistantResult(requester.preferredLanguage),
   };
 }
 
@@ -266,23 +279,25 @@ export async function getCompanyBaustellenDirectory(requester: RequesterContext)
   const text = assistantToolText(requester);
   if (requester.kind === "anonymous") return { ok: false as const, message: text.notSignedIn };
 
-  const rows = await prisma.baustelle.findMany({
-    where: { companyProfileId: requester.companyId, status: "active" },
-    select: { name: true, type: true, address: true, description: true },
-    orderBy: { name: "asc" },
-    take: 120,
-  });
+  const where = { companyProfileId: requester.companyId, status: 'active' as const };
+  const [rows, count] = await Promise.all([
+    prisma.baustelle.findMany({ where, select: { name: true, type: true, address: true, description: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }], take: 120 }),
+    prisma.baustelle.count({ where }),
+  ]);
 
   return {
     ok: true as const,
-    count: rows.length,
+    count,
+    returnedCount: rows.length,
+    complete: rows.length === count,
+    truncated: rows.length < count,
     baustellen: rows.map((b) => ({
       name: b.name,
       type: b.type,
       address: b.address,
       descriptionSnippet: b.description ? b.description.slice(0, 200) : null,
     })),
-    message: text.activeSitesDirectory(rows.length),
+    message: text.activeSitesDirectory(count),
   };
 }
 

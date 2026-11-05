@@ -28,6 +28,13 @@ middleware checks the actual prompt, including accumulated tool results. Admin
 requests allow four calls/steps; worker help allows one. Retries are disabled.
 Generation stops after 45 seconds or client cancellation.
 
+Admin operational turns require an initial data-tool call and reserve the final
+step for the answer. Greetings/capability turns register only a harmless static
+tool, then disable further tools. A tool report over24KiB is explicitly
+unavailable and must be narrowed/paginated; the64KiB actual model-input guard
+still applies to accumulated context. Empty/error/length-limited output is
+marked incomplete. No budget/model/provider was raised for AL Steel grounding.
+
 Before generation, reserve `steps * (65,536 + 1,024)` tokens from **both** daily
 budgets. Byte count is a conservative input-token bound, not a token estimate
 shown to users. A completed SDK response refunds the reservation down to actual

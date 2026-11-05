@@ -2,8 +2,10 @@ import { prisma } from "@/lib/db/prisma";
 import { getDashboardSnapshot } from "@/lib/dashboard/dashboard-snapshot";
 import { ProjectStatus } from "@/generated/prisma/enums";
 import { dateKey } from "@/lib/workzone/reporting";
-import { effectiveSessionHours } from "@/lib/workzone/session-rules";
 import type { RequesterContext } from "./requester";
+import { assistantDayBounds, isAssistantDateKey } from './turn-context';
+import { dayKey, shiftMonth } from '@/lib/dashboard/steel-metrics';
+import { assistantHoursData } from './hours-data';
 
 const PROJECT_STATUS_SET = new Set<string>(Object.values(ProjectStatus));
 
@@ -175,25 +177,9 @@ function mustAdmin(requester: RequesterContext): string | null {
   return null;
 }
 
-function localDayBounds(d: Date) {
-  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
-  return { start, end };
-}
-
-function monthBoundsFromDate(d: Date) {
-  const start = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-  return { start, end };
-}
-
-function parseYmd(s: string | undefined): Date | null {
-  if (!s?.trim()) return null;
-  const [y, m, day] = s.split("-").map((v) => Number(v));
-  if (!y || !m || !day) return null;
-  const d = new Date(y, m - 1, day);
-  if (d.getFullYear() !== y || d.getMonth() !== m - 1 || d.getDate() !== day) return null;
-  return d;
+function monthBounds(month: string, zone: string) {
+  const start = assistantDayBounds(`${month}-01`, zone), next = assistantDayBounds(`${shiftMonth(month,1)}-01`, zone);
+  return start && next ? { start: start.start, end: next.start } : null;
 }
 
 /** Wer gerade live eingestempelt ist (alle Worker der Firma). */
@@ -215,23 +201,28 @@ export async function adminGetLiveWorkforce(requester: RequesterContext) {
       baustelle: { select: { id: true, name: true } },
     },
     orderBy: { startTime: "desc" },
-    take: 200,
   });
 
   const list = rows.map((r) => ({
+    workerId: r.worker.id,
     worker: `${r.worker.firstName} ${r.worker.lastName}`.trim(),
     baustelle: r.baustelle?.name ?? text.noSite,
-    since: r.startTime.toLocaleTimeString(text.locale, { hour: "2-digit", minute: "2-digit" }),
+    since: r.startTime.toLocaleTimeString(text.locale, { timeZone: requester.timeZone ?? 'Europe/Berlin', hour: "2-digit", minute: "2-digit" }),
+    startedAt: r.startTime.toISOString(),
   }));
+  const workerCount = new Set(rows.map(row => row.worker.id)).size;
 
   return {
     ok: true as const,
-    count: list.length,
+    complete: true,
+    count: workerCount,
+    sessionRows: list.length,
+    interpretation: 'count is distinct live workers; workers contains live session rows and can repeat a worker with more than one open session.',
     workers: list,
     message:
       list.length === 0
         ? text.noLiveWorkers
-        : text.liveWorkers(list.length),
+        : text.liveWorkers(workerCount),
   };
 }
 
@@ -253,74 +244,29 @@ export async function adminGetHoursAggregate(
   const deny = mustAdmin(requester);
   if (deny) return { ok: false as const, message: deny };
 
-  const ref = parseYmd(input.referenceDate) ?? new Date();
-  let start: Date;
-  let end: Date;
+  const zone = requester.timeZone ?? 'Europe/Berlin';
+  const reference = input.referenceDate ?? dayKey(new Date(),zone);
+  if (!isAssistantDateKey(reference)) return { ok:false as const, code:'INVALID_DATE', message:text.rangeRequired };
+  let bounds: {start:Date;end:Date} | null;
   let label: string;
-
-  if (input.period === "today") {
-    const b = localDayBounds(ref);
-    start = b.start;
-    end = b.end;
-    label = text.dayLabel(dateKey(start));
-  } else if (input.period === "month") {
-    const b = monthBoundsFromDate(ref);
-    start = b.start;
-    end = b.end;
-    label = text.monthLabel(`${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`);
+  if (input.period === 'today') {
+    bounds=assistantDayBounds(reference,zone); label=text.dayLabel(reference);
+  } else if (input.period === 'month') {
+    bounds=monthBounds(reference.slice(0,7),zone); label=text.monthLabel(reference.slice(0,7));
   } else {
-    const a = parseYmd(input.rangeFrom);
-    const b = parseYmd(input.rangeTo);
-    if (!a || !b) return { ok: false as const, message: text.rangeRequired };
-    start = localDayBounds(a).start;
-    end = localDayBounds(b).end;
-    if (start > end) return { ok: false as const, message: text.rangeOrder };
-    label = `${input.rangeFrom}–${input.rangeTo}`;
+    const first=input.rangeFrom&&assistantDayBounds(input.rangeFrom,zone),last=input.rangeTo&&assistantDayBounds(input.rangeTo,zone);
+    if(!first||!last)return {ok:false as const,code:'INVALID_DATE',message:text.rangeRequired};
+    if(first.start>=last.end)return {ok:false as const,code:'INVALID_RANGE',message:text.rangeOrder};
+    bounds={start:first.start,end:last.end}; label=input.rangeFrom+'–'+input.rangeTo;
   }
-
-  const sessions = await prisma.workSession.findMany({
-    where: {
-      startTime: { gte: start, lte: end },
-      worker: { companyProfileId: requester.companyId },
-    },
-    select: {
-      totalHours: true,
-      breakMinutes: true,
-      startTime: true,
-      endTime: true,
-      workerId: true,
-      worker: { select: { firstName: true, lastName: true } },
-    },
-    take: 5000,
-  });
-
-  let totalHours = 0;
-  const byWorker = new Map<string, { name: string; hours: number }>();
-
-  for (const s of sessions) {
-    const h = effectiveSessionHours(s);
-    totalHours += h;
-    if (input.groupByWorker) {
-      const id = s.workerId;
-      const name = `${s.worker.firstName} ${s.worker.lastName}`.trim();
-      const cur = byWorker.get(id) ?? { name, hours: 0 };
-      cur.hours += h;
-      byWorker.set(id, cur);
-    }
-  }
-
-  const breakdown = input.groupByWorker
-    ? [...byWorker.values()].sort((a, b) => b.hours - a.hours)
-    : undefined;
-
-  return {
-    ok: true as const,
-    periodLabel: label,
-    sessionRows: sessions.length,
-    totalHours,
-    byWorker: breakdown,
-    message: text.hoursSummary(label, totalHours, sessions.length),
-  };
+  if(!bounds)return {ok:false as const,code:'INVALID_DATE',message:text.rangeRequired};
+  const data=await assistantHoursData(requester,{from:bounds.start,to:bounds.end});
+  if(!data)return {ok:false as const,code:'ACCESS_DENIED',message:text.adminOnly};
+  const page=input.groupByWorker?data.workers.slice(0,50):undefined;
+  return {ok:true as const,complete:true,asOf:data.asOf,timeZone:data.timeZone,periodLabel:label,from:bounds.start.toISOString(),toExclusive:bounds.end.toISOString(),sessionRows:data.sessionRows,totalHours:data.totalHours,
+    byWorker:page?.map(w=>({workerId:w.workerId,name:w.worker,hours:w.hours,sessionRows:w.sessionRows})),totalWorkers:data.workers.length,byWorkerComplete:!page||page.length===data.workers.length,
+    interpretation:'Sessions belong to the calendar day on which they started, matching the existing timesheet convention. Live sessions are measured at asOf; this is hours evidence, not production kg.',
+    message:text.hoursSummary(label,data.totalHours,data.sessionRows)};
 }
 
 /** Führerschein-/Lizenstext enthält Substring (z. B. CE). */
@@ -331,6 +277,7 @@ export async function adminSearchWorkersByLicense(requester: RequesterContext, i
 
   const q = input.contains.trim();
   if (q.length < 2) return { ok: false as const, message: text.searchMin };
+  const totalMatches = await prisma.worker.count({ where: { companyProfileId: requester.companyId, licenses: { contains: q, mode: 'insensitive' } } });
 
   const rows = await prisma.worker.findMany({
     where: {
@@ -344,6 +291,8 @@ export async function adminSearchWorkersByLicense(requester: RequesterContext, i
 
   return {
     ok: true as const,
+    totalMatches,
+    complete: totalMatches <= rows.length,
     matches: rows.map((w) => ({
       worker: `${w.firstName} ${w.lastName}`.trim(),
       licenses: w.licenses ?? "",
@@ -363,54 +312,17 @@ export async function adminGetHoursRanking(requester: RequesterContext, input: {
 
   const m = input.yearMonth.trim().match(/^(\d{4})-(\d{2})$/);
   if (!m) return { ok: false as const, message: text.monthRequired };
-  const year = Number(m[1]);
   const month = Number(m[2]);
   if (month < 1 || month > 12) return { ok: false as const, message: text.invalidMonth };
 
-  const ref = new Date(year, month - 1, 15);
-  const { start, end } = monthBoundsFromDate(ref);
-  const limit = Math.min(50, Math.max(5, Math.floor(Number(input.limit ?? 15) || 15)));
-
-  const sessions = await prisma.workSession.findMany({
-    where: {
-      startTime: { gte: start, lte: end },
-      worker: { companyProfileId: requester.companyId },
-    },
-    select: {
-      totalHours: true,
-      breakMinutes: true,
-      startTime: true,
-      endTime: true,
-      workerId: true,
-      worker: { select: { firstName: true, lastName: true } },
-    },
-    take: 8000,
-  });
-
-  const map = new Map<string, { name: string; hours: number }>();
-  for (const s of sessions) {
-    const h = effectiveSessionHours(s);
-    const id = s.workerId;
-    const name = `${s.worker.firstName} ${s.worker.lastName}`.trim();
-    const cur = map.get(id) ?? { name, hours: 0 };
-    cur.hours += h;
-    map.set(id, cur);
-  }
-
-  const ranking = [...map.values()]
-    .sort((a, b) => b.hours - a.hours)
-    .slice(0, limit)
-    .map((r, i) => ({ rank: i + 1, worker: r.name, hours: r.hours }));
-
-  return {
-    ok: true as const,
-    yearMonth: input.yearMonth,
-    ranking,
-    message:
-      ranking.length === 0
-        ? text.noMonthSessions(input.yearMonth)
-        : text.topHours(ranking.length, input.yearMonth),
-  };
+  const bounds=monthBounds(input.yearMonth,requester.timeZone??'Europe/Berlin');
+  if(!bounds)return {ok:false as const,code:'INVALID_MONTH',message:text.invalidMonth};
+  const data=await assistantHoursData(requester,{from:bounds.start,to:bounds.end});
+  if(!data)return {ok:false as const,code:'ACCESS_DENIED',message:text.adminOnly};
+  const limit = Math.min(50,Math.max(1,Math.floor(Number(input.limit??15)||15)));
+  const ranking=data.workers.slice(0,limit).map((w,i)=>({rank:i+1,workerId:w.workerId,worker:w.worker,hours:w.hours}));
+  return {ok:true as const,yearMonth:input.yearMonth,asOf:data.asOf,timeZone:data.timeZone,aggregationComplete:true,complete:ranking.length===data.workers.length,totalWorkers:data.workers.length,ranking,
+    message:ranking.length?text.topHours(ranking.length,input.yearMonth):text.noMonthSessions(input.yearMonth)};
 }
 
 export async function adminGetDashboardSnapshot(
@@ -466,6 +378,7 @@ export async function adminListBaustellenOverview(requester: RequesterContext, i
     orderBy: { name: "asc" },
     take: 120,
   });
+  const totalMatches = await prisma.baustelle.count({ where: { companyProfileId: requester.companyId, ...statusFilter } });
 
   const ids = sites.map((s) => s.id);
   const [todoGroups, doneGroups] = await Promise.all([
@@ -499,6 +412,8 @@ export async function adminListBaustellenOverview(requester: RequesterContext, i
   return {
     ok: true as const,
     count: rows.length,
+    totalMatches,
+    complete: totalMatches <= rows.length,
     baustellen: rows,
     message: text.sitesOverview,
   };
@@ -528,9 +443,12 @@ export async function adminListProjects(requester: RequesterContext, input: { li
     orderBy: { updatedAt: "desc" },
     take,
   });
+  const totalMatches = await prisma.project.count({ where: { companyProfileId: requester.companyId, ...(status && PROJECT_STATUS_SET.has(status) ? { status: status as keyof typeof ProjectStatus & string } : {}) } });
 
   return {
     ok: true as const,
+    totalMatches,
+    complete: totalMatches <= rows.length,
     projects: rows.map((p) => ({
       title: p.title,
       customer: p.customerName,
@@ -562,9 +480,13 @@ export async function adminListOpenManualTasks(requester: RequesterContext, inpu
     orderBy: { createdAt: "desc" },
     take,
   });
+  const totalMatches = await prisma.manualTask.count({ where: { baustelle: { companyProfileId: requester.companyId } } });
 
   return {
     ok: true as const,
+    totalMatches,
+    complete: totalMatches <= tasks.length,
+    statusSemantics: 'These are recorded manual task entries; this query does not establish an open/closed completion status.',
     tasks: tasks.map((t) => ({
       baustelle: t.baustelle.name,
       description: t.description.slice(0, 400),

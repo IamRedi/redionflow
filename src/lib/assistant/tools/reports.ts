@@ -21,14 +21,15 @@ import {
 import { effectiveSessionHours } from "@/lib/workzone/session-rules";
 import type { RequesterContext } from "../requester";
 import { assistantToolText } from "./text";
+import { assistantDayBounds } from '../turn-context';
 import {
-  startOfLocalDay,
   todayKey,
   currentMonthKey,
   validDateKey,
   validMonthKey,
-  endOfLocalDay,
-  findWorkerByName,
+  resolveWorkerByName,
+  workerLookupMessage,
+  incompleteAssistantResult,
   workerLinks,
   sessionPayload,
 } from "./shared";
@@ -41,7 +42,11 @@ export async function getWorkerPrivateSummary(
       ok: true;
       worker: string;
       days: number;
-      totalHours: number;
+      totalHours: number | null;
+      returnedHours: number;
+      complete: boolean;
+      truncated: boolean;
+      totalSessions: number | null;
       sessions: Array<{
         date: string;
         startTime: string;
@@ -58,13 +63,15 @@ export async function getWorkerPrivateSummary(
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false, message: text.sensitiveAdminOnly };
 
-  const worker = await findWorkerByName(requester.companyId, input.workerName);
-  if (!worker) return { ok: false, message: text.workerNotFound };
+  const resolution = await resolveWorkerByName(requester.companyId, input.workerName);
+  if (resolution.status !== 'found') return { ok: false, message: workerLookupMessage(resolution, requester.preferredLanguage) };
+  const worker = resolution.worker;
 
   const days = Math.min(31, Math.max(1, Math.floor(Number(input.days ?? 7) || 7)));
-  const since = new Date();
-  since.setDate(since.getDate() - (days - 1));
-  since.setHours(0, 0, 0, 0);
+  const zone = requester.timeZone ?? 'Europe/Berlin';
+  const today = todayKey(zone);
+  const sinceKey = new Date(Date.parse(`${today}T12:00:00Z`) - (days - 1) * 86400_000).toISOString().slice(0, 10);
+  const since = assistantDayBounds(sinceKey, zone)!.start;
 
   const sessions = await prisma.workSession.findMany({
     where: { workerId: worker.id, startTime: { gte: since } },
@@ -76,10 +83,11 @@ export async function getWorkerPrivateSummary(
       totalHours: true,
       baustelle: { select: { name: true } },
     },
-    take: 250,
+    take: 251,
   });
 
-  const rows = sessions.map((s) => ({
+  const complete = sessions.length <= 250;
+  const rows = sessions.slice(0, 250).map((s) => ({
     date: dateKey(s.startTime),
     ...sessionPayload(s, new Date(), text, requester.preferredLanguage),
   }));
@@ -89,9 +97,13 @@ export async function getWorkerPrivateSummary(
     ok: true,
     worker: `${worker.firstName} ${worker.lastName}`.trim(),
     days,
-    totalHours,
+    totalHours: complete ? totalHours : null,
+    returnedHours: totalHours,
+    complete,
+    truncated: !complete,
+    totalSessions: complete ? sessions.length : null,
     sessions: rows,
-    message: text.hoursOverview(days, `${worker.firstName} ${worker.lastName}`.trim()),
+    message: complete ? text.hoursOverview(days, `${worker.firstName} ${worker.lastName}`.trim()) : incompleteAssistantResult(requester.preferredLanguage),
   };
 }
 
@@ -190,7 +202,7 @@ export async function getMyDailyReport(requester: RequesterContext, input: { dat
   if (requester.kind === "anonymous") return { ok: false as const, message: text.notSignedIn };
   if (requester.kind !== "worker") return { ok: false as const, message: text.workerDailyAdminHint };
 
-  const date = (input.date ?? todayKey()).trim();
+  const date = (input.date ?? todayKey(requester.timeZone)).trim();
   if (!validDateKey(date)) return { ok: false as const, message: text.invalidDate };
 
   const report = await getWorkerDailyReport(requester.workerId, date);
@@ -211,7 +223,7 @@ export async function getMyMonthlyTimesheet(requester: RequesterContext, input: 
   if (requester.kind === "anonymous") return { ok: false as const, message: text.notSignedIn };
   if (requester.kind !== "worker") return { ok: false as const, message: text.workerMonthlyAdminHint };
 
-  const month = (input.month ?? currentMonthKey()).trim();
+  const month = (input.month ?? currentMonthKey(requester.timeZone)).trim();
   if (!validMonthKey(month)) return { ok: false as const, message: text.invalidMonth };
 
   const report = await getWorkerMonthlyReport(requester.workerId, month);
@@ -231,9 +243,10 @@ export async function adminGetWorkerDailyReport(requester: RequesterContext, inp
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const worker = await findWorkerByName(requester.companyId, input.workerName);
-  if (!worker) return { ok: false as const, message: text.workerNotFound };
-  const date = (input.date ?? todayKey()).trim();
+  const resolution = await resolveWorkerByName(requester.companyId, input.workerName);
+  if (resolution.status !== 'found') return { ok: false as const, message: workerLookupMessage(resolution, requester.preferredLanguage) };
+  const worker = resolution.worker;
+  const date = (input.date ?? todayKey(requester.timeZone)).trim();
   if (!validDateKey(date)) return { ok: false as const, message: text.invalidDate };
 
   const report = await getWorkerDailyReport(worker.id, date);
@@ -252,11 +265,11 @@ export async function adminGetTeamDailyReport(requester: RequesterContext, input
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const date = (input.date ?? todayKey()).trim();
+  const date = (input.date ?? todayKey(requester.timeZone)).trim();
   if (!validDateKey(date)) return { ok: false as const, message: text.invalidDate };
-  const start = startOfLocalDay(date);
-  if (!start) return { ok: false as const, message: text.invalidDate };
-  const end = endOfLocalDay(start);
+  const bounds = assistantDayBounds(date, requester.timeZone ?? 'Europe/Berlin');
+  if (!bounds) return { ok: false as const, message: text.invalidDate };
+  const { start, end } = bounds;
 
   const [workers, sessionsRaw, trees, inventoryMovements, coneMovements] = await Promise.all([
     prisma.worker.findMany({
@@ -266,14 +279,14 @@ export async function adminGetTeamDailyReport(requester: RequesterContext, input
       take: 500,
     }),
     prisma.workSession.findMany({
-      where: { worker: { companyProfileId: requester.companyId }, startTime: { gte: start, lte: end } },
+      where: { worker: { companyProfileId: requester.companyId }, startTime: { gte: start, lt: end } },
       include: { worker: true, baustelle: { select: { name: true } } },
       orderBy: { startTime: "asc" },
       take: 3000,
     }),
     prisma.treeItem.findMany({
       where: {
-        completedAt: { gte: start, lte: end },
+        completedAt: { gte: start, lt: end },
         completedByWorker: { companyProfileId: requester.companyId },
       },
       include: { completedByWorker: true, baustelle: { select: { name: true } } },
@@ -281,19 +294,20 @@ export async function adminGetTeamDailyReport(requester: RequesterContext, input
       take: 5000,
     }),
     prisma.inventoryMovement.findMany({
-      where: { timestamp: { gte: start, lte: end }, worker: { companyProfileId: requester.companyId } },
+      where: { timestamp: { gte: start, lt: end }, worker: { companyProfileId: requester.companyId } },
       include: { worker: true, baustelle: { select: { name: true } }, treeItem: { select: { treeId: true } } },
       orderBy: { timestamp: "asc" },
       take: 5000,
     }),
     prisma.machineConeMovement.findMany({
-      where: { createdAt: { gte: start, lte: end }, actorWorker: { companyProfileId: requester.companyId } },
+      where: { createdAt: { gte: start, lt: end }, actorWorker: { companyProfileId: requester.companyId } },
       include: { actorWorker: true, baustelle: { select: { name: true } }, treeItem: { select: { treeId: true } } },
       orderBy: { createdAt: "asc" },
       take: 5000,
     }),
   ]);
 
+  const complete = workers.length < 500 && sessionsRaw.length < 3000 && trees.length < 5000 && inventoryMovements.length < 5000 && coneMovements.length < 5000;
   const sessions = sessionsRaw.filter((session) => effectiveSessionHours(session) >= 1 / 60);
   const rows = new Map<
     string,
@@ -386,12 +400,15 @@ export async function adminGetTeamDailyReport(requester: RequesterContext, input
   return {
     ok: true as const,
     date,
-    activeWorkerCount: activeRows.length,
+    complete,
+    truncated: !complete,
+    activeWorkerCount: complete ? activeRows.length : null,
+    returnedActiveWorkerCount: activeRows.length,
     workersWithTrees,
     workersWorkedWithoutTrees,
     workers: activeRows,
     message:
-      workersWithTrees.length === 0
+      !complete ? incompleteAssistantResult(requester.preferredLanguage) : workersWithTrees.length === 0
         ? text.teamNoCompletedTrees(date)
         : text.teamCompletedTrees(date, workersWithTrees.length),
   };
@@ -401,9 +418,10 @@ export async function adminGetWorkerMonthlyTimesheet(requester: RequesterContext
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const worker = await findWorkerByName(requester.companyId, input.workerName);
-  if (!worker) return { ok: false as const, message: text.workerNotFound };
-  const month = (input.month ?? currentMonthKey()).trim();
+  const resolution = await resolveWorkerByName(requester.companyId, input.workerName);
+  if (resolution.status !== 'found') return { ok: false as const, message: workerLookupMessage(resolution, requester.preferredLanguage) };
+  const worker = resolution.worker;
+  const month = (input.month ?? currentMonthKey(requester.timeZone)).trim();
   if (!validMonthKey(month)) return { ok: false as const, message: text.invalidMonth };
 
   const report = await getWorkerMonthlyReport(worker.id, month);
@@ -422,7 +440,7 @@ export async function adminGetOwnDailyReport(requester: RequesterContext, input:
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const date = (input.date ?? todayKey()).trim();
+  const date = (input.date ?? todayKey(requester.timeZone)).trim();
   if (!validDateKey(date)) return { ok: false as const, message: text.invalidDate };
   const report = await getAdminDailyReport(requester.adminId, date);
   if (!report.admin) return { ok: false as const, message: text.adminNotFound };
