@@ -30,8 +30,10 @@ export type WorkshopPhoto = { id: string; kind: "asset" | "site"; target: string
 export const directorySchema = z.object({ sites: z.array(z.object({ key: id, id, name: z.string(), active: z.boolean() })), workers: z.array(z.object({ key: id, id, name: z.string(), available: z.boolean() })) });
 export type WorkshopDirectory = z.infer<typeof directorySchema>;
 export const emptyDirectory: WorkshopDirectory = { sites: [], workers: [] };
-export type WorkshopSnapshot = { state: WorkshopState; revision: number; updatedAt: string; photos: WorkshopPhoto[]; directory: WorkshopDirectory; actor?: z.infer<typeof actorSchema> };
+export const illustrationSchema = z.object({ assetId: id, status: z.enum(["pending", "ready", "error"]), url: z.string().startsWith("/api/demo/baumdienst/images/").optional(), at: z.iso.datetime(), error: z.string().optional() });
+export type WorkshopIllustration = z.infer<typeof illustrationSchema>;
+export type WorkshopSnapshot = { state: WorkshopState; revision: number; updatedAt: string; photos: WorkshopPhoto[]; directory: WorkshopDirectory; actor?: z.infer<typeof actorSchema>; illustrations?: WorkshopIllustration[]; imageGenerationEnabled?: boolean };
 export const WORKSHOP_API = "/api/demo/baumdienst/workshop";
 export const WORKSHOP_FILES_API = "/api/demo/baumdienst/files";
 export const fileUrl = (id: string) => `${WORKSHOP_FILES_API}/${encodeURIComponent(id)}`;
-export const snapshotSchema = z.object({ state: workshopSchema, actor: actorSchema.default(demoOffice), revision: z.number().int().nonnegative(), updatedAt: z.iso.datetime(), directory: directorySchema.default(emptyDirectory), photos: z.array(z.object({ id: z.uuid(), kind: z.enum(["asset", "site"]), target: id, jobId: id.optional(), name: z.string(), at: z.iso.datetime(), url: z.string().startsWith(`${WORKSHOP_FILES_API}/`) })) });
+export const snapshotSchema = z.object({ state: workshopSchema, actor: actorSchema.default(demoOffice), revision: z.number().int().nonnegative(), updatedAt: z.iso.datetime(), directory: directorySchema.default(emptyDirectory), illustrations: z.array(illustrationSchema).default([]), imageGenerationEnabled: z.boolean().default(false), photos: z.array(z.object({ id: z.uuid(), kind: z.enum(["asset", "site"]), target: id, jobId: id.optional(), name: z.string(), at: z.iso.datetime(), url: z.string().startsWith(`${WORKSHOP_FILES_API}/`) })) });

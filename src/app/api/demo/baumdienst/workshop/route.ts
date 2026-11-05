@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   try {
     await requireWorkshopDemo(); await ensureWorkshopDemo();
     const snapshot = await withDemoActor(await prisma.$transaction(tx => workshopSnapshot(tx), { isolationLevel: "RepeatableRead" }));
-    const etag = `"workshop-${snapshot.revision}-${digest(JSON.stringify([snapshot.directory, snapshot.actor.key])).slice(0, 16)}"`;
+    const etag = `"workshop-${snapshot.revision}-${digest(JSON.stringify([snapshot.directory, snapshot.actor.key, snapshot.imageGenerationEnabled, snapshot.illustrations])).slice(0, 16)}"`;
     if (request.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers: { ...demoHeaders, ETag: etag } });
     return Response.json(snapshot, { headers: { ...demoHeaders, ETag: etag } });
   } catch (error) { return workshopResponseError(error); }

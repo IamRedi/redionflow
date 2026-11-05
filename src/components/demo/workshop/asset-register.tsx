@@ -9,10 +9,11 @@ import type { WorkshopAsset } from "@/lib/workshop/demo-model";
 import { action, control, Field, WorkshopDialog } from "./workshop-ui";
 import { useWorkshopDemo } from "./use-workshop-demo";
 import { flowError } from "./custody-panels";
+import { studioCopy } from "@/lib/workshop/studio-copy";
 
 export function AssetRegister({ open, onClose, code = "", asset, onSaved }: { open: boolean; onClose: () => void; code?: string; asset?: WorkshopAsset; onSaved?: (id: string) => void }) {
-  const { dispatch, pending, actor, upload } = useWorkshopDemo();
-  const { currentLang } = useLanguage(), c = workshopCopy(currentLang);
+  const { dispatch, pending, actor, upload, generateImage, imageGenerationEnabled } = useWorkshopDemo();
+  const { currentLang } = useLanguage(), c = workshopCopy(currentLang), studio = studioCopy(currentLang);
   const [message, setMessage] = useState("");
   const [assetId] = useState(() => asset?.id || crypto.randomUUID());
   const [registered, setRegistered] = useState(false);
@@ -29,6 +30,7 @@ export function AssetRegister({ open, onClose, code = "", asset, onSaved }: { op
       if (file instanceof File && file.size) {
         try { await upload(file, { kind: "asset", target: assetId }); } catch { setMessage(`${c.created} · ${c.fileError}`); return; }
       }
+      if (!(file instanceof File && file.size) && imageGenerationEnabled && data.get("ai-image") === "on") void generateImage(assetId).catch(() => { /* Separate image status is visible on the durable asset card. */ });
       if (onSaved) onSaved(assetId); else onClose();
     } catch (e) { setMessage(e instanceof Error && e.message === "duplicate" ? c.codeUsed : flowError(e, c)); }
   }
@@ -39,6 +41,7 @@ export function AssetRegister({ open, onClose, code = "", asset, onSaved }: { op
       {!asset && <Field label={c.code}><input className={control} name="code" defaultValue={code} maxLength={80} pattern="[A-Za-z0-9 .$\/+%\-]+" placeholder={c.autoCode} autoComplete="off" /></Field>}
       <details className="rounded-xl border px-3"><summary className="flex min-h-11 cursor-pointer items-center font-medium text-sm">{c.specifications}</summary><div className="grid gap-4 pb-4 sm:grid-cols-2">{([ ["manufacturer", c.manufacturer], ["model", c.model], ["serial", c.serial] ] as const).map(([key,label]) => <Field key={key} label={label}><input name={key} className={control} maxLength={100} defaultValue={asset?.details?.[key]} /></Field>)}<Field label={c.note}><textarea className={`${control} h-24 py-3`} name="note" maxLength={2000} defaultValue={asset?.details?.note} /></Field></div></details>
       </fieldset><Field label={c.photos}><input className="min-h-11 w-full min-w-0 rounded-xl border p-2 text-sm" name="photo" type="file" accept="image/jpeg,image/png,image/webp" /></Field>
+      {imageGenerationEnabled && <div><label className="flex min-h-11 items-center gap-3 text-sm"><input name="ai-image" type="checkbox" defaultChecked className="size-5 shrink-0 accent-green-700" />{studio.auto}</label><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{studio.hint}</p></div>}
       {message && <p role="alert" className="rounded-xl border p-3 text-sm">{message}</p>}
       <Button className={`${action} w-full`} disabled={pending}>{asset ? <Save /> : <PackagePlus />}{asset || registered ? c.save : c.register}</Button>
     </form>
