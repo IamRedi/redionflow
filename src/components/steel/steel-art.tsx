@@ -6,19 +6,7 @@
  */
 
 import type { SteelPhaseKey, SteelSiteShape } from "@/lib/workzone/steel-phases";
-
-const C = {
-  steel: "#475569",
-  steelDark: "#1e293b",
-  steelLight: "#94a3b8",
-  concrete: "#a8a29e",
-  concreteTop: "#d6d3d1",
-  ground: "#78716c",
-  orange: "#f97316",
-  primer: "#c2410c",
-  spark: "#fde047",
-  zinc: "#cbd5e1",
-};
+import { STEEL_ART_PALETTE as C } from "@/lib/steel-work/illustration-style";
 
 const STYLE = `
 .sa-spin{transform-box:fill-box;transform-origin:center;animation:sa-spin 1.1s linear infinite}

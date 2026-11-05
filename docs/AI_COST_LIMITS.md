@@ -73,3 +73,38 @@ tests cover bounded history and the visible quota error without paid inference.
 The quotas limit these two routes. They do not impose a provider-account billing
 cap on other applications or integrations. No throughput/load benchmark or real
 paid-provider quality evaluation is claimed here.
+
+## Steel work illustrations — separate image contract
+
+The illustration path uses the existing OpenAI account and the pinned
+`gpt-image-2.5-flare-2026-09-08` image model, not the assistant's text model or
+token reservation. One explicit create/edit/regenerate request allows exactly
+one Image API edit with a shipped synthetic style reference,1024×768,medium
+quality,transparent WebP80,120s deadline and zero retries. No batches,automatic
+backfill,render-time jobs or failure retries are started. Publication/activation
+of this new image-model contract requires the owner's concrete PR approval.
+
+The existing tenant/RLS quota table stores separate `image-burst` and `image-day`
+request counters; their token field stays zero and chat counters are untouched.
+All scopes are checked and charged atomically under a company advisory lock:
+
+| Scope | Fixed image requests |
+| --- | --- |
+| Authenticated actor / fixed10-minute window |1|
+| Company / fixed10-minute window |2|
+| Authenticated actor / UTC day |5|
+| Company / UTC day |10|
+
+Actor/company identity is revalidated from the server context; request fields
+cannot choose either. Failure keeps the image reservation, so an uncertain
+provider outcome cannot silently refund a possibly paid call. Authentication or
+quota-store failure stops before provider access. These hard-coded ceilings
+cannot be raised by the chat-model environment overrides. Quota rejection keeps
+the current image and reports a localized illustration-limit message.
+
+This bounds image request count and output settings, not the entire OpenAI
+account bill. Image-input/output billing differs from text inference; exact
+cost/access/quality depends on the provider account and actual request. See the
+[official model pricing notes](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare).
+Safe diagnostic usage counts are recorded separately as `steel.visual_image_usage`.
+The owner's existing photo is never sent as a style reference or overwritten.

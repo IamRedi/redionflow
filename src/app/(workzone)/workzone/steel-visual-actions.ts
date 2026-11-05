@@ -32,5 +32,18 @@ export async function generateSteelWorkVisualAction(input: { definitionId: strin
     const result = await generateSteelWorkVisual(input?.definitionId, input?.revision);
     revalidatePath('/workzone', 'layout');
     return { ok: true as const, message: 'OK', ...result };
-  } catch { return { ok: false as const, message: unavailable[lang] ?? unavailable.en, status: 'error' }; }
+  } catch (error) {
+    if (error instanceof Error && error.message === 'VISUAL_QUOTA') {
+      const quota: Record<string, string> = {
+        sq: 'Kufiri i ilustrimeve u arrit. Provo më vonë; figura ekzistuese ruhet.',
+        en: 'The illustration limit was reached. Try later; the existing image is kept.',
+        de: 'Das Illustrationslimit ist erreicht. Bitte später erneut versuchen; das bestehende Bild bleibt erhalten.',
+        it: 'Limite delle illustrazioni raggiunto. Riprova più tardi; l’immagine esistente viene conservata.',
+        ro: 'Limita de ilustrații a fost atinsă. Încearcă mai târziu; imaginea existentă este păstrată.',
+        pl: 'Osiągnięto limit ilustracji. Spróbuj później; dotychczasowy obraz pozostaje.',
+      };
+      return { ok: false as const, message: quota[lang] ?? quota.en, status: 'quota' };
+    }
+    return { ok: false as const, message: unavailable[lang] ?? unavailable.en, status: 'error' };
+  }
 }

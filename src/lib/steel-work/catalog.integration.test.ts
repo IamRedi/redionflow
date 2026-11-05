@@ -70,6 +70,36 @@ it('edits an unselected definition without silently enabling it and requests fre
   expect(await saveSteelWorkDefinitionAction({ id: result.definitionId, kind: 'site', label: 'Photo example', revision: edited.revision })).toMatchObject({ ok: true, artNeeded: false });
 });
 
+it('refreshes generated art when its linked work context changes, while keeping uploaded photos', async () => {
+  const task = await create('Fixture flashing');
+  const process = await saveSteelWorkDefinitionAction({ kind: 'factory', label: 'Fixture fastening' });
+  expect(process.ok).toBe(true);
+  await prisma.steelWorkDefinition.update({ where: { id: task.definitionId }, data: { visualStatus: 'generated', visualUpdatedAt: new Date() } });
+  const linked = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: task.revision, linkedProcessKey: process.key, linkedList: 'assembly' });
+  expect(linked).toMatchObject({ ok: true, artNeeded: true });
+  const unchanged = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: linked.revision, linkedProcessKey: process.key, linkedList: 'assembly' });
+  expect(unchanged).toMatchObject({ ok: true, artNeeded: false });
+  const filtered = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: unchanged.revision, linkedProcessKey: process.key, linkedList: 'assembly', linkedKind: 'COLUMN' });
+  expect(filtered).toMatchObject({ ok: true, artNeeded: true });
+  const parts = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: filtered.revision, linkedProcessKey: process.key, linkedList: 'part', linkedKind: 'COLUMN' });
+  expect(parts).toMatchObject({ ok: true, artNeeded: true });
+  await prisma.steelWorkDefinition.update({ where: { id: task.definitionId }, data: { visualStatus: 'photo' } });
+  expect(await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: parts.revision })).toMatchObject({ ok: true, artNeeded: false });
+});
+
+it('cancels an invalidated pending badge on any edit while retaining the previous image', async () => {
+  const task = await create('Fixture pending illustration');
+  const at = new Date('2026-11-05T12:00:00Z');
+  await prisma.steelWorkDefinition.update({ where: { id: task.definitionId }, data: { visualStatus: 'pending', visualUpdatedAt: at } });
+  const unchanged = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture pending illustration', revision: task.revision });
+  expect(unchanged).toMatchObject({ ok: true, artNeeded: false });
+  expect(await prisma.steelWorkDefinition.findUnique({ where: { id: task.definitionId } })).toMatchObject({ visualStatus: 'generated', visualUpdatedAt: at });
+  await prisma.steelWorkDefinition.update({ where: { id: task.definitionId }, data: { visualStatus: 'pending', visualUpdatedAt: null } });
+  const edited = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture changed pending illustration', revision: unchanged.revision });
+  expect(edited).toMatchObject({ ok: true, artNeeded: true });
+  expect(await prisma.steelWorkDefinition.findUnique({ where: { id: task.definitionId } })).toMatchObject({ visualStatus: 'fallback', visualUpdatedAt: null });
+});
+
 it('disable/archive/re-enable preserve original history and reject stale revisions', async () => {
   const result = await create(), assignment = await prisma.steelSiteTask.findFirstOrThrow({ where: { definitionId: result.definitionId } });
   expect((await updateSteelPhaseAction({ phaseItemId: assignment.treeItemId, command: 'done' })).ok).toBe(true);

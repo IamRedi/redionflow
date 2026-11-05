@@ -1,16 +1,17 @@
-import { randomUUID } from 'node:crypto';
-import { Output, streamText, type FinishReason } from 'ai';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { fleetActor } from '@/lib/fleet/access';
 import { compactPhoto, MAX_PHOTO_BYTES } from '@/lib/asset-photos/image';
 import { getRequesterContext } from '@/lib/assistant/requester';
-import { reserveAssistantQuota } from '@/lib/assistant/quota';
-import { assistantGeneration } from '@/lib/assistant/generation';
-import { categorizeAssistantFailure, type AssistantFailure } from '@/lib/assistant/diagnostics';
+import { categorizeAssistantFailure } from '@/lib/assistant/diagnostics';
 import { logger } from '@/lib/observability/logger';
 import { canManageSteelCatalog } from './types';
-import { parseSteelScene, renderSteelScene, steelSceneGenerationSchema, steelScenePrompt, STEEL_SCENE_MAX_BYTES } from './visual';
+import { renderSteelScene } from './visual';
+import { buildSteelIllustrationPrompt, STEEL_ILLUSTRATION_STYLE_VERSION } from './illustration-style';
+import { generateSteelImage, SteelImageGenerationError, STEEL_IMAGE_MODEL } from './image-generation';
+import { reserveSteelImageQuota } from './image-quota';
 
 const validId = /^[a-z0-9-]{10,64}$/i;
 export const steelVisualUrl = (id: string, at: Date) => `/api/steel-work-visuals/${id}?v=${at.getTime()}`;
@@ -47,67 +48,65 @@ export async function generateSteelWorkVisual(definitionId: string, revision: nu
   if (!process.env.OPENAI_API_KEY?.trim()) throw new Error('VISUAL_UNAVAILABLE');
   const requester = await getRequesterContext();
   if (requester.kind === 'anonymous' || requester.companyId !== actor.companyId) throw new Error('VISUAL_DENIED');
-  const jobAt = new Date(), staleBefore = new Date(jobAt.getTime() - 120_000);
+  const jobAt = new Date(), staleBefore = new Date(jobAt.getTime() - 300_000);
   const definition = await withTenantContext(actor.companyId, async tx => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${actor.companyId}`}))`;
     await tx.$queryRaw`SELECT "id" FROM "SteelWorkDefinition" WHERE "id"=${definitionId} AND "companyProfileId"=${actor.companyId} FOR UPDATE`;
-    const row = await tx.steelWorkDefinition.findFirst({ where: { ...ownedWhere(actor.companyId, definitionId), revision, archivedAt: null }, select: { label: true, description: true, key: true, kind: true, visualStatus: true, visualUpdatedAt: true, updatedAt: true } });
+    const row = await tx.steelWorkDefinition.findFirst({ where: { ...ownedWhere(actor.companyId, definitionId), revision, archivedAt: null }, select: { label: true, description: true, key: true, kind: true, linkedProcessKey: true, linkedList: true, linkedKind: true, visualStatus: true, visualUpdatedAt: true, updatedAt: true } });
     if (!row) throw new Error('VISUAL_CONFLICT');
-    if (row.visualStatus === 'photo') return { ...row, skip: true };
+    if (row.visualStatus === 'photo') return { ...row, linked: null, skip: true };
     if (row.visualStatus === 'pending' && row.updatedAt > staleBefore) throw new Error('PHOTO_BUSY');
+    const linked = row.linkedProcessKey ? await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: actor.companyId, key: row.linkedProcessKey, kind: { in: ['factory', 'field'] } }, select: { id: true, revision: true, key: true, label: true, description: true } }) : null;
     await tx.steelWorkDefinition.updateMany({ where: ownedWhere(actor.companyId, definitionId), data: { visualStatus: 'pending', updatedAt: jobAt } });
-    return { ...row, skip: false };
+    return { ...row, linked, skip: false };
   });
   if (definition.skip) return { url: definition.visualUpdatedAt ? steelVisualUrl(definitionId, definition.visualUpdatedAt) : undefined, status: 'photo' };
   const jobWhere = { ...ownedWhere(actor.companyId, definitionId), revision, archivedAt: null, visualStatus: 'pending', updatedAt: jobAt };
   const controller = new AbortController();
-  let phase: 'quota' | 'stream' | 'validation' | 'storage' = 'quota';
-  let output = '', finishReason: FinishReason | null = null, providerCalls = 0;
-  let providerFailure: AssistantFailure | undefined;
+  let phase: 'reference' | 'quota' | 'image' | 'validation' | 'storage' = 'reference';
+  let providerCalls = 0, outputBytes = 0;
   try {
-    const quota = await reserveAssistantQuota(requester);
-    if (!quota.ok) throw new Error('VISUAL_QUOTA');
-    // Worker generation means ONE call even for an admin; the shared quota
-    // reservation remains conservative and is settled to actual usage.
-    phase = 'stream';
-    const generation = assistantGeneration(new Request(`https://steel-work.invalid/${randomUUID()}`, { signal: controller.signal }), 'worker', quota.settle, {
-      onProviderCall: () => { providerCalls += 1; }, onFailure: failure => { providerFailure = failure; },
-    });
-    const result = streamText({ ...generation, output: Output.object({ schema: steelSceneGenerationSchema }), temperature: 0, system: steelScenePrompt, prompt: JSON.stringify({ label: definition.label || definition.key, kind: definition.kind, description: definition.description }) });
-    for await (const part of result.fullStream) {
-      if (part.type === 'text-delta') {
-        output += part.text;
-        if (Buffer.byteLength(output, 'utf8') > STEEL_SCENE_MAX_BYTES) throw new Error('VISUAL_OVERSIZE');
-      } else if (part.type === 'error') {
-        providerFailure ??= categorizeAssistantFailure(part.error, { source: 'provider' });
-        throw new Error('VISUAL_UNAVAILABLE');
-      } else if (part.type === 'abort') throw new Error('VISUAL_UNAVAILABLE');
-      else if (part.type === 'finish') finishReason = part.finishReason;
-    }
+    // Literal path keeps Next's file trace scoped to this public style asset.
+    const reference = new Uint8Array(await readFile(join(process.cwd(), 'public', 'illustrations', 'alsteel-style-v1.png')));
+    const prompt = buildSteelIllustrationPrompt({ key: definition.key, label: definition.label, description: definition.description, kind: definition.kind as 'site' | 'factory' | 'field',
+      linkedProcess: definition.linked ? { key: definition.linked.key, label: definition.linked.label, description: definition.linked.description, list: definition.linkedList as 'assembly' | 'part' | null, elementKind: definition.linkedKind } : undefined });
+    phase = 'quota';
+    const quota = await reserveSteelImageQuota(requester);
+    if (!quota.ok) throw new Error(quota.reason === 'unavailable' ? 'VISUAL_UNAVAILABLE' : 'VISUAL_QUOTA');
+    phase = 'image';
+    providerCalls = 1;
+    const result = await generateSteelImage(prompt, reference, controller.signal);
+    logger.info({ event: 'steel.visual_image_usage', model: STEEL_IMAGE_MODEL, style: STEEL_ILLUSTRATION_STYLE_VERSION, ...result.usage }, 'Work illustration usage');
     phase = 'validation';
-    if (finishReason !== 'stop') throw new Error('VISUAL_INCOMPLETE');
-    const scene = parseSteelScene(output);
-    if (!scene) throw new Error('VISUAL_INVALID');
+    outputBytes = result.bytes.length;
+    const image = await compactPhoto(result.bytes);
     phase = 'storage';
     const at = new Date();
     const saved = await withTenantContext(actor.companyId, async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${actor.companyId}`}))`;
+      if (definition.linked && !await tx.steelWorkDefinition.findFirst({ where: { ...ownedWhere(actor.companyId, definition.linked.id), revision: definition.linked.revision }, select: { id: true } })) {
+        const retainedStatus = definition.visualStatus === 'pending' ? definition.visualUpdatedAt ? 'generated' : 'fallback' : definition.visualStatus;
+        await tx.steelWorkDefinition.updateMany({ where: jobWhere, data: { visualStatus: retainedStatus } });
+        return false;
+      }
       const current = await tx.steelWorkDefinition.updateMany({ where: jobWhere, data: { visualStatus: 'generated', visualUpdatedAt: at } });
       if (current.count !== 1) return false; // A newer photo/edit always wins.
       await tx.steelWorkVisual.upsert({
         where: { companyProfileId_definitionId: { companyProfileId: actor.companyId, definitionId } },
-        create: { companyProfileId: actor.companyId, definitionId, scene, mime: 'image/svg+xml' },
-        update: { data: null, scene, mime: 'image/svg+xml' },
+        create: { companyProfileId: actor.companyId, definitionId, data: new Uint8Array(image.data), scene: Prisma.DbNull, mime: 'image/webp' },
+        update: { data: new Uint8Array(image.data), scene: Prisma.DbNull, mime: 'image/webp' },
       });
-      await tx.auditLog.create({ data: { companyProfileId: actor.companyId, actorType: actor.workerId ? 'WORKER' : 'ADMIN', actorId: (actor.workerId ?? actor.userId)!, action: 'steel.visual_generated', payload: { definitionId, revision } } });
+      await tx.auditLog.create({ data: { companyProfileId: actor.companyId, actorType: actor.workerId ? 'WORKER' : 'ADMIN', actorId: (actor.workerId ?? actor.userId)!, action: 'steel.visual_generated', payload: { definitionId, revision, style: STEEL_ILLUSTRATION_STYLE_VERSION, bytes: image.data.length } } });
       return true;
     });
     return { status: saved ? 'generated' : 'superseded', url: saved ? steelVisualUrl(definitionId, at) : undefined };
   } catch (error) {
     try { await withTenantContext(actor.companyId, tx => tx.steelWorkDefinition.updateMany({ where: jobWhere, data: { visualStatus: 'error' } })); }
     catch { logger.warn({ event: 'steel.visual_status_update_failed' }, 'Work visual status could not be updated'); }
-    const knownCode = error instanceof Error && ['VISUAL_QUOTA', 'VISUAL_INVALID', 'VISUAL_INCOMPLETE', 'VISUAL_OVERSIZE'].includes(error.message) ? error.message : undefined;
-    const failure = providerFailure ?? categorizeAssistantFailure(error, { source: phase === 'storage' ? 'database' : 'provider' });
-    logger.warn({ event: 'steel.visual_generation_failed', phase, finishReason, outputBytes: Buffer.byteLength(output, 'utf8'), providerCalls, failureCode: knownCode ?? failure.code, failure }, 'Work visual retained after generation failure');
-    throw new Error('VISUAL_UNAVAILABLE');
+    const knownCode = error instanceof Error && error.message === 'VISUAL_QUOTA' ? error.message : error instanceof SteelImageGenerationError ? error.code : undefined;
+    const failure = error instanceof SteelImageGenerationError ? error.failure : categorizeAssistantFailure(error, { source: phase === 'storage' ? 'database' : 'provider' });
+    logger.warn({ event: 'steel.visual_generation_failed', phase, outputBytes, providerCalls, failureCode: knownCode ?? failure?.code, failure }, 'Work visual retained after generation failure');
+    throw new Error(knownCode ?? 'VISUAL_UNAVAILABLE');
   } finally { controller.abort(); }
 }
 
