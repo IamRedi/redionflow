@@ -7,6 +7,7 @@ test('steel footer ends the content and the transparent header keeps one book en
   assertE2ETestDatabase(process.env);
   test.setTimeout(300_000);
   const baseline = process.env.FOOTER_HEADER_BASELINE === 'true';
+  const underlaySmoke = process.env.STEEL_HEADER_UNDERLAY_SMOKE === 'true';
   const email = `footer-header-${Date.now()}@example.test`, errors: string[] = [];
   let companyId: string | undefined;
   page.on('pageerror', e => errors.push(e.message));
@@ -28,9 +29,10 @@ test('steel footer ends the content and the transparent header keeps one book en
     await prisma.user.createMany({ data: Array.from({ length: 3 }, (_, i) => ({ companyProfileId: companyId!, name: `Office Demo ${i + 1}`, email: `office-${i}-${email}`, passwordHash: owner.passwordHash, role: 'ADMIN' as const })) });
     for (const theme of ['light', 'dark']) {
       await context.addCookies([{ name: 'bk_theme', value: theme, url: info.project.use.baseURL! }]);
-      for (const [width, height] of [[1440, 900], [360, 800], [320, 640], [760, 360]]) {
+      for (const [width, height] of underlaySmoke ? [[1440, 900], [360, 800]] : [[1440, 900], [360, 800], [320, 640], [760, 360]]) {
         await page.setViewportSize({ width, height });
         for (const [view, url] of [['dashboard', '/app/dashboard?month=2026-10&day=2026-10-14'], ['workzone', '/workzone?view=map']]) {
+          if (underlaySmoke && view !== (theme === 'light' ? 'dashboard' : 'workzone')) continue;
           await page.goto(url);
           const main = page.getByTestId('app-workspace-scroll');
           await expect(main).toBeVisible();
@@ -61,6 +63,27 @@ test('steel footer ends the content and the transparent header keeps one book en
               expect(state.alertsCentered).toBe(true);
               expect(state.workersReachTools).toBe(true);
             }
+            await main.press('PageDown');
+            await expect.poll(() => main.evaluate(el => el.scrollTop)).toBeGreaterThan(state.headerTop + 100);
+            const underlay = await page.evaluate(() => {
+              const main = document.querySelector('[data-testid="app-workspace-scroll"]')!, content = main.firstElementChild!;
+              const header = document.querySelector('[data-testid="admin-topbar"],[data-testid="workzone-topbar"]')!, h = header.getBoundingClientRect(), m = main.getBoundingClientRect();
+              const logo = header.querySelector('button,a')!, l = logo.getBoundingClientRect(), logoHit = document.elementFromPoint(l.x+l.width/2,l.y+l.height/2);
+              const x = m.left + m.width / 2, y = h.bottom - 2;
+              const hit = document.elementFromPoint(x, y);
+              return { scrollerTop: m.top, contentTop: content.getBoundingClientRect().top, headerBottom: h.bottom, contentPaintsBehind: document.elementsFromPoint(x,y).some(el => el === content || content.contains(el)), emptyHeaderPassesClicks: !!hit && main.contains(hit), logoAboveContent: logoHit === logo || !!logoHit && logo.contains(logoHit) };
+            });
+            console.log('HEADER_UNDERLAY', JSON.stringify({ theme, view, width, ...underlay }));
+            expect(underlay.scrollerTop).toBe(0);
+            expect(underlay.contentTop).toBeLessThan(underlay.headerBottom);
+            expect(underlay.contentPaintsBehind).toBe(true);
+            expect(underlay.emptyHeaderPassesClicks).toBe(true);
+            expect(underlay.logoAboveContent).toBe(true);
+            await page.screenshot({ path: info.outputPath(`underlay-${view}-${theme}-${width}.png`) });
+            await main.press('Home');
+            await expect.poll(() => main.evaluate(el => el.scrollTop)).toBeLessThan(1);
+          }
+          if (!baseline && !underlaySmoke) {
             const profiles = page.getByTestId('flow-team-strip').locator('a[href^="/workzone/admin-profile/"]');
             await expect(profiles).toHaveCount(3);
             await profiles.last().focus();
@@ -83,7 +106,8 @@ test('steel footer ends the content and the transparent header keeps one book en
           await expect.poll(() => main.evaluate(el => Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop))).toBeLessThan(3);
           const credit = page.getByRole('link', { name: 'by RediON', exact: true });
           await expect(credit).toHaveCount(1);
-          await page.locator('[data-testid="admin-topbar"],[data-testid="workzone-topbar"]').click({position:{x:2,y:2}});
+          // Blank header space now intentionally passes clicks to the content below.
+          await page.mouse.click(2, 2);
           await page.screenshot({ path: info.outputPath(`${baseline ? 'before' : 'after'}-${view}-${theme}-${width}-end.png`) });
           if (!baseline) {
             await expect(credit).toBeInViewport();
@@ -103,7 +127,7 @@ test('steel footer ends the content and the transparent header keeps one book en
         }
       }
     }
-    if (!baseline) {
+    if (!baseline && !underlaySmoke) {
       await page.setViewportSize({ width: 360, height: 800 });
       await page.goto('/app/dashboard?month=2026-10&day=2026-10-14');
       await page.evaluate(() => { document.documentElement.style.fontSize = '32px'; });

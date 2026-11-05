@@ -101,7 +101,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </header>
       <AdminFleet production={production} machines={machines} isAdmin showCones={showCones} country={country} />
       <div className={production ? `${workspace.body} ${workspace.admin}` : 'grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24'}>
-        <aside className={`${production ? workspace.navigation : 'min-w-0'} print:hidden`}>
+        <aside data-testid={production ? 'app-workspace-navigation' : undefined} className={`${production ? workspace.navigation : 'min-w-0'} print:hidden`}>
           {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}
           <nav className={`no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:sticky ${production ? "md:top-4 md:max-h-[calc(100dvh-2rem)]" : "md:top-24 md:max-h-[calc(100dvh-7rem)]"} md:mx-0 md:flex-col md:gap-4 md:overflow-y-auto md:overscroll-contain md:rounded-2xl md:border md:bg-card/70 md:p-2 md:shadow-sm md:backdrop-blur`}>
             <div className="hidden items-center gap-2.5 rounded-xl px-2 pt-1.5 md:flex">

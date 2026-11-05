@@ -18,6 +18,7 @@ import { safeCompanyLogo } from '@/lib/company-logo';
 import { WorkerIconStrip } from '@/app/(workzone)/workzone/worker-icon-strip';
 import { notifyTeamAction } from '@/app/(workzone)/workzone/announcement-actions';
 import { TopbarAnnouncementButton } from '@/app/(workzone)/workzone/topbar-announcement-button';
+import { WorkspaceHeaderOffset } from './WorkspaceHeaderOffset';
 
 function adminInitial(value: string | null | undefined) {
   const source = value?.trim();
@@ -148,6 +149,7 @@ export async function FlowTopBar({
 
   return (
     <div className={contained ? "w-full min-w-0 px-4 pb-3 pt-14 sm:px-5 lg:min-h-[110px] lg:py-3" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
+      {contained && <WorkspaceHeaderOffset />}
       <div className={`grid grid-cols-[auto_minmax(0,1fr)] ${contained ? "items-center" : "items-start lg:grid-cols-[auto_minmax(0,1fr)_auto]"} gap-3`}>
         {/* Keep the production logo and scrollable team side by side in normal flow. */}
         <div className={`pointer-events-none relative z-10 ${contained ? "col-start-1 row-start-1 flex-row items-center" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
