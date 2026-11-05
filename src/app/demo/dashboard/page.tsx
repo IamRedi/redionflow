@@ -10,6 +10,7 @@ import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import type { CompanyMode } from "@/lib/mode-config";
+import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 
 function formatHours(value: number) {
   return value.toLocaleString("de-DE", {
@@ -291,6 +292,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
     resolveRequestLanguage(),
   ]);
   const snapshot = await getDashboardSnapshotForWeek(company.id, weekOffset, currentLang);
+  const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
 
   const statCards = [
     { key: "active-workers", title: t("admin.aktiveMitarbeiter", currentLang, mode), value: snapshot.stats.activeWorkers, description: t("admin.aktiveMitarbeiterSub", currentLang, mode), icon: HardHat },
@@ -300,7 +302,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
   ];
 
   return (
-    <div className="min-w-0 space-y-5 pb-8">
+    <div className={workshopEnabled ? "min-w-0 space-y-5 pb-8" : "mx-auto max-w-7xl space-y-5 pb-8"}>
       <div className="overflow-hidden rounded-[28px] border border-border/80 bg-background/85 shadow-lg shadow-emerald-950/5 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-emerald-500/[0.08] via-background to-background px-4 py-4 sm:px-5">
           <div className="min-w-0">
@@ -398,7 +400,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
-            <div className={mode === "baumdienst" ? "min-w-0" : "h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"}>
+            <div className={workshopEnabled ? "min-w-0" : "h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"}>
               <WeeklyHoursTable rows={snapshot.charts.weekHoursByBaustelle} columns={snapshot.charts.weekHoursColumns} currentLang={currentLang} mode={mode} />
             </div>
           </CardContent>
@@ -412,7 +414,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
-            <div className={mode === "baumdienst" ? "min-w-0" : "h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"}>
+            <div className={workshopEnabled ? "min-w-0" : "h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"}>
               <WorkerHoursToggleChart weekly={snapshot.charts.workerHours.weekly} monthly={snapshot.charts.workerHours.monthly} currentLang={currentLang} companyMode={mode} embedded />
             </div>
           </CardContent>

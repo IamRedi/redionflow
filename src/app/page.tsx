@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 import { LandingPage } from "@/components/landing/LandingPage";
 import { landingContent } from "@/components/landing/landing-content";
-import { isPublicDemoEnabled } from "@/lib/public-demo";
+import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/public-demo";
 import { isSaasMode } from "@/lib/saas-config";
 import { getCompanyMode } from "@/lib/db/company";
 
@@ -17,6 +17,6 @@ export default async function HomePage() {
   const initialTheme = jar.get("bk_theme")?.value === "dark" ? "dark" : "light";
 
   const demoEnabled = isPublicDemoEnabled();
-  const workshopDemoEnabled = demoEnabled && await getCompanyMode() === "baumdienst";
+  const workshopDemoEnabled = demoEnabled && isBaumdienstWorkshopDemoEnabled(await getCompanyMode());
   return <LandingPage initialTheme={initialTheme} isSaasMode={isSaasMode} demoEnabled={demoEnabled} workshopDemoEnabled={workshopDemoEnabled} />;
 }

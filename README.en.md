@@ -2,9 +2,9 @@
 
 # RediOnFlow
 
-**Local demo candidate · 5 November 2026:** BaumdienstFlow has an interactive workshop rehearsal: intake, repair, documented function check and release, tool issue/return, spare parts and documents. Fictional data and browser-local storage only; not yet deployed to the public demo. [Scope, UX comparison and verification](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Workshop demo online · 5 November 2026:** [Try the BaumdienstFlow workshop](https://redionflow-production.up.railway.app/demo/workshop): intake, repair, documented function check and release, tool issue/return, spare parts and documents. Fictional data and browser-local storage only. A dedicated Baumdienst deployment profile is isolated from the AL Steel pilot and BauFlow demo. [Scope, release and verification](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
-![Workshop demo – local capture with fictional data, not deployed](docs/assets/screenshots/baum-workshop-desktop.png)
+![Public workshop demo – actual online capture with fictional data on 5 November 2026](docs/assets/screenshots/baum-workshop-online.jpg)
 
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 
@@ -61,7 +61,7 @@ The user interface, the demo data and most documents are in German, because the 
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 employees, 3 job sites, 152 trees, 5 machines |
 | BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
 
-The `/demo` pages are read-only and need no login. All names, addresses, licence plates and companies are made up. Both demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
+The existing `/demo` views are read-only and need no login. The new Baumdienst workshop supports editing fictional workflows in your own browser; those local changes are neither shared with other people nor cleared by the nightly server reset. All names, addresses, licence plates and companies are made up. Both server demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
 
 Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
 

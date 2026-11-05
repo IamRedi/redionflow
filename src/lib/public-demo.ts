@@ -9,3 +9,9 @@ export function isPublicDemoEnabled(env: Record<string, string | undefined> = pr
   const saas = (env.SAAS_MODE ?? "").trim().toLowerCase() === "true";
   return !saas && (appEnv === "demo" || appEnv === "local");
 }
+
+/** Explicit deployment profile; shared code must never opt another company in. */
+export function isBaumdienstWorkshopDemoEnabled(mode: string | undefined, env: Record<string, string | undefined> = process.env): boolean {
+  return mode === "baumdienst" && isPublicDemoEnabled(env)
+    && (env.DEMO_PROFILE ?? "").trim().toLowerCase() === "baumdienst-workshop";
+}
