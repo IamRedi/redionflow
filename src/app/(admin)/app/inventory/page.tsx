@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db/prisma";
 import { t, type Language } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { AdminInventoryConsole } from "./admin-inventory-console";
+import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
 
 function localeForLanguage(lang: Language) {
   if (lang === "en") return "en-US";
@@ -24,6 +26,7 @@ function categoryLabel(category: string, lang: Language) {
 
 export default async function AdminInventoryPage() {
   const [company, currentLang] = await Promise.all([getOrCreateDefaultCompany(), resolveRequestLanguage()]);
+  if (await isSteelCompany(company.id)) return <AssetWarehouse />;
   const [items, activeAssignments, privateAssets, movements] = await Promise.all([
     prisma.companyInventoryItem.findMany({
       where: { companyProfileId: company.id },

@@ -1,3 +1,6 @@
+import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
+import { getCurrentCompanyId } from '@/lib/db/tenant';
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -75,6 +78,7 @@ type WorkerProfile = {
   motherTongue?: string;
   assetItems: Array<{
     id: string;
+    companyInventoryItemId?: string | null;
     kind: "CLOTHING" | "EQUIPMENT";
     itemName: string;
     itemCode: string | null;
@@ -226,6 +230,8 @@ export async function WorkerProfileView({
   }>;
 }) {
   const [currentLang, companyCountry] = await Promise.all([resolveRequestLanguage(), getCompanyCountry()]);
+  const companyId = await getCurrentCompanyId();
+  const assetOperations = Boolean(companyId && await isSteelCompany(companyId));
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
   const activePauseIntervals = activeSession?.pauseIntervals ?? [];
   const history = worker.sessions.filter((session) => (!session.isLive || session.endTime) && isReportableSession(session)).slice(0, 15);
@@ -570,11 +576,12 @@ export async function WorkerProfileView({
             </form>
           </details>
 
+          {assetOperations && <section className="space-y-3"><AssetWarehouse workerId={worker.id}/></section>}
           <WorkerInventory
             workerId={worker.id}
             mode={mode}
-            items={worker.assetItems}
-            catalogItems={catalogItems}
+            items={assetOperations ? worker.assetItems.filter(item => item.isPrivate || !item.companyInventoryItemId) : worker.assetItems}
+            catalogItems={assetOperations ? [] : catalogItems}
             movementHistory={inventoryMovements}
             currentLang={currentLang}
           />

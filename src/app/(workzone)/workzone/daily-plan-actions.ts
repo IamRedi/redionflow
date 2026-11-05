@@ -9,6 +9,25 @@ import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { sendNotification } from "@/lib/notifications/sendNotification";
 import type { ActionResult } from "@/lib/validation/action-result";
 import { dateKey, dayRange, isTomorrow } from "@/lib/workzone/date-utils";
+import type { Prisma } from '@/generated/prisma/client';
+import { STEEL_TYPES } from '@/lib/dashboard/steel-metrics';
+import { AssetOperationError } from '@/lib/company-assets/access';
+import { assertPlanningMachineUsable } from '@/lib/company-assets/legacy-machine';
+import { assetActionError } from '@/lib/company-assets/action-errors';
+
+async function withSteelPlanningContext<T extends ActionResult>(companyId: string, checkMachines: boolean, work: (tx: Prisma.TransactionClient, actor: { companyId: string } | null) => Promise<T>): Promise<T | ActionResult> {
+  try {
+    // The outer action and pilot boundary authenticate the administrator. Resolve
+    // the company mode on this same connection, never through a privileged fallback.
+    return await withPilotDbContext(companyId, async tx => {
+      const steel = checkMachines && await tx.baustelle.findFirst({ where: { companyProfileId: companyId, type: { in: [...STEEL_TYPES] } }, select: { id: true } });
+      return work(tx, steel ? { companyId } : null);
+    }, 'admin');
+  } catch (error) {
+    if (error instanceof AssetOperationError) return assetActionError(error);
+    throw error;
+  }
+}
 
 function planDay(value: string) {
   const range = dayRange(value);
@@ -116,7 +135,7 @@ export async function moveDailyPlanItemAction(input: {
 
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return { ok: false, message: msg(input.lang, "notSignedIn") };
-  const result = await withPilotDbContext<MoveDailyPlanItemResult>(currentCompanyId, async tx => {
+  const result = await withSteelPlanningContext<MoveDailyPlanItemResult>(currentCompanyId, input.kind === 'MACHINE', async (tx, assetActor) => {
     const targetBaustelle = await tx.baustelle.findFirst({
       where: { id: input.columnId, companyProfileId: currentCompanyId },
       select: { id: true, name: true },
@@ -126,6 +145,7 @@ export async function moveDailyPlanItemAction(input: {
       ? await tx.worker.findFirst({ where: { id: input.itemId, companyProfileId: currentCompanyId }, select: { id: true } })
       : await tx.machine.findFirst({ where: { id: input.itemId, companyProfileId: currentCompanyId }, select: { id: true } });
     if (!ownedItem) return { ok: false, message: msg(input.lang, "assignmentNotFound") };
+    if (assetActor && input.kind === 'MACHINE') await assertPlanningMachineUsable(tx, assetActor, input.itemId);
     const company = await tx.companyProfile.findUnique({ where: { id: currentCompanyId }, select: { id: true } });
     if (!company || company.id !== currentCompanyId) return { ok: false, message: msg(input.lang, "companyNotFound") };
     const plan = await tx.dailyWorkPlan.upsert({
@@ -232,7 +252,7 @@ export async function moveDailyPlanItemAction(input: {
     }
 
     return { ok: true, message: msg(input.lang, "dailyPlanAssigned") };
-  }, "admin");
+  });
   if (!result.ok) return result;
 
   revalidatePath("/workzone");
@@ -312,7 +332,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return { ok: false, message: msg(input.lang, "notSignedIn") };
   let notificationWorkerIds: string[] = [];
-  const result = await withPilotDbContext<ActionResult>(currentCompanyId, async tx => {
+  const result = await withSteelPlanningContext<ActionResult>(currentCompanyId, true, async (tx, assetActor) => {
     const company = await tx.companyProfile.findUnique({ where: { id: currentCompanyId }, select: { id: true } });
     if (!company || company.id !== currentCompanyId) return { ok: false, message: msg(input.lang, "companyNotFound") };
     const plan = await tx.dailyWorkPlan.findUnique({
@@ -335,6 +355,10 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
       },
     });
     if (!plan) return { ok: false, message: msg(input.lang, "dailyPlanNotFound") };
+    if (assetActor) {
+      const machines = [...new Set(plan.columns.flatMap(column => column.assignments.filter(assignment => assignment.kind === 'MACHINE' && assignment.machineId).map(assignment => assignment.machineId!)))].sort();
+      for (const id of machines) await assertPlanningMachineUsable(tx, assetActor, id);
+    }
 
     const rows: PlanRowSnapshot[] = plan.columns.map((column, idx) => {
       const workerNames = column.assignments.filter((a) => a.kind === "WORKER").map((a) => a.labelSnapshot).join(", ");
@@ -405,7 +429,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
       ];
     }
     return { ok: true, message: msg(input.lang, "dailyPlanSaved") };
-  }, "admin");
+  });
   if (!result.ok) return result;
 
   if (isTomorrow(day)) {

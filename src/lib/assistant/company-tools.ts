@@ -5,6 +5,7 @@ import { fuelTimeZone } from '@/lib/fleet/fuel/time';
 import { midnight, nextDay } from '@/lib/dashboard/steel-metrics';
 import type { RequesterContext } from './requester';
 import { categorizeAssistantFailure } from './diagnostics';
+import {assistantAssetGrounding,assetGroundingFields} from './asset-grounding';
 
 type Tx = Prisma.TransactionClient;
 type Page = { cursor?: string; limit?: number };
@@ -89,7 +90,7 @@ function plateVariants(query: string) {
 export async function adminSearchCompanyFleet(requester: RequesterContext, input: Search & { machineId?: string; active?: boolean } = {}) {
   const page = paging(input), query = searchText(input.query);
   if (!page || query === null || (input.active !== undefined && typeof input.active !== 'boolean')) return failure('INVALID_INPUT', 'Use a bounded fleet search and valid page cursor/limit.');
-  return read(requester, 'Machine register and confirmed stored GPS', async (tx, _zone, now) => {
+  const result=await read(requester, 'Machine register and confirmed stored GPS', async (tx, _zone, now) => {
     const where: Prisma.MachineWhereInput = { companyProfileId: requester.companyId,
       ...(input.machineId ? { id: input.machineId } : {}), ...(input.active === undefined ? {} : { isActive: input.active }),
       ...(query ? { OR: [ ...['name', 'nickname', 'model', 'funksioni'].map(field => ({ [field]: { contains: query, mode: 'insensitive' } })), ...plateVariants(query).map(q => ({ targe: { contains: q, mode: 'insensitive' as const } })) ] } : {}) };
@@ -121,6 +122,10 @@ export async function adminSearchCompanyFleet(requester: RequesterContext, input
     return { ...pageInfo(items, total, input, page.limit), identityResolution: input.machineId ? 'exact_id' : query && total > 1 ? 'multiple_candidates_require_clarification' : 'directory_matches',
       caveat: 'GPS is the last stored report, not a live refresh or proof of location now. Null GPS is not proof the machine is offline. No odometer or address is inferred.' };
   });
+  if(!result.ok)return result;
+  const grounding=await assistantAssetGrounding(requester,result.data.items.map(row=>({kind:'machine',id:row.id})));
+  if(!grounding.applicable)return result;
+  return {...result,data:{...result.data,items:result.data.items.map(row=>({...row,...assetGroundingFields(grounding,{kind:'machine',id:row.id},row.active)})),operationalCoverage:{complete:grounding.complete,warning:grounding.warning,retrievedAt:grounding.retrievedAt},caveat:`${result.data.caveat} active/baseRecordActive is only the base register flag; use current operationalAvailability and usable for workflow blocks, never active alone.`}};
 }
 
 function validDay(value: string) {
@@ -172,7 +177,7 @@ export async function adminGetCompanyFuelReceipts(requester: RequesterContext, i
 export async function adminSearchCompanyInventory(requester: RequesterContext, input: Search & { itemId?: string } = {}) {
   const page = paging(input), query = searchText(input.query);
   if (!page || query === null) return failure('INVALID_INPUT', 'Use a bounded inventory search and valid page cursor/limit.');
-  return read(requester, 'CompanyInventoryItem catalog and active worker asset assignments', async tx => {
+  const result=await read(requester, 'CompanyInventoryItem catalog and active worker asset assignments', async tx => {
     const where: Prisma.CompanyInventoryItemWhereInput = { companyProfileId: requester.companyId,
       ...(input.itemId ? { id: input.itemId } : {}), ...(query ? { OR: ['name', 'itemCode', 'barcode'].map(field => ({ [field]: { contains: query, mode: 'insensitive' } })) } : {}) };
     const [total, rows] = await Promise.all([
@@ -185,4 +190,8 @@ export async function adminSearchCompanyInventory(requester: RequesterContext, i
       size: r.sizeLabel, active: r.isActive, updatedAt: iso(r.updatedAt), activeWorkerAssignments: r._count.workerAssignments })), total, input, page.limit),
       caveat: 'These are catalog entries and active recorded assignments, not physical stock quantities or availability. No quantity/condition is inferred from catalog presence.' };
   });
+  if(!result.ok)return result;
+  const grounding=await assistantAssetGrounding(requester,result.data.items.map(row=>({kind:'inventory',id:row.id})));
+  if(!grounding.applicable)return result;
+  return {...result,data:{...result.data,items:result.data.items.map(row=>({...row,...assetGroundingFields(grounding,{kind:'inventory',id:row.id},row.active)})),operationalCoverage:{complete:grounding.complete,warning:grounding.warning,retrievedAt:grounding.retrievedAt}}};
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AdminFleet } from "@/components/dashboard/admin-fleet";
+import { assetCopy } from '@/components/company-assets/copy';
 import { isSteelCompany } from "@/lib/dashboard/steel-access";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
 import { AdminNavGroup } from "@/components/shell/admin-nav-group";
@@ -54,6 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const features = getFeatures(mode);
   const production = mode === 'bau' && Boolean(admin.companyProfileId) && await isSteelCompany(admin.companyProfileId!);
   const branding = productBranding(mode);
+  const assets = assetCopy(currentLang);
 
   const navSections: AdminNavSection[] = [
     {
@@ -61,7 +63,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       items: [
         { href: "/app/admin", label: t("admin.navPersonalFleet", currentLang, mode), activePrefixes: ["/app/admin/workers/", "/app/admin/day/", "/app/admin/machines/"] },
         { href: "/app/fleet-gps", label: t("admin.navFleetGps", currentLang, mode), requires: "gps" },
-        { href: "/app/admin/inventory", label: t("admin.navBarcodeInventory", currentLang, mode), requires: "inventory" },
+        { href: "/app/admin/inventory", label: production ? assets.warehouse : t("admin.navBarcodeInventory", currentLang, mode), requires: "inventory" },
+        ...(production ? [{ href: '/app/workshop', label: assets.workshop, requires: 'inventory' as const }] : []),
         { href: "/app/safety", label: t("admin.navSafetyEquipment", currentLang, mode), requires: "inventory" },
       ],
     },
@@ -99,7 +102,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <header data-testid="admin-topbar" className={production ? "relative z-10 print:hidden" : "sticky top-0 z-10 print:hidden"}>
         <FlowTopBar contained={production} />
       </header>
-      <AdminFleet production={production} machines={machines} isAdmin showCones={showCones} country={country} />
+      {!production && <AdminFleet production={false} machines={machines} isAdmin showCones={showCones} country={country} />}
       <div className={production ? `${workspace.body} ${workspace.admin}` : 'grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24'}>
         <aside data-testid={production ? 'app-workspace-navigation' : undefined} className={`${production ? workspace.navigation : 'min-w-0'} print:hidden`}>
           {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}
@@ -168,6 +171,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
           {!production && <RediOnFooter />}
         </div>
+        {production && <AdminFleet production machines={machines} isAdmin showCones={showCones} country={country} />}
       </div>
     </div>
   );

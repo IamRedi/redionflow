@@ -18,6 +18,9 @@ describe("crew permissions", () => {
   it("office handles orders and costs but no steps", () => {
     expect(crewPermissions({ isAdmin: false, crewRole: "OFFICE" })).toMatchObject({ siteSteps: false, factorySteps: false, office: true });
   });
+  it("a mechanic is not implicitly a production engineer, even with a legacy foreman level", () => {
+    expect(crewPermissions({ isAdmin: false, crewRole: "MECHANIC", level: "MEISTER" })).toEqual({ siteSteps: false, factorySteps: false, office: false, reportMissing: true });
+  });
   it("nobody signed in may do nothing", () => {
     expect(crewPermissions(null).reportMissing).toBe(false);
   });

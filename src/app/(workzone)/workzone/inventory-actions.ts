@@ -1,6 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from 'node:crypto';
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { runAssetOperationAction } from './asset-operations-actions';
+import { assetWorkflowMessage } from '@/lib/company-assets/action-errors';
 
 import type { Prisma } from "@/generated/prisma/client";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
@@ -42,6 +46,7 @@ function revalidateInventoryPaths(workerId?: string | null) {
 
 async function getInventoryActor() {
   const [admin, worker] = await Promise.all([getCurrentAdmin(), getCurrentWorker()]);
+  if (admin && worker) return null;
   if (admin) {
     return {
       role: "ADMIN",
@@ -172,11 +177,17 @@ export async function submitWorkerInventoryAssignmentAction(formData: FormData):
         })
       : null;
 
+  if (companyInventoryItemId && !companyItem) return { ok: false, message: tr("itemNotFound") };
+
   if (!companyItem && !itemName) {
     return { ok: false, message: tr("inventoryNameOrCompanyItemRequired") };
   }
 
   if (companyItem) {
+    if (await isSteelCompany(worker.companyProfileId)) {
+      const result = await runAssetOperationAction({ requestId: randomUUID(), command: { type: 'handover', asset: { kind: 'inventory', id: companyItem.id }, kind: 'issue', toWorkerId: workerId, note: note || undefined } });
+      return result.ok ? { ok: true, message: await assetWorkflowMessage() } : result;
+    }
     const activeAssignment = await findActiveAssignment(prisma, companyItem.id);
     if (activeAssignment && activeAssignment.workerId !== workerId) {
       const assignedName = `${activeAssignment.worker.firstName} ${activeAssignment.worker.lastName}`.trim();
@@ -267,6 +278,8 @@ export async function scanWorkerInventoryBarcodeAction(formData: FormData): Prom
   const kind = String(formData.get("kind") ?? "EQUIPMENT");
 
   if (!barcode) return { ok: false, message: tr("barcodeMissing") };
+  const companyId = await getCurrentCompanyId();
+  if (companyId && await isSteelCompany(companyId) && await prisma.companyInventoryItem.findFirst({ where: { companyProfileId: companyId, barcode }, select: { id: true } })) return { ok: false, message: await assetWorkflowMessage() };
 
   const next = new FormData();
   next.set("workerId", workerId);
@@ -298,9 +311,14 @@ export async function returnWorkerInventoryItemAction(formData: FormData): Promi
       worker: { select: { companyProfileId: true } },
     },
   });
-  if (!item) return { ok: false, message: tr("itemNotFound") };
+  const currentCompanyId = await getCurrentCompanyId();
+  if (!item || !currentCompanyId || item.worker.companyProfileId !== currentCompanyId) return { ok: false, message: tr("itemNotFound") };
   if (actor.role === "WORKER" && actor.workerId !== item.workerId) return { ok: false, message: tr("profileAccessDenied") };
   if (item.status === "DELETED") return { ok: true, message: tr("inventoryAlreadyReturned") };
+  if (item.companyInventoryItemId && !item.isPrivate && await isSteelCompany(currentCompanyId)) {
+    const result = await runAssetOperationAction({ requestId: randomUUID(), command: { type: 'handover', asset: { kind: 'inventory', id: item.companyInventoryItemId }, kind: 'return' } });
+    return result.ok ? { ok: true, message: await assetWorkflowMessage() } : result;
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.workerAssetItem.update({
@@ -339,6 +357,7 @@ export async function createAdminInventoryItemAction(formData: FormData): Promis
   if (!actor || actor.role !== "ADMIN") return { ok: false, message: tr("adminOnly") };
 
   const company = await getOrCreateDefaultCompany();
+  if (await isSteelCompany(company.id)) return { ok: false, message: await assetWorkflowMessage() };
   const category = inventoryCategoryFromKind(String(formData.get("category") ?? "WORK_TOOL"));
   const itemCodeInput = String(formData.get("itemCode") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -386,6 +405,7 @@ export async function updateAdminInventoryItemAction(formData: FormData): Promis
   if (!id || !itemCode || !name) return { ok: false, message: tr("nameAndIdRequired") };
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return { ok: false, message: tr("notSignedIn") };
+  if (await isSteelCompany(currentCompanyId)) return { ok: false, message: await assetWorkflowMessage() };
   const existingItem = await prisma.companyInventoryItem.findUnique({
     where: { id },
     select: { id: true, barcode: true, companyProfileId: true },
@@ -425,6 +445,7 @@ export async function generateAdminInventoryBarcodeAction(formData: FormData): P
   if (!id) return { ok: false, message: tr("itemNotFound") };
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return { ok: false, message: tr("notSignedIn") };
+  if (await isSteelCompany(currentCompanyId)) return { ok: false, message: await assetWorkflowMessage() };
   const existingItem = await prisma.companyInventoryItem.findUnique({
     where: { id },
     select: { barcode: true, companyProfileId: true },

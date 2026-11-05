@@ -1522,6 +1522,7 @@
     "crewRole": "Roli në punë",
     "crewRoleNone": "Pa rol",
     "crewRoles": {
+      "MECHANIC": "Mekanik",
       "FIELD_ENGINEER": "Inxhinier terreni",
       "FACTORY_ENGINEER": "Inxhinier fabrike",
       "OFFICE": "Punonjës zyre",

@@ -192,6 +192,7 @@ enum AssistantLanguage {
 }
 
 model User {
+  companyAssetFiles CompanyAssetFile[] @relation("AssetFileUser")
   id                String            @id @default(cuid())
   email             String            @unique
   name              String?
@@ -239,9 +240,17 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@index([companyProfileId])
+  @@unique([companyProfileId,id])
 }
 
 model CompanyProfile {
+  operationalAssets CompanyOperationalAsset[]
+  assetHandovers CompanyAssetHandover[]
+  assetIncidents CompanyAssetIncident[]
+  assetRepairs CompanyAssetRepair[]
+  assetEvents CompanyAssetEvent[]
+  assetFiles CompanyAssetFile[]
+  assetCommandReceipts CompanyAssetCommandReceipt[]
   steelWorkDefinitions SteelWorkDefinition[]
   steelWorkVisuals SteelWorkVisual[]
   steelSiteTasks SteelSiteTask[]
@@ -574,6 +583,7 @@ model CompanyInventoryCatalog {
 }
 
 model CompanyInventoryItem {
+  operationalAsset CompanyOperationalAsset?
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -593,6 +603,7 @@ model CompanyInventoryItem {
   updatedAt DateTime @updatedAt
 
   @@unique([companyProfileId, itemCode])
+  @@unique([companyProfileId,id])
   @@index([companyProfileId, category])
   @@index([isActive])
 }
@@ -644,6 +655,7 @@ model LaborRole {
 }
 
 model Machine {
+  operationalAsset CompanyOperationalAsset?
   wanwayDevices WanwayDevice[]
   fuelReceipts FuelReceipt[]
   id               String         @id @default(cuid())
@@ -832,6 +844,11 @@ model MachineConeMovement {
 }
 
 model Worker {
+  operationalAssets CompanyOperationalAsset[] @relation("AssetHolder")
+  assetHandoversFrom CompanyAssetHandover[] @relation("AssetHandoverFrom")
+  assetHandoversTo CompanyAssetHandover[] @relation("AssetHandoverTo")
+  assetRepairOrigins CompanyAssetRepair[] @relation("AssetRepairOrigin")
+  companyAssetFiles CompanyAssetFile[] @relation("AssetFileWorker")
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -898,6 +915,161 @@ model Worker {
   @@index([companyProfileId])
   @@index([status])
   @@index([availability])
+  @@unique([companyProfileId,id])
+}
+
+/// Operational overlay; existing machines, issued rows and history are retained.
+model CompanyOperationalAsset {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  machineId String? @unique
+  machine Machine? @relation(fields:[companyProfileId,machineId],references:[companyProfileId,id],onDelete:Restrict)
+  inventoryItemId String? @unique
+  inventoryItem CompanyInventoryItem? @relation(fields:[companyProfileId,inventoryItemId],references:[companyProfileId,id],onDelete:Restrict)
+  disposition String @default("active")
+  revision Int @default(0)
+  holderWorkerId String?
+  holder Worker? @relation("AssetHolder",fields:[companyProfileId,holderWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  siteId String?
+  site Baustelle? @relation("AssetSite",fields:[companyProfileId,siteId],references:[companyProfileId,id],onDelete:Restrict)
+  wasActive Boolean?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  handovers CompanyAssetHandover[]
+  incidents CompanyAssetIncident[]
+  repairs CompanyAssetRepair[]
+  events CompanyAssetEvent[]
+  files CompanyAssetFile[]
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,disposition])
+  @@unique([companyProfileId,machineId])
+  @@unique([companyProfileId,inventoryItemId])
+}
+
+model CompanyAssetHandover {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  kind String
+  status String @default("pending")
+  revision Int @default(1)
+  fromWorkerId String?
+  fromWorker Worker? @relation("AssetHandoverFrom",fields:[companyProfileId,fromWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  toWorkerId String?
+  toWorker Worker? @relation("AssetHandoverTo",fields:[companyProfileId,toWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  siteId String?
+  site Baustelle? @relation("AssetHandoverSite",fields:[companyProfileId,siteId],references:[companyProfileId,id],onDelete:Restrict)
+  required Json
+  confirmations Json
+  createdByKey String
+  createdByName String
+  note String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,status])
+}
+
+model CompanyAssetIncident {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  kind String
+  status String @default("pending")
+  revision Int @default(1)
+  note String
+  reportedByKey String
+  reportedByName String
+  decisionNote String?
+  decidedByName String?
+  decidedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,status])
+}
+
+model CompanyAssetRepair {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  phase String @default("reported")
+  location String @default("internal")
+  provider String @default("")
+  problem String
+  repairNote String @default("")
+  tested Boolean @default(false)
+  revision Int @default(1)
+  reportedByKey String
+  reportedByName String
+  originWorkerId String?
+  originWorker Worker? @relation("AssetRepairOrigin",fields:[companyProfileId,originWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files CompanyAssetFile[]
+  events CompanyAssetEvent[]
+  @@unique([companyProfileId,assetId,id])
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,phase])
+}
+
+model CompanyAssetEvent {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  repairId String?
+  repair CompanyAssetRepair? @relation(fields:[companyProfileId,assetId,repairId],references:[companyProfileId,assetId,id],onDelete:Restrict)
+  type String
+  actorKey String
+  actorName String
+  note String @default("")
+  createdAt DateTime @default(now())
+  @@index([companyProfileId,assetId,createdAt])
+}
+
+model CompanyAssetFile {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  repairId String?
+  repair CompanyAssetRepair? @relation(fields:[companyProfileId,assetId,repairId],references:[companyProfileId,assetId,id],onDelete:Restrict)
+  kind String
+  mime String
+  name String
+  size Int
+  dataBytes Bytes
+  sha256 String
+  uploadedByUserId String?
+  uploadedByUser User? @relation("AssetFileUser",fields:[companyProfileId,uploadedByUserId],references:[companyProfileId,id],onDelete:Restrict)
+  uploadedByWorkerId String?
+  uploadedByWorker Worker? @relation("AssetFileWorker",fields:[companyProfileId,uploadedByWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  uploadedByName String
+  createdAt DateTime @default(now())
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,assetId,createdAt])
+}
+
+model CompanyAssetCommandReceipt {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  requestId String
+  actorKey String
+  fingerprint String
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([companyProfileId,requestId])
 }
 
 model NotificationSubscription {
@@ -1106,6 +1278,8 @@ model MachineBaustellePresence {
 }
 
 model Baustelle {
+  operationalAssets CompanyOperationalAsset[] @relation("AssetSite")
+  assetHandovers CompanyAssetHandover[] @relation("AssetHandoverSite")
   steelTasks SteelSiteTask[]
   id               String         @id @default(cuid())
   companyProfileId String

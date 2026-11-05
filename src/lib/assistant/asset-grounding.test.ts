@@ -1,0 +1,20 @@
+import {beforeEach,expect,it,vi} from 'vitest';
+const mocks=vi.hoisted(()=>({steel:vi.fn(),actor:vi.fn(),read:vi.fn(),tenant:vi.fn()}));
+vi.mock('@/lib/dashboard/steel-access',()=>({isSteelCompany:mocks.steel}));
+vi.mock('@/lib/company-assets/access',()=>({assetActor:mocks.actor}));
+vi.mock('@/lib/company-assets/service',()=>({readCanonicalAssetFacts:mocks.read}));
+vi.mock('@/lib/db/tenant-context',()=>({withTenantContext:mocks.tenant}));
+import {assistantAssetGrounding,assetGroundingFields} from './asset-grounding';
+import type {RequesterContext} from './requester';
+const requester:RequesterContext={kind:'admin',adminId:'admin-fixture',companyId:'tenant-fixture',displayName:'Fictional chief',preferredLanguage:'SQ'};
+const ref={kind:'machine' as const,id:'machine-fixture'};
+beforeEach(()=>{vi.resetAllMocks();mocks.steel.mockResolvedValue(true);mocks.actor.mockResolvedValue({companyId:requester.companyId,userId:requester.adminId,workerId:null,canManage:true,canRepair:true});mocks.tenant.mockImplementation(async(_company:string,fn:(tx:unknown)=>unknown)=>fn({fixture:true}));mocks.read.mockResolvedValue([{ref,baseRecordActive:true,operationalAvailability:'reported',usable:false}]);});
+it('keeps base active while exposing a canonical pending defect as unusable',async()=>{
+ const result=await assistantAssetGrounding(requester,[ref]);expect(result.complete).toBe(true);expect(assetGroundingFields(result,ref,true)).toMatchObject({baseRecordActive:true,operationalAvailability:'reported',usable:false,operationalCoverageComplete:true,operationalTimeBasis:'current_status_not_historical_plan_date'});
+ expect(mocks.tenant).toHaveBeenCalledWith(requester.companyId,expect.any(Function));expect(mocks.read).toHaveBeenCalledWith({fixture:true},expect.objectContaining({companyId:requester.companyId}),[ref]);
+});
+it('leaves non-steel consumers unchanged and reads no new asset data',async()=>{mocks.steel.mockResolvedValue(false);const result=await assistantAssetGrounding(requester,[ref]);expect(result.applicable).toBe(false);expect(assetGroundingFields(result,ref,true)).toEqual({});expect(mocks.actor).not.toHaveBeenCalled();expect(mocks.read).not.toHaveBeenCalled();});
+it.each([{companyId:'foreign',userId:'admin-fixture'},{companyId:'tenant-fixture',userId:'different-admin'}])('fails closed for a mismatched fresh actor %j',async actor=>{mocks.actor.mockResolvedValue(actor);const result=await assistantAssetGrounding(requester,[ref]);expect(result).toMatchObject({applicable:true,complete:false,items:[]});expect(mocks.read).not.toHaveBeenCalled();});
+it('represents database/auth failures as unknown, never usable or zero, without raw diagnostics',async()=>{mocks.read.mockRejectedValue(new Error('PRIVATE_SQL_OR_CONNECTION'));const result=await assistantAssetGrounding(requester,[ref]);expect(assetGroundingFields(result,ref,true)).toMatchObject({baseRecordActive:true,operationalAvailability:null,usable:null,operationalCoverageComplete:false});expect(JSON.stringify(result)).not.toContain('PRIVATE_SQL_OR_CONNECTION');expect(result.warning).toContain('Do not infer missing states');});
+it('does not silently treat missing or unexpected IDs as a complete status set',async()=>{mocks.read.mockResolvedValue([{ref:{kind:'machine',id:'foreign-unrequested'},baseRecordActive:true,operationalAvailability:'available',usable:true}]);const result=await assistantAssetGrounding(requester,[ref]);expect(result).toMatchObject({complete:false,items:[]});expect(assetGroundingFields(result,ref).usable).toBeNull();});
+it('deduplicates exact identities but rejects an unbounded read instead of taking the first subset',async()=>{await assistantAssetGrounding(requester,[ref,ref]);expect(mocks.read.mock.calls[0][2]).toEqual([ref]);mocks.read.mockClear();expect(await assistantAssetGrounding(requester,Array.from({length:501},(_,i)=>({kind:'machine',id:`fixture-${i}`})))).toMatchObject({complete:false,items:[]});expect(mocks.read).not.toHaveBeenCalled();});

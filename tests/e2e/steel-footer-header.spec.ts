@@ -64,6 +64,9 @@ test('steel footer ends the content and the transparent header keeps one book en
               expect(state.workersReachTools).toBe(true);
             }
             await main.press('PageDown');
+            // A short landscape viewport advances less than 100px per keypress.
+            // Preserve the underlay threshold and verify it after two page steps.
+            await main.press('PageDown');
             await expect.poll(() => main.evaluate(el => el.scrollTop)).toBeGreaterThan(state.headerTop + 100);
             const underlay = await page.evaluate(() => {
               const main = document.querySelector('[data-testid="app-workspace-scroll"]')!, content = main.firstElementChild!;

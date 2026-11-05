@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { checkLimit } from "@/lib/billing/limits";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
+import { updateMachineWithAssetGuard } from '@/lib/company-assets/legacy-machine';
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -101,7 +102,7 @@ export default async function MachinesPage() {
     if (!currentCompanyId || currentCompanyId !== companyId) return;
     const existing = await prisma.machine.findFirst({ where: { companyProfileId: companyId, name } });
     if (existing) {
-      await prisma.machine.update({ where: { id: existing.id }, data });
+      await updateMachineWithAssetGuard(companyId, existing.id, data);
     } else {
       const limit = await checkLimit(currentCompanyId, "machines");
       if (!limit.ok) return;
