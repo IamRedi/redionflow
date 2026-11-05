@@ -59,15 +59,22 @@ function datesInQuestion(text: string, today: string) {
   return { dates: [...dates], invalidDates: [...invalidDates] };
 }
 
+function periodText(value: string) {
+  // Albanian "shkurt" also means "briefly". A response-style instruction
+  // must not turn yesterday's question into a February/day comparison.
+  return value.normalize('NFD').replace(/\p{M}/gu, '')
+    .replace(/\b(pergjigju|pergjigje|thuaj|shpjego|trego|kthe|shkruaj)\s+(?:(?:me|sa|te|nje)\s+){0,2}shkurt\b/giu, '');
+}
+
 function otherTimeScope(value: string) {
-  const text = value.normalize('NFD').replace(/\p{M}/gu, '');
+  const text = periodText(value);
   return /\b(\d{4}|muaj\w*|month\w*|monat\w*|mese|luna|miesiac\w*|jave\w*|week\w*|woche\w*|vit\w*|year\w*|jahr\w*|janar|shkurt|mars|prill|maj|qershor|korrik|gusht|shtator|tetor|nentor|dhjetor)\b/iu.test(text);
 }
 
 function otherPeriodScope(value: string) {
   // Remove whole day dates before looking for a standalone year/month so a
   // historical date such as 2025-11-01 remains a single-day instruction.
-  const text = value.normalize('NFD').replace(/\p{M}/gu, '')
+  const text = periodText(value)
     .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, '')
     .replace(/\b\d{1,2}[./]\d{1,2}[./]\d{4}\b/g, '');
   return /\b(muaj\w*|month\w*|monat\w*|mes[ei]|lun[ai]|miesiac\w*|jav\w*|week\w*|woche\w*|settimana|saptamana|tydzien|vit\w*|year\w*|jahr\w*|anno|anul|rok\w*|janar|shkurt|mars|prill|maj|qershor|korrik|gusht|shtator|tetor|nentor|dhjetor|(?:19|20)\d{2})\b/iu.test(text);

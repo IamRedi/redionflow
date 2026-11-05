@@ -10,6 +10,8 @@ vi.mock('@/lib/db/tenant-context', () => ({ withTenantContext: vi.fn(async (_com
 vi.mock('@/lib/dashboard/steel-data', () => ({ steelDashboardData: vi.fn() }));
 import { adminGetSteelElement, adminGetSteelProductionEvidence, adminGetSteelProductionSummary, adminSearchSteelProjects } from './steel-tools';
 import type { RequesterContext } from './requester';
+import { steelDashboardData } from '@/lib/dashboard/steel-data';
+import { emptyMetric, emptyMetrics } from '@/lib/dashboard/steel-metrics';
 const admin: RequesterContext = { kind: 'admin', adminId: 'admin-demo', companyId: 'company-demo', displayName: 'Synthetic', preferredLanguage: 'SQ' };
 beforeEach(() => {
   vi.clearAllMocks();
@@ -62,4 +64,33 @@ it('uses captured weights, marks legacy and missing weights, and keeps distinct 
 it('preserves storage failures rather than falsely reporting no production', async () => {
   state.tx.siteElementWork.findMany.mockRejectedValue(new Error('Synthetic database failure'));
   await expect(adminGetSteelProductionEvidence(admin, { date: '2026-11-01' })).rejects.toThrow('Synthetic database failure');
+});
+it('exposes selected-day project metrics only for the existing project page without substituting monthly or page totals', async () => {
+  const metric = (kg: number) => ({ ...emptyMetric(), kg, checks: 1, pieces: 1 });
+  const progress = { kg: 0, totalPieces: 0, readyKg: 0, readyPieces: 0, mountedKg: 0, missingPieces: 0, stages: {} };
+  const month = { ...emptyMetrics(), assembled: metric(60) };
+  vi.mocked(steelDashboardData).mockResolvedValue({ month: '2026-11', day: '2026-11-03', totalProgress: progress, totals: month,
+    days: [{ key: '2026-11-03', checks: 3, metrics: { ...emptyMetrics(), assembled: metric(6) } }, { key: '2026-11-04', checks: 3, metrics: { ...emptyMetrics(), assembled: metric(54) } }],
+    projectRows: [
+      { id: 'a', name: 'Demo A', status: 'active', progress, month: { ...emptyMetrics(), assembled: metric(10) } },
+      { id: 'b', name: 'Demo B', status: 'active', progress, month: { ...emptyMetrics(), assembled: metric(20) } },
+      { id: 'c', name: 'Demo C', status: 'active', progress, month: { ...emptyMetrics(), assembled: metric(30) } },
+    ], dayProjects: [
+      { id: 'a', name: 'Demo A', metrics: { ...emptyMetrics(), assembled: metric(1) }, checks: 1, operations: [{ stage: 'welding' }] },
+      { id: 'b', name: 'Demo B', metrics: { ...emptyMetrics(), assembled: metric(2) }, checks: 1, operations: [] },
+      { id: 'c', name: 'Demo C', metrics: { ...emptyMetrics(), assembled: metric(3) }, checks: 1, operations: [] },
+      { id: 'not-in-page-set', name: 'Not a selected project', metrics: { ...emptyMetrics(), assembled: metric(9999) }, checks: 1, operations: [] },
+    ],
+  } as unknown as Awaited<ReturnType<typeof steelDashboardData>>);
+  const first = await adminGetSteelProductionSummary(admin, { date: '2026-11-03', limit: 1 });
+  expect(first).toMatchObject({ ok: true, selectedDate: '2026-11-03', projectCount: 3, projectPageComplete: false, selectedDayProjectsPageComplete: false, nextProjectCursor: 'a',
+    monthlyProduction: { assembled: { kg: 60 } }, projects: [{ id: 'a', monthlyProduction: { assembled: { kg: 10 } } }],
+    selectedDayProjects: [{ id: 'a', name: 'Demo A', checks: 1, metrics: { assembled: { kg: 1 } } }] });
+  if (!first.ok) throw new Error('Expected first summary page');
+  expect(first.selectedDayProjects).toHaveLength(1);
+  expect(first.selectedDayProjects[0]).not.toHaveProperty('operations');
+  const last = await adminGetSteelProductionSummary(admin, { date: '2026-11-03', limit: 1, projectCursor: 'b' });
+  expect(last).toMatchObject({ ok: true, projectCount: 3, projectPageComplete: true, selectedDayProjectsPageComplete: true, nextProjectCursor: null,
+    monthlyProduction: { assembled: { kg: 60 } }, selectedDayProjects: [{ id: 'c', metrics: { assembled: { kg: 3 } } }] });
+  expect(JSON.stringify(last)).not.toContain('Not a selected project');
 });

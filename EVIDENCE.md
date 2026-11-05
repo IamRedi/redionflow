@@ -2,6 +2,47 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — canonical factory-production answers (follow-up candidate)
+
+PR52/head89f52d3 was owner-approved and merged as
+adc4144b5f68b97016a86e62d7d6f76df88eb049 with identical reviewed tree
+0403edef935d26a3c26ba468c929b7289a0eff1d. Railway deployment
+010343e7-655f-465d-bc18-b0f4b858e243 succeeded at12:51:04UTC; no pending
+migration and health200/ok. A fourth authorized real read-only probe asked for
+one concise factory-production sentence. It exposed a new semantic failure:
+the model added cutting and assembly kg into a fabricated single output total.
+The legacy qualifier guard cannot validate such invented arithmetic. The bad
+turn, source trace and safe diagnostics remain in private history for audit;
+no customer transcript/name/quantity is reproduced here. Stream completion is
+not semantic acceptance.
+
+This candidate renders narrowly recognized factory quantity answers directly
+from successful canonical day/month summaries, with three separate processes,
+pieces, legacy approximation and explicit unknown weights. Details use paged
+selected-day facts rather than month/current-progress rows. Source failure or
+unsupported period comparison stays unknown/clarified, never inferred zero.
+Possession/stock, named-project and process/worker-specific requests retain
+their normal tool path. The Albanian response-style phrase "përgjigju shkurt"
+no longer mistakes a yesterday question for a February/day comparison.
+No schema, business data, UI, provider, dependency or budget changes.
+
+Local laptop validation PASS:286 assistant unit tests/19 files (17.04s),
+29 PostgreSQL integration tests/5 files (44.88s), schema drift check, scoped
+ESLint, application TypeScript/production build, staged Gitleaks and independent
+static review.66 source/test/schema/doc SHA256 values match the tested WSL
+mirror. Review found and corrected stock/project/unsupported-period overmatching;
+the route regression reproduces the exact brief-answer/date wording with
+fictional values and verifies delivered text equals archived text. An initial
+type-check failure in inherited intent spreading was corrected and rechecked.
+The new SQL payload/pagination regression passed before the final classifier-only
+adjustment; unit/lint/build were rerun on the final code. No UI component changed,
+so the earlier UI rendering suite was not repeated. The task DB is stopped.
+This candidate requires separate owner approval and post-publication
+real-provider acceptance; PR52 is already live.
+Public showcase/About/portfolio assessment remains NO_CONTENT_CHANGE for this
+internal accuracy correction. Existing unrelated portfolio/documentation work
+remains separate; no customer data or private screenshots go to public media.
+
 ## 5 November 2026 — real-provider readback and legacy-weight precision
 
 PR51/head a557b09 was explicitly approved and merged as
@@ -25,15 +66,17 @@ the emitted text is checkpointed/archived. It preserves digits, locale formattin
 units and existing approximation signs; date/month scopes and complete-page
 project derivations are explicit. It does not rewrite historical answers or
 business data. Private diagnostic counts identify the guard's intervention.
-This follow-up candidate is not yet published and requires its own owner approval.
+Historical checkpoint: this candidate awaited approval here; PR52 was later
+approved/published as recorded above. Its first real probe exposed a separate
+semantic arithmetic failure, addressed by the new follow-up candidate.
 Local follow-up verification:229 assistant unit tests/18 files PASS3.05s,
 scoped ESLint, production build/application TypeScript, staged Gitleaks and
 independent static review PASS.64 source/test/schema/doc hashes match the WSL
 mirror. No new SQL/schema, DB mutation, UI component, provider or cost changes;
 the earlier28 PostgreSQL cases were not repeated. Fictional tests cover scope,
 locale/Markdown, complete-page grouping, missing-weight zero, transform failure
-and identical delivered/archived text. Real-provider acceptance of this guard
-waits for the approved follow-up publication.
+and identical delivered/archived text. The later real probe demonstrates why
+this qualifier guard alone is not semantic answer validation.
 Equal numbers can conservatively share a qualifier; this bounded guard is not a
 general proof that all model statements are correct. Physical phone IME/text
 zoom and broader owner acceptance remain separate. Public presentation/card/

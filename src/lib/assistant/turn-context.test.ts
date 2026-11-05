@@ -46,6 +46,11 @@ describe('company-calendar grounding', () => {
     expect(turn('Sa kg më 2025-11-01?')).toMatchObject({ singleDate: '2025-11-01', mixedPeriods: false });
     expect(turn('Sa kg më 5.11.2025?')).toMatchObject({ singleDate: '2025-11-05', mixedPeriods: false });
   });
+  it('distinguishes a brief-answer instruction from the Albanian month February', () => {
+    expect(turn('Sa materiale ka bërë fabrika dje? Përgjigju shkurt me një fjali.')).toMatchObject({ singleDate: '2026-10-31', mixedPeriods: false });
+    expect(turn('Sa kg dje?', 'edhe te Demo, përgjigju shkurt')).toMatchObject({ singleDate: '2026-10-31', mixedPeriods: false });
+    expect(turn('Krahaso shkurt 2026 me dje. Përgjigju shkurt.')).toMatchObject({ singleDate: null, mixedPeriods: true });
+  });
   it('does not collapse an open-ended since/from range to its single starting day', () => {
     for (const question of ['Sa orë që prej 2026-01-01?', 'Sa orë nga 2026-01-01?', 'Hours since 2026-01-01', 'Hours from 2026-01-01', 'Stunden seit 2026-01-01']) {
       const range = turn(question);
