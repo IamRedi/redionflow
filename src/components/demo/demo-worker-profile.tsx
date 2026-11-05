@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
@@ -145,7 +146,7 @@ function whatsappHref(phone: string | null) {
   return `https://wa.me/${cleaned}`;
 }
 
-export async function DemoWorkerProfileView({ worker }: { worker: DemoWorkerProfile }) {
+export async function DemoWorkerProfileView({ worker, inventoryContent }: { worker: DemoWorkerProfile; inventoryContent?: ReactNode }) {
   const currentLang = await resolveRequestLanguage();
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
   const history = worker.sessions.filter((session) => (!session.isLive || session.endTime) && isReportableSession(session)).slice(0, 15);
@@ -157,7 +158,7 @@ export async function DemoWorkerProfileView({ worker }: { worker: DemoWorkerProf
   const whatsappUrl = whatsappHref(worker.phone);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className={inventoryContent ? "space-y-5" : "mx-auto max-w-6xl space-y-5"}>
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <div className="h-28 bg-[#163328]" />
         <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6">
@@ -186,6 +187,7 @@ export async function DemoWorkerProfileView({ worker }: { worker: DemoWorkerProf
         </div>
       </div>
 
+      {inventoryContent}
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr_0.9fr]">
         <Card>
           <CardHeader className="pb-3">
@@ -291,7 +293,7 @@ export async function DemoWorkerProfileView({ worker }: { worker: DemoWorkerProf
         </Card>
       </div>
 
-      <Card>
+      {!inventoryContent && <Card>
         <CardHeader>
           <CardTitle>{t("workzone.equipmentClothingTitle", currentLang)}</CardTitle>
           <CardDescription>{t("workzone.equipmentClothingDescription", currentLang)}</CardDescription>
@@ -374,7 +376,7 @@ export async function DemoWorkerProfileView({ worker }: { worker: DemoWorkerProf
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       <Card>
         <CardHeader>

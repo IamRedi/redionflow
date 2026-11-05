@@ -2,11 +2,16 @@ import { notFound } from "next/navigation";
 
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
 import { DemoWorkerProfileView } from "@/components/demo/demo-worker-profile";
-import { getOrCreateDefaultCompany } from "@/lib/db/company";
+import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
+import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
+import { demoWorkerKey, requireWorkshopDemo } from "@/lib/workshop/shared-store";
+import { InventoryScope } from "@/components/demo/workshop/inventory-scope";
 
 export default async function DemoWorkerProfilePage({ params }: { params: Promise<{ workerId: string }> }) {
   const company = await getOrCreateDefaultCompany();
+  const inventoryEnabled = isBaumdienstWorkshopDemoEnabled(await getCompanyMode());
+  if (inventoryEnabled) await requireWorkshopDemo();
   const { workerId } = await params;
   const worker = await prisma.worker.findFirst({
     where: { id: workerId, companyProfileId: company.id },
@@ -37,10 +42,10 @@ export default async function DemoWorkerProfilePage({ params }: { params: Promis
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      {!inventoryEnabled && <div className="flex justify-end">
         <DemoReadonlyBadge />
-      </div>
-      <DemoWorkerProfileView worker={{ ...worker, inventoryMovements }} />
+      </div>}
+      <DemoWorkerProfileView worker={{ ...worker, inventoryMovements }} inventoryContent={inventoryEnabled ? <InventoryScope scope="worker" identity={demoWorkerKey(worker)} now={new Date().toISOString()} /> : undefined} />
     </div>
   );
 }
