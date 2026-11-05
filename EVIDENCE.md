@@ -2,7 +2,79 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
-## 5 November 2026 — catalog released; illustration follow-up awaiting approval
+## 5 November 2026 — recognizable illustrations from the native steel style
+
+Base/runtime: approved PR59 is live at3526d353095fde15dcd290cbc7f6b6a2c13bc894,
+Railway1aaf2296-b44b-4000-b5d4-242556da7595 SUCCESS19:27:27.559UTC.
+Its one real SVG request succeeded and persisted (901tokens), but the owner
+rejected the resulting abstract scene as an unclear depiction of the operation.
+Technical persistence acceptance was not semantic/visual acceptance. The older
+621token failure's precise cause remains unknown. Those historical records below
+are preserved and superseded only for the current continuation point.
+
+Owner clarification: the requested trim task concerns folded sheet metal at
+roof/facade edges. The new shared illustration brief describes the actual folded
+edge, fixing screw and contacting orange driver. It uses the native steel palette
+and a shipped synthetic PNG reference made offline from our own four SVG scenes.
+Native palette extraction was byte-identical in42 phase/site markup comparisons.
+Generated images use contain rather than crop; uploaded photos retain cover.
+A small44px illustration action saves current edits and requests one replacement;
+uploaded original photos have no AI replacement action and remain protected.
+
+Image generation is an explicit new model/cost contract: the existing installed
+SDK6/OpenAI3 image adapter, pinned gpt-image-2.5-flare-2026-09-08,one image edit,
+1024×768,medium,transparent WebP80,120s,zero retries. Separate durable image
+ceilings are actor5/company10 per UTC day and actor1/company2 per10minute window.
+No text-model quota/provider configuration was changed. No new dependency,
+secret,database schema or migration was introduced. Request-count limits are not
+an account billing cap. Failed calls stay charged; a newer photo/edit/linked
+process revision wins. Invalidated pending badges are cleared on revision edits
+and stale linked-context recovery. Raw provider SVG/URLs are never accepted.
+
+Validation on the laptop, with no cloud Actions:
+
+-68 focused unit tests/5 files PASS: authorization/private media,legacy SVG,
+  specific shared brief,real installed image adapter with fake fetch,byte bounds,
+  zero retries/deadline,independent quota limits and stale-context fences.
+  The original66test batch passed; only the changed media file was rerun after
+  two additional stale pending recovery cases (28media tests PASS).
+-5 image quota PostgreSQL cases PASS: atomic concurrency,actor/company ceilings,
+  tenant separation,UTC reset,failed-call consumption and untouched chat counters.
+  The catalog's first9cases found the older isolated55470 cluster missing the
+  already-existing catalog migration. After applying committed migrations only
+  to that disposable DB,only those9cases were rerun:PASS10.57s,including both new
+  pending/link invalidation regressions. No production DB was accessed for tests.
+-Final production build and one bounded new Chromium flow PASS18.1s/1.1min total.
+  Actual server actions saved an unsaved description exactly once and requested
+  one mocked image; original photos skipped AI; a second explicit mock503 retained
+  exact prior WebP/URL and all business progress. Two synthetic HTTP calls,zero
+  paid/company-provider calls. Desktop1440×1000/phone390×844 before/after in both
+  themes,full illustration without crop,44px controls,private bytes/reload and
+  unchanged surfaces/typography/layout were visually inspected. Shared shell/
+  header/footer/branding source is byte-unchanged; no new full-footer acceptance
+  claim. Local Next3217 and owned PostgreSQL55470/55471 were stopped afterwards.
+-TypeScript,scoped ESLint,staged Gitleaks and diff-check PASS.762 application/test/script/public/schema/
+  configuration hashes match the tested Linux mirror. An initial local socket
+  permission stop occurred before build/tests; the owned socket path was fixed.
+  An initial successful build exposed broad tracing for an imported asset path;
+  a literal path scoped it to the intended PNG. The final rebuild/new flow above
+  supersedes that warning-bearing run. No unrelated tests were repeated.
+
+Style draft: one built-in imagegen request with our own reference produced a
+clear roof-edge technical illustration. Its optimized synthetic fixture is
+27,714bytes. This demonstrates a reviewable style direction, not successful
+access to the company's separately billed Image API model. Actual production
+model access/output quality and owner acceptance remain NOT_VERIFIED until
+separate publication approval and one bounded existing-task acceptance request.
+No production task,photo,work confirmation or material plan was changed here.
+
+Sources: [Image API guide](https://developers.openai.com/api/docs/guides/image-generation),
+[pinned Flare model](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare),
+[pricing](https://developers.openai.com/api/docs/pricing). Existing native/showcase/
+portfolio documentation PRs remain separate and unmerged; no public readiness
+increase or generated-customer-photo claim is made.
+
+## 5 November 2026 — catalog released; former illustration follow-up candidate (historical)
 
 Owner approval for PR55/headf0fe2cc was executed. Merge
 6c8b88645f8285331fc3654509f44d9458563849 has the identical reviewed tree

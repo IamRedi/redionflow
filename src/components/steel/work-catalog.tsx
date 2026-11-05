@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import * as Dialog from "@radix-ui/react-dialog";
-import { Archive, ArrowLeft, Camera, Check, ImagePlus, Loader2, PenLine, Plus, RotateCcw, Search, X } from "lucide-react";
+import { Archive, ArrowLeft, Camera, Check, ImagePlus, Loader2, PenLine, Plus, RotateCcw, Search, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition, type RefObject } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
@@ -36,14 +36,15 @@ export function steelWorkVisualUrl(definition: Pick<SteelWorkDefinitionView, "id
 }
 
 /** Photo or trusted generated image; the existing steel drawing is always a safe fallback. */
-export function SteelWorkVisual({ definition, fallback, src, animate = false, className = "h-full w-full", imageClassName = "h-full w-full object-cover" }: {
+export function SteelWorkVisual({ definition, fallback, src, animate = false, className = "h-full w-full", imageClassName }: {
   definition?: SteelWorkDefinitionView | null; fallback?: string; src?: string | null; animate?: boolean; className?: string; imageClassName?: string;
 }) {
   const url = src ?? (definition ? steelWorkVisualUrl(definition) : null);
   const { currentLang } = useLanguage();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const fit = src || definition?.visualStatus === "photo" ? "object-cover" : "object-contain";
   return <div className={className}>
-    {url && failedUrl !== url ? <img src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName} /> : <SteelPhaseArt phase={steelWorkArtKey(definition?.linkedProcessKey ?? fallback ?? definition?.key)} animate={animate} className="h-full w-full p-[8px]" />}
+    {url && failedUrl !== url ? <img src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName ?? `h-full w-full ${fit}`} /> : <SteelPhaseArt phase={steelWorkArtKey(definition?.linkedProcessKey ?? fallback ?? definition?.key)} animate={animate} className="h-full w-full p-[8px]" />}
   </div>;
 }
 
@@ -148,7 +149,7 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
     });
   }
 
-  function save() {
+  function save(regenerate = false) {
     if (!editor || !loaded || pending) return;
     const draft = editor, photo = file, current = epoch.current;
     if (!draft.label.trim()) { setError(c.required); return; }
@@ -164,11 +165,11 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
         if (photo) {
           const form = new FormData(); form.set("definitionId", result.definitionId); form.set("revision", String(result.revision)); form.set("file", photo);
           try { if (!(await uploadSteelWorkVisualAction(form)).ok) mediaNotice = c.imageError; } catch { mediaNotice = c.imageError; }
-        } else if (result.artNeeded && draft.definition?.visualStatus !== "photo") {
+        } else if ((result.artNeeded || regenerate) && draft.definition?.visualStatus !== "photo") {
           if (current === epoch.current) setNotice(c.imagePending);
           try {
             const visual = await generateSteelWorkVisualAction({ definitionId: result.definitionId, revision: result.revision });
-            if (!visual.ok || visual.status === "error" || visual.status === "fallback") mediaNotice = c.imageFallback;
+            if (!visual.ok || visual.status === "error" || visual.status === "fallback") mediaNotice = visual.status === "quota" ? visual.message : c.imageFallback;
           } catch { mediaNotice = c.imageFallback; }
         }
         onChanged?.();
@@ -219,7 +220,7 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
           {loading && !loaded ? <div className="flex min-h-32 items-center justify-center" role="status"><Loader2 className="size-6 animate-spin" aria-label={c.saving} /></div> : editor ? <form onSubmit={(event) => { event.preventDefault(); save(); }} className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-br from-slate-100 to-orange-50 dark:from-slate-800 dark:to-slate-950"><SteelWorkVisual definition={editor.definition} src={preview} fallback={editor.linkedProcessKey || editor.definition?.key} /></div>
-              {canManage ? <div className="min-w-[min(100%,10rem)] flex-1"><div className="flex flex-wrap gap-1"><button type="button" disabled={pending} onClick={() => camera.current?.click()} className={iconControl} aria-label={c.camera} title={c.camera}><Camera className="size-5" /></button><button type="button" disabled={pending} onClick={() => upload.current?.click()} className={iconControl} aria-label={c.upload} title={c.upload}><ImagePlus className="size-5" /></button>{file ? <button type="button" disabled={pending} onClick={clearFile} className={iconControl} aria-label={c.clearPhoto} title={c.clearPhoto}><X className="size-4" /></button> : null}</div><p className="break-words text-xs text-muted-foreground">{file?.name ?? c.photoHint}</p></div> : null}
+              {canManage ? <div className="min-w-[min(100%,10rem)] flex-1"><div className="flex flex-wrap gap-1"><button type="button" disabled={pending} onClick={() => camera.current?.click()} className={iconControl} aria-label={c.camera} title={c.camera}><Camera className="size-5" /></button><button type="button" disabled={pending} onClick={() => upload.current?.click()} className={iconControl} aria-label={c.upload} title={c.upload}><ImagePlus className="size-5" /></button>{file ? <button type="button" disabled={pending} onClick={clearFile} className={iconControl} aria-label={c.clearPhoto} title={c.clearPhoto}><X className="size-4" /></button> : editor.definition && editor.definition.visualStatus !== "photo" ? <button type="button" disabled={pending || !loaded || !editor.label.trim()} onClick={() => save(true)} className={iconControl} aria-label={c.generate} title={c.generate}>{pending ? <Loader2 className="size-5 animate-spin" /> : <Sparkles className="size-5" />}</button> : null}</div><p className="break-words text-xs text-muted-foreground">{file?.name ?? c.photoHint}</p></div> : null}
             </div>
             <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.name}</span><input autoFocus required maxLength={80} value={editor.label} disabled={pending || !canManage} onChange={(event) => setEditor({ ...editor, label: event.target.value })} className={input} /></label>
             <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.description}</span><textarea maxLength={500} rows={2} value={editor.description} disabled={pending || !canManage} onChange={(event) => setEditor({ ...editor, description: event.target.value })} className={`${input} resize-y py-2`} /></label>

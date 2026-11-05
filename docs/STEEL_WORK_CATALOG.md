@@ -70,24 +70,58 @@ bounded raster validation, orientation, metadata removal and WebP compression
 (12MB input/24MP maximum, stored output at most180KB). Images are private and
 read through authenticated same-company endpoints.
 
-With no photo, an explicit create/edit action requests one original geometric
-illustration from the existing OpenAI model. It sends only the task's label,
-description, canonical type and trusted style instructions. The model returns
-bounded scene JSON under a strict provider output schema; trusted code renders
-SVG using the existing steel palette. That provider-only schema uses required
-fields and homogeneous point arrays while the canonical stored-scene reader
-retains older optional-radius compatibility.
-Arbitrary XML, JavaScript, CSS, text, external resources and embedded images are
-rejected. Image responses use nosniff, same-origin policy and restrictive CSP.
+The owner rejected the first generated scene as unrecognizable despite its
+successful persistence. The old text-model/free-geometry generator is replaced
+with a single Image API edit using the existing OpenAI adapter and the pinned
+`gpt-image-2.5-flare-2026-09-08` model. This is a separately approved image-model
+and cost contract; the assistant's `gpt-4o-mini` configuration is unchanged.
+The request fixes one image,1024×768,medium quality,transparent WebP80,zero
+retries and a120s deadline. The shipped native style reference is a small PNG
+rendered offline from our own foundation/trusses/cutting/welding SVGs; it
+contains no customer information. No dependency upgrade or new secret is needed.
 
-The existing guarded streaming model, input/output bounds,45s timeout, zero
-retries and shared durable quotas remain. Illustration generation allows one
-model call, with actual usage settlement; there is no rendering-time generation,
-mass paid backfill or automatic paid retry. Missing key/quota/provider/validation
-failure keeps the saved task and previous image/fallback. Revision/status/time
-checks prevent a late generation from overwriting a photo or newer edit.
-Safe failure logs distinguish stream/validation/storage phases using only
-bounded status metadata; they never retain generated text or task descriptions.
+`illustration-style.ts` owns the shared native palette, style version and bounded
+task brief. Every generated scene uses the same flat industrial illustration
+language,4:3 composition and safe margin, with a recognizable workpiece and
+tool/action at the contact point. It sends only label/description/type and owned
+linked-process context, never company/site/worker records. Description is the
+source of truth; linked process metadata is supporting context. Owner-confirmed
+terminology: “Montim borde” means folded sheet-metal trims at roof/facade edges,
+shown close-up with the fold, fixing screw and contacting orange driver. It does
+not mean wooden boards or generic beam assembly. No text/logos/people or
+photorealistic job evidence is requested. Generated illustrations use contain
+to avoid cutting off the operation; original uploaded photos retain cover.
+
+Only explicit create/edit or the small illustration button starts generation.
+The button saves current edits and requests one replacement illustration; it is
+absent for original photos. Missing key/quota/provider/validation failure keeps
+the saved task and previous image/fallback. There is no render-time generation,
+mass backfill or automatic paid retry. Original photos always win. Pending jobs
+expire only after five minutes; every revision-changing edit clears an invalidated
+pending badge. Target revision/status/time and linked-definition revision checks
+prevent stale results overwriting a newer photo, edit or linked-process change.
+
+Image calls have separate durable request-count ceilings in the existing quota
+table. They do not use the chat model's token budget. The UTC day allows 5 images
+per actor and 10 per company; each fixed 10-minute window allows 1 per actor and
+2 per company. Failed calls retain their reservation;
+quota-store/auth failures make no paid call. These ceilings are not a provider
+account billing cap. See `AI_COST_LIMITS.md` for scope and approval boundaries.
+
+Prompt/reference/response bytes are bounded before provider parsing/decoding.
+Only validated raster bytes enter `compactPhoto`; the resulting private WebP
+has orientation/metadata stripped and is at most180KB. Arbitrary provider SVG,
+URLs and remote image downloads are never accepted. Existing validated v1 SVG
+scenes remain readable unchanged and are replaced only by an explicit request.
+Private responses retain nosniff,same-origin policy and restrictive CSP. Safe
+diagnostics contain phase/byte counts/allowlisted failure and image usage/model/
+style metadata, never prompts,reference bytes,task text,URLs or provider bodies.
+
+API contract: [Image API guide](https://developers.openai.com/api/docs/guides/image-generation)
+and [pinned Flare model](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare).
+Local fake-fetch tests prove the installed adapter contract, not paid model access
+or universal image quality. A built-in-tool style draft is separate from an
+approved real AL Steel Image API acceptance request after deployment.
 
 ## Verification and release
 
