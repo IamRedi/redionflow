@@ -3,6 +3,7 @@
 import { MonitorPlay } from "lucide-react";
 
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
+import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -168,7 +169,7 @@ export function LandingPage({
         </section></div> : null}
       </section>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-8 sm:px-6 lg:px-8">
+      <div className={`relative z-10 mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 ${workshopDemoEnabled ? "" : "pb-8"}`}>
         <section id="betrieb" className="scroll-mt-28">
           <FeaturesSection content={content.features} />
         </section>
@@ -228,9 +229,9 @@ export function LandingPage({
           </a>
         </div>
 
-        <footer className="mt-10 border-t border-white/10 pt-5">
-          <RediOnFooter onDark />
-        </footer>
+        <div className={workshopDemoEnabled ? "mt-10" : "mt-10 border-t border-white/10 pt-5"}>
+          {workshopDemoEnabled ? <BaumdienstDemoFooter lang={currentLang} onDark /> : <RediOnFooter onDark />}
+        </div>
       </div>
     </main>
   );

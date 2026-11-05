@@ -7,6 +7,44 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Public, fictional Baumdienst profile only. Deliberately independent of the
+/// nightly CompanyProfile/Baustelle reset; never used for operational tenants.
+model BaumdienstDemoWorkspace {
+  key       String   @id
+  data      Json
+  revision  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files     BaumdienstDemoFile[]
+  mutations BaumdienstDemoMutation[]
+}
+
+model BaumdienstDemoFile {
+  id           String @id
+  workspaceKey String
+  workspace    BaumdienstDemoWorkspace @relation(fields: [workspaceKey], references: [key], onDelete: Cascade)
+  kind         String
+  target       String
+  jobId        String?
+  name         String
+  mime         String
+  bytes        Int
+  data         Bytes
+  createdAt    DateTime @default(now())
+  @@index([workspaceKey, kind, target, createdAt])
+}
+
+/// Idempotency receipts: a retry cannot book stock or upload a file twice.
+model BaumdienstDemoMutation {
+  id           String @id
+  workspaceKey String
+  workspace    BaumdienstDemoWorkspace @relation(fields: [workspaceKey], references: [key], onDelete: Cascade)
+  fingerprint  String
+  revision     Int
+  createdAt    DateTime @default(now())
+  @@index([workspaceKey, createdAt])
+}
+
 enum UserRole {
   ADMIN
   STAFF

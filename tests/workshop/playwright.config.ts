@@ -1,7 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
-// This suite exercises browser-local state only, against an explicitly started
-// synthetic demo. It cannot target the pilot or either public demo.
+// This suite exercises a shared synthetic database against an explicitly started
+// loopback demo. Fixture resets additionally require the exact disposable DB.
+// It cannot target the pilot or either public demo.
 const baseURL = process.env.WORKSHOP_DEMO_BASE_URL || "http://127.0.0.1:8765";
 const target = new URL(baseURL);
 if (target.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(target.hostname) || target.username || target.password || target.pathname !== "/") throw new Error("Workshop E2E requires a loopback demo URL.");

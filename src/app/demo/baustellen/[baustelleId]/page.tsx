@@ -14,6 +14,11 @@ import { WorkingBadge } from "@/app/(workzone)/workzone/working-badge";
 import { BaustelleMap } from "@/app/(workzone)/workzone/baustellen/[baustelleId]/baustelle-map";
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
 import { DemoTreeList } from "@/components/demo/demo-tree-list";
+import { DemoPhoto } from "@/components/demo/workshop/demo-photo";
+import { BaumdienstSiteArt } from "@/components/demo/workshop/workshop-art";
+import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
+import { demoSiteKey, requireWorkshopDemo } from "@/lib/workshop/shared-store";
+import { workshopCopy } from "@/lib/workshop/copy";
 
 function formatDateTime(date: Date) {
   return date.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
@@ -23,9 +28,11 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   const { baustelleId } = await params;
   const [currentLang, mode] = await Promise.all([resolveRequestLanguage(), getCompanyMode()]);
   const tr = (key: string) => t(key, currentLang, mode);
+  const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
+  const demoCompany = workshopEnabled ? await requireWorkshopDemo() : null;
   const kidraht = kidrahtDemoUrl(mode);
   const baustelle = await prisma.baustelle.findUnique({
-    where: { id: baustelleId },
+    where: { id: baustelleId, ...(demoCompany ? { companyProfileId: demoCompany.id } : {}) },
     include: {
       treeItems: { orderBy: [{ status: "asc" }, { treeId: "asc" }] },
       manualTasks: {
@@ -87,6 +94,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
 
   return (
     <div className="space-y-4">
+      {workshopEnabled && <DemoPhoto kind="site" target={baustelle.id} photoKey={demoSiteKey(baustelle)} alt={baustelle.name} className="h-48 overflow-hidden rounded-2xl border bg-card sm:h-56"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto>}
       <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border bg-card p-4 shadow-sm">
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground">
@@ -99,7 +107,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
           {haltCount > 0 ? <p className="mt-1 text-sm font-semibold text-red-500">{tr("workzone.haltActive")} ({haltCount})</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <DemoReadonlyBadge />
+          {workshopEnabled ? <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{workshopCopy(currentLang).shared}</span> : <DemoReadonlyBadge />}
           <WorkingBadge workers={activeWorkerNames} />
         </div>
       </div>

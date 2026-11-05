@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { workshopCopy } from "../../src/lib/workshop/copy";
+import { resetWorkshopFixture } from "./shared-fixture";
 
 test.beforeEach(async ({ context, page }, info) => {
+  await resetWorkshopFixture();
   await context.addCookies([{ name: "bk_lang", value: "de", url: String(info.project.use.baseURL) }]);
   await context.route("https://*.tile.openstreetmap.org/**", route => route.abort());
   await context.route("https://nominatim.openstreetmap.org/**", route => route.abort());
@@ -11,7 +13,7 @@ test.beforeEach(async ({ context, page }, info) => {
   await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
 });
 
-test("repair, parts, release, issue/return, document, reload, export and scoped reset", async ({ page }, info) => {
+test("repair, parts, release, issue/return, shared document, reload and history export", async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   await page.getByRole("button", { name: "Defekt melden", exact: true }).click();
   let dialog = page.getByRole("dialog");
@@ -33,6 +35,8 @@ test("repair, parts, release, issue/return, document, reload, export and scoped 
   await dialog.getByRole("button", { name: "Reparatur abschließen", exact: true }).click();
   await page.getByRole("button", { name: "Details öffnen: Kran-LKW · MU-BD 401", exact: true }).click();
   await dialog.getByRole("button", { name: "Für Einsatz freigeben", exact: true }).click();
+  await expect(dialog.getByText("In der gemeinsamen Demo gespeichert.", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("link", { name: "Flotte", exact: true }).click();
   const crane = page.locator("article").filter({ has: page.getByRole("heading", { name: "Kran-LKW", exact: true }) });
   await expect(crane).toContainText("Verfügbar");
@@ -48,20 +52,20 @@ test("repair, parts, release, issue/return, document, reload, export and scoped 
   await page.getByLabel("Gerät / Fahrzeug", { exact: true }).last().selectOption("crane");
   const content = "DEMO · Werkstatt-Protokoll, keine echten Daten.";
   await page.getByLabel("Beispieldokument hinzufügen", { exact: true }).setInputFiles({ name: "DEMO-Pruefprotokoll.txt", mimeType: "text/plain", buffer: Buffer.from(content) });
+  await expect(page.getByText("DEMO-Pruefprotokoll.txt", { exact: true })).toBeVisible();
   await page.reload();
   const docRow = page.locator("li").filter({ hasText: "DEMO-Pruefprotokoll.txt" });
-  const documentDownload = page.waitForEvent("download"); await docRow.getByRole("button", { name: "Herunterladen" }).click();
+  const documentDownload = page.waitForEvent("download"); await docRow.getByRole("link", { name: "Herunterladen" }).click();
   const documentPath = await (await documentDownload).path();
   expect(await readFile(documentPath!, "utf8")).toBe(content);
   const exported = page.waitForEvent("download"); await page.getByRole("button", { name: "Demodaten exportieren", exact: true }).click();
-  const state = JSON.parse(await readFile((await (await exported).path())!, "utf8"));
+  const { state } = JSON.parse(await readFile((await (await exported).path())!, "utf8"));
   expect(state.assets.find((a: { id: string }) => a.id === "crane").events.length).toBeGreaterThan(5);
   expect(state.parts.find((p: { id: string }) => p.id === "hydraulic").stock).toBe(1);
-  await page.getByRole("button", { name: "Demo zurücksetzen", exact: true }).click();
-  await dialog.getByRole("button", { name: "Demo zurücksetzen", exact: true }).click();
-  await expect(page.getByText("DEMO-Pruefprotokoll.txt", { exact: true })).toHaveCount(0);
+  expect(state.movements).toHaveLength(1);
+  await expect(page.getByRole("button", { name: "Demo zurücksetzen", exact: true })).toHaveCount(0);
   expect(errors).toEqual([]);
-  await page.screenshot({ path: info.outputPath("documents-reset.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("documents-shared.png"), fullPage: true });
 });
 
 test("six locales, desktop/touch themes, overflow, focus and usable primary controls", async ({ page, context }, info) => {
@@ -78,6 +82,7 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
     for (const tab of ["orders", "fleet", "tools", "parts", "documents", "history"]) {
       await page.goto(`/demo/workshop?tab=${tab}`);
       await expect(page.getByTestId("workshop-demo")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const size = await page.getByRole("button", { name: "Defekt melden", exact: true }).boundingBox(); expect(size!.height).toBeGreaterThanOrEqual(44);
       const colors = await page.getByRole("button", { name: "Defekt melden", exact: true }).evaluate(el => { const s = getComputedStyle(el); return [s.color, s.backgroundColor]; });
@@ -96,6 +101,8 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/demo/workshop");
   await page.getByRole("button", { name: "Hell/Dunkel", exact: true }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(await page.getByTestId("workshop-demo").locator("svg g").evaluateAll(els => els.some(el => getComputedStyle(el).animationName !== "none"))).toBe(false);
   expect(errors).toEqual([]);
 });
 
@@ -125,13 +132,12 @@ test("native presentation, shared Workzone header and the existing detail pages"
   }
 });
 
-test("corrupt storage stays read-only and can be recovered with a scoped reset", async ({ page }) => {
+test("old browser storage never overwrites the shared demo", async ({ page }) => {
   await page.evaluate(() => localStorage.setItem("redionflow:baumdienst:workshop-demo:v1", "invalid demo JSON"));
   await page.reload();
-  await expect(page.getByTestId("workshop-demo").getByRole("alert")).toContainText("nicht lesbar");
-  await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "Demo zurücksetzen", exact: true }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Demo zurücksetzen", exact: true }).click();
   await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
+  await expect(page.getByTestId("workshop-demo").getByRole("alert")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Demo zurücksetzen", exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("redionflow:baumdienst:workshop-demo:v1"))).toBe("invalid demo JSON");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
 });

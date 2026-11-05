@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { de } from "./dictionaries";
 import { MODE_OVERRIDES_INTERNAL } from "./mode-overrides";
@@ -26,7 +27,7 @@ import { MODE_OVERRIDES_INTERNAL } from "./mode-overrides";
  * code and tests, and whitelist the shared locale helpers themselves.
  */
 
-const REPO_ROOT = path.resolve(decodeURIComponent(new URL("../../..", import.meta.url).pathname));
+const REPO_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const SRC_ROOT = path.join(REPO_ROOT, "src");
 
 function walkFiles(root: string, out: string[] = []): string[] {
