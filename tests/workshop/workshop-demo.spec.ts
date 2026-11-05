@@ -41,10 +41,10 @@ test("repair, parts, release, issue/return, shared document, reload and history 
   const crane = page.locator("article").filter({ has: page.getByRole("heading", { name: "Kran-LKW", exact: true }) });
   await expect(crane).toContainText("Verfügbar");
   await crane.getByRole("button", { name: "Details öffnen" }).click();
-  await dialog.getByRole("button", { name: "Ausgeben", exact: true }).click();
-  await dialog.getByLabel("Ausgegeben an", { exact: true }).fill("Demo-Kolonne");
-  await dialog.getByRole("button", { name: "Ausgeben", exact: true }).click();
-  await page.reload(); await expect(crane).toContainText("Demo-Kolonne");
+  await dialog.getByRole("button", { name: "Zuordnen", exact: true }).click();
+  await dialog.getByLabel("Mitarbeiter (optional)", { exact: true }).selectOption({ label: "Jonas Becker" });
+  await dialog.getByRole("button", { name: "Zuordnen", exact: true }).click();
+  await page.reload(); await expect(crane).toContainText("Jonas Becker");
   await crane.getByRole("button", { name: "Details öffnen" }).click();
   await dialog.getByRole("button", { name: "Zurücknehmen", exact: true }).click();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();

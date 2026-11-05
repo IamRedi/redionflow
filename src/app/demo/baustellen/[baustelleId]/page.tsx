@@ -15,6 +15,7 @@ import { BaustelleMap } from "@/app/(workzone)/workzone/baustellen/[baustelleId]
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
 import { DemoTreeList } from "@/components/demo/demo-tree-list";
 import { DemoPhoto } from "@/components/demo/workshop/demo-photo";
+import { InventoryScope } from "@/components/demo/workshop/inventory-scope";
 import { BaumdienstSiteArt } from "@/components/demo/workshop/workshop-art";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoSiteKey, requireWorkshopDemo } from "@/lib/workshop/shared-store";
@@ -94,7 +95,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
 
   return (
     <div className="space-y-4">
-      {workshopEnabled && <DemoPhoto kind="site" target={baustelle.id} photoKey={demoSiteKey(baustelle)} alt={baustelle.name} className="h-48 overflow-hidden rounded-2xl border bg-card sm:h-56"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto>}
+      {workshopEnabled && <DemoPhoto kind="site" target={baustelle.id} photoKey={demoSiteKey(baustelle)} alt={baustelle.name} className="h-32 overflow-hidden rounded-2xl border bg-card sm:h-56"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto>}
       <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border bg-card p-4 shadow-sm">
         <div className="min-w-0">
           <div className="text-xs text-muted-foreground">
@@ -103,7 +104,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
             </Link>
           </div>
           <h1 className="mt-1 text-xl font-semibold text-foreground">{baustelle.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{baustelle.description ?? ""}</p>
+          <p className={`mt-1 text-sm text-muted-foreground ${workshopEnabled ? "line-clamp-2 sm:line-clamp-none" : ""}`}>{baustelle.description ?? ""}</p>
           {haltCount > 0 ? <p className="mt-1 text-sm font-semibold text-red-500">{tr("workzone.haltActive")} ({haltCount})</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -112,6 +113,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
         </div>
       </div>
 
+      {workshopEnabled && <InventoryScope scope="site" identity={demoSiteKey(baustelle)} now={new Date().toISOString()} />}
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>

@@ -3,7 +3,7 @@ import type { WorkshopAsset, WorkshopState } from "./demo-model";
 export function createWorkshopDemo(): WorkshopState {
   const asset = (id: string, name: string, code: string, kind: "fleet" | "tool", inspection = "2027-06-30", holder = ""): WorkshopAsset => ({ id, name, code, kind, inspection, holder, location: holder || "Lager", events: [] });
   return {
-    version: 1,
+    version: 2,
     movements: [],
     assets: [asset("chipper", "Häcksler", "MU-BD 201", "fleet"), asset("truck", "LKW 7,5 t", "MU-BD 101", "fleet", "2027-05-31", "Jonas Becker"), asset("platform", "Hubarbeitsbühne 27 m", "MU-BD 301", "fleet"), asset("crane", "Kran-LKW", "MU-BD 401", "fleet"), asset("saw", "Motorsäge", "WG-101", "tool"), asset("pole-saw", "Stangensäge", "WG-102", "tool", "2027-05-31", "Arben Berisha"), asset("blower", "Laubbläser", "WG-103", "tool"), asset("harness", "Klettergurt", "PSA-201", "tool", "2026-10-31")].map(a => {
       if (a.id === "chipper" || a.id === "saw") { a.location = "Werkstatt"; a.events = [{ id: `received-${a.id}`, kind: "received", at: "2026-11-04T08:10:00.000Z", actor: "Demo", ref: a.id === "saw" ? "WS-102" : "WS-101", note: a.id === "saw" ? "Kettenbremse ohne Funktion" : "Hydraulikleitung undicht" }]; }

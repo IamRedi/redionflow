@@ -3,17 +3,25 @@ import { z } from "zod";
 // Fictional workshop rules, independent of operational fleet and planning actions.
 const stamp = z.iso.datetime();
 const text = z.string().trim().min(1).max(2000);
-const eventSchema = z.object({ id: text, at: stamp, kind: z.enum(["received", "started", "repaired", "released", "issued", "returned", "part", "inspection", "document", "photo"]), note: z.string().max(2000), actor: text, ref: z.string().optional() });
-const assetSchema = z.object({ id: text, name: text, code: text, kind: z.enum(["fleet", "tool"]), location: text, holder: z.string().max(100), inspection: z.iso.date(), events: z.array(eventSchema) });
-const jobSchema = z.object({ id: text, assetId: text, problem: text, priority: z.enum(["normal", "urgent"]), status: z.enum(["received", "repairing", "repaired"]), assignee: z.string().max(100), createdAt: stamp, repairedAt: stamp.optional(), releasedAt: stamp.optional(), repairNote: z.string().max(2000), tested: z.boolean(), parts: z.array(z.object({ id: text, name: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative() })) });
+export const placementSchema = z.object({ workerKey: text.optional(), workerName: text.optional(), siteKey: text.optional(), siteName: text.optional() }).strict().superRefine((p, ctx) => {
+  if ((!p.workerKey && !p.siteKey) || Boolean(p.workerKey) !== Boolean(p.workerName) || Boolean(p.siteKey) !== Boolean(p.siteName)) ctx.addIssue({ code: "custom", message: "Invalid inventory placement" });
+});
+export type InventoryPlacement = z.infer<typeof placementSchema>;
+const eventSchema = z.object({ id: text, at: stamp, kind: z.enum(["received", "started", "repaired", "released", "issued", "transferred", "returned", "part", "inspection", "document", "photo"]), note: z.string().max(2000), actor: text, ref: z.string().optional(), placement: placementSchema.optional() });
+const assetSchema = z.object({ id: text, name: text, code: text, kind: z.enum(["fleet", "tool"]), location: text, holder: z.string().max(100), inspection: z.iso.date(), events: z.array(eventSchema), placement: placementSchema.optional() });
+const originSchema = z.object({ holder: z.string().max(100), location: text, placement: placementSchema.optional() });
+const jobSchema = z.object({ id: text, assetId: text, problem: text, priority: z.enum(["normal", "urgent"]), status: z.enum(["received", "repairing", "repaired"]), assignee: z.string().max(100), createdAt: stamp, repairedAt: stamp.optional(), releasedAt: stamp.optional(), repairNote: z.string().max(2000), tested: z.boolean(), origin: originSchema.optional(), parts: z.array(z.object({ id: text, name: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative() })) });
 export const documentSchema = z.object({ id: text, name: z.string().min(1).max(120), assetId: text, jobId: z.string().optional(), mime: z.enum(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]), data: z.string().max(360000).optional(), fileId: z.uuid().optional(), bytes: z.number().int().min(1).max(1_000_000), at: stamp });
 const movementSchema = z.object({ id: text, at: stamp, kind: z.enum(["consume", "restock"]), partId: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative(), jobId: z.string().optional(), actor: text });
-export const workshopSchema = z.object({ version: z.literal(1), assets: z.array(assetSchema).min(1).max(100), jobs: z.array(jobSchema).max(1000), parts: z.array(z.object({ id: text, name: text, stock: z.number().int().nonnegative(), minimum: z.number().int().nonnegative(), unitCents: z.number().int().nonnegative() })).max(100), documents: z.array(documentSchema).max(80), movements: z.array(movementSchema).max(10000).default([]) }).superRefine((state, ctx) => {
+const stateShape = z.object({ version: z.literal(2), assets: z.array(assetSchema).min(1).max(100), jobs: z.array(jobSchema).max(1000), parts: z.array(z.object({ id: text, name: text, stock: z.number().int().nonnegative(), minimum: z.number().int().nonnegative(), unitCents: z.number().int().nonnegative() })).max(100), documents: z.array(documentSchema).max(80), movements: z.array(movementSchema).max(10000).default([]) });
+export const legacyWorkshopSchema = stateShape.extend({ version: z.literal(1) });
+export const workshopSchema = stateShape.superRefine((state, ctx) => {
   const ids = new Set(state.assets.map(a => a.id));
   const jobs = new Map(state.jobs.map(j => [j.id, j]));
   const open = state.jobs.filter(j => !j.releasedAt).map(j => j.assetId);
   if (ids.size !== state.assets.length || jobs.size !== state.jobs.length || new Set(open).size !== open.length || state.jobs.some(j => !ids.has(j.assetId) || (j.releasedAt && (j.status !== "repaired" || !j.tested))) || state.documents.some(d => !ids.has(d.assetId) || (d.jobId && jobs.get(d.jobId)?.assetId !== d.assetId) || (!d.fileId && !d.data) || (d.data && d.mime !== "text/plain" && !/^[A-Za-z0-9+/]+={0,2}$/.test(d.data)))) ctx.addIssue({ code: "custom", message: "Invalid workshop references" });
   if (new Set(state.documents.map(d => d.id)).size !== state.documents.length || state.movements.some(m => !state.parts.some(p => p.id === m.partId) || (m.jobId && !jobs.has(m.jobId)))) ctx.addIssue({ code: "custom", message: "Invalid document or movement references" });
+  if (new Set(state.assets.map(a => a.code.trim().toUpperCase())).size !== state.assets.length || state.assets.some(a => a.placement && (Boolean(a.holder) !== Boolean(a.placement.workerKey) || a.holder !== (a.placement.workerName ?? "") || open.includes(a.id)))) ctx.addIssue({ code: "custom", message: "Invalid inventory identity or placement" });
 });
 export type WorkshopState = z.infer<typeof workshopSchema>;
 export type WorkshopAsset = WorkshopState["assets"][number];
@@ -30,6 +38,7 @@ export type WorkshopCommand =
   | { type: "repair"; jobId: string; note: string; tested: boolean }
   | { type: "release"; jobId: string }
   | { type: "issue"; assetId: string; holder: string }
+  | { type: "assign"; assetId: string; placement: InventoryPlacement }
   | { type: "return"; assetId: string }
   | { type: "inspection"; assetId: string; date: string; note: string }
   | { type: "part"; jobId: string; partId: string; qty: number }
@@ -43,11 +52,11 @@ export function inspectionOverdue(asset: WorkshopAsset, now: string) { return as
 export function availability(state: WorkshopState, asset: WorkshopAsset, now: string) {
   if (activeJob(state, asset.id)) return "workshop";
   if (inspectionOverdue(asset, now)) return "inspection";
-  return asset.holder ? "issued" : "available";
+  return asset.holder || asset.placement ? "issued" : "available";
 }
 export function applyWorkshopCommand(input: WorkshopState, command: WorkshopCommand, now: string, id: string): WorkshopState {
   const state = structuredClone(input);
-  const event = (asset: WorkshopAsset, kind: EventKind, note = "", ref?: string) => asset.events.unshift({ id, at: now, kind, note, actor: "Demo", ...(ref ? { ref } : {}) });
+  const event = (asset: WorkshopAsset, kind: EventKind, note = "", ref?: string, placement = asset.placement) => asset.events.unshift({ id, at: now, kind, note, actor: "Demo", ...(ref ? { ref } : {}), ...(placement ? { placement: structuredClone(placement) } : {}) });
   const assetFor = (assetId: string) => { const asset = state.assets.find(a => a.id === assetId); assert(asset, "missing"); return asset; };
   const jobFor = (jobId: string) => { const job = state.jobs.find(j => j.id === jobId); assert(job, "missing"); return job; };
   const positive = (qty: number) => assert(Number.isSafeInteger(qty) && qty > 0 && qty <= 10000, "quantity");
@@ -55,9 +64,10 @@ export function applyWorkshopCommand(input: WorkshopState, command: WorkshopComm
     case "receive": {
       const asset = assetFor(command.assetId);
       assert(!activeJob(state, asset.id), "duplicate"); assert(command.problem.trim() && command.problem.length <= 2000, "required");
-      state.jobs.unshift({ id, assetId: asset.id, problem: command.problem.trim(), priority: command.priority, status: "received", assignee: command.assignee.trim().slice(0, 100), createdAt: now, repairNote: "", tested: false, parts: [] });
-      if (asset.holder) event(asset, "returned", asset.holder, id);
-      asset.holder = ""; asset.location = "Werkstatt"; event(asset, "received", command.problem.trim(), id); break;
+      const origin = { holder: asset.holder, location: asset.location, ...(asset.placement ? { placement: structuredClone(asset.placement) } : {}) };
+      state.jobs.unshift({ id, assetId: asset.id, problem: command.problem.trim(), priority: command.priority, status: "received", assignee: command.assignee.trim().slice(0, 100), createdAt: now, repairNote: "", tested: false, parts: [], origin });
+      if (asset.holder || asset.placement) event(asset, "returned", [asset.holder, asset.placement?.siteName].filter(Boolean).join(" · "), id);
+      asset.holder = ""; delete asset.placement; asset.location = "Werkstatt"; event(asset, "received", command.problem.trim(), id, origin.placement); break;
     }
     case "start": {
       const job = jobFor(command.jobId); assert(job.status === "received" && !job.releasedAt, "transition"); assert(command.assignee.trim(), "required");
@@ -76,8 +86,19 @@ export function applyWorkshopCommand(input: WorkshopState, command: WorkshopComm
       const asset = assetFor(command.assetId); assert(availability(state, asset, now) === "available", "unavailable"); assert(command.holder.trim(), "required");
       asset.holder = command.holder.trim().slice(0, 100); asset.location = asset.holder; event(asset, "issued", asset.holder); break;
     }
+    case "assign": {
+      const asset = assetFor(command.assetId);
+      assert(!["workshop", "inspection"].includes(availability(state, asset, now)), "unavailable");
+      const placement = placementSchema.parse(command.placement);
+      assert(JSON.stringify(asset.placement) !== JSON.stringify(placement), "transition");
+      const moving = Boolean(asset.holder || asset.placement);
+      const from = [asset.holder, asset.placement?.siteName].filter(Boolean).join(" · ");
+      asset.placement = placement; asset.holder = placement.workerName ?? ""; asset.location = placement.siteName ?? placement.workerName!;
+      const to = [placement.workerName, placement.siteName].filter(Boolean).join(" · ");
+      event(asset, moving ? "transferred" : "issued", moving ? `${from} → ${to}` : to); break;
+    }
     case "return": {
-      const asset = assetFor(command.assetId); assert(asset.holder, "transition"); event(asset, "returned", asset.holder); asset.holder = ""; asset.location = "Lager"; break;
+      const asset = assetFor(command.assetId); assert(asset.holder || asset.placement, "transition"); event(asset, "returned", [asset.holder, asset.placement?.siteName].filter(Boolean).join(" · ")); asset.holder = ""; delete asset.placement; asset.location = "Lager"; break;
     }
     case "inspection": {
       const asset = assetFor(command.assetId); assert(z.iso.date().safeParse(command.date).success && command.date >= workshopDay(now) && command.note.trim(), "required");

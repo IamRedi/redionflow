@@ -1,0 +1,62 @@
+import { describe, expect, it } from "vitest";
+import { createWorkshopDemo } from "./demo-data";
+import { activeJob, applyWorkshopCommand as apply, availability, legacyWorkshopSchema, workshopSchema } from "./demo-model";
+import { inventoryHistory, resolveInventoryTag, siteInventory, upgradeWorkshopInventory, workerInventory } from "./inventory-flow";
+import type { WorkshopDirectory } from "./shared-contract";
+const at = "2026-11-05T10:00:00.000Z";
+const directory: WorkshopDirectory = { workers: [{ key: "worker-jonas", name: "Jonas Becker", id: "current-worker", available: true }], sites: [{ key: "site-park", id: "current-site", name: "Stadtpark", active: true }] };
+const placement = { workerKey: "worker-jonas", workerName: "Jonas Becker", siteKey: "site-park", siteName: "Stadtpark" };
+describe("Baumdienst inventory relationships", () => {
+  it("upgrades the existing store without changing IDs, stock, history or documents; old writers fail closed", () => {
+    const before = { ...createWorkshopDemo(), version: 1 };
+    const upgraded = upgradeWorkshopInventory(before, directory);
+    expect(upgraded.version).toBe(2);
+    expect(upgraded.jobs).toEqual(before.jobs); expect(upgraded.documents).toEqual(before.documents); expect(upgraded.parts).toEqual(before.parts);
+    expect(upgraded.assets.map(a => a.id)).toEqual(before.assets.map(a => a.id));
+    expect(upgraded.assets.find(a => a.id === "truck")?.placement?.workerKey).toBe("worker-jonas");
+    expect(upgraded.assets.find(a => a.id === "pole-saw")?.holder).toBe("Arben Berisha");
+    expect(upgraded.assets.find(a => a.id === "pole-saw")?.placement).toBeUndefined();
+    expect(legacyWorkshopSchema.safeParse(upgraded).success).toBe(false);
+    expect(upgradeWorkshopInventory(upgraded, directory)).toEqual(upgraded);
+    expect(() => upgradeWorkshopInventory({ ...before, version: 3 }, directory)).toThrow();
+  });
+  it("uses one record through site, worker, transfer, repair, release and return", () => {
+    let state = apply(createWorkshopDemo(), { type: "assign", assetId: "blower", placement }, at, "assigned");
+    expect(siteInventory(state, "site-park").map(a => a.id)).toEqual(["blower"]);
+    expect(workerInventory(state, "worker-jonas").map(a => a.id)).toEqual(["blower"]);
+    expect(availability(state, state.assets.find(a => a.id === "blower")!, at)).toBe("issued");
+    state = apply(state, { type: "receive", assetId: "blower", problem: "DEMO", assignee: "Demo", priority: "normal" }, at, "job");
+    expect(state.assets.find(a => a.id === "blower")?.placement).toBeUndefined();
+    expect(activeJob(state, "blower")?.origin?.placement).toEqual(placement);
+    expect(siteInventory(state, "site-park").map(a => a.id)).toEqual(["blower"]);
+    expect(() => apply(state, { type: "assign", assetId: "blower", placement }, at, "bad")).toThrow("unavailable");
+    state = apply(state, { type: "start", jobId: "job", assignee: "Demo" }, at, "started");
+    state = apply(state, { type: "repair", jobId: "job", note: "DEMO tested", tested: true }, at, "fixed");
+    expect(() => apply(state, { type: "assign", assetId: "blower", placement }, at, "bad")).toThrow("unavailable");
+    state = apply(state, { type: "release", jobId: "job" }, at, "released");
+    expect(siteInventory(state, "site-park")).toHaveLength(0);
+    state = apply(state, { type: "assign", assetId: "blower", placement: { siteKey: "site-other", siteName: "Other site" } }, at, "new-site");
+    state = apply(state, { type: "assign", assetId: "blower", placement }, at, "move");
+    expect(siteInventory(state, "site-other")).toHaveLength(0); expect(siteInventory(state, "site-park")).toHaveLength(1);
+    state = apply(state, { type: "return", assetId: "blower" }, at, "return");
+    const asset = state.assets.find(a => a.id === "blower")!;
+    expect(asset.location).toBe("Lager"); expect(asset.events.map(e => e.kind)).toEqual(["returned", "transferred", "issued", "released", "repaired", "started", "received", "returned", "issued"]);
+    expect(asset.events.find(e => e.id === "move")?.placement).toEqual(placement);
+    expect(siteInventory(state, "site-park")).toHaveLength(0);
+    expect(inventoryHistory(state, "site", "site-park").map(a => a.id)).toEqual(["blower"]);
+    expect(inventoryHistory(state, "worker", "worker-jonas").map(a => a.id)).toEqual(["blower"]);
+    expect(state.assets).toHaveLength(8);
+  });
+  it("rejects ambiguous codes, broken assignments and overdue equipment", () => {
+    const state = createWorkshopDemo();
+    expect(() => apply(state, { type: "assign", assetId: "harness", placement }, at, "bad")).toThrow("unavailable");
+    expect(workshopSchema.safeParse({ ...state, assets: state.assets.map(a => ({ ...a, code: "SAME" })) }).success).toBe(false);
+    expect(workshopSchema.safeParse({ ...state, assets: state.assets.map(a => a.id === "blower" ? { ...a, placement, holder: "Wrong" } : a) }).success).toBe(false);
+  });
+  it("resolves barcode text and same-origin NFC links to the identical asset, never a fuzzy or foreign record", () => {
+    const assets = createWorkshopDemo().assets, origin = "https://demo.example";
+    for (const value of ["WG-101", " wg-101 ", `${origin}/demo/workshop?asset=saw&tab=tools`]) expect(resolveInventoryTag(value, assets, origin)?.id).toBe("saw");
+    for (const value of ["WG101", "unknown", "", "javascript:alert(1)", "https://pilot.example/demo/workshop?asset=saw", `${origin}/workzone?asset=saw`, "WG-101".repeat(500)]) expect(resolveInventoryTag(value, assets, origin)).toBeUndefined();
+    expect(resolveInventoryTag("WG-101", [...assets, assets.find(a => a.id === "saw")!], origin)).toBeUndefined();
+  });
+});

@@ -151,7 +151,7 @@ export default async function DemoWorkzonePage() {
         defaultAddress={defaultAddress}
         detailHrefBase="/demo/baustellen"
         readOnly
-        allowCanvasDrag
+        allowCanvasDrag={!workshopEnabled}
         mode={mode}
       />
       {workshopEnabled ? <WorkshopOverview /> : null}

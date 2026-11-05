@@ -2,11 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 import { createWorkshopDemo } from "@/lib/workshop/demo-data";
-import type { WorkshopCommand } from "@/lib/workshop/demo-model";
-import { snapshotSchema, WORKSHOP_API, WORKSHOP_FILES_API, type WorkshopSnapshot } from "@/lib/workshop/shared-contract";
+import { emptyDirectory, snapshotSchema, WORKSHOP_API, WORKSHOP_FILES_API, type publicWorkshopCommand, type WorkshopSnapshot } from "@/lib/workshop/shared-contract";
+import type { z } from "zod";
+export type DemoInventoryCommand = z.infer<typeof publicWorkshopCommand>;
 
 type View = WorkshopSnapshot & { status: "loading" | "ready" | "connection"; hydrated: boolean; pending: boolean };
-const serverSnapshot: View = { state: createWorkshopDemo(), revision: -1, updatedAt: "", photos: [], status: "loading", hydrated: false, pending: false };
+const serverSnapshot: View = { state: createWorkshopDemo(), revision: -1, updatedAt: "", photos: [], directory: emptyDirectory, status: "loading", hydrated: false, pending: false };
+let etag: string | null = null;
 let cached = serverSnapshot;
 const listeners = new Set<() => void>();
 let reading: Promise<void> | null = null;
@@ -20,10 +22,11 @@ async function refresh() {
   if (reading) return reading;
   reading = (async () => {
     try {
-      const response = await fetch(WORKSHOP_API, { cache: "no-store", headers: cached.revision >= 0 ? { "If-None-Match": `"workshop-${cached.revision}"` } : {} });
+      const response = await fetch(WORKSHOP_API, { cache: "no-store", headers: etag ? { "If-None-Match": etag } : {} });
       if (response.status === 304) { emit({ status: "ready" }); return; }
       if (!response.ok) throw new Error("connection");
       accept(await response.json());
+      etag = response.headers.get("etag");
     } catch { emit({ status: "connection" }); }
     finally { reading = null; }
   })();
@@ -76,7 +79,7 @@ async function change(operation: () => Promise<void>) {
 }
 export function useWorkshopDemo() {
   const data = useSyncExternalStore(subscribe, () => cached, () => serverSnapshot);
-  async function dispatch(command: WorkshopCommand) {
+  async function dispatch(command: DemoInventoryCommand) {
     await change(() => send(WORKSHOP_API, JSON.stringify(command), () => JSON.stringify({ requestId: crypto.randomUUID(), revision: cached.revision, command }), { "Content-Type": "application/json" }));
   }
   async function upload(file: File, target: { kind: "asset" | "site" | "document"; target: string; jobId?: string }) {

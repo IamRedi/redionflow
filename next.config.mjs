@@ -64,6 +64,10 @@ const SECURITY_HEADERS = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Opt-in for disk-constrained local verification; provider builds keep caching.
+  ...(process.env.BDF_LOCAL_BUILD_NO_CACHE === "1" ? {
+    webpack(config) { config.cache = false; return config; },
+  } : {}),
   images: {
     localPatterns: [
       {

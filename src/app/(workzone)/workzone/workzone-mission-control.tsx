@@ -13,6 +13,7 @@ import { SteelSiteArt } from "@/components/steel/steel-art";
 import { SteelSiteScene } from "@/components/steel/steel-site-scene";
 import { AssetPhoto } from "@/components/asset-photo";
 import { DemoPhoto } from "@/components/demo/workshop/demo-photo";
+import { InventoryScope } from "@/components/demo/workshop/inventory-scope";
 import { BaumdienstSiteArt } from "@/components/demo/workshop/workshop-art";
 import { t } from "@/lib/i18n";
 import type { FleetLocation } from "@/lib/fleet/location";
@@ -67,7 +68,7 @@ function clamp(value: number, min: number, max: number) {
 
 function canvasSignature(items: MissionItem[]) {
   return orderedCanvasItems(items)
-    .map((item) => `${item.id}:${item.liveSince ?? "idle"}${item.demoPhotoKey ? ":demo-photo" : ""}`)
+    .map((item) => `${item.id}:${item.liveSince ?? "idle"}${item.demoPhotoKey ? ":demo-photo-inventory" : ""}`)
     .join("|");
 }
 
@@ -90,13 +91,14 @@ function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
   const mobile = viewport === "mobile";
   // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
   const tall = items.some((item) => isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey));
+  const inventory = items.some(item => item.demoPhotoKey);
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
   const columnGap = mobile ? 166 : count > 9 ? 250 : 285;
   // Cards carry badges and a note, so rows need room to avoid overlap.
-  const rowGap = tall ? (mobile ? 276 : 270) : mobile ? 252 : 224;
-  const cardHeight = tall ? (mobile ? 262 : 254) : mobile ? 236 : 204;
+  const rowGap = inventory ? (mobile ? 390 : 360) : tall ? (mobile ? 276 : 270) : mobile ? 252 : 224;
+  const cardHeight = inventory ? (mobile ? 375 : 345) : tall ? (mobile ? 262 : 254) : mobile ? 236 : 204;
   const rows = Math.max(1, Math.ceil(Math.max(count, 1) / columns));
 
   return {
@@ -599,13 +601,14 @@ export function WorkzoneMissionControl({
                     {t("common.note", currentLang)}: {item.pendingSiteTask}
                   </p>
                 ) : null}
+                {item.demoPhotoKey && <div className="mt-2"><InventoryScope scope="site" identity={item.demoPhotoKey} compact now={new Date().toISOString()} /></div>}
                 <div className="mt-2 flex items-center gap-1">
                   {allowDetailNavigation ? (
-                    <Button asChild size="sm" variant="outline" className={`text-[11px] ${isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
+                    <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "min-h-11 px-2" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
                       <Link href={`${detailHrefBase}/${item.id}`}>{t("common.open", currentLang)}</Link>
                     </Button>
                   ) : null}
-                  <Button asChild size="sm" variant="outline" className={`text-[11px] ${isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
+                  <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "min-h-11 px-2" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
                     <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer">
                       {t("common.location", currentLang)}
                     </a>
