@@ -16,5 +16,5 @@ export function WorkshopFleet({ machines, now }: { machines: DemoMachine[]; now:
     links[machine.id] = { href: `/demo/workshop?tab=fleet&asset=${asset.id}`, label: c.open, status: c[status === "inspection" ? "inspectionDue" : status] };
     return { ...machine, isActive: machine.isActive && status !== "workshop" && status !== "inspection" };
   });
-  return <div className="hidden lg:block"><DemoMachineRail machines={fleet} initiallyOpen={false} workshopLinks={links} /></div>;
+  return <div className="pointer-events-none fixed inset-0 z-20 hidden lg:block [&_aside]:pointer-events-auto"><DemoMachineRail machines={fleet} initiallyOpen={false} workshopLinks={links} /></div>;
 }

@@ -300,7 +300,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 pb-8">
+    <div className="min-w-0 space-y-5 pb-8">
       <div className="overflow-hidden rounded-[28px] border border-border/80 bg-background/85 shadow-lg shadow-emerald-950/5 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-emerald-500/[0.08] via-background to-background px-4 py-4 sm:px-5">
           <div className="min-w-0">
@@ -398,7 +398,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
-            <div className="h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className={mode === "baumdienst" ? "min-w-0" : "h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"}>
               <WeeklyHoursTable rows={snapshot.charts.weekHoursByBaustelle} columns={snapshot.charts.weekHoursColumns} currentLang={currentLang} mode={mode} />
             </div>
           </CardContent>
@@ -412,7 +412,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0 sm:p-5 sm:pt-0">
-            <div className="h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className={mode === "baumdienst" ? "min-w-0" : "h-[340px] min-h-0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"}>
               <WorkerHoursToggleChart weekly={snapshot.charts.workerHours.weekly} monthly={snapshot.charts.workerHours.monthly} currentLang={currentLang} companyMode={mode} embedded />
             </div>
           </CardContent>

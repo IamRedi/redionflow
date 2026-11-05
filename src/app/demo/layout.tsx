@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
+import type { Viewport } from "next";
 import { notFound } from "next/navigation";
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
 import { WorkshopFleet } from "@/components/demo/workshop/workshop-fleet";
+import { DemoWorkspace } from "@/components/demo/demo-workspace";
+import shellStyles from "@/components/demo/demo-workspace.module.css";
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
@@ -11,6 +14,8 @@ import { getFeatures } from "@/lib/mode-config";
 import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { isPublicDemoEnabled } from "@/lib/public-demo";
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
 
 export default async function DemoLayout({ children }: { children: ReactNode }) {
   // No login on these pages: never serve them outside a demo/local instance.
@@ -63,8 +68,8 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   const pageTone = mode === "baumdienst" ? "dark:bg-[#10211a]" : "";
 
   return (
-    <div className={`min-h-dvh overflow-x-hidden bg-background text-foreground ${pageTone}`}>
-      <header className={mode === "baumdienst" ? "relative z-10 bg-transparent print:hidden" : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
+    <div className={`${mode === "baumdienst" ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
+      <header className={mode === "baumdienst" ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         <div className="pt-3">
           <DemoTopBar
             mode={mode}
@@ -89,10 +94,10 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
       </header>
       {features.machines ? mode === "baumdienst" ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
-      <div className="mx-auto max-w-6xl lg:pr-20">
-        <main className={`${mode === "baumdienst" ? "px-5 pb-6 pt-4" : "px-5 pb-24 pt-4 lg:pb-6"} print:max-w-none print:px-0 print:py-0`}>{children}</main>
+      {mode === "baumdienst" ? <><DemoWorkspace>{children}</DemoWorkspace><div className={shellStyles.footer}><RediOnFooter compact /></div></> : <div className="mx-auto max-w-6xl lg:pr-20">
+        <main className="px-5 pb-24 pt-4 lg:pb-6 print:max-w-none print:px-0 print:py-0">{children}</main>
         <RediOnFooter />
-      </div>
+      </div>}
     </div>
   );
 }
