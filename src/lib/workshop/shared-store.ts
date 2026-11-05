@@ -9,6 +9,7 @@ import { upgradeWorkshopInventory } from "./inventory-flow";
 import type { DemoActor } from "./custody-schema";
 import { applyCustodyCommand, type BaseTree } from "./custody-flow";
 import type { z } from "zod";
+import { IMAGE_LEASE_MS, imageEnabled, imageIdentity, imageUrl } from "./image-identity";
 
 export const DEMO_WORKSPACE_KEY = "baumdienst-workshop:v1";
 export class SharedWorkshopError extends Error {
@@ -54,7 +55,15 @@ export async function ensureWorkshopDemo() {
 export async function workshopSnapshot(tx: Prisma.TransactionClient = prisma): Promise<WorkshopSnapshot> {
   const row = await tx.baumdienstDemoWorkspace.findUniqueOrThrow({ where: { key: DEMO_WORKSPACE_KEY } });
   const photos = await tx.baumdienstDemoFile.findMany({ where: { workspaceKey: DEMO_WORKSPACE_KEY, kind: { in: ["asset", "site"] } }, orderBy: { createdAt: "desc" }, select: { id: true, kind: true, target: true, jobId: true, name: true, createdAt: true } });
-  return { state: workshopSchema.parse(row.data), revision: row.revision, updatedAt: row.updatedAt.toISOString(), directory: await workshopDirectory(tx), photos: photos.map(p => ({ id: p.id, kind: p.kind as "asset" | "site", target: p.target, ...(p.jobId ? { jobId: p.jobId } : {}), name: p.name, at: p.createdAt.toISOString(), url: fileUrl(p.id) })) };
+  const state = workshopSchema.parse(row.data);
+  const generations = await tx.baumdienstDemoImageGeneration.findMany({ where: { workspaceKey: DEMO_WORKSPACE_KEY }, orderBy: { startedAt: "desc" }, select: { id: true, fingerprint: true, status: true, startedAt: true, finishedAt: true, errorCode: true } });
+  const illustrations = state.assets.flatMap(asset => {
+    const candidates = generations.filter(g => g.fingerprint === digest(imageIdentity(asset)));
+    const g = candidates.find(g => g.status === "ready") || candidates[0]; if (!g) return [];
+    const expired = g.status === "pending" && Date.now() - g.startedAt.getTime() >= IMAGE_LEASE_MS;
+    return [{ assetId: asset.id, status: (expired ? "error" : g.status) as "pending" | "ready" | "error", at: (g.finishedAt || g.startedAt).toISOString(), ...(g.status === "ready" ? { url: imageUrl(g.id) } : {}), ...(expired || g.errorCode ? { error: expired ? "aiTimeout" : g.errorCode! } : {}) }];
+  });
+  return { state, illustrations, imageGenerationEnabled: imageEnabled(), revision: row.revision, updatedAt: row.updatedAt.toISOString(), directory: await workshopDirectory(tx), photos: photos.map(p => ({ id: p.id, kind: p.kind as "asset" | "site", target: p.target, ...(p.jobId ? { jobId: p.jobId } : {}), name: p.name, at: p.createdAt.toISOString(), url: fileUrl(p.id) })) };
 }
 
 export async function mutateWorkshopDemo(envelope: { requestId: string; revision: number }, fingerprint: string, apply: (tx: Prisma.TransactionClient, state: WorkshopState, at: string, id: string) => Promise<WorkshopState>) {

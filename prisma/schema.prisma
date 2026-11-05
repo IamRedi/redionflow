@@ -17,6 +17,25 @@ model BaumdienstDemoWorkspace {
   updatedAt DateTime @updatedAt
   files     BaumdienstDemoFile[]
   mutations BaumdienstDemoMutation[]
+  imageGenerations BaumdienstDemoImageGeneration[]
+}
+
+/// Bounded, durable image cache and paid-attempt ledger for the opt-in demo only.
+model BaumdienstDemoImageGeneration {
+  id           String @id
+  workspaceKey String
+  workspace    BaumdienstDemoWorkspace @relation(fields: [workspaceKey], references: [key], onDelete: Cascade)
+  fingerprint  String
+  assetId      String
+  actorKey     String
+  model        String
+  style        String
+  status       String
+  errorCode    String?
+  data         Bytes?
+  startedAt    DateTime @default(now())
+  finishedAt   DateTime?
+  @@index([workspaceKey, fingerprint, startedAt], map: "BaumdienstDemoImageGeneration_cache_idx")
 }
 
 model BaumdienstDemoFile {

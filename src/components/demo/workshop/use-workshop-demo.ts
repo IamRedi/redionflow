@@ -7,11 +7,12 @@ import type { z } from "zod";
 import { demoOffice } from "@/lib/workshop/custody-schema";
 export type DemoInventoryCommand = z.infer<typeof publicWorkshopCommand>;
 
-type View = WorkshopSnapshot & { status: "loading" | "ready" | "connection"; hydrated: boolean; pending: boolean };
-const serverSnapshot: View = { state: createWorkshopDemo(), actor: demoOffice, revision: -1, updatedAt: "", photos: [], directory: emptyDirectory, status: "loading", hydrated: false, pending: false };
+type View = WorkshopSnapshot & { status: "loading" | "ready" | "connection"; hydrated: boolean; pending: boolean; generating: string[]; imageErrors: Record<string,string> };
+const serverSnapshot: View = { state: createWorkshopDemo(), actor: demoOffice, revision: -1, updatedAt: "", photos: [], directory: emptyDirectory, status: "loading", hydrated: false, pending: false, generating: [], imageErrors: {} };
 let etag: string | null = null;
 let cached = serverSnapshot;
 const listeners = new Set<() => void>();
+const imageRequests = new Map<string, string>();
 let actorEpoch = 0;
 let reading: Promise<void> | null = null;
 let cleanup: (() => void) | null = null;
@@ -103,5 +104,19 @@ export function useWorkshopDemo() {
     etag = null; if (reading) await reading; await refresh();
     } finally { emit({pending: false}); }
   }
-  return { ...data, actor: data.actor || demoOffice, dispatch, upload, refresh, switchActor };
+  async function generateImage(assetId: string) {
+    if (cached.generating.includes(assetId)) return;
+    emit({ generating: [...cached.generating, assetId], imageErrors: { ...cached.imageErrors, [assetId]: "" } });
+    const requestId = imageRequests.get(assetId) || crypto.randomUUID(); imageRequests.set(assetId, requestId);
+    try {
+      const response = await fetch("/api/demo/baumdienst/images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assetId, requestId }) });
+      const result = await response.json();
+      imageRequests.delete(assetId);
+      if (!response.ok || result.status === "error") throw new Error(result.error || "aiFailed");
+    } catch (error) {
+      emit({ imageErrors: { ...cached.imageErrors, [assetId]: error instanceof Error ? error.message : "aiFailed" } });
+      throw error;
+    } finally { emit({ generating: cached.generating.filter(id => id !== assetId) }); etag = null; if (reading) await reading; await refresh(); }
+  }
+  return { ...data, actor: data.actor || demoOffice, dispatch, upload, refresh, switchActor, generateImage };
 }

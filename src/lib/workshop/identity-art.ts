@@ -1,3 +1,4 @@
+import { botanicalIdentity } from "./botanical";
 export const treeIdentity = (siteKey: string, code: string) => `${siteKey}:${code}`;
 export const ILLUSTRATION_STYLE = "baumdienst-forest-v1";
 const normalized = (name: string) => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -17,15 +18,6 @@ export function assetArtKind(id: string, name = "", category = "tool") {
   return category === "vehicle" ? "truck" : "toolbox";
 }
 export function treeArtKind(species: string) {
-  const n = normalized(species);
-  if (/eiche|quercus|oak/.test(n)) return "oak";
-  if (/ahorn|acer|platane|platanus|maple/.test(n)) return "maple";
-  if (/birke|betula|birch/.test(n)) return "birch";
-  if (/buche|fagus|carpinus|beech/.test(n)) return "beech";
-  if (/esche|fraxinus|ash/.test(n)) return "ash";
-  if (/linde|tilia|lime/.test(n)) return "lime";
-  if (/fichte|picea|tanne|abies|kiefer|pinus|pine/.test(n)) return "conifer";
-  if (/weide|salix|willow/.test(n)) return "willow";
-  if (/malus|prunus|apfel|kirsche|apple|cherry/.test(n)) return "fruit";
-  return "broadleaf";
+  const { kind } = botanicalIdentity(species);
+  return ["spruce", "fir", "pine"].includes(kind) ? "conifer" : kind;
 }

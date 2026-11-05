@@ -15,6 +15,7 @@ import { ProductsSection } from "@/components/landing/ProductsSection";
 import { SecuritySection } from "@/components/landing/SecuritySection";
 import { SideNavigation } from "@/components/landing/SideNavigation";
 import { landingContent, normalizeLandingLanguage } from "./landing-content";
+import { studioSummary } from "@/lib/workshop/studio-copy";
 import { workshopCopy } from "@/lib/workshop/copy";
 
 function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
@@ -164,7 +165,7 @@ export function LandingPage({
         {workshopDemoEnabled ? <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8"><section id="werkstatt-demo" className="my-12 rounded-xl border border-white/10 bg-white/[0.045] p-5 shadow-[0_16px_32px_rgba(0,0,0,0.12)] sm:p-8">
           <SectionIntro eyebrow={workshop.demo} title={workshop.title} text={workshop.subtitle} />
           <p className="mt-4 text-sm font-semibold text-emerald-200">{workshop.received} → {workshop.repairing} → {workshop.repaired}</p>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/75">{workshop.featureSummary}</p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/75">{workshop.featureSummary} {studioSummary(landingLang)}</p>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/75">{workshop.demoHint}</p>
           <a href="/demo/workshop" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-emerald-300 px-5 text-sm font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#10211a]">{workshop.open}</a>
         </section></div> : null}
