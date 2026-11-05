@@ -9,3 +9,10 @@ footer a.redion-signature{font-family:RedionManrope,Manrope,ui-sans-serif,system
 /* One quiet, centered author row; utilities retain their own layout. */
 .redion-author-footer{display:flex;justify-content:center;align-items:center;width:100%;min-width:0;flex:0 0 100%;grid-column:1/-1}
 footer{flex-wrap:wrap}
+
+/* Owner correction05Nov: natural content end; legal row directly above author. */
+.redion-legal-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 18px;width:100%;margin:0;text-align:center}
+.redion-legal-row a{display:inline-flex;align-items:center;min-height:44px;font-size:12px;line-height:1.4}
+.redion-author-footer{position:static;min-height:0;flex:none;gap:0;margin:0;padding:0}
+
+footer{padding-bottom:8px}.footer-bottom{padding-bottom:0;gap:6px}
