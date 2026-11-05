@@ -2,6 +2,18 @@
 
 Stand: 5. November 2026. **Lokaler Kandidat, nicht veröffentlicht und nicht für reale Betriebsdaten.** Grundlage ist `807519b1a4dea650645aa153db49000406af3a7f` aus dem BauFlow-Pilotzweig. Die öffentliche Baumdienst-Demo läuft davon unabhängig auf `main`.
 
+## Freigegebener, isolierter Demo-Release
+
+Der Eigentümer hat am 5. November die Veröffentlichung ausschließlich in der bestehenden öffentlichen Baumdienst-Demo freigegeben. Dafür dient die eigene Deployment-Branch `demo/baumdienst-workshop-20261105`; weder `main` noch der verbundene AL-Steel-Pilotzweig werden bewegt. Ein Codebestand bleibt erhalten, mit expliziter Profilkonfiguration statt einer zweiten Produktkopie.
+
+`DEMO_PROFILE=baumdienst-workshop` aktiviert die Vorlage nur zusammen mit `APP_ENV=demo|local`, deaktiviertem SaaS-Modus und Firmenmodus `baumdienst`. Ohne Opt-in, bei einem anderen Profil, in BauFlow oder im SaaS-/Produktivmodus sind Route, Einstieg, Werkstatt-Flotte und neue Workspace-Vorlage ausgeschlossen. Nur der Baumdienst-Webdienst erhält diese Konfiguration; BauFlow, AL Steel und beide nächtlichen Reset-Dienste bleiben unverändert. Die bestehende Baumdienst-Datenbank wurde separat vom BauFlow-Ziel verifiziert und enthält ausschließlich die bekannte fiktive Baumdienst-Musterfirma.
+
+Release-Prüfung: Produktionsbuild/TypeScript, fokussiertes ESLint, 31 Unit-Tests einschließlich Profilgrenzen und Werkstattmodell, alle fünf Browser-Tests mit Online-Demo-Flags sowie drei negative HTTP-Profile. Die dynamische Workspace-Shell rendert keine zweite Kopie ihrer Formulare als Suspense-Fallback. `node tests/workshop/deployment-boundaries.cjs` prüft die ausgeschlossenen Profile lokal gegen ein vorhandenes fiktives Test-DB-Ziel.
+
+Vorheriger verifizierter Runtime-Stand für Rollback: Deployment `820c0ff0-e184-4b66-b2b7-eb50c747fa3d`, Quellrevision `ce13ead44842715a071fd8e702c023e3c4223e51`. Die 49 vorhandenen Migrationen bleiben erhalten; die weiteren Migrationen entfernen keine Felder der bestehenden Demo-Baseline. Kein Datenbank-Reset ist Teil dieses Releases. Der optionale lokale Voll-Export wurde durch die automatische Sicherheitsprüfung abgewiesen; ein providerinterner Snapshot ist im bestehenden Plan nicht verfügbar (Pro erforderlich). Es wurde weder exportiert noch ein Tarif geändert. Die fiktive Demo ist getrennt vom echten Pilotbetrieb und kann weiterhin auf die vorherige App-Version zurückgestellt werden.
+
+Rollout und öffentliche Runtime-Abnahme werden nach dem Deployment ergänzt. Die nachstehenden ursprünglichen Kandidatenbefunde bleiben als Historie erhalten.
+
 ## Auftrag und fachliche Übertragung
 
 Der Eigentümer möchte die erprobte BauFlow-Oberfläche auf das fiktive Baumdienst-Demoprofil übertragen. An die Stelle der Fertigungsübersicht tritt die Werkstatt. Hier werden Fahrzeuge und einzelne Geräte mit Defekt angenommen, repariert und nach Prüfung wieder freigegeben. Die Baumdienst-Farben, bestehenden Karten, Schriften, Icons und Komponenten bleiben erhalten.
@@ -27,7 +39,7 @@ Die drei Reparaturzustände sind **Angenommen → In Reparatur → Repariert**. 
 
 ## Daten- und Zugriffsgrenze
 
-`/demo/workshop` setzt die bestehende Freigabe für öffentliche Demos (`APP_ENV=local|demo`, kein SaaS-Modus) und den Firmenmodus `baumdienst` voraus. BauFlow und der echte SaaS-/Pilotbetrieb erhalten dadurch keine Werkstattaktion.
+`/demo/workshop` setzt die bestehende Freigabe für öffentliche Demos (`APP_ENV=local|demo`, kein SaaS-Modus), den Firmenmodus `baumdienst` und das ausdrückliche Profil `DEMO_PROFILE=baumdienst-workshop` voraus. BauFlow und der echte SaaS-/Pilotbetrieb erhalten dadurch keine Werkstattaktion.
 
 Alle Werkstattdaten sind fiktive Beispiele. Der versionierte, validierte Zustand liegt unter `redionflow:baumdienst:workshop-demo:v1` in `localStorage`. Kein Server-Action-/API-Schreibpfad, keine neue Migration, kein neuer Provider und keine neuen Abhängigkeiten. Aufträge und Dateiinhalte werden nicht an die Datenbank oder einen Storage-Anbieter übertragen. Es gibt weder Benutzerrollen noch Mehrbenutzer-Synchronisation für diese Probe; der Akteur heißt ausdrücklich Demo. Ein Browser-Export ist keine betriebliche Datensicherung. Bei defektem oder vollem Browserspeicher wird kein Speichern vorgetäuscht.
 

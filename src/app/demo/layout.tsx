@@ -13,7 +13,7 @@ import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { getFeatures } from "@/lib/mode-config";
 import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
-import { isPublicDemoEnabled } from "@/lib/public-demo";
+import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/public-demo";
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
 
@@ -64,15 +64,17 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
     getCompanyMode(),
   ]);
   const features = getFeatures(mode);
+  const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
   // Mirrors the real Workzone layout: theme background, dark green only in dark mode.
   const pageTone = mode === "baumdienst" ? "dark:bg-[#10211a]" : "";
 
   return (
-    <div className={`${mode === "baumdienst" ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
-      <header className={mode === "baumdienst" ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
+    <div className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
+      <header className={workshopEnabled ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         <div className="pt-3">
           <DemoTopBar
             mode={mode}
+            workshopEnabled={workshopEnabled}
             workers={workers.map((worker) => ({
               id: worker.id,
               firstName: worker.firstName,
@@ -85,16 +87,16 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
               live: worker.sessions.length > 0,
             }))}
           />
-          {announcement?.message && mode !== "baumdienst" ? (
+          {announcement?.message && !workshopEnabled ? (
             <div className="mx-auto max-w-6xl px-5 pb-2 lg:pr-20">
               <div className="rounded-md border bg-card px-3 py-2 text-sm">{announcement.message}</div>
             </div>
           ) : null}
         </div>
       </header>
-      {features.machines ? mode === "baumdienst" ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
+      {features.machines ? workshopEnabled ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
-      {mode === "baumdienst" ? <><DemoWorkspace>{children}</DemoWorkspace><div className={shellStyles.footer}><RediOnFooter compact /></div></> : <div className="mx-auto max-w-6xl lg:pr-20">
+      {workshopEnabled ? <><DemoWorkspace>{children}</DemoWorkspace><div className={shellStyles.footer}><RediOnFooter compact /></div></> : <div className="mx-auto max-w-6xl lg:pr-20">
         <main className="px-5 pb-24 pt-4 lg:pb-6 print:max-w-none print:px-0 print:py-0">{children}</main>
         <RediOnFooter />
       </div>}

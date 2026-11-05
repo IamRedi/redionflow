@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import styles from "./demo-workspace.module.css";
 
@@ -15,5 +15,7 @@ function ScrollWorkspace({ children }: { children: ReactNode }) {
   return <main ref={ref} className={workspaceClass} tabIndex={0} data-testid="demo-workspace">{children}</main>;
 }
 export function DemoWorkspace({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<main className={workspaceClass}>{children}</main>}><ScrollWorkspace>{children}</ScrollWorkspace></Suspense>;
+  // Demo routes already render dynamically (cookies/company data). Rendering the
+  // full children as a Suspense fallback duplicated forms during stream handoff.
+  return <ScrollWorkspace>{children}</ScrollWorkspace>;
 }

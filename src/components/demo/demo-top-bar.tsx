@@ -26,11 +26,11 @@ type DemoWorker = {
   live: boolean;
 };
 
-export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mode?: CompanyMode }) {
+export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { workers: DemoWorker[]; mode?: CompanyMode; workshopEnabled?: boolean }) {
   const currentLang = await resolveRequestLanguage();
   const kidraht = kidrahtDemoUrl(mode);
 
-  if (mode === "baumdienst") {
+  if (mode === "baumdienst" && workshopEnabled) {
     const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
     return <div className="w-full min-w-0 px-5 pb-3 pt-8 lg:pr-20" data-testid="baum-demo-topbar">
       <div data-demo-teamrow className="flex min-w-0 items-start gap-3"><Link href="/demo/workzone" aria-label="BaumdienstFlow · Workzone" className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><AppBrand compact mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} /></Link><div className="min-w-0 flex-1"><WorkerIconStrip admin comfortable insetClassName="" profileHrefBase="/demo/workers" workers={workers.map(worker => ({ ...worker, activeProfile: false, pendingVacationRequest: false, vacationDecisionSignal: false, vacationDecisionSignalKey: null }))} /></div></div>
