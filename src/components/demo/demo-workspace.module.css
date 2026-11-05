@@ -25,7 +25,7 @@
 @media (max-height: 560px) {
   .header > div { padding-top: 0; }
   .header [data-testid="baum-demo-topbar"] { padding-top: 24px; padding-bottom: 4px; }
-  .header [data-demo-teamrow] { display: none; }
+  .header [data-demo-teamrow] > a { display: none; }
   .header [data-demo-navigation] { margin-top: 0; max-width: 100%; min-height: 52px; flex-wrap: nowrap; overflow-x: auto; padding-block: 4px; scrollbar-width: thin; }
   .header [data-demo-navigation] > * { flex-shrink: 0; }
 }

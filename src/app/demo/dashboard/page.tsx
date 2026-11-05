@@ -1,3 +1,6 @@
+import { prisma } from "@/lib/db/prisma";
+import { ensureWorkshopDemo, demoSiteKey } from "@/lib/workshop/shared-store";
+import { workshopSchema } from "@/lib/workshop/demo-model";
 import Link from "next/link";
 import { BriefcaseBusiness, ChevronLeft, ChevronRight, HardHat, MapPinned, Wrench } from "lucide-react";
 
@@ -293,6 +296,13 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
   ]);
   const snapshot = await getDashboardSnapshotForWeek(company.id, weekOffset, currentLang);
   const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
+  let progressRows = snapshot.charts.baustellenProgress;
+  if (workshopEnabled) {
+    const [workspace, sites] = await Promise.all([ensureWorkshopDemo(), prisma.baustelle.findMany({where:{companyProfileId:company.id},select:{id:true,name:true,address:true,treeItems:{select:{treeId:true,status:true}}}})]);
+    const saved = workshopSchema.parse(workspace.data).custody.trees;
+    progressRows = progressRows.map(row => {const site=sites.find(s=>s.id===row.id); if(!site)return row; const key=demoSiteKey(site), total=site.treeItems.length, done=site.treeItems.filter(t=>(saved[`${key}:${t.treeId}`]?.status || t.status)==="done").length;return {...row,value:total?Math.round(done/total*100):0,hint:`${done}/${total}`,detail:`${done}/${total}`};});
+  }
+
 
   const statCards = [
     { key: "active-workers", title: t("admin.aktiveMitarbeiter", currentLang, mode), value: snapshot.stats.activeWorkers, description: t("admin.aktiveMitarbeiterSub", currentLang, mode), icon: HardHat },
@@ -366,7 +376,7 @@ export default async function DemoDashboardPage({ searchParams }: { searchParams
 
       <div className="grid items-start gap-4 xl:grid-cols-2">
         <div className="min-w-0"><MonthlyHoursTrend points={snapshot.charts.monthHoursTrend} currentLang={currentLang} mode={mode} /></div>
-        <div className="min-w-0"><ProgressBarChart rows={snapshot.charts.baustellenProgress} currentLang={currentLang} mode={mode} /></div>
+        <div className="min-w-0"><ProgressBarChart rows={progressRows} currentLang={currentLang} mode={mode} /></div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">

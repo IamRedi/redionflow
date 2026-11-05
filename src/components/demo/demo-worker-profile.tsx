@@ -162,7 +162,7 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <div className="h-28 bg-[#163328]" />
         <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6">
-          <div className="-mt-12 flex items-end gap-4">
+          <div className={inventoryContent ? "-mt-10 flex min-w-0 flex-1 flex-wrap items-end gap-3" : "-mt-12 flex items-end gap-4"}>
             <div className="relative size-28">
               <div className="relative flex size-28 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted text-3xl font-semibold shadow-sm">
                 {worker.profileImageUrl ? (
@@ -172,8 +172,8 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
                 )}
               </div>
             </div>
-            <div className="pb-1">
-              <h1 className="text-2xl font-semibold">
+            <div className={inventoryContent ? "min-w-0 flex-1 pb-1" : "pb-1"}>
+              <h1 className={inventoryContent ? "break-words text-2xl font-semibold" : "text-2xl font-semibold"}>
                 {worker.firstName} {worker.lastName}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -188,6 +188,7 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
       </div>
 
       {inventoryContent}
+      <ProfileDetails collapsed={Boolean(inventoryContent)} label={t("workzone.dataTitle", currentLang)}>
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr_0.9fr]">
         <Card>
           <CardHeader className="pb-3">
@@ -484,6 +485,9 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
           </div>
         </CardContent>
       </Card>
+      </ProfileDetails>
     </div>
   );
 }
+
+function ProfileDetails({collapsed, label, children}: {collapsed: boolean; label: string; children: ReactNode}) { return collapsed ? <details className="rounded-2xl border bg-card px-4"><summary className="flex min-h-14 cursor-pointer items-center text-sm font-medium">{label}</summary><div className="space-y-5 pb-4">{children}</div></details> : <>{children}</>; }

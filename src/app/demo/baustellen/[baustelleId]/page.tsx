@@ -1,3 +1,4 @@
+import { MusterSite } from "@/components/demo/workshop/muster-site";
 import Link from "next/link";
 import { BookOpenCheck } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -92,6 +93,8 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
       dateSet: String(row?.dateSet ?? ""),
     };
   });
+
+  if (workshopEnabled) return <MusterSite id={baustelle.id} siteKey={demoSiteKey(baustelle)} name={baustelle.name} address={baustelle.address} description={baustelle.description} trees={baustelle.treeItems} points={points} crew={baustelle.workSessions.map(s => ({id:s.workerId, name:`${s.worker.firstName} ${s.worker.lastName}`}))} safety={safetyRows} tasks={baustelle.manualTasks.slice(0,10).map(t => t.description)} briefing={kidraht ? kidrahtBriefingUrl(kidraht) : undefined} now={new Date().toISOString()} />;
 
   return (
     <div className="space-y-4">

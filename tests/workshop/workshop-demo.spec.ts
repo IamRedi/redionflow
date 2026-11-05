@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { workshopCopy } from "../../src/lib/workshop/copy";
 import { resetWorkshopFixture } from "./shared-fixture";
@@ -13,7 +14,10 @@ test.beforeEach(async ({ context, page }, info) => {
   await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
 });
 
-test("repair, parts, release, issue/return, shared document, reload and history export", async ({ page }, info) => {
+test("repair, parts, release, issue/return, shared document, reload and history export", async ({ page, request }, info) => {
+  const seed = await (await request.get("/api/demo/baumdienst/workshop")).json();
+  expect((await request.post("/api/demo/baumdienst/workshop", {headers:{Origin:String(info.project.use.baseURL)}, data:{requestId:randomUUID(), revision:seed.revision, command:{type:"policy", autoConfirm:true}}})).status()).toBe(200);
+  await page.reload(); await expect(page.getByRole("button",{name:"Defekt melden",exact:true})).toBeEnabled();
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   await page.getByRole("button", { name: "Defekt melden", exact: true }).click();
   let dialog = page.getByRole("dialog");
@@ -41,12 +45,13 @@ test("repair, parts, release, issue/return, shared document, reload and history 
   const crane = page.locator("article").filter({ has: page.getByRole("heading", { name: "Kran-LKW", exact: true }) });
   await expect(crane).toContainText("Verfügbar");
   await crane.getByRole("button", { name: "Details öffnen" }).click();
-  await dialog.getByRole("button", { name: "Zuordnen", exact: true }).click();
-  await dialog.getByLabel("Mitarbeiter (optional)", { exact: true }).selectOption({ label: "Jonas Becker" });
-  await dialog.getByRole("button", { name: "Zuordnen", exact: true }).click();
+  await dialog.getByRole("button", { name: "An Mitarbeiter geben", exact: true }).click();
+  await dialog.getByLabel("Mitarbeiter wählen", { exact: true }).selectOption({ label: "Jonas Becker" });
+  await dialog.getByRole("button", { name: "Anfrage senden", exact: true }).click();
   await page.reload(); await expect(crane).toContainText("Jonas Becker");
   await crane.getByRole("button", { name: "Details öffnen" }).click();
-  await dialog.getByRole("button", { name: "Zurücknehmen", exact: true }).click();
+  await dialog.getByRole("button", { name: "Ins Lager zurückgeben", exact: true }).click();
+  await dialog.getByRole("button", { name: "Anfrage senden", exact: true }).click();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("link", { name: "Dokumente", exact: true }).click();
   await page.getByLabel("Gerät / Fahrzeug", { exact: true }).last().selectOption("crane");
@@ -82,10 +87,11 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
     for (const tab of ["orders", "fleet", "tools", "parts", "documents", "history"]) {
       await page.goto(`/demo/workshop?tab=${tab}`);
       await expect(page.getByTestId("workshop-demo")).toBeVisible();
-      await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
+      const primary = page.getByRole("button", {name: tab === "tools" || tab === "fleet" ? "Gerät erfassen" : "Defekt melden", exact:true});
+      await expect(primary).toBeEnabled();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      const size = await page.getByRole("button", { name: "Defekt melden", exact: true }).boundingBox(); expect(size!.height).toBeGreaterThanOrEqual(44);
-      const colors = await page.getByRole("button", { name: "Defekt melden", exact: true }).evaluate(el => { const s = getComputedStyle(el); return [s.color, s.backgroundColor]; });
+      const size = await primary.boundingBox(); expect(size!.height).toBeGreaterThanOrEqual(44);
+      const colors = await primary.evaluate(el => { const s = getComputedStyle(el); return [s.color, s.backgroundColor]; });
       const luminance = (value: string) => { const rgb = value.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(n => { const x = n / 255; return x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; }); return .2126 * rgb[0] + .7152 * rgb[1] + .0722 * rgb[2]; };
       const [fg, bg] = colors.map(luminance); expect((Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05)).toBeGreaterThanOrEqual(4.5);
       if ((width === 1440 || width === 390) && (tab === "orders" || tab === "tools")) await page.screenshot({ path: info.outputPath(`${tab}-${theme}-${width}.png`), fullPage: true });
@@ -99,6 +105,7 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
     expect((await signature.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/demo/workshop");
+  await page.getByText("Mehr",{exact:true}).click();
   await page.getByRole("button", { name: "Hell/Dunkel", exact: true }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -126,7 +133,7 @@ test("native presentation, shared Workzone header and the existing detail pages"
     const workerSize = await strip.getByRole("button").first().boundingBox(); expect(workerSize!.height).toBeGreaterThanOrEqual(44);
     await page.screenshot({ path: info.outputPath(`workzone-${theme}-${width}.png`), fullPage: true });
     const site = await page.locator('a[href^="/demo/baustellen/"]').first().getAttribute("href");
-    const worker = await strip.getByRole("button").first().getAttribute("title"); expect(worker).toBeTruthy();
+    await expect(strip.getByRole("combobox", {name:"Demo ausprobieren als"})).toBeVisible();
     await page.goto("/demo/dashboard"); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (site) { await page.goto(site); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); }
   }

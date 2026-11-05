@@ -12,65 +12,36 @@ test.beforeEach(async ({ context }, info) => {
   await context.route("https://nominatim.openstreetmap.org/**", route => route.abort());
 });
 
-test("phone inventory → site/worker → workshop → deliberate release → new assignment; desktop sees the same record", async ({ page, browser, request }, info) => {
-  const start = await (await request.get(api)).json() as WorkshopSnapshot;
-  const worker = start.directory.workers.find(w => w.name === "Jonas Becker")!;
-  const site = start.directory.sites.find(s => s.name.includes("Stadtpark"))!;
-  const desktop = await browser.newContext({ baseURL: String(info.project.use.baseURL), viewport: { width: 1440, height: 900 } });
-  await desktop.addCookies([{ name: "bk_lang", value: "de", url: String(info.project.use.baseURL) }]);
-  const other = await desktop.newPage();
-  const errors: string[] = []; page.on("pageerror", e => errors.push(e.message)); other.on("pageerror", e => errors.push(e.message));
+test("phone worker takes → manager confirms → colleague transfer needs both → workshop preserves origin", async ({page, browser, request}, info) => {
+  const baseURL = String(info.project.use.baseURL), seed = await (await request.get(api)).json() as WorkshopSnapshot;
+  const worker = seed.directory.workers.find(w => w.name === "Jonas Becker")!, colleague = seed.directory.workers.find(w => w.available && w.key !== worker.key)!;
+  const site = seed.directory.sites.find(s => s.name.includes("Stadtpark"))!;
+  const office = await browser.newContext({baseURL, viewport:{width:1440,height:900}});
+  await office.addCookies([{name:"bk_lang",value:"de",url:baseURL}]); const desktop = await office.newPage();
+  const errors:string[]=[]; page.on("pageerror",e=>errors.push(e.message)); desktop.on("pageerror",e=>errors.push(e.message));
   try {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/demo/baustellen/${site.id}`);
-    const scope = page.getByRole("region", { name: "Geräte & Werkzeuge" });
-    await scope.getByRole("button", { name: "Gerät zuordnen", exact: true }).click();
-    await scope.getByLabel("Verfügbares Gerät").selectOption("blower");
-    await scope.getByLabel("Mitarbeiter (optional)").selectOption(worker.key);
-    await scope.getByRole("button", { name: "Zuordnen", exact: true }).click();
-    await expect(scope).toContainText("Laubbläser · WG-103");
-    await other.goto(`/demo/workers/${worker.id}`);
-    await expect(other.getByRole("region", { name: "Geräte & Werkzeuge" })).toContainText("Laubbläser · WG-103");
-    await page.goto("/demo/workshop?tab=tools");
-    const blower = page.locator("article").filter({ has: page.getByRole("heading", { name: "Laubbläser", exact: true }) });
-    await blower.getByRole("button", { name: "Details öffnen", exact: true }).click();
-    let dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("link", { name: site.name })).toHaveAttribute("href", `/demo/baustellen/${site.id}`);
-    await dialog.getByRole("button", { name: "Defekt melden", exact: true }).click();
-    await dialog.getByLabel("Defektbeschreibung").fill("DEMO · Geräusch im Gebläse");
-    await dialog.getByRole("button", { name: "In Werkstatt annehmen", exact: true }).click();
-    await other.reload();
-    await expect(other.getByRole("region", { name: "Geräte & Werkzeuge" })).toContainText("In Werkstatt");
-    await page.getByRole("button", { name: "Details öffnen: Laubbläser · WG-103", exact: true }).click();
-    await expect(dialog.getByRole("link", { name: site.name })).toBeVisible();
-    await dialog.getByRole("button", { name: "Reparatur starten", exact: true }).click();
-    await page.getByRole("button", { name: "Details öffnen: Laubbläser · WG-103", exact: true }).click();
-    await dialog.getByLabel("Durchgeführte Arbeiten").fill("DEMO · Funktion geprüft");
-    await dialog.getByLabel("Funktionsprüfung erfolgreich").check();
-    await dialog.getByRole("button", { name: "Reparatur abschließen", exact: true }).click();
-    await expect(dialog).not.toBeVisible();
-    const beforeRelease = await (await request.get(api)).json() as WorkshopSnapshot;
-    const denied = await request.post(api, { headers: { Origin: String(info.project.use.baseURL) }, data: { requestId: randomUUID(), revision: beforeRelease.revision, command: { type: "assign", assetId: "blower", siteKey: site.key } } });
-    expect(denied.status()).toBe(400);
-    await page.getByRole("button", { name: "Details öffnen: Laubbläser · WG-103", exact: true }).click();
-    await dialog.getByRole("button", { name: "Für Einsatz freigeben", exact: true }).click();
-    await expect(dialog).toContainText("In der gemeinsamen Demo gespeichert.");
-    await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
-    await page.goto(`/demo/workshop?tab=tools&asset=blower&detail=1&site=${site.key}`);
-    dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: "Zuordnen", exact: true }).click();
-    await expect(dialog.getByLabel("Baustelle (optional)")).toHaveValue(site.key);
-    await dialog.getByRole("button", { name: "Zuordnen", exact: true }).click();
-    await page.goto(`/demo/baustellen/${site.id}`);
-    await expect(page.getByRole("region", { name: "Geräte & Werkzeuge" })).toContainText("Laubbläser · WG-103");
-    await page.screenshot({ path: info.outputPath("site-inventory-phone.png"), fullPage: true });
-    const result = await (await request.get(api)).json() as WorkshopSnapshot;
-    expect(result.state.assets.filter(a => a.id === "blower")).toHaveLength(1);
-    expect(result.state.assets.find(a => a.id === "blower")?.placement?.workerKey).toBeUndefined();
-    expect(result.state.jobs.find(j => j.assetId === "blower")?.origin?.placement?.workerKey).toBe(worker.key);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    expect(errors).toEqual([]);
-  } finally { await desktop.close(); }
+    await page.setViewportSize({width:390,height:844}); await page.goto("/demo/workshop?tab=tools");
+    await page.getByRole("combobox",{name:"Demo ausprobieren als"}).selectOption(worker.key);
+    await page.getByRole("button",{name:"Scannen",exact:true}).click(); await page.getByLabel("Barcode / NFC-Code").fill("WG-103"); await page.getByRole("button",{name:"Gerät öffnen",exact:true}).click();
+    let dialog=page.getByRole("dialog"); await dialog.getByRole("button",{name:"Gerät mitnehmen",exact:true}).click();
+    await dialog.getByLabel("Baustelle (optional)").selectOption(site.key); await dialog.getByRole("button",{name:`Bestätigen · ${worker.name}`,exact:true}).click();
+    await expect(dialog).toContainText("Bestätigung ausstehend");
+    let snapshot=await (await request.get(api)).json() as WorkshopSnapshot; expect(snapshot.state.assets.find(a=>a.id==="blower")?.holder).toBe("");
+    await desktop.goto("/demo/workshop?tab=tools"); await desktop.getByRole("button",{name:/^Mitteilungen/}).click();
+    await desktop.getByRole("dialog").getByRole("button").filter({hasText:"Laubbläser"}).click(); await desktop.getByRole("dialog").getByRole("button",{name:"Bestätigen",exact:true}).click();
+    await expect(desktop.getByRole("dialog")).toContainText("Abgeschlossen");
+    await page.reload(); await page.goto("/demo/workshop?tab=tools&asset=blower&detail=1"); dialog=page.getByRole("dialog");
+    await expect(dialog.getByRole("link",{name:site.name})).toHaveAttribute("href",`/demo/baustellen/${site.id}`);
+    await dialog.getByRole("button",{name:"An Kollegen übergeben",exact:true}).click(); await dialog.getByLabel("Mitarbeiter wählen").selectOption(colleague.key); await dialog.getByRole("button",{name:"Anfrage senden",exact:true}).click();
+    snapshot=await (await request.get(api)).json() as WorkshopSnapshot; expect(snapshot.state.assets.find(a=>a.id==="blower")?.holder).toBe(worker.name);
+    await dialog.getByRole("button",{name:"Schließen",exact:true}).click(); await page.getByRole("combobox",{name:"Demo ausprobieren als"}).selectOption(colleague.key);
+    await page.getByRole("button",{name:/^Mitteilungen/}).click(); await page.getByRole("dialog").getByRole("button").filter({hasText:"Laubbläser"}).first().click(); await page.getByRole("dialog").getByRole("button",{name:"Bestätigen",exact:true}).click(); await expect(page.getByRole("dialog")).toContainText("Abgeschlossen");
+    await desktop.goto(`/demo/workers/${colleague.id}`); await expect(desktop.getByRole("region",{name:"Geräte & Werkzeuge"})).toContainText("Laubbläser");
+    await desktop.goto("/demo/workshop?tab=tools&asset=blower&detail=1"); const dd=desktop.getByRole("dialog"); await dd.getByText("Service & Details",{exact:true}).click(); await dd.getByRole("button",{name:"Defekt melden",exact:true}).click(); await dd.getByLabel("Defektbeschreibung").fill("DEMO · custody origin"); await dd.getByRole("button",{name:"In Werkstatt annehmen",exact:true}).click();
+    await desktop.getByRole("button",{name:"Details öffnen: Laubbläser · WG-103",exact:true}).click(); await dd.getByRole("button",{name:"Reparatur starten",exact:true}).click(); await desktop.getByRole("button",{name:"Details öffnen: Laubbläser · WG-103",exact:true}).click(); await dd.getByLabel("Durchgeführte Arbeiten").fill("DEMO · geprüft"); await dd.getByLabel("Funktionsprüfung erfolgreich").check(); await dd.getByRole("button",{name:"Reparatur abschließen",exact:true}).click(); await desktop.getByRole("button",{name:"Details öffnen: Laubbläser · WG-103",exact:true}).click(); await dd.getByRole("button",{name:"Für Einsatz freigeben",exact:true}).click();
+    snapshot=await (await request.get(api)).json() as WorkshopSnapshot; expect(snapshot.state.assets.filter(a=>a.id==="blower")).toHaveLength(1); expect(snapshot.state.assets.find(a=>a.id==="blower")?.holder).toBe(""); expect(snapshot.state.jobs.find(j=>j.assetId==="blower")?.origin?.placement?.workerKey).toBe(colleague.key);
+    expect(snapshot.state.custody.handovers.every(h=>h.status==="completed" && h.confirmations.length===2)).toBe(true); expect(errors).toEqual([]);
+  } finally { await office.close(); }
 });
 
 test("barcode/NFC identify the same unit without a mutation and stop listening when closed", async ({ page, request }) => {
@@ -110,9 +81,12 @@ test("barcode/NFC identify the same unit without a mutation and stop listening w
 test("concurrent assignments keep one location, retry once and retain the previous placement", async ({ request }, info) => {
   const seed = await (await request.get(api)).json() as WorkshopSnapshot;
   const headers = { Origin: String(info.project.use.baseURL) };
+  const policy = await request.post(api,{headers,data:{requestId:randomUUID(),revision:seed.revision,command:{type:"policy",autoConfirm:true}}});
+  const ready = await policy.json() as WorkshopSnapshot;
+  const worker = seed.directory.workers.find(w=>w.available)!;
   const [first, second] = seed.directory.sites;
-  const one = { requestId: randomUUID(), revision: seed.revision, command: { type: "assign", assetId: "crane", siteKey: first.key } };
-  const two = { requestId: randomUUID(), revision: seed.revision, command: { type: "assign", assetId: "crane", siteKey: second.key } };
+  const one = { requestId: randomUUID(), revision: ready.revision, command: { type: "assign", assetId: "crane", workerKey: worker.key, siteKey: first.key } };
+  const two = { requestId: randomUUID(), revision: ready.revision, command: { type: "assign", assetId: "crane", workerKey: worker.key, siteKey: second.key } };
   const replies = await Promise.all([request.post(api, { headers, data: one }), request.post(api, { headers, data: two })]);
   expect(replies.map(r => r.status()).sort()).toEqual([200, 409]);
   const index = replies.findIndex(r => r.status() === 200), winner = index === 0 ? one : two;
@@ -120,12 +94,12 @@ test("concurrent assignments keep one location, retry once and retain the previo
   expect((await request.post(api, { headers, data: winner })).status()).toBe(200);
   const current = await (await request.get(api)).json() as WorkshopSnapshot;
   expect(current.revision).toBe(committed.revision);
-  expect(current.state.assets.find(a => a.id === "crane")?.events).toHaveLength(1);
+  expect(current.state.assets.find(a => a.id === "crane")?.events).toHaveLength(2);
   const target = winner.command.siteKey === first.key ? second : first;
-  const moved = await request.post(api, { headers, data: { requestId: randomUUID(), revision: current.revision, command: { type: "assign", assetId: "crane", siteKey: target.key } } });
+  const moved = await request.post(api, { headers, data: { requestId: randomUUID(), revision: current.revision, command: { type: "assign", assetId: "crane", workerKey: worker.key, siteKey: target.key } } });
   expect(moved.status()).toBe(200);
   const result = await moved.json() as WorkshopSnapshot, asset = result.state.assets.find(a => a.id === "crane")!;
-  expect(asset.placement?.siteKey).toBe(target.key); expect(asset.events[0].kind).toBe("transferred");
+  expect(asset.placement?.siteKey).toBe(target.key); expect(asset.events[0].kind).toBe("issued");
   expect(asset.events[0].note).toContain(first.name); expect(asset.events[0].note).toContain(second.name);
 });
 
@@ -134,7 +108,7 @@ test("upgrade preserves existing data/files and directory changes invalidate its
   await prisma.baumdienstDemoWorkspace.create({ data: { key: DEMO_WORKSPACE_KEY, data: legacy, revision: 17 } });
   const file = await prisma.baumdienstDemoFile.create({ data: { id: randomUUID(), workspaceKey: DEMO_WORKSPACE_KEY, kind: "asset", target: "crane", name: "DEMO-retained.webp", mime: "image/webp", data: Buffer.from("DEMO"), bytes: 4 } });
   const first = await request.get(api), snapshot = await first.json() as WorkshopSnapshot;
-  expect(snapshot.revision).toBe(18); expect(snapshot.state.version).toBe(2);
+  expect(snapshot.revision).toBe(18); expect(snapshot.state.version).toBe(3);
   expect(snapshot.state.jobs).toEqual(legacy.jobs); expect(snapshot.state.parts).toEqual(legacy.parts); expect(snapshot.state.documents).toEqual(legacy.documents);
   expect(await prisma.baumdienstDemoFile.count({ where: { id: file.id } })).toBe(1);
   expect(Buffer.from((await prisma.baumdienstDemoFile.findUniqueOrThrow({ where: { id: file.id } })).data)).toEqual(Buffer.from("DEMO"));

@@ -4,13 +4,15 @@ import { useSyncExternalStore } from "react";
 import { createWorkshopDemo } from "@/lib/workshop/demo-data";
 import { emptyDirectory, snapshotSchema, WORKSHOP_API, WORKSHOP_FILES_API, type publicWorkshopCommand, type WorkshopSnapshot } from "@/lib/workshop/shared-contract";
 import type { z } from "zod";
+import { demoOffice } from "@/lib/workshop/custody-schema";
 export type DemoInventoryCommand = z.infer<typeof publicWorkshopCommand>;
 
 type View = WorkshopSnapshot & { status: "loading" | "ready" | "connection"; hydrated: boolean; pending: boolean };
-const serverSnapshot: View = { state: createWorkshopDemo(), revision: -1, updatedAt: "", photos: [], directory: emptyDirectory, status: "loading", hydrated: false, pending: false };
+const serverSnapshot: View = { state: createWorkshopDemo(), actor: demoOffice, revision: -1, updatedAt: "", photos: [], directory: emptyDirectory, status: "loading", hydrated: false, pending: false };
 let etag: string | null = null;
 let cached = serverSnapshot;
 const listeners = new Set<() => void>();
+let actorEpoch = 0;
 let reading: Promise<void> | null = null;
 let cleanup: (() => void) | null = null;
 function emit(change: Partial<View>) { cached = { ...cached, ...change }; listeners.forEach(listener => listener()); }
@@ -20,12 +22,16 @@ function accept(value: unknown) {
 }
 async function refresh() {
   if (reading) return reading;
+  const epoch = actorEpoch;
   reading = (async () => {
     try {
       const response = await fetch(WORKSHOP_API, { cache: "no-store", headers: etag ? { "If-None-Match": etag } : {} });
+      if (epoch !== actorEpoch) return;
       if (response.status === 304) { emit({ status: "ready" }); return; }
       if (!response.ok) throw new Error("connection");
-      accept(await response.json());
+      const value = await response.json();
+      if (epoch !== actorEpoch) return;
+      accept(value);
       etag = response.headers.get("etag");
     } catch { emit({ status: "connection" }); }
     finally { reading = null; }
@@ -57,7 +63,7 @@ async function deliver(intent: Intent) {
         if (response.status === 409) await refresh();
         throw new Error(typeof result.error === "string" ? result.error : "connection");
       }
-      accept(result); unconfirmed = null; return;
+      accept(result.actor ? result : { ...result, actor: cached.actor }); unconfirmed = null; return;
     } catch (error) {
       if (attempt === 0 && (error instanceof TypeError || error instanceof SyntaxError)) continue;
       throw error;
@@ -88,5 +94,14 @@ export function useWorkshopDemo() {
       return form;
     }));
   }
-  return { ...data, dispatch, upload, refresh };
+  async function switchActor(key: string) {
+    if (cached.pending || unconfirmed) throw new Error("pending");
+    emit({pending: true}); actorEpoch++;
+    try {
+    const response = await fetch("/api/demo/baumdienst/actor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
+    if (!response.ok) throw new Error("connection");
+    etag = null; if (reading) await reading; await refresh();
+    } finally { emit({pending: false}); }
+  }
+  return { ...data, actor: data.actor || demoOffice, dispatch, upload, refresh, switchActor };
 }
