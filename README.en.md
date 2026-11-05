@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**AI & botanical studio online · 5 November 2026:** [Try the Musterfirma](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Equipment registration can automatically create a realistic studio image from its name when no photo is uploaded; your own photos take priority. The illustration persists across devices. The species studio adds crown and leaf/needle shapes, seasonal colours and hedge references. Fictional Baumdienst template only. AI allowance: 5 attempts per UTC day, 50 total; page views never start paid generation. [Logic and evidence](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Actual online photo dialog with a saved AI studio illustration](docs/assets/screenshots/baum-studio-equipment-online.jpg)
+
 **Equipment handovers and tree cards online · 5 November 2026:** [Try the BaumdienstFlow Musterfirma](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Register equipment with a barcode/printable label and photo. Storage handovers use manager/worker confirmation or an explicitly enabled policy; colleague transfers always require both colleagues. Inventory, fleet, profiles, sites and Werkstatt share one persistent record. Original species SVGs form a 2-column phone / 6-column laptop grid with quick actions and full tree cards. Fictional template only; AL Steel and other demos stay separate. [Logic, evidence and limits](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Actual online Baumdienst tree grid with fictional data](docs/assets/screenshots/baum-tree-grid-online.jpg)

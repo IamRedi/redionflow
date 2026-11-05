@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**AI-Studio und Baumreferenzen online · 5. November 2026:** [Musterfirma testen](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Ohne hochgeladenes Foto kann die Geräteerfassung automatisch ein realistisches Studiobild aus dem Namen erzeugen; eigene Fotos haben Vorrang. Die Illustration bleibt auf allen Geräten gespeichert. Das Artenstudio ergänzt Kronenform, Blatt/Nadeln, saisonale Farben und Heckenreferenzen. Nur das fiktive Baumdienst-Template. KI-Kontingent: 5 Versuche pro UTC-Tag, 50 insgesamt; keine bezahlte Erstellung bei Seitenaufrufen. [Logik und Nachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Tatsächlicher Online-Fotodialog mit gespeicherter KI-Studioillustration](docs/assets/screenshots/baum-studio-equipment-online.jpg)
+
 **Geräteübergaben und Baumkarten online · 5. November 2026:** [BaumdienstFlow-Musterfirma ausprobieren](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Geräte mit Barcode/Drucketikett und Foto erfassen. Lagerübergaben mit Chef-/Mitarbeiterbestätigung oder bewusst aktivierter Regel; Kollegenübergaben immer mit beiden Kollegen. Inventar, Flotte, Profile, Baustellen und Werkstatt nutzen denselben gespeicherten Eintrag. Eigene Arten-SVGs bilden Baumkarten mit zwei Spalten am Telefon und sechs am Laptop, Schnellaktionen und voller Detailkarte. Nur das fiktive Template; AL Steel und andere Demos bleiben getrennt. [Logik, Nachweise und Grenzen](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Tatsächliche Baumkarten der Online-Musterfirma](docs/assets/screenshots/baum-tree-grid-online.jpg)

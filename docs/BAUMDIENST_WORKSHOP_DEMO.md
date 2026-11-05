@@ -1,6 +1,6 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-Stand: 5. November 2026. **Bestätigte Geräteübergaben und Baumkarten der Musterfirma online.** Runtime `e85f38536aed3713621266d91039770b6c3a4ad5`, Branch `feat/baumdienst-custody-tree-grid-20261105`, [Draft PR 56](https://github.com/IamRedi/redionflow/pull/56), gestapelt auf PR54. Railway `ce964774-242e-490f-a536-cbd4c92c1401`: SUCCESS seit 19:24:36 UTC, eine gesunde Replica. Kein Main-/Pilot-Merge; frühere Releases bleiben als Historie erhalten.
+Stand: 5. November 2026. **AI-Studiobilder und botanische Referenzen der Musterfirma online.** Runtime `dbf58ce63c3ba62fd8afcea1f963dc2c361c7fa1`, Branch `feat/baumdienst-ai-botanical-studio-20261105`, [Draft PR61](https://github.com/IamRedi/redionflow/pull/61), gestapelt auf PR56. Railway `6ef59b42-73eb-4ede-880e-7bdc395d4d66`: SUCCESS seit 20:49:43 UTC, eine Replica. Kein Main-/Pilot-Merge. Der vorherige Runtime-Stand `4ac289f` lieferte die erste tatsächlich generierte und gespeicherte Geräteillustration; frühere Releases sind unten als Historie erhalten.
 
 
 ## Studio AI dhe referencat botanike — 5 nëntor 2026
@@ -27,7 +27,13 @@ Bazë botanike: [Woodland Trust — format dhe gjethet](https://www.woodlandtrus
 
 **UI:** ruhen dy kolona në telefon dhe gjashtë në laptop, prekja për veprime dhe mbajtja/detajet për kartën e plotë. Referenca botanike qëndron e grupuar brenda detajeve; studioja hapet kur kërkohet. Foto/AI mbetet te i njëjti kontroll i kamerës. Ruhen theme-t, komponentët, fokusi, aksionet 44px, lëvizja e reduktuar dhe footer-i natyral. Privatësia dhe prezantimi vendor përditësohen në gjashtë/katër gjuhët ekzistuese.
 
-Verifikimi i këtij zgjerimi dhe publikimi regjistrohen pas provës së revision-it final. Seksionet e mëposhtme ruajnë historinë e release-ve të mëparshme; kufizimi i mëparshëm “AI jo e lidhur” zëvendësohet vetëm nga ky zgjerim i konfiguruar dhe prova reale e dokumentuar.
+**Prova dhe publikimi:** 652 teste unit kaluan, një skip i vjetër mbeti; katër teste me PostgreSQL lokal provuan rezervimin/parallelitetin, cache, kufijtë, fotot gjatë gjenerimit dhe lejet. Të 22 rastet e browser-it kaluan, përfshirë 2/6 kolona, gjashtë gjuhë, theme, 200% tekst, landscape, inventar/Werkstatt dhe dy shfletues të pavarur. Pas thjeshtimit të dialogut, të dy rastet e prekura dhe build/TypeScript/lint kaluan përsëri. Profilet e përjashtuara japin 404 edhe për endpoint-et e reja. Gitleaks pa sekrete. Nuk u nisën Actions në cloud.
+
+Prova reale online regjistroi `DEMO · Akku-Heckenschere`, `BF-FCBA715C`, më 20:34:34 UTC. Ilustrimi ishte gati më 20:34:39 UTC dhe lexohet pa gjendje shfletuesi si WebP 1024×1024, 26634 bytes, pa EXIF. V3/r31 → r34 ruan të nëntë pajisjet ekzistuese dhe krejt historikun e dorëzimeve, gjashtë porositë, stokun, dy dokumentet dhe hash-et e dy fotove. Shtohet vetëm pajisja fiktive dhe figura e saj. Rollout-i i fundit ndryshoi vetëm commit-pin të të njëjtit web-service; figura mbeti pas rollout-it. Asnjë reset. Tabelat e reja/çelësi janë additive: rollback në e85/4ac mbetet i mundshëm pa fshirë ledger-in ose skedarët.
+
+Pamjet reale online në `docs/assets/screenshots/baum-studio-equipment-online.jpg` dhe `baum-tree-grid-online.jpg` tregojnë pajisjen AI dhe pemët. U panë 390×844 dhe 1440×900/1000, dark/light; Hecke dhe gjethja u kontrolluan veçmas. Asnjë overflow horizontal apo scroll i dytë i jashtëm. Dialogu final u rifreskua online: rasteri ngarkohet, nuk ka mesazh bosh fotosh apo buton të përsëritur; konsola e kontrollit të ri është pa gabime. Provat janë responsive në shfletues, jo pranim i një telefoni fizik/NFC/printeri.
+
+Çelësi i veçantë i Musterfirma-s u vendos vetëm pas miratimit të shprehur për kopjimin në memorie të lidhjes ekzistuese OpenAI. Nuk u ruajt në repo, artefakte ose chat. AL Steel u lexua si referencë, pa shkrim konfigurimi/sekreti/deploy. Disa deploy të pilotit nga puna paralele mbeten jashtë këtij rollout-i. Shërbimet e tjera demo/reset/DB ruajnë deployment-ID-të e kontrolluara. About-i ekzistues i repo-s mbetet i saktë: NO_CONTENT_CHANGE. README-t dhe prezantimi vendor përditësohen; përputhja e portofolit përgatitet në draft PR38, pa merge ose Production promotion. Seksionet e mëposhtme ruajnë historinë e release-ve të mëparshme; kufizimi i mëparshëm “AI jo e lidhur” zëvendësohet vetëm nga ky zgjerim i konfiguruar dhe prova reale e dokumentuar.
 
 ## Visuelle Online-Abnahme und begrenzte UI-Korrekturen
 
