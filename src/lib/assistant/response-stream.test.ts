@@ -1,6 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { createAssistantRunDiagnostics } from './diagnostics';
 import { assistantResponseStream, type AssistantResponseResult } from './response-stream';
+import { createLegacyWeightQualifier } from './weight-qualifier';
 
 async function* parts(values: unknown[]) { yield* values; }
 const textPart = (text: string) => ({ type: 'text-delta', text });
@@ -93,4 +94,28 @@ it('aborts upstream and records cancellation exactly once without leaking raw re
   await result.body!.cancel('PRIVATE CANCEL REASON');
   expect(onCancel).toHaveBeenCalledOnce(); expect(onComplete).toHaveBeenCalledOnce();
   expect(onComplete.mock.calls[0][0]).toMatchObject({ status: 'cancelled', answer: '', diagnostics: { failure: { code: 'cancel' } } });
+});
+
+it('qualifies a buffered final kg quote once before delivery, checkpoint and archive', async () => {
+  const qualifier = createLegacyWeightQualifier({ singleDate: null, currentMonthRequested: false });
+  qualifier.observe({ toolName: 'adminGetSteelProductionEvidence', status: 'ok', input: {}, result: { ok: true, aggregates: [{ metric: { kg: 123.45, legacyPieces: 1 } }] } });
+  const onCheckpoint = vi.fn(async (_answer: string) => {});
+  const { result, onComplete } = response([
+    { type: 'start-step' }, textPart('Po kontrolloj 123.45 kg…'), { type: 'tool-call' }, finishStep('tool-calls'),
+    { type: 'start-step' }, textPart('Prerje **123,'), textPart('45** kg; stok 99 kg.'), finishStep(), finish(),
+  ], { transformAnswer: qualifier.transformAnswer, onCheckpoint });
+  const delivered = await result.text();
+  expect(delivered).toBe('Prerje **≈123,45** kg; stok 99 kg.');
+  expect(onCheckpoint).toHaveBeenCalledExactlyOnceWith(delivered);
+  expect(onComplete.mock.calls[0][0]).toMatchObject({ answer: delivered, status: 'completed' });
+  expect(qualifier.snapshot()).toEqual({ legacyValuesSeen: 1, qualifiersAdded: 1 });
+});
+
+it('fails closed to a safe fallback if answer qualification throws', async () => {
+  const onCheckpoint = vi.fn(async (_answer: string) => {});
+  const { result, onComplete } = response([{ type: 'start-step' }, textPart('Unqualified 123.45 kg'), finishStep(), finish()], { transformAnswer: () => { throw Error('PRIVATE TRANSFORM ERROR'); }, onCheckpoint });
+  const delivered = await result.text();
+  expect(delivered).toBe('Fallback:internal');
+  expect(onCheckpoint).not.toHaveBeenCalled();
+  expect(onComplete.mock.calls[0][0]).toMatchObject({ answer: delivered, status: 'error', diagnostics: { hasFinalAnswer: false, failure: { code: 'internal' } } });
 });

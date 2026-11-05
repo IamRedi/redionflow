@@ -2,6 +2,46 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — real-provider readback and legacy-weight precision
+
+PR51/head a557b09 was explicitly approved and merged as
+e6c23179fb937d0653c44ea136fe03abfa053258, with identical reviewed tree
+8c5011a7c220c2838ee7374147b6b75aa5ad2f2a. Railway deployment
+3ec86093-2f5c-4ffe-9f5f-310c5aa3701c succeeded at12:19:59UTC; the additive
+history migration applied and health returned200/ok.
+
+Three authorized real read-only questions covered started sites, yesterday's
+production and requested project details. All three runs completed in two model
+steps, with zero tool/provider failures, matching dates/counts/kg in their fresh
+stored sources. Short replies expanded on the details request. Questions,
+answers, usage and tool traces were retrieved from private history; reload
+restored all three turns. No real transcripts, names or customer quantities are
+copied into this repository or public media.
+
+The same traces exposed an answer-quality gap: legacy kg were numerically
+correct but lacked their approximation qualifier. A focused server-side delivery
+guard now adds `≈` only from successful canonical legacy-weight evidence, before
+the emitted text is checkpointed/archived. It preserves digits, locale formatting,
+units and existing approximation signs; date/month scopes and complete-page
+project derivations are explicit. It does not rewrite historical answers or
+business data. Private diagnostic counts identify the guard's intervention.
+This follow-up candidate is not yet published and requires its own owner approval.
+Local follow-up verification:229 assistant unit tests/18 files PASS3.05s,
+scoped ESLint, production build/application TypeScript, staged Gitleaks and
+independent static review PASS.64 source/test/schema/doc hashes match the WSL
+mirror. No new SQL/schema, DB mutation, UI component, provider or cost changes;
+the earlier28 PostgreSQL cases were not repeated. Fictional tests cover scope,
+locale/Markdown, complete-page grouping, missing-weight zero, transform failure
+and identical delivered/archived text. Real-provider acceptance of this guard
+waits for the approved follow-up publication.
+Equal numbers can conservatively share a qualifier; this bounded guard is not a
+general proof that all model statements are correct. Physical phone IME/text
+zoom and broader owner acceptance remain separate. Public presentation/card/
+About assessment is NO_CONTENT_CHANGE: existing company-scoped read-only AI
+copy remains accurate, with no new readiness or perfect-accuracy claim. Existing
+portfolioPR28 and documentationPR36 remain separate; the website itself is
+already published although sourcePR33 remains open.
+
 ## 5 November 2026 — concise assistant answers and private diagnostic history
 
 Owner scope: diagnose intermittent answers after the owner deployed the key,

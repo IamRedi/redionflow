@@ -10,6 +10,7 @@ export type AssistantResponseStreamOptions = {
   diagnostics: AssistantRunDiagnostics;
   fallback: (failure: AssistantFailureCode) => string;
   storageFailure: string;
+  transformAnswer?: (text: string) => string;
   onCheckpoint?: (answer: string) => Promise<void>;
   onToolError?: (event: { toolCallId: string; toolName: string; input: unknown; failure: AssistantFailure }) => Promise<void>;
   onComplete: (result: AssistantResponseResult) => Promise<void>;
@@ -47,7 +48,12 @@ export function assistantResponseStream(parts: AsyncIterable<unknown>, options: 
       const flushText = async () => {
         const text = !stepCalls ? stepText : '';
         stepText = ''; stepCalls = false;
-        if (text.trim()) { emit(text); await checkpoint(); }
+        if (text.trim()) {
+          let safeText: string;
+          try { safeText = options.transformAnswer ? options.transformAnswer(text) : text; }
+          catch { run.fail(null); return; }
+          emit(safeText); await checkpoint();
+        }
       };
       try {
         while (!cancelled) {
