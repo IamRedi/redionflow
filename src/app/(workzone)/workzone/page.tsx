@@ -51,7 +51,7 @@ function materialIndicators(
   ].filter(Boolean) as Array<{ key: string; label: string; icon: string; qty: number }>;
 }
 
-export default async function WorkzoneHomePage({ searchParams }: { searchParams?: Promise<{view?: string}> } = {}) {
+export default async function WorkzoneHomePage({ searchParams }: { searchParams?: Promise<{view?: string}> }) {
   const initialMap = (await searchParams)?.view === 'map';
   await autoLockPastWorkLogs();
   const company = await getOrCreateDefaultCompany();

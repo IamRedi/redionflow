@@ -7,10 +7,10 @@ const manrope = localFont({ src: "./fonts/manrope-variable.ttf", weight: "200 80
 const credit = { by: "by", red: "R", green: "e", blue: "d", yellow: "i", on: "ON" };
 
 /** `onDark` is for pages that paint their own dark background regardless of the theme (landing). */
-export function RediOnFooter({ onDark = false }: { onDark?: boolean }) {
+export function RediOnFooter({ onDark = false, compact = false }: { onDark?: boolean; compact?: boolean }) {
   return (
     <footer
-      className={cn(styles.footer, "print:hidden")}
+      className={cn(styles.footer, compact && styles.compact, "print:hidden")}
       data-theme={onDark ? "dark" : undefined}
     >
       <a className={cn(styles.credit, manrope.className)} href="https://www.redioncekrezi.de/" aria-label="by RediON">

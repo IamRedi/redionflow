@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/db/prisma";
-import { getOrCreateDefaultCompany } from "@/lib/db/company";
+import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { t } from "@/lib/i18n";
 import { equipmentQuantity, readLatLng } from "@/lib/workzone/site-json";
 import { WorkzoneMissionControl } from "@/app/(workzone)/workzone/workzone-mission-control";
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
+import { WorkshopOverview } from "@/components/demo/workshop/workshop-overview";
+import { workshopCopy } from "@/lib/workshop/copy";
 
 function materialIndicators(
   input: { signQty: number; plateQty: number; fenceQty: number; coneQty: number },
@@ -21,6 +23,7 @@ function materialIndicators(
 export default async function DemoWorkzonePage() {
   const company = await getOrCreateDefaultCompany();
   const currentLang = await resolveRequestLanguage();
+  const mode = await getCompanyMode(); const c = workshopCopy(currentLang);
   const [baustellen, coneMoves] = await Promise.all([
     prisma.baustelle.findMany({
       where: { companyProfileId: company.id },
@@ -130,14 +133,14 @@ export default async function DemoWorkzonePage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border bg-card p-4">
+      {mode === "baumdienst" ? <header className="py-2"><p className="text-xs font-semibold uppercase tracking-widest text-primary">{c.summary}</p><h1 className="mt-2 text-3xl font-bold tracking-tight">Workzone</h1><p className="mt-2 text-sm text-muted-foreground">{c.focus}</p></header> : <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">{t("admin.publicDemo", currentLang)}</div>
           <DemoReadonlyBadge />
         </div>
         <h1 className="mt-1 text-xl font-semibold">Workzone</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("demo.workzoneDescription", currentLang)}</p>
-      </div>
+      </div>}
       <WorkzoneMissionControl
         items={liveMission}
         archive={archivedMission}
@@ -145,7 +148,9 @@ export default async function DemoWorkzonePage() {
         detailHrefBase="/demo/baustellen"
         readOnly
         allowCanvasDrag
+        mode={mode}
       />
+      {mode === "baumdienst" ? <WorkshopOverview /> : null}
     </div>
   );
 }

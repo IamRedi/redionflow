@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**Lokaler Demo-Kandidat · 5. November 2026:** BaumdienstFlow hat eine interaktive Werkstattprobe mit Annahme, Reparatur, dokumentierter Prüfung und Freigabe, Werkzeugausgabe, Ersatzteilen und Dokumenten. Nur fiktive Daten und Speicherung im eigenen Browser; noch nicht in der öffentlichen Demo veröffentlicht. [Umfang, UX-Abgleich und Prüfnachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Werkstatt-Demo – lokale Aufnahme mit fiktiven Daten, noch nicht veröffentlicht](docs/assets/screenshots/baum-workshop-desktop.png)
+
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 
 - **BaumdienstFlow** für Baumpflege- und Baumdienstbetriebe: Baumlisten mit Koordinaten, Fällungen, Kronenpflege, Hubsteiger und Häcksler.

@@ -1,0 +1,31 @@
+.shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+}
+.header { min-width: 0; }
+.workspace {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 16px;
+}
+.workspace:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+.footer { min-width: 0; width: 100%; }
+@media (max-height: 560px) {
+  .header > div { padding-top: 0; }
+  .header [data-testid="baum-demo-topbar"] { padding-top: 24px; padding-bottom: 4px; }
+  .header [data-demo-teamrow] { display: none; }
+  .header [data-demo-navigation] { margin-top: 0; max-width: 100%; min-height: 52px; flex-wrap: nowrap; overflow-x: auto; padding-block: 4px; scrollbar-width: thin; }
+  .header [data-demo-navigation] > * { flex-shrink: 0; }
+}
+@media print {
+  .shell { display: block; height: auto; overflow: visible; }
+  .workspace { height: auto; overflow: visible; }
+}

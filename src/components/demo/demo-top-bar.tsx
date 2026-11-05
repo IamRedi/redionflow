@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Bot, Home, LayoutDashboard } from "lucide-react";
+import { Bot, Home, LayoutDashboard, Truck, Wrench } from "lucide-react";
+import { cookies } from "next/headers";
 
 import { AppBrand } from "@/components/branding/AppBrand";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -10,6 +11,8 @@ import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { kidrahtDemoUrl } from "@/lib/kidraht-demo";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { DemoReadonlyBadge } from "./demo-readonly-badge";
+import { DemoThemeButton } from "./demo-theme-button";
+import { workshopCopy } from "@/lib/workshop/copy";
 
 type DemoWorker = {
   id: string;
@@ -26,6 +29,22 @@ type DemoWorker = {
 export async function DemoTopBar({ workers, mode }: { workers: DemoWorker[]; mode?: CompanyMode }) {
   const currentLang = await resolveRequestLanguage();
   const kidraht = kidrahtDemoUrl(mode);
+
+  if (mode === "baumdienst") {
+    const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
+    return <div className="w-full min-w-0 px-5 pb-3 pt-8 lg:pr-20" data-testid="baum-demo-topbar">
+      <div data-demo-teamrow className="flex min-w-0 items-start gap-3"><Link href="/demo/workzone" aria-label="BaumdienstFlow · Workzone" className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><AppBrand compact mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} /></Link><div className="min-w-0 flex-1"><WorkerIconStrip admin comfortable insetClassName="" profileHrefBase="/demo/workers" workers={workers.map(worker => ({ ...worker, activeProfile: false, pendingVacationRequest: false, vacationDecisionSignal: false, vacationDecisionSignalKey: null }))} /></div></div>
+      <nav data-demo-navigation aria-label="Demo" className="mt-3 flex flex-wrap items-center gap-2">
+        <Link href="/demo/workzone" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Home className="size-4" />Workzone</Link>
+        <Link href="/demo/workshop" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Wrench className="size-4" />{c.title}</Link>
+        <Link href="/demo/workshop?tab=fleet" aria-label={`${c.fleet} · Demo`} className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><Truck className="size-4" />{c.fleet}</Link>
+        <Link href="/demo/dashboard" className="inline-flex min-h-11 items-center justify-center rounded-full border bg-card px-3 focus-visible:ring-2 focus-visible:ring-ring" aria-label="Dashboard" title="Dashboard"><LayoutDashboard className="size-4" /></Link>
+        {kidraht ? <KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle", currentLang)} className="h-11 min-w-11" /> : null}
+        <DemoThemeButton dark={dark} label={t("admin.themeToggle", currentLang)} />
+        <div className="[&_button]:min-h-11 [&_button]:min-w-11"><LanguageSwitcher /></div>
+      </nav>
+    </div>;
+  }
 
   return (
     <div className="mx-auto grid max-w-6xl gap-2 px-5 pb-1 pt-8">
