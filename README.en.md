@@ -7,9 +7,9 @@
 - **BaumdienstFlow** for tree care companies: tree lists with coordinates, removals, crown work, aerial lifts and chippers.
 - **BauFlow** for construction, civil works and fibre-optic contractors: task lists instead of trees, trenches, house connections, directional drilling, tools and traffic safety.
 
-[![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
+Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) runs are reserved for explicitly selected cloud verification.
 
-**[Deutsche Version](README.md)** · **As of 1 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **As of 5 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
@@ -29,10 +29,14 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 | Status | Meaning and scope |
 |---|---|
 | **Built and live** | Workzone for the job site (task or tree list, map, time tracking with start, pause and stop, extra work, notes, traffic safety), admin dashboard, staff and fleet, daily plan with versions, barcode inventory with checkout to employees, cost estimating (projects, line items, templates, wage roles, recipes), daily and monthly reports, job site export (ZIP with HTML, CSV, KML), leave requests, admin password login, 6 languages |
-| **Verified** | 711 automated tests in CI on every pull request (423 unit, 263 integration against real PostgreSQL, 25 end-to-end in the browser), secret scan, Docker demo smoke test, Lighthouse mobile 96/100/100/100. Details in the [verification record](EVIDENCE.md). |
+| **Documented verification baseline, 1 November** | 711 automated tests (423 unit, 263 integration against real PostgreSQL, 25 end-to-end in the browser), secret scan, Docker demo smoke test, Lighthouse mobile 96/100/100/100. Historical results are in the [verification record](EVIDENCE.md); they are not a new test run for this documentation update. |
 | **Built, not active in the demo** | AI assistant (needs an OpenAI key), push notifications (Firebase), file storage for documents and photos (Supabase), subscriptions and invoices in SaaS mode (Stripe), vehicle GPS. The code exists and is tested; the public demo deliberately runs without these services. |
 | **In progress** | Offline mode for field actions (browser queue exists, not yet tested in the field), Content Security Policy from report-only to enforcing, a real virus scanner for uploads |
 | **Vision** | Pilot companies in both industries, more trades as their own mode, analysis across several seasons |
+
+**Steel production · Released for a real company, 5 November 2026 ([#55](https://github.com/IamRedi/redionflow/pull/55)).** A shared company catalog is live: tasks are enabled per site, while deselection and archiving preserve earlier confirmations. Each material can have its required factory and field processes. Explicitly linked tasks derive progress from confirmed material work. Uploaded photos are stored as small private WebP images. This release requires company sign-in; the public demos remain separate. Verified production source: [6c8b886](https://github.com/IamRedi/redionflow/commit/6c8b88645f8285331fc3654509f44d9458563849).
+
+**Still unverified:** successful AI illustration generation in production. The first real request retained the standard drawing; core tasks and uploaded photos remain usable.
 
 ## Why this project?
 
@@ -81,7 +85,7 @@ More in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md) (German).
 
 ## Quality and security
 
-- **CI on every pull request:** lint with zero warnings, TypeScript strict, 423 unit tests, 263 integration tests against a throwaway PostgreSQL, production build, 25 browser tests, gitleaks and a Docker smoke test of the demo.
+- **Local routine verification:** lint with zero warnings, TypeScript strict, unit and integration tests against a throwaway PostgreSQL, production build, browser tests, gitleaks and the Docker demo smoke test remain the checks. The existing cloud workflow runs only through `workflow_dispatch`; every job is preserved. Local and GitHub CI results are reported separately, and required protections remain in place.
 - **Security:** passwords and codes hashed with scrypt, login rate limiting, revocable sessions, same-origin checks on every mutation, private files only through a checked route, security headers. Threat model and known residual risks are documented openly in [SECURITY.md](SECURITY.md).
 - **Accessibility and speed:** Lighthouse mobile on the landing page: 96 performance, 100 accessibility, 100 best practices, 100 SEO.
 - **No real data.** The repository was created as a snapshot without git history from the private production system. Real company and personal data was removed; the demo data is invented.
@@ -116,7 +120,7 @@ Operations, auth details and deployment: [docs/OPERATIONS.md](docs/OPERATIONS.md
 
 ## How this project is built
 
-RediOnFlow is developed by Redion Cekrezi, with AI agents as tools: the human decides what gets built, reviews every result and approves it; the agents write code, tests and documentation in small pull requests that are merged only with green CI. How that works in practice and where its limits are: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md) (German).
+RediOnFlow is developed by Redion Cekrezi, with AI agents as tools: the human decides what gets built, reviews every result and approves it; the agents write code, tests and documentation in small pull requests. Routine development verification runs locally; review, approval and required protections remain separate prerequisites. How that works in practice and where its limits are: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md) (German).
 
 ## About the author
 

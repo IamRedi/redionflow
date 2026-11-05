@@ -7,9 +7,9 @@
 - **BaumdienstFlow** für Baumpflege- und Baumdienstbetriebe: Baumlisten mit Koordinaten, Fällungen, Kronenpflege, Hubsteiger und Häcksler.
 - **BauFlow** für Bau-, Tiefbau- und Glasfaserbetriebe: Arbeitslisten statt Bäume, Trassen, Hausanschlüsse, Spülbohrung, Werkzeug und Absicherung.
 
-[![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
+Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) werden nur für ausdrücklich ausgewählte Cloud-Prüfungen gestartet.
 
-**[English version](README.en.md)** · **Stand: 1. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **Stand: 5. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
 ## Websites und Live-Demos
 
@@ -27,10 +27,14 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 | Status | Bedeutung und Umfang |
 |---|---|
 | **Umgesetzt und live** | Workzone für die Baustelle (Arbeitsliste oder Baumliste, Karte, Arbeitszeit mit Start, Pause und Stopp, Zusatzarbeiten, Hinweise, Absicherung), Admin-Dashboard, Personal und Fuhrpark, Tagesplan mit Versionen, Barcode-Inventar mit Ausgabe an Mitarbeitende, Kalkulation (Projekte, Positionen, Vorlagen, Lohnrollen, Rezepte), Tages- und Monatsberichte, Baustellen-Export (ZIP mit HTML, CSV, KML), Urlaub, Admin-Login mit Passwort, 6 Sprachen |
-| **Verifiziert** | 711 automatisierte Tests in CI auf jedem Pull Request (423 Unit, 263 Integration gegen echte PostgreSQL, 25 Ende-zu-Ende im Browser), Secret-Scan, Docker-Demo-Smoke-Test, Lighthouse mobil 96/100/100/100. Details im [Prüfprotokoll](EVIDENCE.md). |
+| **Dokumentierte Prüfbasis vom 1. November** | 711 automatisierte Tests (423 Unit, 263 Integration gegen echte PostgreSQL, 25 Ende-zu-Ende im Browser), Secret-Scan, Docker-Demo-Smoke-Test, Lighthouse mobil 96/100/100/100. Historische Ergebnisse im [Prüfprotokoll](EVIDENCE.md); sie sind kein neuer Prüflauf dieses Dokumentationsstands. |
 | **Umgesetzt, in der Demo nicht aktiv** | KI-Assistent (braucht einen OpenAI-Schlüssel), Push-Benachrichtigungen (Firebase), Dateispeicher für Dokumente und Fotos (Supabase), Abos und Rechnungen im SaaS-Modus (Stripe), Fahrzeug-GPS. Der Code ist vorhanden und getestet; die öffentliche Demo läuft bewusst ohne diese Dienste. |
 | **In Arbeit** | Offline-Modus für Feldaktionen (Warteschlange im Browser ist angelegt, noch nicht im Feld erprobt), Content Security Policy von „Report-Only“ auf „blockierend“, echter Virenscanner für Uploads |
 | **Vision** | Pilotbetriebe in beiden Branchen, weitere Gewerke als eigener Modus, Auswertung über mehrere Saisons |
+
+**Stahlfertigung · Am 5. November 2026 für einen realen Betrieb veröffentlicht ([#55](https://github.com/IamRedi/redionflow/pull/55)).** Ein gemeinsamer Firmenkatalog ist im Produktivbetrieb: Arbeiten werden je Baustelle aktiviert; Abwahl und Archivierung erhalten bisherige Bestätigungen. Pro Material lassen sich die nötigen Fabrik- und Baustellenschritte festlegen. Explizit verknüpfte Aufgaben übernehmen den Fortschritt aus bestätigten Materialarbeiten. Eigene Fotos werden als kleine private WebP gespeichert. Dieser Stand erfordert die Firmenanmeldung; die öffentlichen Demos bleiben getrennt. Verifizierter Produktionsstand: [6c8b886](https://github.com/IamRedi/redionflow/commit/6c8b88645f8285331fc3654509f44d9458563849).
+
+**Noch nicht verifiziert:** erfolgreiche KI-Illustrationen im Produktivbetrieb. Der erste echte Aufruf behielt die Standardzeichnung bei; Aufgaben und hochgeladene Fotos bleiben nutzbar.
 
 ## Warum dieses Projekt?
 
@@ -79,7 +83,7 @@ Mehr dazu in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
 
 ## Qualität und Sicherheit
 
-- **CI auf jedem Pull Request:** Lint ohne Warnungen, TypeScript strict, 423 Unit-Tests, 263 Integrationstests gegen eine wegwerfbare PostgreSQL, Produktionsbuild, 25 Browser-Tests, gitleaks und ein Docker-Smoke-Test der Demo.
+- **Lokale Routineprüfung:** Lint ohne Warnungen, TypeScript strict, Unit- und Integrationstests gegen eine wegwerfbare PostgreSQL, Produktionsbuild, Browser-Tests, gitleaks und Docker-Demo-Smoke-Test bleiben die Prüfungen. Der bestehende Cloud-Workflow ist nur über `workflow_dispatch` startbar; alle Jobs bleiben erhalten. Lokale Ergebnisse und GitHub-CI-Ergebnisse werden getrennt ausgewiesen; erforderliche Schutzregeln bleiben bestehen.
 - **Sicherheit:** Passwörter und Codes mit scrypt, Rate-Limit beim Login, widerrufbare Sitzungen, Same-Origin-Prüfung für jede Änderung, private Dateien nur über eine geprüfte Route, Sicherheits-Header. Bedrohungsmodell und bekannte Restrisiken stehen offen in [SECURITY.md](SECURITY.md).
 - **Barrierefreiheit und Tempo:** Lighthouse mobil auf der Startseite 96 Performance, 100 Barrierefreiheit, 100 Best Practices, 100 SEO.
 - **Keine echten Daten.** Das Repository wurde als Schnappschuss ohne Git-Verlauf aus dem privaten Produktivsystem erstellt. Echte Firmen- und Personendaten wurden entfernt, die Demo-Daten sind selbst erfunden.
@@ -114,7 +118,7 @@ Betrieb, Auth-Details und Deployment: [docs/OPERATIONS.md](docs/OPERATIONS.md), 
 
 ## Wie dieses Projekt entsteht
 
-RediOnFlow wird von Redion Cekrezi entwickelt, mit KI-Agenten als Werkzeug: Der Mensch entscheidet, was gebaut wird, prüft jedes Ergebnis und gibt es frei; die Agenten schreiben Code, Tests und Dokumentation in kleinen Pull Requests, die nur mit grüner CI gemergt werden. Wie das konkret abläuft und wo die Grenzen liegen: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md).
+RediOnFlow wird von Redion Cekrezi entwickelt, mit KI-Agenten als Werkzeug: Der Mensch entscheidet, was gebaut wird, prüft jedes Ergebnis und gibt es frei; die Agenten schreiben Code, Tests und Dokumentation in kleinen Pull Requests. Verifikation läuft im normalen Entwicklungsablauf lokal; Review, Freigabe und erforderliche Schutzregeln bleiben eigenständige Voraussetzungen. Wie das konkret abläuft und wo die Grenzen liegen: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md).
 
 ## Dokumentation
 
