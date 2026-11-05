@@ -1,13 +1,22 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 import { prisma } from '../../src/lib/db/prisma';
 import { doneQty } from '../../src/lib/elements/stages';
-import { t } from '../../src/lib/i18n';
 import { elementProcessCopy, workCatalogCopy } from '../../src/components/steel/work-catalog-copy';
 import { seedSteelWorkCatalog } from '../fixtures/steel-work-catalog';
 
 const c = workCatalogCopy('sq'), p = elementProcessCopy('sq');
+// Read the expected UI labels without importing Next's bundled JSON dictionaries
+// into Node's native ESM runner.
+const dictionary: unknown = JSON.parse(readFileSync(new URL('../../src/locales/sq.json', import.meta.url), 'utf8'));
+function t(path: string, language: 'sq') {
+  if (language !== 'sq') throw new Error('Unsupported fixture language');
+  const value = path.split('.').reduce<unknown>((current, key) => current && typeof current === 'object' ? (current as Record<string, unknown>)[key] : undefined, dictionary);
+  if (typeof value !== 'string') throw new Error(`Missing fixture label: ${path}`);
+  return value;
+}
 const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const dialog = (page: Page) => page.getByRole('dialog').last();
 const selected = (page: Page, label: string) => dialog(page).getByRole('checkbox', { name: `${c.select}: ${label}`, exact: true });
@@ -63,7 +72,7 @@ test('shared catalog, historical selections, linked material progress and privat
     await page.goto(vega); await openCatalog(page);
     await expect(selected(page, 'Detyrë ilustruese demo')).not.toBeChecked();
     await expect(selected(page, seed.customTasks[0].label)).not.toBeChecked();
-    await selected(page, seed.customTasks[0].label).check();
+    await selected(page, seed.customTasks[0].label).click();
     await expect(selected(page, seed.customTasks[0].label)).toBeChecked();
     const secondSelection = await prisma.steelSiteTask.findUniqueOrThrow({ where: { companyProfileId_baustelleId_definitionId: { companyProfileId: companyId, baustelleId: seed.sites.vega.id, definitionId: seed.definitions.find(definition => definition.key === seed.customTasks[0].treeId)!.id } }, include: { treeItem: true } });
     expect(secondSelection.treeItem.status).toBe('todo');
@@ -86,9 +95,10 @@ test('shared catalog, historical selections, linked material progress and privat
 
     await page.goto(aurora); await openCatalog(page);
     const historical = seed.customTasks[0];
-    await selected(page, historical.label).uncheck(); await expect(selected(page, historical.label)).not.toBeChecked();
+    await expect(selected(page, historical.label)).toBeChecked();
+    await selected(page, historical.label).click(); await expect(selected(page, historical.label)).not.toBeChecked();
     expect(await prisma.treeItem.findUnique({ where: { id: historical.id } })).toMatchObject({ status: 'done', notes: historical.notes, completedAt: historical.completedAt });
-    await selected(page, historical.label).check(); await expect(selected(page, historical.label)).toBeChecked();
+    await selected(page, historical.label).click(); await expect(selected(page, historical.label)).toBeChecked();
     await edit(page, historical.label); await dialog(page).getByRole('button', { name: c.archive, exact: true }).click();
     await dialog(page).getByRole('button', { name: c.archive, exact: true }).click();
     await expect(selected(page, historical.label)).toHaveCount(0);
@@ -111,8 +121,11 @@ test('shared catalog, historical selections, linked material progress and privat
 
     await page.getByRole('button', { name: new RegExp(escaped(t('elements.factoryList', 'sq'))) }).click();
     await page.getByRole('button').filter({ has: page.getByText(seed.elements.fresh.mark, { exact: true }) }).click();
+    await expect(dialog(page).getByRole('button', { name: t('elements.backToList', 'sq'), exact: true })).toBeVisible();
     await dialog(page).getByRole('button', { name: 'Proceset', exact: true }).click();
     const picker = page.getByRole('dialog', { name: p.title, exact: true });
+    await expect(picker.getByText(p.scope.replace('{count}', '1'), { exact: true })).toBeVisible();
+    await expect(picker.getByRole('checkbox', { name: p.replace.replace('{count}', '3'), exact: true })).toHaveCount(0);
     await expect(picker.getByRole('checkbox', { checked: true })).toHaveCount(0);
     await picker.getByRole('checkbox', { name: t('factory.steps.cutting', 'sq'), exact: true }).check();
     await picker.getByRole('button', { name: p.manage, exact: true }).click();
@@ -156,6 +169,24 @@ test('shared catalog, historical selections, linked material progress and privat
       await close(page);
       await expect(page.getByRole('button', { name: t('steel.addTask', 'sq'), exact: true })).toBeFocused();
     }
+    // Text enlargement is a separate accessibility state from a narrow viewport.
+    const textZoom = await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    await openCatalog(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await dialog(page).evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    expect(await dialog(page).getByRole('searchbox').evaluate(element => {
+      const style = getComputedStyle(element);
+      return element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) >= 4 * parseFloat(style.fontSize);
+    })).toBe(true);
+    await reachable(dialog(page).getByRole('button', { name: c.add, exact: true }), 390, 844);
+    await page.screenshot({ path: info.outputPath('steel-catalog-text-zoom.png'), fullPage: true });
+    await edit(page, 'Detyrë me foto demo');
+    expect(await dialog(page).evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await reachable(dialog(page).getByRole('button', { name: c.save, exact: true }), 390, 844);
+    await reachable(dialog(page).getByRole('button', { name: c.cancel, exact: true }), 390, 844);
+    await page.screenshot({ path: info.outputPath('steel-catalog-editor-text-zoom.png'), fullPage: true });
+    await close(page);
+    await textZoom.evaluate(element => element.remove());
   } finally {
     if (companyId) { await prisma.user.deleteMany({ where: { companyProfileId: companyId } }); await prisma.companyProfile.delete({ where: { id: companyId } }); }
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, Lock, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
 import Image from 'next/image';
 import { SlidersHorizontal } from 'lucide-react';
 import { ElementProcessEditor } from '@/components/steel/element-process-editor';
@@ -182,6 +182,20 @@ export function ElementListButtons({
 
 type View = { kind: "list" } | { kind: "element"; id: string } | { kind: "stage"; id: string; stage: string };
 
+/** Exiting views keep their animation, but their previous actions are no longer available. */
+function AnimatedElementView({ isList, children }: { isList: boolean; children: ReactNode }) {
+  const isPresent = useIsPresent();
+  return <motion.div
+    inert={!isPresent}
+    aria-hidden={!isPresent || undefined}
+    initial={{ opacity: 0, x: isList ? -16 : 16 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.16 }}
+    className="space-y-3"
+  >{children}</motion.div>;
+}
+
 function ElementListSheet({
   side,
   site,
@@ -225,13 +239,9 @@ function ElementListSheet({
   return (
     <Sheet onClose={onClose} label={label} closeLabel={t("factory.close", lang)}>
       <AnimatePresence mode="wait" initial={false}>
-        <motion.div
+        <AnimatedElementView
           key={view.kind === "list" ? "list" : view.kind === "element" ? `e-${view.id}` : `s-${view.id}-${view.stage}`}
-          initial={{ opacity: 0, x: view.kind === "list" ? -16 : 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.16 }}
-          className="space-y-3"
+          isList={view.kind === "list"}
         >
           {view.kind === "list" || !current ? (
             <ListView
@@ -283,7 +293,7 @@ function ElementListSheet({
               onRemoved={(workId) => patch(current.id, (element) => ({ ...element, work: element.work.filter((entry) => entry.id !== workId) }))}
             />
           )}
-        </motion.div>
+        </AnimatedElementView>
       </AnimatePresence>
       <ElementProcessEditor open={processTarget !== null} onOpenChange={open => { if (!open) setProcessTarget(null); }} siteId={site.id} side={side}
         elements={(processTarget ?? []).map(target => items.find(item => item.id === target.id) ?? target)} definitions={definitions}

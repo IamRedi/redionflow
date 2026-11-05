@@ -90,7 +90,7 @@ function ElementProcessSession({ open, onOpenChange, siteId, side, elements, def
         onCloseAutoFocus={(event) => { event.preventDefault(); if (opener.current?.isConnected) opener.current.focus({ preventScroll: true }); }}
         onEscapeKeyDown={(event) => { if (pending || catalogOpen) event.preventDefault(); }} onInteractOutside={(event) => { if (pending || catalogOpen) event.preventDefault(); }}>
         <div className="flex shrink-0 items-center gap-2 border-b px-4 py-2 sm:px-5"><div className="min-w-0 flex-1"><Dialog.Title className="text-base font-bold">{p.title}</Dialog.Title><Dialog.Description className="text-xs text-muted-foreground">{side === "factory" ? c.factory : c.field}</Dialog.Description></div><Dialog.Close asChild><button type="button" disabled={pending} aria-label={c.close} className="grid size-11 place-items-center rounded-xl outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:opacity-50"><X className="size-5" /></button></Dialog.Close></div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
           <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); apply(); }}>
             <div><p className="text-sm font-semibold">{p.scope.replace("{count}", String(count))}</p><p className="mt-1 break-words text-xs text-muted-foreground">{snapshot.materials.slice(0, 8).map((element) => element.mark).join(" · ")}{count > 8 ? ` · +${count - 8}` : ""}</p></div>
             {scopeError ? <p role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">{scopeError}</p> : null}
@@ -101,8 +101,8 @@ function ElementProcessSession({ open, onOpenChange, siteId, side, elements, def
                 const retainedEverywhere = snapshot.effective.every((keys) => keys.includes(key));
                 const unavailable = Boolean(definition?.archivedAt) && !retainedEverywhere;
                 return <li key={key}><label className={`flex min-h-16 items-center gap-3 p-2 sm:p-3 ${unavailable ? "opacity-60" : "cursor-pointer"}`}>
-                  <span className="grid min-h-11 min-w-11 shrink-0 place-items-center"><input type="checkbox" className="size-5 accent-orange-600" checked={selected.includes(key)} disabled={pending || Boolean(scopeError) || unavailable} onChange={(event) => { setSelected((prior) => event.target.checked ? [...prior, key] : prior.filter((stage) => stage !== key)); setError(null); }} /></span>
-                  <span className="block h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"><SteelWorkVisual definition={definition} fallback={key} /></span>
+                  <span className="grid min-h-[44px] min-w-[44px] shrink-0 place-items-center"><input type="checkbox" className="size-5 accent-orange-600" checked={selected.includes(key)} disabled={pending || Boolean(scopeError) || unavailable} onChange={(event) => { setSelected((prior) => event.target.checked ? [...prior, key] : prior.filter((stage) => stage !== key)); setError(null); }} /></span>
+                  <span className="block h-[48px] w-[64px] shrink-0 overflow-hidden rounded-lg bg-muted"><SteelWorkVisual definition={definition} fallback={key} /></span>
                   <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold">{label(key, definition)}</span>{definition?.description ? <span className="block text-xs text-muted-foreground">{definition.description}</span> : null}{definition?.archivedAt ? <span className="block text-xs text-muted-foreground">{unavailable ? p.retained : p.archived}</span> : null}</span>
                 </label></li>;
               })}
