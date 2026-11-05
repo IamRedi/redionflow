@@ -4,9 +4,9 @@
 
 **Verbundenes Inventar online · 5. November 2026:** [BaumdienstFlow-Inventar ausprobieren](https://redionflow-production.up.railway.app/demo/workshop?tab=tools): ein Eintrag pro Fahrzeug/Werkzeug, Barcode-/NFC-Suche, geprüfte Mitarbeiter-/Baustellenzuordnung, Reparaturherkunft und bewusste Freigabe nach Funktionsprüfung. Historie, Teilebuchungen, Dokumente und Fotos bleiben geräteübergreifend erhalten. Nur die öffentliche Musterfirma; AL Steel und BauFlow bleiben getrennt. [Release, Nachweise und Grenzen](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
-![Lokale Produktionsbuild-Aufnahme des veröffentlichten Inventar-Releases mit fiktiven Daten](docs/assets/screenshots/baum-inventory-local.png)
+![Tatsächliche Online-Aufnahme des Inventars mit fiktiven Daten](docs/assets/screenshots/baum-inventory-online.jpg)
 
-Öffentliche API, datenerhaltende Übernahme und Zuordnung/Request-Wiederholung wurden online geprüft. Die neue visuelle Online-Abnahme bleibt offen, weil Computer Use die Browser-URL nicht sicher prüfen konnte; das Bild oben ist ausdrücklich lokal. Physische NFC-/Kameraabnahme bleibt separat.
+Online geprüft: Desktop/Telefon in beiden Themes, Inventar/Flotte/Baustelle/Mitarbeiter, Defektannahme, Reparatur, geprüfte Freigabe und erneute Zuordnung. Bestehende Daten blieben erhalten. Physische NFC-/Kameraabnahme bleibt separat.
 
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 

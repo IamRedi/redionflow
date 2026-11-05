@@ -4,9 +4,9 @@
 
 **Connected inventory demo online · 5 November 2026:** [Try the BaumdienstFlow inventory](https://redionflow-production.up.railway.app/demo/workshop?tab=tools): one record per vehicle/tool, barcode/NFC lookup, validated crew/site assignments, repair origin and deliberate tested release. History, stock movements, documents and photos persist across devices. Public fictional Musterfirma only; AL Steel and BauFlow remain separate. [Release, evidence and limits](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
-![Local production-build capture of the published inventory release, with fictional data](docs/assets/screenshots/baum-inventory-local.png)
+![Actual online inventory capture with fictional data](docs/assets/screenshots/baum-inventory-online.jpg)
 
-The public API, data-preserving upgrade and assignment/retry were verified online. A fresh online visual check remains pending because Computer Use could not verify the browser URL; the image above is explicitly local. Physical NFC/camera acceptance is separate.
+Verified online: desktop/phone in both themes, inventory/fleet/site/worker links, intake, repair, tested release and deliberate reassignment. Existing data was retained. Physical NFC/camera acceptance remains separate.
 
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 
