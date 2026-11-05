@@ -10,7 +10,7 @@ import type { AssetCommand, AssetQuery, AssetSnapshot, AssetSummary } from '@/li
 import type { AssetCopy } from './copy';
 
 export const assetButton = 'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-semibold outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50';
-export const assetPrimary = `${assetButton} border-orange-600 bg-orange-600 text-white hover:bg-orange-700 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400`;
+export const assetPrimary = `${assetButton} border-orange-700 bg-orange-700 text-white hover:bg-orange-800 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400`;
 export const assetInput = 'min-h-11 w-full min-w-0 rounded-xl border bg-card px-3 py-2 text-base outline-none focus:border-orange-500 focus-visible:ring-1 focus-visible:ring-orange-500 disabled:opacity-50';
 
 /** A retry retains the same UUID only while its command payload is unchanged. */
@@ -51,27 +51,30 @@ export function useAssetMutation(c: AssetCopy, after: () => Promise<unknown>) {
 
 export function useAssetSnapshot(query: AssetQuery, c: AssetCopy) {
   const queryKey = JSON.stringify(query);
-  const [snapshot, setSnapshot] = useState<AssetSnapshot | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState<{ key: string; snapshot: AssetSnapshot } | null>(null);
+  const [request, setRequest] = useState<{ key: string; loading: boolean; error: string | null }>({key:queryKey,loading:true,error:null});
   const epoch = useRef(0);
   const invalidate = useCallback(() => { epoch.current++; }, []);
   const load = useCallback(async () => {
     const own = ++epoch.current;
-    setLoading(true); setError(null);
+    setRequest({key:queryKey,loading:true,error:null});
     try {
       const result = await getAssetSnapshotAction(JSON.parse(queryKey) as AssetQuery);
       if (own !== epoch.current) return;
-      if (!result.ok) { setSnapshot(null); setError(result.message || c.loadError); return; }
-      setSnapshot(result.data);
-    } catch { if (own === epoch.current) { setSnapshot(null); setError(c.loadError); } }
-    finally { if (own === epoch.current) setLoading(false); }
+      if (!result.ok) { setLoaded(null); setRequest({key:queryKey,loading:false,error:result.message || c.loadError}); return; }
+      setLoaded({key:queryKey,snapshot:result.data});
+      setRequest({key:queryKey,loading:false,error:null});
+    } catch { if (own === epoch.current) { setLoaded(null); setRequest({key:queryKey,loading:false,error:c.loadError}); } }
   }, [queryKey, c.loadError]);
   useEffect(() => {
     let current = true;
     queueMicrotask(() => { if (current) void load(); });
     return () => { current = false; invalidate(); };
   }, [load, invalidate]);
+  // Refresh the same query in place; a new query can never expose an older result.
+  const snapshot=loaded?.key===queryKey?loaded.snapshot:null;
+  const loading=request.key!==queryKey||request.loading;
+  const error=request.key===queryKey?request.error:null;
   return { snapshot, loading, error, reload: load };
 }
 

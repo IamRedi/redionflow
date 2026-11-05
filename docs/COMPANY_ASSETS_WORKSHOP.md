@@ -113,3 +113,10 @@ The fresh production backup at 2026-11-05T22:49:29.010Z passed independent resto
 No production migration, deployment or real role/asset mutation was performed
 during preparation. Native presentation, showcase and portfolio copy are prepared
 in their existing companion PRs, held until the core release is authorized.
+
+The final client refresh correction keeps same-query card nodes, focus and scroll
+position intact while refreshing; category/search changes immediately hide old
+results. The three affected asset browser flows passed after this correction
+(the final visual case also asserts a delayed real filter response). Primary
+light-theme action text now exceeds 4.5:1 contrast; both themes are measured in
+the browser. The unchanged shell retains its preceding full header/footer PASS.

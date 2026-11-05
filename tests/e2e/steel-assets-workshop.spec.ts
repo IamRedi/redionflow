@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type BrowserContext, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Locator, type Page, type Route, type TestInfo } from '@playwright/test';
 import sharp from 'sharp';
 import { prisma } from '../../src/lib/db/prisma';
 import { assertE2ETestDatabase, validateE2ETarget } from '../../scripts/lib/e2e-target';
@@ -49,6 +49,21 @@ async function touch(control:Locator,width:number,height:number) {
   expect(box!.width).toBeGreaterThanOrEqual(43.5);expect(box!.height).toBeGreaterThanOrEqual(43.5);
   expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.y).toBeGreaterThanOrEqual(0);
   expect(box!.x+box!.width).toBeLessThanOrEqual(width+1);expect(box!.y+box!.height).toBeLessThanOrEqual(height+1);
+}
+async function readablePrimary(control:Locator) {
+  await expect(control).toBeVisible();
+  const ratio=await control.evaluate(element=>{
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=1;
+    const context=canvas.getContext('2d')!;
+    const luminance=(color:string)=>{
+      context.clearRect(0,0,1,1);context.fillStyle=color;context.fillRect(0,0,1,1);
+      const rgb=[...context.getImageData(0,0,1,1).data].slice(0,3).map(value=>{const s=value/255;return s<=0.04045?s/12.92:((s+0.055)/1.055)**2.4;});
+      return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2];
+    };
+    const style=getComputedStyle(element),foreground=luminance(style.color),background=luminance(style.backgroundColor);
+    return(Math.max(foreground,background)+0.05)/(Math.min(foreground,background)+0.05);
+  });
+  expect(ratio).toBeGreaterThanOrEqual(4.5);
 }
 async function production(companyId:string) {
   return {elements:await prisma.siteElement.findMany({where:{companyProfileId:companyId},orderBy:{id:'asc'}}),work:await prisma.siteElementWork.findMany({where:{companyProfileId:companyId},orderBy:{id:'asc'}})};
@@ -141,6 +156,7 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
   test.setTimeout(150_000);let companyId:string|undefined;
   try{
     const fixture=await setup(page,context,info);companyId=fixture.companyId;const {seed}=fixture;
+    await prisma.companyInventoryItem.createMany({data:Array.from({length:29},(_,index)=>({companyProfileId:companyId!,category:'WORK_TOOL' as const,itemCode:`SCROLL-${companyId}-${index}`,name:`ZZ Scroll Tool ${String(index+1).padStart(2,'0')} · DEMO`}))});
     await page.goto('/workzone');
     for(const theme of ['light','dark'])for(const width of [1440,390,360]){
       const height=width===1440?1000:844;await page.setViewportSize({width,height});
@@ -150,6 +166,7 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
       await page.getByTestId('fleet-dock-open').click();const picker=page.getByTestId('fleet-picker');
       if(width<500)expect(await picker.getByTestId('fleet-card-grid').evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(3);
       await expect(picker.locator(`[data-machine-id="${seed.machines[0].id}"]`)).toContainText('ZZ 001 DM');await expect(picker.locator(`[data-machine-id="${seed.machines[1].id}"]`)).toContainText('ZZ 002 DM');
+      await page.screenshot({path:info.outputPath(`fleet-grid-${theme}-${width}.png`)});
       await picker.getByTestId('fleet-search').fill('ZZ 001 DM');await expect(picker.locator('[data-machine-id]')).toHaveCount(1);await touch(picker.locator('[data-machine-id]'),width,height);
       await page.screenshot({path:info.outputPath(`fleet-picker-${theme}-${width}.png`)});await picker.locator('[data-machine-id]').click();
       const machine=page.getByTestId('fleet-machine-card');await expect(machine).toBeVisible();
@@ -161,7 +178,7 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
       expect(await currentDialog(page).evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       await page.screenshot({path:info.outputPath(`workshop-${theme}-${width}.png`)});await page.keyboard.press('Escape');
       await expect(page.getByTestId('workshop-dock-open')).toBeFocused();
-      await page.goto('/app/inventory');await expect(page.getByRole('tab',{name:c.clothing,exact:true})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(`warehouse-${theme}-${width}.png`)});await page.goto('/workzone');
+      await page.goto('/app/inventory');await expect(page.getByRole('tab',{name:c.clothing,exact:true})).toBeVisible();await readablePrimary(page.getByRole('button',{name:c.addAsset,exact:true}));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(`warehouse-${theme}-${width}.png`)});await page.goto('/workzone');
     }
     // One bounded short-window / text-enlargement state for the touched native dialogs.
     await page.setViewportSize({width:844,height:390});
@@ -200,5 +217,39 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
     expect(underlay.emptyAreaPassesClicks).toBe(true);
     expect(underlay.logoAboveContent).toBe(true);
     await page.screenshot({path:info.outputPath('workzone-underlay-390-short.png')});
+    // A same-query refresh preserves the actual card node, opener focus and scroll.
+    await page.setViewportSize({width:390,height:844});await page.goto('/app/inventory');
+    const warehouse=page.getByTestId('asset-warehouse');
+    const scrollCard=page.locator('#warehouse-items').getByRole('button').filter({hasText:'ZZ Scroll Tool 29 · DEMO'});
+    await scrollCard.scrollIntoViewIfNeeded();
+    const cardHandle=await scrollCard.elementHandle();expect(cardHandle).not.toBeNull();
+    const listScroll=page.getByTestId('app-workspace-scroll');
+    const priorScroll=await listScroll.evaluate(element=>element.scrollTop);expect(priorScroll).toBeGreaterThan(100);
+    await scrollCard.click();await expect(detail(page).getByRole('heading',{name:'ZZ Scroll Tool 29 · DEMO',exact:true})).toBeVisible();
+    await closeDetail(page);
+    await expect(warehouse).toHaveAttribute('aria-busy','false');
+    expect(await cardHandle!.evaluate(element=>element.isConnected)).toBe(true);
+    await expect(scrollCard).toBeFocused();
+    expect(Math.abs(await listScroll.evaluate(element=>element.scrollTop)-priorScroll)).toBeLessThanOrEqual(2);
+    await page.screenshot({path:info.outputPath('warehouse-refresh-retains-scroll.png')});
+    // A different category must hide the old tools while its real response is delayed.
+    let releaseCategory=()=>{};
+    const categoryResponse=new Promise<void>(resolve=>{releaseCategory=resolve;});
+    const delayCategory=async(route:Route)=>{
+      if(route.request().method()==='POST'&&route.request().postData()?.includes('"category":"clothing"'))await categoryResponse;
+      await route.fallback();
+    };
+    await page.route('**/app/inventory',delayCategory);
+    try{
+      await page.getByRole('tab',{name:c.clothing,exact:true}).click();
+      await expect(warehouse).toHaveAttribute('aria-busy','true');
+      await expect(scrollCard).toHaveCount(0);
+    }finally{
+      // Keep the handler until page teardown; removing it while the paused
+      // fallback resumes can dispatch the same request to the context twice.
+      releaseCategory();
+    }
+    await expect(page.locator('#warehouse-items').getByRole('button').filter({hasText:seed.clothing.name})).toBeVisible();
+    await expect(warehouse).toHaveAttribute('aria-busy','false');
   }finally{if(companyId)await cleanupSteelAssetsWorkshop(companyId);}
 });
