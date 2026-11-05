@@ -1,5 +1,10 @@
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: eine Codebasis, zwei Produkte. BaumdienstFlow für Baumpflege, BauFlow für Bau und Tiefbau." width="100%"></p>
 
+## Static website publication · 5 November 2026
+
+PR48 merged only into the existing website branch as f2fed3b. Existing Cloudflare Pages Production 2df8d623-baf6-427d-accd-42153479f54e; eight localized product pages match source. ZIP SHA256 babf812c30048089919d2b0b61bb38ac1750cdd417db455941464f5cbef24df4. Existing November-3 German websites/assets retained. Parent published by portfolio PR40/006ba5f and final host configuration in PR41/97ddb4a; four source-matching pages, font and assets verified. Office/admin, worker PIN and existing read-only demos retained. Do not merge PR33 or website source into Railway-connected main: default-branch README integration remains with a separately scoped app release to avoid triggering pilot/demo/reset deployments. About points to the verified parent; stage/readiness unchanged.
+
+
 # RediOnFlow
 
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
