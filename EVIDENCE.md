@@ -2,6 +2,54 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — catalog released; illustration follow-up awaiting approval
+
+Owner approval for PR55/headf0fe2cc was executed. Merge
+6c8b88645f8285331fc3654509f44d9458563849 has the identical reviewed tree
+2356ac4c8a8e0a0222a7397df2637b72f0d5af7c. Railway deployment
+56995ad8-4dec-44ad-8c41-6ae1fc114ffa SUCCESS at18:39:43.867UTC in Amsterdam:
+the additive catalog migration applied successfully, one replica is online,
+no warning/critical/pending operation, existing startup override preserved.
+Authenticated before/after readback retained the current task/work progress.
+Another site's custom catalog choices were available unchecked. No real task
+completion, material plan or work confirmation was changed for this smoke check.
+
+The separately authorized real illustration probe did not pass. One save of
+an existing task without a photo retained its work/state and standard image;
+the provider settled621 total tokens, then the application reported generation
+failure. There was no paid retry. The former catch recorded only a generic
+failure, so the exact validation-versus-storage cause remains unknown. Customer
+labels, source content and screenshots are not reproduced in this repository.
+
+This follow-up adds strict structured output through the existing model and
+SDK. The provider-only schema uses anyOf-compatible union variants, required
+rectangle radius and homogeneous two-coordinate arrays. The canonical reader
+still accepts stored scenes with an omitted rectangle radius; trusted rendering,
+shape/byte bounds, photo/newer-edit fencing,45s/1024 tokens/one call/no retry and
+shared quotas remain. Failure diagnostics contain only phase, bounded finish
+reason, byte count, call count and existing sanitized error categories, never
+raw output, prompt, task text, URLs or provider error bodies.
+
+The [AI SDK structured-output contract](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data)
+and [OpenAI's supported strict schema subset](https://developers.openai.com/api/docs/guides/structured-outputs)
+were checked against the actual installed SDK6/provider3 adapter, not assumed
+from current documentation alone. A fake-fetch Responses stream proves the
+serialized strict schema and unchanged model/token/no-retry limits; real network
+is explicitly forbidden in those tests.
+
+Local validation PASS:80 focused unit tests/5 files (5.58s), scoped ESLint,
+Windows TypeScript and Linux Node22 production build. Tests cover the actual SDK
+adapter request/result, legacy scenes, incomplete/error streams, retained art
+and failure-log redaction including failed status recovery. No schema/UI or
+business-data change; the earlier catalog SQL/integration/UI suites were not
+repeated for this backend-only follow-up. A real successful illustration is
+still NOT_VERIFIED and requires publication plus one controlled probe.
+
+Milestone companions are prepared separately, not merged or published:
+native presentation PR57, public showcase PR58 and portfolio PR46. Their local
+checks/rendered previews passed and their copy makes no AI-success claim.
+Production remains6c8b886; this follow-up needs its own exact owner approval.
+
 ## 5 November 2026 — shared task catalog and material process plans (not released)
 
 Prepared on `feature/steel-shared-work-catalog-20261105`, based on the approved
