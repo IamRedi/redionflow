@@ -36,7 +36,7 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 
 **KI-Illustrationen:** Ein Image-API-Aufruf im Produktivbetrieb speicherte eine WebP-Illustration im bestehenden Stil in Orange und Schiefergrau; Arbeitsdarstellung und Fortbestand nach erneutem Laden wurden geprüft ([PR #60](https://github.com/IamRedi/redionflow/pull/60)). Die optionale Funktion setzt den eingerichteten Firmenzugang und verfügbare Bildkontingente voraus; eigene Fotos haben Vorrang, bei Fehlern bleibt ein vorhandenes Bild oder die Standardzeichnung erhalten.
 
-**Lager, Werkstatt und Fuhrpark · Veröffentlichungskandidat, 6. November 2026 ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Werkzeuge, Kleidung und Baustellenausrüstung werden als einzelne Einheiten mit Code und gegebenenfalls Größe geführt. Ausgabe und Rückgabe brauchen Büro- und Mitarbeiterbestätigung; einen Kollegenwechsel bestätigen beide Beteiligten. Verlust und Ausmusterung bleiben bis zur Entscheidung der Leitung offen. Reparaturen durchlaufen gemeldet → angenommen → in Reparatur → einsatzbereit; die Freigabe erfordert Funktionsprüfung und Reparaturnotiz oder Beleg. Private Fotos, Rechnungen und Verlauf bleiben beim jeweiligen Betriebsmittel. Zwei kompakte Aktionen öffnen Flotte und Werkstatt; die Fahrzeugauswahl zeigt am Handy drei Spalten mit Namen und Kennzeichen. Dieser lokal geprüfte Stand wartet auf Freigabe und Veröffentlichung der neuen Kernversion; er ist noch kein neuer Produktiv- oder Demo-Stand.
+**Lager, Werkstatt und Fuhrpark · Am 6. November 2026 für einen realen Stahlbetrieb veröffentlicht ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Werkzeuge, Kleidung und Baustellenausrüstung werden als einzelne Einheiten mit Code und gegebenenfalls Größe geführt. Ausgabe und Rückgabe brauchen Büro- und Mitarbeiterbestätigung; einen Kollegenwechsel bestätigen beide Beteiligten. Verlust und Ausmusterung bleiben bis zur Entscheidung der Leitung offen. Reparaturen durchlaufen gemeldet → angenommen → in Reparatur → einsatzbereit; die Freigabe erfordert Funktionsprüfung und Reparaturnotiz oder Beleg. Private Fotos, Rechnungen und Verlauf bleiben beim jeweiligen Betriebsmittel. Zwei kompakte Aktionen öffnen Flotte und Werkstatt; die Fahrzeugauswahl zeigt am Handy drei Spalten mit Namen und Kennzeichen. Verifizierter Produktivstand: [c91a95a](https://github.com/IamRedi/redionflow/commit/c91a95ae379a8ed2ac25306001a41f96e7f4c258). Die Firmenanmeldung ist erforderlich; diese Erweiterung ist in den öffentlichen Demos nicht freigeschaltet.
 
 ## Warum dieses Projekt?
 
@@ -72,11 +72,11 @@ Alle Bilder stammen aus der laufenden Anwendung mit den fiktiven Demo-Daten. Es 
 |---|---|---|
 | ![Baustelle Stadtpark am Handy mit Start- und Stopp-Knopf](docs/assets/screenshots/baumdienst-mobil-baustelle.webp) | ![Glasfaser-Baustelle am Handy mit Arbeitsliste](docs/assets/screenshots/bauflow-mobil-baustelle.webp) | ![Übersicht der Glasfaser-Baustellen am Handy](docs/assets/screenshots/bauflow-mobil-workzone.webp) |
 
-### Werkstatt im Stahlbetrieb (Veröffentlichungskandidat)
+### Werkstatt im Stahlbetrieb
 
 ![Lokale Werkstattansicht mit vier Reparaturphasen und einem fiktiven Fahrzeug in der Phase einsatzbereit](docs/assets/screenshots/steel-workshop-ready-light-desktop.png)
 
-Echte lokale Anwendung mit ausschließlich erfundenen Testdaten. Das Bild zeigt einen geprüften Kandidaten, keine bereits veröffentlichte Erweiterung der öffentlichen Demo.
+Echte lokale Anwendung mit ausschließlich erfundenen Testdaten. Das lokal aufgenommene Bild enthält keine Kundendaten und zeigt keine Freischaltung der Funktion in der öffentlichen Demo.
 
 ## Architektur
 

@@ -38,7 +38,7 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 
 **AI illustrations:** One production Image API request saved a WebP illustration in the native orange/slate style; its work depiction and persistence after reload were verified ([PR #60](https://github.com/IamRedi/redionflow/pull/60)). Generation remains optional, subject to company provider access and image quotas; uploaded photos take precedence, and an existing image or standard drawing is retained on failure.
 
-**Warehouse, workshop and fleet · Release candidate, 6 November 2026 ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Tools, clothing and site equipment are tracked as individual units with codes and sizes where relevant. Issues and returns require office and worker confirmation; colleague transfers require both colleagues. Loss and retirement remain pending until management decides. Repairs move through reported → received → repairing → ready; release requires a function test and a repair note or evidence. Private photos, invoices and history stay with the original asset. Two compact actions open fleet and workshop; the phone vehicle picker has three columns with names and plates. This locally verified candidate awaits approval and deployment of the new core release; it is not a new production or public-demo release yet.
+**Warehouse, workshop and fleet · Released for a real steel company, 6 November 2026 ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Tools, clothing and site equipment are tracked as individual units with codes and sizes where relevant. Issues and returns require office and worker confirmation; colleague transfers require both colleagues. Loss and retirement remain pending until management decides. Repairs move through reported → received → repairing → ready; release requires a function test and a repair note or evidence. Private photos, invoices and history stay with the original asset. Two compact actions open fleet and workshop; the phone vehicle picker has three columns with names and plates. Verified production source: [c91a95a](https://github.com/IamRedi/redionflow/commit/c91a95ae379a8ed2ac25306001a41f96e7f4c258). Company sign-in is required; this extension is not enabled in the public demos.
 
 ## Why this project?
 
@@ -74,11 +74,11 @@ All images come from the running application with the fictitious demo data. None
 |---|---|---|
 | ![Stadtpark job site on a phone with start and stop button](docs/assets/screenshots/baumdienst-mobil-baustelle.webp) | ![Fibre-optic job site on a phone with task list](docs/assets/screenshots/bauflow-mobil-baustelle.webp) | ![Overview of fibre-optic job sites on a phone](docs/assets/screenshots/bauflow-mobil-workzone.webp) |
 
-### Steel workshop (release candidate)
+### Steel workshop
 
 ![Local workshop view with four repair stages and a fictional vehicle ready for use](docs/assets/screenshots/steel-workshop-ready-light-desktop.png)
 
-The real local application with fictional test data only. This is a verified candidate, not an already published extension of the public demo.
+The real local application with fictional test data only. This local capture contains no customer data and does not imply the feature is enabled in the public demo.
 
 ## Architecture
 
