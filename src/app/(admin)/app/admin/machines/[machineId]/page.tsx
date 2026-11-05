@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { prisma } from '@/lib/db/prisma';
+import { updateMachineWithAssetGuard } from '@/lib/company-assets/legacy-machine';
 import { getTranslator } from '@/lib/i18n';
 import { getCompanyCountry, getCompanyMode } from '@/lib/db/company';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
@@ -131,9 +132,7 @@ async function saveMachine(formData: FormData) {
   if (!owned) notFound();
   const name = machineNameFromForm(formData);
 
-  await prisma.machine.update({
-    where: { id, companyProfileId: actionCompanyId },
-    data: {
+  await updateMachineWithAssetGuard(actionCompanyId, id, {
       name,
       nickname: cleanText(formData.get('nickname')) ?? name,
       model: cleanText(formData.get('model')),
@@ -154,7 +153,6 @@ async function saveMachine(formData: FormData) {
       isActive: formData.get('isActive') === 'on',
       gpsEnabled: formData.get('gpsEnabled') === 'on',
       gpsDeviceId: cleanText(formData.get('gpsDeviceId')),
-    },
   });
 
   revalidatePath('/app/admin');

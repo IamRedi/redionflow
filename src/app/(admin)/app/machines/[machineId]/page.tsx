@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { prisma } from "@/lib/db/prisma";
+import { updateMachineWithAssetGuard } from '@/lib/company-assets/legacy-machine';
 import { getTranslator } from "@/lib/i18n";
 import { getCompanyMode } from "@/lib/db/company";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -62,9 +63,7 @@ export default async function MachineEditPage({ params }: { params: Promise<{ ma
       cleanText(formData.get("targe")) ??
       existing.name;
 
-    await prisma.machine.update({
-      where: { id, companyProfileId: actionCompanyId },
-      data: {
+    await updateMachineWithAssetGuard(actionCompanyId, id, {
         name,
         nickname: cleanText(formData.get("nickname")) ?? name,
         model: cleanText(formData.get("model")),
@@ -77,7 +76,6 @@ export default async function MachineEditPage({ params }: { params: Promise<{ ma
         isActive,
         gpsEnabled,
         gpsDeviceId,
-      },
     });
     revalidatePath("/app/machines");
     revalidatePath("/app/admin");

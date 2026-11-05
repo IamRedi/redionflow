@@ -4,7 +4,8 @@ import { useWorkzoneMapMode } from './workzone-map-fleet';
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type RefObject } from "react";
+import * as Dialog from '@radix-ui/react-dialog';
 import Link from "next/link";
 import type { FleetLocation } from "@/lib/fleet/location";
 import { mapsLink } from "@/lib/fleet/location-link";
@@ -12,7 +13,14 @@ import { fleetCopy } from "@/lib/fleet/copy";
 import { fleetTime } from "@/lib/fleet/format";
 import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
+import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, Wrench, X } from "lucide-react";
+import { FleetDock } from '@/components/company-assets/fleet-dock';
+import { FleetPicker } from '@/components/company-assets/fleet-picker';
+import { AssetDetailDialog } from '@/components/company-assets/asset-detail-panel';
+import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
+import { WorkshopWorkspace } from '@/components/company-assets/workshop-workspace';
+import { assetCopy } from '@/components/company-assets/copy';
+import type { AssetRef } from '@/lib/company-assets/types';
 
 import { Button } from "@/components/ui/button";
 import { MachineArt, machineKind } from "@/components/steel/machine-art";
@@ -26,7 +34,7 @@ import { getActiveMachineDefect, getVisibleMachineNotes, parseMachineNotes, type
 import { addMachineDefectAction, blockMachineAction, resolveMachineDefectAction } from "./machine-actions";
 import { getMachineConeHistoryAction, setMachineConeTotalAction, transferConesAction } from "./cone-actions";
 
-type MachineSideItem = {
+export type MachineSideItem = {
   id: string;
   name: string;
   nickname: string | null;
@@ -95,11 +103,11 @@ function defectDateLabel(value: string) {
   return parsed.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
 }
 
-function Detail({ label, value }: { label: string; value: string | number | null | undefined }) {
+function Detail({ label, value, wrap = false }: { label: string; value: string | number | null | undefined; wrap?: boolean }) {
   return (
-    <div className="rounded-md border bg-background/70 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-sm font-medium">{value ?? "-"}</div>
+    <div className={cn('rounded-md border bg-background/70 px-3 py-2', wrap && 'min-w-0')}>
+      <div className={cn('text-[11px] uppercase tracking-wide text-muted-foreground', wrap && 'break-words')}>{label}</div>
+      <div className={cn('mt-0.5 text-sm font-medium', wrap && 'break-words')}>{value ?? "-"}</div>
     </div>
   );
 }
@@ -129,6 +137,26 @@ function InspectionChip({ label, date }: { label: string; date: Date | string | 
   );
 }
 
+/** The production sheet traps focus; other companies retain their existing portal. */
+function MachineCardSurface({ enhanced, title, onClose, returnFocusRef, children }: {
+  enhanced: boolean; title: string; onClose: () => void; returnFocusRef: RefObject<HTMLButtonElement | null>; children: ReactNode;
+}) {
+  const opener = useRef<HTMLElement | null>(null);
+  if (!enhanced) return createPortal(<div role="dialog" aria-modal="true" aria-label={title} className="fixed inset-0 z-[1200] flex h-dvh flex-col bg-background">{children}</div>, document.body);
+  return <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-[1399] bg-background" />
+      <Dialog.Content data-testid="fleet-machine-card" className="fixed inset-0 z-[1400] flex h-dvh min-h-0 min-w-0 flex-col bg-background text-foreground outline-none"
+        onOpenAutoFocus={() => { opener.current = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null; }}
+        onCloseAutoFocus={event => { event.preventDefault(); const target = opener.current?.isConnected ? opener.current : returnFocusRef.current; target?.focus({ preventScroll: true }); }}>
+        <Dialog.Title className="sr-only">{title}</Dialog.Title>
+        <Dialog.Description className="sr-only">{title}</Dialog.Description>
+        {children}
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>;
+}
+
 export function MachineSidebar({
   machines,
   isAdmin,
@@ -136,6 +164,7 @@ export function MachineSidebar({
   showCones = true,
   country = "DE",
   embedded = false,
+  enhancedOperations = false,
 }: {
   machines: MachineSideItem[];
   isAdmin: boolean;
@@ -143,9 +172,18 @@ export function MachineSidebar({
   showCones?: boolean;
   country?: string;
   embedded?: boolean;
+  enhancedOperations?: boolean;
 }) {
   const { currentLang: lang } = useLanguage();
   const c = fleetCopy(lang);
+  const assets = assetCopy(lang);
+  const fleetButton = useRef<HTMLButtonElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerSelection, setPickerSelection] = useState<string | null>(null);
+  const [returnToFleet, setReturnToFleet] = useState(false);
+  const [workshopOpen, setWorkshopOpen] = useState(false);
+  const [workshopAsset, setWorkshopAsset] = useState<AssetRef>();
+  const [detail, setDetail] = useState<{ asset: AssetRef; initialReport?: 'defect' } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const mapMode = useWorkzoneMapMode();
   const [fleetVisibility, setFleetVisibility] = useState({ plan: true, map: false });
@@ -169,11 +207,20 @@ export function MachineSidebar({
   useEffect(() => {
     const open = (event: Event) => {
       const id = (event as CustomEvent<{id?: string}>).detail?.id;
-      if (id && machines.some(m => m.id === id)) setSelectedId(id);
+      if (id && machines.some(m => m.id === id)) { setReturnToFleet(false); setPickerOpen(false); setSelectedId(id); }
     };
     window.addEventListener("fleet:open-machine", open);
     return () => window.removeEventListener("fleet:open-machine", open);
   }, [machines]);
+
+  function closeMachine() {
+    setSelectedId(null);
+    if (enhancedOperations && returnToFleet) setPickerOpen(true);
+  }
+
+  function openWorkshop(asset?: AssetRef) {
+    setWorkshopAsset(asset); setWorkshopOpen(true);
+  }
 
   function blockMachine() {
     if (!selected) return;
@@ -245,10 +292,11 @@ export function MachineSidebar({
     });
   }
 
-  if (machines.length === 0) return null;
+  if (machines.length === 0 && !enhancedOperations) return null;
 
   return (
-    <aside data-testid="fleet-rail" className={embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
+    <aside data-testid="fleet-rail" className={enhancedOperations ? 'flex min-h-0 min-w-0 items-center justify-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:justify-start lg:px-2' : embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
+      {enhancedOperations ? <FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); setPickerOpen(true); }} onWorkshop={() => openWorkshop()} /> : <>
       <button
         type="button"
         title={t("workzone.fleet", lang)}
@@ -303,21 +351,27 @@ export function MachineSidebar({
           </div>
         </div>
       ) : null}
+      </>}
+
+      {enhancedOperations ? <>
+        <FleetPicker open={pickerOpen} onOpenChange={setPickerOpen} machines={machines} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} />
+        <AssetWorkspaceDialog open={workshopOpen} onOpenChange={setWorkshopOpen} title={assets.workshop}><WorkshopWorkspace initialAsset={workshopAsset} /></AssetWorkspaceDialog>
+        <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} onClose={() => setDetail(null)} />
+      </> : null}
 
       {selected && typeof document !== "undefined"
-        ? createPortal(
-            <div role="dialog" aria-modal="true" aria-label={machineLabel(selected)} className="fixed inset-0 z-[1200] flex h-dvh flex-col bg-background">
+        ? <MachineCardSurface enhanced={enhancedOperations} title={machineLabel(selected)} onClose={closeMachine} returnFocusRef={fleetButton}>
               <div className="flex items-center gap-3 border-b px-3 py-2 sm:px-6">
                 <button
                   type="button"
-                  onClick={() => setSelectedId(null)}
+                  onClick={closeMachine}
                   className="grid size-12 place-items-center rounded-full border bg-card active:scale-95"
                   aria-label={t("common.close", lang)}
                 >
                   <X className="size-6" />
                 </button>
                 <div className="min-w-0 flex-1 truncate text-center text-sm font-medium text-muted-foreground">{t("workzone.fleet", lang)}</div>
-                <span
+                {enhancedOperations ? <button type="button" data-testid="fleet-machine-history" onClick={() => setDetail({ asset: { kind: 'machine', id: selected.id } })} className="grid size-11 shrink-0 place-items-center rounded-xl border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" aria-label={t('workzone.history', lang)}><Wrench className="size-5" /></button> : <span
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-bold",
                     !selected.isActive
@@ -328,12 +382,12 @@ export function MachineSidebar({
                   )}
                 >
                   {!selected.isActive ? t("machineSheet.statusBlocked", lang) : activeDefect ? t("machineSheet.statusDefect", lang) : t("machineSheet.statusOk", lang)}
-                </span>
+                </span>}
               </div>
 
-              <div className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[minmax(150px,32vh)_auto] gap-3 overflow-y-auto p-3 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1 lg:gap-5 lg:overflow-hidden">
+              <div className={enhancedOperations ? 'no-scrollbar mx-auto grid min-h-0 w-full min-w-0 flex-1 auto-rows-max gap-3 overflow-y-auto overscroll-contain p-3 sm:p-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-5' : 'mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[minmax(150px,32vh)_auto] gap-3 overflow-y-auto p-3 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1 lg:gap-5 lg:overflow-hidden'}>
                 {/* Picture of the machine with its name on a plate in the corner */}
-                <div className="relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+                <div className={cn('relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950', enhancedOperations && 'h-[min(38dvh,300px)] min-h-[170px] lg:sticky lg:top-0 lg:h-[min(75dvh,650px)]')}>
                   <AssetPhoto key={`${selected.id}:${selected.imageUrl}`} kind="machine" id={selected.id} src={selected.imageUrl} alt={machineLabel(selected)} canEdit={canEditPhotos}>
                     <MachineArt kind={machineKind(selected)} animate={selected.isActive} className="absolute inset-0 h-full w-full p-4 pt-14" />
                   </AssetPhoto>
@@ -347,7 +401,7 @@ export function MachineSidebar({
                   ) : null}
                 </div>
 
-                <div className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
+                <div className={enhancedOperations ? 'flex min-h-0 min-w-0 flex-col gap-3' : 'flex min-h-0 flex-col gap-3 lg:overflow-y-auto'}>
                   <div className="rounded-2xl border bg-card p-3">
                     <div className="flex flex-wrap gap-2">
                       {selected.gps ? <a href={mapsLink(selected.gps.lat, selected.gps.lng)} target="_blank" rel="noreferrer" className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-orange-600 px-4 font-semibold text-white">{c.maps}</a> : <span className="flex flex-1 items-center text-sm text-muted-foreground">{c.noGps}</span>}
@@ -356,15 +410,15 @@ export function MachineSidebar({
                     {selected.gps && <p className="mt-2 text-xs text-muted-foreground">{selected.gps.online ? c.online : selected.gps.stale ? c.stale : c.unknown} · {c.lastReport}: {fleetTime(selected.gps.reportedAt, "Europe/Berlin", true)}</p>}
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <Detail label={t("workzone.model", lang)} value={selected.model} />
-                    <Detail label={t("workzone.requiredLicense", lang)} value={selected.patentaEnevojshme} />
-                    <Detail label={t("workzone.productionYear", lang)} value={selected.vitiProdhimit} />
+                    <Detail label={t("workzone.model", lang)} value={selected.model} wrap={enhancedOperations} />
+                    <Detail label={t("workzone.requiredLicense", lang)} value={selected.patentaEnevojshme} wrap={enhancedOperations} />
+                    <Detail label={t("workzone.productionYear", lang)} value={selected.vitiProdhimit} wrap={enhancedOperations} />
                   </div>
 
                   {selected.ownership || selected.tonnage ? (
                     <div className="grid grid-cols-2 gap-2">
-                      {selected.tonnage ? <Detail label={t("machineSheet.papers.tonnage", lang)} value={`${selected.tonnage} t`} /> : null}
-                      {selected.ownership ? <Detail label={t("machineSheet.papers.ownership", lang)} value={selected.ownership} /> : null}
+                      {selected.tonnage ? <Detail label={t("machineSheet.papers.tonnage", lang)} value={`${selected.tonnage} t`} wrap={enhancedOperations} /> : null}
+                      {selected.ownership ? <Detail label={t("machineSheet.papers.ownership", lang)} value={selected.ownership} wrap={enhancedOperations} /> : null}
                     </div>
                   ) : null}
 
@@ -519,7 +573,7 @@ export function MachineSidebar({
 
                   ) : null}
 
-                  {defectFormOpen ? (
+                  {!enhancedOperations && defectFormOpen ? (
                     <div className="space-y-2 rounded-2xl border-2 border-amber-500/40 bg-amber-500/[0.06] p-3">
                       <Textarea
                         rows={2}
@@ -548,23 +602,24 @@ export function MachineSidebar({
                         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
                         <div className="min-w-0 flex-1">
                           <div className="font-semibold text-amber-900 dark:text-amber-100">{activeDefect.text}</div>
+                          {enhancedOperations ? <div className="text-xs font-semibold text-muted-foreground">{t('workzone.history', lang)}</div> : null}
                           <div className="text-xs text-muted-foreground">
                             {activeDefect.reportedBy}
                             {defectDateLabel(activeDefect.reportedAt) ? ` · ${defectDateLabel(activeDefect.reportedAt)}` : ""}
                           </div>
                         </div>
                       </div>
-                      <Button type="button" variant="outline" className="mt-2 h-11 w-full" disabled={isPending} onClick={() => setResolveConfirmDefect(activeDefect)}>
+                      {!enhancedOperations ? <Button type="button" variant="outline" className="mt-2 h-11 w-full" disabled={isPending} onClick={() => setResolveConfirmDefect(activeDefect)}>
                         <CheckCircle2 className="size-4" />
                         {t("machineSheet.resolveDefect", lang)}
-                      </Button>
+                      </Button> : null}
                     </div>
-                  ) : (
+                  ) : !enhancedOperations ? (
                     <div className="flex items-center gap-2 rounded-2xl border border-green-500/40 bg-green-500/10 px-3 py-3 text-sm font-medium text-green-700 dark:text-green-300">
                       <CheckCircle2 className="size-5" />
                       {t("machineSheet.noDefect", lang)}
                     </div>
-                  )}
+                  ) : null}
 
                   {getVisibleMachineNotes(selected.notes) ? (
                     <p className="line-clamp-3 rounded-xl bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">{getVisibleMachineNotes(selected.notes)}</p>
@@ -573,13 +628,14 @@ export function MachineSidebar({
                   <div className="mt-auto grid grid-cols-2 gap-2 pb-[env(safe-area-inset-bottom)]">
                     <button
                       type="button"
+                      data-testid={enhancedOperations ? 'fleet-machine-report' : undefined}
                       disabled={isPending || defectFormOpen}
-                      onClick={() => setDefectFormOpen(true)}
-                      className="flex h-16 items-center justify-center gap-2 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 text-base font-bold text-amber-800 active:scale-[0.98] disabled:opacity-50 dark:text-amber-200"
+                      onClick={() => enhancedOperations ? setDetail({ asset: { kind: 'machine', id: selected.id }, initialReport: 'defect' }) : setDefectFormOpen(true)}
+                      className={cn('flex h-16 items-center justify-center gap-2 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 text-base font-bold text-amber-800 active:scale-[0.98] disabled:opacity-50 dark:text-amber-200', enhancedOperations && 'h-auto min-h-16 min-w-0 px-2 py-3 text-sm')}
                     >
                       <AlertTriangle className="size-5" /> {t("machineSheet.reportDefect", lang)}
                     </button>
-                    {isAdmin ? (
+                    {enhancedOperations ? <button type="button" onClick={() => openWorkshop({ kind: 'machine', id: selected.id })} className="flex min-h-16 min-w-0 items-center justify-center gap-2 rounded-2xl border bg-card px-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Wrench className="size-5 shrink-0" /><span className="break-words">{assets.workshop}</span></button> : isAdmin ? (
                       <button
                         type="button"
                         disabled={isPending || !selected.isActive}
@@ -602,12 +658,10 @@ export function MachineSidebar({
                   </div>
                 </div>
               </div>
-            </div>,
-            document.body,
-          )
+            </MachineCardSurface>
         : null}
       <SimpleDialog
-        open={Boolean(blockConfirmOpen && selected)}
+        open={Boolean(!enhancedOperations && blockConfirmOpen && selected)}
         title={t("common.confirm", lang)}
         description={selected ? `${machineLabel(selected)} ${t("workzone.confirmBlockMachine", lang)}` : null}
         confirmLabel={t("common.confirm", lang)}
@@ -617,7 +671,7 @@ export function MachineSidebar({
         onConfirm={blockMachine}
       />
       <SimpleDialog
-        open={Boolean(resolveConfirmDefect && selected)}
+        open={Boolean(!enhancedOperations && resolveConfirmDefect && selected)}
         title={t("common.confirm", lang)}
         description={t("workzone.confirmDefectResolved", lang)}
         confirmLabel={t("common.yes", lang)}

@@ -1,4 +1,7 @@
 "use server";
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
+import { confirmLegacyAssetAssignment } from '@/lib/company-assets/legacy';
 
 import { createSessionCookie } from "@/lib/auth/session-cookie";
 
@@ -823,6 +826,8 @@ export async function createWorkerInventoryItemAction(formData: FormData): Promi
       })
     : null;
 
+  if (companyInventoryItemId && await isSteelCompany(worker.companyProfileId)) return { ok: false, message: await assetWorkflowMessage() };
+
   const resolvedName = companyItem?.name ?? itemName;
   const resolvedCode = companyItem?.itemCode ?? itemCode;
   const resolvedNote = note || companyItem?.note || null;
@@ -854,8 +859,15 @@ export async function confirmWorkerInventoryItemAction(formData: FormData): Prom
   const actor = await getProfileActor();
   if (!actor) return { ok: false, message: tr("loginRequired") };
 
-  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true } });
-  if (!item || !canConfirmStatus(actor, item.workerId, item.status)) {
+  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true, companyInventoryItemId: true, isPrivate: true, worker: { select: { companyProfileId: true } } } });
+  if (!item) return { ok: false, message: tr("itemNotFound") };
+
+  if (item.companyInventoryItemId && !item.isPrivate && await isSteelCompany(item.worker.companyProfileId)) {
+    try { await confirmLegacyAssetAssignment(item.id); revalidateWorkerProfile(item.workerId); return { ok: true, message: tr("handoverConfirmed") }; }
+    catch (error) { return assetActionError(error); }
+  }
+
+  if (!canConfirmStatus(actor, item.workerId, item.status)) {
     return { ok: false, message: tr("confirmationWrongProfile") };
   }
   const access = await assertWorkerAccess(actor, item.workerId);
@@ -892,10 +904,11 @@ export async function requestDeleteWorkerInventoryItemAction(formData: FormData)
   const actor = await getProfileActor();
   if (!actor) return { ok: false, message: tr("loginRequired") };
 
-  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true } });
+  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true, companyInventoryItemId: true, isPrivate: true, worker: { select: { companyProfileId: true } } } });
   if (!item || !canAccessWorkerProfile(actor, item.workerId)) return { ok: false, message: tr("profileAccessDenied") };
   const access = await assertWorkerAccess(actor, item.workerId);
   if (!access.ok) return access;
+  if (item.companyInventoryItemId && !item.isPrivate && await isSteelCompany(item.worker.companyProfileId)) return { ok: false, message: await assetWorkflowMessage() };
   if (item.status === "DELETED") return { ok: true, message: tr("itemAlreadyDeleted") };
   if (item.status === "PENDING_ADMIN_DELETE_CONFIRMATION" || item.status === "PENDING_WORKER_DELETE_CONFIRMATION") {
     return { ok: true, message: tr("deleteWaitsConfirmation") };

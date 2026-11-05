@@ -42,9 +42,10 @@ Evidence pages use checkedAt/id keysets scoped to the same company/project/day;
 paging does not change totals. Month/day filters do not alter records. Dates and
 numeric weights have deterministic SQ/EN/DE/IT/PL/RO formats.
 
-The steel admin workspace uses the available width, without a reserved floating
-fleet gutter. Fleet administration/history remain under Personnel & Fleet;
-Workzone keeps its vehicle rail in an allocated shell row/column. Header and
+The steel admin workspace uses the available width. The compact Flota/Oficina
+action dock uses an allocated shell row/column; vehicles appear in its searchable
+dialog rather than a permanently visible thumbnail rail. Fleet administration
+also remains under Personnel & Fleet. Header and
 navigation remain outside the primary content scroll region. The transparent
 shared footer is the final content item: it appears at the end of a long view,
 then scrolls away when returning to the beginning. It is not a persistent viewport

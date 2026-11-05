@@ -47,8 +47,12 @@
 @media(min-width:1024px) {
   .shell { --workspace-header-height: 110px; }
   .workzone > aside { margin-top: var(--workspace-header-height); }
+  .admin { grid-template-columns: 208px minmax(0, 1fr) auto; }
+  .admin > aside:last-child { margin-top: var(--workspace-header-height); }
 }
 @media(max-width:1023px) {
+  .admin { grid-template-rows: minmax(0, 1fr) auto; }
+  .admin > aside:last-child { grid-column: 1 / -1; grid-row: 2; }
   .workzone { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
 }
 @media print {

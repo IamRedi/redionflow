@@ -107,6 +107,34 @@ import { signupAction } from "@/app/(public)/signup/actions";
 import { createBaustelleAction, updateBaustelleCanvasPositionAction, updateBaustelleMetaAction, deleteBaustelleAction, clearBaustelleImportDataAction } from "@/app/(admin)/app/baustellen/actions";
 import { ensureDailyPlanAction, moveDailyPlanItemAction, removeDailyPlanItemAction, clearDailyPlanAction, saveDailyPlanAction, updateDailyPlanColumnNoteAction } from "@/app/(workzone)/workzone/daily-plan-actions";
 import { hashPassword } from "@/lib/auth/password";
+import { runAssetMutation } from '@/lib/company-assets/service';
+
+it.each([false, true])('restricted steel planning reads status without creating overlays or using privileged tenant SQL (reported=%s)', async reported => {
+  const a = tenants[0];
+  await prisma.companyProfile.update({ where: { id: a.company.id }, data: { mode: 'bau' } });
+  await prisma.baustelle.update({ where: { id: a.site.id }, data: { type: 'STEEL_ASSEMBLY' } });
+  await prisma.user.update({ where: { id: a.admin.id }, data: { isActive: true } });
+  await as(0);
+  if (reported) await runAssetMutation({ requestId: crypto.randomUUID(), command: { type: 'report', asset: { kind: 'machine', id: a.machine.id }, kind: 'defect', note: 'Fictional restricted-role fault' } });
+  const overlays = await prisma.companyOperationalAsset.count({ where: { companyProfileId: a.company.id } });
+  const forbidden = vi.spyOn(prisma, '$transaction').mockImplementation(() => { throw new Error('SYSTEM_TENANT_QUERY_FORBIDDEN'); });
+  try {
+    const date = '2026-10-06';
+    const assigned = await moveDailyPlanItemAction({ date, columnId: a.site.id, kind: 'MACHINE', itemId: a.machine.id, force: true });
+    expect(assigned.ok).toBe(!reported);
+    if (!reported) expect((await saveDailyPlanAction({ date })).ok).toBe(true);
+    const [grants] = await withTenantDbContext(a.company.id, tx => tx.$queryRaw<Array<{ machine_write: boolean; overlay_write: boolean; repair_note: boolean; file_read: boolean }>>`
+      SELECT has_table_privilege(current_user, '"Machine"', 'UPDATE') AS machine_write,
+        has_table_privilege(current_user, '"CompanyOperationalAsset"', 'INSERT') AS overlay_write,
+        has_column_privilege(current_user, '"CompanyAssetRepair"', 'repairNote', 'SELECT') AS repair_note,
+        has_table_privilege(current_user, '"CompanyAssetFile"', 'SELECT') AS file_read`);
+    expect(grants).toEqual({ machine_write: false, overlay_write: false, repair_note: false, file_read: false });
+    expect(forbidden).not.toHaveBeenCalled();
+  } finally { forbidden.mockRestore(); }
+  expect(await prisma.companyOperationalAsset.count({ where: { companyProfileId: a.company.id } })).toBe(overlays);
+  if (reported) expect(await prisma.dailyWorkPlan.count({ where: { companyProfileId: a.company.id, planDate: new Date('2026-10-05T22:00:00Z') } })).toBe(0);
+  await cleanPool();
+});
 
 function form(values: Record<string, string>) {
   const value = new FormData(); for (const [key, text] of Object.entries(values)) value.set(key, text); return value;

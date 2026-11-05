@@ -3,6 +3,8 @@ import type { Prisma } from '@/generated/prisma/client';
 import type { RequesterContext } from './requester';
 
 const mocks = vi.hoisted(() => ({ withTenantContext: vi.fn() }));
+const assetFacts=vi.hoisted(()=>({read:vi.fn()}));
+vi.mock('./asset-grounding',async original=>({...await original<typeof import('./asset-grounding')>(),assistantAssetGrounding:assetFacts.read}));
 vi.mock('@/lib/db/tenant-context', () => mocks);
 import { adminGetCompanyFuelReceipts, adminSearchCompanyFleet, adminSearchCompanyInventory, adminSearchCompanyWorkers } from './company-tools';
 
@@ -23,6 +25,7 @@ const machine = () => ({ id: 'machine-a', name: 'Demo crane', nickname: 'Crane',
 
 beforeEach(() => {
   vi.clearAllMocks();
+  assetFacts.read.mockResolvedValue({applicable:false,complete:true,items:[],retrievedAt:now.toISOString(),warning:null});
   vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
   vi.stubEnv('WANWAY_GPS_ENABLED', 'true'); vi.stubEnv('DEMO_MODE', 'false'); vi.stubEnv('APP_ENV', 'saas');
   tx.user.findFirst.mockResolvedValue({ id: 'admin-a' }); tx.companyProfile.findUnique.mockResolvedValue({ country: 'AL' });
@@ -33,6 +36,15 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
 describe('company assistant read tools', () => {
+  it('does not present an active register machine with a canonical defect as usable',async()=>{
+    tx.machine.count.mockResolvedValue(1);tx.machine.findMany.mockResolvedValue([machine()]);
+    assetFacts.read.mockResolvedValue({applicable:true,complete:true,items:[{ref:{kind:'machine',id:'machine-a'},baseRecordActive:true,operationalAvailability:'reported',usable:false}],retrievedAt:now.toISOString(),warning:null});
+    expect(await adminSearchCompanyFleet(requester)).toMatchObject({ok:true,data:{items:[{active:true,baseRecordActive:true,operationalAvailability:'reported',usable:false}],operationalCoverage:{complete:true}}});
+  });
+  it('keeps failure of the operational read explicitly unknown instead of falling back to active=true',async()=>{
+    tx.machine.count.mockResolvedValue(1);tx.machine.findMany.mockResolvedValue([machine()]);assetFacts.read.mockResolvedValue({applicable:true,complete:false,items:[],retrievedAt:now.toISOString(),warning:'Operational data unavailable'});
+    expect(await adminSearchCompanyFleet(requester)).toMatchObject({ok:true,data:{items:[{active:true,baseRecordActive:true,operationalAvailability:null,usable:null,operationalCoverageComplete:false}],operationalCoverage:{complete:false}}});
+  });
   it('denies workers before any database call, and verifies live admin membership before business reads', async () => {
     const workerRequester: RequesterContext = { kind: 'worker', workerId: 'worker-a', companyId: 'tenant-a', preferredLanguage: 'SQ', displayName: 'Demo' };
     for (const tool of [adminSearchCompanyWorkers, adminSearchCompanyFleet, adminGetCompanyFuelReceipts, adminSearchCompanyInventory]) expect(await tool(workerRequester)).toMatchObject({ ok: false, code: 'FORBIDDEN' });

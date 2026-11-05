@@ -158,13 +158,13 @@ export function legacyAssistantTools(requester: RequesterContext, turn: ReturnTy
       },
       adminAnalyzeDailyPlanLicenses: {
         description:
-          "Admin only: analyzes the daily plan for a date against worker licenses/driver permissions and machine requirements. Use for questions such as whether licenses match machines, who is planned with which machine, or whether the plan makes sense.",
+          "Admin only: daily plan licenses/requirements. In steel companies consult current operationalAvailability/usable and coverage warnings: base active alone is never proof a machine is usable. Current status is separate from the requested historical plan date; plan rows do not establish confirmed physical custody.",
         inputSchema: z.object({ date: z.string().optional() }),
         execute: async (input: { date?: string }) => adminAnalyzeDailyPlanLicenses(requester, { date: assistantToolDate(turn, input.date) ?? turn.today }),
       },
       adminQueryDailyPlan: {
         description:
-          "Admin only: reads the daily plan for a date and returns groups with site, workers, and machines. Use for questions such as which machines Noah/Mario had today, who is on Prio 1 site, or which machine is planned for a site.",
+          "Admin only: recorded daily-plan groups with site, workers and machines. Planned assignment is not confirmed asset custody or current usability. In steel companies use operationalAvailability/usable and warnings, not base active alone; status is current even for a historical plan. Saved unresolved names never establish asset availability.",
         inputSchema: z.object({ date: z.string().optional(), workerName: z.string().optional(), baustelleName: z.string().optional() }),
         execute: async (input: { date?: string; workerName?: string; baustelleName?: string }) =>
           adminQueryDailyPlan(requester, { ...input, date: assistantToolDate(turn, input.date) ?? turn.today }),

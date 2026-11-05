@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db/prisma";
 import type { RequesterContext } from "../requester";
 import { assistantToolText } from "./text";
+import {assistantAssetGrounding,assetGroundingFields} from '../asset-grounding';
 import {
   startOfLocalDay,
   todayKey,
@@ -62,10 +63,11 @@ export async function getWorkerHrProfile(
 
   const assets = await prisma.workerAssetItem.findMany({
     where: { workerId: worker.id, status: "ACTIVE" },
-    select: { kind: true, itemName: true, itemCode: true },
+    select: { kind: true, itemName: true, itemCode: true,companyInventoryItemId:true,isPrivate:true },
     orderBy: { handedOverAt: "desc" },
     take: 41,
   });
+  const assetGrounding=await assistantAssetGrounding(requester,assets.filter(a=>a.companyInventoryItemId&&!a.isPrivate).map(a=>({kind:'inventory',id:a.companyInventoryItemId!})));
 
   const label = `${worker.firstName} ${worker.lastName}`.trim();
   const lic = worker.licenses?.trim() ?? null;
@@ -84,10 +86,11 @@ export async function getWorkerHrProfile(
     emailAccount: worker.emailAccount,
     birthDate: worker.birthDate ? worker.birthDate.toISOString().slice(0, 10) : null,
     startedAtCompany: worker.startedAtCompany ? worker.startedAtCompany.toISOString().slice(0, 10) : null,
-    assetItems: assets.slice(0, 40).map((a) => ({ kind: a.kind, itemName: a.itemName, itemCode: a.itemCode })),
+    assetItems: assets.slice(0, 40).map((a) => ({ kind: a.kind, itemName: a.itemName, itemCode: a.itemCode,
+      ...(assetGrounding.applicable?{evidenceBasis:'recorded_assignment_not_proof_of_current_physical_possession',...(a.companyInventoryItemId&&!a.isPrivate?assetGroundingFields(assetGrounding,{kind:'inventory',id:a.companyInventoryItemId}):{operationalAvailability:null,usable:null,operationalWarning:'Private/unlinked legacy belongings are recorded rows only; operational condition and physical possession are not verified.'})}:{}) })),
     assetItemsComplete: assets.length <= 40,
     assetItemsTruncated: assets.length > 40,
-    message,
+    message:assetGrounding.applicable&&assetGrounding.warning?`${message} ${assetGrounding.warning}`:message,
   };
 }
 
@@ -364,6 +367,8 @@ export async function adminAnalyzeDailyPlanLicenses(requester: RequesterContext,
 
   if (!plan) return { ok: true as const, date: key, groups: [], warnings: [], message: text.noDailyPlan(key) };
 
+  const grounding=await assistantAssetGrounding(requester,plan.columns.flatMap(column=>column.assignments.filter(a=>a.kind==='MACHINE'&&a.machine&&a.machineId).map(a=>({kind:'machine',id:a.machineId!}))));
+
   const groups = plan.columns.map((column) => {
     const workers = column.assignments
       .filter((assignment) => assignment.kind === "WORKER" && assignment.worker)
@@ -379,12 +384,13 @@ export async function adminAnalyzeDailyPlanLicenses(requester: RequesterContext,
         plate: assignment.machine!.targe,
         model: assignment.machine!.model,
         active: assignment.machine!.isActive,
+        ...assetGroundingFields(grounding,{kind:'machine',id:assignment.machineId!},assignment.machine!.isActive),
       }));
     return {
       baustelle: column.baustelle?.name ?? column.title,
       workers,
       machines,
-      warnings: analyzePlanLicenseWarnings(workers, machines, text),
+      warnings: [...analyzePlanLicenseWarnings(workers, machines, text),...(grounding.applicable?machines.filter(m=>'usable' in m&&m.usable===false).map(m=>`${m.name}: operational asset block; base active flag is not usability.`):[]),...(grounding.warning?[grounding.warning]:[])],
     };
   });
 
@@ -434,6 +440,8 @@ export async function adminQueryDailyPlan(
 
   if (!plan) return { ok: true as const, date: key, groups: [], message: text.noDailyPlan(key) };
 
+  const grounding=await assistantAssetGrounding(requester,plan.columns.flatMap(column=>column.assignments.filter(a=>a.kind==='MACHINE'&&a.machineId).map(a=>({kind:'machine',id:a.machineId!}))));
+
   const liveGroups = plan.columns.map((column) => {
     const workers = column.assignments
       .filter((assignment) => assignment.kind === "WORKER")
@@ -449,6 +457,7 @@ export async function adminQueryDailyPlan(
         plate: assignment.machine?.targe ?? null,
         model: assignment.machine?.model ?? null,
         active: assignment.machine?.isActive ?? null,
+        ...assetGroundingFields(grounding,{kind:'machine',id:assignment.machineId??'unresolved'},assignment.machine?.isActive??null),
       }));
     return {
       source: "live-plan" as const,
@@ -456,7 +465,7 @@ export async function adminQueryDailyPlan(
       note: column.note,
       workers,
       machines,
-      warnings: analyzePlanLicenseWarnings(workers, machines, text),
+      warnings: [...analyzePlanLicenseWarnings(workers, machines, text),...(grounding.applicable?machines.filter(m=>'usable' in m&&m.usable===false).map(m=>`${m.name}: operational asset block; base active flag is not usability.`):[]),...(grounding.warning?[grounding.warning]:[])],
     };
   });
 
@@ -473,7 +482,7 @@ export async function adminQueryDailyPlan(
       .split(",")
       .map((name) => name.trim())
       .filter(Boolean)
-      .map((name) => ({ name, requiredLicense: null, plate: null, model: null, active: null })),
+      .map((name) => ({ name, requiredLicense: null, plate: null, model: null, active: null,...(grounding.applicable?{operationalAvailability:null,usable:null,operationalWarning:'Saved plan names are not resolved asset identities or availability evidence.'}:{}) })),
     warnings: [] as string[],
   }));
 

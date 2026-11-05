@@ -34,7 +34,7 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
       execute: input => adminSearchCompanyWorkers(requester, input),
     },
     adminSearchCompanyFleet: {
-      description: 'Search vehicles by ID/name/nickname/plate, show equipment details and last STORED GPS fix with reportedAt/age/stale status. Never refreshes GPS. Ambiguous names return candidate vehicles.',
+      description: 'Search vehicles by ID/name/nickname/plate, equipment and last STORED GPS. In steel companies active/baseRecordActive is only the register flag, never usability: current operationalAvailability/usable includes confirmed custody, pending handovers, reports and workshop blocks. Null or incomplete operational coverage is unknown; never fall back to active=true. Current asset status is separate from historical plan dates. Never refreshes GPS; ambiguous names remain candidates.',
       inputSchema: z.object({ query: companyText.optional(), machineId: id.optional(), active: z.boolean().optional(), ...companyPage }),
       execute: input => adminSearchCompanyFleet(requester, input),
     },
@@ -44,7 +44,7 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
       execute: input => adminGetCompanyFuelReceipts(requester, input),
     },
     adminSearchCompanyInventory: {
-      description: 'Search the recorded company inventory catalog by item ID/name and count active worker assignments. Exact matching catalog count, paginated rows. Catalog/assignment counts do not establish physical stock balances or available quantities.',
+      description: 'Search inventory catalog and count recorded active worker assignments. In steel companies include current operationalAvailability/usable; base active or ACTIVE assignment rows do not prove current condition/possession or free warehouse stock. Lost/retired responsibility records may remain ACTIVE in historical worker rows. Null/incomplete operational coverage is unknown. Exact matching catalog count and paginated rows, never invented stock quantities.',
       inputSchema: z.object({ query: companyText.optional(), itemId: id.optional(), ...companyPage }),
       execute: input => adminSearchCompanyInventory(requester, input),
     },

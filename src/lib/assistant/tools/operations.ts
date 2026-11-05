@@ -24,7 +24,7 @@ export async function getMyOperationalSnapshot(
       live:
         | { active: false; message: string }
         | { active: true; baustelleName: string; startedAt: string; message: string };
-      assignment: { machine: string | null; baustelle: string | null; message: string };
+      assignment: { machine: string | null; baustelle: string | null; message: string; basis?:string };
       message: string;
     }
   | { ok: false; message: string }
@@ -70,6 +70,7 @@ export async function getMyOperationalSnapshot(
       machine: assigned.machine,
       baustelle: assigned.baustelle,
       message: assigned.message,
+      basis:assigned.basis,
     },
     message: [live.message, assigned.message].filter(Boolean).join(" · "),
   };
@@ -111,7 +112,7 @@ export async function getAssignedMachine(
   requester: RequesterContext,
   input: { workerName: string; date?: string },
 ): Promise<
-  | { ok: true; worker: string; machine: string | null; baustelle: string | null; message: string }
+  | { ok: true; worker: string; machine: string | null; baustelle: string | null; message: string; basis?:string }
   | { ok: false; message: string }
 > {
   const text = assistantToolText(requester);
@@ -148,6 +149,7 @@ export async function getAssignedMachine(
       machine: machine?.labelSnapshot ?? null,
       baustelle: col.baustelle?.name ?? col.title ?? null,
       message: machine?.labelSnapshot ? text.assignedWithMachine(machine.labelSnapshot) : text.assignedNoMachine,
+      basis:'Recorded daily-plan assignment, not confirmed asset custody or current usability.',
     };
   }
 

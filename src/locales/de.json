@@ -1605,6 +1605,7 @@
     "crewRole": "Rolle im Team",
     "crewRoleNone": "Keine Rolle",
     "crewRoles": {
+      "MECHANIC": "Mechaniker",
       "FIELD_ENGINEER": "Bauleiter Montage",
       "FACTORY_ENGINEER": "Werkstattleiter",
       "OFFICE": "Büro",

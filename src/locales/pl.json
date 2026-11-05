@@ -460,6 +460,7 @@
     "crewRole": "Team role",
     "crewRoleNone": "No role",
     "crewRoles": {
+      "MECHANIC": "Mechanik",
       "FIELD_ENGINEER": "Site engineer",
       "FACTORY_ENGINEER": "Factory engineer",
       "OFFICE": "Office",
