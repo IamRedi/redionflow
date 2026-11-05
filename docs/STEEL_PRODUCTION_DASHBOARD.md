@@ -1,9 +1,14 @@
-# Steel production dashboard — review candidate, 4 November 2026
+# Steel production dashboard — deployed pilot, 4 November 2026
 
-This candidate replaces the generic dashboard for BauFlow companies with steel
+This feature replaces the generic dashboard for BauFlow companies with steel
 projects/workshops. Baumdienst keeps its existing dashboard. It is prepared over
-pilot d56173b; publication requires owner approval under AGENTS.md. No real data,
-GPS binding or credential was changed during development.
+pilot d56173b. The owner explicitly approved PR35 / feature head0872572 under
+AGENTS.md. Merge44c5a7af9a1d4f5c371581df5e8ae02e8da35159 matches that tested tree.
+Railway deployment82816adc-f8ca-41c7-9415-7ef18509031e reached SUCCESS on
+4 November 2026 at20:25 UTC in EU/Amsterdam. The new migration applied, health200,
+the authenticated admin dashboard/read-only monitor and the Albanian native
+presentation copy were read back. No real work confirmation, account creation,
+GPS binding or credential change was needed for this release acceptance.
 
 ## What the numbers mean
 
@@ -108,12 +113,12 @@ Exact results/revision are recorded in the PR, not inferred from this checklist.
 
 Native presentation copy is prepared in all six existing locales. Showcase media
 is real local UI with fictional companies/projects only. The portfolio companion
-keeps the live core separate from this review candidate; maturity is unchanged.
+describes the pilot release and retains a labelled synthetic local capture; maturity is unchanged.
 Generic GitHub About remains accurate: NO_CONTENT_CHANGE. Public portfolio and
 separate product-site publication keep their own approval/readback boundaries.
 
-After approval, merge to the existing Railway pilot, retain source/config/secrets,
-verify the additive migration, exact deployment, health and authenticated views.
+Publication retained the existing Railway source/config/secrets and verified
+the additive migration, exact deployment, health and authenticated views.
 Rollback runs the prior application revision and retains the new column/index and
 stored evidence. Old app versions can continue writing legacy-null snapshots;
 never drop evidence or reset customer projects as part of rollback.
