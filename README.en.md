@@ -2,9 +2,11 @@
 
 # RediOnFlow
 
-**Shared workshop demo online · 5 November 2026:** [Try the BaumdienstFlow workshop](https://redionflow-production.up.railway.app/demo/workshop): intake, repair, documented function check and release, tool issue/return, spare parts and history. Documents and site/workshop photos are stored on the server and visible across devices. Public fictional data only. The dedicated Baumdienst profile is isolated from the AL Steel pilot and BauFlow demo. [Scope, release and verification](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Connected inventory demo online · 5 November 2026:** [Try the BaumdienstFlow inventory](https://redionflow-production.up.railway.app/demo/workshop?tab=tools): one record per vehicle/tool, barcode/NFC lookup, validated crew/site assignments, repair origin and deliberate tested release. History, stock movements, documents and photos persist across devices. Public fictional Musterfirma only; AL Steel and BauFlow remain separate. [Release, evidence and limits](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
-![Shared public workshop – actual online capture with fictional data on 5 November 2026](docs/assets/screenshots/baum-workshop-shared-online.jpg)
+![Local production-build capture of the published inventory release, with fictional data](docs/assets/screenshots/baum-inventory-local.png)
+
+The public API, data-preserving upgrade and assignment/retry were verified online. A fresh online visual check remains pending because Computer Use could not verify the browser URL; the image above is explicitly local. Physical NFC/camera acceptance is separate.
 
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 
