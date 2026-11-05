@@ -1,11 +1,11 @@
-import { activeJob, legacyWorkshopSchema, workshopSchema, type WorkshopAsset, type WorkshopState } from "./demo-model";
+import { activeJob, legacyWorkshopSchema, previousWorkshopSchema, workshopSchema, type WorkshopAsset, type WorkshopState } from "./demo-model";
 import type { WorkshopDirectory } from "./shared-contract";
 
 /** Add relationships without replacing an existing asset, order, event or file. */
 export function upgradeWorkshopInventory(raw: unknown, directory: WorkshopDirectory): WorkshopState {
   const version = (raw as { version?: unknown })?.version;
-  const state = version === 1 ? legacyWorkshopSchema.parse(raw) : workshopSchema.parse(raw);
-  return workshopSchema.parse({ ...state, version: 2, assets: state.assets.map(asset => {
+  const state = version === 1 ? legacyWorkshopSchema.parse(raw) : version === 2 ? previousWorkshopSchema.parse(raw) : workshopSchema.parse(raw);
+  return workshopSchema.parse({ ...state, version: 3, assets: state.assets.map(asset => {
     if (!asset.holder || asset.placement || activeJob(state as WorkshopState, asset.id)) return asset;
     const matches = directory.workers.filter(w => w.name === asset.holder);
     return matches.length === 1 ? { ...asset, placement: { workerKey: matches[0].key, workerName: matches[0].name } } : asset;
@@ -38,4 +38,9 @@ export function workerInventory(state: WorkshopState, workerKey: string) {
 export function inventoryHistory(state: WorkshopState, scope: "site" | "worker", identity: string) {
   const key = scope === "site" ? "siteKey" : "workerKey";
   return state.assets.filter(asset => asset.placement?.[key] === identity || asset.events.some(e => e.placement?.[key] === identity) || state.jobs.some(j => j.assetId === asset.id && j.origin?.placement?.[key] === identity));
+}
+
+/** Shared upload permission for the labelled fictional role simulation. */
+export function canUploadDemoFile(state: WorkshopState, actor: {key:string;role:string}, kind: string, target: string, jobId?: string) {
+  return actor.role === "admin" || kind === "site" || state.assets.find(a=>a.id===target)?.placement?.workerKey === actor.key || Boolean(jobId && state.jobs.find(j=>j.id===jobId && j.assetId===target)?.origin?.placement?.workerKey === actor.key);
 }

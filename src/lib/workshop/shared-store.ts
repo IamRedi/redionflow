@@ -3,9 +3,11 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { createWorkshopDemo } from "./demo-data";
-import { applyWorkshopCommand, WorkshopError, workshopSchema, type WorkshopState } from "./demo-model";
+import { WorkshopError, workshopSchema, type WorkshopState } from "./demo-model";
 import { fileUrl, type WorkshopDirectory, type WorkshopSnapshot, type mutationEnvelope } from "./shared-contract";
 import { upgradeWorkshopInventory } from "./inventory-flow";
+import type { DemoActor } from "./custody-schema";
+import { applyCustodyCommand, type BaseTree } from "./custody-flow";
 import type { z } from "zod";
 
 export const DEMO_WORKSPACE_KEY = "baumdienst-workshop:v1";
@@ -40,12 +42,12 @@ export async function workshopDirectory(tx: Prisma.TransactionClient = prisma): 
 export async function ensureWorkshopDemo() {
   const directory = await workshopDirectory();
   const row = await prisma.baumdienstDemoWorkspace.upsert({ where: { key: DEMO_WORKSPACE_KEY }, update: {}, create: { key: DEMO_WORKSPACE_KEY, data: json(upgradeWorkshopInventory(createWorkshopDemo(), directory)) } });
-  if ((row.data as { version?: unknown })?.version !== 1) return row;
-  // Version 2 makes old writers fail closed instead of stripping relationships.
+  if ((row.data as { version?: unknown })?.version === 3) return row;
+  // Version 3 makes older writers fail closed rather than losing confirmations.
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT "key" FROM "BaumdienstDemoWorkspace" WHERE "key" = ${DEMO_WORKSPACE_KEY} FOR UPDATE`;
     const current = await tx.baumdienstDemoWorkspace.findUniqueOrThrow({ where: { key: DEMO_WORKSPACE_KEY } });
-    if ((current.data as { version?: unknown })?.version !== 1) return current;
+    if ((current.data as { version?: unknown })?.version === 3) return current;
     return tx.baumdienstDemoWorkspace.update({ where: { key: DEMO_WORKSPACE_KEY }, data: { data: json(upgradeWorkshopInventory(current.data, directory)), revision: { increment: 1 } } });
   });
 }
@@ -78,17 +80,22 @@ export async function mutateWorkshopDemo(envelope: { requestId: string; revision
   }, { maxWait: 10000, timeout: 15000 });
 }
 export function digest(value: string | Uint8Array) { return createHash("sha256").update(value).digest("hex"); }
-export async function runWorkshopCommand(envelope: z.infer<typeof mutationEnvelope>) {
-  return mutateWorkshopDemo(envelope, digest(JSON.stringify(envelope.command)), async (tx, state, at, id) => {
+export async function runWorkshopCommand(envelope: z.infer<typeof mutationEnvelope>, actor: DemoActor) {
+  return mutateWorkshopDemo(envelope, digest(JSON.stringify([actor.key, envelope.command])), async (tx, state, at, id) => {
     try {
       const command = envelope.command;
-      if (command.type !== "assign") return applyWorkshopCommand(state, command, at, id);
       const directory = await workshopDirectory(tx);
-      const worker = command.workerKey ? directory.workers.find(w => w.key === command.workerKey && w.available) : undefined;
-      const site = command.siteKey ? directory.sites.find(s => s.key === command.siteKey && s.active) : undefined;
-      if ((command.workerKey && !worker) || (command.siteKey && !site)) throw new SharedWorkshopError("unavailable");
-      return applyWorkshopCommand(state, { type: "assign", assetId: command.assetId, placement: { ...(worker ? { workerKey: worker.key, workerName: worker.name } : {}), ...(site ? { siteKey: site.key, siteName: site.name } : {}) } }, at, id);
+      let baseTree: BaseTree | undefined;
+      if (command.type === "tree") {
+        const site = directory.sites.find(s => s.key === command.siteKey && s.active);
+        if (!site) throw new SharedWorkshopError("missing", 404);
+        const rows = await tx.treeItem.findMany({ where: { baustelleId: site.id, treeId: command.treeCode }, take: 2, select: { status: true, species: true, diameter: true, notes: true } });
+        if (rows.length !== 1) throw new SharedWorkshopError("missing", 404);
+        let note = rows[0].notes || ""; try { const json = JSON.parse(note); note = typeof json.note === "string" ? json.note : ""; } catch { /* Plain historical note. */ }
+        baseTree = { ...rows[0], note };
+      }
+      return applyCustodyCommand(state, command, actor, directory, at, id, baseTree);
     }
-    catch (error) { if (error instanceof WorkshopError) throw new SharedWorkshopError(error.message); throw error; }
+    catch (error) { if (error instanceof WorkshopError) throw new SharedWorkshopError(error.message, error.message === "permission" ? 403 : error.message === "pending" ? 409 : 400); throw error; }
   });
 }

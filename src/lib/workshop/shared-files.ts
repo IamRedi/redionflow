@@ -1,3 +1,5 @@
+import { canUploadDemoFile } from "./inventory-flow";
+import type { DemoActor } from "./custody-schema";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
 import { compactPhoto, MAX_PHOTO_BYTES } from "@/lib/asset-photos/image";
@@ -33,7 +35,7 @@ export async function prepareDemoFile(file: File, kind: Upload["kind"]) {
   }
   return { data: bytes, name, mime: file.type as "application/pdf" | "text/plain" };
 }
-export async function uploadWorkshopFile(input: Upload, file: File, companyId: string) {
+export async function uploadWorkshopFile(input: Upload, file: File, companyId: string, actor: DemoActor) {
   let target = input.target;
   if (input.kind === "site") {
     if (input.jobId) throw new SharedWorkshopError("missing", 404);
@@ -42,18 +44,21 @@ export async function uploadWorkshopFile(input: Upload, file: File, companyId: s
     target = demoSiteKey(site);
   }
   const prepared = await prepareDemoFile(file, input.kind);
-  const fingerprint = digest(JSON.stringify({ kind: input.kind, target, jobId: input.jobId, name: prepared.name, mime: prepared.mime, digest: digest(prepared.data) }));
+  const fingerprint = digest(JSON.stringify({ actorKey: actor.key, kind: input.kind, target, jobId: input.jobId, name: prepared.name, mime: prepared.mime, digest: digest(prepared.data) }));
   return mutateWorkshopDemo(input, fingerprint, async (tx, state, at) => {
     if (input.kind !== "site" && !state.assets.some(a => a.id === target)) throw new SharedWorkshopError("missing", 404);
     if (input.jobId && !state.jobs.some(j => j.id === input.jobId && j.assetId === target)) throw new SharedWorkshopError("missing", 404);
+    if (!canUploadDemoFile(state, actor, input.kind, target, input.jobId)) throw new SharedWorkshopError("permission",403);
     const usage = await tx.baumdienstDemoFile.aggregate({ where: { workspaceKey: DEMO_WORKSPACE_KEY }, _sum: { bytes: true }, _count: true });
     if (usage._count >= 160 || (usage._sum.bytes ?? 0) + prepared.data.length > 22_000_000) throw new SharedWorkshopError("storage", 413);
     const fileId = randomUUID();
     await tx.baumdienstDemoFile.create({ data: { id: fileId, workspaceKey: DEMO_WORKSPACE_KEY, kind: input.kind, target, jobId: input.jobId, name: prepared.name, mime: prepared.mime, bytes: prepared.data.length, data: prepared.data } });
+    state.custody.fileEvents.unshift({ id: fileId, kind: input.kind, target, name: prepared.name, at, actor });
     if (input.kind === "document") {
-      return applyWorkshopCommand(state, { type: "document", document: { id: fileId, fileId, name: prepared.name, mime: prepared.mime, bytes: prepared.data.length, assetId: target, ...(input.jobId ? { jobId: input.jobId } : {}), at } }, at, fileId);
+      const next = applyWorkshopCommand(state, { type: "document", document: { id: fileId, fileId, name: prepared.name, mime: prepared.mime, bytes: prepared.data.length, assetId: target, ...(input.jobId ? { jobId: input.jobId } : {}), at } }, at, fileId);
+      next.assets.forEach(a => a.events.filter(e => e.id === fileId).forEach(e => { e.actor = actor.name; e.actorKey = actor.key; })); return next;
     }
-    if (input.kind === "asset") state.assets.find(a => a.id === target)!.events.unshift({ id: fileId, at, kind: "photo", note: prepared.name, actor: "Demo", ...(input.jobId ? { ref: input.jobId } : {}) });
+    if (input.kind === "asset") state.assets.find(a => a.id === target)!.events.unshift({ id: fileId, at, kind: "photo", note: prepared.name, actor: actor.name, actorKey: actor.key, ...(input.jobId ? { ref: input.jobId } : {}) });
     return state;
   });
 }

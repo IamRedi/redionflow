@@ -2,11 +2,13 @@
 
 # RediOnFlow
 
-**Connected inventory demo online · 5 November 2026:** [Try the BaumdienstFlow inventory](https://redionflow-production.up.railway.app/demo/workshop?tab=tools): one record per vehicle/tool, barcode/NFC lookup, validated crew/site assignments, repair origin and deliberate tested release. History, stock movements, documents and photos persist across devices. Public fictional Musterfirma only; AL Steel and BauFlow remain separate. [Release, evidence and limits](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Equipment handovers and tree cards online · 5 November 2026:** [Try the BaumdienstFlow Musterfirma](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Register equipment with a barcode/printable label and photo. Storage handovers use manager/worker confirmation or an explicitly enabled policy; colleague transfers always require both colleagues. Inventory, fleet, profiles, sites and Werkstatt share one persistent record. Original species SVGs form a 2-column phone / 6-column laptop grid with quick actions and full tree cards. Fictional template only; AL Steel and other demos stay separate. [Logic, evidence and limits](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Actual online Baumdienst tree grid with fictional data](docs/assets/screenshots/baum-tree-grid-online.jpg)
 
 ![Actual online inventory capture with fictional data](docs/assets/screenshots/baum-inventory-online.jpg)
 
-Verified online: desktop/phone in both themes, inventory/fleet/site/worker links, intake, repair, tested release and deliberate reassignment. Existing data was retained. Physical NFC/camera acceptance remains separate.
+Online verified: registration, manager → Jonas confirmation, Jonas → Arben with both colleagues, and tree completion/reopening retained after reload. Phone/desktop and both themes reviewed; existing records/files preserved. Automated tests additionally cover repair/release, concurrency and shared uploads. Physical NFC/camera/printer acceptance remains separate.
 
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 

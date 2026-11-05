@@ -14,7 +14,7 @@ test("workspace uses the viewport, scrolls the natural legal footer, and preserv
       await page.goto(route);
       const workspace = page.getByTestId("demo-workspace");
       await expect(workspace).toBeVisible();
-      if (route.startsWith("/demo/workshop")) await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
+      if (route.startsWith("/demo/workshop")) await expect(page.getByRole("button", { name: route.includes("tab=tools") ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
       const signature = page.getByRole("link", { name: "by RediON", exact: true });
       await expect(signature).toHaveCount(1);
       const footer = (await signature.boundingBox())!;

@@ -8,11 +8,11 @@ async function verify(flags,label){
     await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Boundary server not ready')),30000);child.stdout.on('data',b=>{if(String(b).includes('Ready')){clearTimeout(timer);resolve()}});child.once('exit',()=>{clearTimeout(timer);reject(new Error('Boundary server exited'))})});
     const response=await fetch('http://127.0.0.1:8766/demo/workshop');
     if(response.status!==404)throw new Error(`${label}: expected workshop 404, got ${response.status}`);
-    for(const endpoint of ['/api/demo/baumdienst/workshop','/api/demo/baumdienst/files/not-owned','/demo/privacy']){
+    for(const endpoint of ['/api/demo/baumdienst/workshop','/api/demo/baumdienst/files/not-owned','/demo/privacy','/demo/inventory/print?asset=crane']){
       const reply=await fetch('http://127.0.0.1:8766'+endpoint);
       if(reply.status!==404)throw new Error(`${label}: ${endpoint} leaked (${reply.status})`);
     }
-    for(const endpoint of ['/api/demo/baumdienst/workshop','/api/demo/baumdienst/files']){
+    for(const endpoint of ['/api/demo/baumdienst/workshop','/api/demo/baumdienst/files','/api/demo/baumdienst/actor']){
       const reply=await fetch('http://127.0.0.1:8766'+endpoint,{method:'POST',headers:{Origin:'http://127.0.0.1:8766','Content-Type':'application/json'},body:'{}'});
       if(reply.status!==404)throw new Error(`${label}: write endpoint ${endpoint} leaked (${reply.status})`);
     }

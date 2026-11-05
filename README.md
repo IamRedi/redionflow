@@ -2,11 +2,13 @@
 
 # RediOnFlow
 
-**Verbundenes Inventar online · 5. November 2026:** [BaumdienstFlow-Inventar ausprobieren](https://redionflow-production.up.railway.app/demo/workshop?tab=tools): ein Eintrag pro Fahrzeug/Werkzeug, Barcode-/NFC-Suche, geprüfte Mitarbeiter-/Baustellenzuordnung, Reparaturherkunft und bewusste Freigabe nach Funktionsprüfung. Historie, Teilebuchungen, Dokumente und Fotos bleiben geräteübergreifend erhalten. Nur die öffentliche Musterfirma; AL Steel und BauFlow bleiben getrennt. [Release, Nachweise und Grenzen](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Geräteübergaben und Baumkarten online · 5. November 2026:** [BaumdienstFlow-Musterfirma ausprobieren](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Geräte mit Barcode/Drucketikett und Foto erfassen. Lagerübergaben mit Chef-/Mitarbeiterbestätigung oder bewusst aktivierter Regel; Kollegenübergaben immer mit beiden Kollegen. Inventar, Flotte, Profile, Baustellen und Werkstatt nutzen denselben gespeicherten Eintrag. Eigene Arten-SVGs bilden Baumkarten mit zwei Spalten am Telefon und sechs am Laptop, Schnellaktionen und voller Detailkarte. Nur das fiktive Template; AL Steel und andere Demos bleiben getrennt. [Logik, Nachweise und Grenzen](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Tatsächliche Baumkarten der Online-Musterfirma](docs/assets/screenshots/baum-tree-grid-online.jpg)
 
 ![Tatsächliche Online-Aufnahme des Inventars mit fiktiven Daten](docs/assets/screenshots/baum-inventory-online.jpg)
 
-Online geprüft: Desktop/Telefon in beiden Themes, Inventar/Flotte/Baustelle/Mitarbeiter, Defektannahme, Reparatur, geprüfte Freigabe und erneute Zuordnung. Bestehende Daten blieben erhalten. Physische NFC-/Kameraabnahme bleibt separat.
+Online geprüft: Erfassung, Chef → Jonas mit Bestätigung, Jonas → Arben mit beiden Kollegen sowie Erledigen/Wiederöffnen eines Baums nach Neuladen. Telefon/Desktop und beide Themes geprüft; vorhandene Daten/Dateien erhalten. Automatisierte Tests decken zusätzlich Reparatur/Freigabe, Parallelität und gemeinsame Uploads ab. Physische NFC-/Kamera-/Druckabnahme bleibt separat.
 
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 

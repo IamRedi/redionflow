@@ -1,3 +1,4 @@
+import { workshopCopy } from "@/lib/workshop/copy";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -159,10 +160,16 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
 
   return (
     <div className={inventoryContent ? "space-y-5" : "mx-auto max-w-6xl space-y-5"}>
-      <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+      {inventoryContent ? <header className="flex flex-wrap items-center gap-4 rounded-3xl border bg-card p-4 sm:p-6">
+        <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/10 text-2xl font-semibold text-primary">
+          {worker.profileImageUrl ? <Image src={worker.profileImageUrl} alt={`${worker.firstName} ${worker.lastName}`} fill sizes="80px" className="object-cover" /> : initials}
+        </div>
+        <div className="min-w-0 flex-1 basis-40"><h1 className="break-words text-xl font-semibold tracking-tight sm:text-2xl">{worker.firstName} {worker.lastName}</h1><p className="mt-2 break-words text-sm leading-relaxed text-muted-foreground">{worker.position ?? t("workzone.workerDefaultRole", currentLang)} · {worker.availability === "AVAILABLE" ? workshopCopy(currentLang).available : worker.availability === "UNAVAILABLE" ? workshopCopy(currentLang).unavailable : availabilityLabel(worker.availability, currentLang)}</p></div>
+        <Button asChild variant="outline" className="min-h-11 w-full sm:w-auto"><Link href="/demo/workzone">{t("report.back", currentLang)}</Link></Button>
+      </header> : <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <div className="h-28 bg-[#163328]" />
         <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6">
-          <div className="-mt-12 flex items-end gap-4">
+          <div className={inventoryContent ? "-mt-10 flex min-w-0 flex-1 flex-wrap items-end gap-3" : "-mt-12 flex items-end gap-4"}>
             <div className="relative size-28">
               <div className="relative flex size-28 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted text-3xl font-semibold shadow-sm">
                 {worker.profileImageUrl ? (
@@ -172,8 +179,8 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
                 )}
               </div>
             </div>
-            <div className="pb-1">
-              <h1 className="text-2xl font-semibold">
+            <div className={inventoryContent ? "min-w-0 flex-1 pb-1" : "pb-1"}>
+              <h1 className={inventoryContent ? "break-words text-2xl font-semibold" : "text-2xl font-semibold"}>
                 {worker.firstName} {worker.lastName}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -185,9 +192,10 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
             <Link href="/demo/workzone">{t("report.back", currentLang)}</Link>
           </Button>
         </div>
-      </div>
+      </div>}
 
       {inventoryContent}
+      <ProfileDetails collapsed={Boolean(inventoryContent)} label={t("workzone.dataTitle", currentLang)}>
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr_0.9fr]">
         <Card>
           <CardHeader className="pb-3">
@@ -484,6 +492,9 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
           </div>
         </CardContent>
       </Card>
+      </ProfileDetails>
     </div>
   );
 }
+
+function ProfileDetails({collapsed, label, children}: {collapsed: boolean; label: string; children: ReactNode}) { return collapsed ? <details className="rounded-2xl border bg-card px-4"><summary className="flex min-h-14 cursor-pointer items-center text-sm font-medium">{label}</summary><div className="space-y-5 pb-4">{children}</div></details> : <>{children}</>; }

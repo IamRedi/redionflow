@@ -1,7 +1,8 @@
+import { currentDemoActor, withDemoActor } from "@/lib/workshop/demo-actor";
 import { rejectCrossOriginMutation } from "@/lib/auth/same-origin";
 import { uploadEnvelope } from "@/lib/workshop/shared-contract";
 import { boundedBody, demoHeaders, workshopResponseError } from "@/lib/workshop/shared-http";
-import { requireWorkshopDemo, SharedWorkshopError } from "@/lib/workshop/shared-store";
+import { requireWorkshopDemo, SharedWorkshopError, workshopDirectory } from "@/lib/workshop/shared-store";
 import { uploadWorkshopFile } from "@/lib/workshop/shared-files";
 
 export const runtime = "nodejs";
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     const input = uploadEnvelope.parse({ requestId: form.get("requestId"), revision: form.get("revision"), kind: form.get("kind"), target: form.get("target"), ...(form.get("jobId") ? { jobId: form.get("jobId") } : {}) });
     const file = form.get("file");
     if (!(file instanceof File)) throw new SharedWorkshopError("fileError");
-    return Response.json(await uploadWorkshopFile(input, file, company.id), { headers: demoHeaders });
+    return Response.json(await withDemoActor(await uploadWorkshopFile(input, file, company.id, await currentDemoActor(await workshopDirectory()))), { headers: demoHeaders });
   } catch (error) { return workshopResponseError(error); }
   finally { if (acquired) activeUploads--; }
 }

@@ -1,4 +1,5 @@
 "use client";
+import { canUploadDemoFile } from "@/lib/workshop/inventory-flow";
 
 import Image from "next/image";
 import { Camera, Download, ImagePlus, LoaderCircle } from "lucide-react";
@@ -13,7 +14,7 @@ import { WorkshopDialog } from "./workshop-ui";
 /** Explicit demo adapter: never calls operational photo actions or storage. */
 export function DemoPhoto({ kind, target, photoKey, jobId, alt, children, className = "" }: { kind: "asset" | "site"; target: string; photoKey?: string; jobId?: string; alt: string; children?: ReactNode; className?: string }) {
   const { currentLang } = useLanguage(), c = workshopCopy(currentLang), p = photoCopy(currentLang);
-  const { photos, upload, pending, status } = useWorkshopDemo();
+  const { photos, state, actor, upload, pending, status } = useWorkshopDemo();
   const images = photos.filter(photo => photo.kind === kind && photo.target === (photoKey ?? target) && (!jobId || photo.jobId === jobId));
   const [open, setOpen] = useState(false), [message, setMessage] = useState("");
   const camera = useRef<HTMLInputElement>(null), file = useRef<HTMLInputElement>(null);
@@ -32,7 +33,7 @@ export function DemoPhoto({ kind, target, photoKey, jobId, alt, children, classN
     <button type="button" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setOpen(true); }} className="absolute bottom-1.5 right-1.5 inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-white/30 bg-black/70 px-3 text-xs font-semibold text-white shadow-sm backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label={`${c.photos}: ${alt}`}><Camera className="size-4" aria-hidden="true" />{images.length > 0 && <span>{images.length}</span>}</button>
     <WorkshopDialog open={open} onClose={() => setOpen(false)} closeLabel={c.close} title={`${c.photos} · ${alt}`} description={c.photoHint}>
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" className="min-h-11" disabled={pending || status !== "ready"} onClick={() => camera.current?.click()}><Camera />{p.camera}</Button><Button type="button" variant="outline" className="min-h-11" disabled={pending || status !== "ready"} onClick={() => file.current?.click()}><ImagePlus />{p.upload}</Button></div>
+        <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" className="min-h-11" disabled={pending || status !== "ready" || !canUploadDemoFile(state,actor,kind,target,jobId)} onClick={() => camera.current?.click()}><Camera />{p.camera}</Button><Button type="button" variant="outline" className="min-h-11" disabled={pending || status !== "ready" || !canUploadDemoFile(state,actor,kind,target,jobId)} onClick={() => file.current?.click()}><ImagePlus />{p.upload}</Button></div>
         <input ref={camera} data-photo-input="camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={e => void choose(e.target.files?.[0])} />
         <input ref={file} data-photo-input="upload" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => void choose(e.target.files?.[0])} />
         {pending && <p role="status" className="flex items-center gap-2 text-sm"><LoaderCircle className="size-4 motion-safe:animate-spin" />{c.saving}</p>}

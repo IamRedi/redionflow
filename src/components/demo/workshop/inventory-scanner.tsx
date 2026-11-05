@@ -1,5 +1,6 @@
 "use client";
 
+import { workshopCopy } from "@/lib/workshop/copy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, Nfc } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { action, control, Field, WorkshopDialog } from "./workshop-ui";
 
 type Reader = { scan(options: { signal: AbortSignal }): Promise<void>; onreading: ((e: { message?: { records: { recordType: string; encoding?: string; data?: BufferSource }[] } }) => void) | null; onreadingerror: (() => void) | null };
 const exampleInventoryCode = "WG-102";
-export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose }: { assets: WorkshopAsset[]; lang: string; closeLabel: string; onFound: (asset: WorkshopAsset) => void; onClose: () => void }) {
+export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose, onUnknown }: { assets: WorkshopAsset[]; lang: string; closeLabel: string; onFound: (asset: WorkshopAsset) => void; onClose: () => void; onUnknown?: (code: string) => void }) {
   const c = inventoryCopy(lang);
   const [code, setCode] = useState(""), [mode, setMode] = useState<"manual" | "camera" | "nfc">("manual"), [error, setError] = useState("");
   const video = useRef<HTMLVideoElement>(null), abort = useRef<AbortController | null>(null);
@@ -72,6 +73,7 @@ export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose }:
       <form className="grid gap-3" onSubmit={e => { e.preventDefault(); detect.current(code); }}><Field label={c.codeInput}><input className={control} value={code} onChange={e => { setCode(e.target.value); setError(""); }} maxLength={2048} autoComplete="off" autoCapitalize="characters" placeholder={exampleInventoryCode} /></Field><Button className={action} disabled={!code.trim()}>{c.find}</Button></form>
       <div className="grid grid-cols-2 gap-3"><Button type="button" variant="outline" className={action} onClick={() => { stopNfc(); setError(""); setMode(mode === "camera" ? "manual" : "camera"); }} aria-pressed={mode === "camera"}><Camera />{c.camera}</Button><Button type="button" variant="outline" className={action} onClick={() => void startNfc()} aria-pressed={mode === "nfc"}><Nfc />{c.nfc}</Button></div>
       {error && <p role="alert" className="rounded-xl border border-amber-600 p-3 text-sm">{error}</p>}
+      {error === c.unknownCode && onUnknown && /^[A-Za-z0-9 .$/+%\-]{1,80}$/.test(code) && <Button className={`${action} w-full`} variant="outline" onClick={() => onUnknown(code.trim().toUpperCase())}>{workshopCopy(lang).register}</Button>}
     </div>
   </WorkshopDialog>;
 }
