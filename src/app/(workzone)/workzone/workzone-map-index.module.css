@@ -1,5 +1,5 @@
 .layout {
-  --map-height: 680px;
+  --map-height: max(260px, calc(100cqh - 24px));
   display: grid;
   grid-template-columns: minmax(0,1fr) 224px;
   align-items: start;
@@ -25,6 +25,7 @@
   background: hsl(var(--card));
   padding: 6px;
 }
+.index:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: -2px; }
 .index section + section {
   border-top: 1px solid hsl(var(--border));
   margin-top: 5px;
@@ -101,8 +102,8 @@
 .toolbar :is(a,button) { background-color: hsl(var(--card)); border-color: hsl(var(--border)); color: hsl(var(--foreground)); }
 .toolbar :is(a,button):hover { background-color: hsl(var(--muted)); color: hsl(var(--foreground)); }
 @media(max-width:1023px) {
-  .layout { --map-height: clamp(380px,65dvh,620px); grid-template-columns: minmax(0,1fr); }
-  .index { max-height: 340px; }
+  .layout { --map-height: max(240px, 65cqh); grid-template-columns: minmax(0,1fr); }
+  .index { max-height: max(176px, 55cqh); }
   .row { min-height: 48px; }
   .name { font-size: 12px; }
   .action { height: 44px; width: 44px; }

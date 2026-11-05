@@ -77,7 +77,8 @@ test('Workzone map has a compact site and fleet index without a floating team he
         const vehicleZoom = page.getByTestId(`map-index-vehicle-${vehicles[0].id}`).getByRole('button', { name: 'Zmadhim: Kamioni demo 1 · DEMO-01', exact: true });
         await vehicleZoom.click();
         await expect.poll(() => centerDistance('Makinat: DEMO-01')).toBeLessThan(8);
-        await page.evaluate(() => window.scrollBy(0, 260));
+        await page.getByTestId('app-workspace-scroll').evaluate(el => { el.scrollTop += 260; });
+        expect(await page.evaluate(() => window.scrollY)).toBe(0);
         expect(Math.abs(await header.evaluate(el => el.getBoundingClientRect().top + window.scrollY) - headerDocTop)).toBeLessThan(2);
         await frame.scrollIntoViewIfNeeded();
         if (device === 'desktop' || device === 'phone') {

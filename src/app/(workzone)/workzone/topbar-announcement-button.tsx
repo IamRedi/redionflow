@@ -27,11 +27,14 @@ export function TopbarAnnouncementButton({ message, className = "" }: { message:
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
+    const scroll = (event: Event) => {
+      if (event.target === document || (event.target instanceof HTMLElement && event.target.matches('[data-testid="app-workspace-scroll"]'))) close();
+    };
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); buttonRef.current?.focus(); } };
     window.addEventListener("resize", close);
-    window.addEventListener("scroll", close);
+    window.addEventListener("scroll", scroll, true);
     window.addEventListener("keydown", escape);
-    return () => { window.removeEventListener("resize", close); window.removeEventListener("scroll", close); window.removeEventListener("keydown", escape); };
+    return () => { window.removeEventListener("resize", close); window.removeEventListener("scroll", scroll, true); window.removeEventListener("keydown", escape); };
   }, [open]);
 
   function submitAnnouncement(formData: FormData) {

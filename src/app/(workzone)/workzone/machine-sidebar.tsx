@@ -12,7 +12,7 @@ import { fleetCopy } from "@/lib/fleet/copy";
 import { fleetTime } from "@/lib/fleet/format";
 import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, Fuel, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
+import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { MachineArt, machineKind } from "@/components/steel/machine-art";
@@ -135,12 +135,14 @@ export function MachineSidebar({
   canEditPhotos = isAdmin,
   showCones = true,
   country = "DE",
+  embedded = false,
 }: {
   machines: MachineSideItem[];
   isAdmin: boolean;
   canEditPhotos?: boolean;
   showCones?: boolean;
   country?: string;
+  embedded?: boolean;
 }) {
   const { currentLang: lang } = useLanguage();
   const c = fleetCopy(lang);
@@ -246,7 +248,7 @@ export function MachineSidebar({
   if (machines.length === 0) return null;
 
   return (
-    <aside data-testid="fleet-rail" className={compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
+    <aside data-testid="fleet-rail" className={embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
       <button
         type="button"
         title={t("workzone.fleet", lang)}
@@ -260,10 +262,9 @@ export function MachineSidebar({
       >
         {t("workzone.fleet", lang).toUpperCase()}
       </button>
-      <Link href="/workzone/fuel" className={compactMap ? "flex size-12 shrink-0 items-center justify-center rounded-full border bg-card shadow-sm" : "flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border bg-card px-1 text-center text-[10px] font-semibold leading-tight shadow-sm"} title={c.fuel}><Fuel className="size-5 text-orange-600"/><span className={compactMap ? "sr-only" : undefined}>{c.fuel}</span></Link>
 
       {fleetOpen ? (
-        <div data-testid="fleet-rail-items" className="no-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 lg:max-h-[calc(100vh-13rem)] lg:flex-none lg:overflow-x-visible lg:overflow-y-auto lg:pr-1">
+        <div data-testid="fleet-rail-items" className={embedded ? 'no-scrollbar min-h-0 min-w-0 flex-1 overflow-x-auto py-1 lg:overflow-x-hidden lg:overflow-y-auto lg:px-1' : 'no-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 lg:max-h-[calc(100vh-13rem)] lg:flex-none lg:overflow-x-visible lg:overflow-y-auto lg:pr-1'}>
           <div className="flex items-center gap-2 lg:flex-col">
             {machines.map((machine) => {
               const label = machineLabel(machine);

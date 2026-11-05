@@ -42,8 +42,18 @@ Evidence pages use checkedAt/id keysets scoped to the same company/project/day;
 paging does not change totals. Month/day filters do not alter records. Dates and
 numeric weights have deterministic SQ/EN/DE/IT/PL/RO formats.
 
-The floating fleet rail is suppressed only on this dashboard; other pages retain
-it. The responsive UI is scoped to a CSS module, with SVG charts, keyboard
+The steel admin workspace uses the available width, without a reserved floating
+fleet gutter. Fleet administration/history remain under Personnel & Fleet;
+Workzone keeps its vehicle rail in an allocated shell row/column. Header,
+navigation and the transparent shared footer remain outside the primary content
+scroll region. The map navigation pane scrolls independently with its bar hidden.
+The author link stays centered over the full footer width, with the small product
+mark at the side. Long public pages retain document scrolling.
+
+Calendar rows fit their actual values: no placeholder dots for empty metrics,
+44px minimum day targets and compact active days. Meaningful dates, quantities,
+weight provenance and the three separate processes are unchanged. Decorative
+section counters are removed. The responsive UI is scoped to CSS modules, with SVG charts, keyboard
 controls, native disclosure, reduced-motion handling and no new UI dependency.
 
 ## Monitor entry and access

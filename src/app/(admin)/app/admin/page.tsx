@@ -1,7 +1,8 @@
 import { requireAdminTenant } from "@/lib/auth/authorization";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { BriefcaseBusiness, Eye, HardHat, Plus, Trash2, Truck, UserMinus, UsersRound, UserX } from "lucide-react";
+import { BriefcaseBusiness, Eye, HardHat, Plus, ReceiptText, Trash2, Truck, UserMinus, UsersRound, UserX } from "lucide-react";
+import { fleetCopy } from '@/lib/fleet/copy';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -718,9 +719,10 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
 
       <Card id="machines" className="scroll-mt-28">
         <CardHeader className="py-4">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-base">
             <BriefcaseBusiness className="size-4" />
             {t("admin.fleetCardTitle", currentLang, mode)}
+            <Link href="/app/machines/fuel" className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium hover:bg-muted"><ReceiptText className="size-4" />{fleetCopy(currentLang).fuelLog}</Link>
           </CardTitle>
           <CardDescription>{t("admin.fleetCardDescription", currentLang, mode)}</CardDescription>
         </CardHeader>
