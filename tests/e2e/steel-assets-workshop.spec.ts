@@ -139,6 +139,12 @@ test('mechanic repairs with external provider and private evidence before tested
     const invoice=await prisma.companyAssetFile.findFirstOrThrow({where:{companyProfileId:companyId,kind:'invoice'}});
     expect((await worker.context.request.get(`/api/company-assets/files/${invoice.id}`)).status()).toBe(404);
     const png=await sharp({create:{width:240,height:160,channels:3,background:'#f97316'}}).withMetadata().png().toBuffer();
+    // Capturing a receipt must keep the selected invoice classification/private access.
+    await detail(mechanic.page).getByTestId('asset-camera-input').setInputFiles({name:'synthetic-camera-invoice.png',mimeType:'image/png',buffer:png});
+    await expect.poll(()=>prisma.companyAssetFile.count({where:{companyProfileId:companyId,kind:'invoice',name:'synthetic-camera-invoice.webp'}})).toBe(1);
+    const cameraInvoice=await prisma.companyAssetFile.findFirstOrThrow({where:{companyProfileId:companyId,kind:'invoice',name:'synthetic-camera-invoice.webp'}});
+    expect(cameraInvoice.mime).toBe('image/webp');
+    expect((await worker.context.request.get(`/api/company-assets/files/${cameraInvoice.id}`)).status()).toBe(404);
     await detail(mechanic.page).getByRole('combobox',{name:c.files,exact:true}).selectOption('photo');await detail(mechanic.page).getByTestId('asset-file-input').setInputFiles({name:'synthetic-checked.png',mimeType:'image/png',buffer:png});
     await expect.poll(()=>prisma.companyAssetFile.count({where:{companyProfileId:companyId,kind:'photo'}})).toBe(1);
     const photo=await prisma.companyAssetFile.findFirstOrThrow({where:{companyProfileId:companyId,kind:'photo'}});expect(photo.mime).toBe('image/webp');expect(photo.size).toBeLessThanOrEqual(180000);

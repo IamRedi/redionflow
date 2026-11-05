@@ -120,3 +120,7 @@ results. The three affected asset browser flows passed after this correction
 (the final visual case also asserts a delayed real filter response). Primary
 light-theme action text now exceeds 4.5:1 contrast; both themes are measured in
 the browser. The unchanged shell retains its preceding full header/footer PASS.
+Camera capture also honors the selected attachment kind: a receipt selected as
+Invoice stays a private invoice. The affected mechanic browser flow passed with
+both PDF and camera-image invoices denied to an ordinary worker, followed by
+tested repair release. No physical camera was opened by the automated test.
