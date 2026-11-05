@@ -2,6 +2,54 @@
 
 **Stand: 3. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 3 November 2026 — approved backup / AI cost-limit rollout
+
+Owner-approved [PR #30](https://github.com/IamRedi/redionflow/pull/30) was merged
+into the existing pilot branch as `13fe7caf1072d060abc690c57db41968c9d75c9b`.
+Railway deployment `b6f18b33-7577-41da-b478-ea2757a44c89` completed SUCCESS.
+The additive `20261103210000_assistant_quota` migration applied successfully;
+63 migrations are installed and the public health endpoint returns HTTP 200.
+
+A private pre-deployment encrypted database snapshot passed a full isolated
+PostgreSQL 18 restore. Read-only per-table count/hash comparisons before and
+after rollout found no changed business rows. The only later operational
+change was the expected login-abuse metadata from invalid-request probes;
+the temporary quota fixtures were removed/restored and no quota rows remained.
+No customer records, credentials, hashes or private backup locations are
+published here. The local restore runner was also corrected to select its
+matching PostgreSQL client library after a fresh WSL session.
+
+Both assistant routes were exercised using the deployed build on an owned
+loopback-only verification server and the production quota store. Oversized
+bodies returned 413, client system roles 400, and three concurrent authenticated
+requests per role returned 429/Retry-After at the controlled daily ceiling.
+Rejected requests consumed no tokens or requests; cleanup was verified. The
+provider was isolated with external fetch disabled and a synthetic key only
+in that child process; **zero paid calls** were made. The real pilot has no
+`OPENAI_API_KEY`: normal paid response/usage settlement remains **NOT VERIFIED**
+in production, and its in-app assistant stays inactive. KiDraht is separate.
+No production environment variable was changed to enable inference.
+
+The local candidate checks below remain the qualification evidence for the
+unchanged code. The local daily backup is active but requires the operator
+computer/Codex; the first unattended run and separate private-key recovery
+copy remain pending. External object-storage contents are outside this DB copy.
+
+## 3 November 2026 — earlier WanWay private-pilot deployment (historical)
+
+Owner-approved PR #28 was merged into the existing pilot branch. Railway's
+active deployment `636b4722-876a-4b11-b14d-99909501132e` runs commit
+`32add653c6d3a816e95fad0cc24324c1dfb50dcb`, with the source branch unchanged.
+The deployment logs show `20261103160000_wanway_readonly` successfully applied
+at 16:55 CET; the final container reports 59 migrations and no pending migrations.
+Health returned `{"ok":true,"service":"redionflow"}`. The authenticated admin
+panel opens with empty APPID/KEY fields, disconnected status and enabled Save;
+the independent encryption keyring is configured. No provider credential was
+entered or real GPS API request made by the agent. Device discovery, mapping,
+live position accuracy and owner acceptance await the owner's real-device test.
+Public demos remain GPS-disabled. No customer data or private runtime URL is
+published here. Existing backup/privacy follow-ups remain open.
+
 ## 3 November 2026 — encrypted backup and assistant cost-limit candidate
 
 Scope: `fix/pilot-backup-ai-limits-20261103`, based on exact pilot revision
@@ -43,15 +91,15 @@ fail-closed semantics are documented in [AI_COST_LIMITS.md](docs/AI_COST_LIMITS.
 No load benchmark, real paid-provider evaluation, independent review, owner
 acceptance or production application deployment is claimed by these checks.
 
-## 3 November 2026 — WanWay feature candidate (local, not deployed)
+## 3 November 2026 — WanWay local candidate verification (before deployment)
 
 Scope: `feat/wanway-gps-integration`, based on active pilot revision
 `000ebf1cc4310de770b0efb4ccf2e7df69b50a19` (PR #27), reconciled locally
 in commit `9868ecd080cbd76b4be2342bad149241468e32cd`. The pilot advanced during
 verification; its new site-element features were preserved and the combined
-source was rechecked. Production is still on
-its existing pilot deployment; no merge, production migration, environment
-change or real-provider authentication was performed for this feature.
+source was rechecked. At this preparation stage no merge, production migration, environment change
+or real-provider authentication had been performed; the later approved rollout
+is recorded above.
 
 | Local gate | Verified result |
 | --- | --- |
@@ -78,8 +126,9 @@ No unrelated production code was changed to hide test failures.
 
 The map layer and route geometry initialized; external tile rendering was not an
 acceptance assertion. Real GS900-Wired data, account licence/IP restrictions,
-real-route accuracy, production keyring setup, privacy sign-off and owner
-acceptance remain **NOT VERIFIED / PENDING APPROVAL**. Workzone and tenant
+real-route accuracy, privacy sign-off and owner acceptance remain
+**NOT VERIFIED / WAITING FOR OWNER REAL-DEVICE TEST**. Production keyring setup
+and admin access were verified in the later deployment recorded above. Workzone and tenant
 regression suites passed; no real KiDraht/provider calls were made.
 
 Architecture, endpoint contracts, security, rollout boundaries and reproducible

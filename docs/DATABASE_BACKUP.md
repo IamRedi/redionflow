@@ -8,8 +8,12 @@ backup, Drive folder ID, credentials or private keys.
 
 ## Create
 
-Use a PostgreSQL client matching the source major version (or the optional
-private SSH path below). Supply these server/operator-only variables:
+Use a PostgreSQL client and libpq library matching the source major version.
+For a private portable tool installation, preserve its library search path
+across fresh login/WSL sessions; checking the executable version alone is not
+a restore test. The private operator wrapper selects the matching library.
+The optional private SSH path is described below. Supply these
+server/operator-only variables:
 
 | Variable | Purpose |
 | --- | --- |
