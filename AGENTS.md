@@ -29,3 +29,14 @@ the single KiDraht book icon, with no duplicate admin-menu entry. Preserve the
 project's existing visual identity and verify these behaviors at the beginning
 and end of desktop/narrow views. The focused regression is
 `tests/e2e/steel-footer-header.spec.ts`; local PASS and owner acceptance differ.
+
+## Assistant logic
+
+Read docs/AI_ASSISTANT.md and docs/AI_COST_LIMITS.md before changing the agent.
+Keep Admin Assistant and Worker Helper permissions separate. Use authenticated
+company scope, canonical steel metrics and explicit ambiguity/freshness/partial
+data; never infer missing facts, add successive production-stage kg, or credit
+shared-team output to an individual/checker. A real provider response/activation
+is separate from mocked/DB tests. Preserve cost gates, read-only business data
+and existing UI. The owner enters provider credentials directly in secret
+configuration; never request or record their value in chat/Git/Drive.

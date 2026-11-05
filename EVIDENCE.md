@@ -2,6 +2,45 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — grounded AL Steel assistant
+
+Owner scope: activate and improve only agent logic for reliable operational
+answers, without changing other UI/processes. This new request supersedes the
+04.11 owner deferral; the owner will enter the OpenAI key directly in Railway.
+Baseline: pilot `b7093069d92b3cd85ff73543e2f5892cd939ad2a` (PR46). Provider
+activation/publication/real-model quality remain separate gates; no key value or
+paid provider call was used in these local checks.
+
+Confirmed gaps: legacy tree/calculation statistics instead of steel data;
+host-local dates and global date overrides; first-match identity ambiguity and
+unscoped admin persona search; capped lists presented as totals; persona/free
+text interpolated as instructions; tool-only/empty/truncated answer risks.
+The agent now uses scoped canonical steel project/product/progress/confirmation
+tools plus worker/fleet/receipt/catalog reads. Company hour totals aggregate all
+closed rows and calculate live hours in one repeatable-read snapshot. Strict
+tenant identity, company calendar, explicit ambiguity and source/provenance
+metadata prevent those known mistakes. Static capability turns cannot read
+private operational tools. Errors are unknown, never inferred zero.
+
+Local laptop verification, isolated WSL Node22/PostgreSQL16, synthetic data:
+
+- Assistant unit suite:118 PASS/10 files,4.36s.
+- Assistant PostgreSQL integration:16 PASS/3 files,23.04s, including5301 closed
+  sessions, fixed live hours, tenant denial, exact steel snapshot/legacy/missing
+  weight, shared-team/checker separation, pagination and durable quotas.
+- Assistant ESLint and full production build/application TypeScript PASS.
+-27 current source/test/fixture SHA256 values match the tested mirror. Logs and
+  manifest remain local; the task-owned fixture database was stopped afterward.
+- Broader UI suites, cloud Actions, external GPS/OCR and paid OpenAI inference
+  were not rerun. Model/provider/packages/schema/limits/UI/business data unchanged.
+
+The architecture/cost documentation and agent instructions reflect the new
+layers. Current generic native presentation/README AI-access split remains
+accurate; public demo still requires its own key/activation. Native/README/About/
+portfolio NO_CONTENT_CHANGE: no public readiness increase or new activation claim
+while the private pilot's key and owner acceptance remain pending. Existing
+separate presentation/portfolio publication gaps are not closed by this work.
+
 ## 5 November 2026 — header transparency must show the content underneath
 
 Linked recurrence `UI-FOOTER-HEADER-20261105`, following owner feedback on
