@@ -54,7 +54,7 @@ test('Workzone map has a compact site and fleet index without a floating team he
         await expect(page.getByText('FOREIGN_PRIVATE_VEHICLE', { exact: true })).toHaveCount(0);
         for (const row of await index.locator('[data-testid^="map-index-"]').all()) {
           expect(await row.locator('button,a').count()).toBe(2);
-          expect((await row.innerText()).trim().split('\n')).toHaveLength(1);
+          expect((await row.innerText()).trim().split('\n')).toHaveLength((await row.getAttribute('data-testid'))?.startsWith('map-index-vehicle-') ? 2 : 1);
         }
         const missingSite = page.getByTestId(`map-index-site-${sites[2].id}`), missingVehicle = page.getByTestId(`map-index-vehicle-${vehicles[2].id}`);
         await expect(missingSite.getByRole('button', { name: 'Zmadhim: Projekt pa GPS', exact: true })).toBeDisabled();
@@ -74,7 +74,7 @@ test('Workzone map has a compact site and fleet index without a floating team he
           const map = await frame.locator('.leaflet-container').boundingBox();
           return marker && map ? Math.hypot(marker.x + marker.width / 2 - map.x - map.width / 2, marker.y + marker.height / 2 - map.y - map.height / 2) : Infinity;
         };
-        const vehicleZoom = page.getByTestId(`map-index-vehicle-${vehicles[0].id}`).getByRole('button', { name: 'Zmadhim: Kamioni demo 1', exact: true });
+        const vehicleZoom = page.getByTestId(`map-index-vehicle-${vehicles[0].id}`).getByRole('button', { name: 'Zmadhim: Kamioni demo 1 · DEMO-01', exact: true });
         await vehicleZoom.click();
         await expect.poll(() => centerDistance('Makinat: DEMO-01')).toBeLessThan(8);
         await page.evaluate(() => window.scrollBy(0, 260));
@@ -94,7 +94,7 @@ test('Workzone map has a compact site and fleet index without a floating team he
         await expect.poll(() => centerDistance('Kantieret: Aurora · Hangar demo')).toBeLessThan(8);
         await frame.scrollIntoViewIfNeeded();
         await page.screenshot({ path: info.outputPath(`workzone-compact-map-${theme}-${device}.png`), fullPage: false });
-        const signature = page.getByRole('img', { name: 'by RediON', exact: true });
+        const signature = page.getByRole('link', { name: 'by RediON', exact: true });
         await expect(signature).toHaveCount(1);
         await signature.scrollIntoViewIfNeeded();
         const loadedFonts = await signature.evaluate(async el => {
