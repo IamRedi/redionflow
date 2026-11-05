@@ -26,6 +26,7 @@ export function FactoryPanel({
   factoryAddress,
   siteOutput,
   canManage,
+  processDefinitions,
 }: {
   factoryName: string;
   factoryId: string;
@@ -34,6 +35,7 @@ export function FactoryPanel({
   factoryAddress: string;
   siteOutput: SiteFactoryOutput[];
   canManage: boolean;
+  processDefinitions?: Array<{ key: string; label: string }>;
 }) {
   const { currentLang: lang } = useLanguage();
   const total = totalOutput(siteOutput);
@@ -68,7 +70,7 @@ export function FactoryPanel({
           </div>
         </div>
       </div>
-      <AllSitesFactoryView sites={siteOutput} />
+      <AllSitesFactoryView sites={siteOutput} processDefinitions={processDefinitions} />
     </section>
   );
 }

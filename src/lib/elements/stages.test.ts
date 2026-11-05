@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, routeStages, stagePieces, stageRemaining, sideOfStage, stageProgress, stagesFor } from "./stages";
+import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, readProcessRoutes, routeClosed, routeStages, stagePieces, stageRemaining, sideOfStage, stageProgress, stagesFor } from "./stages";
 
 const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office: boolean; reportMissing: boolean }>) => ({
   siteSteps: false,
@@ -80,5 +80,55 @@ describe("element stages", () => {
     expect(elementDone({ list: "part", quantity: 12, work: [{ stage: "cutting", pieces: 12 }] }, "factory")).toBe(true);
     expect(doneQty({ list: "part", quantity: 12, work: [{ stage: "cutting", pieces: 5 }] }, "factory")).toBe(5);
     expect(onFieldList({ list: "part", work: [{ stage: "cutting" }] })).toBe(false);
+  });
+
+  it("keeps null configurations exactly legacy and includes every configured required stage even before work", () => {
+    const base = { list: "assembly" as const, quantity: 4, factoryDoneAt: new Date(), work: [{ stage: "cutting", pieces: 4 }] };
+    expect(doneQty(base, "factory")).toBe(4);
+    expect(doneQty({ ...base, processRoutes: { v: 1, factory: null, field: null } }, "factory")).toBe(4);
+    const planned = { ...base, processRoutes: { v: 1, factory: ["cutting", "welding"], field: null } };
+    expect(routeClosed(planned, "factory")).toBe(true);
+    expect(routeStages(planned, "factory")).toEqual(["cutting", "welding"]);
+    expect(doneQty(planned, "factory")).toBe(0);
+    expect(onFieldList(planned)).toBe(false);
+    expect(doneQty({ ...planned, work: [...planned.work, { stage: "welding", pieces: 2 }] }, "factory")).toBe(2);
+  });
+
+  it("an explicit empty route or a planned route with no work never auto-completes or claims work started", () => {
+    const base = { list: "assembly" as const, quantity: 2, work: [], factoryDoneAt: new Date() };
+    const empty = { ...base, processRoutes: { v: 1, factory: [], field: [] } };
+    expect(routeClosed(empty, "factory")).toBe(false);
+    expect(doneQty(empty, "factory")).toBe(0);
+    expect(elementStatus(empty, "factory")).toBe("waiting");
+    expect(stageProgress([empty], "factory")).toEqual({});
+    const planned = { ...base, processRoutes: { v: 1, factory: ["cutting"], field: null } };
+    expect(elementStatus(planned, "factory")).toBe("waiting");
+    expect(doneQty(planned, "factory")).toBe(0);
+  });
+
+  it("selects only eligible denominators and supports stable company processes on either side", () => {
+    const fp = `fp-${"a".repeat(24)}`, sp = `sp-${"b".repeat(24)}`;
+    expect(sideOfStage(fp)).toBe("factory");
+    expect(sideOfStage(sp)).toBe("field");
+    expect(sideOfStage("fp-short")).toBeNull();
+    const configured = { list: "assembly" as const, quantity: 4, processRoutes: { v: 1, factory: [fp], field: [sp] }, work: [{ stage: fp, pieces: 2 }, { stage: sp, pieces: 1 }, { stage: "welding", pieces: 4 }] };
+    expect(stagesFor("factory", "assembly", configured.processRoutes)).toEqual([fp]);
+    expect(doneQty(configured, "factory")).toBe(2);
+    expect(doneQty(configured, "field")).toBe(1);
+    expect(stageRemaining(configured, sp)).toBe(1);
+    expect(stagePieces(configured, "welding")).toBe(4); // Historical evidence remains readable.
+    const progress = stageProgress([configured, { list: "assembly", quantity: 8, processRoutes: { v: 1, factory: ["cutting"], field: null }, work: [] }], "factory");
+    expect(progress[fp]).toEqual({ done: 0, total: 1, pieces: 2, totalPieces: 4 });
+    expect(progress.cutting).toMatchObject({ total: 1, totalPieces: 8 });
+    expect(progress.welding).toBeUndefined();
+    expect(stagesFor("field", "part", configured.processRoutes)).toEqual([]);
+    expect(stagesFor("factory", "part", configured.processRoutes)).toEqual([fp]);
+  });
+
+  it("reads only valid versioned side-specific route configurations", () => {
+    expect(readProcessRoutes(null)).toBeNull();
+    expect(readProcessRoutes({ v: 1, factory: ["mounted"], field: null })).toBeNull();
+    expect(readProcessRoutes({ v: 2, factory: [], field: [] })).toBeNull();
+    expect(readProcessRoutes({ v: 1, factory: ["cutting", "cutting"], field: null })).toEqual({ v: 1, factory: ["cutting"], field: null });
   });
 });

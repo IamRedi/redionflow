@@ -90,3 +90,23 @@ it('paginates the complete matching set and requires explicit inclusion of inact
   await prisma.user.update({ where: { id: tenants[0].admin.id }, data: { isActive: false } });
   expect(await adminGetStartedSteelProjects(admin())).toMatchObject({ ok: false, code: 'ACCESS_DENIED' });
 });
+
+it('counts registered custom and archived process history while ignoring foreign or unregistered process keys', async () => {
+  const fp = `fp-${'a'.repeat(24)}`, sp = `sp-${'b'.repeat(24)}`, foreignKey = `fp-${'c'.repeat(24)}`, unknown = `fp-${'d'.repeat(24)}`;
+  await prisma.steelWorkDefinition.createMany({ data: [
+    { companyProfileId: tenants[0].company.id, kind: 'factory', key: fp, label: 'Synthetic renamed cutting', archivedAt: now },
+    { companyProfileId: tenants[0].company.id, kind: 'field', key: sp, label: 'Synthetic inspection' },
+    { companyProfileId: tenants[1].company.id, kind: 'factory', key: foreignKey, label: 'Foreign synthetic process' },
+  ] });
+  const field = await site('Custom field history'), foreign = await site('Foreign key only'), unsupported = await site('Unknown key only');
+  await confirmation(tenants[0].site.id, fp, past, 0, 'part');
+  await confirmation(field.id, sp);
+  await confirmation(foreign.id, foreignKey);
+  await confirmation(unsupported.id, unknown);
+  expect(await adminGetStartedSteelProjects(admin(), { scope: 'factory' })).toMatchObject({ ok: true, totalMatches: 1, projects: [{ id: tenants[0].site.id }] });
+  expect(await adminGetStartedSteelProjects(admin(), { scope: 'site' })).toMatchObject({ ok: true, totalMatches: 1, projects: [{ id: field.id }] });
+  const result = await adminGetStartedSteelProjects(admin());
+  expect(result).toMatchObject({ ok: true, totalMatches: 2 });
+  if (!result.ok) throw new Error('Expected registered activity');
+  expect(result.projects.map(project => project.id).sort()).toEqual([tenants[0].site.id, field.id].sort());
+});

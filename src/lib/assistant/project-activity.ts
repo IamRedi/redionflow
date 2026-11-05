@@ -1,6 +1,6 @@
 import type { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/db/prisma';
-import { FIELD_STAGES } from '@/lib/elements/stages';
+import { FIELD_STAGES, sideOfStage } from '@/lib/elements/stages';
 import { FACTORY_STEP_KEYS } from '@/lib/factory/production';
 import { fuelTimeZone } from '@/lib/fleet/fuel/time';
 import type { RequesterContext } from './requester';
@@ -22,15 +22,19 @@ export async function adminGetStartedSteelProjects(requester: RequesterContext, 
       await tx.$executeRaw`SELECT set_config('app.current_tenant_id', ${companyId}, true)`;
       const company = await tx.companyProfile.findFirst({ where: { id: companyId, mode: 'bau', users: { some: { id: requester.adminId, role: 'ADMIN', isActive: true } } }, select: { country: true } });
       if (!company) return error('ACCESS_DENIED', 'No authorized steel company exists for this administrator.');
+      // Archived definitions remain valid historical evidence. A label rename
+      // never changes a custom process key into a canonical kg series.
+      const definitions = await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId, kind: { in: ['factory', 'field'] } }, select: { key: true, kind: true } });
+      const factoryStages = [...new Set([...FACTORY_STEP_KEYS, ...definitions.filter(definition => definition.kind === 'factory' && sideOfStage(definition.key) === 'factory').map(definition => definition.key)])];
+      const fieldStages = [...new Set([...FIELD_STAGES, ...definitions.filter(definition => definition.kind === 'field' && sideOfStage(definition.key) === 'field').map(definition => definition.key)])];
       const factory = scope !== 'site', field = scope !== 'factory';
       const workWhere: Prisma.SiteElementWorkWhereInput = {
         companyProfileId: companyId, checkedAt: { lte: now },
         OR: [
           ...(factory ? [
-            { stage: { in: [...FACTORY_STEP_KEYS] }, element: { companyProfileId: companyId, list: 'assembly' } },
-            { stage: 'cutting', element: { companyProfileId: companyId, list: 'part' } },
+            { stage: { in: factoryStages }, element: { companyProfileId: companyId, list: { in: ['assembly', 'part'] } } },
           ] : []),
-          ...(field ? [{ stage: { in: [...FIELD_STAGES] }, element: { companyProfileId: companyId, list: 'assembly' } }] : []),
+          ...(field ? [{ stage: { in: fieldStages }, element: { companyProfileId: companyId, list: 'assembly' } }] : []),
         ],
       };
       // A planned future session, empty/non-live placeholder or future close is not work evidence.
@@ -40,7 +44,7 @@ export async function adminGetStartedSteelProjects(requester: RequesterContext, 
       };
       // Creation/import/note/block-only audit records do not prove production work.
       const eventWhere: Prisma.ProductionEventWhereInput = { companyProfileId: companyId, createdAt: { lte: now },
-        stepKey: { in: [...FACTORY_STEP_KEYS] },
+        stepKey: { in: factoryStages },
         OR: [{ action: 'start', toStatus: 'active' }, { action: 'done', toStatus: 'done' }],
         batch: { companyProfileId: companyId },
       };

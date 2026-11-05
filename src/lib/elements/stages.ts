@@ -21,12 +21,33 @@ export type ElementList = "assembly" | "part";
 export const FIELD_STAGES = ["received", "mounted", "bolted", "touchup"] as const;
 export const ALL_STAGES: readonly string[] = [...FACTORY_STEP_KEYS, ...FIELD_STAGES];
 
-export function stagesFor(side: ElementSide, list: ElementList): readonly string[] {
-  if (side === "field") return list === "assembly" ? FIELD_STAGES : [];
-  return list === "assembly" ? FACTORY_STEP_KEYS : ["cutting"];
+export type ElementProcessRoutes = { v: 1; factory: string[] | null; field: string[] | null };
+export const isCustomStage = (stage: string) => /^(?:fp|sp)-[a-f0-9]{24}$/.test(stage);
+
+/** Null sides retain the original, inferred route. Empty sides never release pieces. */
+export function readProcessRoutes(value: unknown): ElementProcessRoutes | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const item = value as Record<string, unknown>;
+  if (item.v !== 1) return null;
+  const read = (side: ElementSide): string[] | null | undefined => {
+    const raw = item[side];
+    if (raw === null) return null;
+    if (!Array.isArray(raw) || raw.length > 80 || raw.some(key => typeof key !== "string" || sideOfStage(key) !== side)) return undefined;
+    return [...new Set(raw as string[])];
+  };
+  const factory = read("factory"), field = read("field");
+  return factory === undefined || field === undefined ? null : { v: 1, factory, field };
+}
+
+export function stagesFor(side: ElementSide, list: ElementList, processRoutes?: unknown): readonly string[] {
+  if (side === "field" && list !== "assembly") return [];
+  const selected = readProcessRoutes(processRoutes)?.[side];
+  return selected ?? (side === "field" ? FIELD_STAGES : list === "assembly" ? FACTORY_STEP_KEYS : ["cutting"]);
 }
 
 export function sideOfStage(stage: string): ElementSide | null {
+  if (/^sp-[a-f0-9]{24}$/.test(stage)) return "field";
+  if (/^fp-[a-f0-9]{24}$/.test(stage)) return "factory";
   if ((FIELD_STAGES as readonly string[]).includes(stage)) return "field";
   if ((FACTORY_STEP_KEYS as readonly string[]).includes(stage)) return "factory";
   return null;
@@ -51,6 +72,7 @@ export type ElementState = {
   work: WorkState[];
   factoryDoneAt?: string | Date | null;
   fieldDoneAt?: string | Date | null;
+  processRoutes?: unknown;
 };
 
 /** Pieces of the element (at least 1). */
@@ -78,6 +100,8 @@ export function stageRemaining(element: ElementState, stage: string) {
 
 /** The steps the element went through on that side. */
 export function routeStages(element: ElementState, side: ElementSide) {
+  const configured = readProcessRoutes(element.processRoutes)?.[side];
+  if (configured !== null && configured !== undefined) return [...stagesFor(side, element.list, element.processRoutes)];
   return stagesFor(side, element.list).filter((stage) => element.work.some((work) => work.stage === stage));
 }
 
@@ -86,8 +110,10 @@ export function routeStages(element: ElementState, side: ElementSide) {
  * taken are not needed) or when every step has been worked.
  */
 export function routeClosed(element: ElementState, side: ElementSide) {
-  const all = stagesFor(side, element.list);
+  const all = stagesFor(side, element.list, element.processRoutes);
   if (all.length === 0) return false;
+  const configured = readProcessRoutes(element.processRoutes)?.[side];
+  if (configured !== null && configured !== undefined) return true;
   if (side === "factory" ? element.factoryDoneAt : element.fieldDoneAt) return true;
   return routeStages(element, side).length === all.length;
 }
@@ -116,7 +142,7 @@ export function onFieldList(element: ElementState) {
 /** waiting: nothing yet; working: some steps or pieces; done: every piece finished. */
 export function elementStatus(element: ElementState, side: ElementSide): "waiting" | "working" | "done" {
   if (elementDone(element, side)) return "done";
-  return routeStages(element, side).length > 0 ? "working" : "waiting";
+  return routeStages(element, side).some(stage => element.work.some(work => work.stage === stage)) ? "working" : "waiting";
 }
 
 export type ElementProgress = { done: number; total: number; pieces: number; totalPieces: number };
@@ -125,7 +151,7 @@ export type ElementProgress = { done: number; total: number; pieces: number; tot
 export function stageProgress(elements: ElementState[], side: ElementSide): Record<string, ElementProgress> {
   const result: Record<string, ElementProgress> = {};
   for (const element of elements) {
-    for (const stage of stagesFor(side, element.list)) {
+    for (const stage of stagesFor(side, element.list, element.processRoutes)) {
       const entry = (result[stage] ??= { done: 0, total: 0, pieces: 0, totalPieces: 0 });
       const through = stagePieces(element, stage);
       entry.total += 1;

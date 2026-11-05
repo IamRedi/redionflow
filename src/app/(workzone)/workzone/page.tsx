@@ -28,6 +28,8 @@ import { FactoryPanel, type FactoryBatchView } from "./factory-panel";
 import { AssetPhoto } from "@/components/asset-photo";
 import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 import { factoryOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
+import { loadSteelTaskProgress } from "@/lib/steel-work/read-progress";
+import { getSteelWorkCatalogAction } from "./steel-catalog-actions";
 import { readFleetLocations } from "@/lib/fleet/location";
 import { wanwayEnabled } from "@/lib/fleet/wanway/service";
 
@@ -156,6 +158,9 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   // own production panel below the board and never appears as a site card.
   const factorySite = allSites.find((site) => site.type === "STEEL_WORKSHOP") ?? null;
   const baustellen = allSites.filter((site) => site.type !== "STEEL_WORKSHOP");
+  const selectedTaskProgress = await loadSteelTaskProgress(company.id, allSites.filter(site => isSteelSiteType(site.type)).map(site => site.id));
+  const workCatalog = allSites.some(site => isSteelSiteType(site.type)) ? await getSteelWorkCatalogAction({}) : null;
+  const factoryDefinitions = workCatalog?.ok ? (workCatalog.definitions ?? []).filter(definition => definition.kind === 'factory') : [];
   const factoryBatches: FactoryBatchView[] = factorySite
     ? (
         await withTenantContext(company.id, (tx) =>
@@ -194,7 +199,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         await withTenantContext(company.id, (tx) =>
           tx.siteElement.findMany({
             where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
-            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, work: { select: { stage: true, pieces: true } } },
+            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, processRoutes: true, work: { select: { stage: true, pieces: true } } },
           }),
         ),
         baustellen,
@@ -266,9 +271,10 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   const defaultAddress = [company.street, [company.zip, company.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const photoPermissions=crewPermissions(worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:admin?{isAdmin:true}:null);
   const missionItems = baustellen.map((b) => {
-    const total = b.treeItems.length;
-    const done = b.treeItems.filter((t) => t.status === "done").length;
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const selected = selectedTaskProgress.get(b.id);
+    const total = selected?.total ?? b.treeItems.length;
+    const done = selected?.done ?? b.treeItems.filter((t) => t.status === "done").length;
+    const pct = selected?.pct ?? (total > 0 ? Math.round((done / total) * 100) : 0);
     const haltCount = b.treeItems.filter((t) => {
       if (!t.notes) return false;
       try {
@@ -409,6 +415,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
           canEditPhoto={photoPermissions.office||photoPermissions.factorySteps}
           factoryAddress={(factorySite.address ?? "").trim()}
           siteOutput={siteOutput}
+          processDefinitions={factoryDefinitions}
           canManage={crewPermissions(worker ? { isAdmin: false, crewRole: worker.crewRole, level: worker.level } : admin ? { isAdmin: true } : null).office}
         />
       ) : null}
@@ -416,9 +423,10 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       {/* With a factory panel the sites live on the board above only; the list would repeat them. */}
       <div className={`grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 ${factorySite ? "hidden" : ""}`}>
         {(factorySite ? [] : baustellen).map((b) => {
-          const total = b.treeItems.length;
-          const done = b.treeItems.filter((t) => t.status === "done").length;
-          const blocked = b.treeItems.filter((t) => t.status === "blocked").length;
+          const selected = selectedTaskProgress.get(b.id);
+          const total = selected?.total ?? b.treeItems.length;
+          const done = selected?.done ?? b.treeItems.filter((t) => t.status === "done").length;
+          const blocked = selected?.blocked ?? b.treeItems.filter((t) => t.status === "blocked").length;
           const haltCount = b.treeItems.filter((t) => {
             if (!t.notes) return false;
             try {
@@ -428,7 +436,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
               return false;
             }
           }).length;
-          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          const pct = selected?.pct ?? (total > 0 ? Math.round((done / total) * 100) : 0);
           const signQty =
             equipmentQuantity(b.activeEquipmentStatus, "SIGN") +
             b.treeItems.reduce((sum, item) => sum + equipmentQuantity(item.siteEquipmentStatus, "SIGN"), 0);

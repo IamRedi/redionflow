@@ -1,14 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, PackageCheck, PackageX, PenLine, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, PackageCheck, PackageX, PenLine, Plus, RotateCcw, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
 import { useLanguage } from "@/components/i18n/language-provider";
-import { SteelPhaseArt, SteelProgressRing } from "@/components/steel/steel-art";
+import { SteelProgressRing } from "@/components/steel/steel-art";
+import { SteelWorkCatalog, SteelWorkVisual } from "@/components/steel/work-catalog";
+import { workCatalogCopy } from "@/components/steel/work-catalog-copy";
 import { t } from "@/lib/i18n";
+import type { SteelWorkDefinitionView } from "@/lib/steel-work/types";
 import {
   applySteelPhaseCommand,
   type SteelPhaseCommand,
@@ -17,13 +20,18 @@ import {
   type SteelPhaseStatus,
 } from "@/lib/workzone/steel-phases";
 
-import { addSteelTaskAction, removeSteelTaskAction, updateSteelPhaseAction } from "../../steel-phase-actions";
+import { updateSteelPhaseAction } from "../../steel-phase-actions";
 
 export type SteelPhaseView = {
   id: string;
   key: SteelPhaseKey;
   status: SteelPhaseStatus;
   meta: SteelPhaseMeta;
+  definitionId?: string;
+  automatic?: boolean;
+  percent?: number | null;
+  completedPieces?: number;
+  requiredPieces?: number;
 };
 
 type Editor = "note" | "missing" | null;
@@ -57,7 +65,11 @@ function fill(template: string, values: Record<string, string | number>) {
 }
 
 function phaseName(item: SteelPhaseView, lang: string) {
-  return item.key === "task" ? item.meta.label || t("steel.task", lang) : t(`steel.${item.key}`, lang);
+  return item.meta.label.trim() || t(item.key === "task" ? "steel.task" : `steel.${item.key}`, lang);
+}
+
+function phasePercent(item: SteelPhaseView) {
+  return item.automatic ? Math.min(100, Math.max(0, Number.isFinite(item.percent) ? item.percent! : 0)) : item.status === "done" ? 100 : 0;
 }
 
 function phaseHint(item: SteelPhaseView, lang: string) {
@@ -70,15 +82,17 @@ export function SteelPhaseBoard({
   canManage = false,
   canReport = false,
   baustelleId,
+  definitions = [],
 }: {
   phases: SteelPhaseView[];
   /** Field engineer or office: finish, reopen, note. */
   canEdit: boolean;
   /** Everyone signed in: report missing material. */
   canReport?: boolean;
-  /** Office: may add and remove own work steps. */
+  /** Authorized planners: select tasks and manage shared work definitions. */
   canManage?: boolean;
   baustelleId: string;
+  definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang } = useLanguage();
   const router = useRouter();
@@ -88,35 +102,13 @@ export function SteelPhaseBoard({
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [adding, setAdding] = useState(false);
-  const [newTask, setNewTask] = useState("");
-
-  function addTask() {
-    const label = newTask.trim();
-    if (!label) return;
-    startTransition(async () => {
-      const result = await addSteelTaskAction({ baustelleId, label });
-      if (!result.ok) {
-        setError(t("steel.error", currentLang));
-        return;
-      }
-      setNewTask("");
-      setAdding(false);
-      router.refresh();
-    });
-  }
-
-  function removeTask(id: string) {
-    startTransition(async () => {
-      const result = await removeSteelTaskAction({ phaseItemId: id });
-      if (!result.ok) {
-        setError(t("steel.error", currentLang));
-        return;
-      }
-      closeSheet();
-      router.refresh();
-    });
-  }
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogInitialId, setCatalogInitialId] = useState<string | null>(null);
+  const catalogTrigger = useRef<HTMLButtonElement>(null);
+  const c = workCatalogCopy(currentLang);
+  const definitionOf = (item: SteelPhaseView) => definitions.find((definition) => definition.id === item.definitionId)
+    ?? definitions.find((definition) => definition.phaseItemId === item.id)
+    ?? definitions.find((definition) => definition.kind === "site" && (definition.key === item.key || definition.key === `steel-${item.key}`));
 
   // Fresh server data (after router.refresh or a realtime update) replaces the optimistic copy.
   const [syncedPhases, setSyncedPhases] = useState(phases);
@@ -127,7 +119,7 @@ export function SteelPhaseBoard({
 
   const open = openIndex === null ? null : items[openIndex] ?? null;
   const doneCount = items.filter((item) => item.status === "done").length;
-  const pct = items.length > 0 ? Math.round((doneCount / items.length) * 100) : 0;
+  const pct = items.length > 0 ? Math.round(items.reduce((sum, item) => sum + phasePercent(item), 0) / items.length) : 0;
 
   useEffect(() => {
     if (openIndex === null) return;
@@ -167,7 +159,7 @@ export function SteelPhaseBoard({
   }
 
   function run(command: "done" | "reopen" | "note" | "missing" | "materialArrived", value = "") {
-    if (!open || (command === "missing" ? !canReport : !canEdit)) return;
+    if (!open || (open.automatic && (command === "done" || command === "reopen")) || (command === "missing" ? !canReport : !canEdit)) return;
     const target = open;
     const local: SteelPhaseCommand =
       command === "note" || command === "missing"
@@ -201,15 +193,15 @@ export function SteelPhaseBoard({
           <SteelProgressRing pct={pct} size={60} label={`${t("steel.progress", currentLang)} ${pct}%`} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-base font-semibold">{t("steel.phasesTitle", currentLang)}</h2>
-            <span className="text-sm tabular-nums text-muted-foreground">
-              {doneCount}/{items.length}
-            </span>
+            <div className="flex items-center gap-2"><span className="text-sm tabular-nums text-muted-foreground">{doneCount}/{items.length}</span>
+              {canManage ? <button ref={catalogTrigger} type="button" onClick={() => { setCatalogInitialId(null); setCatalogOpen(true); }} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Plus className="size-4" />{t("steel.addTask", currentLang)}</button> : null}
+            </div>
           </div>
-          <ol className="mt-2 flex items-center">
+          <ol className="mt-2 flex flex-wrap items-center gap-y-2">
             {items.map((item, index) => (
-              <li key={item.id} className="flex flex-1 items-center last:flex-none">
+              <li key={item.id} className="flex min-w-9 max-w-14 flex-1 items-center last:flex-none">
                 <span
                   className={`grid size-7 shrink-0 place-items-center rounded-full border-2 text-[11px] font-bold transition-colors ${STATUS_STYLE[item.status].dot}`}
                 >
@@ -219,7 +211,7 @@ export function SteelPhaseBoard({
                   <span className="mx-1 h-1 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                     <span
                       className="block h-full rounded-full bg-green-500 transition-[width] duration-700"
-                      style={{ width: item.status === "done" ? "100%" : "0%" }}
+                      style={{ width: `${phasePercent(item)}%` }}
                     />
                   </span>
                 ) : null}
@@ -246,10 +238,7 @@ export function SteelPhaseBoard({
               }`}
             >
               <div className="relative aspect-[4/3] w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
-                <SteelPhaseArt phase={item.key} animate={item.status !== "done"} className="absolute inset-0 h-full w-full p-2" />
-                <span className="absolute left-2 top-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-wider text-white">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+                <SteelWorkVisual definition={definitionOf(item)} fallback={item.key} animate={item.status !== "done"} className="absolute inset-0 h-full w-full" />
                 {item.status === "done" ? (
                   <span className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-green-500 text-white shadow-md">
                     <Check className="size-5" strokeWidth={3} />
@@ -261,64 +250,26 @@ export function SteelPhaseBoard({
                 ) : null}
               </div>
               <div className="flex flex-1 flex-col gap-1 p-3">
-                <span className="text-[15px] font-semibold leading-tight sm:text-base">{phaseName(item, currentLang)}</span>
+                <span className="min-w-0 break-words text-[15px] font-semibold leading-tight sm:text-base">{phaseName(item, currentLang)}</span>
                 <span className="line-clamp-2 text-xs text-muted-foreground">{phaseHint(item, currentLang)}</span>
                 <span className={`mt-auto inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${style.chip}`}>
                   {statusLabel(item.status, currentLang)}
                 </span>
+                {item.automatic ? <span className="text-xs tabular-nums text-muted-foreground">{c.fromMaterials} · {(item.requiredPieces ?? 0) > 0 ? `${item.completedPieces ?? 0}/${item.requiredPieces} ${c.pieces}` : c.noMaterials}</span> : null}
                 {item.status === "blocked" && item.meta.material ? (
                   <span className="line-clamp-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">{item.meta.material}</span>
                 ) : item.meta.note ? (
                   <span className="line-clamp-1 text-[11px] text-sky-700 dark:text-sky-300">✎ {item.meta.note}</span>
                 ) : null}
               </div>
-              <span className={`absolute inset-x-0 bottom-0 h-1 ${style.bar}`} />
+              <span className="absolute inset-x-0 bottom-0 h-1 bg-muted"><span className={`block h-full ${style.bar}`} style={{ width: item.automatic ? `${phasePercent(item)}%` : "100%" }} /></span>
             </button>
           );
         })}
-        {canManage ? (
-          adding ? (
-            <div className="flex min-h-[200px] flex-col gap-2 rounded-2xl border-2 border-dashed border-orange-500/50 bg-card p-3">
-              <span className="text-sm font-semibold">{t("steel.addTask", currentLang)}</span>
-              <input
-                autoFocus
-                value={newTask}
-                onChange={(event) => setNewTask(event.target.value.slice(0, 80))}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") addTask();
-                  if (event.key === "Escape") setAdding(false);
-                }}
-                placeholder={t("steel.taskPlaceholder", currentLang)}
-                className="h-12 w-full rounded-xl border-2 bg-background px-3 text-base outline-none focus:border-orange-500"
-              />
-              <div className="mt-auto grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setAdding(false)} className="h-12 rounded-xl border-2 bg-card text-sm font-semibold active:scale-95">
-                  {t("steel.cancel", currentLang)}
-                </button>
-                <button
-                  type="button"
-                  disabled={pending || !newTask.trim()}
-                  onClick={addTask}
-                  className="h-12 rounded-xl bg-orange-600 text-sm font-bold text-white active:scale-95 disabled:opacity-50"
-                >
-                  {t("steel.save", currentLang)}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed text-muted-foreground transition hover:border-orange-500/60 hover:text-orange-600 active:scale-[0.98]"
-            >
-              <span className="grid size-12 place-items-center rounded-full border-2 border-current">
-                <Plus className="size-6" />
-              </span>
-              <span className="text-sm font-semibold">{t("steel.addTask", currentLang)}</span>
-            </button>
-          )
-        ) : null}
+
       </div>
+
+      <SteelWorkCatalog open={catalogOpen} onOpenChange={setCatalogOpen} kind="site" siteId={baustelleId} definitions={definitions} canManage={canManage} initialDefinitionId={catalogInitialId} onChanged={() => router.refresh()} returnFocusRef={catalogTrigger} />
 
       {typeof document !== "undefined"
         ? createPortal(
@@ -372,7 +323,7 @@ export function SteelPhaseBoard({
                     open.status === "done" ? "border-green-500/60" : open.status === "blocked" ? "border-amber-500/70" : "border-transparent"
                   }`}
                 >
-                  <SteelPhaseArt phase={open.key} animate={open.status !== "done"} className="mx-auto block h-[30vh] max-h-[300px] min-h-[160px] w-full p-3" />
+                  <SteelWorkVisual definition={definitionOf(open)} fallback={open.key} animate={open.status !== "done"} className="mx-auto block h-[30vh] max-h-[300px] min-h-[160px] w-full" />
                   {open.status === "done" ? (
                     <span className="absolute right-3 top-3 grid size-12 place-items-center rounded-full bg-green-500 text-white shadow-lg">
                       <Check className="size-7" strokeWidth={3} />
@@ -382,12 +333,13 @@ export function SteelPhaseBoard({
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{phaseName(open, currentLang)}</h2>
+                    <h2 className="min-w-0 break-words text-2xl font-bold tracking-tight sm:text-3xl">{phaseName(open, currentLang)}</h2>
                     <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[open.status].chip}`}>
                       {statusLabel(open.status, currentLang)}
                     </span>
                   </div>
                   <p className="mt-1 text-base text-muted-foreground">{phaseHint(open, currentLang)}</p>
+                  {open.automatic ? <p className="mt-2 text-sm font-semibold tabular-nums text-muted-foreground">{c.fromMaterials} · {(open.requiredPieces ?? 0) > 0 ? `${open.completedPieces ?? 0}/${open.requiredPieces} ${c.pieces}` : c.noMaterials}</p> : null}
                   <div className="mt-3 space-y-2 text-sm">
                     {open.status === "done" && open.meta.doneBy && open.meta.doneBy !== "…" ? (
                       <p className="font-medium text-green-700 dark:text-green-300">{fill(t("steel.doneBy", currentLang), { name: open.meta.doneBy })}</p>
@@ -474,8 +426,8 @@ export function SteelPhaseBoard({
                       <p className="rounded-xl border bg-muted/40 p-3 text-center text-sm text-muted-foreground">{t("steel.onlyEngineer", currentLang)}</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      {open.status === "done" ? (
+                    <div className={`grid grid-cols-1 gap-3 ${open.automatic ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+                      {open.automatic ? null : open.status === "done" ? (
                         <button
                           type="button"
                           disabled={pending}
@@ -525,14 +477,14 @@ export function SteelPhaseBoard({
                       )}
                     </div>
                   )}
-                  {canManage && open.key === "task" && !editor ? (
+                  {canManage && definitionOf(open) && !editor ? (
                     <button
                       type="button"
                       disabled={pending}
-                      onClick={() => removeTask(open.id)}
-                      className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-red-600 active:scale-[0.98] disabled:opacity-50"
+                      onClick={() => { setCatalogInitialId(definitionOf(open)?.id ?? null); closeSheet(); setCatalogOpen(true); }}
+                      className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 active:scale-[0.98] disabled:opacity-50"
                     >
-                      <Trash2 className="size-4" /> {t("steel.removeTask", currentLang)}
+                      <PenLine className="size-4" /> {c.edit}
                     </button>
                   ) : null}
                 </div>

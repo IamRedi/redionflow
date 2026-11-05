@@ -2,6 +2,55 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — shared task catalog and material process plans (not released)
+
+Prepared on `feature/steel-shared-work-catalog-20261105`, based on the approved
+PR53 production merge `df65504a5fac6fd226389636ec65c2c91c6a5235`. PR53 deployed
+successfully as Railway `15f15a9c-f4c7-4df4-96fd-88cb440396ae` at13:31:16UTC.
+Its two further real assistant probes remain deferred after the owner stopped
+browser control; no universal semantic acceptance is claimed.
+
+This candidate adds one tenant-owned catalog for site tasks and factory/field
+processes, per-site selection, explicit material applicability, derived linked
+task progress, reversible archival and private WebP/validated generated SVG
+art. Existing task IDs, notes, completion attribution, material confirmations
+and weight snapshots remain preserved. New material lists start unconfigured.
+The shared shell/header/footer and dependency/provider versions are unchanged.
+See [the workflow and recovery contract](docs/STEEL_WORK_CATALOG.md).
+
+Measured local results before the final layout/focus adjustments: fresh additive
+migrations and Prisma schema drift PASS;892 unit tests/97 files PASS (final
+batch17.02s);348 PostgreSQL integration tests/27 files PASS (147.87s) using the
+official disposable integration identity and restricted runtime role; full
+ESLint PASS. Windows Prisma generation and final TypeScript `--noEmit --incremental
+false`, focused final UI/spec ESLint and staged Gitleaks subsequently PASS.
+Media tests use mocked generation; no paid image
+generation or production business-data mutation was performed.
+
+An earlier integration invocation used the E2E database name and hit the
+suite's environment guards; the tests were not weakened. The corrected official
+integration batch passed in full. An initial schema diff mismatch was corrected
+and the fresh migration/schema comparison rerun successfully.
+
+Independent review found a many-task narrow-header overflow and absent keyboard
+focus restoration after externally opened dialogs. Bounded wrapping, long-label
+layout and explicit top/nested-dialog focus return are implemented, with rendered
+acceptance still pending in the
+focused browser workflow. Its fixture is fictional and also checks cross-site
+unchecked choices, history preservation, linked2/10 partial-delivery progress,
+material plans, custom process links, private compressed photo bytes and themes.
+
+PENDING / NOT_VERIFIED: production build and this browser workflow were
+interrupted when Windows C: reached zero free space and the WSL executor failed
+with I/O errors. The SQL legacy-upgrade verifier stopped during its source
+guard, before connecting to PostgreSQL or creating its named fixture database;
+this is not a migration failure. Final source-bound build/browser acceptance,
+legacy-upgrade execution, actual provider-generated art, encrypted production
+backup/recovery receipt and owner merge/deploy approval remain separate gates.
+No production deployment or approval request is made by this record. Portfolio
+assessment preserves maturity and existing accurate general claims; candidate
+documentation/publication follows acceptance without customer data or imagery.
+
 ## 5 November 2026 — canonical factory-production answers (follow-up candidate)
 
 PR52/head89f52d3 was owner-approved and merged as

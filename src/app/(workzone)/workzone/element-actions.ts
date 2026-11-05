@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { importElementList, type ElementImportResult } from "@/lib/elements/import";
-import { canCheck, doneQty, FIELD_STAGES, onFieldList, pieces, routeStages, sideOfStage, stagePieces, stageRemaining, stagesFor, type ElementList } from "@/lib/elements/stages";
+import { canCheck, doneQty, isCustomStage, onFieldList, pieces, readProcessRoutes, routeStages, sideOfStage, stagePieces, stageRemaining, stagesFor, type ElementList } from "@/lib/elements/stages";
 import { describeWorkbook, ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
 import { logger } from "@/lib/observability/logger";
 import { geocodeAddress } from "@/lib/geo/geocode";
@@ -104,17 +105,20 @@ const elementSelect = {
   weightKg: true,
   factoryDoneAt: true,
   fieldDoneAt: true,
+  processRoutes: true,
+  processRevision: true,
   work: { select: { id: true, stage: true, pieces: true } },
 } as const;
 
-type ElementRow = { list: string; quantity: number; factoryDoneAt: Date | null; fieldDoneAt: Date | null; work: Array<{ id: string; stage: string; pieces: number }> };
+type ElementRow = { list: string; quantity: number; factoryDoneAt: Date | null; fieldDoneAt: Date | null; processRoutes?: unknown; work: Array<{ id: string; stage: string; pieces: number }> };
 
 const asState = (element: ElementRow) => ({ ...element, list: element.list as ElementList });
 
 /** Pieces the site already worked on (any field step), which the factory cannot take back. */
 function piecesOnSite(element: ElementRow) {
   const state = asState(element);
-  return Math.max(0, ...FIELD_STAGES.map((stage) => element.work.filter((work) => work.stage === stage).reduce((sum, work) => sum + (work.pieces > 0 ? work.pieces : pieces(state)), 0)));
+  const stages = new Set(element.work.filter(work => sideOfStage(work.stage) === "field").map(work => work.stage));
+  return Math.max(0, ...[...stages].map((stage) => element.work.filter((work) => work.stage === stage).reduce((sum, work) => sum + (work.pieces > 0 ? work.pieces : pieces(state)), 0)));
 }
 
 /** The factory change would leave fewer pieces out than the site already has. */
@@ -143,11 +147,16 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
   const workerIds = [...new Set(parsed.data.workerIds)];
 
   const result = await withTenantContext(companyId, async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
     // Serialize checks with other checks and list reimports for this element.
     // Two engineers cannot both claim the same remaining pieces/weight.
     await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: elementSelect });
-    if (!element || !stagesFor(side, element.list as ElementList).includes(stage)) return null;
+    if (!element || !stagesFor(side, element.list as ElementList, element.processRoutes).includes(stage)) return null;
+    if (isCustomStage(stage)) {
+      const definition = await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: companyId, kind: side, key: stage }, select: { id: true, archivedAt: true } });
+      if (!definition || definition.archivedAt && !readProcessRoutes(element.processRoutes)?.[side]?.includes(stage)) return null;
+    }
     const state = asState(element);
     // The field list starts where the factory ends.
     if (side === "field" && !onFieldList(state)) return "notReady" as const;
@@ -195,8 +204,12 @@ export async function removeElementWorkAction(input: unknown): Promise<ActionRes
   if (!actor) return { ok: false, message: tr("notSignedIn") };
 
   const result = await withTenantContext(companyId, async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
     const entry = await tx.siteElementWork.findFirst({ where: { id: parsed.data.workId, companyProfileId: companyId }, select: { id: true, stage: true, elementId: true } });
     if (!entry) return null;
+    await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${entry.elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
+    // A concurrent cancellation may have removed the entry while acquiring the lock.
+    if (!await tx.siteElementWork.findFirst({ where: { id: entry.id, companyProfileId: companyId }, select: { id: true } })) return null;
     const side = sideOfStage(entry.stage);
     if (!side) return null;
     if (!canCheck(actor.can, side)) return "denied" as const;
@@ -243,12 +256,13 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   if (!canCheck(actor.can, side)) return { ok: false, message: tr("elementCheckOnlyEngineer") };
 
   const result = await withTenantContext(companyId, async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: elementSelect });
     if (!element) return null;
     const state = asState(element);
     if (side === "field" && !onFieldList(state)) return "notReady" as const;
     // Finishing needs at least one step done: that is the route.
-    if (done && routeStages(state, side).length === 0) return "noSteps" as const;
+    if (done && (routeStages(state, side).length === 0 || doneQty(state, side) === 0 && readProcessRoutes(element.processRoutes)?.[side] != null)) return "noSteps" as const;
     const stamp = done ? { at: new Date(), by: actor.name } : { at: null, by: null };
     if (side === "factory" && !done && takesBackFromSite({ ...element, factoryDoneAt: null })) return "onSite" as const;
     await tx.siteElement.update({
@@ -263,6 +277,75 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };
   revalidateSite(result);
   return { ok: true, message: "OK", doneByName: actor.name };
+}
+
+const processSchema = z.object({
+  siteId: z.string().min(1).max(64),
+  elementIds: z.array(z.string().min(1).max(64)).min(1).max(1000),
+  side: z.enum(["factory", "field"]),
+  stages: z.array(z.string().min(1).max(32)).max(80),
+  expectedRevisions: z.record(z.string().min(1).max(64), z.number().int().min(0)).optional(),
+});
+
+export type ElementProcessResult = ActionResult & {
+  code?: "INVALID_INPUT" | "ACCESS_DENIED" | "NOT_FOUND" | "REVISION_CONFLICT" | "PROCESS_UNAVAILABLE" | "ALREADY_ON_SITE";
+  revisions?: Record<string, number>;
+};
+
+/** Set the required route without rewriting any historical confirmation or finish attribution. */
+export async function setElementProcessesAction(input: unknown): Promise<ElementProcessResult> {
+  const tr = await getActionTranslator();
+  const parsed = processSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, code: "INVALID_INPUT", message: tr("invalidInput") };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, code: "ACCESS_DENIED", message: tr("notSignedIn") };
+  const actor = await currentCompanyActor(companyId);
+  if (!actor || !(actor.can.office || actor.can.siteSteps || actor.can.factorySteps)) return { ok: false, code: "ACCESS_DENIED", message: tr("elementCheckOnlyEngineer") };
+  const { siteId, side, expectedRevisions } = parsed.data;
+  const ids = [...new Set(parsed.data.elementIds)].sort(), stages = [...new Set(parsed.data.stages)];
+  if (stages.some(stage => sideOfStage(stage) !== side)
+    || expectedRevisions && (ids.some(id => !Object.hasOwn(expectedRevisions, id)) || Object.keys(expectedRevisions).some(id => !ids.includes(id))))
+    return { ok: false, code: "INVALID_INPUT", message: tr("invalidInput") };
+
+  const result = await withTenantContext(companyId, async tx => {
+    // Catalog edits/archive use this same lock. Acquire it before element rows
+    // so a newly selected process cannot be archived between validation/save.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
+    const site = await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: "STEEL_ASSEMBLY" }, select: { id: true } });
+    if (!site) return { code: "NOT_FOUND" as const };
+    await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "companyProfileId"=${companyId} AND "baustelleId"=${siteId} AND "id" IN (${Prisma.join(ids)}) ORDER BY "id" FOR UPDATE`;
+    const elements = await tx.siteElement.findMany({ where: { id: { in: ids }, companyProfileId: companyId, baustelleId: siteId }, select: elementSelect });
+    if (elements.length !== ids.length) return { code: "NOT_FOUND" as const };
+    if (expectedRevisions && elements.some(element => element.processRevision !== expectedRevisions[element.id])) return { code: "REVISION_CONFLICT" as const };
+    const definitions = stages.length ? await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId, kind: side, key: { in: stages } }, select: { key: true, archivedAt: true } }) : [];
+    const byKey = new Map(definitions.map(definition => [definition.key, definition]));
+    const updates: Array<{ element: typeof elements[number]; routes: { v: 1; factory: string[] | null; field: string[] | null }; changed: boolean }> = [];
+    for (const element of elements) {
+      if (side === "field" && element.list !== "assembly") return { code: "INVALID_INPUT" as const };
+      const prior = readProcessRoutes(element.processRoutes);
+      if (element.processRoutes !== null && !prior) return { code: "INVALID_INPUT" as const };
+      const previous = prior?.[side] ?? routeStages(asState(element), side);
+      for (const stage of stages) {
+        const definition = byKey.get(stage);
+        // Archiving hides a process from new selection; it never silently removes
+        // that process from an existing element's required route.
+        if (definition?.archivedAt && !previous.includes(stage) || isCustomStage(stage) && !definition)
+          return { code: "PROCESS_UNAVAILABLE" as const };
+      }
+      const routes = { ...(prior ?? { v: 1 as const, factory: null, field: null }), [side]: stages };
+      if (side === "factory" && takesBackFromSite({ ...element, processRoutes: routes })) return { code: "ALREADY_ON_SITE" as const };
+      updates.push({ element, routes, changed: JSON.stringify(prior?.[side]) !== JSON.stringify(stages) });
+    }
+    const revisions: Record<string, number> = {};
+    for (const { element, routes, changed } of updates) {
+      if (changed) await tx.siteElement.update({ where: { id: element.id }, data: { processRoutes: routes, processRevision: { increment: 1 }, processEditedBy: actor.name, processEditedAt: new Date() } });
+      revisions[element.id] = element.processRevision + (changed ? 1 : 0);
+    }
+    return { revisions };
+  }, { timeout: 30_000, maxWait: 10_000 });
+  if ("code" in result) return { ok: false, code: result.code, message: tr(result.code === "ALREADY_ON_SITE" ? "elementAlreadyOnSite" : "invalidInput") };
+  revalidateSite(siteId);
+  return { ok: true, message: "OK", revisions: result.revisions };
 }
 
 export type ProjectSiteState = { ok: boolean; message: string; siteId?: string };

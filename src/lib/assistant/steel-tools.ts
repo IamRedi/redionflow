@@ -3,7 +3,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { steelDashboardData } from '@/lib/dashboard/steel-data';
 import { addMetric, dayKey, emptyMetric, measure, midnight, monthDays, nextDay, shiftMonth, STEEL_TYPES, type Metric } from '@/lib/dashboard/steel-metrics';
-import { ALL_STAGES, doneQty, stagePieces, stagesFor, type ElementState } from '@/lib/elements/stages';
+import { doneQty, isCustomStage, sideOfStage, stagePieces, stagesFor, type ElementState } from '@/lib/elements/stages';
 import { batchState, readFactorySteps } from '@/lib/factory/production';
 import { fuelTimeZone } from '@/lib/fleet/fuel/time';
 import type { RequesterContext } from './requester';
@@ -73,7 +73,7 @@ function period(input: { date?: string; month?: string }, company: Company, now:
 }
 const elementSelect = {
   id: true, baustelleId: true, list: true, mark: true, kind: true, profile: true, material: true, quantity: true, lengthMm: true, weightKg: true, areaM2: true,
-  sourceFile: true, factoryDoneAt: true, factoryDoneBy: true, fieldDoneAt: true, fieldDoneBy: true, updatedAt: true,
+  sourceFile: true, factoryDoneAt: true, factoryDoneBy: true, fieldDoneAt: true, fieldDoneBy: true, updatedAt: true, processRoutes: true, processRevision: true,
   baustelle: { select: { id: true, name: true } },
   work: { select: { stage: true, pieces: true } },
 } satisfies Prisma.SiteElementSelect;
@@ -81,13 +81,15 @@ type ElementRow = Prisma.SiteElementGetPayload<{ select: typeof elementSelect }>
 function elementPayload(row: ElementRow) {
   const state = { ...row, list: row.list === 'part' ? 'part' : 'assembly' } satisfies ElementState;
   const unitWeightKg = row.weightKg !== null && Number.isFinite(row.weightKg) && row.weightKg >= 0 ? row.weightKg : null;
+  const selectedStages = [...stagesFor('factory', state.list, state.processRoutes), ...stagesFor('field', state.list, state.processRoutes)];
   return {
     id: row.id, project: row.baustelle, list: row.list, mark: row.mark, kind: row.kind, profile: row.profile, material: row.material,
     quantity: row.quantity, lengthMm: row.lengthMm, unitWeightKg, totalKnownWeightKg: unitWeightKg === null ? null : unitWeightKg * row.quantity, areaM2: row.areaM2,
     sourceFile: row.sourceFile, updatedAt: row.updatedAt.toISOString(),
     factory: { finishedPieces: doneQty(state, 'factory'), routeClosedAt: row.factoryDoneAt?.toISOString() ?? null, closedBy: row.factoryDoneBy },
     field: { finishedPieces: doneQty(state, 'field'), routeClosedAt: row.fieldDoneAt?.toISOString() ?? null, closedBy: row.fieldDoneBy },
-    stages: [...stagesFor('factory', state.list), ...stagesFor('field', state.list)].map(stage => ({ stage, completedPieces: stagePieces(state, stage) })),
+    processRoutes: row.processRoutes, processRevision: row.processRevision,
+    stages: [...new Set([...selectedStages, ...row.work.map(work => work.stage)])].map(stage => ({ stage, selected: selectedStages.includes(stage), completedPieces: stagePieces(state, stage) })),
     confirmationCount: row.work.length,
   };
 }
@@ -136,7 +138,7 @@ export async function adminGetSteelProductionSummary(requester: RequesterContext
     if (input.projectCursor && cursorIndex < 0) fail('INVALID_CURSOR', 'The project cursor does not belong to this summary.');
     const page = data.projectRows.slice(cursorIndex + 1, cursorIndex + 1 + limit), hasMore = data.projectRows.length > cursorIndex + 1 + limit;
     const pageIds = new Set(page.map(p => p.id));
-    return { ok: true as const, source: source(company, ['SiteElement', 'SiteElementWork', 'Baustelle'], now), month: data.month, selectedDate: data.day, selectedProject: project, currentProgress: data.totalProgress,
+    return { ok: true as const, source: source(company, ['SiteElement', 'SiteElementWork', 'Baustelle', 'SteelWorkDefinition'], now), month: data.month, selectedDate: data.day, selectedProject: project, currentProgress: data.totalProgress, processDefinitions: data.processDefinitions,
       monthlyProduction: data.totals, dailyProduction: data.days.filter(d => d.checks > 0 || d.key === data.day),
       projectCount: data.projectRows.length, projectPageComplete: !hasMore, nextProjectCursor: hasMore ? page.at(-1)!.id : null,
       projects: page.map(p => ({ id: p.id, name: p.name, status: p.status, currentProgress: p.progress, monthlyProduction: p.month })),
@@ -160,7 +162,7 @@ async function workerFor(tx: Tx, companyId: string, input: { workerId?: string; 
 export async function adminGetSteelProductionEvidence(requester: RequesterContext, input: ProjectFilter & PageInput & { elementId?: string; workerId?: string; workerName?: string; stage?: string; date?: string; month?: string } = {}) {
   return run(requester, (company, now) => withTenantContext(company.id, async tx => {
     const range = period(input, company, now), limit = limitOf(input.limit), project = await projectFor(tx, company.id, input), worker = await workerFor(tx, company.id, input);
-    if (input.stage && !ALL_STAGES.includes(input.stage)) fail('INVALID_STAGE', 'Use a supported factory or site stage.');
+    if (input.stage && (!sideOfStage(input.stage) || isCustomStage(input.stage) && !await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: company.id, key: input.stage, kind: sideOfStage(input.stage)! }, select: { id: true } }))) fail('INVALID_STAGE', 'Use a supported company factory or site stage.');
     if (input.elementId && !await tx.siteElement.findFirst({ where: { id: input.elementId, companyProfileId: company.id, baustelle: projectScope(company.id), ...(project ? { baustelleId: project.id } : {}) }, select: { id: true } })) fail('ELEMENT_NOT_FOUND', 'No matching element exists in this company and project.');
     const base: Prisma.SiteElementWorkWhereInput = { companyProfileId: company.id, element: { companyProfileId: company.id, baustelle: projectScope(company.id), ...(project ? { baustelleId: project.id } : {}), ...(input.elementId ? { id: input.elementId } : {}), list: { in: ['assembly', 'part'] } }, checkedAt: { gte: range.from, lt: range.to }, ...(input.stage ? { stage: input.stage } : {}) };
     // The complete bounded period is measured before pagination. No hidden take() on totals.

@@ -32,6 +32,7 @@ import { formatCount } from "@/lib/workzone/date-utils";
 import { isSteelSiteType, steelSiteShape } from "@/lib/workzone/steel-phases";
 import { CreateBaustelleForm } from "./create-baustelle-form";
 import { clearBaustelleImportDataAction, deleteBaustelleAction, updateBaustelleMetaAction } from "./actions";
+import { loadSteelTaskProgress } from "@/lib/steel-work/read-progress";
 
 function typeLabel(value: string, currentLang: Language, mode: CompanyMode) {
   const option = baustelleTypeOptionsForMode(mode).find((item) => item.value === value);
@@ -68,6 +69,7 @@ export default async function BaustellenAdminPage() {
   }), "admin");
   const typeOptions = baustelleTypeOptionsForMode(mode);
   const ids = baustellen.map((b) => b.id);
+  const selectedTaskProgress = await loadSteelTaskProgress(company.id, baustellen.filter(site => isSteelSiteType(site.type)).map(site => site.id));
   const doneRows = ids.length
     ? await withPilotDbContext(company.id, (tx) =>
         tx.treeItem.groupBy({ by: ["baustelleId"], where: { baustelleId: { in: ids }, status: "done" }, _count: { _all: true } }),
@@ -121,9 +123,10 @@ export default async function BaustellenAdminPage() {
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {baustellen.map((b) => {
             const steel = isSteelSiteType(b.type);
-            const total = b._count.treeItems;
-            const done = doneBySite.get(b.id) ?? 0;
-            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            const selected = selectedTaskProgress.get(b.id);
+            const total = selected?.total ?? b._count.treeItems;
+            const done = selected?.done ?? doneBySite.get(b.id) ?? 0;
+            const pct = selected?.pct ?? (total > 0 ? Math.round((done / total) * 100) : 0);
             const active = b.status === "active";
             return (
               <li key={b.id} className="group/card flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-md">

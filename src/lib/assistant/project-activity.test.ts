@@ -8,11 +8,13 @@ import { adminGetStartedSteelProjects } from './project-activity';
 const now = new Date('2026-11-05T12:00:00Z');
 const requester: RequesterContext = { kind: 'admin', adminId: 'admin-a', companyId: 'tenant-a', displayName: 'Demo', preferredLanguage: 'SQ' };
 const tx = { $executeRaw: vi.fn(), companyProfile: { findFirst: vi.fn() }, baustelle: { count: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
+  steelWorkDefinition: { findMany: vi.fn() },
   siteElementWork: { aggregate: vi.fn() }, workSession: { aggregate: vi.fn(), fields: { startTime: 'synthetic-field-reference' } }, productionEvent: { aggregate: vi.fn() } };
 beforeEach(() => {
   vi.clearAllMocks(); vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
   mocks.transaction.mockImplementation((fn: (client: Prisma.TransactionClient) => Promise<unknown>) => fn(tx as unknown as Prisma.TransactionClient));
   tx.companyProfile.findFirst.mockResolvedValue({ country: 'AL' }); tx.baustelle.count.mockResolvedValue(0); tx.baustelle.findMany.mockResolvedValue([]); tx.baustelle.findFirst.mockResolvedValue(null);
+  tx.steelWorkDefinition.findMany.mockResolvedValue([]);
   tx.siteElementWork.aggregate.mockResolvedValue({ _min: { checkedAt: null }, _max: { checkedAt: null } });
   tx.workSession.aggregate.mockResolvedValue({ _min: { startTime: null }, _max: { startTime: null } });
   tx.productionEvent.aggregate.mockResolvedValue({ _min: { createdAt: null }, _max: { createdAt: null } });
@@ -67,5 +69,20 @@ describe('compact recorded project activity', () => {
     const result = await adminGetStartedSteelProjects(requester);
     expect(result).toMatchObject({ ok: false, code: 'READ_UNAVAILABLE' });
     expect(JSON.stringify(result)).not.toContain('private-database-secret');
+  });
+
+  it('recognizes registered custom factory/field history including archived definitions without crossing sides', async () => {
+    const fp = `fp-${'a'.repeat(24)}`, sp = `sp-${'b'.repeat(24)}`, wrongSide = `sp-${'c'.repeat(24)}`;
+    tx.steelWorkDefinition.findMany.mockResolvedValue([{ key: fp, kind: 'factory', archivedAt: now }, { key: sp, kind: 'field' }, { key: wrongSide, kind: 'factory' }]);
+    await adminGetStartedSteelProjects(requester, { scope: 'factory' });
+    expect(tx.steelWorkDefinition.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { companyProfileId: 'tenant-a', kind: { in: ['factory', 'field'] } } }));
+    const factoryWork = tx.baustelle.count.mock.calls[0][0].where.OR[0].siteElements.some.work.some;
+    expect(factoryWork.OR[0]).toMatchObject({ stage: { in: expect.arrayContaining([fp, 'cutting']) }, element: { list: { in: ['assembly', 'part'] } } });
+    expect(JSON.stringify(factoryWork)).not.toContain(sp);
+    expect(JSON.stringify(factoryWork)).not.toContain(wrongSide);
+    await adminGetStartedSteelProjects(requester, { scope: 'site' });
+    const fieldWork = tx.baustelle.count.mock.calls[1][0].where.OR[0].siteElements.some.work.some;
+    expect(fieldWork.OR[0]).toMatchObject({ stage: { in: expect.arrayContaining([sp, 'mounted']) }, element: { list: 'assembly' } });
+    expect(JSON.stringify(fieldWork)).not.toContain(fp);
   });
 });

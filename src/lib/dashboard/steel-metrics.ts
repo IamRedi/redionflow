@@ -1,5 +1,5 @@
 import { localClock } from '@/lib/fleet/fuel/time';
-import { doneQty, stagePieces, type ElementState } from '@/lib/elements/stages';
+import { doneQty, stagePieces, stagesFor, type ElementState } from '@/lib/elements/stages';
 import { FACTORY_STEP_KEYS } from '@/lib/factory/production';
 export const STEEL_TYPES = ['STEEL_WORKSHOP', 'STEEL_ASSEMBLY'] as const;
 export const SERIES = ['cutParts', 'cutAssemblies', 'assembled'] as const;
@@ -25,6 +25,7 @@ export type SteelElement = {
     weightKg: number | null;
     factoryDoneAt: Date | null;
     fieldDoneAt: Date | null;
+    processRoutes?: unknown;
     work: Array<{
         stage: string;
         pieces: number;
@@ -111,9 +112,13 @@ export function calendarMetrics(month: string, zone: string, elements: SteelElem
 /** Current assembly progress; each process has its own denominator, never an additive tonnage. */
 export function projectProgress(elements: SteelElement[]) {
     let kg = 0, totalPieces = 0, readyKg = 0, readyPieces = 0, mountedKg = 0, missingPieces = 0;
-    const stages = Object.fromEntries([...FACTORY_STEP_KEYS, 'received', 'mounted', 'bolted', 'touchup'].map(s => [s, { kg: 0, pieces: 0 }])) as Record<string, {
+    const emptyStage = () => ({ kg: 0, pieces: 0, eligibleMarks: 0, eligiblePieces: 0, eligibleKg: 0 });
+    const stages = Object.fromEntries([...FACTORY_STEP_KEYS, 'received', 'mounted', 'bolted', 'touchup'].map(s => [s, emptyStage()])) as Record<string, {
         kg: number;
         pieces: number;
+        eligibleMarks: number;
+        eligiblePieces: number;
+        eligibleKg: number;
     }>;
     for (const e of elements.filter(e => e.list === 'assembly')) {
         const state = { ...e, list: 'assembly' } satisfies ElementState;
@@ -122,13 +127,18 @@ export function projectProgress(elements: SteelElement[]) {
         kg += (unit ?? 0) * count;
         readyPieces += ready;
         readyKg += (unit ?? 0) * ready;
-        mountedKg += (unit ?? 0) * stagePieces(state, 'mounted');
+        if (stagesFor('field', state.list, state.processRoutes).includes('mounted'))
+            mountedKg += (unit ?? 0) * stagePieces(state, 'mounted');
         if (unit === null)
             missingPieces += count;
-        for (const key of Object.keys(stages)) {
+        for (const key of [...stagesFor('factory', state.list, state.processRoutes), ...stagesFor('field', state.list, state.processRoutes)]) {
+            const stage = stages[key] ??= emptyStage();
             const n = stagePieces(state, key);
-            stages[key].pieces += n;
-            stages[key].kg += (unit ?? 0) * n;
+            stage.pieces += n;
+            stage.kg += (unit ?? 0) * n;
+            stage.eligibleMarks += 1;
+            stage.eligiblePieces += count;
+            stage.eligibleKg += (unit ?? 0) * count;
         }
     }
     return { kg, totalPieces, readyKg, readyPieces, mountedKg, missingPieces, stages };

@@ -38,6 +38,9 @@ import type { FactoryBatchView } from "../../production/production-ui";
 import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
 import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
 import { compareMarks } from "@/lib/elements/tekla-list";
+import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
+import { canManageSteelCatalog } from "@/lib/steel-work/types";
+import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
 
 export default async function BaustelleDetailPage({
   params,
@@ -61,7 +64,9 @@ export default async function BaustelleDetailPage({
   // The factory has its own production panel on the field board.
   if (siteHead?.type === "STEEL_WORKSHOP") redirect("/workzone#fabrika");
   if (siteHead && isSteelSiteType(siteHead.type)) await ensureSteelPhases(siteHead);
-  const baustelle = await withPilotDbContext(currentCompanyId, tx => tx.baustelle.findFirst({
+  const baustelle = await withPilotDbContext(currentCompanyId, async tx => {
+    await tx.$executeRaw`SELECT set_config('app.current_tenant_id', ${currentCompanyId}, true)`;
+    return tx.baustelle.findFirst({
     where: { id: baustelleId, companyProfileId: currentCompanyId },
     include: {
       treeItems: { orderBy: [{ status: "asc" }, { treeId: "asc" }] },
@@ -77,7 +82,8 @@ export default async function BaustelleDetailPage({
         },
       },
     },
-  }));
+    });
+  });
   if (!baustelle) notFound();
   const features = getFeatures(mode);
   const currentActorView = currentWorker
@@ -211,18 +217,6 @@ export default async function BaustelleDetailPage({
   });
 
   const isSteel = isSteelSiteType(baustelle.type);
-  const phaseOrder = steelPhasesFor(baustelle.type).map((phase) => phase.treeId);
-  const steelPhases = isSteel
-    ? baustelle.treeItems
-        .flatMap((item) => {
-          const key = steelPhaseKeyFromTreeId(item.treeId);
-          return key ? [{ id: item.id, key, status: item.status, meta: readSteelPhaseMeta(item.notes), order: phaseOrder.indexOf(item.treeId) }] : [];
-        })
-        .sort((a, b) => (a.order < 0 ? 99 : a.order) - (b.order < 0 ? 99 : b.order))
-        .map(({ order: _order, ...phase }) => phase)
-    : [];
-  const steelPct = steelPhases.length > 0 ? Math.round((steelPhases.filter((p) => p.status === "done").length / steelPhases.length) * 100) : 0;
-
   if (isSteel) {
     const can = crewPermissions(
       currentAdmin && !currentWorker
@@ -271,6 +265,8 @@ export default async function BaustelleDetailPage({
             factoryDoneBy: true,
             fieldDoneAt: true,
             fieldDoneBy: true,
+            processRoutes: true,
+            processRevision: true,
             work: { orderBy: { checkedAt: "asc" }, select: { id: true, stage: true, pieces: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } },
           },
         }),
@@ -293,6 +289,22 @@ export default async function BaustelleDetailPage({
       events: batch.events.map((event) => ({ ...event, createdAt: event.createdAt.toISOString() })),
     }));
     const files: SiteFileView[] = fileRows.map((file) => ({ ...file, createdAt: file.createdAt.toISOString() }));
+    const catalog = await getSteelWorkCatalogAction({ siteId: baustelle.id });
+    const definitions = catalog.ok ? catalog.definitions ?? [] : [];
+    const steelItems = await withTenantContext(currentCompanyId, tx => tx.treeItem.findMany({ where: { baustelleId: baustelle.id, baustelle: { companyProfileId: currentCompanyId } }, include: { steelTask: { include: { definition: true } } } }));
+    const projected = projectSteelTasks(steelItems, elementRows.map(element => ({ ...element, list: element.list === 'part' ? 'part' as const : 'assembly' as const })));
+    const phaseOrder = steelPhasesFor(baustelle.type).map(phase => phase.treeId);
+    const steelPhases = projected.flatMap(item => {
+      const key = steelPhaseKeyFromTreeId(item.treeId);
+      if (!key) return [];
+      const meta = readSteelPhaseMeta(item.notes), definition = item.steelTask?.definition;
+      if (definition?.label) meta.label = definition.label;
+      return [{ id: item.id, key, status: item.status as 'todo' | 'done' | 'blocked', meta,
+        definitionId: definition?.id, automatic: item.automatic, percent: item.percent,
+        completedPieces: item.completedPieces, requiredPieces: item.requiredPieces,
+        order: definition?.sortOrder ?? phaseOrder.indexOf(item.treeId) }];
+    }).sort((a, b) => (a.order < 0 ? 99 : a.order) - (b.order < 0 ? 99 : b.order)).map(({ order: _order, ...phase }) => phase);
+    const steelPct = steelTaskTotals(steelPhases).pct;
     const elements: ElementView[] = elementRows
       .map((element) => ({
         ...element,
@@ -340,6 +352,7 @@ export default async function BaustelleDetailPage({
                 elements={elements}
                 workers={elementWorkers}
                 can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin }}
+                definitions={definitions}
               />
             ) : null}
           </div>
@@ -357,11 +370,11 @@ export default async function BaustelleDetailPage({
         />
 
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-          <SteelPhaseBoard phases={steelPhases} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={can.siteSteps} baustelleId={baustelle.id} />
+          <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
             {/* The factory here is only to look at: what it produced for this site, per process. */}
             {factoryView ? (
-              <SiteFactoryView output={factoryView} />
+              <SiteFactoryView output={factoryView} processDefinitions={definitions.filter(definition => definition.kind === 'factory')} />
             ) : batches.length > 0 ? (
               <SiteProductionPanel site={{ id: baustelle.id, name: baustelle.name }} batches={batches} canAdvance={canAdvance} canManage={isAdmin} />
             ) : null}
