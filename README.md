@@ -2,9 +2,9 @@
 
 # RediOnFlow
 
-**Lokaler Demo-Kandidat · 5. November 2026:** BaumdienstFlow hat eine interaktive Werkstattprobe mit Annahme, Reparatur, dokumentierter Prüfung und Freigabe, Werkzeugausgabe, Ersatzteilen und Dokumenten. Nur fiktive Daten und Speicherung im eigenen Browser; noch nicht in der öffentlichen Demo veröffentlicht. [Umfang, UX-Abgleich und Prüfnachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Werkstatt-Demo online · 5. November 2026:** [Werkstatt in BaumdienstFlow ausprobieren](https://redionflow-production.up.railway.app/demo/workshop): Annahme, Reparatur, dokumentierte Prüfung und Freigabe, Werkzeugausgabe, Ersatzteile und Dokumente. Nur fiktive Daten und Speicherung im eigenen Browser. Das eigene Baumdienst-Deploymentprofil ist vom AL-Steel-Pilot und der BauFlow-Demo getrennt. [Umfang, Release und Prüfnachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
-![Werkstatt-Demo – lokale Aufnahme mit fiktiven Daten, noch nicht veröffentlicht](docs/assets/screenshots/baum-workshop-desktop.png)
+![Öffentliche Werkstatt-Demo – tatsächliche Online-Aufnahme mit fiktiven Daten vom 5. November 2026](docs/assets/screenshots/baum-workshop-online.jpg)
 
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 
@@ -60,7 +60,7 @@ zeigen ausschließlich synthetische Daten aus dem lokalen Review-Kandidaten.
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 Mitarbeitende, 3 Baustellen, 152 Bäume, 5 Maschinen |
 | BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 Mitarbeitende, 4 Glasfaser-Baustellen, 114 Arbeiten, 8 Maschinen, Werkzeuginventar |
 
-Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Alle Namen, Adressen, Kennzeichen und Firmen sind erfunden. Beide Demos werden jede Nacht um 02:00 UTC auf den Ausgangsstand zurückgesetzt. Einen Admin-Zugang zum Ausprobieren gibt es auf Anfrage.
+Die bestehenden `/demo`-Ansichten sind schreibgeschützt und brauchen kein Login. In der neuen Baumdienst-Werkstatt lassen sich fiktive Abläufe im eigenen Browser bearbeiten; diese lokalen Änderungen werden nicht mit anderen Personen synchronisiert oder vom nächtlichen Server-Reset gelöscht. Alle Namen, Adressen, Kennzeichen und Firmen sind erfunden. Beide Server-Demos werden jede Nacht um 02:00 UTC auf den Ausgangsstand zurückgesetzt. Einen Admin-Zugang zum Ausprobieren gibt es auf Anfrage.
 
 Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten** derselben fiktiven Firma verknüpft: Ein Knopf „Firmenwissen“ in der oberen Leiste und eine Unterweisungskarte auf jeder Baustelle öffnen die vom Chef freigegebenen Regeln und die Sicherheitsunterweisung für diese Baustelle. Mitarbeitende melden sich dort mit einer PIN an.
 
