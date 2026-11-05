@@ -39,7 +39,7 @@ test('steel workspace uses the screen, compact calendar, quiet footer and compan
           const root = document.querySelector('[data-testid="steel-dashboard"]')!, credit = document.querySelector('a[aria-label="by RediON"]')!, footer = credit.closest('footer')!;
           const day = document.querySelector('[data-testid="production-day-2026-10-14"]')!;
           const r = root.getBoundingClientRect(), f = footer.getBoundingClientRect(), c = credit.getBoundingClientRect();
-          return { width: innerWidth, rightGap: innerWidth - r.right, outerHeight: document.documentElement.scrollHeight, height: innerHeight, overflow: document.documentElement.scrollWidth > innerWidth, dayHeight: day.getBoundingClientRect().height, footerHeight: f.height, footerBg: getComputedStyle(footer).backgroundColor, creditOffset: Math.abs(c.x + c.width / 2 - innerWidth / 2), bodyHeight: document.body.getBoundingClientRect().height, bodyOverflow: getComputedStyle(document.body).overflow };
+          return { width: innerWidth, rightGap: innerWidth - r.right, outerHeight: document.documentElement.scrollHeight, height: innerHeight, overflow: document.documentElement.scrollWidth > innerWidth, dayHeight: day.getBoundingClientRect().height, footerHeight: f.height, footerBg: getComputedStyle(footer).backgroundColor, creditOffset: Math.abs(c.x + c.width / 2 - f.x - f.width / 2), bodyHeight: document.body.getBoundingClientRect().height, bodyOverflow: getComputedStyle(document.body).overflow };
         });
         console.log('DENSITY', JSON.stringify({ baseline, theme, ...state }));
         await page.screenshot({ path: info.outputPath(`${baseline ? 'before' : 'after'}-dashboard-${theme}-${width}.png`) });

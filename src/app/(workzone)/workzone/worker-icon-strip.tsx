@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Mail, Phone, UserRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -87,6 +87,7 @@ export function WorkerIconStrip({
   profileHrefBase,
   insetClassName = "",
   comfortable = false,
+  trailing,
 }: {
   workers: WorkerBadge[];
   admin: boolean;
@@ -94,6 +95,7 @@ export function WorkerIconStrip({
   /** Room on the left for what floats above the strip (the logo); scrolled items pass under it. */
   insetClassName?: string;
   comfortable?: boolean;
+  trailing?: ReactNode;
 }) {
   const { currentLang } = useLanguage();
   const pathname = usePathname();
@@ -168,8 +170,8 @@ export function WorkerIconStrip({
   const canContact = Boolean(openWorker?.phone || openWorker?.emailAccount || whatsapp);
 
   return (
-    <div ref={wrapRef} className="no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1">
-      <div className={`flex min-w-max items-start gap-2 pr-5 ${insetClassName}`}>
+    <div ref={wrapRef} className={cn("no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1", comfortable && 'lg:scroll-pr-[112px]')}>
+      <div className={`flex min-w-max items-start gap-2 pr-5 ${comfortable ? 'lg:pr-[112px]' : ''} ${insetClassName}`}>
         {workers.map((worker) => {
           const badge = workerBadgeLabel(worker.lastName);
           const nameLabel = firstNameLabel(worker.firstName);
@@ -263,6 +265,7 @@ export function WorkerIconStrip({
             </div>
           );
         })}
+        {trailing}
       </div>
       {openWorker ? (
         <div className="fixed z-40 w-44 rounded-md border bg-card p-2 shadow-lg" style={{ top: openMenu!.top, left: openMenu!.left }}>

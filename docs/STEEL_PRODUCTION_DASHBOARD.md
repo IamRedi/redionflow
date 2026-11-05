@@ -44,9 +44,15 @@ numeric weights have deterministic SQ/EN/DE/IT/PL/RO formats.
 
 The steel admin workspace uses the available width, without a reserved floating
 fleet gutter. Fleet administration/history remain under Personnel & Fleet;
-Workzone keeps its vehicle rail in an allocated shell row/column. Header,
-navigation and the transparent shared footer remain outside the primary content
-scroll region. The map navigation pane scrolls independently with its bar hidden.
+Workzone keeps its vehicle rail in an allocated shell row/column. Header and
+navigation remain outside the primary content scroll region. The transparent
+shared footer is the final content item: it appears at the end of a long view,
+then scrolls away when returning to the beginning. It is not a persistent viewport
+row. This owner correction supersedes the earlier PR43 footer placement.
+The header/team wrapper is transparent; on desktop the announcement/bell controls
+sit directly beneath the single book icon, without a group backplate. The team
+can scroll underneath, with enough end space to reach its last profile. Steel
+admin navigation does not repeat the KiDraht link. The map navigation pane scrolls independently with its bar hidden.
 The author link stays centered over the full footer width, with the small product
 mark at the side. Long public pages retain document scrolling.
 

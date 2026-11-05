@@ -96,7 +96,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className={production ? `${workspace.shell} bg-background` : 'min-h-dvh bg-background'}>
-      <header data-testid="admin-topbar" className={production ? "relative z-10 border-b bg-background print:hidden" : "sticky top-0 z-10 print:hidden"}>
+      <header data-testid="admin-topbar" className={production ? "relative z-10 print:hidden" : "sticky top-0 z-10 print:hidden"}>
         <FlowTopBar contained={production} />
       </header>
       <AdminFleet production={production} machines={machines} isAdmin showCones={showCones} country={country} />
@@ -115,7 +115,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="contents md:flex md:flex-col md:gap-0.5">
               <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
-              {kidrahtOn ? <AdminNavLink href="/workzone/kidraht" label={KIDRAHT_NAME} /> : null}
+              {kidrahtOn && !production ? <AdminNavLink href="/workzone/kidraht" label={KIDRAHT_NAME} /> : null}
             </div>
             {visibleNavSections.map((section, index) => (
               <div key={section.title ?? `section-${index}`} className="contents md:flex md:flex-col md:gap-0.5">
@@ -165,11 +165,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
         <div className={production ? 'contents' : 'min-w-0'}>
           <LiveRefreshListener enabled />
-          <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'print:px-0 print:py-0'}>{children}</main>
+          <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
           {!production && <RediOnFooter />}
         </div>
       </div>
-      {production && <RediOnFooter />}
     </div>
   );
 }

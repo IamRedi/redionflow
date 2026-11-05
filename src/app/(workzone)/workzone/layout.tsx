@@ -70,11 +70,10 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
       <WorkzoneSyncRunner />
       <LiveRefreshListener enabled />
       <div className={production ? `${workspace.body} ${workspace.workzone}` : 'mx-auto w-full max-w-6xl lg:pr-20'}>
-        <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{children}</main>
+        <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
         {production && features.machines ? <MachineSidebar embedded machines={machines} isAdmin={Boolean(admin)} canEditPhotos={crewPermissions(admin?{isAdmin:true}:worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:null).office} showCones={showCones} country={country} /> : null}
         {!production && <RediOnFooter />}
       </div>
-      {production && <RediOnFooter />}
     </div>
     </WorkzoneMapFleet>
   );

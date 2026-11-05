@@ -2,6 +2,49 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — owner correction: natural footer and transparent header
+
+Issue `UI-FOOTER-HEADER-20261105`, based on deployed PR43/`003a3d1`.
+The owner rejected the always-visible footer and the header tool arrangement.
+The earlier automated PASS proved the implementation against an incorrect footer
+criterion; it was not owner acceptance of that layout. Root cause is confirmed:
+the author footer was placed outside the content scroller in a permanent shell
+row, the admin header painted a background/border, KiDraht was repeated in the
+admin navigation, and desktop alerts lived in a separate reserved header area.
+
+The bounded correction moves the existing transparent footer to the end of the
+content scroller. Header/navigation retain their own stationary space. The team
+wrapper is transparent and spans the available width; desktop alerts are grouped
+under the single book icon with no group backplate. The controls retain their
+small theme-colored circular surfaces for legibility. End padding/scroll padding
+keeps the final office profile reachable past the overlaid controls. Office
+profiles remain available in the team strip; the duplicate KiDraht menu entry is
+removed. Public/non-steel layouts keep their established behavior. No production
+metrics, calendar values, map behavior, fuel workflow, dependencies or data change.
+
+Local state: VERIFIED_FIX / pending owner review and publication. One focused
+Chromium workflow PASS (37.0s; 53.8s including the production build/application
+TypeScript check) covers dashboard and Workzone, light/dark, 1440×900, 360×800,
+320×640 and 760×360. It asserts: footer absent at the beginning, visible at End,
+absent again at Home; stationary transparent header/team wrapper; one icon-only
+book entry; centered alerts below it on desktop; reachable final office profile;
+announcement popup bounds/Escape and preserved submit accent; keyboard link
+focus; no outer/horizontal overflow; root-text reflow at 200%; public presentation
+has no operational controls. No page errors. Baseline and final synthetic images
+were reviewed; eleven current source/test files match the tested mirror by SHA256,
+with the replaced mobile-only wrapper removed. Focused lint, diff and staged
+secret scanning accompany the PR. Earlier GPS/OCR/fuel/import/full-dashboard
+suites and cloud Actions are not repeated.
+
+The palette, cards, fonts, logos and existing business actions are preserved.
+Physical mobile keyboard acceptance remains PENDING_RECHECK. The existing pg
+concurrent-query warning and pre-existing unit wrapping on unusually large demo
+KPI numbers were present in the baseline; neither is a new claimed fix. Native
+feature copy, README/About and portfolio capability content remain accurate:
+NO_CONTENT_CHANGE for this layout correction, with earlier publication gaps
+retained. Source preparation, local PASS, owner UI review and deployment remain
+separate evidence; the previous pilot is not changed by preparing this branch.
+
 ## 5 November 2026 — steel workspace and fuel-history refinement candidate
 
 Prepared on `fix/steel-workspace-density-fuel-20261105`, over pilot
