@@ -243,6 +243,9 @@ model User {
 
 model CompanyProfile {
   assistantQuotaBuckets AssistantQuotaBucket[]
+  assistantConversations AssistantConversation[]
+  assistantRuns AssistantRun[]
+  assistantToolTraces AssistantToolTrace[]
   wanwayIntegration WanwayIntegration?
   id                    String  @id @default(cuid())
   legalName             String
@@ -322,6 +325,91 @@ model AssistantQuotaBucket {
 
   @@unique([companyProfileId, actorKey, window, windowStart], map: "AssistantQuotaBucket_scope_window_key")
   @@index([companyProfileId, windowStart])
+}
+
+/// Private admin-owned history, separate from cost buckets and sensitive-action audit logs.
+model AssistantConversation {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  /// Historical actor ID; removing an admin must not delete or reassign a transcript.
+  adminId          String
+  title            String
+  clientContext    Json?
+  contextUnverified Boolean       @default(false)
+  contextRedacted  Boolean        @default(false)
+  contextTruncated Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  lastRunAt        DateTime       @default(now())
+  runs             AssistantRun[]
+
+  @@unique([companyProfileId, adminId, id], map: "AssistantConversation_owner_id_key")
+  @@index([companyProfileId, adminId, lastRunAt, id], map: "AssistantConversation_owner_time_idx")
+}
+
+/// One server-accepted question and the exact emitted answer (secret-redacted).
+model AssistantRun {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  adminId          String
+  conversationId   String
+  conversation     AssistantConversation @relation(fields: [companyProfileId, adminId, conversationId], references: [companyProfileId, adminId, id], onDelete: Cascade, map: "AssistantRun_conversation_owner_fkey")
+  clientMessageId  String?
+  question         String
+  answer           String         @default("")
+  status           String         @default("running")
+  model            String?
+  finishReason     String?
+  errorCode        String?
+  httpStatus       Int?
+  inputTokens      Int?
+  outputTokens     Int?
+  totalTokens      Int?
+  diagnostics      Json?
+  diagnosticsRedacted Boolean    @default(false)
+  diagnosticsTruncated Boolean   @default(false)
+  questionRedacted Boolean        @default(false)
+  answerRedacted   Boolean        @default(false)
+  answerTruncated  Boolean        @default(false)
+  traceTruncated   Boolean        @default(false)
+  traceBytes       Int            @default(0)
+  startedAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  finishedAt       DateTime?
+  toolTraces       AssistantToolTrace[]
+
+  @@unique([companyProfileId, adminId, id], map: "AssistantRun_owner_id_key")
+  @@unique([companyProfileId, adminId, clientMessageId], map: "AssistantRun_owner_message_key")
+  @@index([companyProfileId, adminId, conversationId, startedAt, id], map: "AssistantRun_conversation_time_idx")
+}
+
+/// Bounded sanitized execution evidence. Never provider headers or raw exceptions.
+model AssistantToolTrace {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  adminId          String
+  runId            String
+  run              AssistantRun   @relation(fields: [companyProfileId, adminId, runId], references: [companyProfileId, adminId, id], onDelete: Cascade, map: "AssistantToolTrace_run_owner_fkey")
+  toolCallId       String
+  toolName         String
+  step             Int?
+  status           String
+  input            Json?
+  result           Json?
+  evidence         Json?
+  redacted         Boolean        @default(false)
+  truncated        Boolean        @default(false)
+  originalBytes    Int            @default(0)
+  storedBytes      Int            @default(0)
+  startedAt        DateTime       @default(now())
+  durationMs       Int?
+  createdAt        DateTime       @default(now())
+
+  @@unique([companyProfileId, adminId, runId, toolCallId], map: "AssistantToolTrace_run_call_key")
+  @@index([companyProfileId, adminId, runId, createdAt, id], map: "AssistantToolTrace_run_time_idx")
 }
 
 enum PlanTier {

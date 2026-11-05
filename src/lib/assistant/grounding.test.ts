@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import type { ToolExecutionOptions } from 'ai';
-import { assistantMetaQuestion, groundedStep, groundedTools } from './grounding';
+import { assistantInitialTool, assistantMetaQuestion, groundedStep, groundedTools } from './grounding';
 
 const options: ToolExecutionOptions = { toolCallId:'synthetic', messages:[] };
 const clock = () => new Date('2026-11-05T10:00:00Z');
@@ -45,4 +45,25 @@ it('does not truncate an oversized report and pretend it is a complete total',as
   const output=await run({},options);
   expect(output).toMatchObject({ok:false,code:'RESULT_TOO_LARGE'});
   expect(JSON.stringify(output)).not.toContain('"total":100');
+});
+it('records safe tool failure evidence without SQL or secret exception text', async () => {
+  const observe = vi.fn(async () => {});
+  const tools = groundedTools({ read: { inputSchema: z.object({}), execute: async (_input: unknown, _options: ToolExecutionOptions) => { throw { name: 'PrismaClientKnownRequestError', code: 'P2022', message: 'private SQL credentials' }; } } }, 'Europe/Tirane', clock, observe);
+  const result = await tools.read.execute!({}, options);
+  expect(result).toMatchObject({ ok: false, code: 'READ_UNAVAILABLE', diagnostic: { code: 'db' } });
+  expect(observe).toHaveBeenCalledWith(expect.objectContaining({ toolName: 'read', status: 'error', failure: expect.objectContaining({ code: 'db' }) }));
+  expect(JSON.stringify(observe.mock.calls)).not.toContain('private SQL');
+});
+it('selects a construction-site source while leaving unrelated worker/quantity questions open', () => {
+  expect(assistantInitialTool('Sa kantiere kanë filluar punë?', true)).toBe('adminGetStartedSteelProjects');
+  expect(assistantInitialTool('Sa kantier?', true)).toBe('adminSearchSteelProjects');
+  expect(assistantInitialTool('Sa punëtorë ka te kantieri?', true)).toBeUndefined();
+  expect(assistantInitialTool('Sa kantier?', false)).toBeUndefined();
+});
+it('preserves optional Zod arguments instead of letting Responses normalize them to required null', () => {
+  const schema = z.object({ query: z.string().optional(), limit: z.number().int().optional() });
+  const tools = groundedTools({ read: { inputSchema: schema, execute: async (input: z.infer<typeof schema>) => ({ ok: true, input }) } }, 'Europe/Tirane');
+  expect(tools.read).toMatchObject({ strict: false });
+  expect(schema.safeParse({}).success).toBe(true);
+  expect(schema.safeParse({ query: null, limit: null }).success).toBe(false);
 });

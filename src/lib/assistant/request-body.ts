@@ -3,6 +3,8 @@ import { ASSISTANT_MAX_BODY_BYTES, ASSISTANT_MAX_HISTORY_CHARS, ASSISTANT_MAX_ME
 
 const schema = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(ASSISTANT_MAX_MESSAGE_CHARS) })).min(1).max(ASSISTANT_MAX_MESSAGES),
+  conversationId: z.string().regex(/^[a-zA-Z0-9_-]{1,120}$/).optional(),
+  clientMessageId: z.string().uuid().optional(),
 }).refine(({ messages }) => messages.reduce((sum, message) => sum + message.content.length, 0) <= ASSISTANT_MAX_HISTORY_CHARS)
   .refine(({ messages }) => messages.at(-1)?.role === "user" && Boolean(messages.at(-1)?.content.trim()));
 

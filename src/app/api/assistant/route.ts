@@ -12,9 +12,14 @@ import { languageForTurn, type AssistantLanguageCode } from '@/lib/assistant/lan
 import { extractAddressedName, resolveIdentityTargetResult } from '@/lib/assistant/identity';
 import { assistantTurnContext } from '@/lib/assistant/turn-context';
 import { adminAssistantPrompt } from '@/lib/assistant/admin-prompt';
-import { assistantMetaQuestion, groundedStep, groundedTools } from '@/lib/assistant/grounding';
+import { assistantInitialTool, assistantMetaQuestion, groundedStep, groundedTools } from '@/lib/assistant/grounding';
 import { legacyAssistantTools } from '@/lib/assistant/legacy-tools';
 import { companyAssistantTools, steelAssistantTools } from '@/lib/assistant/business-tools';
+import { createAssistantRunDiagnostics, categorizeAssistantFailure, type AssistantFailureCode } from '@/lib/assistant/diagnostics';
+import { AssistantHistoryError, startRun, appendTrace, finishRun, checkpointRun, type AssistantTerminalStatus } from '@/lib/assistant/history';
+import { assistantResponseStream } from '@/lib/assistant/response-stream';
+import type { RequesterContext } from '@/lib/assistant/requester';
+import { logger } from '@/lib/observability/logger';
 
 export const runtime = 'nodejs';
 
@@ -30,45 +35,49 @@ function message(lang: AssistantLanguageCode, key: 'admin' | 'invalid' | 'disabl
   return text[lang][key];
 }
 
-/** Preserve the text-stream client while keeping raw provider errors private. */
-function safeStream(response: Response, fallback: string, incomplete: () => boolean) {
-  const reader = response.body?.getReader();
-  if (!reader) return response;
-  const encoder = new TextEncoder();
-  let cancelled = false;
-  let bytes = 0;
-  return new Response(new ReadableStream<Uint8Array>({
-    async start(controller) {
-      try {
-        while (!cancelled) {
-          const chunk = await reader.read();
-          if (chunk.done) break;
-          bytes += chunk.value.byteLength;
-          controller.enqueue(chunk.value);
-        }
-        if (!cancelled && (bytes === 0 || incomplete())) controller.enqueue(encoder.encode(`\n\n${fallback}`));
-      } catch {
-        if (!cancelled) controller.enqueue(encoder.encode(`\n\n${fallback}`));
-      } finally {
-        if (!cancelled) controller.close();
-        reader.releaseLock();
-      }
-    },
-    async cancel(reason) { cancelled = true; await reader.cancel(reason); },
-  }), { status: response.status, headers: { ...Object.fromEntries(response.headers), 'cache-control': 'no-store' } });
+function storageMessage(lang: AssistantLanguageCode) {
+  const copy = { SQ: 'Historiku i bisedës nuk u ruajt. Provo sërish.', EN: 'The conversation could not be saved. Please retry.', DE: 'Der Chat konnte nicht gespeichert werden. Bitte erneut versuchen.', IT: 'La conversazione non è stata salvata. Riprova.', RO: 'Conversația nu a putut fi salvată. Reîncearcă.', PL: 'Nie udało się zapisać rozmowy. Spróbuj ponownie.' };
+  return copy[lang];
+}
+
+function failureMessage(lang: AssistantLanguageCode, code: AssistantFailureCode) {
+  if (lang === 'SQ') {
+    if (code === 'provider_auth' || code === 'missing_key') return 'Lidhja me OpenAI nuk u autorizua. Kontrollo konfigurimin e çelësit në Railway.';
+    if (code === 'provider_quota') return 'OpenAI refuzoi kërkesën për shkak të kufirit të llogarisë. Kontrollo kreditet/kufirin e saj.';
+    if (code === 'rate') return 'Shumë kërkesa. Provo sërish pas pak.';
+    if (code === 'timeout') return 'Kërkesa zgjati tepër dhe u ndërpre. Provo një pyetje më të kufizuar.';
+    if (code === 'input_payload') return 'Kjo kërkesë tejkalon kufirin e kontekstit. Kufizo projektin ose periudhën.';
+    if (code === 'cancel') return 'Përgjigjja u ndërpre.';
+  }
+  return message(lang, 'unavailable');
 }
 
 export async function POST(req: Request) {
   const denied = rejectCrossOriginMutation(req);
   if (denied) return denied;
   let errorLanguage: AssistantLanguageCode = 'DE';
+  let history: Awaited<ReturnType<typeof startRun>> | null = null;
+  let actor: RequesterContext | null = null;
+  const headers = () => ({ 'cache-control': 'no-store', ...(history ? { 'x-assistant-conversation-id': history.conversationId, 'x-assistant-run-id': history.runId } : {}) });
+  async function savedResponse(response: Response, status: AssistantTerminalStatus, code?: string) {
+    if (history && actor) {
+      const raw = await response.clone().text();
+      let answer = raw;
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        try { answer = JSON.parse(raw).error ?? raw; } catch { /* Keep the safe response text. */ }
+      }
+      if (!await finishRun(actor, { runId: history.runId, answer, status, errorCode: code, httpStatus: response.status })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+    }
+    for (const [key, value] of Object.entries(headers())) response.headers.set(key, value);
+    return response;
+  }
   try {
   const authenticated = await getRequesterContext();
   errorLanguage = authenticated.preferredLanguage;
   if (authenticated.kind !== 'admin') return NextResponse.json({ error: message(authenticated.preferredLanguage, 'admin') }, { status: 403 });
+  actor = authenticated;
   const clientIp = getClientIp(req.headers);
   const access = await ensureLoginAllowed('assistant', clientIp);
-  if (!access.ok) return assistantQuotaResponse({ ok: false, status: 429, reason: 'rate', retryAfterSeconds: access.retryAfterSeconds }, authenticated.preferredLanguage);
   const parsed = await readAssistantBody(req);
   if (!parsed.ok) {
     await registerFailedLogin('assistant', clientIp);
@@ -78,35 +87,70 @@ export async function POST(req: Request) {
   const language = languageForTurn(authenticated, question);
   errorLanguage = language;
   const requester = { ...authenticated, preferredLanguage: language };
-  if (!process.env.OPENAI_API_KEY?.trim()) return NextResponse.json({ error: message(language, 'disabled') }, { status: 503 });
+  actor = requester;
+  // Save each NEW question before quota or paid generation. Prompt history is
+  // bounded separately and is never silently imported as trusted past evidence.
+  history = await startRun(requester, { conversationId: parsed.data.conversationId, clientMessageId: parsed.data.clientMessageId, question });
+  if (history.replayed) {
+    if (history.status === 'running') return NextResponse.json({ error: language === 'SQ' ? 'Kjo pyetje po përpunohet ende. Hape sërish bisedën pas pak.' : 'This question is still being processed. Reopen the conversation shortly.' }, { status: 409, headers: headers() });
+    return new Response(history.answer, { headers: { ...headers(), 'content-type': 'text/plain; charset=utf-8' } });
+  }
+  if (!access.ok) return await savedResponse(assistantQuotaResponse({ ok: false, status: 429, reason: 'rate', retryAfterSeconds: access.retryAfterSeconds }, language), 'rejected', 'RATE_LIMITED');
+  if (!process.env.OPENAI_API_KEY?.trim()) return await savedResponse(NextResponse.json({ error: message(language, 'disabled') }, { status: 503 }), 'rejected', 'KEY_MISSING');
 
   const turn = assistantTurnContext(parsed.data.messages, { timeZone: requester.timeZone ?? 'Europe/Berlin' });
-  if (turn.invalidDates.length) return new Response(message(language, 'date'), { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+  if (turn.invalidDates.length) return await savedResponse(new Response(message(language, 'date'), { headers: { 'content-type': 'text/plain; charset=utf-8' } }), 'completed', 'INVALID_DATE');
     const company = await withTenantContext(requester.companyId, tx => tx.companyProfile.findUnique({ where: { id: requester.companyId }, select: { mode: true } }));
-    if (!company) return NextResponse.json({ error: message(language, 'admin') }, { status: 403 });
+    if (!company) return await savedResponse(NextResponse.json({ error: message(language, 'admin') }, { status: 403 }), 'rejected', 'INVALID_REQUEST');
     const steel = company.mode === 'bau' && await isSteelCompany(requester.companyId);
     const identity = await resolveIdentityTargetResult({ companyId: requester.companyId, addressedName: extractAddressedName(question) });
-    if (identity.status === 'ambiguous') return new Response(`${message(language, 'ambiguous')}\n${identity.candidates.map(c => c.displayName).join(' · ')}`, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+    if (identity.status === 'ambiguous') return await savedResponse(new Response(`${message(language, 'ambiguous')}\n${identity.candidates.map(c => c.displayName).join(' · ')}`, { headers: { 'content-type': 'text/plain; charset=utf-8' } }), 'completed', 'AMBIGUOUS_PERSON');
     const quota = await reserveAssistantQuota(requester);
-    if (!quota.ok) return assistantQuotaResponse(quota, language);
+    if (!quota.ok) return await savedResponse(assistantQuotaResponse(quota, language), 'rejected', quota.status === 429 ? 'QUOTA_REJECTED' : 'QUOTA_UNAVAILABLE');
     const metaQuestion = assistantMetaQuestion(question);
     const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel), ...(steel ? steelAssistantTools(requester, turn) : {}) };
     if (!metaQuestion) delete registry.getAssistantCapabilities;
     else for (const name of Object.keys(registry)) if (name !== 'getAssistantCapabilities') delete registry[name];
-    const tools = groundedTools(registry, turn.timeZone);
-    const generation = assistantGeneration(req, 'admin', quota.settle);
-    let incomplete = false;
+    const diagnostics = createAssistantRunDiagnostics();
+    const runId = history.runId;
+    const tools = groundedTools(registry, turn.timeZone, () => new Date(), async event => {
+      const stored = await appendTrace(requester, { ...event, runId, evidence: { ...event.evidence, ...(event.failure ? { failure: event.failure } : {}) } });
+      if (!stored) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+    });
+    const disconnect = new AbortController();
+    const generationRequest = new Request(req.url, { signal: AbortSignal.any([req.signal, disconnect.signal]) });
+    const generation = assistantGeneration(generationRequest, 'admin', quota.settle, { onProviderCall: diagnostics.providerCall, onFailure: diagnostics.failure });
+    let usage: Record<string, unknown> | undefined;
     const result = streamText({
       ...generation,
       temperature: 0,
       system: adminAssistantPrompt({ requester, turn, steel, target: identity.status === 'found' ? identity.target : null }),
       messages: parsed.data.messages,
       tools,
-      prepareStep: step => groundedStep(step, metaQuestion),
-      onFinish: async event => { incomplete = event.finishReason === 'length'; await generation.onFinish(event); },
+      prepareStep: step => groundedStep(step, metaQuestion, assistantInitialTool(question, steel)),
+      onFinish: async event => { usage = event.totalUsage; await generation.onFinish(event); },
     });
-    return safeStream(result.toTextStreamResponse(), message(language, 'unavailable'), () => incomplete);
-  } catch {
-    return NextResponse.json({ error: message(errorLanguage, 'unavailable') }, { status: 503 });
+    return assistantResponseStream(result.fullStream, {
+      diagnostics, headers: headers(), fallback: code => failureMessage(language, code), storageFailure: storageMessage(language),
+      onCancel: () => disconnect.abort(),
+      onToolError: async event => {
+        if (!await appendTrace(requester, { runId, toolCallId: event.toolCallId, toolName: event.toolName, input: event.input, result: { ok: false, diagnostic: event.failure }, status: 'error' })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+      },
+      onCheckpoint: async answer => { if (!await checkpointRun(requester, { runId, answer })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE'); },
+      onComplete: async final => {
+        if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: final.diagnostics, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+        logger.info({ event: 'assistant.run', runId, status: final.status, failure: final.diagnostics.failure, lastToolFailure: final.diagnostics.lastToolFailure, steps: final.diagnostics.steps, providerCalls: final.diagnostics.providerCalls, failedToolResults: final.diagnostics.failedToolResults }, 'Assistant request completed');
+      },
+    });
+  } catch (error) {
+    if (error instanceof AssistantHistoryError) {
+      const text = error.code === 'RUNNING'
+        ? errorLanguage === 'SQ' ? 'Përgjigjja e mëparshme po përpunohet ende. Rifresko bisedën pas pak.' : 'The previous answer is still processing. Refresh this conversation shortly.'
+        : error.code === 'HISTORY_NOT_FOUND' ? errorLanguage === 'SQ' ? 'Biseda nuk u gjet.' : 'Conversation not found.' : storageMessage(errorLanguage);
+      return NextResponse.json({ error: text, code: error.code }, { status: error.status, headers: headers() });
+    }
+    const failure = categorizeAssistantFailure(error);
+    const response = NextResponse.json({ error: failureMessage(errorLanguage, failure.code) }, { status: 503, headers: headers() });
+    try { return await savedResponse(response, 'error', failure.code.toUpperCase()); } catch { return NextResponse.json({ error: storageMessage(errorLanguage) }, { status: 503, headers: headers() }); }
   }
 }

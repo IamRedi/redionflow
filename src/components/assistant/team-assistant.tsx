@@ -4,13 +4,13 @@ import { assistantHistory, ASSISTANT_MAX_MESSAGE_CHARS } from "@/lib/assistant/l
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, Send, Sparkles, Square, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Plus, RefreshCw, Send, Sparkles, Square, Trash2, X } from "lucide-react";
+import { conversationContentNotice, conversationStatus, useAdminConversations, type ClientChatMessage } from '@/lib/assistant/conversation-client';
 
 import { AppBrand } from "@/components/branding/AppBrand";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { t } from "@/lib/i18n";
 
-const ADMIN_ASSISTANT_STORAGE_KEY = "team-assistant:chat-state";
 const ADMIN_ASSISTANT_PANEL_STORAGE_KEY = "team-assistant:panel-state";
 const WORKER_ASSISTANT_PANEL_STORAGE_KEY = "worker-assistant:panel-state";
 
@@ -38,28 +38,13 @@ type WindowWithSpeech = Window & {
   webkitSpeechRecognition?: SpeechRecognitionCtor;
 };
 
-type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
-
-function readAssistantChatState(storageKey: string) {
-  if (typeof window === "undefined") return { messages: [] as ChatMessage[], input: "" };
-  const raw = window.sessionStorage.getItem(storageKey);
-  if (!raw) return { messages: [] as ChatMessage[], input: "" };
-  try {
-    const saved = JSON.parse(raw) as { messages?: ChatMessage[]; input?: string };
-    return {
-      messages: Array.isArray(saved.messages) ? saved.messages : [],
-      input: typeof saved.input === "string" ? saved.input : "",
-    };
-  } catch {
-    return { messages: [] as ChatMessage[], input: "" };
-  }
-}
+type ChatMessage = ClientChatMessage;
 
 function readAssistantPanelState(storageKey: string) {
   if (typeof window === "undefined") return { open: false, panelPosition: null as { top: number; left: number } | null };
-  const raw = window.sessionStorage.getItem(storageKey);
-  if (!raw) return { open: false, panelPosition: null as { top: number; left: number } | null };
   try {
+    const raw = window.sessionStorage.getItem(storageKey);
+    if (!raw) return { open: false, panelPosition: null as { top: number; left: number } | null };
     const saved = JSON.parse(raw) as { open?: boolean; top?: number; left?: number };
     return {
       open: Boolean(saved.open),
@@ -73,6 +58,10 @@ function readAssistantPanelState(storageKey: string) {
   }
 }
 
+function writeAssistantPanelState(storageKey: string, state: unknown) {
+  try { window.sessionStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* Panel position persistence is optional. */ }
+}
+
 type AssistantChatProps = {
   compact?: boolean;
   endpoint: string;
@@ -83,7 +72,8 @@ type AssistantChatProps = {
   errorMessage: string;
   inputPlaceholder: string;
   emptyHelpText: string;
-  storageKey?: string;
+  durableAdmin?: boolean;
+  language?: string;
   clearLabel?: string;
   sendLabel?: string;
   stopLabel?: string;
@@ -102,7 +92,8 @@ function AssistantChat({
   errorMessage,
   inputPlaceholder,
   emptyHelpText,
-  storageKey,
+  durableAdmin = false,
+  language = 'en',
   clearLabel,
   sendLabel = "Senden",
   stopLabel = "Stop",
@@ -115,48 +106,22 @@ function AssistantChat({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [storageReady, setStorageReady] = useState(!storageKey);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    const saved = readAssistantChatState(storageKey);
-    // Restoring from localStorage has to wait until after hydration, so this
-    // one-time sync from an external store stays in an effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMessages(saved.messages);
-    setInput(saved.input);
-    setStorageReady(true);
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    if (!storageReady) return;
-    if (typeof window === "undefined") return;
-    window.sessionStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        messages,
-        input,
-      }),
-    );
-  }, [messages, input, storageKey, storageReady]);
+  const archive = useAdminConversations({ enabled: durableAdmin, language, setMessages, setInput, setLoading: setIsLoading });
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   function clearChat() {
     abortRef.current?.abort();
     setMessages([]);
     setInput("");
-    if (storageKey && typeof window !== "undefined") {
-      window.sessionStorage.removeItem(storageKey);
-    }
   }
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    el.scrollTo({ top: el.scrollHeight, behavior: durableAdmin ? 'instant' : 'smooth' });
+  }, [messages, durableAdmin, archive.notice]);
 
   const lastAssistant = useMemo(() => {
     const m = [...messages].reverse().find((x) => x.role === "assistant");
@@ -190,6 +155,7 @@ function AssistantChat({
   async function sendMessage() {
     const text = input.trim();
     if (!text || isLoading || text.length > ASSISTANT_MAX_MESSAGE_CHARS) return;
+    if (durableAdmin) { archive.send(text, messages); return; }
 
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text };
     const assistantMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
@@ -242,9 +208,27 @@ function AssistantChat({
     }
   }
 
-  const canSend = !isLoading && Boolean(input.trim());
+  const canSend = !isLoading && Boolean(input.trim()) && (!durableAdmin || archive.ready && !archive.busy && archive.pageIndex === 0);
   const chat = (
     <div className="flex h-full min-h-0 flex-col">
+      {durableAdmin && <div className="shrink-0 border-b bg-background px-2 py-1" data-testid="assistant-history-controls">
+        <div className="flex min-w-0 items-center gap-1">
+          <select aria-label={archive.copy.history} value={archive.conversationId ?? ''} disabled={archive.busy || isLoading || !archive.ready}
+            className="h-11 min-w-0 flex-1 rounded-lg border bg-background px-2 text-[13px] text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+            onChange={event => event.target.value ? void archive.select(event.target.value) : archive.newChat()}>
+            <option value="">{archive.busy ? archive.copy.loading : archive.copy.newChat}</option>
+            {archive.conversations.map(c => <option key={c.id} value={c.id}>{c.title || archive.copy.history}</option>)}
+          </select>
+          {archive.nextList && <button type="button" onClick={() => void archive.moreConversations()} disabled={archive.busy || isLoading} title={archive.copy.more} aria-label={archive.copy.more} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40"><ChevronDown className="size-4" /></button>}
+          <button type="button" onClick={() => void archive.latest()} disabled={archive.busy || isLoading} title={archive.copy.refresh} aria-label={archive.copy.refresh} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40"><RefreshCw className={`size-4 ${archive.busy ? 'animate-spin' : ''}`} /></button>
+          <button type="button" onClick={archive.newChat} disabled={!archive.ready} title={archive.copy.newChat} aria-label={archive.copy.newChat} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40"><Plus className="size-5" /></button>
+        </div>
+        {(archive.nextRuns || archive.pageIndex > 0) && <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
+          <button type="button" onClick={() => void archive.older()} disabled={!archive.nextRuns || archive.busy || isLoading} title={archive.copy.older} aria-label={archive.copy.older} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg px-1 hover:bg-muted disabled:opacity-40"><ChevronLeft className="size-4" /><span className="hidden sm:inline">{archive.copy.older}</span></button>
+          {archive.pageIndex > 0 && <button type="button" onClick={() => void archive.latest()} disabled={archive.busy || isLoading} className="min-h-11 rounded-lg px-1 hover:bg-muted">{archive.copy.latest}</button>}
+          <button type="button" onClick={() => void archive.newer()} disabled={archive.pageIndex === 0 || archive.busy || isLoading} title={archive.copy.newer} aria-label={archive.copy.newer} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg px-1 hover:bg-muted disabled:opacity-40"><ChevronRight className="size-4" /><span className="hidden sm:inline">{archive.copy.newer}</span></button>
+        </div>}
+      </div>}
       <div
         ref={scrollRef}
         className={`chat-wallpaper min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-4 ${compact ? "" : "max-h-[62dvh] min-h-[50dvh] rounded-t-2xl"}`}
@@ -266,10 +250,17 @@ function AssistantChat({
                 }`}
               >
                 {m.content || (isLoading ? <span className="inline-flex gap-1 py-1"><span className="size-1.5 animate-bounce rounded-full bg-current opacity-60" /><span className="size-1.5 animate-bounce rounded-full bg-current opacity-60 [animation-delay:120ms]" /><span className="size-1.5 animate-bounce rounded-full bg-current opacity-60 [animation-delay:240ms]" /></span> : null)}
+                {durableAdmin && m.role === 'assistant' && !isLoading && conversationStatus(m.status, archive.copy) && <div className="mt-1 text-[11px] opacity-70">{conversationStatus(m.status, archive.copy)}</div>}
+                {durableAdmin && conversationContentNotice(m, language) && <div className="mt-1 text-[11px] opacity-70">{conversationContentNotice(m, language)}</div>}
               </div>
             </div>
           ))
         )}
+        {durableAdmin && archive.notice && <div role="status" className="flex items-center gap-1 px-1 pt-1 text-xs text-muted-foreground">
+          <span className="min-w-0 flex-1">{archive.notice}</span>
+          {!archive.ready && !archive.busy && <button type="button" onClick={() => void archive.initialize()} className="min-h-11 shrink-0 rounded-lg px-2 hover:bg-muted">{archive.copy.retry}</button>}
+          {archive.canRetry && !isLoading && <button type="button" onClick={() => void archive.retry()} className="min-h-11 shrink-0 rounded-lg px-2 hover:bg-muted">{archive.copy.retry}</button>}
+        </div>}
       </div>
 
       <form
@@ -283,8 +274,9 @@ function AssistantChat({
           className="h-11 min-w-0 flex-1 rounded-full bg-white px-4 text-[15px] text-[#111b21] outline-none placeholder:text-[#667781] dark:bg-[#2a3942] dark:text-[#e9edef] dark:placeholder:text-[#8696a0]"
           value={input}
           maxLength={ASSISTANT_MAX_MESSAGE_CHARS}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={inputPlaceholder}
+          onChange={(e) => { setInput(e.target.value); if (durableAdmin) archive.rememberDraft(e.target.value); }}
+          disabled={durableAdmin && (!archive.ready || archive.busy || archive.pageIndex > 0)}
+          placeholder={durableAdmin && archive.pageIndex > 0 ? archive.copy.latestHint : inputPlaceholder}
           title={speechSupported ? voiceHint : undefined}
           aria-label={inputPlaceholder}
           onDoubleClick={() => startVoiceToText()}
@@ -295,7 +287,7 @@ function AssistantChat({
             className="grid size-11 shrink-0 place-items-center rounded-full bg-[#00a884] text-white transition active:scale-95"
             title={stopLabel}
             aria-label={stopLabel}
-            onClick={() => abortRef.current?.abort()}
+            onClick={() => durableAdmin ? archive.stop() : abortRef.current?.abort()}
           >
             <Square className="size-4 fill-current" />
           </button>
@@ -346,8 +338,8 @@ export function TeamAssistantChat({ compact = false }: { compact?: boolean }) {
       noAccessMessage={t("admin.aiAssistantNoAccess", currentLang)}
       errorMessage={t("admin.aiAssistantError", currentLang)}
       inputPlaceholder={t("admin.aiAssistantPrompt", currentLang)}
-      storageKey={ADMIN_ASSISTANT_STORAGE_KEY}
-      clearLabel={t("admin.aiAssistantClear", currentLang)}
+      durableAdmin
+      language={currentLang}
       sendLabel={t("common.send", currentLang)}
       stopLabel={t("common.stop", currentLang)}
       lastAnswerLabel={t("workzone.aiHelperLastAnswer", currentLang)}
@@ -465,7 +457,6 @@ export function TeamAssistantLogoTrigger({
 }) {
   const { currentLang } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [chatResetKey, setChatResetKey] = useState(0);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [panelPosition, setPanelPosition] = useState<{ top: number; left: number } | null>(null);
   const [panelStorageReady, setPanelStorageReady] = useState(false);
@@ -483,16 +474,16 @@ export function TeamAssistantLogoTrigger({
     if (!panelStorageReady) return;
     if (typeof window === "undefined") return;
     if (!open) {
-      window.sessionStorage.setItem(ADMIN_ASSISTANT_PANEL_STORAGE_KEY, JSON.stringify({ open: false }));
+      writeAssistantPanelState(ADMIN_ASSISTANT_PANEL_STORAGE_KEY, { open: false });
       return;
     }
-    window.sessionStorage.setItem(
+    writeAssistantPanelState(
       ADMIN_ASSISTANT_PANEL_STORAGE_KEY,
-      JSON.stringify({
+      {
         open: true,
         top: panelPosition?.top ?? 16,
         left: panelPosition?.left ?? 16,
-      }),
+      },
     );
   }, [open, panelPosition, panelStorageReady]);
 
@@ -507,13 +498,6 @@ export function TeamAssistantLogoTrigger({
     const left = rect ? Math.max(16, Math.min(rect.left, window.innerWidth - panelWidth - 16)) : 16;
     setPanelPosition({ top, left });
     setOpen(true);
-  }
-
-  function clearAdminChat() {
-    if (typeof window !== "undefined") {
-      window.sessionStorage.removeItem(ADMIN_ASSISTANT_STORAGE_KEY);
-    }
-    setChatResetKey((key) => key + 1);
   }
 
   return (
@@ -535,12 +519,10 @@ export function TeamAssistantLogoTrigger({
           subtitle={t("admin.aiAssistantReadOnlyHint", currentLang)}
           companyLogo={companyLogo}
           onClose={() => setOpen(false)}
-          onClear={clearAdminChat}
-          clearLabel={t("admin.aiAssistantClear", currentLang)}
           closeLabel={t("common.close", currentLang)}
           anchor={panelPosition}
         >
-          <TeamAssistantChat key={chatResetKey} compact />
+          <TeamAssistantChat compact />
         </AssistantSheet>
       ) : null}
     </>
@@ -575,16 +557,16 @@ export function WorkerAssistantTrigger({
     if (!panelStorageReady) return;
     if (typeof window === "undefined") return;
     if (!open) {
-      window.sessionStorage.setItem(WORKER_ASSISTANT_PANEL_STORAGE_KEY, JSON.stringify({ open: false }));
+      writeAssistantPanelState(WORKER_ASSISTANT_PANEL_STORAGE_KEY, { open: false });
       return;
     }
-    window.sessionStorage.setItem(
+    writeAssistantPanelState(
       WORKER_ASSISTANT_PANEL_STORAGE_KEY,
-      JSON.stringify({
+      {
         open: true,
         top: panelPosition?.top ?? 16,
         left: panelPosition?.left ?? 16,
-      }),
+      },
     );
   }, [open, panelPosition, panelStorageReady]);
 

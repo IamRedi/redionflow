@@ -47,8 +47,11 @@ even when processes restart or streams disconnect.
 HTTP bodies have a 96 KiB byte limit and a 10-second read timeout. Only user and
 assistant messages are accepted: at most 16 messages, 4,000 characters each and
 12,000 characters total, ending with a nonempty user question. Server/system
-messages cannot be supplied by the client. The browser retains its visible
-transcript while sending only the bounded recent history.
+messages cannot be supplied by the client. The admin's durable private archive
+is separate from the bounded recent history sent to the model. The archive does
+not increase model context, output, retries, quotas or timeout. Saving a new
+question must succeed before paid generation; idempotent client message IDs
+replay saved answers without a second reservation or provider call.
 
 Rate/budget rejections return localized HTTP 429 with `Retry-After`. Quota-store
 or configuration failures return 503 and make no provider call. The chat shows

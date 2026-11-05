@@ -3,7 +3,15 @@ const state = vi.hoisted(() => ({ companyId: "", requester: null as unknown }));
 vi.mock("@/lib/db/tenant", async original => ({ ...await original<typeof import("@/lib/db/tenant")>(), getCurrentCompanyId: async () => state.companyId || null }));
 vi.mock("@/lib/assistant/requester", () => ({ getRequesterContext: async () => state.requester }));
 vi.mock("@/lib/auth/login-guard", () => ({ ensureLoginAllowed: async () => ({ ok: true }), getClientIp: () => "synthetic", registerFailedLogin: vi.fn() }));
-vi.mock("ai", async original => ({ ...await original<typeof import("ai")>(), streamText: vi.fn(() => ({ toTextStreamResponse: () => new Response("Synthetic answer") })) }));
+vi.mock("ai", async original => ({ ...await original<typeof import("ai")>(), streamText: vi.fn((options: { onFinish?: (event: { finishReason: string; totalUsage: { totalTokens: number } }) => Promise<void> }) => ({
+  toTextStreamResponse: () => new Response("Synthetic answer"),
+  fullStream: (async function* () {
+    yield { type: 'start-step' }; yield { type: 'text-delta', text: 'Synthetic answer' };
+    yield { type: 'finish-step', finishReason: 'stop' };
+    await options.onFinish?.({ finishReason: 'stop', totalUsage: { totalTokens: 50 } });
+    yield { type: 'finish', finishReason: 'stop' };
+  })(),
+})) }));
 import { streamText } from "ai";
 import { prisma } from "@/lib/db/prisma";
 import { seedSecurityTenants, removeSecurityTenants } from "../../../tests/security/fixtures";
@@ -67,8 +75,15 @@ for (const kind of ["admin", "worker"] as const) it(`${kind} route blocks valid 
   state.requester = identity(0, kind); vi.stubEnv("ASSISTANT_USER_BURST_REQUESTS", "1");
   const post = kind === "admin" ? adminPost : workerPost;
   const request = () => new Request("http://127.0.0.1:3100/api/assistant", { method: "POST", headers: { origin: "http://127.0.0.1:3100", "content-type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] }) });
-  expect((await post(request())).status).toBe(200);
+  const first = await post(request()); expect(first.status).toBe(200);
+  expect(await first.text()).toBe('Synthetic answer');
   const blocked = await post(request()); expect(blocked.status).toBe(429); expect(blocked.headers.get("retry-after")).toBeTruthy();
   expect(streamText).toHaveBeenCalledTimes(1);
   expect(await prisma.worker.count({ where: { companyProfileId: state.companyId } })).toBe(1);
+  if (kind === 'admin') {
+    const runs = await prisma.assistantRun.findMany({ where: { companyProfileId: state.companyId }, orderBy: { startedAt: 'asc' } });
+    expect(runs).toHaveLength(2);
+    expect(runs[0]).toMatchObject({ status: 'completed', answer: 'Synthetic answer', totalTokens: 50 });
+    expect(runs[1]).toMatchObject({ status: 'rejected', errorCode: 'QUOTA_REJECTED', httpStatus: 429 });
+  }
 });

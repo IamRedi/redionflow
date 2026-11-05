@@ -2,6 +2,53 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — concise assistant answers and private diagnostic history
+
+Owner scope: diagnose intermittent answers after the owner deployed the key,
+answer briefly by default, and retain conversations to find mistakes. AL Steel
+is a real operational company; the old disposable-pilot assumption is revoked.
+Baseline:583e832b888a7e7a4b055424cd1f3e52fc9f96ae/PR47. The owner-triggered
+Railway deployment dca7ccaf-26c7-4320-971e-8bc6f1a4b808 succeeded; key NAME is
+present (no secret value read). Observed legacy chat confused the workshop/site
+count and returned unavailable production answers. Old HTTP200 logs had no
+execution traces, so they do not establish the exact provider/tool failure.
+
+Fix: preserve optional Zod arguments with explicit Responses `strict:false`,
+consume full SDK stream parts rather than silently filtered text errors, and
+use a canonical recorded-activity tool for started sites. The server prompt
+defaults to1–2 sentences/name lists and expands only when requested. Real
+provider adapter tests use explicit in-memory HTTP mocks; they demonstrate the
+wire contract, not paid-model answer quality. A normal real30-tool request is
+28,843 bytes;12,000-character history plus12KiB result is53,685 bytes. Two24KiB
+results exceed the existing65,536-byte guard and are explicitly rejected before
+provider access. No model, provider, dependency, retry, timeout or cost increase.
+
+Three additive private history tables store each accepted question, emitted
+answer/status and bounded secret-redacted tool evidence/diagnostics. Tenant and
+admin ownership, RLS, concurrency/idempotency, interruption and pagination are
+covered. Failure to save a new question prevents paid generation. New chat
+retains old conversations. Older unscoped browser caches are neither imported
+nor deleted. No pre-release browser-only conversation is claimed recovered.
+
+Local laptop verification, isolated WSL Node22/PostgreSQL16, synthetic data:
+
+-213 assistant unit tests/17 files PASS2.26s;28 integration tests/5 files
+  PASS30.03s, including nonowner/nontenant RLS, duplicate sends, stored quota
+  rejection, canonical kg and started-work criteria.
+- Prisma migration apply and schema diff PASS (no drift); scoped ESLint and
+  production build/application TypeScript and staged Gitleaks PASS.62 source/test/schema/doc hashes
+  match the tested mirror; logs/manifest remain local.
+- Cua browser check on the production build with a fictional local company:
+  archive restore, older-page navigation, new chat retaining history, saved
+  configuration rejection and reload restore PASS. Desktop/narrow light/dark
+  and760×360 composer/overflow checked;360×800 composer remains44px and visible.
+  Screenshots under local outputs/assistant-history. Chrome automation became
+  intermittently unavailable; remaining checks completed in the in-app browser.
+- Independent static review PASS. No paid OpenAI inference, business-data
+  mutation, broad unrelated UI suite, cloud Actions or production migration.
+  Physical phone keyboard/IME, text zoom and real provider quality remain
+  NOT_VERIFIED. Publication requires the owner's approval for the exact PR.
+
 ## 5 November 2026 — grounded AL Steel assistant
 
 Owner scope: activate and improve only agent logic for reliable operational
