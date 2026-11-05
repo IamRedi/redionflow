@@ -1,8 +1,8 @@
 export const steelPresentation = {
-  sq: 'Për firmat e çelikut: kalendar i kg të konfirmuara sipas ditës/projektit dhe panel monitori vetëm për shikim.',
-  en: 'For steel operations: a calendar of confirmed kg by day/project and a read-only production monitor.',
-  de: 'Für Stahlbetriebe: Kalender bestätigter Produktions-kg je Tag und Projekt sowie eine Monitoransicht ohne Bearbeitung.',
-  it: 'Per le aziende dell’acciaio: calendario dei kg confermati per giorno e progetto e monitor produzione in sola lettura.',
-  pl: 'Dla firm stalowych: kalendarz potwierdzonych kg według dnia i projektu oraz monitor produkcji tylko do odczytu.',
-  ro: 'Pentru firmele de oțel: calendar cu kg confirmate pe zi și proiect și monitor de producție doar pentru vizualizare.',
+  sq: 'Për firmat e çelikut: kg të konfirmuara sipas ditës/projektit, monitor për shikim, detyra e procese për material dhe foto private. Vegla, veshje sipas masës dhe pajisje me dorëzime të konfirmuara; riparime me dokumentim e historik. Flotë kompakte me kërkim sipas emrit/targës.',
+  en: 'For steel operations: confirmed daily/project kg, read-only monitor, shared tasks, material process plans and private photos. Tools, sized clothing and site equipment with confirmed handovers; workshop repairs with evidence and history. Compact fleet search by name or plate.',
+  de: 'Für Stahlbetriebe: bestätigte kg je Tag/Projekt, Monitor ohne Bearbeitung, Aufgabenkatalog, Materialprozesse und private Fotos. Werkzeuge, Kleidung nach Größe und Baustellenausrüstung mit bestätigten Übergaben; Reparaturen mit Belegen und Verlauf. Kompakte Flottensuche nach Name oder Kennzeichen.',
+  it: 'Per le aziende dell’acciaio: kg confermati per giorno/progetto, monitor in sola lettura, attività condivise, processi per materiale e foto private. Utensili, vestiario per taglia e attrezzature con consegne confermate; riparazioni con documenti e cronologia. Flotta compatta con ricerca per nome o targa.',
+  pl: 'Dla firm stalowych: potwierdzone kg według dnia/projektu, monitor tylko do odczytu, wspólne zadania, procesy materiałów i prywatne zdjęcia. Narzędzia, odzież według rozmiaru i sprzęt z potwierdzonym przekazaniem; naprawy z dokumentacją i historią. Kompaktowa flota z wyszukiwaniem po nazwie lub rejestracji.',
+  ro: 'Pentru firmele de oțel: kg confirmate pe zi/proiect, monitor doar pentru vizualizare, sarcini comune, procese pe material și fotografii private. Unelte, îmbrăcăminte pe mărimi și echipamente cu predări confirmate; reparații cu documente și istoric. Flotă compactă cu căutare după nume sau număr auto.',
 };
