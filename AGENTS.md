@@ -15,3 +15,7 @@ the laptop/mini PC; cloud verification requires explicit selection. Preserve
 required assertions and branch protection. Do not merge or deploy this pilot
 without owner approval. Never push to its Railway-connected pilot branch as
 part of feature preparation.
+
+## Native presentation maintenance
+
+After each app work session, follow [websites/products/PUBLIC_PRESENTATION.md](websites/products/PUBLIC_PRESENTATION.md) and reconcile the native information page and portfolio first-page card. Record six acceptance gates or a justified `NO_CONTENT_CHANGE`; preserve publication authorization and exact-source evidence.

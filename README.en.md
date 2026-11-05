@@ -13,6 +13,12 @@
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
+## P2 presentation record · 5 November 2026
+
+The shared [RediOnFlow introduction](https://flow.redioncekrezi.de/en.html) leads to the four-language product introductions for [BaumdienstFlow](https://www.baumdienstflow.de/about/en.html) and [BauFlow](https://www.baumdienstflow.de/bauflow/about/en.html). Both retain separate company-admin, worker/PIN and existing demo entries. Information pages describe the actual scope; they do not establish field, hardware or customer acceptance.
+
+The P2 source and publication/anonymous readback are tracked separately in the [presentation review](websites/products/P2_REVIEW.md). Historical application test counts and revisions are retained. Static website work does not authorize merging the Railway pilot. Native introduction, portfolio and affected README/About text are reconciled together after material product milestones.
+
 ## Product websites and live demos
 
 | Product | Website | Demo | Fictitious company |

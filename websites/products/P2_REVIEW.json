@@ -1,0 +1,15 @@
+{
+  "environment": "ISOLATED_LOCAL_CANDIDATE_NOT_PUBLISHED",
+  "reviewedAt": "2026-11-05",
+  "logs": [],
+  "browserEvidence": [
+    "centered-ui-final.json",
+    "static-ui-matrix-final.json",
+    "business-native-ui-matrix.json",
+    "theme-ui-final.json",
+    "pulse-native-theme-handoff.json",
+    "http-presentation-validation.json"
+  ],
+  "publication": "PENDING_EXACT_TARGET_VERSION_OWNER_APPROVAL",
+  "readinessChange": false
+}

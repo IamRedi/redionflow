@@ -11,6 +11,12 @@
 
 **[English version](README.en.md)** · **Stand: 3. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## P2-Präsentationsstand · 5. November 2026
+
+Die gemeinsame [RediOnFlow-Vorstellung](https://flow.redioncekrezi.de/de.html) führt zu den vier­sprachigen Produktvorstellungen von [BaumdienstFlow](https://www.baumdienstflow.de/about/de.html) und [BauFlow](https://www.baumdienstflow.de/bauflow/about/de.html). Beide behalten getrennte Links für Firmen-Admin, Mitarbeitende mit PIN und die vorhandene Demo. Die Vorstellungen kennzeichnen den tatsächlichen Funktionsstand und ersetzen keine Feld-, Geräte- oder Kundeneinführung.
+
+Der P2-Quellstand und sein Veröffentlichungs-/Online-Readback werden separat im [Präsentationsreview](websites/products/P2_REVIEW.md) geführt. Historische App-Testzahlen und Revisionen bleiben unverändert. Änderungen an statischen Websites autorisieren keinen Merge des Railway-Piloten. Nach einem wesentlichen Produktfortschritt werden Vorstellung, Portfolio und betroffene README/About-Texte gemeinsam abgeglichen.
+
 ## Websites und Live-Demos
 
 | Produkt | Website | Demo | Fiktive Firma |
