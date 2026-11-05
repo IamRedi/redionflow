@@ -147,8 +147,8 @@ export async function FlowTopBar({
   const companyLogo = safeCompanyLogo(companyBrand?.logoDataUrl);
 
   return (
-    <div className={contained ? "mx-auto w-full min-w-0 max-w-[2000px] px-4 pb-3 pt-14 sm:px-5 lg:py-3 lg:pr-48" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
-      <div className={`grid grid-cols-[auto_minmax(0,1fr)] ${contained ? "items-center" : "items-start"} gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]`}>
+    <div className={contained ? "w-full min-w-0 px-4 pb-3 pt-14 sm:px-5 lg:min-h-[110px] lg:py-3" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
+      <div className={`grid grid-cols-[auto_minmax(0,1fr)] ${contained ? "items-center" : "items-start lg:grid-cols-[auto_minmax(0,1fr)_auto]"} gap-3`}>
         {/* Keep the production logo and scrollable team side by side in normal flow. */}
         <div className={`pointer-events-none relative z-10 ${contained ? "col-start-1 row-start-1 flex-row items-center" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
           <div className={`flex items-center gap-2 ${contained ? "shrink-0" : ""}`}>
@@ -232,6 +232,7 @@ export async function FlowTopBar({
           <WorkerIconStrip
             insetClassName={contained ? "" : "pl-[124px]"}
             comfortable={contained}
+            trailing={contained ? adminProfiles.map(profile => <Link key={profile.id} href={`/workzone/admin-profile/${profile.id}`} title={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} aria-label={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} className="inline-flex size-[44px] shrink-0 items-center justify-center rounded-full border bg-transparent text-xs font-semibold text-foreground/80 transition hover:bg-muted hover:text-foreground">{adminInitial(profile.name ?? profile.email)}</Link>) : undefined}
             admin={Boolean(admin)}
             workers={workersSorted.map((worker) => ({
               id: worker.id,
@@ -268,11 +269,7 @@ export async function FlowTopBar({
           />
         </div>
 
-        {contained && mobileAdminProfiles.length > 0 ? <div className="no-scrollbar col-span-2 flex min-w-0 items-center gap-2 overflow-x-auto lg:hidden">
-          {mobileAdminProfiles.map(profile => <Link key={profile.id} href={`/workzone/admin-profile/${profile.id}`} title={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} aria-label={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border bg-background/85 text-xs font-semibold text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground">{adminInitial(profile.name ?? profile.email)}</Link>)}
-        </div> : null}
-
-        <div className="hidden items-center gap-2 lg:flex">
+        {!contained && <div className="hidden items-center gap-2 lg:flex">
           {admin ? (
             <>
               <TopbarAnnouncementButton message={announcementMessage} />
@@ -301,7 +298,7 @@ export async function FlowTopBar({
               <span>{adminInitial(profile.name ?? profile.email)}</span>
             </Link>
           ))}
-        </div>
+        </div>}
       </div>
     </div>
   );

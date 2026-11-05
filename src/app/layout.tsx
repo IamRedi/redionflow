@@ -7,7 +7,7 @@ import { Bell, Home, LayoutDashboard } from "lucide-react";
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { Button } from "@/components/ui/button";
-import { FlowMobileTools } from "@/components/shell/FlowMobileTools";
+import { ProductionHeaderTools } from "@/components/shell/ProductionHeaderTools";
 import { TopbarAnnouncementButton } from "@/app/(workzone)/workzone/topbar-announcement-button";
 import { notifyTeamAction } from "@/app/(workzone)/workzone/announcement-actions";
 import { isSteelCompany } from "@/lib/dashboard/steel-access";
@@ -92,17 +92,19 @@ export default async function RootLayout({
         <LanguageProvider initialLang={initialLang}>
           <FooterBrandProvider mark={production ? (admin ? <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle}>{brandBadge}</Link> : brandBadge) : null}>
           {/* Operational tools align with the header; the steel product mark lives in the shared footer. */}
-          <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
-            {production ? <FlowMobileTools>
-              <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-background/80 text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
-              {admin ? <>
-                <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-background/80 text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>
-                <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px]" />
-                <form action={notifyTeamAction}><Button type="submit" variant="outline" size="icon" className="size-[44px] rounded-full bg-background/85 text-foreground/80 shadow-sm hover:bg-muted hover:text-foreground" title={t("workzone.notifyTeam", initialLang)} aria-label={t("workzone.notifyTeam", initialLang)}><Bell className="size-4" /></Button></form>
-              </> : null}
-            </FlowMobileTools> : null}
-            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} className={production ? "h-[44px] min-w-[44px] lg:h-8 lg:min-w-8" : undefined} /> : null}
-            {!production && <div className={`border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${admin ? "" : "pointer-events-none"}`}>
+          {production ? <ProductionHeaderTools
+            navigation={<>
+              <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
+              {admin && <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>}
+            </>}
+            alerts={admin ? <>
+              <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px] bg-transparent shadow-none" />
+              <form action={notifyTeamAction}><Button type="submit" variant="outline" size="icon" className="size-[44px] rounded-full bg-transparent text-foreground/80 shadow-none hover:bg-muted hover:text-foreground" title={t("workzone.notifyTeam", initialLang)} aria-label={t("workzone.notifyTeam", initialLang)}><Bell className="size-4" /></Button></form>
+            </> : null}
+            book={kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} iconOnly /> : null}
+          /> : <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
+            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} /> : null}
+            <div className={`border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${admin ? "" : "pointer-events-none"}`}>
               {admin ? (
                 <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle} className="block transition hover:text-brand-green">
                   {brandBadge}
@@ -110,8 +112,8 @@ export default async function RootLayout({
               ) : (
                 brandBadge
               )}
-            </div>}
-          </div>
+            </div>
+          </div>}
           {children}
           </FooterBrandProvider>
         </LanguageProvider>
