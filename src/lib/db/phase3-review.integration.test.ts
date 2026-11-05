@@ -67,7 +67,7 @@ it.each(["machine","fleet"])("actual %s save rejects forged target",async kind=>
 });
 it("actual inline machine deletion cannot delete B",async()=>{
  await asAdmin();const [a,b]=tenants;
- const forms=elements(await AdminPage()).filter(el=>el.type==="form");
+ const forms=elements(await AdminPage({})).filter(el=>el.type==="form");
  const target=forms.find(el=>elements(el.props.children).some(child=>child.type==="input"&&child.props.name==="id"&&child.props.value===a.machine.id));
  expect(target).toBeTruthy();const action=target!.props.action as (data:FormData)=>Promise<unknown>;
  await run(action,form({id:b.machine.id}));expect(await prisma.machine.findUnique({where:{id:b.machine.id}})).not.toBeNull();

@@ -8,7 +8,7 @@ import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { cn } from "@/lib/ui/cn";
 
-type DemoMachine = {
+export type DemoMachine = {
   id: string;
   name: string;
   nickname: string | null;
@@ -60,10 +60,10 @@ function Detail({ label, value }: { label: string; value: string | number | null
   );
 }
 
-export function DemoMachineRail({ machines }: { machines: DemoMachine[] }) {
+export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks }: { machines: DemoMachine[]; initiallyOpen?: boolean; workshopLinks?: Record<string, { href: string; label: string; status: string }> }) {
   const { currentLang } = useLanguage();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [fleetOpen, setFleetOpen] = useState(true);
+  const [fleetOpen, setFleetOpen] = useState(initiallyOpen);
   const selected = useMemo(() => machines.find((machine) => machine.id === selectedId) ?? null, [machines, selectedId]);
 
   if (machines.length === 0) return null;
@@ -73,6 +73,8 @@ export function DemoMachineRail({ machines }: { machines: DemoMachine[] }) {
       <button
         type="button"
         title={t("workzone.fleet", currentLang)}
+        aria-label={t("workzone.fleet", currentLang)}
+        aria-expanded={fleetOpen}
         onClick={() => setFleetOpen((open) => !open)}
         className={cn(
           "flex size-12 shrink-0 items-center justify-center rounded-full border bg-muted text-[11px] font-semibold shadow-sm transition hover:scale-105",
@@ -95,12 +97,14 @@ export function DemoMachineRail({ machines }: { machines: DemoMachine[] }) {
                   title={`${label}${machine.isActive ? "" : ` - ${t("workzone.blockedStatus", currentLang).toUpperCase()}`}`}
                   onClick={() => setSelectedId(selectedMachine ? null : machine.id)}
                   className={cn(
-                    "relative flex h-9 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted text-xs font-semibold shadow-sm transition hover:scale-105",
+                    "relative flex h-11 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted text-xs font-semibold shadow-sm transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     selectedMachine ? "ring-2 ring-brand-green ring-offset-2 ring-offset-background" : "",
                     machine.isActive ? "border-border" : "border-red-500 bg-red-600 text-white",
                   )}
                 >
                   {machine.imageUrl ? (
+                    // Stored demo image URLs already use the existing asset pipeline.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={machine.imageUrl} alt={label} className="size-full object-cover" />
                   ) : (
                     <span className="block whitespace-nowrap px-1 text-center text-[9px] leading-none tracking-tight">{shortLabel(label) || initials(label)}</span>
@@ -122,6 +126,7 @@ export function DemoMachineRail({ machines }: { machines: DemoMachine[] }) {
         <div className="fixed inset-x-3 bottom-20 max-h-[calc(100dvh-7rem)] overflow-hidden rounded-lg border bg-card shadow-2xl lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-14 lg:top-0 lg:w-[min(26rem,calc(100vw-6rem))] lg:max-h-none">
           <div className="relative h-36 bg-muted">
             {selected.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- existing stored demo asset
               <img src={selected.imageUrl} alt={machineLabel(selected)} className="size-full object-cover" />
             ) : (
               <div className="flex size-full items-center justify-center text-muted-foreground">
@@ -178,6 +183,7 @@ export function DemoMachineRail({ machines }: { machines: DemoMachine[] }) {
             >
               {t("common.open", currentLang)}
             </Link>
+            {workshopLinks?.[selected.id] ? <div className="space-y-2 border-t pt-3"><p className="text-sm font-medium">{workshopLinks[selected.id].status}</p><Link href={workshopLinks[selected.id].href} className="inline-flex min-h-11 items-center rounded-md border bg-background px-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring">{workshopLinks[selected.id].label}</Link></div> : null}
           </div>
         </div>
       ) : null}

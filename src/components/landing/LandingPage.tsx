@@ -14,6 +14,7 @@ import { ProductsSection } from "@/components/landing/ProductsSection";
 import { SecuritySection } from "@/components/landing/SecuritySection";
 import { SideNavigation } from "@/components/landing/SideNavigation";
 import { landingContent, normalizeLandingLanguage } from "./landing-content";
+import { workshopCopy } from "@/lib/workshop/copy";
 
 function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return (
@@ -32,33 +33,16 @@ function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string
 function TaskCard({
   title,
   text,
-  index,
 }: {
   title: string;
   text: string;
-  index: number;
 }) {
-  const colors = [
-    "border-emerald-300/25 bg-emerald-300/10 text-emerald-200",
-    "border-sky-300/25 bg-sky-300/10 text-sky-200",
-    "border-amber-300/25 bg-amber-300/10 text-amber-200",
-    "border-lime-300/25 bg-lime-300/10 text-lime-200",
-  ];
-  const color = colors[index % colors.length];
-
   return (
     <article className="group rounded-xl border border-white/10 bg-white/[0.045] p-5 shadow-[0_16px_32px_rgba(0,0,0,0.12)] transition hover:border-white/20 hover:bg-white/[0.065]">
-      <div className="flex items-start gap-4">
-        <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold ${color}`}
-        >
-          {String(index + 1).padStart(2, "0")}
-        </div>
         <div className="min-w-0">
           <h3 className="text-[1.12rem] font-semibold tracking-tight text-white">{title}</h3>
           <p className="mt-2 text-sm leading-6 text-white/66">{text}</p>
         </div>
-      </div>
     </article>
   );
 }
@@ -67,14 +51,17 @@ export function LandingPage({
   initialTheme,
   isSaasMode = false,
   demoEnabled = false,
+  workshopDemoEnabled = false,
 }: {
   initialTheme: "light" | "dark";
   isSaasMode?: boolean;
   demoEnabled?: boolean;
+  workshopDemoEnabled?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const landingLang = normalizeLandingLanguage(currentLang);
   const content = landingContent[landingLang];
+  const workshop = workshopCopy(landingLang);
   const demoPush = {
     de: {
       title: "Live sehen statt lesen.",
@@ -173,6 +160,12 @@ export function LandingPage({
           <ProblemSolutionSection content={content.problemSolution} />
         </div>
         <ProductsSection isSaasMode={isSaasMode} landingLang={landingLang} />
+        {workshopDemoEnabled ? <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8"><section id="werkstatt-demo" className="my-12 rounded-xl border border-white/10 bg-white/[0.045] p-5 shadow-[0_16px_32px_rgba(0,0,0,0.12)] sm:p-8">
+          <SectionIntro eyebrow={workshop.demo} title={workshop.title} text={workshop.subtitle} />
+          <p className="mt-4 text-sm font-semibold text-emerald-200">{workshop.received} → {workshop.repairing} → {workshop.repaired}</p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/75">{workshop.demoHint}</p>
+          <a href="/demo/workshop" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-emerald-300 px-5 text-sm font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#10211a]">{workshop.open}</a>
+        </section></div> : null}
       </section>
 
       <div className="relative z-10 mx-auto max-w-7xl px-5 pb-8 sm:px-6 lg:px-8">
@@ -216,12 +209,11 @@ export function LandingPage({
           <SectionIntro {...content.sections.previewsIntro} />
 
           <div className="mt-8 grid gap-3 md:grid-cols-2">
-            {content.sections.previews.map((card, index) => (
+            {content.sections.previews.map((card) => (
               <TaskCard
                 key={card.title}
                 title={card.title}
                 text={card.text}
-                index={index}
               />
             ))}
           </div>

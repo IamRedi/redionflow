@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**Local demo candidate · 5 November 2026:** BaumdienstFlow has an interactive workshop rehearsal: intake, repair, documented function check and release, tool issue/return, spare parts and documents. Fictional data and browser-local storage only; not yet deployed to the public demo. [Scope, UX comparison and verification](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Workshop demo – local capture with fictional data, not deployed](docs/assets/screenshots/baum-workshop-desktop.png)
+
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 
 - **BaumdienstFlow** for tree care companies: tree lists with coordinates, removals, crown work, aerial lifts and chippers.

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
+import { WorkshopFleet } from "@/components/demo/workshop/workshop-fleet";
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
@@ -63,7 +64,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className={`min-h-dvh overflow-x-hidden bg-background text-foreground ${pageTone}`}>
-      <header className={`sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
+      <header className={mode === "baumdienst" ? "relative z-10 bg-transparent print:hidden" : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         <div className="pt-3">
           <DemoTopBar
             mode={mode}
@@ -79,17 +80,17 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
               live: worker.sessions.length > 0,
             }))}
           />
-          {announcement?.message ? (
+          {announcement?.message && mode !== "baumdienst" ? (
             <div className="mx-auto max-w-6xl px-5 pb-2 lg:pr-20">
               <div className="rounded-md border bg-card px-3 py-2 text-sm">{announcement.message}</div>
             </div>
           ) : null}
         </div>
       </header>
-      {features.machines ? <DemoMachineRail machines={machines} /> : null}
+      {features.machines ? mode === "baumdienst" ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
       <div className="mx-auto max-w-6xl lg:pr-20">
-        <main className="px-5 py-6 print:max-w-none print:px-0 print:py-0">{children}</main>
+        <main className={`${mode === "baumdienst" ? "px-5 pb-6 pt-4" : "px-5 pb-24 pt-4 lg:pb-6"} print:max-w-none print:px-0 print:py-0`}>{children}</main>
         <RediOnFooter />
       </div>
     </div>
