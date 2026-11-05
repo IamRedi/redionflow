@@ -24,7 +24,18 @@ const state = vi.hoisted(() => ({
   toolCalls: [] as Array<{ name: string; args: unknown[] }>,
   requesterRead: vi.fn(), quotaRead: vi.fn(), settle: vi.fn(), generation: vi.fn(),
   companyRead: vi.fn(), identityRead: vi.fn(), failedLogin: vi.fn(), stream: vi.fn(), generationFinish: vi.fn(),
+  historyStart: vi.fn(), historyFinish: vi.fn(), trace: vi.fn(), checkpoint: vi.fn(),
+  replayed: false, archiveUnavailable: false,
 }));
+vi.mock('@/lib/assistant/history', () => {
+  class AssistantHistoryError extends Error { constructor(readonly status: number, readonly code: string) { super(code); } }
+  return { AssistantHistoryError,
+    startRun: async (...args: unknown[]) => { state.historyStart(...args); if (state.archiveUnavailable) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE'); return { conversationId: 'conversation-demo', runId: 'run-demo', replayed: state.replayed, status: state.replayed ? 'completed' : 'running', answer: state.replayed ? 'Previously archived answer' : '' }; },
+    finishRun: async (...args: unknown[]) => { state.historyFinish(...args); return true; },
+    appendTrace: async (...args: unknown[]) => { state.trace(...args); return true; },
+    checkpointRun: async (...args: unknown[]) => { state.checkpoint(...args); return true; },
+  };
+});
 vi.mock('@/lib/assistant/requester', () => ({ getRequesterContext: async () => { state.requesterRead(); return state.requester; } }));
 vi.mock('@/lib/auth/login-guard', () => ({ ensureLoginAllowed: async () => state.access, getClientIp: () => 'synthetic-test-ip', registerFailedLogin: async (...args: unknown[]) => { state.failedLogin(...args); } }));
 vi.mock('@/lib/db/tenant-context', () => ({ withTenantContext: async (_companyId: string, fn: (tx: unknown) => unknown) => fn({ companyProfile: { findUnique: async (input: unknown) => { state.companyRead(input); return state.company; } } }) }));
@@ -46,18 +57,18 @@ vi.mock('@/lib/assistant/generation', () => ({ assistantGeneration: (...args: un
 } }));
 vi.mock('ai', async original => ({ ...await original<typeof import('ai')>(), streamText: (options: CapturedGeneration) => {
   state.stream(options); state.captured = options;
-  return { toTextStreamResponse: () => {
-    if (!state.streamFailure) return new Response(new ReadableStream<Uint8Array>({ async start(controller) {
-      if (state.responseText) controller.enqueue(new TextEncoder().encode(state.responseText));
-      await options.onFinish({ finishReason: state.finishReason, totalUsage: { totalTokens: 321 } });
-      controller.close();
-    } }), { headers: { 'content-type': 'text/plain; charset=utf-8' } });
-    let count = 0;
-    return new Response(new ReadableStream<Uint8Array>({ pull(controller) {
-      if (count++ === 0) controller.enqueue(new TextEncoder().encode('Partial synthetic answer'));
-      else controller.error(new Error('synthetic-private-provider-detail'));
-    } }), { headers: { 'content-type': 'text/plain; charset=utf-8' } });
-  } };
+  return { fullStream: (async function* () {
+    yield { type: 'start-step' };
+    if (state.streamFailure) {
+      yield { type: 'text-delta', text: 'Partial synthetic answer' };
+      yield { type: 'error', error: new Error('synthetic-private-provider-detail') };
+      return;
+    }
+    if (state.responseText) yield { type: 'text-delta', text: state.responseText };
+    yield { type: 'finish-step', finishReason: state.finishReason };
+    await options.onFinish({ finishReason: state.finishReason, totalUsage: { totalTokens: 321 } });
+    yield { type: 'finish', finishReason: state.finishReason };
+  })() };
 } }));
 // Keep the real registries/schemas and turn/grounding logic; substitute only the
 // business data functions so these route tests cannot touch a DB or provider.
@@ -79,6 +90,7 @@ vi.mock('@/lib/assistant/steel-tools', () => Object.fromEntries([
 vi.mock('@/lib/assistant/company-tools', () => Object.fromEntries([
   'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory',
 ].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, rows: [] }; }])));
+vi.mock('@/lib/assistant/project-activity', () => ({ adminGetStartedSteelProjects: async (...args: unknown[]) => { state.toolCalls.push({ name: 'adminGetStartedSteelProjects', args }); return { ok: true, totalMatches: 2, projects: [{ name: 'Synthetic site' }] }; } }));
 
 import { POST } from '@/app/api/assistant/route';
 const origin = 'http://127.0.0.1:3100';
@@ -93,6 +105,7 @@ beforeEach(() => {
   state.company = { mode: 'bau' }; state.steel = true; state.identity = { status: 'not_found' };
   state.access = { ok: true }; state.quotaDenied = false; state.streamFailure = false; state.captured = null; state.toolCalls = [];
   state.responseText = 'Synthetic grounded answer'; state.finishReason = 'stop';
+  state.replayed = false; state.archiveUnavailable = false;
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
@@ -171,7 +184,7 @@ it('uses the company calendar across UTC midnight and routes fresh grounded evid
   expect(captured.prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: 'required' });
   expect(captured.prepareStep({ stepNumber: 1 })).toEqual({ toolChoice: 'auto' });
   expect(captured.prepareStep({ stepNumber: 3 })).toEqual({ toolChoice: 'none' });
-  expect(state.generation).toHaveBeenCalledWith(expect.any(Request), 'admin', state.settle);
+  expect(state.generation).toHaveBeenCalledWith(expect.any(Request), 'admin', state.settle, expect.objectContaining({ onProviderCall: expect.any(Function), onFailure: expect.any(Function) }));
 });
 it('returns quota rejection before generation or inference', async () => {
   state.quotaDenied = true;
@@ -222,4 +235,38 @@ it('marks token-limited output incomplete while retaining the original quota set
   expect(text).toContain('mos e trajto përgjigjen e pjesshme si të plotë');
   expect(state.generationFinish).toHaveBeenCalledExactlyOnceWith({ finishReason: 'length', totalUsage: { totalTokens: 321 } });
   expect(state.settle).toHaveBeenCalledExactlyOnceWith(321);
+});
+it('archives the question before inference and exactly the delivered answer including a failure notice', async () => {
+  state.streamFailure = true;
+  const response = await POST(request()); const answer = await response.text();
+  expect(response.headers.get('x-assistant-conversation-id')).toBe('conversation-demo');
+  expect(response.headers.get('x-assistant-run-id')).toBe('run-demo');
+  expect(state.historyStart.mock.invocationCallOrder[0]).toBeLessThan(state.generation.mock.invocationCallOrder[0]);
+  expect(state.historyFinish).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ adminId: 'admin-demo', companyId: 'company-demo' }), expect.objectContaining({ runId: 'run-demo', answer, status: 'partial', diagnostics: expect.objectContaining({ hasFinalAnswer: false }) }));
+});
+it('fails closed before paid generation if the conversation cannot be saved', async () => {
+  state.archiveUnavailable = true;
+  const response = await POST(request());
+  expect(response.status).toBe(503); expect((await response.json()).error).toContain('nuk u ruajt');
+  expect(state.quotaRead).not.toHaveBeenCalled(); expect(state.generation).not.toHaveBeenCalled();
+});
+it('replays the existing message without another quota reservation or model call', async () => {
+  state.replayed = true;
+  const response = await POST(request());
+  expect(await response.text()).toBe('Previously archived answer');
+  expect(state.historyFinish).not.toHaveBeenCalled(); expect(state.quotaRead).not.toHaveBeenCalled(); expect(state.stream).not.toHaveBeenCalled();
+});
+it.each([
+  ['sa projekte kan filluar pune', 'adminGetStartedSteelProjects'],
+  ['sa kantier', 'adminSearchSteelProjects'],
+] as const)('routes %s to its canonical steel source', async (question, toolName) => {
+  await (await POST(request(question))).text();
+  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName } });
+  expect(options().system).toContain('normally one or two sentences');
+  expect(options().system).toContain('Expand only when the user explicitly asks for details');
+});
+it('archives a quota rejection as a rejected run, not a successful business answer', async () => {
+  state.quotaDenied = true;
+  const response = await POST(request()); const body = await response.json();
+  expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer: body.error, status: 'rejected', errorCode: 'QUOTA_REJECTED', httpStatus: 429 }));
 });

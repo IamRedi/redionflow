@@ -3,12 +3,14 @@
 The admin assistant reads the authenticated company's operational records. It
 does not change business data, confirm work, upload files or operate devices.
 Unknown information stays unknown; it cannot answer facts that are not recorded
-or available through its tools. Existing logo/dialog/text streaming are unchanged.
+or available through its tools. The existing logo/dialog remain; the admin chat
+adds a small conversation selector and a new-chat action.
 
 `POST /api/assistant` serves administrators. `/api/assistant/worker` remains a
 separate restricted Worker Helper. A provider key does not grant workers admin
-data tools. Admin chat can retain bounded recent history, but previous answers
-are never evidence for a fresh operational answer.
+data tools. Admin conversations are archived privately for their tenant and
+administrator. Only bounded recent context is sent to the model; previous
+answers are never evidence for a fresh operational answer.
 
 ## Rule layers
 
@@ -22,13 +24,27 @@ are never evidence for a fresh operational answer.
 | Retrieval | Operational turns require a data tool first. Greetings/capability turns register only the static capability tool, then answer without private reads. |
 | Answer | Actual sources/times, exact totals versus page rows, explicit missing/legacy/approximate data. Errors are unknown, never zero. |
 | Execution | Existing four admin steps/one worker step,45s cancellation,64KiB actual model input and1,024 output tokens. Final admin step starts no new lookup. |
-| Delivery | Same text stream; empty/error/length-limited output gets a localized incomplete-response message. Raw provider/SQL errors stay private. |
+| Delivery | Consume the SDK full stream, discard tool-call introductions, and detect error/abort/empty/length/tool-only endings. An unfinished answer gets a localized notice. Raw provider/SQL errors stay private. |
+| History | Persist each accepted question before paid generation; save emitted answer, status, usage and safe diagnostics. Actor-owned history/traces require fresh ADMIN membership and tenant/admin RLS. |
+
+Answers default to one or two sentences or a compact name list. Expand only on
+an explicit request for details, evidence or a report. Necessary date, source,
+uncertainty and partial-page qualifiers remain brief. A workshop is not counted
+as a construction site. A project is not considered started just because its
+list was imported or its status is active.
 
 `admin-prompt.ts` defines trusted rules. `grounding.ts` adds source/retrieval time,
 rejects invalid dates before queries and explicitly rejects a report over24KiB
 instead of silently clipping rows into a false total. The existing64KiB actual
 model-input guard can reject accumulated context earlier. Quota metadata may be
 written; business data remain read-only.
+
+Registered tools explicitly use `strict:false` at the Responses boundary to
+preserve their existing optional Zod parameter contract. Server-side Zod and
+authorization checks still apply before execution. Omitting this setting can
+let Responses normalize optional fields into required/null arguments that fail
+the application's non-null optional schema. See the official
+[function-calling contract](https://developers.openai.com/api/docs/guides/function-calling#strict-mode).
 
 ## AL Steel production
 
@@ -38,6 +54,7 @@ Those tools retain their own non-steel audience.
 | Tool | Evidence |
 | --- | --- |
 | `adminSearchSteelProjects` | Production projects/sites, exact match count and cursor page. |
+| `adminGetStartedSteelProjects` | Exact count and names with recorded factory/site activity. Excludes import/status alone, workshops, future/invalid/deleted confirmations and unrelated legacy notes; site-only and factory-only scopes are explicit. |
 | `adminSearchSteelElements` | Imported assembly/part marks with project/list identity and pagination. |
 | `adminGetSteelElement` | Exact product properties, quantity/weight/dimensions/material, applicable process quantities and closed-route state. |
 | `adminGetSteelProductionSummary` | Canonical current progress and monthly/daily kg, from the same steel dashboard service; project details paginate separately. |
@@ -54,6 +71,39 @@ remain approximate. Missing weight is unknown. Canonical cancellations/exclusion
 remain in effect. Confirmation date is not actual work start/end. `workerIds`
 credit a team; `checkedBy` identifies the checker. Shared-team kg are not each
 member's individual output. Old unlinked name text is not silently attributed.
+
+## Private conversation archive
+
+The additive `20261105120000_assistant_history` migration creates three tables
+only: `AssistantConversation`, `AssistantRun`, `AssistantToolTrace`. No business
+record is seeded, rewritten or reset. History is separate from quota buckets
+and sensitive-action audit logs. Apply it before serving this version.
+
+`POST /api/assistant` accepts optional `conversationId` and UUID
+`clientMessageId`; the latter makes retries idempotent across lost responses.
+Only one run can be in progress per conversation. A stale interrupted run is
+marked incomplete rather than silently rerun. An archive start failure makes
+no paid provider call. Valid rate/configuration/quota rejections and calendar
+clarifications are saved too; malformed/unauthenticated requests are not a
+private transcript. Responses carry conversation/run identifiers in headers.
+
+`GET /api/assistant/conversations`, `/conversations/[id]` and
+`/api/assistant/runs/[runId]/traces` paginate private owned records with no-store
+responses. New chat retains the previous archive. The browser loads the latest
+50 turns and can navigate older pages; prompt history keeps its existing
+16-message/12,000-character bound. The old unscoped sessionStorage cache is
+neither trusted/imported nor erased. Pre-release browser-only chats cannot be
+claimed as recovered server history.
+
+Questions and emitted answers retain timestamps, terminal status and explicit
+redaction/truncation flags. Tool inputs/results/evidence are sanitized and
+bounded (8KiB input,24KiB result,256KiB aggregate/run,128 traces). Raw exceptions,
+keys, credentials and provider headers are excluded. Safe diagnostics distinguish
+provider authorization/quota/rate failures, invalid tool arguments, database
+categories, input/step/time limits, interruption and empty/incomplete output.
+Application logs contain only safe run metadata; no transcript or tool payload.
+There is no automatic transcript pruning. Normal company backups must include
+these private tables. Worker Helper has no access to this archive.
 
 ## Other operational sources
 

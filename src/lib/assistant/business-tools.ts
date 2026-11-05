@@ -4,6 +4,7 @@ import type { RequesterContext } from './requester';
 import { assistantToolDate, isAssistantDateKey, type assistantTurnContext } from './turn-context';
 import { adminSearchSteelProjects, adminSearchSteelElements, adminGetSteelElement, adminGetSteelProductionSummary, adminGetSteelProductionEvidence, adminGetSteelProjectBatches } from './steel-tools';
 import { adminSearchCompanyWorkers, adminSearchCompanyFleet, adminGetCompanyFuelReceipts, adminSearchCompanyInventory } from './company-tools';
+import { adminGetStartedSteelProjects } from './project-activity';
 
 const text = z.string().trim().min(1).max(180);
 const id = z.string().trim().min(1).max(120);
@@ -52,6 +53,11 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
 
 export function steelAssistantTools(requester: RequesterContext, turn: Turn): ToolSet {
   return {
+    adminGetStartedSteelProjects: {
+      description: 'Which/how many steel sites have started work? Returns exact count and compact project names with first/last stored activity. Defaults active STEEL_ASSEMBLY sites, any recorded factory/site activity; import/status alone never counts. scope=factory uses factory confirmations/start-done legacy events; scope=site uses field confirmations/project clock-ins. Not proof of current ongoing physical work.',
+      inputSchema: z.object({ scope: z.enum(['any', 'factory', 'site']).optional(), includeInactive: z.boolean().optional(), ...page }),
+      execute: input => adminGetStartedSteelProjects(requester, input),
+    },
     adminSearchSteelProjects: {
       description: 'Discover actual AL Steel production projects/sites by name. Returns IDs, names/status/types, exact matching count and a cursor page. Do this before using a guessed project ID.',
       inputSchema: z.object({ query: text.optional(), ...page }),

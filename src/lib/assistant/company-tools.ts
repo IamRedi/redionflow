@@ -4,6 +4,7 @@ import { freshness } from '@/lib/fleet/wanway/adapter';
 import { fuelTimeZone } from '@/lib/fleet/fuel/time';
 import { midnight, nextDay } from '@/lib/dashboard/steel-metrics';
 import type { RequesterContext } from './requester';
+import { categorizeAssistantFailure } from './diagnostics';
 
 type Tx = Prisma.TransactionClient;
 type Page = { cursor?: string; limit?: number };
@@ -42,8 +43,8 @@ async function read<T>(requester: RequesterContext, source: string, fn: (tx: Tx,
         consistency: 'Current stored records read during this request; live/provider verification is not performed.',
         data: await fn(tx, timeZone, now) };
     });
-  } catch {
-    return failure('DATA_UNAVAILABLE', 'The stored data could not be read. Do not interpret this failure as zero, no records, or an offline device.');
+  } catch (error) {
+    return { ...failure('DATA_UNAVAILABLE', 'The stored data could not be read. Do not interpret this failure as zero, no records, or an offline device.'), diagnostic: categorizeAssistantFailure(error, { source: 'database' }) };
   }
 }
 
