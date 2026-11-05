@@ -36,7 +36,7 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 
 **Steel production · Released for a real company, 5 November 2026 ([#55](https://github.com/IamRedi/redionflow/pull/55)).** A shared company catalog is live: tasks are enabled per site, while deselection and archiving preserve earlier confirmations. Each material can have its required factory and field processes. Explicitly linked tasks derive progress from confirmed material work. Uploaded photos are stored as small private WebP images. This release requires company sign-in; the public demos remain separate. Verified production source: [6c8b886](https://github.com/IamRedi/redionflow/commit/6c8b88645f8285331fc3654509f44d9458563849).
 
-**Still unverified:** successful AI illustration generation in production. The first real request retained the standard drawing; core tasks and uploaded photos remain usable.
+**AI illustrations:** One real production request generated a task illustration; its displayed result and persistence after reload were verified ([#59](https://github.com/IamRedi/redionflow/pull/59)). Generation remains optional, subject to company provider configuration and quota; the standard drawing remains available when generation is unavailable.
 
 ## Why this project?
 

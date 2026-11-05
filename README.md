@@ -34,7 +34,7 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 
 **Stahlfertigung · Am 5. November 2026 für einen realen Betrieb veröffentlicht ([#55](https://github.com/IamRedi/redionflow/pull/55)).** Ein gemeinsamer Firmenkatalog ist im Produktivbetrieb: Arbeiten werden je Baustelle aktiviert; Abwahl und Archivierung erhalten bisherige Bestätigungen. Pro Material lassen sich die nötigen Fabrik- und Baustellenschritte festlegen. Explizit verknüpfte Aufgaben übernehmen den Fortschritt aus bestätigten Materialarbeiten. Eigene Fotos werden als kleine private WebP gespeichert. Dieser Stand erfordert die Firmenanmeldung; die öffentlichen Demos bleiben getrennt. Verifizierter Produktionsstand: [6c8b886](https://github.com/IamRedi/redionflow/commit/6c8b88645f8285331fc3654509f44d9458563849).
 
-**Noch nicht verifiziert:** erfolgreiche KI-Illustrationen im Produktivbetrieb. Der erste echte Aufruf behielt die Standardzeichnung bei; Aufgaben und hochgeladene Fotos bleiben nutzbar.
+**KI-Illustrationen:** Ein realer Produktionsaufruf erzeugte eine Aufgabenillustration; ihre Anzeige und der Fortbestand nach erneutem Laden wurden geprüft ([#59](https://github.com/IamRedi/redionflow/pull/59)). Die optionale Funktion setzt den eingerichteten Firmenzugang und verfügbares Kontingent voraus; bei Nichtverfügbarkeit bleibt die Standardzeichnung erhalten.
 
 ## Warum dieses Projekt?
 
