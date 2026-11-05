@@ -9,7 +9,7 @@
 
 Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) runs are reserved for explicitly selected cloud verification.
 
-**[Deutsche Version](README.md)** · **As of 5 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **As of 6 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
@@ -37,6 +37,8 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 **Steel production · Released for a real company, 5 November 2026 ([#55](https://github.com/IamRedi/redionflow/pull/55)).** A shared company catalog is live: tasks are enabled per site, while deselection and archiving preserve earlier confirmations. Each material can have its required factory and field processes. Explicitly linked tasks derive progress from confirmed material work. Uploaded photos are stored as small private WebP images. This release requires company sign-in; the public demos remain separate. Verified production source: [6c8b886](https://github.com/IamRedi/redionflow/commit/6c8b88645f8285331fc3654509f44d9458563849).
 
 **AI illustrations:** One production Image API request saved a WebP illustration in the native orange/slate style; its work depiction and persistence after reload were verified ([PR #60](https://github.com/IamRedi/redionflow/pull/60)). Generation remains optional, subject to company provider access and image quotas; uploaded photos take precedence, and an existing image or standard drawing is retained on failure.
+
+**Warehouse, workshop and fleet · Release candidate, 6 November 2026.** Tools, clothing and site equipment are tracked as individual units with codes and sizes where relevant. Issues and returns require office and worker confirmation; colleague transfers require both colleagues. Loss and retirement remain pending until management decides. Repairs move through reported → received → repairing → ready; release requires a function test and a repair note or evidence. Private photos, invoices and history stay with the original asset. Two compact actions open fleet and workshop; the phone vehicle picker has three columns with names and plates. This locally verified candidate awaits approval and deployment of the new core release; it is not a new production or public-demo release yet.
 
 ## Why this project?
 
@@ -71,6 +73,12 @@ All images come from the running application with the fictitious demo data. None
 | BaumdienstFlow: job site | BauFlow: job site | BauFlow: overview |
 |---|---|---|
 | ![Stadtpark job site on a phone with start and stop button](docs/assets/screenshots/baumdienst-mobil-baustelle.webp) | ![Fibre-optic job site on a phone with task list](docs/assets/screenshots/bauflow-mobil-baustelle.webp) | ![Overview of fibre-optic job sites on a phone](docs/assets/screenshots/bauflow-mobil-workzone.webp) |
+
+### Steel workshop (release candidate)
+
+![Local workshop view with four repair stages and a fictional vehicle ready for use](docs/assets/screenshots/steel-workshop-ready-light-desktop.png)
+
+The real local application with fictional test data only. This is a verified candidate, not an already published extension of the public demo.
 
 ## Architecture
 
