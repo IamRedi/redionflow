@@ -24,6 +24,64 @@ Die Telefonansicht hat eine kompaktere Navigation und Einleitung, Suche und Ger�
 
 Lokale Prüfbasis: vollständige Unit-Suite 600 PASS / ein bestehender Skip; vollständige 16 Browserfälle PASS, danach sechs finale betroffene Browserprüfungen nach Korrektur der Telefonfilter PASS. Enthalten sind Mehrgeräte-Zuordnung, Herkunft/Retoure/Reparatur/Freigabe, konkurrierende Zuordnungen, NFC-/Barcode-Auflösung ohne Mutation, Upgrade mit erhaltenen Dateien, Verzeichnis-ETag, alle sechs Sprachen, Themes und natürlicher Footer. Vollständiges Lint ohne Fehler; explizites Demo-Lint hat keine neuen Fehler, die bekannten fünf Hardcoded-Text-Warnungen der bestehenden DemoTopBar bleiben separat ausgewiesen. Der erste lokale Cache-Build scheiterte an vollem Datenträger; erfolgreicher Produktionsbuild nutzt `BDF_LOCAL_BUILD_NO_CACHE=1`, ausschließlich lokal. Ohne diese Variable besitzt die Next-Konfiguration keinen zusätzlichen Webpack-Hook; Provider-Build, Abhängigkeiten und Tarif bleiben unverändert.
 
+## Logjika e inventarit dhe Werkstatt-it — referencë e plotë
+
+Kjo pjesë dokumenton sjelljen aktuale të template-it publik Musterfirma. Burimi i së vërtetës është serveri; kartelat, flota, Baustelle dhe profili i punonjësit janë pamje të të njëjtit inventar. Nuk ka kopje të pajisjes për secilin modul. Katër automjete dhe katër vegla identifikohen nga ID/kodi i pandryshuar; pjesët rezervë janë stok sasior, jo pajisje individuale.
+
+### Gjendjet dhe veprimet
+
+```mermaid
+flowchart LR
+  Lager[Magazina / në dispozicion] -->|Cakto| Assigned[Punonjës dhe/ose Baustelle]
+  Assigned -->|Transfero| Assigned
+  Assigned -->|Kthe| Lager
+  Lager -->|Defekt| Received[Pranuar në Werkstatt]
+  Assigned -->|Defekt + ruaj origjinën| Received
+  Received -->|Nis riparimin| Repairing[Në riparim]
+  Repairing -->|Shënim + provë funksioni| Repaired[Riparuar, ende e bllokuar]
+  Repaired -->|Liro, kontrolli i vlefshëm| Lager
+```
+
+| Veprimi | Kushti dhe rezultati |
+| --- | --- |
+| Cakto / ndrysho caktimin | Zgjidhet të paktën një punonjës ose Baustelle ekzistuese. Serveri zgjidh emrat nga çelësat e lejuar; refuzon punonjësin pa status AVAILABLE, Baustelle joaktive ose çelës të huaj. Nuk lejohet pajisje në Werkstatt ose me kontroll të skaduar. Ka vetëm një caktim aktual; transferimi ruan vendin e vjetër → të ri. Caktimi identik refuzohet. |
+| Kthe në magazinë | Kërkohet caktim/mbajtës aktual. Regjistrohet kthimi, pastrohet caktimi dhe vendndodhja bëhet Lager. Nuk fshihet historiku. |
+| Prano defekt | Nuk lejohet porosi tjetër e paliruar për të njëjtën pajisje. Kërkohet përshkrim; ruhen prioriteti/përgjegjësi dhe snapshot-i i origjinës. Caktimi përfundon, pajisja kalon në Werkstatt dhe krijohen ngjarjet e kthimit/pranimit. |
+| Nis riparimin | Lejohet vetëm nga Pranuar, me përgjegjës jo bosh. |
+| Përfundo riparimin | Lejohet vetëm nga Në riparim, me përshkrim të punës dhe provë funksioni të konfirmuar. Ruhet koha e përfundimit. Pajisja ende nuk është e disponueshme. |
+| Liro për punë | Kërkohet Riparuar, provë funksioni, porosi ende e paliruar dhe kontroll jo i skaduar. Ruhet koha e lirimit dhe pajisja kthehet në Lager. Caktimi i origjinës nuk rikthehet automatikisht. |
+| Regjistro kontroll | Data duhet të jetë sot ose në të ardhmen, me shënim. Përditëson afatin dhe shton ngjarje; nuk riparon ose liron automatikisht pajisjen. |
+| Përdor pjesë | Vetëm gjatë riparimit; sasi e plotë 1–10000 dhe stok i mjaftueshëm. Ulet stoku, ruhet lëvizja dhe sasia/emri/çmimi i atëhershëm në porosi. Kostoja është shuma e këtyre rreshtave. |
+| Plotëso stokun | Sasi e plotë 1–10000; stoku përfundimtar maksimumi 100000. Ruhet lëvizje e veçantë. |
+
+Disponueshmëria kontrollohet me këtë përparësi: porosi e paliruar → Werkstatt; ndryshe kontroll i skaduar → bllokim; ndryshe caktim/mbajtës → në përdorim; përndryshe në dispozicion. Datat e kontrollit dhe paraqitja e kohës përdorin Europe/Berlin. Aktori i historikut është Demo: ky template publik nuk identifikon një operator real.
+
+### Lidhjet dhe historiku
+
+Baustelle/punonjësi shfaqin caktimin aktual ose origjinën e porosisë aktive. Pas lirimit pajisja largohet nga lista aktive e origjinës; historiku dhe dokumentet mbeten të arritshme me filtrat e origjinës. Kartela e pajisjes hap porosinë aktive me veprim të veçantë. Flota filtron vetëm automjetet e inventarit; grupi i vjetër i planifikimit Motorsägen-Set nuk bëhet automjet i pestë.
+
+Çelësi i Baustelle-s rrjedh nga emri/adresa dhe ai i punonjësit nga emri/mbiemri, me SHA-256 të shkurtuar. ID-të aktuale të DB-së përdoren vetëm për lidhjet. Kështu reset-i që rikrijon ID-të ruan marrëdhëniet kur identiteti i të dhënave bazë mbetet i njëjtë. Riemërtimi ndryshon çelësin; nuk bëhet bashkim me hamendje. Origjina/emrat historikë ruhen. Dy identitete me të njëjtin çelës bllokojnë leximin e direktoriumit (503), në vend të lidhjes së gabuar.
+
+### Skanimi, ruajtja dhe gabimet
+
+Barkodi është Code 39 SVG. Teksti manual/lexuesi si tastierë, kamera ZXing dhe NFC NDEF zgjidhin të njëjtin kod. Pranohet edhe URL e të njëjtit origin në /demo/workshop me asset të njohur. Kodet tekst normalizohen me trim/uppercase; kod bosh, i gjatë mbi 2048, i panjohur, i dykuptimtë ose URL e huaj nuk krijon pajisje. Skanimi nuk bën caktim, kthim ose konsum. NFC lexon tekst/URL, nuk shkruan tag dhe nuk lidh UID të çfarëdoshëm. Kamera ngarkohet pas veprimit të përdoruesit; burimet ndërpriten kur dialogu/faqja mbyllet ose fshihet. Lejet dhe pajisjet fizike mbeten provë e veçantë.
+
+Klienti dërgon vetëm komandën e lejuar, UUID të kërkesës dhe revision aktual. Serveri merr row lock për workspace-in, kontrollon receipt-in/fingerprint-in, revision-in dhe kushtet, pastaj ruan gjendjen + receipt + versionin e ri në një transaksion. Kërkesa identike e përsëritur nuk regjistrohet dy herë. E njëjta UUID me përmbajtje tjetër ose version i vjetër jep 409; klienti rifreskon gjendjen. Pas përgjigjes së humbur mbahet kërkesa e pakonfirmuar për riprovim me të njëjtën UUID. Nuk ka ruajtje offline/localStorage të versionit të ri dhe provat e vjetra lokale nuk importohen vetë.
+
+Ka një cache të përbashkët në faqe, rifreskim çdo 8 sekonda vetëm kur faqja duket, si dhe në focus/online. ETag përfshin revision-in dhe hash-in e direktoriumit. Loading/pending/connection tregohen dhe veprimet e shkrimit bllokohen gjatë pritjes ose pa lidhje. 400 tregon veprim/të dhëna të pavlefshme; 404 modul/objekt të palejuar; 409 konflikt; 413 madhësi/kuotë; 429 ngarkesë; 503 lidhje ose direktorium i paqartë. Ndryshimet kontrollohen për të njëjtin origin dhe JSON pranohet deri në 12000 byte. Kufiri është 80 mutacione/minutë për workspace, gjendje JSON deri 4 MB dhe transaksion deri 15 sekonda. Ky mekanizëm nuk zëvendëson autentikimin e një firme reale.
+
+### Dokumentet, fotot dhe izolimi
+
+Dokumenti lidhet me pajisjen dhe opsionalisht me porosinë e saj; serveri kontrollon që lidhja përputhet. Fotoja lidhet me pajisjen ose me çelësin e Baustelle-s; foto pajisjeje mund të lidhet edhe me porosinë. Skedarët/byte-t ruhen në DB-në e demos me ID/URL të qëndrueshme. Emrat pastrohen. PDF/TXT deri 1 MB kontrollohen për format/UTF-8; JPEG/PNG/WebP deri 12 MB dekodohen me kufi 24 megapikselë, orientohen, hiqen EXIF/GPS dhe zvogëlohen në WebP deri 180 KB. SVG dhe animacionet nuk pranohen si foto. Maksimumi dy konvertime njëherësh, 160 skedarë/22 MB gjithsej; dokumentet kanë edhe kufirin 80/10 MB. Kuota, skedari, ngjarja dhe revision ruhen atomikisht: dështimi nuk lë regjistrim të pjesshëm.
+
+Moduli kërkon shprehimisht profilin baumdienst-workshop në demo, SaaS joaktiv dhe saktësisht një firmë me emrin Baumdienst Musterstadt GmbH e mode baumdienst. Jashtë këtij kombinimi UI/API/files kthejnë 404. Nuk shkruhen tabelat operative të inventarit, CompanyInventory/WorkerAsset, AL Steel, BauFlow ose shërbimet e reset-it. Tabelat e workspace-it nuk kanë FK me firmën bazë që rikrijohet natën. Upgrade-i v1→v2 bëhet vetëm një herë nën lock, ruan gjendjen/skedarët/receipts dhe rrit një revision; rollback duhet të jetë v2-compatible.
+
+### Vendimet e ndërfaqes dhe provat
+
+Ngjyrat, tipografia, sipërfaqet dhe SVG-të ekzistuese ruhen. Ka një scroll kryesor, dialog të kufizuar nga viewport-i, veprime kryesore të paktën 44px, fokus të dukshëm, lëvizje Reduced Motion dhe footer natyral me ligjore + një by RediON. Korrigjimi vizual i këtij vijimi kufizohet te skrollet që ndjekin temën dhe treguesi SVG i hapjes/mbylljes së barkodit; përdoret native details/summary që punon edhe me Enter/Space. Nuk ndryshon komandat ose skemën.
+
+Burimet zbatuese: src/lib/workshop/demo-model.ts, inventory-flow.ts, shared-contract.ts, shared-store.ts, shared-files.ts; src/components/demo/workshop/use-workshop-demo.ts, inventory-scanner.tsx, inventory-scope.tsx dhe workshop-demo.tsx; src/app/api/demo/baumdienst. Provat ekzistuese mbulojnë tranzicionet, konkurrencën/riprovimin, skedarët/kuotat, upgrade/reset, gjuhët/temat dhe rrjedhën në telefon. Pranimi i ri online dhe identiteti i deployment-it regjistrohen sipër pas publikimit; prova fizike NFC/kamera/tastierë nuk deklarohet nga një viewport telefoni në desktop.
+
 ## Vorheriger gemeinsamer Release: 61dc1b5
 
 [Werkstatt online](https://redionflow-production.up.railway.app/demo/workshop). Railway-Deployment `2cffb9f3-63a8-4115-a512-78c20a940455` war seit 5. November 2026, 11:09:12 UTC **SUCCESS**, eine gesunde Replica. Nur der vorhandene Baumdienst-Webdienst `c5ba03e9-2e72-48a7-bd24-262a8d1b322a` wurde damals auf die geprüfte Branch/Revision gesetzt. Die bestehende Demo-Profilkonfiguration blieb erhalten. Die additive Migration wurde erfolgreich angewendet; vorhandene Basisdaten wurden nicht zurückgesetzt. Spätere Dokumentations-/Mediencommits verändern den Runtime-Pin nicht.

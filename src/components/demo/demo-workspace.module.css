@@ -4,8 +4,12 @@
   height: 100dvh;
   min-width: 0;
   overflow: hidden;
+  color-scheme: light;
+  scrollbar-color: hsl(var(--muted-foreground) / .5) hsl(var(--background));
 }
+:global(.dark) .shell { color-scheme: dark; }
 .header { min-width: 0; }
+.header [data-demo-navigation] { scrollbar-width: thin; }
 .workspace {
   position: relative;
   min-height: 0;
@@ -14,6 +18,7 @@
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
   scroll-padding-block: 16px;
 }
 .workspace:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
