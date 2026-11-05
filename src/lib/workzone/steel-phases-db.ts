@@ -1,23 +1,18 @@
-import { prisma } from "@/lib/db/prisma";
-
-import { steelPhasesFor } from "./steel-phases";
+import { getCurrentCompanyId } from '@/lib/db/tenant';
+import { withTenantContext } from '@/lib/db/tenant-context';
+import { ensureSteelWorkCatalog } from '@/lib/steel-work/catalog';
+import { isSteelSiteType } from './steel-phases';
 
 /**
- * Makes sure a steel site has one row per work phase. Idempotent: existing
- * phases (and their status) are never touched.
+ * Bind existing steel phase history to the shared catalog. New unchecked
+ * choices remain definitions only; viewing a site never creates task rows.
  */
 export async function ensureSteelPhases(site: { id: string; type: string }) {
-  const phases = steelPhasesFor(site.type);
-  if (phases.length === 0) return 0;
-  const result = await prisma.treeItem.createMany({
-    data: phases.map((phase) => ({
-      baustelleId: site.id,
-      treeId: phase.treeId,
-      species: phase.key,
-      diameter: 0,
-      status: "todo" as const,
-    })),
-    skipDuplicates: true,
+  if (!isSteelSiteType(site.type)) return 0;
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return 0;
+  return withTenantContext(companyId, async tx => {
+    if (!await tx.baustelle.findFirst({ where: { id: site.id, companyProfileId: companyId }, select: { id: true } })) return 0;
+    return ensureSteelWorkCatalog(companyId, tx);
   });
-  return result.count;
 }

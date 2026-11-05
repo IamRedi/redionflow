@@ -5,7 +5,7 @@
  */
 import { FACTORY_STEP_KEYS } from "@/lib/factory/production";
 
-import { doneQty, pieces, stagePieces, type ElementState } from "./stages";
+import { doneQty, pieces, stagePieces, stagesFor, type ElementState } from "./stages";
 
 export type OutputRow = {
   baustelleId: string;
@@ -13,10 +13,11 @@ export type OutputRow = {
   weightKg: number | null;
   factoryDoneAt: Date | string | null;
   fieldDoneAt: Date | string | null;
+  processRoutes?: unknown;
   work: Array<{ stage: string; pieces: number }>;
 };
 
-export type StageOutput = { marks: number; pieces: number };
+export type StageOutput = { marks: number; pieces: number; eligibleMarks: number; eligiblePieces: number };
 
 export type SiteFactoryOutput = {
   siteId: string;
@@ -35,8 +36,9 @@ export type SiteFactoryOutput = {
 };
 
 function emptyStages() {
-  return Object.fromEntries(FACTORY_STEP_KEYS.map((key) => [key, { marks: 0, pieces: 0 }])) as Record<string, StageOutput>;
+  return Object.fromEntries(FACTORY_STEP_KEYS.map((key) => [key, emptyStage()])) as Record<string, StageOutput>;
 }
+const emptyStage = (): StageOutput => ({ marks: 0, pieces: 0, eligibleMarks: 0, eligiblePieces: 0 });
 
 export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name: string }>): SiteFactoryOutput[] {
   const bySite = new Map<string, SiteFactoryOutput>();
@@ -46,7 +48,7 @@ export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name
     const entry =
       bySite.get(site.id) ??
       ({ siteId: site.id, siteName: site.name, marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, mountedPieces: 0, stages: emptyStages() } satisfies SiteFactoryOutput);
-    const state: ElementState = { list: "assembly", quantity: row.quantity, work: row.work, factoryDoneAt: row.factoryDoneAt, fieldDoneAt: row.fieldDoneAt };
+    const state: ElementState = { list: "assembly", quantity: row.quantity, work: row.work, factoryDoneAt: row.factoryDoneAt, fieldDoneAt: row.fieldDoneAt, processRoutes: row.processRoutes };
     const count = pieces(state);
     const kgPiece = row.weightKg ?? 0;
     const out = doneQty(state, "factory");
@@ -57,11 +59,14 @@ export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name
     entry.doneKg += kgPiece * out;
     if (out >= count) entry.doneMarks += 1;
     entry.mountedPieces += doneQty(state, "field");
-    for (const key of FACTORY_STEP_KEYS) {
+    for (const key of stagesFor("factory", state.list, row.processRoutes)) {
+      const stage = entry.stages[key] ??= emptyStage();
+      stage.eligibleMarks += 1;
+      stage.eligiblePieces += count;
       const through = stagePieces(state, key);
       if (through === 0) continue;
-      entry.stages[key].marks += through >= count ? 1 : 0;
-      entry.stages[key].pieces += through;
+      stage.marks += through >= count ? 1 : 0;
+      stage.pieces += through;
     }
     bySite.set(site.id, entry);
   }
@@ -73,9 +78,12 @@ export function totalOutput(sites: SiteFactoryOutput[]): Omit<SiteFactoryOutput,
   const total = { marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, mountedPieces: 0, stages: emptyStages() };
   for (const site of sites) {
     for (const key of ["marks", "pieces", "kg", "donePieces", "doneKg", "doneMarks", "mountedPieces"] as const) total[key] += site[key];
-    for (const key of FACTORY_STEP_KEYS) {
-      total.stages[key].marks += site.stages[key]?.marks ?? 0;
-      total.stages[key].pieces += site.stages[key]?.pieces ?? 0;
+    for (const [key, stage] of Object.entries(site.stages)) {
+      const summed = total.stages[key] ??= emptyStage();
+      summed.marks += stage.marks;
+      summed.pieces += stage.pieces;
+      summed.eligibleMarks += stage.eligibleMarks;
+      summed.eligiblePieces += stage.eligiblePieces;
     }
   }
   return total;

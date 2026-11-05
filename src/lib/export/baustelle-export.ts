@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/db/prisma";
+import { withTenantContext } from '@/lib/db/tenant-context';
+import { isSteelSiteType } from '@/lib/workzone/steel-phases';
+import { projectSteelTasks } from '@/lib/steel-work/progress';
 import { createStoredZip } from "@/lib/export/zip";
 import { getFeatures, type CompanyMode } from "@/lib/mode-config";
 import { BAU_EXPORT_TEXT, EXPORT_TEXT, normalizeExportLang } from "./baustelle/text";
@@ -23,15 +25,17 @@ export async function buildBaustelleExportZip(baustelleId: string, companyProfil
   // Branch cuts and the extra-work surcharge are tree data; BauFlow leaves them out.
   const showTreeFields = getFeatures(mode).trees;
   const headRows = showTreeFields ? 2 : 1;
-  const baustelle = await prisma.baustelle.findFirst({
+  const baustelle = await withTenantContext(companyProfileId, tx => tx.baustelle.findFirst({
     where: { id: baustelleId, companyProfileId },
     include: {
       treeItems: {
         orderBy: [{ status: "asc" }, { treeId: "asc" }],
         include: {
+          steelTask: { include: { definition: true } },
           completedByWorker: { select: { firstName: true, lastName: true } },
         },
       },
+      siteElements: { where: { companyProfileId }, include: { work: { where: { companyProfileId }, orderBy: { checkedAt: 'asc' } } } },
       manualTasks: {
         orderBy: { createdAt: "asc" },
         include: {
@@ -64,12 +68,13 @@ export async function buildBaustelleExportZip(baustelleId: string, companyProfil
         },
       },
     },
-  });
+  }));
 
   if (!baustelle) return null;
+  const reportTrees = isSteelSiteType(baustelle.type) ? projectSteelTasks(baustelle.treeItems, baustelle.siteElements.map(element => ({ ...element, list: element.list === 'part' ? 'part' as const : 'assembly' as const }))) : baustelle.treeItems;
 
   const archiveRoot = `${sanitizeSegment(baustelle.name)}-${sanitizeSegment(baustelle.id)}`;
-  const normalizedTrees = baustelle.treeItems.map((tree) => {
+  const normalizedTrees = reportTrees.map((tree) => {
     const meta = parseTreeMeta(tree.notes);
     return {
       treeId: tree.treeId,
@@ -119,10 +124,10 @@ export async function buildBaustelleExportZip(baustelleId: string, companyProfil
           <tr><th>${htmlEscape(text.type)}</th><td>${htmlEscape(baustelle.type)}</td></tr>
           <tr><th>${htmlEscape(text.address)}</th><td>${htmlEscape(baustelle.address ?? "-")}</td></tr>
           <tr><th>${htmlEscape(text.description)}</th><td>${htmlEscape(baustelle.description ?? "-")}</td></tr>
-          <tr><th>${htmlEscape(text.treesTotal)}</th><td>${baustelle.treeItems.length}</td></tr>
-          <tr><th>${htmlEscape(text.done)}</th><td>${baustelle.treeItems.filter((tree) => tree.status === "done").length}</td></tr>
-          <tr><th>${htmlEscape(text.blocked)}</th><td>${baustelle.treeItems.filter((tree) => tree.status === "blocked").length}</td></tr>
-          <tr><th>${htmlEscape(text.open)}</th><td>${baustelle.treeItems.filter((tree) => tree.status === "todo").length}</td></tr>
+          <tr><th>${htmlEscape(text.treesTotal)}</th><td>${reportTrees.length}</td></tr>
+          <tr><th>${htmlEscape(text.done)}</th><td>${reportTrees.filter((tree) => tree.status === "done").length}</td></tr>
+          <tr><th>${htmlEscape(text.blocked)}</th><td>${reportTrees.filter((tree) => tree.status === "blocked").length}</td></tr>
+          <tr><th>${htmlEscape(text.open)}</th><td>${reportTrees.filter((tree) => tree.status === "todo").length}</td></tr>
         </tbody>
       </table>
     `,
@@ -377,6 +382,12 @@ export async function buildBaustelleExportZip(baustelleId: string, companyProfil
   ];
 
   const archiveName = `${archiveRoot}-export.zip`;
+  if (isSteelSiteType(baustelle.type)) entries.push({ name: `${archiveRoot}/steel/production.json`, data: asText(JSON.stringify({
+    version: 1, siteId: baustelle.id,
+    // Raw history is separate from current projected progress, including disabled tasks.
+    tasks: baustelle.treeItems, currentTasks: reportTrees,
+    elements: baustelle.siteElements,
+  }, null, 2)) });
   return {
     archiveName,
     buffer: createStoredZip(entries),

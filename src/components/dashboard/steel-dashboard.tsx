@@ -9,6 +9,7 @@ import { steelCopy } from '@/lib/dashboard/steel-copy';
 import { t } from '@/lib/i18n';
 import { reportLocale } from '@/lib/workzone/date-utils';
 import { productionDate, productionNumber } from '@/lib/dashboard/steel-format';
+import { sideOfStage } from '@/lib/elements/stages';
 import styles from './steel-dashboard.module.css';
 const kgUnit = 'kg';
 
@@ -57,7 +58,8 @@ export function SteelDashboard({ data: d, lang }: {
     const missing = SERIES.reduce((a, s) => a + d.totals[s].missingPieces, 0), legacy = SERIES.reduce((a, s) => a + d.totals[s].legacyPieces, 0);
     const offset = (new Date(`${d.month}-01T12:00Z`).getUTCDay() + 6) % 7;
     const readyPct = d.totalProgress.totalPieces ? Math.round(100 * d.totalProgress.readyPieces / d.totalProgress.totalPieces) : 0;
-    const stageName = (stage: string) => t(`${['received', 'mounted', 'bolted', 'touchup'].includes(stage) ? 'elements.fieldStages' : 'factory.steps'}.${stage}`, lang);
+    const stageName = (stage: string) => d.processDefinitions?.find(definition => definition.key === stage)?.label || t(`${sideOfStage(stage) === 'field' ? 'elements.fieldStages' : 'factory.steps'}.${stage}`, lang);
+    const stageKeys = (progress: typeof d.totalProgress, side: 'factory' | 'field') => Object.keys(progress.stages).filter(key => sideOfStage(key) === side && progress.stages[key].eligiblePieces > 0);
     const badge = (m: Metric) => <span className={styles.micro}>{n(m.pieces, 0)} {c.pieces}{m.missingPieces > 0 ? ` · ${n(m.missingPieces, 0)} ${c.missing}` : ''}</span>;
     const trendDays = d.days.filter(day => day.key <= d.today), max = Math.max(1, ...trendDays.flatMap(day => visible.map(s => day.metrics[s].kg)));
     const x = (i: number) => 50 + i / Math.max(1, trendDays.length - 1) * 650;
@@ -68,8 +70,7 @@ export function SteelDashboard({ data: d, lang }: {
             return <article key={p.id} className={styles.projectCard} data-testid={`production-project-${p.id}`}>
             <div className={styles.projectTop}><div><span className={styles.projectOverline}>{c.project}</span><h3>{p.name}</h3><span className={styles.micro}>{n(p.progress.kg)} {kgUnit} · {n(p.progress.totalPieces, 0)} {c.pieces} · {c.planned}</span></div><div className={styles.ring} role="img" aria-label={`${pct}% ${c.percentHint}`} style={{ background: `conic-gradient(var(--green) ${pct}%, var(--track) 0)` }}><span>{pct}<small>%</small></span></div></div>
             <div className={styles.projectSummary}><span>{c.completed}<strong>{n(p.progress.readyKg)} {kgUnit}</strong></span><span>{c.mounted}<strong>{n(p.progress.mountedKg)} {kgUnit}</strong></span></div>
-            <div className={styles.stageGroup} data-side="factory"><span>{c.factory}</span><div>{['cutting', 'assembly', 'welding', 'cleaning', 'coating', 'loading'].map(key => <div key={key} className={styles.stage}><span>{stageName(key)}</span><strong>{n(p.progress.stages[key].kg)}<small>{` ${kgUnit}`}</small></strong><div><i style={{ width: `${p.progress.totalPieces ? p.progress.stages[key].pieces / p.progress.totalPieces * 100 : 0}%` }}/></div><small>{n(p.progress.stages[key].pieces, 0)} {c.pieces}</small></div>)}</div></div>
-            <div className={styles.stageGroup}><span>{c.field}</span><div>{['received', 'mounted', 'bolted', 'touchup'].map(key => <div key={key} className={styles.stage}><span>{stageName(key)}</span><strong>{n(p.progress.stages[key].kg)}<small>{` ${kgUnit}`}</small></strong><div><i style={{ width: `${p.progress.totalPieces ? p.progress.stages[key].pieces / p.progress.totalPieces * 100 : 0}%` }}/></div><small>{n(p.progress.stages[key].pieces, 0)} {c.pieces}</small></div>)}</div></div>
+            {(['factory', 'field'] as const).map(side => stageKeys(p.progress, side).length > 0 && <div key={side} className={styles.stageGroup} data-side={side}><span>{side === 'factory' ? c.factory : c.field}</span><div>{stageKeys(p.progress, side).map(key => <div key={key} className={styles.stage}><span>{stageName(key)}</span><strong>{n(p.progress.stages[key].kg)}<small>{` ${kgUnit}`}</small></strong><div><i style={{ width: `${p.progress.stages[key].eligiblePieces ? p.progress.stages[key].pieces / p.progress.stages[key].eligiblePieces * 100 : 0}%` }}/></div><small>{n(p.progress.stages[key].pieces, 0)} / {n(p.progress.stages[key].eligiblePieces, 0)} {c.pieces}</small></div>)}</div></div>)}
             {p.progress.missingPieces > 0 && <p className={styles.qualityInline}>{n(p.progress.missingPieces, 0)} {c.missing}</p>}
             {!d.readOnly && <Link className={styles.projectLink} href={`/workzone/baustellen/${p.id}`}>{c.openList}<ArrowUpRight size={14}/></Link>}
           </article>;

@@ -42,6 +42,20 @@ describe('steel production evidence', () => {
         expect(progress).toMatchObject({ totalPieces: 4, kg: 500, readyPieces: 2, readyKg: 250, mountedKg: 125 });
         expect(progress.stages.cutting.pieces).toBe(0);
     });
+    it('measures current selected processes independently while retaining immutable historical throughput', () => {
+        const fp = `fp-${'a'.repeat(24)}`, sp = `sp-${'b'.repeat(24)}`;
+        const configured = element({ processRoutes: { v: 1, factory: ['cutting', fp], field: [sp] }, work: [{ stage: 'cutting', pieces: 4 }, { stage: fp, pieces: 2 }, { stage: sp, pieces: 1 }, { stage: 'assembly', pieces: 4 }] });
+        const other = element({ id: 'other', quantity: 6, processRoutes: { v: 1, factory: ['cutting'], field: [] } });
+        const progress = projectProgress([configured, other]);
+        expect(progress).toMatchObject({ totalPieces: 10, readyPieces: 2, readyKg: 250 });
+        expect(progress.stages[fp]).toMatchObject({ pieces: 2, kg: 250, eligibleMarks: 1, eligiblePieces: 4, eligibleKg: 500 });
+        expect(progress.stages[sp]).toMatchObject({ pieces: 1, kg: 125, eligiblePieces: 4 });
+        expect(progress.stages.cutting.eligiblePieces).toBe(10);
+        expect(progress.stages.assembly).toMatchObject({ pieces: 0, kg: 0, eligiblePieces: 0 });
+        const historical = calendarMetrics('2026-11', 'Europe/Tirane', [configured], [work({ stage: 'assembly' }), work({ id: 'custom-work', stage: fp, pieces: 4 })]);
+        expect(historical.totals.assembled).toMatchObject({ pieces: 2, kg: 250, legacyPieces: 0 });
+        expect(historical.totals.cutAssemblies.kg).toBe(0);
+    });
     it('handles leap months and DST boundaries without server-local date arithmetic', () => {
         expect(monthDays('2028-02')).toHaveLength(29);
         expect(monthKey('2026-99', '2026-11-04')).toBe('2026-11');

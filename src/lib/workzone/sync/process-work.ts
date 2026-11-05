@@ -161,6 +161,7 @@ export async function processCheckTree(
     where: { id: treeItemId },
     select: {
       id: true,
+      treeId: true,
       status: true,
       updatedAt: true,
       baustelle: { select: { id: true, companyProfileId: true, isActive: true } },
@@ -175,6 +176,11 @@ export async function processCheckTree(
   if (tree.baustelle.companyProfileId !== auth.companyProfileId) {
     await recordOutcome(action.id, auth, action, "rejected", m.companyMismatch);
     return { id: action.id, outcome: "rejected", message: m.companyMismatch };
+  }
+
+  if (tree.treeId.startsWith('steel-')) {
+    await recordOutcome(action.id, auth, action, 'rejected', m.steelTaskOnline);
+    return { id: action.id, outcome: 'rejected', message: m.steelTaskOnline };
   }
 
   if (!tree.baustelle.isActive) {

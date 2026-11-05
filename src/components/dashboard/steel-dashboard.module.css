@@ -735,6 +735,7 @@
   min-width: 0
 }
 .stage>span {
+  overflow-wrap: anywhere;
   font-size: 9px;
   color: var(--subtle);
   display: block;

@@ -106,3 +106,21 @@ it('denies anonymous, worker and mixed signed sessions instead of taking a compa
     expect(await productionAudience()).toBeNull();
     expect(dayKey(new Date('2026-10-31T23:30Z'), 'Europe/Tirane')).toBe('2026-11-01');
 });
+it('exposes safe registered process labels and selected denominators without relabeling custom history as canonical kg or leaking operators to monitors', async () => {
+    const fp = `fp-${'a'.repeat(24)}`, sp = `sp-${'b'.repeat(24)}`, e = await add();
+    await prisma.steelWorkDefinition.createMany({ data: [
+        { companyProfileId: tenants[0].company.id, kind: 'factory', key: fp, label: 'Synthetic named process', archivedAt: new Date() },
+        { companyProfileId: tenants[0].company.id, kind: 'field', key: sp, label: 'Synthetic field process' },
+    ] });
+    await prisma.siteElement.update({ where: { id: e.id }, data: { processRoutes: { v: 1, factory: [fp], field: [sp] } } });
+    await prisma.siteElementWork.create({ data: { companyProfileId: tenants[0].company.id, elementId: e.id, stage: fp, pieces: 2,
+        workerIds: [tenants[0].worker.id], workerNames: 'PRIVATE_CUSTOM_OPERATOR', checkedByName: 'PRIVATE_CUSTOM_CHECKER', checkedAt: new Date('2026-11-03T12:00Z'),
+        productionSnapshot: { v: 1, list: 'assembly', mark: e.mark, quantity: 4, unitWeightKg: 125 } } });
+    const data = await read(true, { month: '2026-11', day: '2026-11-03' });
+    expect(data.processDefinitions).toEqual(expect.arrayContaining([{ key: fp, kind: 'factory', label: 'Synthetic named process' }, { key: sp, kind: 'field', label: 'Synthetic field process' }]));
+    expect(data.totalProgress).toMatchObject({ readyPieces: 2, stages: { [fp]: { pieces: 2, kg: 250, eligiblePieces: 4 }, [sp]: { pieces: 0, eligiblePieces: 4 } } });
+    expect(data.totals).toMatchObject({ cutParts: { kg: 0 }, cutAssemblies: { kg: 0 }, assembled: { kg: 0 } });
+    expect(data.dayProjects[0].operations).toMatchObject([{ stage: fp, metric: { kg: 250 } }]);
+    expect(JSON.stringify(data)).not.toContain('PRIVATE_CUSTOM');
+    expect(data.processDefinitions.every(definition => Object.keys(definition).sort().join(',') === 'key,kind,label')).toBe(true);
+});

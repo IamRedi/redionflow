@@ -242,6 +242,9 @@ model User {
 }
 
 model CompanyProfile {
+  steelWorkDefinitions SteelWorkDefinition[]
+  steelWorkVisuals SteelWorkVisual[]
+  steelSiteTasks SteelSiteTask[]
   assistantQuotaBuckets AssistantQuotaBucket[]
   assistantConversations AssistantConversation[]
   assistantRuns AssistantRun[]
@@ -1103,6 +1106,7 @@ model MachineBaustellePresence {
 }
 
 model Baustelle {
+  steelTasks SteelSiteTask[]
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -1324,6 +1328,7 @@ model DailyWorkPlanSnapshotRow {
 }
 
 model TreeItem {
+  steelTask SteelSiteTask?
   id          String    @id @default(cuid())
   treeId      String
   baustelleId String
@@ -1350,6 +1355,8 @@ model TreeItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([baustelleId, id])
 
   @@unique([baustelleId, treeId])
   @@index([baustelleId])
@@ -1669,6 +1676,10 @@ model SiteFile {
 /// parts like plate 1001). The factory and the field team check off, per
 /// element and stage, which workers made or mounted it.
 model SiteElement {
+  processRoutes Json?
+  processRevision Int @default(0)
+  processEditedBy String?
+  processEditedAt DateTime?
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -1707,6 +1718,63 @@ model SiteElement {
 
 /// Who did one stage of one element: factory steps (cutting ... loading) or
 /// "mounted" on site. Saved by the engineer who checked it.
+model SteelWorkDefinition {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  kind String
+  key String
+  label String @default("")
+  description String @default("")
+  sortOrder Int @default(0)
+  revision Int @default(1)
+  archivedAt DateTime?
+  linkedProcessKey String?
+  linkedList String?
+  linkedKind String?
+  visualUpdatedAt DateTime?
+  visualStatus String @default("fallback")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  siteTasks SteelSiteTask[]
+  visual SteelWorkVisual?
+  @@unique([companyProfileId,id])
+  @@unique([companyProfileId,key])
+  @@index([companyProfileId,kind,archivedAt,sortOrder])
+}
+
+model SteelWorkVisual {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  definitionId String @unique
+  definition SteelWorkDefinition @relation(fields:[companyProfileId,definitionId],references:[companyProfileId,id],onDelete:Cascade)
+  data Bytes?
+  scene Json?
+  mime String
+  updatedAt DateTime @default(now()) @updatedAt
+  @@unique([companyProfileId,definitionId])
+}
+
+model SteelSiteTask {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  baustelleId String
+  baustelle Baustelle @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade)
+  definitionId String
+  definition SteelWorkDefinition @relation(fields:[companyProfileId,definitionId],references:[companyProfileId,id],onDelete:Restrict)
+  treeItemId String @unique
+  treeItem TreeItem @relation(fields:[baustelleId,treeItemId],references:[baustelleId,id],onDelete:Cascade)
+  enabled Boolean @default(true)
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  @@unique([companyProfileId,baustelleId,definitionId])
+  @@unique([baustelleId,treeItemId])
+  @@index([companyProfileId,definitionId])
+}
+
 model SiteElementWork {
   id                String         @id @default(cuid())
   companyProfileId  String

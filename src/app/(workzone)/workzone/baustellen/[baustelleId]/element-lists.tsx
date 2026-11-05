@@ -1,9 +1,14 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, Lock, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
+import Image from 'next/image';
+import { SlidersHorizontal } from 'lucide-react';
+import { ElementProcessEditor } from '@/components/steel/element-process-editor';
+import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
+import { readProcessRoutes } from '@/lib/elements/stages';
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed, routeStages, sideOfStage, stagePieces, stageProgress, stageRemaining, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
@@ -38,6 +43,8 @@ export type ElementView = {
   factoryDoneBy: string | null;
   fieldDoneAt: string | null;
   fieldDoneBy: string | null;
+  processRoutes?: unknown;
+  processRevision?: number;
   work: ElementWorkView[];
 };
 
@@ -52,9 +59,12 @@ const STATUS_STYLE: Record<Status, { badge: string; pill: string }> = {
   done: { badge: "bg-green-600 text-white", pill: "bg-green-600/15 text-green-700 dark:text-green-300" },
 };
 
-function stageLabel(stage: string, lang: string) {
-  return sideOfStage(stage) === "field" ? t(`elements.fieldStages.${stage}`, lang) : t(`factory.steps.${stage}`, lang);
+function stageLabel(stage: string, lang: string, definitions: SteelWorkDefinitionView[] = []) {
+  const definition = definitions.find(definition => definition.key === stage);
+  return definition?.label || (sideOfStage(stage) === "field" ? t(`elements.fieldStages.${stage}`, lang) : t(`factory.steps.${stage}`, lang));
 }
+
+const processButton = (lang: string) => ({ sq: 'Proceset', en: 'Processes', de: 'Prozesse', it: 'Processi', ro: 'Procese', pl: 'Procesy' })[lang] ?? 'Processes';
 
 function statusLabel(status: Status, lang: string) {
   return status === "done" ? t("elements.statusDone", lang) : status === "working" ? t("elements.statusWorking", lang) : t("elements.statusWaiting", lang);
@@ -85,11 +95,13 @@ export function ElementListButtons({
   elements,
   workers,
   can,
+  definitions = [],
 }: {
   site: { id: string; name: string };
   elements: ElementView[];
   workers: ElementWorkerOption[];
   can: { factory: boolean; field: boolean; office: boolean };
+  definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang: lang } = useLanguage();
   const [open, setOpen] = useState<ElementSide | null>(null);
@@ -158,6 +170,8 @@ export function ElementListButtons({
             workers={workers}
             canEdit={open === "factory" ? can.factory : can.field}
             canImport={can.office}
+            canPlan={can.office || can.factory || can.field}
+            definitions={definitions}
             onClose={() => setOpen(null)}
           />
         ) : null}
@@ -168,6 +182,20 @@ export function ElementListButtons({
 
 type View = { kind: "list" } | { kind: "element"; id: string } | { kind: "stage"; id: string; stage: string };
 
+/** Exiting views keep their animation, but their previous actions are no longer available. */
+function AnimatedElementView({ isList, children }: { isList: boolean; children: ReactNode }) {
+  const isPresent = useIsPresent();
+  return <motion.div
+    inert={!isPresent}
+    aria-hidden={!isPresent || undefined}
+    initial={{ opacity: 0, x: isList ? -16 : 16 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.16 }}
+    className="space-y-3"
+  >{children}</motion.div>;
+}
+
 function ElementListSheet({
   side,
   site,
@@ -176,6 +204,8 @@ function ElementListSheet({
   workers,
   canEdit,
   canImport,
+  canPlan,
+  definitions,
   onClose,
 }: {
   side: ElementSide;
@@ -185,6 +215,8 @@ function ElementListSheet({
   workers: ElementWorkerOption[];
   canEdit: boolean;
   canImport: boolean;
+  canPlan: boolean;
+  definitions: SteelWorkDefinitionView[];
   onClose: () => void;
 }) {
   const { currentLang: lang } = useLanguage();
@@ -192,6 +224,7 @@ function ElementListSheet({
   const [list, setList] = useState<ElementList>("assembly");
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [processTarget, setProcessTarget] = useState<ElementView[] | null>(null);
   // The crew picked last per step, offered again on the next element.
   const lastPick = useRef<Record<string, string[]>>({});
 
@@ -206,13 +239,9 @@ function ElementListSheet({
   return (
     <Sheet onClose={onClose} label={label} closeLabel={t("factory.close", lang)}>
       <AnimatePresence mode="wait" initial={false}>
-        <motion.div
+        <AnimatedElementView
           key={view.kind === "list" ? "list" : view.kind === "element" ? `e-${view.id}` : `s-${view.id}-${view.stage}`}
-          initial={{ opacity: 0, x: view.kind === "list" ? -16 : 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.16 }}
-          className="space-y-3"
+          isList={view.kind === "list"}
         >
           {view.kind === "list" || !current ? (
             <ListView
@@ -226,13 +255,18 @@ function ElementListSheet({
               query={query}
               setQuery={setQuery}
               canImport={canImport}
+              canPlan={canPlan}
+              definitions={definitions}
+              onProcesses={(elements) => setProcessTarget(elements)}
               onOpen={(id) => setView({ kind: "element", id })}
             />
           ) : view.kind === "element" ? (
             <ElementDetail
               element={current}
               side={side}
-              canEdit={canEdit}
+              canEdit={canEdit && (side === 'factory' || onFieldList(current))}
+              definitions={definitions}
+              onProcesses={canPlan ? () => setProcessTarget([current]) : undefined}
               onBack={() => setView({ kind: "list" })}
               onStage={(stage) => setView({ kind: "stage", id: current.id, stage })}
               onDone={(doneAt, doneBy) =>
@@ -247,8 +281,9 @@ function ElementListSheet({
               element={current}
               stage={view.stage}
               side={side}
-              canEdit={canEdit}
+              canEdit={canEdit && stagesFor(side, current.list, current.processRoutes).includes(view.stage) && (side === 'factory' || onFieldList(current))}
               workers={workers}
+              definitions={definitions}
               lastPick={lastPick}
               onBack={() => setView({ kind: "element", id: current.id })}
               onAdded={(work) => {
@@ -258,8 +293,14 @@ function ElementListSheet({
               onRemoved={(workId) => patch(current.id, (element) => ({ ...element, work: element.work.filter((entry) => entry.id !== workId) }))}
             />
           )}
-        </motion.div>
+        </AnimatedElementView>
       </AnimatePresence>
+      <ElementProcessEditor open={processTarget !== null} onOpenChange={open => { if (!open) setProcessTarget(null); }} siteId={site.id} side={side}
+        elements={(processTarget ?? []).map(target => items.find(item => item.id === target.id) ?? target)} definitions={definitions}
+        onApplied={(stages, revisions) => {
+          const ids = new Set(processTarget?.map(element => element.id));
+          setItems(all => all.map(element => ids.has(element.id) ? { ...element, processRoutes: { ...(readProcessRoutes(element.processRoutes) ?? { v: 1, factory: null, field: null }), [side]: stages }, processRevision: revisions[element.id] ?? element.processRevision } : element));
+        }} />
     </Sheet>
   );
 }
@@ -275,6 +316,9 @@ function ListView({
   query,
   setQuery,
   canImport,
+  canPlan,
+  definitions,
+  onProcesses,
   onOpen,
 }: {
   side: ElementSide;
@@ -287,12 +331,16 @@ function ListView({
   query: string;
   setQuery: (query: string) => void;
   canImport: boolean;
+  canPlan: boolean;
+  definitions: SteelWorkDefinitionView[];
+  onProcesses: (elements: ElementView[]) => void;
   onOpen: (id: string) => void;
 }) {
   const { currentLang: lang } = useLanguage();
   const router = useRouter();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [importing, startImport] = useTransition();
+  const [configureAfterImport, setConfigureAfterImport] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const lists: ElementList[] = side === "factory" ? ["assembly", "part"] : ["assembly"];
@@ -302,7 +350,7 @@ function ListView({
   const shown = ofList;
   // Pieces not yet out of the factory (also of elements partly on site).
   const stillInFactory = side === "field" ? ofList.reduce((sum, element) => sum + element.quantity - doneQty(element, "factory"), 0) : 0;
-  const stages = stagesFor(side, activeList);
+  const stages = [...new Set(shown.flatMap(element => [...stagesFor(side, element.list, element.processRoutes)]))];
   const progress = stageProgress(shown, side);
   const pieces = shown.reduce((sum, element) => sum + element.quantity, 0);
   const totalKg = shown.reduce((sum, element) => sum + (element.weightKg ?? 0) * element.quantity, 0);
@@ -332,7 +380,7 @@ function ListView({
     startImport(async () => {
       const result = await importElementListsAction(form);
       setMessage({ ok: result.ok, text: result.message });
-      if (result.ok) router.refresh();
+      if (result.ok) { router.refresh(); setConfigureAfterImport(true); }
     });
   }
 
@@ -393,16 +441,17 @@ function ListView({
               />
             </>
           ) : null}
+          {canPlan ? <button type="button" onClick={() => onProcesses(ofList)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4 text-orange-600" />{processButton(lang)}</button> : null}
         </div>
         {shown.length > 0 ? (
           <div className={`mt-3 grid gap-1.5 ${stages.length > 4 ? "grid-cols-3 sm:grid-cols-6" : stages.length > 1 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
             {stages.map((stage) => {
-              const entry = progress[stage] ?? { done: 0, total: 0 };
-              const pct = entry.total > 0 ? Math.round((entry.done / entry.total) * 100) : 0;
+              const entry = progress[stage] ?? { done: 0, total: 0, pieces: 0, totalPieces: 0 };
+              const pct = entry.totalPieces > 0 ? Math.round((entry.pieces / entry.totalPieces) * 100) : 0;
               return (
                 <div key={stage} className="min-w-0 rounded-lg bg-muted/60 px-2 py-1.5">
                   <div className="flex items-baseline justify-between gap-1">
-                    <span className="truncate text-[11px] font-semibold">{stageLabel(stage, lang)}</span>
+                    <span className="truncate text-[11px] font-semibold">{stageLabel(stage, lang, definitions)}</span>
                     <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
                       {entry.done}/{entry.total}
                     </span>
@@ -418,6 +467,7 @@ function ListView({
         {stillInFactory > 0 ? <p className="mt-2 text-xs text-muted-foreground">{fill(t("elements.stillInFactory", lang), { n: stillInFactory })}</p> : null}
       </div>
       {message ? <p className={`text-sm font-medium ${message.ok ? "text-green-700 dark:text-green-400" : "text-red-600"}`}>{message.text}</p> : null}
+      {configureAfterImport && canPlan ? <button type="button" onClick={() => { onProcesses(ofList); setConfigureAfterImport(false); }} className="min-h-11 rounded-xl border border-orange-500/50 bg-orange-500/10 px-4 text-sm font-semibold">{processButton(lang)} · {ofList.length} {t('elements.marks', lang)}</button> : null}
 
       {items.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{canImport ? t("elements.emptyOffice", lang) : t("elements.empty", lang)}</p>
@@ -475,7 +525,7 @@ function ListView({
           <ul className="space-y-1.5">
             {visible.map((element) => (
               <li key={element.id}>
-                <ElementRow element={element} stages={stages} side={side} locked={side === "field" && !onFieldList(element)} onOpen={() => onOpen(element.id)} />
+                <ElementRow element={element} stages={stagesFor(side, element.list, element.processRoutes)} definitions={definitions} side={side} locked={side === "field" && !onFieldList(element)} canPlan={canPlan} onOpen={() => onOpen(element.id)} />
               </li>
             ))}
           </ul>
@@ -496,7 +546,7 @@ function stepTone(element: ElementView, stage: string, status: Status) {
   return through >= cap ? "bg-green-600" : "bg-green-600/45";
 }
 
-function ElementRow({ element, stages, side, locked = false, onOpen }: { element: ElementView; stages: readonly string[]; side: ElementSide; locked?: boolean; onOpen: () => void }) {
+function ElementRow({ element, stages, definitions, side, locked = false, canPlan, onOpen }: { element: ElementView; stages: readonly string[]; definitions: SteelWorkDefinitionView[]; side: ElementSide; locked?: boolean; canPlan: boolean; onOpen: () => void }) {
   const { currentLang: lang } = useLanguage();
   const status = elementStatus(element, side);
   const total = (element.weightKg ?? 0) * element.quantity;
@@ -506,8 +556,8 @@ function ElementRow({ element, stages, side, locked = false, onOpen }: { element
     <button
       type="button"
       onClick={onOpen}
-      disabled={locked}
-      aria-disabled={locked}
+      disabled={locked && !canPlan}
+      aria-disabled={locked && !canPlan}
       title={locked ? t("elements.lockedInFactory", lang) : undefined}
       className={`flex w-full items-center gap-3 rounded-2xl border p-2.5 text-left ${locked ? "cursor-not-allowed border-dashed bg-muted/40 opacity-60" : "bg-card active:scale-[0.99]"}`}
     >
@@ -539,7 +589,7 @@ function ElementRow({ element, stages, side, locked = false, onOpen }: { element
         {stages.length > 1 ? (
           <span className="mt-1.5 flex gap-1">
             {stages.map((stage) => (
-              <span key={stage} title={stageLabel(stage, lang)} className={`h-1.5 min-w-0 flex-1 rounded-full ${stepTone(element, stage, status)}`} />
+              <span key={stage} title={stageLabel(stage, lang, definitions)} className={`h-1.5 min-w-0 flex-1 rounded-full ${stepTone(element, stage, status)}`} />
             ))}
           </span>
         ) : null}
@@ -550,7 +600,7 @@ function ElementRow({ element, stages, side, locked = false, onOpen }: { element
 }
 
 /** The element's pieces as small blocks: finished, arrived on site, still in the factory. */
-function PieceStrip({ element, side }: { element: ElementView; side: ElementSide }) {
+function PieceStrip({ element, side, definitions }: { element: ElementView; side: ElementSide; definitions: SteelWorkDefinitionView[] }) {
   const { currentLang: lang } = useLanguage();
   const total = element.quantity;
   const done = doneQty(element, side);
@@ -595,7 +645,7 @@ function PieceStrip({ element, side }: { element: ElementView; side: ElementSide
       <p className="mt-2 text-xs text-muted-foreground">{line}</p>
       {routeClosed(element, side) && waiting.length > 0 ? (
         <p className="mt-1 text-xs font-semibold text-orange-700 dark:text-orange-300">
-          {fill(t("elements.piecesWaitFor", lang), { steps: waiting.map((stage) => stageLabel(stage, lang)).join(", ") })}
+          {fill(t("elements.piecesWaitFor", lang), { steps: waiting.map((stage) => stageLabel(stage, lang, definitions)).join(", ") })}
         </p>
       ) : null}
     </div>
@@ -606,6 +656,8 @@ function ElementDetail({
   element,
   side,
   canEdit,
+  definitions,
+  onProcesses,
   onBack,
   onStage,
   onDone,
@@ -613,6 +665,8 @@ function ElementDetail({
   element: ElementView;
   side: ElementSide;
   canEdit: boolean;
+  definitions: SteelWorkDefinitionView[];
+  onProcesses?: () => void;
   onBack: () => void;
   onStage: (stage: string) => void;
   onDone: (doneAt: string | null, doneBy: string | null) => void;
@@ -620,7 +674,9 @@ function ElementDetail({
   const { currentLang: lang } = useLanguage();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const stages = stagesFor(side, element.list);
+  const stages = stagesFor(side, element.list, element.processRoutes);
+  const legacyRoute = readProcessRoutes(element.processRoutes)?.[side] == null;
+  const historicStages = [...new Set(element.work.filter(work => sideOfStage(work.stage) === side && !stages.includes(work.stage)).map(work => work.stage))];
   const status = elementStatus(element, side);
   const closed = routeClosed(element, side);
   const closedAt = side === "factory" ? element.factoryDoneAt : element.fieldDoneAt;
@@ -665,18 +721,20 @@ function ElementDetail({
         </div>
       </div>
 
-      {element.quantity > 1 || side === "field" ? <PieceStrip element={element} side={side} /> : null}
+      {element.quantity > 1 || side === "field" ? <PieceStrip element={element} side={side} definitions={definitions} /> : null}
 
       <div className="flex items-baseline justify-between px-1">
         <span className="text-sm font-bold">{side === "factory" ? t("elements.factorySteps", lang) : t("elements.fieldSteps", lang)}</span>
-        <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: route.length, total: stages.length })}</span>
+        <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: stages.filter(stage => cap > 0 && stagePieces(element, stage) >= cap).length, total: stages.length })}</span>
+        {onProcesses ? <button type="button" onClick={onProcesses} className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4" />{processButton(lang)}</button> : null}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {stages.map((stage, index) => {
+        {stages.map((stage) => {
           const entries = element.work.filter((entry) => entry.stage === stage);
           const through = stagePieces(element, stage);
           const full = through >= cap && through > 0;
-          const skipped = entries.length === 0 && closed;
+          const skipped = legacyRoute && entries.length === 0 && closed;
+          const definition = definitions.find(definition => definition.key === stage);
           const last = entries[entries.length - 1] ?? null;
           return (
             <button
@@ -690,10 +748,11 @@ function ElementDetail({
             >
               <span className="flex items-center gap-2">
                 <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${full ? "bg-green-600 text-white" : entries.length > 0 ? "bg-orange-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                  {full ? <Check className="size-4" /> : skipped ? <Minus className="size-4" /> : index + 1}
+                  {full ? <Check className="size-4" /> : skipped ? <Minus className="size-4" /> : side === 'factory' ? <Factory className="size-4" /> : <HardHat className="size-4" />}
                 </span>
-                <span className={`min-w-0 truncate text-base font-bold ${skipped ? "text-muted-foreground line-through decoration-1" : ""}`}>{stageLabel(stage, lang)}</span>
+                <span className={`min-w-0 truncate text-base font-bold ${skipped ? "text-muted-foreground line-through decoration-1" : ""}`}>{stageLabel(stage, lang, definitions)}</span>
               </span>
+              {definition?.visualUpdatedAt ? <Image unoptimized src={`/api/steel-work-visuals/${definition.id}?v=${Date.parse(definition.visualUpdatedAt)}`} width={160} height={80} alt="" className="mt-2 h-16 w-full rounded-lg object-cover" /> : null}
               {entries.length > 0 ? (
                 <span className="mt-2 min-w-0">
                   <span className={`block text-sm font-bold tabular-nums ${full ? "text-green-700 dark:text-green-400" : "text-orange-700 dark:text-orange-300"}`}>
@@ -711,9 +770,10 @@ function ElementDetail({
           );
         })}
       </div>
+      {historicStages.length ? <details className="rounded-xl border p-3"><summary className="min-h-11 cursor-pointer text-sm font-semibold">{({ sq: 'Historiku i proceseve', en: 'Process history', de: 'Prozessverlauf', it: 'Storico processi', ro: 'Istoric procese', pl: 'Historia procesów' })[lang] ?? 'Process history'}</summary><div className="flex flex-wrap gap-2">{historicStages.map(stage => <button key={stage} type="button" onClick={() => onStage(stage)} className="min-h-11 rounded-lg border px-3 text-sm">{stageLabel(stage, lang, definitions)} · {stagePieces(element, stage)}</button>)}</div></details> : null}
 
       {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
-      {closed && closedAt ? (
+      {legacyRoute && closed && closedAt ? (
         <div className={`flex items-center gap-3 rounded-2xl border-2 p-3 ${status === "done" ? "border-green-600/50 bg-green-600/10" : "border-orange-500/40 bg-orange-500/[0.06]"}`}>
           <CheckCheck className={`size-6 shrink-0 ${status === "done" ? "text-green-700 dark:text-green-400" : "text-orange-600"}`} />
           <div className="min-w-0 flex-1">
@@ -726,7 +786,7 @@ function ElementDetail({
             </button>
           ) : null}
         </div>
-      ) : canEdit && !closed ? (
+      ) : legacyRoute && canEdit && !closed ? (
         <>
           <button
             type="button"
@@ -742,7 +802,7 @@ function ElementDetail({
           </p>
         </>
       ) : null}
-      {!canEdit ? <p className="text-center text-sm text-muted-foreground">{side === "factory" ? t("elements.onlyFactoryEngineer", lang) : t("elements.onlyFieldEngineer", lang)}</p> : null}
+      {!canEdit ? <p className="text-center text-sm text-muted-foreground">{side === 'field' && !onFieldList(element) ? t('elements.lockedInFactory', lang) : side === "factory" ? t("elements.onlyFactoryEngineer", lang) : t("elements.onlyFieldEngineer", lang)}</p> : null}
     </>
   );
 }
@@ -757,6 +817,7 @@ function StageView({
   side,
   canEdit,
   workers,
+  definitions,
   lastPick,
   onBack,
   onAdded,
@@ -767,6 +828,7 @@ function StageView({
   side: ElementSide;
   canEdit: boolean;
   workers: ElementWorkerOption[];
+  definitions: SteelWorkDefinitionView[];
   lastPick: React.MutableRefObject<Record<string, string[]>>;
   onBack: () => void;
   onAdded: (work: ElementWorkView) => void;
@@ -837,7 +899,7 @@ function StageView({
         </button>
         <div className="min-w-0 flex-1">
           <div className="truncate text-lg font-bold leading-tight">
-            {element.mark} · {stageLabel(stage, lang)}
+            {element.mark} · {stageLabel(stage, lang, definitions)}
           </div>
           <div className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepPieces", lang), { done: through, total: cap })}</div>
         </div>
@@ -967,7 +1029,7 @@ function StageView({
               className="inline-flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl bg-green-600 px-2 font-bold text-white shadow-sm active:scale-95 disabled:opacity-50"
             >
               {pending ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <Check className="size-5 shrink-0" />}
-              <span className="truncate">{fill(t("elements.confirmStepPieces", lang), { step: stageLabel(stage, lang), n: count })}</span>
+              <span className="truncate">{fill(t("elements.confirmStepPieces", lang), { step: stageLabel(stage, lang, definitions), n: count })}</span>
             </button>
           </div>
         ) : (

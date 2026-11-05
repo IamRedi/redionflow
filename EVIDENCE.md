@@ -2,6 +2,88 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — shared task catalog and material process plans (not released)
+
+Prepared on `feature/steel-shared-work-catalog-20261105`, based on the approved
+PR53 production merge `df65504a5fac6fd226389636ec65c2c91c6a5235`. PR53 deployed
+successfully as Railway `15f15a9c-f4c7-4df4-96fd-88cb440396ae` at13:31:16UTC.
+Its two further real assistant probes remain deferred after the owner stopped
+browser control; no universal semantic acceptance is claimed.
+
+This candidate adds one tenant-owned catalog for site tasks and factory/field
+processes, per-site selection, explicit material applicability, derived linked
+task progress, reversible archival and private WebP/validated generated SVG
+art. Existing task IDs, notes, completion attribution, material confirmations
+and weight snapshots remain preserved. New material lists start unconfigured.
+The shared shell/header/footer and dependency/provider versions are unchanged.
+See [the workflow and recovery contract](docs/STEEL_WORK_CATALOG.md).
+
+Measured local results: fresh additive migrations and Prisma schema drift PASS;
+892 unit tests/97 files PASS (17.02s);348 PostgreSQL integration tests/27 files
+PASS (147.87s) using the official isolated PostgreSQL16 integration identity and
+restricted runtime role; full ESLint PASS. Final Windows Prisma generation,
+TypeScript, focused UI/spec lint and staged Gitleaks PASS. Backend code stayed
+unchanged during the final UI/test-only adjustments. No cloud Actions ran.
+
+An earlier integration invocation used the E2E database name and hit the
+suite's environment guards; the tests were not weakened. The corrected official
+integration batch passed in full. An initial schema diff mismatch was corrected
+and the fresh migration/schema comparison rerun successfully.
+
+Independent review corrected a many-task narrow-header overflow, long-label
+wrapping and keyboard focus restoration after externally opened dialogs. The
+focused production-build/Chromium workflow PASS includes cross-site unchecked
+choices, unchanged history through disable/archive/restore, linked2/10 partial
+delivery, material plans, custom process links and real private WebP bytes with
+metadata stripped/anonymous404. Desktop1440x1000 and phone390x844 light/dark
+screens,44px controls, modal focus trapping and top/nested focus return PASS.
+The new dialogs reuse the existing hidden-scrollbar treatment. Cua manually
+verified the third process-editor opener's focus return, a many-task phone
+header, keyboard-reachable actions at844x390 and natural footer/header behavior.
+All screenshots use fictional data. Actual handset/on-screen keyboard behavior
+is separate from viewport simulation. The final200% text-enlargement state PASS,
+including usable search width, editor overflow and reachable save/cancel. Icon
+touch targets retain44CSS pixels while labels enlarge and controls wrap. The
+last full browser workflow PASS in66.0s (1.8m including its production build).
+
+That additional run exposed an exit-animation race before the enlarged state:
+the outgoing list toolbar remained clickable for160ms while the sheet title
+already named the selected material. The mixed-plan confirmation guard stopped
+the incorrect bulk apply; no material was changed. Exiting views now keep their
+animation but become inert/hidden from accessibility, and the workflow asserts
+the loaded detail and exact single-material scope before applying. The final
+build/browser run includes this fix and all earlier scenarios.
+
+The actual legacy SQL upgrade also PASS:67 prior migrations,10 byte-identical
+task rows retaining3/10 progress,5 unchanged confirmation/snapshot rows,2 audit
+rows and3 unchanged legacy material rows with NULL routes. All10 task links
+were correct; another site received no selected task instances and no custom
+choice crossed tenants. The verifier and detailed synthetic proof are retained
+privately outside Git. Current source/test/schema files match the tested mirror
+by SHA256; EVIDENCE.md is excluded from its own manifest.
+
+A fresh encrypted production snapshot at2026-11-05T18:04:35.120Z PASS verified
+isolated restoration, receipt size and independently computed archive SHA256.
+Private receipts/archives and customer contents are not committed. No app/config
+or business record was changed and no new offsite upload was made. The first
+default-sandbox attempt could not obtain SSH config; the identical authorized
+network-escalated attempt completed through the existing tenant/restore guards.
+
+Earlier disk-full/WSL I/O and180s runner startup interruptions are superseded by
+recovered local execution; no fixture/migration guard was weakened. The runner
+uses a local-only600s startup allowance. A test-only native ESM dictionary import
+was corrected, and server-controlled checkbox assertions now wait for confirmed
+saved state. Those were fixture/executor issues, not accepted failed checks.
+
+Actual provider-generated art, owner merge/deploy approval and post-publication
+runtime acceptance remain separate. Media tests use mocked generation; no paid
+illustration call is claimed. Production still runs PR53. Portfolio assessment
+preserves maturity and accurate general claims; affected native/showcase content
+must reflect the feature after acceptance without customer data or imagery.
+Read-only Railway config confirms the existing production branch, Amsterdam
+instance, migrate/provision/Next start override and no staged service changes;
+the Dockerfile's default startup is not substituted during this release.
+
 ## 5 November 2026 — canonical factory-production answers (follow-up candidate)
 
 PR52/head89f52d3 was owner-approved and merged as
