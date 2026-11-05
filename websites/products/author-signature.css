@@ -1,0 +1,16 @@
+.redion-signature{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap;line-height:1.6;letter-spacing:normal;text-transform:none;font-family:RedionManrope,Manrope,ui-sans-serif,system-ui,sans-serif;--credit-muted:#667085;--credit-r:#C93432;--credit-e:#15803D;--credit-d:#175CD3;--credit-i:#986E00;--credit-on:#15803D}.redion-signature[data-theme=dark]{--credit-muted:#AEB7C9;--credit-r:#FF5A5F;--credit-e:#22C55E;--credit-d:#5798FF;--credit-i:#FFD43B;--credit-on:#22C55E}.redion-signature .redion-by{font-size:11px;font-weight:400;color:var(--credit-muted)}.redion-signature .redion-word{display:inline-flex;gap:0;font-size:13px;font-weight:700;letter-spacing:-.35px}.redion-signature .redion-r{color:var(--credit-r)}.redion-signature .redion-e{color:var(--credit-e)}.redion-signature .redion-d{color:var(--credit-d)}.redion-signature .redion-i{color:var(--credit-i)}.redion-signature .redion-on{color:var(--credit-on)}@media(forced-colors:active){.redion-signature span{color:CanvasText!important}}
+
+.p2-languages{display:flex;justify-content:flex-end;gap:8px;padding-top:20px}.p2-languages a{min-width:44px;min-height:44px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px}.p2-role-access{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:24px;font-size:13px}.p2-role-access a{padding:12px;border:1px solid var(--line);border-radius:8px}
+html[data-theme=light] .redion-signature[data-theme=dark]{--credit-muted:#667085;--credit-r:#C93432;--credit-e:#15803D;--credit-d:#175CD3;--credit-i:#986E00;--credit-on:#15803D}
+
+html[data-theme=light] .site-footer{background:#fff}
+
+/* One quiet, whole-phrase author link: native semantics, same tab and touch/keyboard access. */
+a.redion-signature{display:inline-flex;min-height:44px;align-items:center;gap:5px;text-decoration:none;text-transform:none;letter-spacing:normal;padding:6px 0}a.redion-signature:focus-visible{outline:2px solid currentColor;outline-offset:5px;border-radius:2px}a.redion-signature:hover{text-decoration:none}a.redion-signature .redion-by{color:var(--credit-muted)}
+
+a.redion-signature{font-family:Manrope,ui-sans-serif,system-ui,sans-serif}
+
+/* One quiet, centered author row; utilities retain their own layout. */
+.redion-author-footer{display:flex;justify-content:center;align-items:center;width:100%;min-width:0;flex:0 0 100%;grid-column:1/-1}
+footer,.footer-bottom{flex-wrap:wrap}
+.footer-bottom .redion-author-footer a.redion-signature{margin-inline:0}
