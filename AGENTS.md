@@ -21,7 +21,10 @@ part of feature preparation.
 Read [docs/STEEL_PRODUCTION_DASHBOARD.md](docs/STEEL_PRODUCTION_DASHBOARD.md)
 before changing the steel shell. Owner correction, 5 November 2026: its footer
 belongs at the end of the scrolling content, not in a permanently visible row.
-The stationary header/team wrapper stays transparent; desktop alerts sit under
+The stationary header/team wrapper stays transparent. Owner clarification after PR44: the scrolling
+content must actually pass behind that transparent header on desktop and phone;
+testing only its CSS background color is insufficient. Preserve initial clearance
+and click access through empty header space. Desktop alerts sit under
 the single KiDraht book icon, with no duplicate admin-menu entry. Preserve the
 project's existing visual identity and verify these behaviors at the beginning
 and end of desktop/narrow views. The focused regression is

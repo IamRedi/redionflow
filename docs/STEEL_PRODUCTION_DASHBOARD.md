@@ -49,6 +49,11 @@ navigation remain outside the primary content scroll region. The transparent
 shared footer is the final content item: it appears at the end of a long view,
 then scrolls away when returning to the beginning. It is not a persistent viewport
 row. This owner correction supersedes the earlier PR43 footer placement.
+Owner clarification after PR44: transparency must reveal the scrolling content
+behind the stationary header on desktop and phone, not an empty reserved row.
+The content scroller spans the header area, with measured initial top clearance
+and scroll padding keeping the first item/focused controls reachable. Empty header
+space passes pointer input through; logo, team and controls remain interactive.
 The header/team wrapper is transparent; on desktop the announcement/bell controls
 sit directly beneath the single book icon, without a group backplate. The team
 can scroll underneath, with enough end space to reach its last profile. Steel

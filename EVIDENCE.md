@@ -2,6 +2,38 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 5 November 2026 — header transparency must show the content underneath
+
+Linked recurrence `UI-FOOTER-HEADER-20261105`, following owner feedback on
+PR44/live `9099a87`. The footer placement was accepted; the header was not.
+Its computed background was transparent, but the primary scroller started below
+its grid row, leaving an empty band instead of content behind the logo/team.
+Earlier background-color assertions did not prove the owner's intended effect.
+
+This bounded repair spans the working region across the header row and measures
+the header's actual height for initial clearance and focus scroll padding.
+The logo, team and tools remain stationary; empty header space passes pointer
+input through. Map layers remain underneath the header. Existing fixed overlays
+retain their viewport stacking when open. Mobile admin navigation and desktop
+fleet clearance follow the measured header height. The accepted footer,
+colors, card/icon design and operational data/processes are unchanged.
+
+Focused local smoke mode: `STEEL_HEADER_UNDERLAY_SMOKE=true`, existing
+`tests/e2e/steel-footer-header.spec.ts`, isolated synthetic PostgreSQL/Chromium.
+Four rendered cases cover dashboard/light and Workzone/map/dark, each desktop
+1440×900 and phone360×800. Assertions now include content painted behind the
+header, click-through blank space, logo hit-testing above the map, stationary
+header, initial clearance, no outer/horizontal overflow and footer End/Home.
+The old blank-header screenshot click was adapted to its new click-through
+semantics. One initial run was interrupted at that old click; a subsequent
+render exposed map layering, which was corrected before publication. Final
+results and deployed revision are recorded in the PR and canonical Drive status.
+Wider suites, extra devices/themes, physical keyboard and cloud Actions are not
+rerun for this correction. Owner requested direct pilot testing after publish;
+local verification and that final owner acceptance remain separate.
+Native presentation/README/About/portfolio: NO_CONTENT_CHANGE, because this
+restores the agreed UI effect without adding capabilities or changing readiness.
+
 ## 5 November 2026 — owner correction: natural footer and transparent header
 
 Issue `UI-FOOTER-HEADER-20261105`, based on deployed PR43/`003a3d1`.
