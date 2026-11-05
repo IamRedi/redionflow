@@ -16,6 +16,7 @@ it("actual Playwright never probes or tests a competitor that becomes ready duri
   const listening = join(folder, "competitor-listening");
   const wrapper = join(folder, "competitor.cjs");
   const config = join(folder, "playwright.config.ts");
+  const quotePath = (value: string) => process.platform === "win32" ? `"${value}"` : `'${value.replace(/'/g, "'\\''")}'`;
   // The fake startup command owns a competitor HTTP server and never emits
   // the real Next child's readiness marker. It exits as a failed owned bind
   // would. No existing service, database or browser is used by this regression.
@@ -39,7 +40,7 @@ it("actual Playwright never probes or tests a competitor that becomes ready duri
     import base from ${JSON.stringify(resolve("playwright.config.ts"))};
     export default { ...base, testDir: ${JSON.stringify(folder)}, outputDir: ${JSON.stringify(join(folder,"results"))},
       workers: 1, webServer: { ...base.webServer,
-        command: ${JSON.stringify(`${process.execPath} ${wrapper}`)}, timeout: 8000 } };
+        command: ${JSON.stringify(`${quotePath(process.execPath)} ${quotePath(wrapper)}`)}, timeout: 8000 } };
   `);
   try {
     const result = spawnSync(process.execPath, [resolve("node_modules/playwright/cli.js"), "test", "--config", config], {

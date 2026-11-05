@@ -5,7 +5,7 @@ import { availability } from "@/lib/workshop/demo-model";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { useWorkshopDemo } from "./use-workshop-demo";
 
-/** Overlay fictional browser-local availability without writing operational machines. */
+/** Shared fictional availability; never writes operational machines. */
 export function WorkshopFleet({ machines, now }: { machines: DemoMachine[]; now: string }) {
   const { state } = useWorkshopDemo(); const { currentLang } = useLanguage(); const c = workshopCopy(currentLang);
   const links: Record<string, { href: string; label: string; status: string }> = {};

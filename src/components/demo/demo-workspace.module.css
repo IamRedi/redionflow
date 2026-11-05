@@ -1,6 +1,6 @@
 .shell {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100dvh;
   min-width: 0;
   overflow: hidden;
@@ -13,11 +13,10 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
   scroll-padding-block: 16px;
 }
 .workspace:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
-.footer { min-width: 0; width: 100%; }
 @media (max-height: 560px) {
   .header > div { padding-top: 0; }
   .header [data-testid="baum-demo-topbar"] { padding-top: 24px; padding-bottom: 4px; }

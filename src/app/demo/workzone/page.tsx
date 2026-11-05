@@ -8,6 +8,7 @@ import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
 import { WorkshopOverview } from "@/components/demo/workshop/workshop-overview";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
+import { demoSiteKey } from "@/lib/workshop/shared-store";
 
 function materialIndicators(
   input: { signQty: number; plateQty: number; fenceQty: number; coneQty: number },
@@ -109,6 +110,7 @@ export default async function DemoWorkzonePage() {
     const coordinates = readLatLng(b.coordinates);
     return {
       id: b.id,
+      demoPhotoKey: workshopEnabled ? demoSiteKey(b) : undefined,
       name: b.name,
       status: b.status,
       type: b.type,

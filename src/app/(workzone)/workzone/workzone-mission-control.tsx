@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, Map, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { SteelSiteScene } from "@/components/steel/steel-site-scene";
 import { AssetPhoto } from "@/components/asset-photo";
+import { DemoPhoto } from "@/components/demo/workshop/demo-photo";
+import { BaumdienstSiteArt } from "@/components/demo/workshop/workshop-art";
 import { t } from "@/lib/i18n";
 import type { FleetLocation } from "@/lib/fleet/location";
 import { WorkzoneMapIndex, type MissionMapFocus } from "./workzone-map-index";
@@ -40,6 +42,7 @@ type MissionItem = {
   standortAddress: string;
   shape?: SteelSiteShape;
   photoUrl?: string | null;
+  demoPhotoKey?: string;
   material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
 };
@@ -64,7 +67,7 @@ function clamp(value: number, min: number, max: number) {
 
 function canvasSignature(items: MissionItem[]) {
   return orderedCanvasItems(items)
-    .map((item) => `${item.id}:${item.liveSince ?? "idle"}`)
+    .map((item) => `${item.id}:${item.liveSince ?? "idle"}${item.demoPhotoKey ? ":demo-photo" : ""}`)
     .join("|");
 }
 
@@ -86,7 +89,7 @@ function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
   const count = items.length;
   const mobile = viewport === "mobile";
   // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
-  const tall = items.some((item) => isSteelSiteType(item.type)||Boolean(item.photoUrl));
+  const tall = items.some((item) => isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey));
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
@@ -285,6 +288,7 @@ export function WorkzoneMissionControl({
   canEditPhotos?: boolean;
 }) {
   const { currentLang } = useLanguage();
+  const reducedMotion = useReducedMotion();
   const mapFleet = useMapFleet();
   const indexVehicles = (mapFleet ?? fleetLocations).map(v => {
     const location = fleetLocations.find(p => p.id === v.id);
@@ -499,7 +503,8 @@ export function WorkzoneMissionControl({
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
           {items.map((item) => {
-            const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl);
+            const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey);
+            const animateLive = item.activeLiveCount > 0 && !(item.demoPhotoKey && reducedMotion);
             const target = positions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;
             return (
@@ -530,19 +535,19 @@ export function WorkzoneMissionControl({
                 }}
                 animate={{
                   x: target.x,
-                  y: item.activeLiveCount > 0 ? [target.y, target.y - 5, target.y] : target.y,
+                  y: animateLive ? [target.y, target.y - 5, target.y] : target.y,
                 }}
                 transition={{
                   x: { duration: 0.25, ease: "easeOut" },
-                  y: item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
+                  y: animateLive ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
                 className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
                 {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
-                    <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
+                    {item.demoPhotoKey ? <DemoPhoto kind="site" target={item.id} photoKey={item.demoPhotoKey} alt={item.name} className="h-full w-full"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto> : <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
-                    </AssetPhoto>
+                    </AssetPhoto>}
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                       {typeLabel(item.type, currentLang)}
                     </span>

@@ -3,7 +3,7 @@ import { createWorkshopDemo } from "./demo-data";
 import { activeJob, applyWorkshopCommand as apply, availability, workshopSchema, type WorkshopCommand } from "./demo-model";
 
 const now = "2026-11-05T10:00:00.000Z";
-describe("browser-local workshop rehearsal", () => {
+describe("fictional workshop rules", () => {
   it("validates its fixture and survives a JSON round trip", () => {
     const state = createWorkshopDemo(); expect(workshopSchema.parse(JSON.parse(JSON.stringify(state)))).toEqual(state);
   });
@@ -68,6 +68,12 @@ describe("browser-local workshop rehearsal", () => {
     const state = createWorkshopDemo(); const doc = { ...state.documents[0], id: "doc2" };
     expect(apply(state, { type: "document", document: doc }, now, "event").documents).toHaveLength(2);
     expect(() => apply(state, { type: "document", document: { ...doc, assetId: "saw" } }, now, "e")).toThrow("missing");
-    expect(() => apply(state, { type: "document", document: { ...doc, bytes: 256001 } }, now, "e")).toThrow();
+    expect(() => apply(state, { type: "document", document: { ...doc, bytes: 1000001 } }, now, "e")).toThrow();
+  });
+  it("retains stock movements with the original price and reference", () => {
+    let state = apply(createWorkshopDemo(), { type: "restock", partId: "hydraulic", qty: 4 }, now, "stock-add");
+    state = apply(state, { type: "part", partId: "hydraulic", qty: 2, jobId: "WS-101" }, now, "stock-use");
+    expect(state.parts.find(p => p.id === "hydraulic")!.stock).toBe(5);
+    expect(state.movements).toEqual([{ id: "stock-use", at: now, kind: "consume", partId: "hydraulic", qty: 2, unitCents: 4800, jobId: "WS-101", actor: "Demo" }, { id: "stock-add", at: now, kind: "restock", partId: "hydraulic", qty: 4, unitCents: 4800, actor: "Demo" }]);
   });
 });

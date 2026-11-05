@@ -18,7 +18,7 @@ export function Status({ children, tone = "neutral" }: { children: ReactNode; to
 export function WorkshopDialog({ title, description, children, open, onClose, closeLabel }: { title: string; description?: string; children: ReactNode; open: boolean; onClose: () => void; closeLabel: string }) {
   const previous = useRef<HTMLElement | null>(null);
   return <Dialog.Root open={open} onOpenChange={value => { if (!value) onClose(); }}>
-    <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-[1200] bg-black/50" />
+    <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm" />
       <Dialog.Content onOpenAutoFocus={() => { previous.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; }} onCloseAutoFocus={event => { if (previous.current?.isConnected) { event.preventDefault(); previous.current.focus(); } }} className="fixed left-1/2 top-1/2 z-[1201] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border bg-card p-4 shadow-xl sm:p-6">
         <div className="mb-5 flex items-start justify-between gap-3"><div className="min-w-0"><Dialog.Title className="break-words text-xl font-semibold tracking-tight">{title}</Dialog.Title><Dialog.Description className="mt-1 text-sm text-muted-foreground">{description || "BaumdienstFlow · Demo"}</Dialog.Description></div><Dialog.Close asChild><Button variant="ghost" size="icon" className="size-11 shrink-0" aria-label={closeLabel}><X /></Button></Dialog.Close></div>
         {children}

@@ -1,17 +1,19 @@
 import { z } from "zod";
 
-// A browser-local rehearsal, deliberately independent of operational tables/actions.
+// Fictional workshop rules, independent of operational fleet and planning actions.
 const stamp = z.iso.datetime();
 const text = z.string().trim().min(1).max(2000);
-const eventSchema = z.object({ id: text, at: stamp, kind: z.enum(["received", "started", "repaired", "released", "issued", "returned", "part", "inspection", "document"]), note: z.string().max(2000), actor: text, ref: z.string().optional() });
+const eventSchema = z.object({ id: text, at: stamp, kind: z.enum(["received", "started", "repaired", "released", "issued", "returned", "part", "inspection", "document", "photo"]), note: z.string().max(2000), actor: text, ref: z.string().optional() });
 const assetSchema = z.object({ id: text, name: text, code: text, kind: z.enum(["fleet", "tool"]), location: text, holder: z.string().max(100), inspection: z.iso.date(), events: z.array(eventSchema) });
 const jobSchema = z.object({ id: text, assetId: text, problem: text, priority: z.enum(["normal", "urgent"]), status: z.enum(["received", "repairing", "repaired"]), assignee: z.string().max(100), createdAt: stamp, repairedAt: stamp.optional(), releasedAt: stamp.optional(), repairNote: z.string().max(2000), tested: z.boolean(), parts: z.array(z.object({ id: text, name: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative() })) });
-export const documentSchema = z.object({ id: text, name: z.string().min(1).max(120), assetId: text, jobId: z.string().optional(), mime: z.enum(["application/pdf", "image/png", "image/jpeg", "text/plain"]), data: z.string().max(360000), bytes: z.number().int().min(1).max(256000), at: stamp });
-export const workshopSchema = z.object({ version: z.literal(1), assets: z.array(assetSchema).min(1).max(100), jobs: z.array(jobSchema).max(1000), parts: z.array(z.object({ id: text, name: text, stock: z.number().int().nonnegative(), minimum: z.number().int().nonnegative(), unitCents: z.number().int().nonnegative() })).max(100), documents: z.array(documentSchema).max(40) }).superRefine((state, ctx) => {
+export const documentSchema = z.object({ id: text, name: z.string().min(1).max(120), assetId: text, jobId: z.string().optional(), mime: z.enum(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]), data: z.string().max(360000).optional(), fileId: z.uuid().optional(), bytes: z.number().int().min(1).max(1_000_000), at: stamp });
+const movementSchema = z.object({ id: text, at: stamp, kind: z.enum(["consume", "restock"]), partId: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative(), jobId: z.string().optional(), actor: text });
+export const workshopSchema = z.object({ version: z.literal(1), assets: z.array(assetSchema).min(1).max(100), jobs: z.array(jobSchema).max(1000), parts: z.array(z.object({ id: text, name: text, stock: z.number().int().nonnegative(), minimum: z.number().int().nonnegative(), unitCents: z.number().int().nonnegative() })).max(100), documents: z.array(documentSchema).max(80), movements: z.array(movementSchema).max(10000).default([]) }).superRefine((state, ctx) => {
   const ids = new Set(state.assets.map(a => a.id));
   const jobs = new Map(state.jobs.map(j => [j.id, j]));
   const open = state.jobs.filter(j => !j.releasedAt).map(j => j.assetId);
-  if (ids.size !== state.assets.length || jobs.size !== state.jobs.length || new Set(open).size !== open.length || state.jobs.some(j => !ids.has(j.assetId) || (j.releasedAt && (j.status !== "repaired" || !j.tested))) || state.documents.some(d => !ids.has(d.assetId) || (d.jobId && jobs.get(d.jobId)?.assetId !== d.assetId) || (d.mime !== "text/plain" && !/^[A-Za-z0-9+/]+={0,2}$/.test(d.data)))) ctx.addIssue({ code: "custom", message: "Invalid workshop references" });
+  if (ids.size !== state.assets.length || jobs.size !== state.jobs.length || new Set(open).size !== open.length || state.jobs.some(j => !ids.has(j.assetId) || (j.releasedAt && (j.status !== "repaired" || !j.tested))) || state.documents.some(d => !ids.has(d.assetId) || (d.jobId && jobs.get(d.jobId)?.assetId !== d.assetId) || (!d.fileId && !d.data) || (d.data && d.mime !== "text/plain" && !/^[A-Za-z0-9+/]+={0,2}$/.test(d.data)))) ctx.addIssue({ code: "custom", message: "Invalid workshop references" });
+  if (new Set(state.documents.map(d => d.id)).size !== state.documents.length || state.movements.some(m => !state.parts.some(p => p.id === m.partId) || (m.jobId && !jobs.has(m.jobId)))) ctx.addIssue({ code: "custom", message: "Invalid document or movement references" });
 });
 export type WorkshopState = z.infer<typeof workshopSchema>;
 export type WorkshopAsset = WorkshopState["assets"][number];
@@ -84,15 +86,18 @@ export function applyWorkshopCommand(input: WorkshopState, command: WorkshopComm
     case "part": {
       const job = jobFor(command.jobId); assert(job.status === "repairing", "transition"); positive(command.qty);
       const part = state.parts.find(p => p.id === command.partId); assert(part, "missing"); assert(part.stock >= command.qty, "stock");
-      part.stock -= command.qty; job.parts.push({ id: part.id, name: part.name, qty: command.qty, unitCents: part.unitCents }); event(assetFor(job.assetId), "part", `${command.qty} × ${part.name}`, job.id); break;
+      part.stock -= command.qty; job.parts.push({ id: part.id, name: part.name, qty: command.qty, unitCents: part.unitCents });
+      state.movements.unshift({ id, at: now, kind: "consume", partId: part.id, qty: command.qty, unitCents: part.unitCents, jobId: job.id, actor: "Demo" });
+      event(assetFor(job.assetId), "part", `${command.qty} × ${part.name}`, job.id); break;
     }
     case "restock": {
-      positive(command.qty); const part = state.parts.find(p => p.id === command.partId); assert(part, "missing"); part.stock += command.qty; break;
+      positive(command.qty); const part = state.parts.find(p => p.id === command.partId); assert(part, "missing"); assert(part.stock + command.qty <= 100000, "quantity"); part.stock += command.qty;
+      state.movements.unshift({ id, at: now, kind: "restock", partId: part.id, qty: command.qty, unitCents: part.unitCents, actor: "Demo" }); break;
     }
     case "document": {
       const doc = documentSchema.parse(command.document); const asset = assetFor(doc.assetId);
       if (doc.jobId) assert(jobFor(doc.jobId).assetId === asset.id, "missing");
-      assert(state.documents.reduce((n, d) => n + d.bytes, 0) + doc.bytes <= 1_000_000 && state.documents.length < 40, "storage");
+      assert(state.documents.reduce((n, d) => n + d.bytes, 0) + doc.bytes <= 10_000_000 && state.documents.length < 80, "storage");
       state.documents.unshift(doc); event(asset, "document", doc.name, doc.jobId); break;
     }
   }

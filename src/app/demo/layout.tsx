@@ -14,6 +14,8 @@ import { getFeatures } from "@/lib/mode-config";
 import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/public-demo";
+import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
+import { resolveRequestLanguage } from "@/lib/i18n/server";
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
 
@@ -65,6 +67,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   ]);
   const features = getFeatures(mode);
   const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
+  const demoLanguage = workshopEnabled ? await resolveRequestLanguage() : "de";
   // Mirrors the real Workzone layout: theme background, dark green only in dark mode.
   const pageTone = mode === "baumdienst" ? "dark:bg-[#10211a]" : "";
 
@@ -96,7 +99,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
       </header>
       {features.machines ? workshopEnabled ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
-      {workshopEnabled ? <><DemoWorkspace>{children}</DemoWorkspace><div className={shellStyles.footer}><RediOnFooter compact /></div></> : <div className="mx-auto max-w-6xl lg:pr-20">
+      {workshopEnabled ? <DemoWorkspace footer={<BaumdienstDemoFooter lang={demoLanguage} />}>{children}</DemoWorkspace> : <div className="mx-auto max-w-6xl lg:pr-20">
         <main className="px-5 pb-24 pt-4 lg:pb-6 print:max-w-none print:px-0 print:py-0">{children}</main>
         <RediOnFooter />
       </div>}

@@ -1,0 +1,14 @@
+.art { --forest: hsl(var(--primary)); --metal: #65766d; --glass: #bfdbd2; --ink: #233b31; --ground: hsl(var(--muted)); color: var(--forest); }
+:global(.dark) .art { --metal: #93aaa0; --glass: #91b8aa; --ink: #253d34; }
+.sway { transform-origin: 80% 85%; animation: treeSway 6s ease-in-out infinite; }
+.repair { transform-box: fill-box; transform-origin: center; animation: toolTurn 4s ease-in-out infinite; }
+.arrive { animation: arrive .25s ease-out both; }
+.heroGraphic { margin-inline: auto; height: 176px; width: 100%; max-width: 384px; }
+@media (max-width: 639px) { .heroGraphic { display: none; } }
+@media (max-height: 560px) { .heroGraphic,.heroStats { display: none; } .heroMain { padding-block: 16px; } }
+.card { transition: border-color .2s, box-shadow .2s, transform .2s; }
+@media (hover: hover) { .card:hover { transform: translateY(-2px); box-shadow: 0 7px 20px hsl(var(--foreground) / .06); border-color: hsl(var(--primary) / .45); } }
+@keyframes treeSway { 0%,100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }
+@keyframes toolTurn { 0%,75%,100% { transform: rotate(-8deg); } 35% { transform: rotate(10deg); } }
+@keyframes arrive { from { opacity: .4; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .sway,.repair,.arrive { animation: none; } .card { transition: none; } .card:hover { transform: none; } }

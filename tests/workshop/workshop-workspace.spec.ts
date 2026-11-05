@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { resetWorkshopFixture } from "./shared-fixture";
+test.beforeEach(async () => { await resetWorkshopFixture(); });
 
-test("workspace uses the viewport, keeps shell reachable, and preserves small-save position", async ({ page, context }, info) => {
+test("workspace uses the viewport, scrolls the natural legal footer, and preserves small-save position", async ({ page, context }, info) => {
   await context.addCookies([{ name: "bk_lang", value: "de", url: String(info.project.use.baseURL) }]);
   await context.route("https://*.tile.openstreetmap.org/**", route => route.abort());
   const errors: string[] = [];
@@ -12,20 +14,25 @@ test("workspace uses the viewport, keeps shell reachable, and preserves small-sa
       await page.goto(route);
       const workspace = page.getByTestId("demo-workspace");
       await expect(workspace).toBeVisible();
+      if (route.startsWith("/demo/workshop")) await expect(page.getByRole("button", { name: "Defekt melden", exact: true })).toBeEnabled();
       const signature = page.getByRole("link", { name: "by RediON", exact: true });
       await expect(signature).toHaveCount(1);
       const footer = (await signature.boundingBox())!;
       expect(Math.abs(footer.x + footer.width / 2 - size.width / 2)).toBeLessThan(2);
-      expect(footer.y + footer.height).toBeLessThanOrEqual(size.height);
       expect((await workspace.boundingBox())!.height).toBeGreaterThan(120);
-      const dimensions = await workspace.evaluate(el => ({ width: el.clientWidth, outer: document.documentElement.scrollHeight, viewport: innerHeight, wide: document.documentElement.scrollWidth <= innerWidth }));
+      const dimensions = await workspace.evaluate(el => ({ width: el.getBoundingClientRect().width, outer: document.documentElement.scrollHeight, viewport: innerHeight, wide: document.documentElement.scrollWidth <= innerWidth }));
       expect(dimensions.width).toBeGreaterThan(size.width - 24);
       expect(dimensions.outer).toBeLessThanOrEqual(dimensions.viewport + 1);
       expect(dimensions.wide).toBe(true);
       await workspace.evaluate(el => { el.scrollTop = el.scrollHeight; });
       await expect.poll(async () => workspace.evaluate(el => el.scrollHeight - el.clientHeight - el.scrollTop)).toBeLessThanOrEqual(1);
       const footerAfter = (await signature.boundingBox())!;
-      expect(footerAfter.y).toBe(footer.y);
+      expect(footerAfter.y + footerAfter.height).toBeLessThanOrEqual(size.height + 1);
+      const scrollTop = await workspace.evaluate(el => el.scrollTop);
+      if (scrollTop > 5) expect(footer.y - footerAfter.y).toBeGreaterThan(5);
+      await expect(page.getByRole("link", { name: "Datenschutz", exact: true })).toHaveAttribute("href", "/demo/privacy");
+      await workspace.evaluate(el => { el.scrollTop = 0; });
+      if (scrollTop > 100) expect((await signature.boundingBox())!.y).toBeGreaterThan(size.height);
       const scrollers = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("body *")].filter(el => {
         const s = getComputedStyle(el); return /auto|scroll/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 2 && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
       }).map(el => el.getAttribute("data-testid") || el.tagName));
@@ -44,8 +51,7 @@ test("workspace uses the viewport, keeps shell reachable, and preserves small-sa
   await zoomWorkspace.focus();
   await page.keyboard.press("Control+End");
   await expect.poll(async () => zoomWorkspace.evaluate(el => el.scrollHeight - el.clientHeight - el.scrollTop)).toBeLessThanOrEqual(1);
-  await page.getByRole("button", { name: "Demo zurücksetzen", exact: true }).scrollIntoViewIfNeeded();
-  await expect(page.getByRole("button", { name: "Demo zurücksetzen", exact: true })).toBeInViewport();
+  await expect(page.getByRole("link", { name: "by RediON", exact: true })).toBeInViewport();
   await page.screenshot({ path: info.outputPath("shell-text-zoom.png") });
   await page.goto("/demo/workshop?tab=parts");
   await expect(page.getByRole("button", { name: "Bestand auffüllen", exact: true }).last()).toBeEnabled();
