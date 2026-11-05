@@ -1,6 +1,18 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-Stand: 5. November 2026. **Gemeinsam gespeicherte Werkstatt-Demo: Releasevorbereitung nach Eigentümerauftrag.** Der erste veröffentlichte Browser-Prototyp auf `a919133` ist unten als Historie dokumentiert. Der neue Kandidat liegt ausschließlich auf `feat/baumdienst-shared-workshop-20261105`; kein Pilot-/Main-Merge.
+Stand: 5. November 2026. **Gemeinsam gespeicherte Werkstatt-Demo online und geprüft.** Die öffentliche Runtime verwendet ausschließlich `61dc1b5f13740e6fb4db15dd8ada0a5317d5afdb` von `feat/baumdienst-shared-workshop-20261105`. [Draft PR 49](https://github.com/IamRedi/redionflow/pull/49) bleibt ungemergt; kein Pilot-/Main-Merge. Der erste Browser-Prototyp auf `a919133` ist unten als Historie dokumentiert.
+
+## Veröffentlichungsnachweis: gemeinsame Demo
+
+[Werkstatt online](https://redionflow-production.up.railway.app/demo/workshop). Railway-Deployment `2cffb9f3-63a8-4115-a512-78c20a940455` ist seit 5. November 2026, 11:09:12 UTC **SUCCESS**, eine gesunde Replica. Nur der vorhandene Baumdienst-Webdienst `c5ba03e9-2e72-48a7-bd24-262a8d1b322a` wurde auf die geprüfte Branch/Revision gesetzt. Die bestehende Demo-Profilkonfiguration blieb erhalten. Die additive Migration wurde erfolgreich angewendet; vorhandene Basisdaten wurden nicht zurückgesetzt. Spätere Dokumentations-/Mediencommits verändern den Runtime-Pin nicht.
+
+Im tatsächlichen öffentlichen Browser geprüft: einen ausdrücklich fiktiven Kran-LKW-Auftrag annehmen, Reparatur starten, eine Arbeitsleuchte verwenden (Bestand 4 → 3), öffentliche DEMO-Grafik und TXT-Protokoll hochladen, Funktionskontrolle dokumentieren, reparieren und bewusst freigeben. Eine weitere DEMO-Grafik wurde an der Baustelle Stadtpark gespeichert. Ein Reload und eine unabhängige HTTP-Abfrage ohne Browserzustand zeigen denselben freigegebenen Auftrag, das Dokument, beide Foto-URLs und den verminderten Bestand (Revision 8). Die Werkstatt-Galerie decodiert das tatsächliche hochgeladene WebP mit 512px. Die fiktiven Testvorgänge bleiben nachvollziehbar erhalten; kein öffentlicher Reset wurde durchgeführt. Online-Ansichten wurden bei 1440×900 und 390×844 geprüft. Aufnahme: `docs/assets/screenshots/baum-workshop-shared-online.jpg`. Die zusätzlichen unabhängigen Desktop-/Telefon-Kontexte und tatsächlichen Datei-Downloads wurden lokal gegen dieselbe Release-Revision geprüft.
+
+Provider-Readback: AL Steel behält Branch `claude/project-thread-an04j1` und Deployment `dca7ccaf-26c7-4320-971e-8bc6f1a4b808`; BauFlow behält `f829b6a0-7ac5-45d3-adb9-7b50854e4edf`. Beide Reset-Dienste und beide Demo-Datenbankdienste behalten ebenfalls ihre vorher erfassten Deployment-IDs. Keine fremden Variablen, Quellkonfigurationen, Domains, Cron-Regeln oder Tarife wurden geändert; kein offener Provider-Patch. Alle drei Health-Endpunkte antworten HTTP 200. Die neue Werkstatt-API und UI sind nur bei Baumdienst HTTP 200; bei AL Steel und BauFlow HTTP 404.
+
+Die tatsächlich laufende Reset-Revision `ce13ead44842715a071fd8e702c023e3c4223e51` verwendet eine feste Liste bestehender Tabellen; die drei neuen Tabellen fehlen darin und haben keine kaskadierende Company-/Site-Verknüpfung. Der Erhalt wurde zusätzlich im isolierten Transaktionstest geprüft. Der frühere Web-Release `854f2d12-fb2a-40f4-99b1-29c27a616a91` / `a919133` bleibt als Rollback-Nachweis erhalten. Ein Rollback der App löscht die additiven gemeinsamen Tabellen nicht.
+
+Abnahme: **596 Unit-Tests bestanden, 1 bestehender Skip; 12 Browser-Tests bestanden**, Produktionsbuild/TypeScript und vollständiges sowie explizites Demo-Lint ohne Fehler/Warnungen. Echte physische Telefonkamera und Bildschirmtastatur bleiben `PENDING_RECHECK`; Responsive-/Upload-/Mehrgeräteprüfungen ersetzen diese Hardwareabnahme nicht. README und [Portfolio-Draft PR 38](https://github.com/IamRedi/redion-portfolio-/pull/38) sind auf die verifizierte gemeinsame Demo abgestimmt; die Portfolio-Production wird durch diese Aufgabe nicht veröffentlicht. Produktreife und Repository-About bleiben unverändert.
 
 ## Gemeinsame Werkstatt, Dateien und Baumdienst-Gestaltung
 
@@ -24,7 +36,7 @@ Die jüngste Footer-Korrektur vom 5. November ist umgesetzt: ein primärer Works
 
 Verifiziert: vollständige lokale Unit-Suite mit 596 bestandenen Tests und einem bereits vorhandenen Skip; Windows-Pfad-/Startquotierung in drei unveränderten fachlichen Testpaketen korrigiert, ohne Assertions zu entfernen. Produktionsbuild und TypeScript, vollständiges Lint sowie zusätzliches explizites Lint der sonst ausgeschlossenen Demo-Komponenten bestanden. Die Browser-Abnahme umfasst komplette Reparatur/Teile/Freigabe, unabhängige Desktop-/Telefon-Sessions, Dateien/Bilddecoder/EXIF-Grenzen, konkurrierende Buchungen, verlorene Antworten, Reset-Erhalt im zurückgerollten Fixture-Test, Unicode, alle sechs Sprachen, Themes, Reduced Motion, kurzen Bildschirm/Landscape/200% Text, Scrollposition und natürlichen Footer. Eine echte physische Bildschirmtastatur bleibt `PENDING_RECHECK`.
 
-**PENDING_PUBLICATION / OWNER_UAT:** Release-Revision, Online-Abnahme und tatsächliche Online-Aufnahme werden nach dem auf diesen einen Webdienst begrenzten Rollout ergänzt. Die folgenden Angaben beschreiben den früheren Browser-Release und gelten bei Speicher-/Footer-Fragen als Historie.
+**ONLINE_VERIFIED / OWNER_UAT:** Der gemeinsame Release ist oben belegt und direkt testbar. Die folgenden Angaben beschreiben den früheren Browser-Release und gelten bei Speicher-/Footer-Fragen als Historie.
 
 ## Freigegebener, isolierter Demo-Release
 
