@@ -72,6 +72,15 @@ remain in effect. Confirmation date is not actual work start/end. `workerIds`
 credit a team; `checkedBy` identifies the checker. Shared-team kg are not each
 member's individual output. Old unlinked name text is not silently attributed.
 
+The delivery guard also preserves the legacy qualifier if a model omits it:
+successful canonical day/month/evidence metrics can add `≈` to matching quoted
+kg values before delivery and archival. It changes no values or historical
+transcripts. Day and month scopes remain separate; project sums are derived only
+from a complete first evidence page. Snapshot-only values do not supply legacy
+qualifiers. Equal numeric values can conservatively share a qualifier; this is
+not semantic verification of every sentence. Private run diagnostics record the
+number of observed legacy values and inserted qualifiers.
+
 ## Private conversation archive
 
 The additive `20261105120000_assistant_history` migration creates three tables
