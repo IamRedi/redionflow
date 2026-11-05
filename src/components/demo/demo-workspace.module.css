@@ -8,6 +8,9 @@
   scrollbar-color: hsl(var(--muted-foreground) / .5) hsl(var(--background));
 }
 :global(.dark) .shell { color-scheme: dark; }
+/* The opt-in Musterfirma shell uses the established light emerald text variant
+   on dark surfaces, including translucent primary badges and links. */
+:global(.dark) .shell :global(.text-primary) { color: #6ee7b7; }
 .header { min-width: 0; }
 .header [data-demo-navigation] { scrollbar-width: thin; }
 .workspace {

@@ -1,3 +1,4 @@
+import { workshopCopy } from "@/lib/workshop/copy";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -159,7 +160,13 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
 
   return (
     <div className={inventoryContent ? "space-y-5" : "mx-auto max-w-6xl space-y-5"}>
-      <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+      {inventoryContent ? <header className="flex flex-wrap items-center gap-4 rounded-3xl border bg-card p-4 sm:p-6">
+        <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/10 text-2xl font-semibold text-primary">
+          {worker.profileImageUrl ? <Image src={worker.profileImageUrl} alt={`${worker.firstName} ${worker.lastName}`} fill sizes="80px" className="object-cover" /> : initials}
+        </div>
+        <div className="min-w-0 flex-1 basis-40"><h1 className="break-words text-xl font-semibold tracking-tight sm:text-2xl">{worker.firstName} {worker.lastName}</h1><p className="mt-2 break-words text-sm leading-relaxed text-muted-foreground">{worker.position ?? t("workzone.workerDefaultRole", currentLang)} · {worker.availability === "AVAILABLE" ? workshopCopy(currentLang).available : worker.availability === "UNAVAILABLE" ? workshopCopy(currentLang).unavailable : availabilityLabel(worker.availability, currentLang)}</p></div>
+        <Button asChild variant="outline" className="min-h-11 w-full sm:w-auto"><Link href="/demo/workzone">{t("report.back", currentLang)}</Link></Button>
+      </header> : <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <div className="h-28 bg-[#163328]" />
         <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6">
           <div className={inventoryContent ? "-mt-10 flex min-w-0 flex-1 flex-wrap items-end gap-3" : "-mt-12 flex items-end gap-4"}>
@@ -185,7 +192,7 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
             <Link href="/demo/workzone">{t("report.back", currentLang)}</Link>
           </Button>
         </div>
-      </div>
+      </div>}
 
       {inventoryContent}
       <ProfileDetails collapsed={Boolean(inventoryContent)} label={t("workzone.dataTitle", currentLang)}>
