@@ -84,3 +84,35 @@ it('returns legacy production groups separately without converting unknown units
   await prisma.productionBatch.create({ data: { companyProfileId: tenants[0].company.id, baustelleId: tenants[0].site.id, title: 'Order group demo', quantity: 4, unit: 't', steps: [{ key: 'cutting', status: 'blocked', note: 'Awaiting material', by: 'Synthetic', at: '2026-11-01T12:00Z' }] } });
   expect(await adminGetSteelProjectBatches(admin(), { projectId: tenants[0].site.id })).toMatchObject({ ok: true, totalMatches: 1, batches: [{ quantity: 4, unit: 't', state: 'blocked', steps: [{ note: 'Awaiting material' }] }] });
 });
+it('keeps selected-day project details paginated while retaining complete company month/day metrics and excluding foreign or removed confirmations', async () => {
+  const companyId = tenants[0].company.id;
+  await prisma.baustelle.update({ where: { id: tenants[0].site.id }, data: { name: 'Alpha Demo' } });
+  const beta = await prisma.baustelle.create({ data: { companyProfileId: companyId, type: 'STEEL_ASSEMBLY', name: 'Beta Demo' } });
+  const gamma = await prisma.baustelle.create({ data: { companyProfileId: companyId, type: 'STEEL_ASSEMBLY', name: 'Gamma Demo' } });
+  const alphaElement = await element(0, { weightKg: 10 });
+  const betaElement = await prisma.siteElement.create({ data: { companyProfileId: companyId, baustelleId: beta.id, list: 'assembly', mark: 'BETA', quantity: 4, weightKg: 20 } });
+  const gammaElement = await prisma.siteElement.create({ data: { companyProfileId: companyId, baustelleId: gamma.id, list: 'part', mark: 'GAMMA', quantity: 4, weightKg: 5 } });
+  const foreign = await element(1, { weightKg: 999 });
+  await prisma.siteElementWork.createMany({ data: [
+    { companyProfileId: companyId, elementId: alphaElement.id, stage: 'cutting', pieces: 1, workerIds: [], checkedByName: 'Synthetic', checkedAt: new Date('2026-11-03T10:00Z') },
+    { companyProfileId: companyId, elementId: alphaElement.id, stage: 'assembly', pieces: 2, workerIds: [], checkedByName: 'Synthetic', checkedAt: new Date('2026-11-04T10:00Z') },
+    { companyProfileId: companyId, elementId: betaElement.id, stage: 'assembly', pieces: 1, workerIds: [], checkedByName: 'Synthetic', checkedAt: new Date('2026-11-03T10:00Z') },
+    { companyProfileId: companyId, elementId: gammaElement.id, stage: 'cutting', pieces: 2, workerIds: [], checkedByName: 'Synthetic', checkedAt: new Date('2026-11-03T10:00Z') },
+    { companyProfileId: tenants[1].company.id, elementId: foreign.id, stage: 'assembly', pieces: 4, workerIds: [], checkedByName: 'FOREIGN', checkedAt: new Date('2026-11-03T10:00Z') },
+  ] });
+  const first = await adminGetSteelProductionSummary(admin(), { date: '2026-11-03', limit: 1 });
+  expect(first).toMatchObject({ ok: true, selectedDate: '2026-11-03', projectCount: 3, projectPageComplete: false, selectedDayProjectsPageComplete: false,
+    monthlyProduction: { cutParts: { kg: 10 }, cutAssemblies: { kg: 10 }, assembled: { kg: 40 } },
+    projects: [{ id: tenants[0].site.id, monthlyProduction: { assembled: { kg: 20 } } }],
+    selectedDayProjects: [{ id: tenants[0].site.id, checks: 1, metrics: { cutParts: { kg: 0 }, cutAssemblies: { kg: 10 }, assembled: { kg: 0 } } }] });
+  if (!first.ok) throw new Error('Expected summary page');
+  expect(first.selectedDayProjects).toHaveLength(1);
+  expect(first.dailyProduction.find(d => d.key === '2026-11-03')?.metrics.assembled.kg).toBe(20);
+  expect(JSON.stringify(first)).not.toContain(tenants[1].marker);
+  const second = await adminGetSteelProductionSummary(admin(), { date: '2026-11-03', limit: 1, projectCursor: first.nextProjectCursor! });
+  expect(second).toMatchObject({ ok: true, projectCount: 3, selectedDayProjects: [{ id: beta.id, metrics: { assembled: { kg: 20 } } }] });
+  await prisma.siteElementWork.deleteMany({ where: { companyProfileId: companyId, elementId: gammaElement.id } });
+  const last = await adminGetSteelProductionSummary(admin(), { date: '2026-11-03', limit: 1, projectCursor: beta.id });
+  expect(last).toMatchObject({ ok: true, projectCount: 3, projectPageComplete: true, selectedDayProjectsPageComplete: true, nextProjectCursor: null,
+    monthlyProduction: { cutParts: { kg: 0 }, assembled: { kg: 40 } }, selectedDayProjects: [{ id: gamma.id, checks: 0, metrics: { cutParts: { kg: 0 } } }] });
+});

@@ -19,6 +19,7 @@ import { createAssistantRunDiagnostics, categorizeAssistantFailure, type Assista
 import { AssistantHistoryError, startRun, appendTrace, finishRun, checkpointRun, type AssistantTerminalStatus } from '@/lib/assistant/history';
 import { assistantResponseStream } from '@/lib/assistant/response-stream';
 import { createLegacyWeightQualifier } from '@/lib/assistant/weight-qualifier';
+import { createCanonicalProductionAnswer, resolveCanonicalProductionIntent } from '@/lib/assistant/production-answer';
 import type { RequesterContext } from '@/lib/assistant/requester';
 import { logger } from '@/lib/observability/logger';
 
@@ -114,11 +115,14 @@ export async function POST(req: Request) {
     else for (const name of Object.keys(registry)) if (name !== 'getAssistantCapabilities') delete registry[name];
     const diagnostics = createAssistantRunDiagnostics();
     const weightQualifier = createLegacyWeightQualifier(turn);
+    const productionIntent = steel && !metaQuestion ? resolveCanonicalProductionIntent(parsed.data.messages) : null;
+    const productionAnswer = createCanonicalProductionAnswer({ intent: productionIntent, turn, language });
     const runId = history.runId;
     const tools = groundedTools(registry, turn.timeZone, () => new Date(), async event => {
       const stored = await appendTrace(requester, { ...event, runId, evidence: { ...event.evidence, ...(event.failure ? { failure: event.failure } : {}) } });
       if (!stored) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
       weightQualifier.observe(event);
+      productionAnswer.observe(event);
     });
     const disconnect = new AbortController();
     const generationRequest = new Request(req.url, { signal: AbortSignal.any([req.signal, disconnect.signal]) });
@@ -130,19 +134,19 @@ export async function POST(req: Request) {
       system: adminAssistantPrompt({ requester, turn, steel, target: identity.status === 'found' ? identity.target : null }),
       messages: parsed.data.messages,
       tools,
-      prepareStep: step => groundedStep(step, metaQuestion, assistantInitialTool(question, steel)),
+      prepareStep: step => groundedStep(step, metaQuestion, productionIntent ? 'adminGetSteelProductionSummary' : assistantInitialTool(question, steel)),
       onFinish: async event => { usage = event.totalUsage; await generation.onFinish(event); },
     });
     return assistantResponseStream(result.fullStream, {
       diagnostics, headers: headers(), fallback: code => failureMessage(language, code), storageFailure: storageMessage(language),
-      transformAnswer: weightQualifier.transformAnswer,
+      transformAnswer: text => weightQualifier.transformAnswer(productionAnswer.transformAnswer(text)),
       onCancel: () => disconnect.abort(),
       onToolError: async event => {
         if (!await appendTrace(requester, { runId, toolCallId: event.toolCallId, toolName: event.toolName, input: event.input, result: { ok: false, diagnostic: event.failure }, status: 'error' })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
       },
       onCheckpoint: async answer => { if (!await checkpointRun(requester, { runId, answer })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE'); },
       onComplete: async final => {
-        if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: { ...final.diagnostics, weightQualification: weightQualifier.snapshot() }, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+        if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: { ...final.diagnostics, weightQualification: weightQualifier.snapshot(), canonicalProduction: productionAnswer.snapshot() }, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
         logger.info({ event: 'assistant.run', runId, status: final.status, failure: final.diagnostics.failure, lastToolFailure: final.diagnostics.lastToolFailure, steps: final.diagnostics.steps, providerCalls: final.diagnostics.providerCalls, failedToolResults: final.diagnostics.failedToolResults }, 'Assistant request completed');
       },
     });

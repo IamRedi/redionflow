@@ -135,10 +135,13 @@ export async function adminGetSteelProductionSummary(requester: RequesterContext
     const cursorIndex = input.projectCursor ? data.projectRows.findIndex(p => p.id === input.projectCursor) : -1;
     if (input.projectCursor && cursorIndex < 0) fail('INVALID_CURSOR', 'The project cursor does not belong to this summary.');
     const page = data.projectRows.slice(cursorIndex + 1, cursorIndex + 1 + limit), hasMore = data.projectRows.length > cursorIndex + 1 + limit;
+    const pageIds = new Set(page.map(p => p.id));
     return { ok: true as const, source: source(company, ['SiteElement', 'SiteElementWork', 'Baustelle'], now), month: data.month, selectedDate: data.day, selectedProject: project, currentProgress: data.totalProgress,
       monthlyProduction: data.totals, dailyProduction: data.days.filter(d => d.checks > 0 || d.key === data.day),
       projectCount: data.projectRows.length, projectPageComplete: !hasMore, nextProjectCursor: hasMore ? page.at(-1)!.id : null,
       projects: page.map(p => ({ id: p.id, name: p.name, status: p.status, currentProgress: p.progress, monthlyProduction: p.month })),
+      selectedDayProjects: data.dayProjects.filter(p => pageIds.has(p.id)).map(({ id, name, metrics, checks }) => ({ id, name, metrics, checks })),
+      selectedDayProjectsPageComplete: !hasMore,
       interpretation: { productionDate: 'confirmation time in the company timezone, not the actual work start/end', weight: 'immutable confirmation snapshot where present; legacyPieces use current-list weights and are approximate; missingPieces have unknown weight', stages: 'cutParts, cutAssemblies and assembled are separate processes, never add them into one steel total', currentProgress: 'current assembly-list progress, not the monthly throughput or a historical inventory snapshot', completeness: 'All matching confirmation rows contribute to the totals; project details are paginated separately.' },
     };
   });

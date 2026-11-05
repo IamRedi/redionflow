@@ -81,6 +81,20 @@ qualifiers. Equal numeric values can conservatively share a qualifier; this is
 not semantic verification of every sentence. Private run diagnostics record the
 number of observed legacy values and inserted qualifiers.
 
+Standard factory-production quantity questions use a bounded canonical answer
+renderer after a successful summary lookup. It reports cutting/assembly series
+separately, with pieces, legacy approximation and missing weights; a model's
+invented combined kg total is replaced before delivery and archival. Requested
+project details use the selected day's per-project facts (or the selected
+month's facts), with explicit page completeness. This is confirmation throughput,
+not stock, unique steel output or evidence of every factory process. Unsupported
+period comparisons and incomplete sources return a short clarification instead
+of an inferred total. Private diagnostics record whether the renderer applied.
+Unrelated, specific-product/process/person and stock questions keep their normal
+read-only tools. This bounded renderer does not certify arbitrary model answers.
+The Albanian style instruction `përgjigju shkurt` is distinguished from February
+when resolving a requested day; an explicit February comparison remains mixed.
+
 ## Private conversation archive
 
 The additive `20261105120000_assistant_history` migration creates three tables

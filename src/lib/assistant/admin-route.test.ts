@@ -26,6 +26,8 @@ const state = vi.hoisted(() => ({
   companyRead: vi.fn(), identityRead: vi.fn(), failedLogin: vi.fn(), stream: vi.fn(), generationFinish: vi.fn(),
   historyStart: vi.fn(), historyFinish: vi.fn(), trace: vi.fn(), checkpoint: vi.fn(),
   replayed: false, archiveUnavailable: false,
+  summaryResult: null as unknown,
+  sourceCall: null as { input: Record<string, unknown> } | null,
 }));
 vi.mock('@/lib/assistant/history', () => {
   class AssistantHistoryError extends Error { constructor(readonly status: number, readonly code: string) { super(code); } }
@@ -58,6 +60,9 @@ vi.mock('@/lib/assistant/generation', () => ({ assistantGeneration: (...args: un
 vi.mock('ai', async original => ({ ...await original<typeof import('ai')>(), streamText: (options: CapturedGeneration) => {
   state.stream(options); state.captured = options;
   return { fullStream: (async function* () {
+    if (state.sourceCall) {
+      await options.tools.adminGetSteelProductionSummary.execute(state.sourceCall.input, { toolCallId: 'synthetic-production', messages: [] });
+    }
     yield { type: 'start-step' };
     if (state.streamFailure) {
       yield { type: 'text-delta', text: 'Partial synthetic answer' };
@@ -86,7 +91,7 @@ vi.mock('@/lib/assistant/tools', () => Object.fromEntries([
 vi.mock('@/lib/assistant/steel-tools', () => Object.fromEntries([
   'adminSearchSteelProjects', 'adminSearchSteelElements', 'adminGetSteelElement', 'adminGetSteelProductionSummary',
   'adminGetSteelProductionEvidence', 'adminGetSteelProjectBatches',
-].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, syntheticMetricKg: 250 }; }])));
+].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return name === 'adminGetSteelProductionSummary' && state.summaryResult !== null ? state.summaryResult : { ok: true, syntheticMetricKg: 250 }; }])));
 vi.mock('@/lib/assistant/company-tools', () => Object.fromEntries([
   'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory',
 ].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, rows: [] }; }])));
@@ -106,6 +111,7 @@ beforeEach(() => {
   state.access = { ok: true }; state.quotaDenied = false; state.streamFailure = false; state.captured = null; state.toolCalls = [];
   state.responseText = 'Synthetic grounded answer'; state.finishReason = 'stop';
   state.replayed = false; state.archiveUnavailable = false;
+  state.summaryResult = null; state.sourceCall = null;
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
@@ -269,4 +275,50 @@ it('archives a quota rejection as a rejected run, not a successful business answ
   state.quotaDenied = true;
   const response = await POST(request()); const body = await response.json();
   expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer: body.error, status: 'rejected', errorCode: 'QUOTA_REJECTED', httpStatus: 429 }));
+});
+
+function productionSource() {
+  const zero = { kg: 0, pieces: 0, legacyPieces: 0, missingPieces: 0 };
+  const metrics = {
+    cutParts: zero,
+    cutAssemblies: { kg: 123.45, pieces: 5, legacyPieces: 5, missingPieces: 0 },
+    assembled: { kg: 67.89, pieces: 2, legacyPieces: 0, missingPieces: 0 },
+  };
+  return { ok: true, month: '2026-10', selectedDate: '2026-10-31', dailyProduction: [{ key: '2026-10-31', metrics }],
+    monthlyProduction: metrics, projectCount: 1, projectPageComplete: true,
+    selectedDayProjectsPageComplete: true, selectedDayProjects: [{ id: 'synthetic-site', name: 'Demo site', metrics }],
+  };
+}
+it('replaces a model sum with separate canonical factory metrics and archives exactly that answer', async () => {
+  state.summaryResult = productionSource(); state.sourceCall = { input: {} };
+  state.responseText = 'Fabrika prodhoi 191.34 kg gjithsej.';
+  const response = await POST(request('Sa materiale ka bërë fabrika dje? Përgjigju shkurt me një fjali.'));
+  const answer = await response.text();
+  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName: 'adminGetSteelProductionSummary' } });
+  expect(answer).toContain('Prerje asamblesh: 5 copë, ≈123,45 kg');
+  expect(answer).toContain('Asambluar: 2 copë, 67,89 kg');
+  expect(answer).not.toContain('191.34'); expect(answer).not.toContain('gjithsej');
+  expect(state.checkpoint).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer }));
+  expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer, diagnostics: expect.objectContaining({ canonicalProduction: { applied: true, unavailable: false } }) }));
+});
+it('uses daily project facts for a detail follow-up instead of returning the invented model answer', async () => {
+  state.summaryResult = productionSource(); state.sourceCall = { input: {} }; state.responseText = 'Invented combined total';
+  const req = new Request(`${origin}/api/assistant`, { method: 'POST', headers: { origin, 'content-type': 'application/json' },
+    body: JSON.stringify({ messages: [
+      { role: 'user', content: 'Sa materiale ka bërë fabrika dje?' },
+      { role: 'assistant', content: 'Untrusted older answer' },
+      { role: 'user', content: 'Më jep detajet sipas projektit për dje.' },
+    ] }),
+  });
+  const answer = await (await POST(req)).text();
+  expect(answer).toContain('"Demo site":'); expect(answer).toContain('≈123,45 kg'); expect(answer).toContain('67,89 kg');
+  expect(answer).not.toContain('Invented');
+  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName: 'adminGetSteelProductionSummary' } });
+});
+it('does not turn a failed factory source into a guessed total or zero confirmations', async () => {
+  state.summaryResult = { ok: false, error: 'unavailable' }; state.sourceCall = { input: {} };
+  state.responseText = 'Nuk ka prodhim: 0 kg.';
+  const answer = await (await POST(request('Sa materiale ka bërë fabrika dje?'))).text();
+  expect(answer).toContain('Nuk kam konfirmime të plota'); expect(answer).not.toContain('0 kg');
+  expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer, diagnostics: expect.objectContaining({ canonicalProduction: { applied: true, unavailable: true } }) }));
 });
