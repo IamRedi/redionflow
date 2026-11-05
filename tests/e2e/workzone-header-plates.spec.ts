@@ -85,7 +85,7 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await page.keyboard.press('Enter');
         await expect.poll(async () => page.evaluate(() => {const a=document.querySelector('.leaflet-marker-icon[title="Makinat: DEMO-01"]')!.getBoundingClientRect(),b=document.querySelector('[data-testid="workzone-map-frame"] .leaflet-container')!.getBoundingClientRect();return Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2);})).toBeLessThan(8);
         const scrollbar = await index.evaluate(el => ({ list: getComputedStyle(el).scrollbarWidth, page: getComputedStyle(document.documentElement).scrollbarWidth }));
-        if (scrollbar.list !== scrollbar.page) issues.push(`${theme}/${width}: scrollbar differs`);
+        if (scrollbar.list !== 'none') issues.push(`${theme}/${width}: visible map scrollbar`);
         await page.getByTestId('workzone-map-frame').scrollIntoViewIfNeeded();
         await page.screenshot({ path: info.outputPath(`workzone-plates-${theme}-${width}.png`) });
       }

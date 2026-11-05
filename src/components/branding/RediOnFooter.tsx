@@ -1,4 +1,6 @@
+'use client';
 import { cn } from "@/lib/ui/cn";
+import { FooterProductMark } from './FooterBrand';
 import localFont from "next/font/local";
 import styles from "./RediOnFooter.module.css";
 
@@ -13,6 +15,7 @@ export function RediOnFooter({ onDark = false }: { onDark?: boolean }) {
       className={cn(styles.footer, "print:hidden")}
       data-theme={onDark ? "dark" : undefined}
     >
+      <div className={styles.product}><FooterProductMark /></div>
       <a className={cn(styles.credit, manrope.className)} href="https://www.redioncekrezi.de/" aria-label="by RediON">
         <span aria-hidden="true">{credit.by}</span>
         <span className={styles.name} aria-hidden="true"><span className={styles.red}>{credit.red}</span><span className={styles.green}>{credit.green}</span><span className={styles.blue}>{credit.blue}</span><span className={styles.yellow}>{credit.yellow}</span>{credit.on}</span>

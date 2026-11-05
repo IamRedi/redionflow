@@ -1,6 +1,59 @@
 # Prüfprotokoll / Verification record
 
-**Stand: 3. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
+**Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
+
+## 5 November 2026 — steel workspace and fuel-history refinement candidate
+
+Prepared on `fix/steel-workspace-density-fuel-20261105`, over pilot
+`807519b1a4dea650645aa153db49000406af3a7f`. Source, local verification and
+publication are separate: this change requires a new exact-PR pilot approval.
+
+The steel admin view reclaims the unused 96px fleet gutter. Admin and Workzone
+use a viewport shell with one primary content scroll area and reachable shell
+rows; the Workzone vehicle rail has allocated space rather than overlaying the
+workspace. The map index retains wheel/touch/keyboard scrolling with its bar
+hidden and viewport-derived height. Calendar cells omit empty metric dots and
+decorative section counters; dates, quantities, weight provenance and calculations
+are preserved. The shared footer is transparent and 44px high, with the small
+author link centered over its full width and the product mark at the side.
+The production monitor also uses that shared footer. Mobile utility targets
+retain their 44px size when the root text size increases.
+
+There is no global fuel shortcut. Each vehicle retains its existing receipt
+entry. Personnel & Fleet links to `/app/machines/fuel`, reusing the authenticated
+company history, pagination and protected original photo. Office history shows
+vehicle/plate, uploader/upload time, actual fueler, receipt time/timezone, station,
+liters/amount and historical GPS clocks/differences without a second data store.
+
+Focused Chromium verification uses fictional steel projects, 24 workers,
+18 vehicles, 65 receipts and a second tenant's receipt. It covers light/dark at
+1440×950, 360×800, 760×360 and 320×640; monitor at 1920×1080 and 360×800;
+calendar/last-row reachability, no document overflow, transparent centered
+footer, retained vehicle receipt entry, office receipt details, 60→65 pagination
+with unchanged row position, foreign-tenant exclusion, keyboard focus, root text
+scale 200% and the public landing footer. Baseline screenshots use the same
+fictional data. The short-landscape outer-scroll regression was reproduced and
+corrected before acceptance. Exact final results and source head are in the PR.
+
+The managed local workflow includes the production build and application
+TypeScript check. Its local web-server startup allowance was extended from
+180s to 600s after a slow build timed out; the assertions and committed default
+runner remain intact. Changed-file lint, source-hash comparison and staged
+secret/diff checks accompany the candidate. Existing GPS/OCR/photo/import/full
+dashboard suites and cloud Actions are not rerun under the owner's instruction.
+The existing pg concurrent-query deprecation warning remains separate.
+
+Physical mobile keyboard behavior and real GPS/receipt acceptance remain
+PENDING_RECHECK. The viewport requests content resizing for supported mobile
+keyboards; a reduced viewport/root-font reflow check is not a physical-device
+claim. No migration, dependency, provider setting, secret or real business record
+changes. Rollback is the prior application revision, retaining all stored data.
+
+Presentation assessment: native feature copy, showcase README/About and the
+portfolio capability card remain accurate (NO_CONTENT_CHANGE for this navigation
+and density refinement; no maturity increase). The shared native footer is updated
+in source. Existing documentation/portfolio companion PRs retain their separate
+publication/readback gaps; this assessment does not close them.
 
 ## 3 November 2026 — encrypted backup and assistant cost-limit candidate
 

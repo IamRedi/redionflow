@@ -424,11 +424,13 @@
   padding: 3px 0 7px
 }
 .day {
+  display: flex;
+  flex-direction: column;
   background: var(--day);
   border: 1px solid var(--day-edge);
   border-radius: 9px;
-  min-height: 91px;
-  padding: 8px 7px;
+  min-height: 44px;
+  padding: 6px 5px;
   text-align: left;
   cursor: pointer;
   min-width: 0;
@@ -454,8 +456,8 @@
 .dayValues {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-top: 9px;
+  gap: 3px;
+  margin-top: 4px;
   font-size: 9px;
   line-height: 1;
   letter-spacing: -.02em
@@ -472,9 +474,7 @@
   flex-shrink: 0;
   border-radius: 50%
 }
-.zero {
-  color: var(--subtle)
-}
+.dayValues:empty { display: none; }
 .today .dayNumber {
   color: var(--cut-parts);
   font-weight: 700
@@ -1006,7 +1006,7 @@
     font-size: 10px
   }
   .day {
-    min-height: 104px
+    min-height: 44px
   }
   .monitor .projectGrid {
     grid-template-columns: repeat(2,minmax(0,1fr))
@@ -1119,14 +1119,14 @@
     gap: 3px
   }
   .day {
-    padding: 7px 4px;
-    min-height: 91px;
+    padding: 6px 3px;
+    min-height: 44px;
     border-radius: 6px
   }
   .dayValues {
     font-size: 8px;
-    gap: 6px;
-    margin-top: 10px
+    gap: 3px;
+    margin-top: 4px
   }
   .dayValues>span {
     gap: 2px

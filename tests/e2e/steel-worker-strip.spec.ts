@@ -4,7 +4,7 @@ import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 import { seedSteelProduction } from '../fixtures/steel-production';
 import { dayKey, shiftMonth } from '../../src/lib/dashboard/steel-metrics';
 
-test('steel admin team stays in its own space and scrolls away from the charts', async ({ page, context }, info) => {
+test('steel admin team stays in its shell row without covering scrolled charts', async ({ page, context }, info) => {
   assertE2ETestDatabase(process.env);
   test.setTimeout(180_000);
   const month = shiftMonth(dayKey(new Date(), 'Europe/Tirane').slice(0, 7), -1);
@@ -49,8 +49,10 @@ test('steel admin team stays in its own space and scrolls away from the charts',
           await strip.getByRole('button', { name: /^Demo01 Crew01/ }).click();
           await expect(header.getByRole('button', { name: 'Profili', exact: true })).toBeVisible();
         }
-        await page.evaluate(() => window.scrollTo(0, 850));
-        await expect.poll(() => header.evaluate(el => el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(0);
+        const headerTop = (await header.boundingBox())!.y;
+        await page.getByTestId('app-workspace-scroll').evaluate(el => { el.scrollTop = 850; });
+        expect(Math.abs((await header.boundingBox())!.y - headerTop)).toBeLessThan(1);
+        expect(await page.evaluate(() => window.scrollY)).toBe(0);
         await expect(header.getByRole('button', { name: 'Profili', exact: true })).toHaveCount(0);
         const chart = page.locator('svg[role="img"]').first();
         await chart.scrollIntoViewIfNeeded();

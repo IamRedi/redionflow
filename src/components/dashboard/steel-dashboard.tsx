@@ -11,7 +11,7 @@ import { reportLocale } from '@/lib/workzone/date-utils';
 import { productionDate, productionNumber } from '@/lib/dashboard/steel-format';
 import styles from './steel-dashboard.module.css';
 const kgUnit = 'kg';
-const section = (n: number) => `${String(n).padStart(2, '0')} /`;
+
 const colors: Record<Series, string> = { cutParts: 'var(--cut-parts)', cutAssemblies: 'var(--cut-assemblies)', assembled: 'var(--assembled)' };
 export function SteelDashboard({ data: d, lang }: {
     data: SteelDashboardData;
@@ -62,7 +62,7 @@ export function SteelDashboard({ data: d, lang }: {
     const trendDays = d.days.filter(day => day.key <= d.today), max = Math.max(1, ...trendDays.flatMap(day => visible.map(s => day.metrics[s].kg)));
     const x = (i: number) => 50 + i / Math.max(1, trendDays.length - 1) * 650;
     const y = (value: number) => 205 - value / max * 165;
-    const projectsSection = (<section className={styles.projectsSection} aria-labelledby="production-projects-title"><div className={styles.sectionHead}><div><span className={styles.sectionIndex}>{section(3)} {c.project}</span><h2 id="production-projects-title">{c.projects}</h2><p>{c.projectsHint}</p></div><span>{d.projectRows.length.toString().padStart(2, '0')}</span></div>
+    const projectsSection = (<section className={styles.projectsSection} aria-labelledby="production-projects-title"><div className={styles.sectionHead}><div><span className={styles.sectionIndex}>{c.project}</span><h2 id="production-projects-title">{c.projects}</h2><p>{c.projectsHint}</p></div><span>{d.projectRows.length.toString().padStart(2, '0')}</span></div>
         <div className={styles.projectGrid}>{d.projectRows.map(p => {
             const pct = p.progress.totalPieces ? Math.round(100 * p.progress.readyPieces / p.progress.totalPieces) : 0;
             return <article key={p.id} className={styles.projectCard} data-testid={`production-project-${p.id}`}>
@@ -134,7 +134,7 @@ export function SteelDashboard({ data: d, lang }: {
 
       <div className={styles.mainGrid}>
         <section className={styles.panel} aria-labelledby="production-calendar-title">
-          <div className={styles.panelHead}><div><span className={styles.sectionIndex}>{section(1)} {c.month}</span><h2 id="production-calendar-title">{c.calendar}</h2><p>{c.calendarHint}</p></div><CalendarDays className={styles.panelIcon} size={22}/></div>
+          <div className={styles.panelHead}><div><span className={styles.sectionIndex}>{c.month}</span><h2 id="production-calendar-title">{c.calendar}</h2><p>{c.calendarHint}</p></div><CalendarDays className={styles.panelIcon} size={22}/></div>
           <div className={styles.calendarNav}><strong>{date(`${d.month}-01`, { month: 'long', year: 'numeric' })}</strong><div>
             <button className={styles.iconButton} type="button" aria-label={date(`${shiftMonth(d.month, -1)}-01`, { month: 'long', year: 'numeric' })} onClick={() => move({ month: shiftMonth(d.month, -1), day: `${shiftMonth(d.month, -1)}-01` })}><ChevronLeft size={17}/></button>
             <button type="button" className={styles.textButton} onClick={() => move({ month: d.readOnly ? null : d.today.slice(0, 7), day: d.readOnly ? null : d.today })}>{c.today}</button>
@@ -146,7 +146,7 @@ export function SteelDashboard({ data: d, lang }: {
             {Array.from({ length: offset }, (_, i) => <div key={`blank-${i}`} className={styles.blankDay} aria-hidden="true"/>)}
             {d.days.map(day => <button key={day.key} data-testid={`production-day-${day.key}`} type="button" className={`${styles.day} ${day.key === d.day ? styles.selectedDay : ''} ${day.key === d.today ? styles.today : ''}`} aria-pressed={day.key === d.day} aria-label={`${date(day.key)}; ${SERIES.map(s => `${c[s]}: ${metricText(day.metrics[s])} kg; ${day.metrics[s].missingPieces} ${c.missing}`).join('; ')}; ${day.checks} ${c.checks}`} disabled={day.key > d.today} onClick={() => move({ day: day.key })}>
               <span className={styles.dayNumber}>{Number(day.key.slice(-2))}{day.checks > 0 && <i className={styles.activityDot}/>}</span>
-              <span className={styles.dayValues}>{SERIES.map(s => <span key={s} style={{ color: colors[s] }}>{day.metrics[s].pieces > 0 ? <><i style={{ background: colors[s] }}/>{day.metrics[s].missingPieces === day.metrics[s].pieces ? '—' : `${day.metrics[s].legacyPieces ? '≈' : ''}${calendarN(day.metrics[s].kg)}`}</> : <span className={styles.zero}>·</span>}</span>)}</span>
+              <span className={styles.dayValues}>{SERIES.filter(s => day.metrics[s].pieces > 0).map(s => <span key={s} style={{ color: colors[s] }}><i style={{ background: colors[s] }}/>{day.metrics[s].missingPieces === day.metrics[s].pieces ? '—' : `${day.metrics[s].legacyPieces ? '≈' : ''}${calendarN(day.metrics[s].kg)}`}</span>)}</span>
             </button>)}
           </div>
           <p className={styles.calendarFooter}><Info size={13}/>{c.basis}</p>
@@ -154,7 +154,7 @@ export function SteelDashboard({ data: d, lang }: {
 
         <div className={styles.sideStack}>
           <section className={styles.panel}>
-            <div className={styles.panelHead}><div><span className={styles.sectionIndex}>{section(2)} {kgUnit}</span><h2>{c.trend}</h2><p>{c.trendHint}</p></div><Sparkles className={styles.panelIcon} size={21}/></div>
+            <div className={styles.panelHead}><div><span className={styles.sectionIndex}>{kgUnit}</span><h2>{c.trend}</h2><p>{c.trendHint}</p></div><Sparkles className={styles.panelIcon} size={21}/></div>
             <div className={styles.chartLegend}>{SERIES.map(s => <button key={s} type="button" aria-pressed={visible.includes(s)} style={{ '--accent': colors[s] } as CSSProperties} onClick={() => setVisible(v => v.includes(s) ? v.length > 1 ? v.filter(k => k !== s) : v : [...v, s])}><i style={{ background: colors[s] }}/>{c[s]}</button>)}</div>
             <svg className={styles.chart} viewBox="0 0 730 245" role="img" aria-labelledby={`${graphId}-title ${graphId}-desc`}>
               <title id={`${graphId}-title`}>{c.trend}</title><desc id={`${graphId}-desc`}>{c.trendHint}. {SERIES.map(s => `${c[s]}: ${metricText(d.totals[s])} kg`).join('; ')}. {c.knowledge}.</desc>
@@ -175,7 +175,7 @@ export function SteelDashboard({ data: d, lang }: {
 
       {!d.readOnly && projectsSection}
 
-      {!d.readOnly && <section className={styles.panel} aria-labelledby="production-evidence-title"><div className={styles.panelHead}><div><span className={styles.sectionIndex}>{section(4)} {c.checks}</span><h2 id="production-evidence-title">{c.evidence}</h2><p>{c.evidenceHint} · {date(d.day)} · {d.zone}</p></div><ClipboardCheck size={23} className={styles.panelIcon}/></div>
+      {!d.readOnly && <section className={styles.panel} aria-labelledby="production-evidence-title"><div className={styles.panelHead}><div><span className={styles.sectionIndex}>{c.checks}</span><h2 id="production-evidence-title">{c.evidence}</h2><p>{c.evidenceHint} · {date(d.day)} · {d.zone}</p></div><ClipboardCheck size={23} className={styles.panelIcon}/></div>
         <details className={styles.evidenceDisclosure}><summary data-testid="production-evidence-toggle"><ClipboardCheck size={16}/><span>{d.dayChecks} {c.checks}</span><ChevronRight size={16}/></summary>
         <div className={styles.evidenceList}>{d.evidence.map(e => <article key={e.id} className={styles.evidenceRow}><div className={styles.mark}><span>{e.mark}</span><small>{e.list === 'part' ? 'Lista parti' : 'Lista assemblaggi'}</small></div><div className={styles.evidenceMain}><strong>{d.projects.find(p => p.id === e.projectId)?.name}</strong><span>{stageName(e.stage)} · {n(e.pieces, 0)} {c.pieces} × {e.unitWeightKg === null ? '—' : n(e.unitWeightKg)} {kgUnit}</span><small>{c.workers}: {e.workerNames || '—'}</small><small>{c.confirmedBy}: {e.checkedByName} · <time dateTime={e.checkedAt}>{clock(e.checkedAt)}</time></small></div><div className={styles.evidenceWeight}><strong>{e.kg === null ? '—' : `${e.legacy ? '≈ ' : ''}${n(e.kg)}`}<small>{` ${kgUnit}`}</small></strong><span className={e.legacy ? styles.legacyTag : styles.originalTag}>{e.kg === null ? c.noWeight : e.legacy ? c.legacy : c.original}</span></div></article>)}</div>
         {d.evidence.length === 0 && <p className={styles.empty}>{c.noActivity}</p>}

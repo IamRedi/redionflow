@@ -15,7 +15,7 @@ export default async function DisplayLayout({ children }: { children: ReactNode 
   const audience = await productionAudience(true);
   if (displayUser?.companyProfileId && !audience) redirect('/display-login');
   if (audience && audience.company.mode === 'bau' && await isSteelCompany(audience.company.id)) {
-    return <div className="min-h-dvh bg-[#f2f6f9] dark:bg-[#111b26]"><main className="mx-auto max-w-[2000px]">{children}</main></div>;
+    return <div className="min-h-dvh bg-[#f2f6f9] dark:bg-[#111b26]"><main className="w-full">{children}</main><RediOnFooter /></div>;
   }
   if (!displayUser) redirect("/display-login");
 

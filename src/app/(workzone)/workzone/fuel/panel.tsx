@@ -24,10 +24,12 @@ export function FuelPanel({
   data,
   lang,
   initialMachineId,
+  logOnly = false,
 }: {
   data: Awaited<ReturnType<typeof readFuelLog>>;
   lang: string;
   initialMachineId: string;
+  logOnly?: boolean;
 }) {
   const c = fleetCopy(lang);
   const [machineId, setMachineId] = useState(initialMachineId);
@@ -122,7 +124,8 @@ export function FuelPanel({
   }
   return (
     <div className="space-y-7">
-      <section className="rounded-2xl border bg-card p-4 sm:p-6">
+      {logOnly && message && <p role="status" className="text-sm text-destructive">{message}</p>}
+      {!logOnly && <section className="rounded-2xl border bg-card p-4 sm:p-6">
         {!draft ? (
           <form
             className="space-y-4"
@@ -366,13 +369,13 @@ export function FuelPanel({
         >
           {message}
         </p>
-      </section>
+      </section>}
       <section className="space-y-3">
         <div>
           <h2 className="text-lg font-semibold">
             {data.isOffice ? c.officeLog : c.fuelLog}
           </h2>
-          <p className="text-xs text-muted-foreground">{c.onlyMine}</p>
+          {!data.isOffice && <p className="text-xs text-muted-foreground">{c.onlyMine}</p>}
         </div>
         {!rows.length && (
           <p className="rounded-2xl border p-6 text-sm text-muted-foreground">
@@ -396,9 +399,7 @@ export function FuelPanel({
               <div className="flex flex-wrap items-start justify-between gap-3 p-4">
                 <div>
                   <h3 className="font-semibold">
-                    {row.machine.targe ??
-                      row.machine.nickname ??
-                      row.machine.name}
+                    {[row.machine.targe, row.machine.nickname || row.machine.name].filter(Boolean).join(' · ')}
                   </h3>
                   <p className="mt-1 text-sm">
                     {row.fueledAt
@@ -431,6 +432,7 @@ export function FuelPanel({
                   {c.details} · {c.gps}
                 </summary>
                 <div className="mt-3 space-y-3 text-sm">
+                  {row.receiptTime && <p>{c.invoiceTime}: {row.receiptTime.replace('T', ' ')} · {row.timeZone}</p>}
                   <a
                     href={`/api/fuel-receipts/${row.id}`}
                     target="_blank"
@@ -440,7 +442,7 @@ export function FuelPanel({
                     <ReceiptText className="size-4" />
                     {c.viewReceipt}
                   </a>
-                  {!row.confirmedAt ? (
+                  {!row.confirmedAt ? (logOnly ? null : (
                     <button
                       disabled={pending}
                       onClick={() => resume(row)}
@@ -448,7 +450,7 @@ export function FuelPanel({
                     >
                       {c.continue}
                     </button>
-                  ) : (
+                  )) : (
                     <>
                       <div>
                         <p className="font-medium">{c.gpsEvidence}</p>
@@ -500,7 +502,7 @@ export function FuelPanel({
                       <p className="text-xs text-muted-foreground">
                         {c.addressHint}
                       </p>
-                      <button
+                      {!logOnly && <button
                         disabled={pending}
                         onClick={() =>
                           perform(() => retryFuelGpsAction(row.id), 'gps')
@@ -508,7 +510,7 @@ export function FuelPanel({
                         className="min-h-10 rounded-lg border px-3 disabled:opacity-50"
                       >
                         {c.retry}
-                      </button>
+                      </button>}
                     </>
                   )}
                 </div>

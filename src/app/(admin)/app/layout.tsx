@@ -9,6 +9,7 @@ import { AdminNavGroup } from "@/components/shell/admin-nav-group";
 import { AdminNavLink } from "@/components/shell/admin-nav-link";
 import { FlowTopBar } from "@/components/shell/FlowTopBar";
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
+import workspace from '@/components/shell/app-workspace.module.css';
 import { LanguageDropdown } from "@/components/i18n/language-dropdown";
 import { logoutAdminAction } from "@/app/admin-login/actions";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
@@ -94,13 +95,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .filter((section) => section.items.length > 0);
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className={production ? `${workspace.shell} bg-background` : 'min-h-dvh bg-background'}>
       <header data-testid="admin-topbar" className={production ? "relative z-10 border-b bg-background print:hidden" : "sticky top-0 z-10 print:hidden"}>
         <FlowTopBar contained={production} />
       </header>
       <AdminFleet production={production} machines={machines} isAdmin showCones={showCones} country={country} />
-      <div className="grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24">
-        <aside className="min-w-0 print:hidden">
+      <div className={production ? `${workspace.body} ${workspace.admin}` : 'grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24'}>
+        <aside className={`${production ? workspace.navigation : 'min-w-0'} print:hidden`}>
           {/* One menu: a scrollable row of links on phones, a sidebar from tablet up. */}
           <nav className={`no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:sticky ${production ? "md:top-4 md:max-h-[calc(100dvh-2rem)]" : "md:top-24 md:max-h-[calc(100dvh-7rem)]"} md:mx-0 md:flex-col md:gap-4 md:overflow-y-auto md:overscroll-contain md:rounded-2xl md:border md:bg-card/70 md:p-2 md:shadow-sm md:backdrop-blur`}>
             <div className="hidden items-center gap-2.5 rounded-xl px-2 pt-1.5 md:flex">
@@ -162,12 +163,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </nav>
         </aside>
 
-        <div className="min-w-0">
+        <div className={production ? 'contents' : 'min-w-0'}>
           <LiveRefreshListener enabled />
-          <main className="print:px-0 print:py-0">{children}</main>
-          <RediOnFooter />
+          <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'print:px-0 print:py-0'}>{children}</main>
+          {!production && <RediOnFooter />}
         </div>
       </div>
+      {production && <RediOnFooter />}
     </div>
   );
 }

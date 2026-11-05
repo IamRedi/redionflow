@@ -17,8 +17,12 @@ from the local synthetic tests. No real customer data or credentials are fixture
   recorded coordinates in Maps, display the original report time and preserve
   offline/stale labels. Refresh is manual and uses the existing provider lease
   and cooldown; viewing a map does not poll the provider.
-- Fleet cards and the Workzone fleet rail open **Add fuel receipt**, optionally
-  with the vehicle already selected. Take/choose a JPG/PNG, read it, check the
+- Open a vehicle from the Workzone fleet rail; its detail card opens **Add fuel
+  receipt** with that vehicle selected. There is no separate floating fuel shortcut.
+  The office opens **Fleet → Fuel log** (`/app/machines/fuel`) for all company
+  receipts and their details, paged without changing existing records. It reuses
+  the authenticated tenant-scoped history and protected receipt-photo endpoint.
+  Take/choose a JPG/PNG, read it, check the
   invoice date/time and confirm. Unreadable or conflicting clocks require manual
   entry. The original photo is retained before OCR and unfinished drafts resume.
 - Each receipt preserves the server uploader and upload time separately from the
