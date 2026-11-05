@@ -73,7 +73,10 @@ read through authenticated same-company endpoints.
 With no photo, an explicit create/edit action requests one original geometric
 illustration from the existing OpenAI model. It sends only the task's label,
 description, canonical type and trusted style instructions. The model returns
-bounded scene JSON; trusted code renders SVG using the existing steel palette.
+bounded scene JSON under a strict provider output schema; trusted code renders
+SVG using the existing steel palette. That provider-only schema uses required
+fields and homogeneous point arrays while the canonical stored-scene reader
+retains older optional-radius compatibility.
 Arbitrary XML, JavaScript, CSS, text, external resources and embedded images are
 rejected. Image responses use nosniff, same-origin policy and restrictive CSP.
 
@@ -83,6 +86,8 @@ model call, with actual usage settlement; there is no rendering-time generation,
 mass paid backfill or automatic paid retry. Missing key/quota/provider/validation
 failure keeps the saved task and previous image/fallback. Revision/status/time
 checks prevent a late generation from overwriting a photo or newer edit.
+Safe failure logs distinguish stream/validation/storage phases using only
+bounded status metadata; they never retain generated text or task descriptions.
 
 ## Verification and release
 

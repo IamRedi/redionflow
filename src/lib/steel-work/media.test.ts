@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   actor: vi.fn(), requester: vi.fn(), tenant: vi.fn(), compact: vi.fn(), quota: vi.fn(), generation: vi.fn(), stream: vi.fn(), generateText: vi.fn(), warn: vi.fn(), settle: vi.fn(),
   tx: { $queryRaw: vi.fn(), steelWorkDefinition: { findFirst: vi.fn(), updateMany: vi.fn() }, steelWorkVisual: { upsert: vi.fn(), findFirst: vi.fn() }, auditLog: { create: vi.fn() } },
 }));
-vi.mock('ai', () => ({ streamText: mocks.stream, generateText: mocks.generateText }));
+vi.mock('ai', async importOriginal => ({ ...await importOriginal<typeof import('ai')>(), streamText: mocks.stream, generateText: mocks.generateText }));
 vi.mock('@/lib/db/tenant-context', () => ({ withTenantContext: mocks.tenant }));
 vi.mock('@/lib/fleet/access', () => ({ fleetActor: mocks.actor }));
 vi.mock('@/lib/asset-photos/image', () => ({ compactPhoto: mocks.compact, MAX_PHOTO_BYTES: 12_000_000 }));
@@ -90,8 +90,8 @@ describe('visual generation authorization and bounded execution', () => {
   it('uses one guarded worker stream with only the definition text and saves validated scene geometry', async () => {
     await expect(generateSteelWorkVisual(definitionId, revision)).resolves.toMatchObject({ status: 'generated' });
     expect(mocks.quota).toHaveBeenCalledExactlyOnceWith(requester);
-    expect(mocks.generation).toHaveBeenCalledExactlyOnceWith(expect.any(Request), 'worker', mocks.settle);
-    expect(mocks.stream).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ model: 'guarded-fixture-model', maxRetries: 0, temperature: 0, prompt: JSON.stringify({ label: definition.label, kind: definition.kind, description: definition.description }) }));
+    expect(mocks.generation).toHaveBeenCalledExactlyOnceWith(expect.any(Request), 'worker', mocks.settle, expect.objectContaining({ onFailure: expect.any(Function), onProviderCall: expect.any(Function) }));
+    expect(mocks.stream).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ model: 'guarded-fixture-model', output: expect.anything(), maxRetries: 0, temperature: 0, prompt: JSON.stringify({ label: definition.label, kind: definition.kind, description: definition.description }) }));
     expect(mocks.tx.steelWorkVisual.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { companyProfileId_definitionId: { companyProfileId: companyId, definitionId } }, update: { data: null, scene, mime: 'image/svg+xml' } }));
     expect(mocks.tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ companyProfileId: companyId, actorId: actor.userId, action: 'steel.visual_generated', payload: { definitionId, revision } }) }));
     expect(mocks.tenant.mock.calls.every(([tenant]) => tenant === companyId)).toBe(true);
@@ -123,6 +123,41 @@ describe('visual generation authorization and bounded execution', () => {
     expect(mocks.tx.steelWorkVisual.upsert).not.toHaveBeenCalled(); expect(mocks.tx.auditLog.create).not.toHaveBeenCalled();
     expect(mocks.tx.steelWorkDefinition.updateMany).toHaveBeenLastCalledWith(expect.objectContaining({ where: expect.objectContaining({ companyProfileId: companyId, revision, visualStatus: 'pending', updatedAt: now }), data: { visualStatus: 'error' } }));
     expect(mocks.stream).toHaveBeenCalledTimes(1);
+  });
+
+  it('records only bounded diagnostic metadata when a complete response fails scene validation', async () => {
+    const privateText = 'fixture-private-label-and-untrusted-model-text';
+    setStream([{ type: 'text-delta', text: privateText }, { type: 'finish', finishReason: 'stop' }]);
+    await expect(generateSteelWorkVisual(definitionId, revision)).rejects.toThrow('VISUAL_UNAVAILABLE');
+    expect(mocks.warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'steel.visual_generation_failed', phase: 'validation', finishReason: 'stop', outputBytes: Buffer.byteLength(privateText), failureCode: 'VISUAL_INVALID' }), expect.any(String));
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain(privateText);
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain(definition.description);
+  });
+
+  it('classifies a provider failure without logging the provider body or message', async () => {
+    const privateError = { name: 'APICallError', statusCode: 401, data: { error: { code: 'invalid_api_key' } }, message: 'fixture-private-provider-body', url: 'https://fixture.invalid/private' };
+    setStream([{ type: 'error', error: privateError }]);
+    await expect(generateSteelWorkVisual(definitionId, revision)).rejects.toThrow('VISUAL_UNAVAILABLE');
+    expect(mocks.warn).toHaveBeenCalledWith(expect.objectContaining({ phase: 'stream', failureCode: 'provider_auth', failure: expect.objectContaining({ httpStatus: 401, providerCode: 'invalid_api_key' }) }), expect.any(String));
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain(privateError.message);
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain(privateError.url);
+  });
+
+  it('distinguishes a post-stream storage failure from invalid generated geometry', async () => {
+    mocks.tx.steelWorkVisual.upsert.mockRejectedValue(new Error('fixture-private-storage-message'));
+    await expect(generateSteelWorkVisual(definitionId, revision)).rejects.toThrow('VISUAL_UNAVAILABLE');
+    expect(mocks.warn).toHaveBeenCalledWith(expect.objectContaining({ phase: 'storage', finishReason: 'stop', failureCode: 'db', failure: expect.objectContaining({ code: 'db' }) }), expect.any(String));
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain('fixture-private-storage-message');
+    expect(mocks.tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('still records the original safe failure when resetting the fenced job status fails', async () => {
+    setStream([{ type: 'text-delta', text: 'fixture invalid scene' }, { type: 'finish', finishReason: 'stop' }]);
+    mocks.tx.steelWorkDefinition.updateMany.mockResolvedValueOnce({ count: 1 }).mockRejectedValueOnce(new Error('fixture-private-status-error'));
+    await expect(generateSteelWorkVisual(definitionId, revision)).rejects.toThrow('VISUAL_UNAVAILABLE');
+    expect(mocks.warn).toHaveBeenCalledWith({ event: 'steel.visual_status_update_failed' }, expect.any(String));
+    expect(mocks.warn).toHaveBeenCalledWith(expect.objectContaining({ phase: 'validation', failureCode: 'VISUAL_INVALID' }), expect.any(String));
+    expect(JSON.stringify(mocks.warn.mock.calls)).not.toContain('fixture-private-status-error');
   });
 });
 
