@@ -9,10 +9,12 @@ import { countVacationWorkdays, parseVacationDate } from "@/lib/workzone/vacatio
 export function VacationRequestForm({
   workerId,
   currentLang,
+  country,
   action,
 }: {
   workerId: string;
   currentLang: string;
+  country: string;
   action: (formData: FormData) => void | Promise<void>;
 }) {
   const [startDate, setStartDate] = useState("");
@@ -26,7 +28,7 @@ export function VacationRequestForm({
       setRequestedDays("");
       return;
     }
-    const nextSuggestedDays = countVacationWorkdays(start, end);
+    const nextSuggestedDays = countVacationWorkdays(start, end, country);
     setRequestedDays(nextSuggestedDays > 0 ? String(nextSuggestedDays) : "");
   }
 
@@ -34,8 +36,8 @@ export function VacationRequestForm({
     const start = parseVacationDate(startDate);
     const end = parseVacationDate(endDate);
     if (!start || !end) return 0;
-    return countVacationWorkdays(start, end);
-  }, [endDate, startDate]);
+    return countVacationWorkdays(start, end, country);
+  }, [country, endDate, startDate]);
 
   return (
     <form action={action} className="grid gap-2 rounded-md border bg-background p-3 md:min-w-[28rem]">

@@ -20,81 +20,72 @@ export type AssistantIdentityTarget =
   | null;
 
 export function extractAddressedName(text: string): string | null {
-  // Examples:
-  // "Hej Andi, ..." -> Andi
-  // "Hallo Gregor ..." -> Gregor
-  // "Hej Redion ..." -> Redion (fuzzy-resolve may still map to "Redi")
-  const comma = text.match(/\b(hej|hi|hallo|hey|servus|moin)\s*,\s*([A-Za-zÄÖÜäöüß]{2,})\b/i);
-  if (comma) return comma[2];
-  const match = text.match(/\b(hej|hi|hallo|hey|servus|moin)\s+([A-Za-zÄÖÜäöüß]{2,})\b/i);
+  const match = text.match(/^\s*(hej|hi|hallo|hey|servus|moin|p[eë]rsh[eë]ndetje)[\s,]+([\p{L}][\p{L}'-]{1,60})\b/iu);
   return match ? match[2] : null;
 }
 
-function prefixNameMatch(a: string, b: string): boolean {
-  const x = a.trim().toLowerCase();
-  const y = b.trim().toLowerCase();
-  if (x.length < 3 || y.length < 3) return false;
-  return x.startsWith(y) || y.startsWith(x);
-}
+export type AssistantIdentityResolution =
+  | { status: 'found'; target: Exclude<AssistantIdentityTarget, null> }
+  | { status: 'not_found' }
+  | { status: 'ambiguous'; candidates: Array<{ type: 'worker' | 'admin'; displayName: string }> };
 
-export async function resolveIdentityTarget(input: {
+export async function resolveIdentityTargetResult(input: {
   companyId: string;
   addressedName: string | null;
-}): Promise<AssistantIdentityTarget> {
+}): Promise<AssistantIdentityResolution> {
   const name = (input.addressedName ?? "").trim();
-  if (!name) return null;
-
-  const worker = await prisma.worker.findFirst({
-    where: {
-      companyProfileId: input.companyId,
-      OR: [{ firstName: { equals: name, mode: "insensitive" } }, { lastName: { equals: name, mode: "insensitive" } }],
-    },
-    select: { id: true, firstName: true, lastName: true, aiPersonalityNote: true, preferredLanguage: true },
-  });
-  if (worker) {
-    return {
+  if (!name || !input.companyId) return { status: 'not_found' };
+  const [workers, admins] = await Promise.all([
+    prisma.worker.findMany({
+      where: {
+        companyProfileId: input.companyId,
+        OR: [{ firstName: { equals: name, mode: 'insensitive' } }, { lastName: { equals: name, mode: 'insensitive' } }],
+      },
+      select: { id: true, firstName: true, lastName: true, aiPersonalityNote: true, preferredLanguage: true },
+      orderBy: { id: 'asc' },
+      take: 2,
+    }),
+    prisma.user.findMany({
+      where: {
+        companyProfileId: input.companyId,
+        role: 'ADMIN',
+        isActive: true,
+        OR: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { name: { startsWith: `${name} `, mode: 'insensitive' } },
+          { name: { endsWith: ` ${name}`, mode: 'insensitive' } },
+          { email: { equals: name, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, name: true, aiPersonalityNote: true, preferredLanguage: true },
+      orderBy: { id: 'asc' },
+      take: 2,
+    }),
+  ]);
+  const matches: Exclude<AssistantIdentityTarget, null>[] = [
+    ...workers.map(worker => ({
       type: "worker",
       workerId: worker.id,
       displayName: `${worker.firstName} ${worker.lastName}`.trim(),
       aiPersonalityNote: worker.aiPersonalityNote,
       preferredLanguage: normalizeAssistantLanguage(worker.preferredLanguage),
-    };
-  }
+    } as const)),
+    ...admins.map(admin => ({
+      type: 'admin',
+      adminId: admin.id,
+      displayName: admin.name ?? 'Admin',
+      aiPersonalityNote: admin.aiPersonalityNote,
+      preferredLanguage: normalizeAssistantLanguage(admin.preferredLanguage),
+    } as const)),
+  ];
+  if (!matches.length) return { status: 'not_found' };
+  if (matches.length > 1) return { status: 'ambiguous', candidates: matches.map(({ type, displayName }) => ({ type, displayName })) };
+  return { status: 'found', target: matches[0] };
+}
 
-  const candidates = await prisma.worker.findMany({
-    where: { companyProfileId: input.companyId },
-    select: { id: true, firstName: true, lastName: true, aiPersonalityNote: true, preferredLanguage: true },
-    take: 80,
-  });
-  const fuzzy = candidates.find(
-    (w) => prefixNameMatch(name, w.firstName) || prefixNameMatch(name, w.lastName),
-  );
-  if (fuzzy) {
-    return {
-      type: "worker",
-      workerId: fuzzy.id,
-      displayName: `${fuzzy.firstName} ${fuzzy.lastName}`.trim(),
-      aiPersonalityNote: fuzzy.aiPersonalityNote,
-      preferredLanguage: normalizeAssistantLanguage(fuzzy.preferredLanguage),
-    };
-  }
-
-  const admin = await prisma.user.findFirst({
-    where: {
-      role: "ADMIN",
-      isActive: true,
-      OR: [{ name: { contains: name, mode: "insensitive" } }, { email: { startsWith: name, mode: "insensitive" } }],
-    },
-    select: { id: true, name: true, aiPersonalityNote: true, preferredLanguage: true },
-  });
-  if (!admin) return null;
-  return {
-    type: "admin",
-    adminId: admin.id,
-    displayName: admin.name ?? "Admin",
-    aiPersonalityNote: admin.aiPersonalityNote,
-    preferredLanguage: normalizeAssistantLanguage(admin.preferredLanguage),
-  };
+export async function resolveIdentityTarget(input: { companyId: string; addressedName: string | null }): Promise<AssistantIdentityTarget> {
+  const result = await resolveIdentityTargetResult(input);
+  return result.status === 'found' ? result.target : null;
 }
 
 export type AssistantPrivacyPolicy = {

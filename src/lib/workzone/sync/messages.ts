@@ -9,6 +9,7 @@ export function syncMessages(lang: string) {
   const selected = normalizeSyncLang(lang);
   const messages = {
     de: {
+      steelTaskOnline: 'Diesen Arbeitsschritt bitte online in der Prozessansicht bearbeiten.',
       unauthorized: "Anmeldung erforderlich.",
       invalidJsonBody: "JSON-Inhalt ist ungueltig.",
       invalidRequestPayload: "Sync-Anfrage ist ungueltig.",
@@ -40,6 +41,7 @@ export function syncMessages(lang: string) {
       legacyNoteAuthor: "Notiz",
     },
     en: {
+      steelTaskOnline: 'Manage this work item online in the process view.',
       unauthorized: "Sign-in required.",
       invalidJsonBody: "Invalid JSON body.",
       invalidRequestPayload: "Invalid sync request.",
@@ -71,6 +73,7 @@ export function syncMessages(lang: string) {
       legacyNoteAuthor: "Note",
     },
     it: {
+      steelTaskOnline: 'Gestisci questa attività online nella vista dei processi.',
       unauthorized: "Accesso richiesto.",
       invalidJsonBody: "Corpo JSON non valido.",
       invalidRequestPayload: "Richiesta di sincronizzazione non valida.",
@@ -102,6 +105,7 @@ export function syncMessages(lang: string) {
       legacyNoteAuthor: "Nota",
     },
     sq: {
+      steelTaskOnline: 'Këtë detyrë menaxhoje online te pamja e proceseve.',
       unauthorized: "Duhet te hysh.",
       invalidJsonBody: "JSON i pavlefshem.",
       invalidRequestPayload: "Kerkese sinkronizimi e pavlefshme.",

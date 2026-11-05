@@ -1,4 +1,7 @@
 "use server";
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
+import { confirmLegacyAssetAssignment } from '@/lib/company-assets/legacy';
 
 import { createSessionCookie } from "@/lib/auth/session-cookie";
 
@@ -29,6 +32,8 @@ import { closePauseInterval, createPauseInterval, findPauseIntervalsForSession }
 import { monthKey, parseReportMessages, serializeReportMessages, type ReportMessage } from "@/lib/workzone/reporting";
 import { hasOpenPause, isTrivialSession, stopBreakMinutes, totalPauseMinutes, totalWorkHours } from "@/lib/workzone/session-rules";
 import { getCurrentWorker, WORKER_COOKIE } from "@/lib/workzone/worker-session";
+import { isLoginCodeTaken, isValidLoginCode } from "@/lib/auth/login-code";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 type LoginState = { message?: string };
 
@@ -369,6 +374,57 @@ export async function loginWorkerAction(_prevState: LoginState, formData: FormDa
   jar.delete(DISPLAY_COOKIE);
 
   redirect("/workzone/profile");
+}
+
+export type ChangeCodeState = { ok: boolean; message: string } | null;
+
+/**
+ * A signed-in worker replaces the code the office gave them. The current
+ * code is asked again (a phone left unlocked is not enough), wrong tries
+ * count like failed logins, and the new code must not belong to anyone else.
+ */
+export async function changeOwnLoginCodeAction(_prev: ChangeCodeState, formData: FormData): Promise<ChangeCodeState> {
+  const tr = await getActionTranslator();
+  const worker = await getCurrentWorker();
+  if (!worker) return { ok: false, message: tr("loginRequired") };
+
+  const clientIp = getClientIp(await headers());
+  const access = await ensureLoginAllowed("worker", clientIp);
+  if (!access.ok) {
+    return { ok: false, message: tr("tooManyAttemptsRetryMinutes", { minutes: Math.ceil(access.retryAfterSeconds / 60) }) };
+  }
+
+  const currentCode = String(formData.get("currentCode") ?? "").trim();
+  const newCode = String(formData.get("newCode") ?? "").trim();
+  const repeatCode = String(formData.get("repeatCode") ?? "").trim();
+  if (!isValidLoginCode(newCode)) return { ok: false, message: tr("loginCodeFormat") };
+  if (newCode !== repeatCode) return { ok: false, message: tr("loginCodeMismatch") };
+
+  const row = await prisma.worker.findUnique({ where: { id: worker.id }, select: { loginCodeHash: true } });
+  if (!row?.loginCodeHash || !verifyPassword(currentCode, row.loginCodeHash)) {
+    await registerFailedLogin("worker", clientIp);
+    return { ok: false, message: tr("loginCodeWrong") };
+  }
+  if (newCode === currentCode) return { ok: false, message: tr("loginCodeSame") };
+  if (await isLoginCodeTaken(prisma, newCode, worker.id)) return { ok: false, message: tr("loginCodeTaken") };
+
+  // The database bumps sessionEpoch on every credential change, which signs
+  // the worker out everywhere; this phone gets a fresh cookie so it stays in.
+  const updated = await prisma.worker.update({
+    where: { id: worker.id },
+    data: { loginCode: null, loginCodeHash: hashPassword(newCode) },
+    select: { sessionEpoch: true },
+  });
+  (await cookies()).set(WORKER_COOKIE, await createSessionCookie("worker", worker.id, updated.sessionEpoch), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  await clearFailedLogin("worker", clientIp);
+  revalidateWorkerProfile(worker.id);
+  return { ok: true, message: tr("loginCodeChanged") };
 }
 
 export async function logoutWorkerAction() {
@@ -770,6 +826,8 @@ export async function createWorkerInventoryItemAction(formData: FormData): Promi
       })
     : null;
 
+  if (companyInventoryItemId && await isSteelCompany(worker.companyProfileId)) return { ok: false, message: await assetWorkflowMessage() };
+
   const resolvedName = companyItem?.name ?? itemName;
   const resolvedCode = companyItem?.itemCode ?? itemCode;
   const resolvedNote = note || companyItem?.note || null;
@@ -801,8 +859,15 @@ export async function confirmWorkerInventoryItemAction(formData: FormData): Prom
   const actor = await getProfileActor();
   if (!actor) return { ok: false, message: tr("loginRequired") };
 
-  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true } });
-  if (!item || !canConfirmStatus(actor, item.workerId, item.status)) {
+  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true, companyInventoryItemId: true, isPrivate: true, worker: { select: { companyProfileId: true } } } });
+  if (!item) return { ok: false, message: tr("itemNotFound") };
+
+  if (item.companyInventoryItemId && !item.isPrivate && await isSteelCompany(item.worker.companyProfileId)) {
+    try { await confirmLegacyAssetAssignment(item.id); revalidateWorkerProfile(item.workerId); return { ok: true, message: tr("handoverConfirmed") }; }
+    catch (error) { return assetActionError(error); }
+  }
+
+  if (!canConfirmStatus(actor, item.workerId, item.status)) {
     return { ok: false, message: tr("confirmationWrongProfile") };
   }
   const access = await assertWorkerAccess(actor, item.workerId);
@@ -839,10 +904,11 @@ export async function requestDeleteWorkerInventoryItemAction(formData: FormData)
   const actor = await getProfileActor();
   if (!actor) return { ok: false, message: tr("loginRequired") };
 
-  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true } });
+  const item = await prisma.workerAssetItem.findUnique({ where: { id: itemId }, select: { id: true, workerId: true, status: true, companyInventoryItemId: true, isPrivate: true, worker: { select: { companyProfileId: true } } } });
   if (!item || !canAccessWorkerProfile(actor, item.workerId)) return { ok: false, message: tr("profileAccessDenied") };
   const access = await assertWorkerAccess(actor, item.workerId);
   if (!access.ok) return access;
+  if (item.companyInventoryItemId && !item.isPrivate && await isSteelCompany(item.worker.companyProfileId)) return { ok: false, message: await assetWorkflowMessage() };
   if (item.status === "DELETED") return { ok: true, message: tr("itemAlreadyDeleted") };
   if (item.status === "PENDING_ADMIN_DELETE_CONFIRMATION" || item.status === "PENDING_WORKER_DELETE_CONFIRMATION") {
     return { ok: true, message: tr("deleteWaitsConfirmation") };

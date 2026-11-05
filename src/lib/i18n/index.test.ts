@@ -4,12 +4,12 @@ import { t } from "./index";
 
 describe("i18n translator", () => {
   it("falls back to English before German for missing target-language keys", () => {
-    expect(t("language.switchLabel", "sq")).toBe("Language");
+    expect(t("language.switchLabel", "pl")).toBe("Language");
     expect(t("language.switchLabel", "it")).toBe("Lingua");
   });
 
   it("treats inherited German values as missing when English has a real translation", () => {
-    expect(t("common.photo", "sq")).toBe("Photo");
+    expect(t("common.photo", "it")).toBe("Photo");
   });
 
   it("falls back to the key path only when no dictionary has the key", () => {

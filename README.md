@@ -9,7 +9,45 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[English version](README.en.md)** · **Stand: 1. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+
+## In Prüfung: Produktionspanel für Stahlbetriebe
+
+Ein Kalender zeigt bestätigte kg pro Tag und Projekt: Teileschnitt,
+Baugruppenschnitt und Zusammenbau bleiben getrennt. Dazu kommen Tagesnachweise,
+Prozessfortschritt, gespeicherte Bestätigungsgewichte und eine private
+Monitoransicht ohne Bearbeitung oder personenbezogene Arbeitsnachweise.
+
+Dieser Erweiterungskandidat ist lokal geprüft und zur Pilotfreigabe vorbereitet.
+[Definitionen, Grenzen und Nachweise](docs/STEEL_PRODUCTION_DASHBOARD.md).
+Die Aufnahme zeigt ausschließlich eine fiktive Firma mit synthetischer Arbeit.
+
+![Lokaler Produktionspanel-Kandidat mit Kalender und Projektfortschritt](docs/assets/screenshots/steel-dashboard-candidate.png)
+
+## Pilot-Erweiterung: Flottenkarte, Tankbelege und eigene Fotos
+
+Die Pilot-Erweiterung zeigt bestätigte Fahrzeuge neben Baustellen, öffnet
+ihre GPS-Position in Maps und erfasst Original-Tankbelege mit hochladender Person,
+tatsächlich tankender Person, Belegzeit und nächster historischer GPS-Meldung
+einschließlich Zeitabstand. Lokale OCR schlägt die Uhrzeit vor; der Mensch prüft
+und bestätigt sie. Unklare Fahrzeugzuordnungen bleiben beim Chef.
+
+Fahrzeuge, Baustellen und Werkstatt erhalten eigene Fotos über ein kleines
+Kamerasymbol: aufnehmen oder auswählen; automatisch WebP, maximal 1024 Pixel
+und 180 KB. Fotos bleiben innerhalb der Firma.
+
+Die Basis bestand 559 Unit-, 301 PostgreSQL- und 28 Chromium-Prüfungen. Für die
+Foto-Erweiterung wurden nur neue gezielte Prüfungen ausgeführt; die vollständigen
+älteren Tests wurden auf Wunsch des Eigentümers nicht wiederholt. Die Abnahme
+mit echten GPS-Geräten und Belegen bleibt separat ausstehend.
+[Ablauf, Grenzen und Freigabe](docs/FLEET_MAP_FUEL.md). Die folgenden Aufnahmen
+zeigen ausschließlich synthetische Daten aus dem lokalen Review-Kandidaten.
+
+![Lokaler BauFlow-Kandidat: Fahrzeuge und Baustelle auf derselben Karte](docs/assets/screenshots/fleet-map-candidate.png)
+
+<img src="docs/assets/screenshots/fuel-receipt-candidate.png" alt="Synthetischer Tankbeleg im lokalen Kandidaten mit getrennten Upload-, Tank- und GPS-Zeiten" width="300">
+
+<img src="docs/assets/screenshots/asset-photos-phone.png" alt="Synthetic BauFlow photo upload workflow" width="260">
 
 ## Websites und Live-Demos
 
@@ -27,7 +65,9 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 | Status | Bedeutung und Umfang |
 |---|---|
 | **Umgesetzt und live** | Workzone für die Baustelle (Arbeitsliste oder Baumliste, Karte, Arbeitszeit mit Start, Pause und Stopp, Zusatzarbeiten, Hinweise, Absicherung), Admin-Dashboard, Personal und Fuhrpark, Tagesplan mit Versionen, Barcode-Inventar mit Ausgabe an Mitarbeitende, Kalkulation (Projekte, Positionen, Vorlagen, Lohnrollen, Rezepte), Tages- und Monatsberichte, Baustellen-Export (ZIP mit HTML, CSV, KML), Urlaub, Admin-Login mit Passwort, 6 Sprachen |
-| **Verifiziert** | 711 automatisierte Tests in CI auf jedem Pull Request (423 Unit, 263 Integration gegen echte PostgreSQL, 25 Ende-zu-Ende im Browser), Secret-Scan, Docker-Demo-Smoke-Test, Lighthouse mobil 96/100/100/100. Details im [Prüfprotokoll](EVIDENCE.md). |
+| **Verifiziert** | Frühere CI-Baseline: 711 Tests, Secret-Scan und Docker-Demo-Smoke. Aktuelle lokale Prüfungen und ihre exakte Abgrenzung stehen im [Prüfprotokoll](EVIDENCE.md). Cloud-Verifikation ist auf diesem Branch ausdrücklich wählbar. |
+| **Umgesetzt und live (Stahlbau-Pilot)** | Stahlbau-Projekte aus Tekla-Listen: neues Projekt aus Dokumenten mit Adresse auf der Karte, Werksliste und Baustellenliste je Element, Stückzahl je Arbeitsschritt mit Arbeitern, Abschluss mit Route, Werk nur zur Ansicht. [Regeln und Ablauf](docs/STEEL_ELEMENTS.md). |
+| **Neu vorbereitet, Freigabe offen** | WanWay/IOPGPS nur lesend: verschlüsselte Zugangsdaten je Firma, Verbindungstest, bestätigte Zuordnung zu vorhandenen Fahrzeugen, manuelle Synchronisierung und letzte Positionsdaten. Nicht in Production oder öffentlicher Demo aktiviert; echter GPS-Test steht aus. [Technik und Grenzen](docs/WANWAY_GPS.md). |
 | **Umgesetzt, in der Demo nicht aktiv** | KI-Assistent (braucht einen OpenAI-Schlüssel), Push-Benachrichtigungen (Firebase), Dateispeicher für Dokumente und Fotos (Supabase), Abos und Rechnungen im SaaS-Modus (Stripe), Fahrzeug-GPS. Der Code ist vorhanden und getestet; die öffentliche Demo läuft bewusst ohne diese Dienste. |
 | **In Arbeit** | Offline-Modus für Feldaktionen (Warteschlange im Browser ist angelegt, noch nicht im Feld erprobt), Content Security Policy von „Report-Only“ auf „blockierend“, echter Virenscanner für Uploads |
 | **Vision** | Pilotbetriebe in beiden Branchen, weitere Gewerke als eigener Modus, Auswertung über mehrere Saisons |
@@ -79,7 +119,7 @@ Mehr dazu in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
 
 ## Qualität und Sicherheit
 
-- **CI auf jedem Pull Request:** Lint ohne Warnungen, TypeScript strict, 423 Unit-Tests, 263 Integrationstests gegen eine wegwerfbare PostgreSQL, Produktionsbuild, 25 Browser-Tests, gitleaks und ein Docker-Smoke-Test der Demo.
+- **Verifikation:** lokale Gates für Lint, TypeScript, Unit-/PostgreSQL-Integrationstests, Build und Browser-Tests. Cloud-Verifikation nur nach ausdrücklicher Auswahl (`workflow_dispatch`); erforderliche Checks und Merge-Schutz bleiben bestehen. [Regel](docs/LOCAL_CI_POLICY.md).
 - **Sicherheit:** Passwörter und Codes mit scrypt, Rate-Limit beim Login, widerrufbare Sitzungen, Same-Origin-Prüfung für jede Änderung, private Dateien nur über eine geprüfte Route, Sicherheits-Header. Bedrohungsmodell und bekannte Restrisiken stehen offen in [SECURITY.md](SECURITY.md).
 - **Barrierefreiheit und Tempo:** Lighthouse mobil auf der Startseite 96 Performance, 100 Barrierefreiheit, 100 Best Practices, 100 SEO.
 - **Keine echten Daten.** Das Repository wurde als Schnappschuss ohne Git-Verlauf aus dem privaten Produktivsystem erstellt. Echte Firmen- und Personendaten wurden entfernt, die Demo-Daten sind selbst erfunden.

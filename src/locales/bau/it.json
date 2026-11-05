@@ -24,7 +24,9 @@
     "importSuccessSummary": "{created} nuove attività importate, {updated} aggiornate, {unchanged} invariate.",
     "baustelleTypeFiberTrench": "Tracciato fibra ottica",
     "baustelleTypeFiberDrilling": "Perforazione orizzontale (HDD)",
-    "baustelleTypeFiberHouseConnection": "Allacciamenti fibra"
+    "baustelleTypeFiberHouseConnection": "Allacciamenti fibra",
+    "baustelleTypeSteelWorkshop": "Officina carpenteria",
+    "baustelleTypeSteelAssembly": "Montaggio in cantiere"
   },
   "report": {
     "crownWidth": "Larghezza / misura",

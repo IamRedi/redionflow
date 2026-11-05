@@ -35,13 +35,15 @@ async function createSiteWithInitialWork(
   diameter: string,
 ) {
   await page.goto("/app/baustellen");
+  // The new-site form is folded away until opened.
+  await page.locator("details summary").first().click();
   await page.locator('input[name="name"]').first().fill(siteName);
   await page.locator('input[name="createFirstTreeItem"]').check();
   await page.locator('input[name="firstTreeSpecies"]').fill(species);
   await page.locator('input[name="firstTreeDiameter"]').fill(diameter);
   await page.locator('button[type="submit"]').last().click();
 
-  const siteRow = page.getByRole("row").filter({ hasText: siteName });
+  const siteRow = page.getByRole("listitem").filter({ hasText: siteName });
   await expect(siteRow).toBeVisible();
   await expect(siteRow.getByText(/1\s+(Arbeiten|Aufgabe|Task|Compito|Detyre|B[aä]ume|Trees|Alberi|Peme)/i)).toBeVisible();
   return siteRow;
@@ -109,8 +111,8 @@ async function startWorkOnSite(page: Page) {
 }
 
 async function openWorkzoneForSite(page: Page, siteName: string) {
-  const siteRow = page.getByRole("row").filter({ hasText: siteName });
-  await siteRow.getByRole("link", { name: /Workzone/i }).click();
+  const siteRow = page.getByRole("listitem").filter({ hasText: siteName });
+  await siteRow.getByRole("link", { name: /Workzone|öffnen|Open site|Hap kantierin/i }).click();
   await expect(page).toHaveURL(/\/workzone\/baustellen\//);
   return new URL(page.url()).pathname;
 }
@@ -170,6 +172,27 @@ async function uploadSiteDocument(page: Page, fileName: string) {
 test.describe.configure({ mode: "serial" });
 
 test.describe("SaaS authenticated smoke", () => {
+  test("assistant displays a quota rejection and bounds the submitted history", async ({ page }) => {
+    await signUpTenant(page, "bau");
+    let requests = 0;
+    await page.route("**/api/assistant", async route => {
+      requests++;
+      const payload = route.request().postDataJSON() as { messages: { role: string; content: string }[] };
+      expect(payload.messages).toHaveLength(16);
+      expect(payload.messages.reduce((size, message) => size + message.content.length, 0)).toBeLessThanOrEqual(12000);
+      expect(payload.messages.at(-1)?.content).toBe("Test assistant limit");
+      await route.fulfill({ status: 429, contentType: "application/json", headers: { "Retry-After": "60" }, body: JSON.stringify({ error: "The assistant's daily limit has been reached. Please try again tomorrow." }) });
+    });
+    await page.evaluate(() => sessionStorage.setItem("team-assistant:chat-state", JSON.stringify({ messages: Array.from({ length: 35 }, (_, i) => ({ id: String(i), role: i % 2 ? "assistant" : "user", content: `Older message ${i}` })), input: "" })));
+    await page.getByRole("button", { name: /^(Open admin assistant|Admin-Assistent oeffnen)$/ }).click();
+    const panel = page.getByRole("dialog");
+    const input = panel.locator("input, textarea").first();
+    await expect(input).toHaveAttribute("maxlength", "4000");
+    await input.fill("Test assistant limit");
+    await input.press("Enter");
+    await expect(panel.getByText("The assistant's daily limit has been reached. Please try again tomorrow.", { exact: true })).toBeVisible();
+    expect(requests).toBe(1);
+  });
   test("native image optimizer serves the allowlisted landing PNG as WebP", async ({ request }) => {
     const response = await request.get("/_next/image", {
       params: { url: "/landingpagephoto/workzoneliveLight.png", w: "640", q: "75" },

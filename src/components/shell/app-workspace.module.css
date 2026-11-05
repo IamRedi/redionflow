@@ -1,0 +1,65 @@
+:global(html):has(.shell) { height: 100%; overflow: hidden; }
+:global(body):has(.shell) { height: 100dvh; min-height: 0; overflow: hidden; }
+.shell {
+  --workspace-header-height: 128px;
+  --workspace-navigation-height: 44px;
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  color-scheme: light;
+}
+:global(.dark) .shell { color-scheme: dark; }
+.shell > header { grid-area: 1 / 1; pointer-events: none; }
+.shell > header :is(a,button,[data-testid="flow-team-strip"],[role="dialog"],input,textarea) { pointer-events: auto; }
+/* Share the full viewport with the transparent header: no clipped blank band. */
+.body { grid-area: 1 / 1 / -1 / -1; min-width: 0; min-height: 0; display: grid; isolation: isolate; }
+/* Existing fixed sheets/dialogs keep their viewport-level stacking while open. */
+.body:has(:global(.fixed)) { isolation: auto; }
+.admin { grid-template-columns: 208px minmax(0, 1fr); gap: 12px; padding: 0 0 0 12px; }
+.navigation { min-width: 0; min-height: 0; margin-top: calc(var(--workspace-header-height) + 12px); }
+.navigation nav { position: static; max-height: 100%; height: 100%; margin: 0; }
+.scroll {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--workspace-header-height) + 12px) 12px 12px;
+  scroll-padding-top: calc(var(--workspace-header-height) + 12px);
+  container-type: size;
+}
+.page { min-width: 0; flex: 1 0 auto; }
+.scroll > footer { flex-shrink: 0; margin-inline: -12px; }
+.scroll:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: -2px; }
+.workzone { grid-template-columns: minmax(0, 1fr) auto; }
+.workzone .scroll { padding-top: calc(var(--workspace-header-height) + 12px); }
+@media(max-width:767px) {
+  .admin { grid-template-columns: minmax(0, 1fr); padding: 0; }
+  .navigation { position: absolute; z-index: 5; inset-inline: 0; top: var(--workspace-header-height); margin-top: 0; }
+  .navigation nav { height: auto; padding: 0 12px 4px; }
+  .admin .scroll { padding-top: calc(var(--workspace-header-height) + var(--workspace-navigation-height) + 8px); scroll-padding-top: calc(var(--workspace-header-height) + var(--workspace-navigation-height) + 8px); }
+}
+@media(min-width:1024px) {
+  .shell { --workspace-header-height: 110px; }
+  .workzone > aside { margin-top: var(--workspace-header-height); }
+  .admin { grid-template-columns: 208px minmax(0, 1fr) auto; }
+  .admin > aside:last-child { margin-top: var(--workspace-header-height); }
+}
+@media(max-width:1023px) {
+  .admin { grid-template-rows: minmax(0, 1fr) auto; }
+  .admin > aside:last-child { grid-column: 1 / -1; grid-row: 2; }
+  .workzone { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+}
+@media print {
+  :global(html):has(.shell) { height: auto; overflow: visible; }
+  :global(body):has(.shell) { height: auto; overflow: visible; }
+  .shell { position: static; display: block; height: auto; overflow: visible; }
+  .body { display: block; padding: 0; }
+  .navigation { position: static; margin-top: 0; }
+  .scroll { overflow: visible; padding: 0; container-type: normal; }
+}

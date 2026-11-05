@@ -111,6 +111,9 @@ export async function checkTreeItemAction(input: unknown): Promise<ActionResult>
   ]);
   if (!tree) return { ok: false, message: tr("treeNotFound") };
   if (!isOwnedByCurrentCompany(tree.baustelle, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
+  // Steel tasks use the engineer/catalog path; generic tree commands must not
+  // bypass disabled selections or overwrite material-derived completion.
+  if (tree.treeId.startsWith('steel-')) return { ok: false, message: tr("accessDenied") };
   if (!worker && !adminUser) return { ok: false, message: tr("actorNotFound") };
   if (worker && !isOwnedByCurrentCompany(worker, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
   if ((done && tree.status === "done") || (!done && tree.status === "todo")) {
@@ -167,6 +170,7 @@ export async function editTreeItemAction(input: unknown): Promise<ActionResult> 
   if (!worker && !adminUser) return { ok: false, message: tr("actorNotFound") };
   if (worker && !isOwnedByCurrentCompany(worker, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
   const editedBy = worker ? workerName(worker) : (adminUser?.name ?? adminUser?.email ?? "Admin");
+  if (tree.treeId.startsWith('steel-')) return { ok: false, message: tr("accessDenied") };
 
   const existingMeta = parseTreeMeta(tree.notes);
   const nextMeta = {

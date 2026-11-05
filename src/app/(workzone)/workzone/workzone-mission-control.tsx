@@ -4,12 +4,20 @@ import { motion } from "framer-motion";
 import { LayoutDashboard, Map, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { HubsteigerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { SteelSiteArt } from "@/components/steel/steel-art";
+import { SteelSiteScene } from "@/components/steel/steel-site-scene";
+import { AssetPhoto } from "@/components/asset-photo";
 import { t } from "@/lib/i18n";
+import type { FleetLocation } from "@/lib/fleet/location";
+import { WorkzoneMapIndex, type MissionMapFocus } from "./workzone-map-index";
+import mapStyles from "./workzone-map-index.module.css";
+import { useMapFleet, useSetWorkzoneMapMode } from "./workzone-map-fleet";
+import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
 type MissionItem = {
   id: string;
@@ -30,6 +38,9 @@ type MissionItem = {
   canvasMobileY: number | null;
   liveSince: string | null;
   standortAddress: string;
+  shape?: SteelSiteShape;
+  photoUrl?: string | null;
+  material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
 };
 
@@ -40,7 +51,7 @@ type SavedCanvasLayout = {
   positionsByViewport: Record<CanvasViewport, CanvasPositions>;
 };
 
-const CANVAS_LAYOUT_STORAGE_KEY = "workzone:mission-control-canvas:v2";
+const CANVAS_LAYOUT_STORAGE_KEY = "workzone:mission-control-canvas:v4";
 
 const WorkzoneMissionMap = dynamic(
   () => import("./workzone-mission-map").then((module) => module.WorkzoneMissionMap),
@@ -71,15 +82,18 @@ function orderedCanvasItems(items: MissionItem[]) {
   });
 }
 
-function canvasMetrics(viewport: CanvasViewport, count: number) {
+function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
+  const count = items.length;
   const mobile = viewport === "mobile";
+  // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
+  const tall = items.some((item) => isSteelSiteType(item.type)||Boolean(item.photoUrl));
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
   const columnGap = mobile ? 166 : count > 9 ? 250 : 285;
   // Cards carry badges and a note, so rows need room to avoid overlap.
-  const rowGap = mobile ? 252 : 224;
-  const cardHeight = mobile ? 236 : 204;
+  const rowGap = tall ? (mobile ? 276 : 270) : mobile ? 252 : 224;
+  const cardHeight = tall ? (mobile ? 262 : 254) : mobile ? 236 : 204;
   const rows = Math.max(1, Math.ceil(Math.max(count, 1) / columns));
 
   return {
@@ -113,7 +127,7 @@ function softOffset(index: number, viewport: CanvasViewport) {
 }
 
 function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport): CanvasPositions {
-  const metrics = canvasMetrics(viewport, items.length);
+  const metrics = canvasMetrics(viewport, items);
   return Object.fromEntries(
     orderedCanvasItems(items).map((item, index) => {
       const column = index % metrics.columns;
@@ -149,7 +163,7 @@ function sameViewportLayouts(a: Record<CanvasViewport, CanvasPositions>, b: Reco
 }
 
 function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, viewport: CanvasViewport, fallbackPositions = autoCanvasLayout(items, viewport)) {
-  const metrics = canvasMetrics(viewport, items.length);
+  const metrics = canvasMetrics(viewport, items);
   return Object.fromEntries(
     items.map((item) => {
       const position = positions[item.id] ?? fallbackPositions[item.id] ?? { x: metrics.left, y: metrics.top };
@@ -196,6 +210,8 @@ function typeIcon(type: string) {
   if (type === "FIBER_TRENCH") return "〰";
   if (type === "FIBER_DRILLING") return "⤳";
   if (type === "FIBER_HOUSE_CONNECTION") return "⌂";
+  if (type === "STEEL_WORKSHOP") return "⚒";
+  if (type === "STEEL_ASSEMBLY") return "🏗️";
   if (type === "OTHER") return "⬛";
   if (type === "WATERING") return "🐘";
   if (type === "EXCAVATOR") return "🚜";
@@ -233,6 +249,8 @@ function typeLabel(type: string, lang: string) {
   if (type === "FIBER_TRENCH") return t("workzone.fiberTrench", lang, "bau");
   if (type === "FIBER_DRILLING") return t("workzone.fiberDrilling", lang, "bau");
   if (type === "FIBER_HOUSE_CONNECTION") return t("workzone.fiberHouseConnection", lang, "bau");
+  if (type === "STEEL_WORKSHOP") return t("workzone.steelWorkshop", lang, "bau");
+  if (type === "STEEL_ASSEMBLY") return t("workzone.steelAssembly", lang, "bau");
   if (type === "OTHER") return t("workzone.otherType", lang, "bau");
   return t("workzone.climbingShort", lang);
 }
@@ -247,6 +265,10 @@ export function WorkzoneMissionControl({
   allowCanvasDrag = true,
   allowDetailNavigation = true,
   mode = "baumdienst",
+  fleetLocations = [],
+  gpsSyncAvailable = false,
+  initialMap = false,
+  canEditPhotos = false,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -257,45 +279,51 @@ export function WorkzoneMissionControl({
   allowCanvasDrag?: boolean;
   allowDetailNavigation?: boolean;
   mode?: import("@/lib/mode-config").CompanyMode;
+  fleetLocations?: FleetLocation[];
+  gpsSyncAvailable?: boolean;
+  initialMap?: boolean;
+  canEditPhotos?: boolean;
 }) {
   const { currentLang } = useLanguage();
-  const [isMapMode, setIsMapMode] = useState(false);
+  const mapFleet = useMapFleet();
+  const indexVehicles = (mapFleet ?? fleetLocations).map(v => {
+    const location = fleetLocations.find(p => p.id === v.id);
+    return { id: v.id, name: v.name, plate: v.plate, coordinates: location ? { lat: location.lat, lng: location.lng } : null };
+  });
+  const [isMapMode, setIsMapMode] = useState(initialMap);
+  const setSharedMapMode = useSetWorkzoneMapMode();
+  useEffect(() => {
+    setSharedMapMode?.(isMapMode);
+    return () => setSharedMapMode?.(false);
+  }, [isMapMode, setSharedMapMode]);
   const [isCompactCanvas, setIsCompactCanvas] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [focusBaustelleId, setFocusBaustelleId] = useState<string | null>(null);
+  const [mapFocus, setMapFocus] = useState<MissionMapFocus | null>(null);
+  const mapFrameRef = useRef<HTMLDivElement>(null);
+  function focusOnMap(kind: MissionMapFocus['kind'], id: string) {
+    setMapFocus(current => ({ kind, id, request: (current?.request ?? 0) + 1 }));
+    if (window.innerWidth < 1024) mapFrameRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const canvasLayoutSignature = useMemo(() => canvasSignature(items), [items]);
-  const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => readSavedCanvasLayout(canvasSignature(items)) ?? autoLayouts(items));
+  // Restore browser-only saved positions in the effect below, after hydration.
+  const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
   const positions = positionsByViewport[canvasViewport];
-  const canvasHeight = canvasMetrics(canvasViewport, items.length).height;
+  const canvasHeight = canvasMetrics(canvasViewport, items).height;
   const isBauMode = mode !== "baumdienst";
-  const canvasBackground = isDarkTheme
-    ? isBauMode
+  // Steel firms get the site panorama (SteelSiteScene) on a plain yard colour; Baumdienst keeps its green field.
+  const canvasBackground = isBauMode
+    ? isDarkTheme
+      ? "linear-gradient(#14171d, #14171d)"
+      : "linear-gradient(#e4e1db, #e4e1db)"
+    : isDarkTheme
       ? [
-          // Neutral concrete grey with a subtle safety-orange top-left tint
-          "radial-gradient(circle at 18% 18%, rgba(255, 132, 40, 0.10), transparent 28%)",
-          "radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.03), transparent 26%)",
-          "linear-gradient(135deg, rgba(28, 28, 30, 0.96), rgba(38, 38, 40, 0.88) 46%, rgba(46, 46, 48, 0.94))",
-          "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
-          "linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-        ].join(", ")
-      : [
           "radial-gradient(circle at 18% 18%, rgba(70, 119, 91, 0.32), transparent 28%)",
           "radial-gradient(circle at 82% 16%, rgba(166, 145, 93, 0.18), transparent 26%)",
           "linear-gradient(135deg, rgba(15, 40, 31, 0.95), rgba(22, 56, 43, 0.86) 46%, rgba(32, 47, 38, 0.94))",
           "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)",
           "linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-        ].join(", ")
-    : isBauMode
-      ? [
-          // Light concrete grey with safety orange highlight
-          "radial-gradient(circle at 16% 18%, rgba(255, 132, 40, 0.10), transparent 30%)",
-          "radial-gradient(circle at 84% 14%, rgba(100, 100, 105, 0.10), transparent 28%)",
-          "radial-gradient(circle at 52% 92%, rgba(120, 120, 125, 0.08), transparent 34%)",
-          "linear-gradient(135deg, rgba(240, 240, 242, 0.98), rgba(228, 228, 232, 0.92) 48%, rgba(220, 220, 224, 0.88))",
-          "linear-gradient(rgba(80, 80, 85, 0.045) 1px, transparent 1px)",
-          "linear-gradient(90deg, rgba(80, 80, 85, 0.04) 1px, transparent 1px)",
         ].join(", ")
       : [
           "radial-gradient(circle at 16% 18%, rgba(73, 135, 96, 0.16), transparent 30%)",
@@ -305,7 +333,7 @@ export function WorkzoneMissionControl({
           "linear-gradient(rgba(53, 83, 65, 0.045) 1px, transparent 1px)",
           "linear-gradient(90deg, rgba(53, 83, 65, 0.04) 1px, transparent 1px)",
         ].join(", ");
-  const canvasBackgroundSize = isDarkTheme ? "auto, auto, auto, 34px 34px, 34px 34px" : "auto, auto, auto, auto, 34px 34px, 34px 34px";
+  const canvasBackgroundSize = isBauMode ? "auto" : isDarkTheme ? "auto, auto, auto, 34px 34px, 34px 34px" : "auto, auto, auto, auto, 34px 34px, 34px 34px";
   const mapItems = useMemo(
     () =>
       items
@@ -402,55 +430,24 @@ export function WorkzoneMissionControl({
   return (
     <div className="w-full min-w-0 space-y-4">
       {isMapMode ? (
-        <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
-          <div className="relative h-[680px] overflow-hidden rounded-xl border">
+        <div className={mapStyles.layout} data-testid="workzone-map-layout">
+          <div ref={mapFrameRef} className={mapStyles.frame} data-testid="workzone-map-frame">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="absolute left-14 top-3 z-[500] h-8 w-8 border-background/80 bg-background/88 shadow-sm backdrop-blur hover:bg-background"
+              className="absolute left-14 top-3 z-[500] h-8 w-8 border-border bg-card text-foreground shadow-sm hover:bg-muted"
               onClick={() => setIsMapMode(false)}
               title={t("workzone.planMode", currentLang)}
               aria-label={t("workzone.planMode", currentLang)}
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
             </Button>
-            {toolbar ? <div className="absolute right-3 top-3 z-[500] flex items-center gap-1.5">{toolbar}</div> : null}
-            <WorkzoneMissionMap items={mapItems} focusId={focusBaustelleId} onFocusChange={setFocusBaustelleId} />
+            {toolbar ? <div className={`${mapStyles.toolbar} absolute right-3 top-3 z-[500] flex items-center gap-1.5`}>{toolbar}</div> : null}
+            <WorkzoneMissionMap items={mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focus={mapFocus} onFocusChange={focusOnMap} />
           </div>
 
-          <div className="rounded-xl border bg-card p-3">
-            <h3 className="text-sm font-semibold">{t("workzone.jumpToSite", currentLang)}</h3>
-            <div className="mt-2 space-y-2">
-              {items.map((item) => {
-                const standort = item.standortAddress || defaultAddress;
-                const resolvedCoords = item.coordinates ?? addressCoords[item.id] ?? null;
-                return (
-                  <div key={item.id} className="rounded-md border p-2">
-                    <p className="truncate text-xs font-semibold">{item.name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{resolvedCoords ? t("workzone.gpsOk", currentLang) : t("workzone.noGps", currentLang)}</p>
-                    <div className="mt-1 flex gap-1">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-[11px]"
-                        disabled={!resolvedCoords}
-                        onClick={() => setFocusBaustelleId(item.id)}
-                      >
-                        {t("workzone.zoom", currentLang)}
-                      </Button>
-                      <Button asChild size="sm" variant="outline" className="h-7 px-2 text-[11px]">
-                        <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer">
-                          {t("common.location", currentLang)}
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <WorkzoneMapIndex items={items.map(item => ({ id: item.id, name: item.name, standortAddress: item.standortAddress, coordinates: item.coordinates ?? addressCoords[item.id] ?? null }))} vehicles={indexVehicles} focus={mapFocus} onFocus={focusOnMap} />
         </div>
       ) : (
         <div
@@ -462,8 +459,18 @@ export function WorkzoneMissionControl({
             contain: "layout paint",
           }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.34),transparent_34%,rgba(31,72,50,0.06)_64%,transparent),radial-gradient(ellipse_at_center,transparent_42%,rgba(87,69,40,0.10))] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(82,135,97,0.08)_64%,transparent),radial-gradient(ellipse_at_center,transparent_44%,rgba(0,0,0,0.24))]" />
-          <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(30deg,transparent_0_47%,rgba(67,100,78,0.09)_48%_52%,transparent_53%_100%)] [background-size:180px_180px] dark:opacity-35 dark:[background-image:linear-gradient(30deg,transparent_0_47%,rgba(190,210,179,0.08)_48%_52%,transparent_53%_100%)]" />
+          {isBauMode ? (
+            <>
+              {/* A steel site at dusk (dark) or morning (light) along the top, fading into the yard. */}
+              <SteelSiteScene dark={isDarkTheme} className="pointer-events-none absolute inset-x-0 top-0 h-[520px] w-full opacity-60 dark:opacity-80 lg:h-[600px]" />
+              <div className="pointer-events-none absolute inset-x-0 top-[360px] h-[240px] bg-gradient-to-b from-transparent to-[#e4e1db] dark:to-[#14171d] lg:top-[420px]" />
+            </>
+          ) : (
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.34),transparent_34%,rgba(31,72,50,0.06)_64%,transparent),radial-gradient(ellipse_at_center,transparent_42%,rgba(87,69,40,0.10))] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(82,135,97,0.08)_64%,transparent),radial-gradient(ellipse_at_center,transparent_44%,rgba(0,0,0,0.24))]" />
+              <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(30deg,transparent_0_47%,rgba(67,100,78,0.09)_48%_52%,transparent_53%_100%)] [background-size:180px_180px] dark:opacity-35 dark:[background-image:linear-gradient(30deg,transparent_0_47%,rgba(190,210,179,0.08)_48%_52%,transparent_53%_100%)]" />
+            </>
+          )}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5">
             {!readOnly || allowCanvasDrag ? (
               <Button
@@ -492,6 +499,7 @@ export function WorkzoneMissionControl({
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
           {items.map((item) => {
+            const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl);
             const target = positions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;
             return (
@@ -503,7 +511,7 @@ export function WorkzoneMissionControl({
                 onDragEnd={(_, info) => {
                   if (readOnly && !allowCanvasDrag) return;
                   const current = positions[item.id] ?? { x: 20, y: 20 };
-                  const { maxX, maxY } = canvasMetrics(canvasViewport, items.length);
+                  const { maxX, maxY } = canvasMetrics(canvasViewport, items);
                   const next = {
                     x: clamp(Math.round(current.x + info.offset.x), 10, maxX),
                     y: clamp(Math.round(current.y + info.offset.y), 10, maxY),
@@ -528,9 +536,20 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"}`}
+                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
-                <div className="flex items-center justify-between gap-2">
+                {hasCover ? (
+                  <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
+                    <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
+                    {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
+                    </AssetPhoto>
+                    <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      {typeLabel(item.type, currentLang)}
+                    </span>
+                  </div>
+                ) : null}
+                {!hasCover&&canEditPhotos&&!readOnly&&<AssetPhoto kind="site" id={item.id} alt={item.name} canEdit className="absolute right-1 top-1 h-10 w-10"><span/></AssetPhoto>}
+                <div className={`flex items-center justify-between gap-2 ${hasCover ? "hidden" : ""}`}>
                   <ItemTypeIcon type={item.type} pct={item.pct} />
                   <div className={`flex flex-wrap items-center justify-end gap-1 ${isCompactCanvas ? "max-w-[88px]" : "max-w-[150px]"}`}>
                     {item.equipmentIndicators.slice(0, 3).map((indicator) => (
@@ -550,6 +569,25 @@ export function WorkzoneMissionControl({
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
                 </p>
+                {isSteelSiteType(item.type) ? (
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full transition-[width] duration-700 ${item.pct >= 100 ? "bg-emerald-500" : "bg-orange-500"}`}
+                      style={{ width: `${item.pct}%` }}
+                    />
+                  </div>
+                ) : null}
+                {item.material && item.material.total > 0 ? (
+                  <p
+                    className={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${
+                      item.material.ready === item.material.total
+                        ? "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300"
+                        : "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-300"
+                    }`}
+                  >
+                    ⚒ {t("factory.cardMaterial", currentLang).replace("{ready}", String(item.material.ready)).replace("{total}", String(item.material.total))}
+                  </p>
+                ) : null}
                 {item.haltCount > 0 ? <p className="text-[11px] font-semibold text-red-500">🅿️🚫 {item.haltCount}</p> : null}
                 {item.pendingSiteTask ? (
                   <p className="mt-1 line-clamp-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-700 dark:text-sky-200">

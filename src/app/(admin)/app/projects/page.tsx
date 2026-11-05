@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { calculateProjectTotals } from "@/lib/calculation/project";
-import { formatEUR } from "@/lib/calculation/formatters";
-import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
+import { formatMoney } from "@/lib/calculation/formatters";
+import { getCompanyCountry, getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { overheadSettingsToEngine } from "@/lib/calculation/overhead-map";
 import { positionDirectCostsFromDb } from "@/lib/calculation/position-from-db";
 import { prisma } from "@/lib/db/prisma";
@@ -12,6 +12,7 @@ import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { CreateProjectForm } from "./create-project-form";
 import { finishProjectAction, openProjectExecutionAction } from "./actions";
+import { regionConfig } from "@/lib/region";
 
 function statusLabel(status: string, translate: (path: string) => string) {
   if (status === "DRAFT") return translate("form.statusDraft");
@@ -38,6 +39,7 @@ export default async function ProjectsPage() {
     resolveRequestLanguage(),
   ]);
   const tr = getTranslator(currentLang, mode);
+  const currency = regionConfig(await getCompanyCountry()).currency;
   const [projects, overheadFull] = await Promise.all([
     prisma.project.findMany({
       where: { companyProfileId: company.id },
@@ -99,11 +101,11 @@ export default async function ProjectsPage() {
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <div className="rounded-md border bg-muted/20 px-3 py-2">
                       <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{tr("form.net")}</div>
-                      <div className="mt-1 tabular-nums font-semibold">{formatEUR(totals.sum.netCents, currentLang)}</div>
+                      <div className="mt-1 tabular-nums font-semibold">{formatMoney(totals.sum.netCents, currentLang, currency)}</div>
                     </div>
                     <div className="rounded-md border bg-muted/20 px-3 py-2">
                       <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{tr("form.gross")}</div>
-                      <div className="mt-1 tabular-nums font-semibold">{formatEUR(totals.sum.grossCents, currentLang)}</div>
+                      <div className="mt-1 tabular-nums font-semibold">{formatMoney(totals.sum.grossCents, currentLang, currency)}</div>
                     </div>
                   </div>
                 </div>

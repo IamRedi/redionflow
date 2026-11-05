@@ -11,13 +11,14 @@ import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorizati
 import { calculatePositionTotals } from "@/lib/calculation/position";
 import { positionDirectCostsFromDb } from "@/lib/calculation/position-from-db";
 import { overheadSettingsToEngine } from "@/lib/calculation/overhead-map";
-import { formatEUR } from "@/lib/calculation/formatters";
+import { formatMoney } from "@/lib/calculation/formatters";
 import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { ProjectMetaForm } from "./project-meta-form";
 import { ApplyTemplateForm } from "./apply-template-form";
 import { RecipeBuilder } from "./recipe-builder";
-import { getCompanyMode } from "@/lib/db/company";
+import { getCompanyCountry, getCompanyMode } from "@/lib/db/company";
+import { regionConfig } from "@/lib/region";
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
@@ -43,6 +44,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   ]);
   if (!project || !currentCompanyId || project.companyProfileId !== currentCompanyId) notFound();
   const translate = getTranslator(currentLang);
+  const currency = regionConfig(await getCompanyCountry()).currency;
 
   const templates = await prisma.calculationTemplate.findMany({
     where: { companyProfileId: project.companyProfileId },
@@ -87,7 +89,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <h1 className="text-xl font-semibold">{translate("form.project")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {project.customerName} · {translate("form.projectNetSumPositions")}:{" "}
-            <span className="font-medium text-foreground">{formatEUR(projectNet, currentLang)}</span>
+            <span className="font-medium text-foreground">{formatMoney(projectNet, currentLang, currency)}</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -162,7 +164,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 return (
                   <TableRow key={pos.id}>
                     <TableCell className="font-medium">{pos.title}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatEUR(t.offer.netCents, currentLang)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatMoney(t.offer.netCents, currentLang, currency)}</TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/app/projects/${projectId}/positions/${pos.id}`}>{translate("common.edit")}</Link>

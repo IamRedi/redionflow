@@ -19,6 +19,8 @@
     "db:migrate": "prisma migrate dev && prisma generate",
     "db:studio": "prisma studio",
     "db:export": "tsx scripts/export-local-data.ts",
+    "backup:create": "tsx scripts/database-backup.ts create",
+    "backup:verify": "tsx scripts/database-backup.ts verify",
     "storage:migrate-local": "tsx scripts/migrate-local-uploads-to-storage.ts",
     "db:reset:workzone": "tsx scripts/reset-workzone-data.ts",
     "db:reset:cones": "tsx scripts/reset-cones-data.ts",
@@ -31,6 +33,7 @@
     "test": "vitest run",
     "test:e2e": "SAAS_MODE=true APP_ENV=saas playwright test",
     "test:e2e:local": "tsx scripts/e2e-local.ts",
+    "test:e2e:wanway:local": "tsx scripts/test-wanway-e2e-local.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:local": "tsx scripts/test-integration-local.ts",
     "test:watch": "vitest"
@@ -69,8 +72,10 @@
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.72.0",
     "react-leaflet": "^5.0.0",
+    "sharp": "0.35.5",
     "tailwind-merge": "^3.5.0",
     "tsx": "^4.21.0",
+    "unpdf": "1.9.0",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "zod": "^4.6.7"
   },

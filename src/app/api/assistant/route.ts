@@ -1,464 +1,164 @@
-import { rejectCrossOriginMutation } from "@/lib/auth/same-origin";
-import { z } from "zod";
-import { NextResponse } from "next/server";
-import { stepCountIs, streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { NextResponse } from 'next/server';
+import { streamText } from 'ai';
+import { rejectCrossOriginMutation } from '@/lib/auth/same-origin';
+import { ensureLoginAllowed, getClientIp, registerFailedLogin } from '@/lib/auth/login-guard';
+import { withTenantContext } from '@/lib/db/tenant-context';
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { getRequesterContext } from '@/lib/assistant/requester';
+import { readAssistantBody } from '@/lib/assistant/request-body';
+import { reserveAssistantQuota, assistantQuotaResponse } from '@/lib/assistant/quota';
+import { assistantGeneration } from '@/lib/assistant/generation';
+import { languageForTurn, type AssistantLanguageCode } from '@/lib/assistant/language';
+import { extractAddressedName, resolveIdentityTargetResult } from '@/lib/assistant/identity';
+import { assistantTurnContext } from '@/lib/assistant/turn-context';
+import { adminAssistantPrompt } from '@/lib/assistant/admin-prompt';
+import { assistantInitialTool, assistantMetaQuestion, groundedStep, groundedTools } from '@/lib/assistant/grounding';
+import { legacyAssistantTools } from '@/lib/assistant/legacy-tools';
+import { companyAssistantTools, steelAssistantTools } from '@/lib/assistant/business-tools';
+import { createAssistantRunDiagnostics, categorizeAssistantFailure, type AssistantFailureCode } from '@/lib/assistant/diagnostics';
+import { AssistantHistoryError, startRun, appendTrace, finishRun, checkpointRun, type AssistantTerminalStatus } from '@/lib/assistant/history';
+import { assistantResponseStream } from '@/lib/assistant/response-stream';
+import { createLegacyWeightQualifier } from '@/lib/assistant/weight-qualifier';
+import { createCanonicalProductionAnswer, resolveCanonicalProductionIntent } from '@/lib/assistant/production-answer';
+import type { RequesterContext } from '@/lib/assistant/requester';
+import { logger } from '@/lib/observability/logger';
 
-import {
-  adminGetDashboardSnapshot,
-  adminGetHoursAggregate,
-  adminGetHoursRanking,
-  adminGetLiveWorkforce,
-  adminListBaustellenOverview,
-  adminListOpenManualTasks,
-  adminListProjects,
-  adminSearchWorkersByLicense,
-} from "@/lib/assistant/admin-tools";
-import { ensureLoginAllowed, getClientIp, registerFailedLogin } from "@/lib/auth/login-guard";
-import { canImpersonateTarget, extractAddressedName, resolveIdentityTarget } from "@/lib/assistant/identity";
-import { ASSISTANT_LANGUAGE_CODES, assistantLanguagePromptLabel, languageForTurn, type AssistantLanguageCode } from "@/lib/assistant/language";
-import { getRequesterContext } from "@/lib/assistant/requester";
-import {
-  adminGetOwnDailyReport,
-  adminGetWorkerDailyReport,
-  adminGetWorkerMonthlyTimesheet,
-  getAssignedMachine,
-  getCompanyBaustellenDirectory,
-  getEquipmentStatus,
-  getKnowledge,
-  getLiveLocation,
-  getMyDailyReport,
-  getMyHoursSummary,
-  getMyMonthlyTimesheet,
-  getMyOperationalSnapshot,
-  getMyVacationSummary,
-  getWorkerHrProfile,
-  getWorkerPrivateSummary,
-  adminGetAvailabilityForDate,
-  adminAnalyzeDailyPlanLicenses,
-  adminGetTeamDailyReport,
-  adminQueryDailyPlan,
-  adminListVacationRequests,
-} from "@/lib/assistant/tools";
+export const runtime = 'nodejs';
 
-export const runtime = "nodejs";
-
-const bodySchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(["system", "user", "assistant"]),
-      content: z.string(),
-    }),
-  ),
-});
-
-function todayKey() {
-  const date = new Date();
-  return dateKeyFromDate(date);
+function message(lang: AssistantLanguageCode, key: 'admin' | 'invalid' | 'disabled' | 'unavailable' | 'date' | 'ambiguous') {
+  const text = {
+    SQ: { admin: 'Asistenti është vetëm për administratorë.', invalid: 'Kërkesë e pavlefshme.', disabled: 'Asistenti AI nuk është aktivizuar ende. Administratori duhet të vendosë çelësin OpenAI në konfigurimin sekret të serverit.', unavailable: 'Nuk arrita ta përfundoj përgjigjen nga burimet e sistemit. Provo sërish; mos e trajto përgjigjen e pjesshme si të plotë.', date: 'Data nuk është e vlefshme. Cilën datë të saktë do të kontrolloj?', ambiguous: 'Ka më shumë se një person me këtë emër. Për kë e ke fjalën?' },
+    EN: { admin: 'The assistant is for administrators only.', invalid: 'Invalid request.', disabled: 'The AI assistant is not activated. The administrator must set the OpenAI key in the server secret configuration.', unavailable: 'I could not finish the answer from the system sources. Please retry; do not treat a partial answer as complete.', date: 'That calendar date is invalid. Which exact date should I check?', ambiguous: 'More than one person matches that name. Which person do you mean?' },
+    DE: { admin: 'Der Assistent ist nur für Administratoren.', invalid: 'Ungültige Anfrage.', disabled: 'Der KI-Assistent ist noch nicht aktiviert. Der Administrator muss den OpenAI-Schlüssel in der geheimen Serverkonfiguration hinterlegen.', unavailable: 'Die Antwort aus den Systemquellen konnte nicht abgeschlossen werden. Bitte erneut versuchen; eine Teilantwort ist nicht vollständig.', date: 'Dieses Kalenderdatum ist ungültig. Welches genaue Datum soll ich prüfen?', ambiguous: 'Mehrere Personen haben diesen Namen. Welche Person meinst du?' },
+    IT: { admin: 'Assistente riservato agli amministratori.', invalid: 'Richiesta non valida.', disabled: 'Assistente AI non ancora attivato. L’amministratore deve configurare la chiave OpenAI nei segreti del server.', unavailable: 'Non è stato possibile completare la risposta dalle fonti del sistema. Riprova; una risposta parziale non è completa.', date: 'Data di calendario non valida. Quale data esatta devo verificare?', ambiguous: 'Più persone corrispondono a questo nome. Quale intendi?' },
+    RO: { admin: 'Asistentul este doar pentru administratori.', invalid: 'Cerere invalidă.', disabled: 'Asistentul AI nu este activat. Administratorul trebuie să configureze cheia OpenAI în secretele serverului.', unavailable: 'Nu am putut finaliza răspunsul din sursele sistemului. Reîncearcă; un răspuns parțial nu este complet.', date: 'Data calendaristică nu este validă. Ce dată exactă să verific?', ambiguous: 'Mai multe persoane au acest nume. La cine te referi?' },
+    PL: { admin: 'Asystent jest dostępny tylko dla administratorów.', invalid: 'Nieprawidłowe żądanie.', disabled: 'Asystent AI nie jest aktywowany. Administrator musi ustawić klucz OpenAI w sekretach serwera.', unavailable: 'Nie udało się dokończyć odpowiedzi na podstawie źródeł systemu. Spróbuj ponownie; częściowa odpowiedź nie jest kompletna.', date: 'Ta data jest nieprawidłowa. Którą dokładnie datę sprawdzić?', ambiguous: 'Do tego imienia pasuje kilka osób. Kogo masz na myśli?' },
+  };
+  return text[lang][key];
 }
 
-function dateKeyFromDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function storageMessage(lang: AssistantLanguageCode) {
+  const copy = { SQ: 'Historiku i bisedës nuk u ruajt. Provo sërish.', EN: 'The conversation could not be saved. Please retry.', DE: 'Der Chat konnte nicht gespeichert werden. Bitte erneut versuchen.', IT: 'La conversazione non è stata salvata. Riprova.', RO: 'Conversația nu a putut fi salvată. Reîncearcă.', PL: 'Nie udało się zapisać rozmowy. Spróbuj ponownie.' };
+  return copy[lang];
 }
 
-function offsetDateKey(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return dateKeyFromDate(date);
-}
-
-function currentMonthKey() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-function asksForToday(text: string) {
-  return /\b(sot|heute|today|aktuell|aktualisht|jetzt|now)\b/i.test(text);
-}
-
-function asksForYesterday(text: string) {
-  return /\b(dje|gestern|yesterday)\b/i.test(text);
-}
-
-function asksForTomorrow(text: string) {
-  return /\b(neser|nesër|morgen|tomorrow)\b/i.test(text);
-}
-
-function relativeDateForTurn(text: string) {
-  if (asksForYesterday(text)) return offsetDateKey(-1);
-  if (asksForTomorrow(text)) return offsetDateKey(1);
-  if (asksForToday(text)) return todayKey();
-  return null;
-}
-
-function asksForCurrentMonth(text: string) {
-  return /\b(aktueller monat|current month|diesen monat|kete muaj|këtë muaj|muaji aktual)\b/i.test(text);
-}
-
-function previousUserMessages(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) {
-  return messages
-    .filter((m) => m.role === "user")
-    .map((m) => m.content)
-    .slice(-4);
-}
-
-function looksLikeShortFollowUp(text: string) {
-  const normalized = text.trim().toLowerCase();
-  return (
-    normalized.length <= 28 &&
-    /\b(po|edhe|dhe|und|auch|dje|gestern|yesterday|sot|heute|today|neser|nes.r|morgen|tomorrow)\b/i.test(normalized)
-  );
-}
-
-function operationalQuestionHint(text: string) {
-  if (/\b(or.t?|stunden|hours|punuan|punoi|arbeitet|worked|ranking|statistik|statistika)\b/i.test(text)) return "hours/stats";
-  if (/\b(ku|wo|where|baustelle|kantier|standort|location)\b/i.test(text)) return "location/site";
-  if (/\b(kur|wann|when|start|filloi|begann|mbaroi|ende|stop)\b/i.test(text)) return "time/report";
-  if (/\b(kush|wer|who|pun.tor|mitarbeiter|worker|team)\b/i.test(text)) return "team/workers";
-  return "general";
-}
-
-function adminPersonaAccessError(lang: AssistantLanguageCode) {
-  if (lang === "SQ") return "Nuk ke te drejte te flasesh si Admin. Hyr si Admin.";
-  if (lang === "EN") return "No access: admin persona is only available to admins.";
-  if (lang === "IT") return "Accesso negato: la persona admin e disponibile solo agli admin.";
-  if (lang === "RO") return "Fara acces: persona de admin este disponibila doar pentru admini.";
-  if (lang === "PL") return "Brak dostepu: persona admina jest dostepna tylko dla adminow.";
-  return "Kein Zugriff: Admin-Persona nur fuer Admins.";
-}
-
-function adminOnlyError(lang: AssistantLanguageCode) {
-  if (lang === "SQ") return "Nuk ka akses: Assistant-i eshte vetem per administrator.";
-  if (lang === "EN") return "No access: the assistant is only available to administrators.";
-  if (lang === "IT") return "Accesso negato: l'assistente e disponibile solo per gli amministratori.";
-  if (lang === "RO") return "Fara acces: asistentul este disponibil doar pentru administratori.";
-  if (lang === "PL") return "Brak dostepu: asystent jest dostepny tylko dla administratorow.";
-  return "Kein Zugriff: Der Assistant ist nur fuer Administratoren verfuegbar.";
-}
-
-function missingApiKeyError(lang: AssistantLanguageCode) {
-  if (lang === "SQ") return 'Mungon OPENAI_API_KEY. Vendose ne `.env` dhe rinis dev-serverin.';
-  if (lang === "EN") return 'OPENAI_API_KEY is missing. Set it in `.env` and restart the dev server.';
-  if (lang === "IT") return 'OPENAI_API_KEY mancante. Impostala in `.env` e riavvia il dev server.';
-  if (lang === "RO") return 'OPENAI_API_KEY lipseste. Seteaz-o in `.env` si reporneste dev serverul.';
-  if (lang === "PL") return 'Brakuje OPENAI_API_KEY. Ustaw go w `.env` i uruchom ponownie dev server.';
-  return 'OPENAI_API_KEY fehlt. Bitte in `.env` setzen und den Dev-Server neu starten.';
-}
-
-function invalidRequestError(lang: AssistantLanguageCode) {
-  if (lang === "SQ") return "Kerkese e pavlefshme.";
-  if (lang === "EN") return "Invalid request.";
-  if (lang === "IT") return "Richiesta non valida.";
-  if (lang === "RO") return "Cerere invalida.";
-  if (lang === "PL") return "Nieprawidlowe zadanie.";
-  return "Ungueltige Anfrage.";
-}
-
-function rateLimitedError(lang: AssistantLanguageCode, retryAfterSeconds: number) {
-  const s = retryAfterSeconds;
-  if (lang === "SQ") return `Shume kerkesa. Provo perseri pas ${s}s.`;
-  if (lang === "EN") return `Too many requests. Try again in ${s}s.`;
-  if (lang === "IT") return `Troppe richieste. Riprova tra ${s}s.`;
-  if (lang === "RO") return `Prea multe cereri. Reincearca in ${s}s.`;
-  if (lang === "PL") return `Za duzo zapytan. Sprobuj za ${s}s.`;
-  return `Zu viele Anfragen. Bitte in ${s}s erneut versuchen.`;
-}
-
-function defaultAssistantStyle(lang: AssistantLanguageCode, targetType?: string) {
-  const adminStyle = {
-    DE: "Du bist ein praeziser, professioneller Admin-Kollege. Antworte kurz, datenbasiert und in der gewaehlten Sprache.",
-    EN: "You are a precise, professional admin colleague. Answer briefly, data-based, and in the selected language.",
-    IT: "Sei un collega admin preciso e professionale. Rispondi in modo breve, basato sui dati e nella lingua selezionata.",
-    SQ: "Je nje koleg admin i sakte dhe profesional. Pergjigju shkurt, me baze ne te dhena dhe ne gjuhen e zgjedhur.",
-    RO: "Esti un coleg admin precis si profesionist. Raspunde scurt, bazat pe date si in limba selectata.",
-    PL: "Jestes precyzyjnym, profesjonalnym kolega adminem. Odpowiadaj krotko, na podstawie danych i w wybranym jezyku.",
-  } as const;
-  const workerStyle = {
-    DE: "Du bist ein kollegialer Baustellen-Mitarbeiter. Antworte kurz, praktisch und in der gewaehlten Sprache.",
-    EN: "You are a collegial field worker. Answer briefly, practically, and in the selected language.",
-    IT: "Sei un worker di cantiere collaborativo. Rispondi in modo breve, pratico e nella lingua selezionata.",
-    SQ: "Je nje worker/koleg ne kantier. Pergjigju shkurt, praktikisht dhe ne gjuhen e zgjedhur.",
-    RO: "Esti un lucrator de santier colegial. Raspunde scurt, practic si in limba selectata.",
-    PL: "Jestes kolezenskim pracownikiem terenowym. Odpowiadaj krotko, praktycznie i w wybranym jezyku.",
-  } as const;
-  return targetType === "admin" ? adminStyle[lang] : workerStyle[lang];
+function failureMessage(lang: AssistantLanguageCode, code: AssistantFailureCode) {
+  if (lang === 'SQ') {
+    if (code === 'provider_auth' || code === 'missing_key') return 'Lidhja me OpenAI nuk u autorizua. Kontrollo konfigurimin e çelësit në Railway.';
+    if (code === 'provider_quota') return 'OpenAI refuzoi kërkesën për shkak të kufirit të llogarisë. Kontrollo kreditet/kufirin e saj.';
+    if (code === 'rate') return 'Shumë kërkesa. Provo sërish pas pak.';
+    if (code === 'timeout') return 'Kërkesa zgjati tepër dhe u ndërpre. Provo një pyetje më të kufizuar.';
+    if (code === 'input_payload') return 'Kjo kërkesë tejkalon kufirin e kontekstit. Kufizo projektin ose periudhën.';
+    if (code === 'cancel') return 'Përgjigjja u ndërpre.';
+  }
+  return message(lang, 'unavailable');
 }
 
 export async function POST(req: Request) {
-  const originDenied = rejectCrossOriginMutation(req);
-  if (originDenied) return originDenied;
-  const requester = await getRequesterContext();
-  const fallbackLanguage = requester.preferredLanguage;
-  if ((requester as { kind: string }).kind !== "admin") {
-    return NextResponse.json({ error: adminOnlyError(fallbackLanguage) }, { status: 403 });
+  const denied = rejectCrossOriginMutation(req);
+  if (denied) return denied;
+  let errorLanguage: AssistantLanguageCode = 'DE';
+  let history: Awaited<ReturnType<typeof startRun>> | null = null;
+  let actor: RequesterContext | null = null;
+  const headers = () => ({ 'cache-control': 'no-store', ...(history ? { 'x-assistant-conversation-id': history.conversationId, 'x-assistant-run-id': history.runId } : {}) });
+  async function savedResponse(response: Response, status: AssistantTerminalStatus, code?: string) {
+    if (history && actor) {
+      const raw = await response.clone().text();
+      let answer = raw;
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        try { answer = JSON.parse(raw).error ?? raw; } catch { /* Keep the safe response text. */ }
+      }
+      if (!await finishRun(actor, { runId: history.runId, answer, status, errorCode: code, httpStatus: response.status })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+    }
+    for (const [key, value] of Object.entries(headers())) response.headers.set(key, value);
+    return response;
   }
-
-  // BDF-P8-007: rate-limit assistant POSTs so a scripted bot cannot
-  // run up OpenAI cost. Legit conversation stays well under the ceiling.
+  try {
+  const authenticated = await getRequesterContext();
+  errorLanguage = authenticated.preferredLanguage;
+  if (authenticated.kind !== 'admin') return NextResponse.json({ error: message(authenticated.preferredLanguage, 'admin') }, { status: 403 });
+  actor = authenticated;
   const clientIp = getClientIp(req.headers);
-  const access = await ensureLoginAllowed("assistant", clientIp);
-  if (!access.ok) {
-    return NextResponse.json(
-      { error: rateLimitedError(fallbackLanguage, access.retryAfterSeconds) },
-      { status: 429, headers: { "Retry-After": String(access.retryAfterSeconds) } },
-    );
+  const access = await ensureLoginAllowed('assistant', clientIp);
+  const parsed = await readAssistantBody(req);
+  if (!parsed.ok) {
+    await registerFailedLogin('assistant', clientIp);
+    return NextResponse.json({ error: message(authenticated.preferredLanguage, 'invalid') }, { status: parsed.status });
   }
-
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      {
-        error: missingApiKeyError(fallbackLanguage),
-      },
-      { status: 500 },
-    );
+  const question = parsed.data.messages.at(-1)!.content;
+  const language = languageForTurn(authenticated, question);
+  errorLanguage = language;
+  const requester = { ...authenticated, preferredLanguage: language };
+  actor = requester;
+  // Save each NEW question before quota or paid generation. Prompt history is
+  // bounded separately and is never silently imported as trusted past evidence.
+  history = await startRun(requester, { conversationId: parsed.data.conversationId, clientMessageId: parsed.data.clientMessageId, question });
+  if (history.replayed) {
+    if (history.status === 'running') return NextResponse.json({ error: language === 'SQ' ? 'Kjo pyetje po përpunohet ende. Hape sërish bisedën pas pak.' : 'This question is still being processed. Reopen the conversation shortly.' }, { status: 409, headers: headers() });
+    return new Response(history.answer, { headers: { ...headers(), 'content-type': 'text/plain; charset=utf-8' } });
   }
+  if (!access.ok) return await savedResponse(assistantQuotaResponse({ ok: false, status: 429, reason: 'rate', retryAfterSeconds: access.retryAfterSeconds }, language), 'rejected', 'RATE_LIMITED');
+  if (!process.env.OPENAI_API_KEY?.trim()) return await savedResponse(NextResponse.json({ error: message(language, 'disabled') }, { status: 503 }), 'rejected', 'KEY_MISSING');
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    await registerFailedLogin("assistant", clientIp);
-    return NextResponse.json({ error: invalidRequestError(fallbackLanguage) }, { status: 400 });
+  const turn = assistantTurnContext(parsed.data.messages, { timeZone: requester.timeZone ?? 'Europe/Berlin' });
+  if (turn.invalidDates.length) return await savedResponse(new Response(message(language, 'date'), { headers: { 'content-type': 'text/plain; charset=utf-8' } }), 'completed', 'INVALID_DATE');
+    const company = await withTenantContext(requester.companyId, tx => tx.companyProfile.findUnique({ where: { id: requester.companyId }, select: { mode: true } }));
+    if (!company) return await savedResponse(NextResponse.json({ error: message(language, 'admin') }, { status: 403 }), 'rejected', 'INVALID_REQUEST');
+    const steel = company.mode === 'bau' && await isSteelCompany(requester.companyId);
+    const identity = await resolveIdentityTargetResult({ companyId: requester.companyId, addressedName: extractAddressedName(question) });
+    if (identity.status === 'ambiguous') return await savedResponse(new Response(`${message(language, 'ambiguous')}\n${identity.candidates.map(c => c.displayName).join(' · ')}`, { headers: { 'content-type': 'text/plain; charset=utf-8' } }), 'completed', 'AMBIGUOUS_PERSON');
+    const quota = await reserveAssistantQuota(requester);
+    if (!quota.ok) return await savedResponse(assistantQuotaResponse(quota, language), 'rejected', quota.status === 429 ? 'QUOTA_REJECTED' : 'QUOTA_UNAVAILABLE');
+    const metaQuestion = assistantMetaQuestion(question);
+    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel), ...(steel ? steelAssistantTools(requester, turn) : {}) };
+    if (!metaQuestion) delete registry.getAssistantCapabilities;
+    else for (const name of Object.keys(registry)) if (name !== 'getAssistantCapabilities') delete registry[name];
+    const diagnostics = createAssistantRunDiagnostics();
+    const weightQualifier = createLegacyWeightQualifier(turn);
+    const productionIntent = steel && !metaQuestion ? resolveCanonicalProductionIntent(parsed.data.messages) : null;
+    const productionAnswer = createCanonicalProductionAnswer({ intent: productionIntent, turn, language });
+    const runId = history.runId;
+    const tools = groundedTools(registry, turn.timeZone, () => new Date(), async event => {
+      const stored = await appendTrace(requester, { ...event, runId, evidence: { ...event.evidence, ...(event.failure ? { failure: event.failure } : {}) } });
+      if (!stored) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+      weightQualifier.observe(event);
+      productionAnswer.observe(event);
+    });
+    const disconnect = new AbortController();
+    const generationRequest = new Request(req.url, { signal: AbortSignal.any([req.signal, disconnect.signal]) });
+    const generation = assistantGeneration(generationRequest, 'admin', quota.settle, { onProviderCall: diagnostics.providerCall, onFailure: diagnostics.failure });
+    let usage: Record<string, unknown> | undefined;
+    const result = streamText({
+      ...generation,
+      temperature: 0,
+      system: adminAssistantPrompt({ requester, turn, steel, target: identity.status === 'found' ? identity.target : null }),
+      messages: parsed.data.messages,
+      tools,
+      prepareStep: step => groundedStep(step, metaQuestion, productionIntent ? 'adminGetSteelProductionSummary' : assistantInitialTool(question, steel)),
+      onFinish: async event => { usage = event.totalUsage; await generation.onFinish(event); },
+    });
+    return assistantResponseStream(result.fullStream, {
+      diagnostics, headers: headers(), fallback: code => failureMessage(language, code), storageFailure: storageMessage(language),
+      transformAnswer: text => weightQualifier.transformAnswer(productionAnswer.transformAnswer(text)),
+      onCancel: () => disconnect.abort(),
+      onToolError: async event => {
+        if (!await appendTrace(requester, { runId, toolCallId: event.toolCallId, toolName: event.toolName, input: event.input, result: { ok: false, diagnostic: event.failure }, status: 'error' })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+      },
+      onCheckpoint: async answer => { if (!await checkpointRun(requester, { runId, answer })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE'); },
+      onComplete: async final => {
+        if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: { ...final.diagnostics, weightQualification: weightQualifier.snapshot(), canonicalProduction: productionAnswer.snapshot() }, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+        logger.info({ event: 'assistant.run', runId, status: final.status, failure: final.diagnostics.failure, lastToolFailure: final.diagnostics.lastToolFailure, steps: final.diagnostics.steps, providerCalls: final.diagnostics.providerCalls, failedToolResults: final.diagnostics.failedToolResults }, 'Assistant request completed');
+      },
+    });
+  } catch (error) {
+    if (error instanceof AssistantHistoryError) {
+      const text = error.code === 'RUNNING'
+        ? errorLanguage === 'SQ' ? 'Përgjigjja e mëparshme po përpunohet ende. Rifresko bisedën pas pak.' : 'The previous answer is still processing. Refresh this conversation shortly.'
+        : error.code === 'HISTORY_NOT_FOUND' ? errorLanguage === 'SQ' ? 'Biseda nuk u gjet.' : 'Conversation not found.' : storageMessage(errorLanguage);
+      return NextResponse.json({ error: text, code: error.code }, { status: error.status, headers: headers() });
+    }
+    const failure = categorizeAssistantFailure(error);
+    const response = NextResponse.json({ error: failureMessage(errorLanguage, failure.code) }, { status: 503, headers: headers() });
+    try { return await savedResponse(response, 'error', failure.code.toUpperCase()); } catch { return NextResponse.json({ error: storageMessage(errorLanguage) }, { status: 503, headers: headers() }); }
   }
-
-  const lastUser = [...parsed.data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
-  const recentUsers = previousUserMessages(parsed.data.messages);
-  const currentDate = todayKey();
-  const yesterdayDate = offsetDateKey(-1);
-  const tomorrowDate = offsetDateKey(1);
-  const turnDate = relativeDateForTurn(lastUser);
-  const currentMonth = currentMonthKey();
-  const shortFollowUp = looksLikeShortFollowUp(lastUser);
-  const previousUser = recentUsers.length > 1 ? recentUsers[recentUsers.length - 2] : "";
-  const inferredTopic = operationalQuestionHint(shortFollowUp && previousUser ? previousUser : lastUser);
-  const turnLanguage = languageForTurn(requester, lastUser);
-  const addressedName = extractAddressedName(lastUser);
-  const target = await resolveIdentityTarget({ companyId: requester.companyId, addressedName });
-  const policy = { allowSensitiveWorkerData: true, allowSensitiveAdminData: true };
-
-  if (!canImpersonateTarget(requester, target)) {
-    return NextResponse.json(
-      {
-        error: adminPersonaAccessError(turnLanguage),
-      },
-      { status: 403 },
-    );
-  }
-
-  const targetName = target?.displayName ?? "Team";
-  const systemStyle =
-    target?.aiPersonalityNote?.trim() ||
-    defaultAssistantStyle(turnLanguage, target?.type);
-
-  const workerScope =
-    requester.kind === "worker"
-      ? `\nWORKER SCOPE (strict):\n- Current date: ${currentDate}. Current month: ${currentMonth}.\n- For "sot/heute/today", always use ${currentDate}; do not guess an old date.\n- Own hours: getMyHoursSummary (days optional).\n- Own daily report: getMyDailyReport (date YYYY-MM-DD optional, default today).\n- Own monthly timesheet: getMyMonthlyTimesheet (month YYYY-MM optional, default current month).\n- Own live location/plan: getMyOperationalSnapshot for "ku je?" / "wo bin ich?" / "where am I?".\n- Public Workzone directory: getCompanyBaustellenDirectory.\n- Colleagues: only operational info such as live location, assigned machine, equipment. Never expose other workers' hours, HR data, daily reports, timesheets, or private notes.\n- Do not use adminGet* tools. Do not expose team totals, rankings, project internals, or full license lists.\nRequester: "${requester.displayName}".\n`
-      : `\nADMIN SCOPE (full read-only data through tools; never invent data):\n- Current date: ${currentDate}. Current month: ${currentMonth}.\n- For "sot/heute/today", always use ${currentDate}; do not guess an old date.\n- For dashboard/KPI/panel questions, first use adminGetDashboardSnapshot. It is the preferred source for numbers shown in the admin dashboard.\n- If dashboard snapshot data is available, do not invent other totals or mix in unrelated numbers. State clearly when numbers come from the snapshot.\n- Who is working now / how many are live? -> adminGetLiveWorkforce.\n- Daily plan: who is assigned to which machine and site? -> adminQueryDailyPlan.\n- Check daily plan against worker licenses/machine requirements -> adminAnalyzeDailyPlanLicenses.\n- If the question asks for worker + machine + site in the daily plan, always use adminQueryDailyPlan and mention worker, machines, and site.\n- Hours today / this month / range totals -> adminGetHoursAggregate.\n- Hours for all workers in a range -> adminGetHoursAggregate with period range + groupByWorker.\n- Worker profile link -> derive from adminGetWorkerDailyReport/adminGetWorkerMonthlyTimesheet or getWorkerHrProfile when asked.\n- Worker daily report -> adminGetWorkerDailyReport (workerName, date optional). For "sot/heute/today", omit date or use ${currentDate}.\n- Team daily report / who did trees today / who did what today -> adminGetTeamDailyReport. For details about one person, then use adminGetWorkerDailyReport.\n- Worker monthly timesheet -> adminGetWorkerMonthlyTimesheet (workerName, month optional). For current month, omit month or use ${currentMonth}.\n- Own admin daily report -> adminGetOwnDailyReport (date optional).\n- Who worked the most in a month -> adminGetHoursRanking (yearMonth YYYY-MM).\n- Who has license X (for example CE) -> adminSearchWorkersByLicense.\n- Single worker private hours summary -> getWorkerPrivateSummary.\n- HR/license/profile text -> getWorkerHrProfile.\n- Single live location or assigned machine -> getLiveLocation / getAssignedMachine.\n- Site overview, open/done trees, documents -> adminListBaustellenOverview.\n- Calculation projects -> adminListProjects.\n- Open/manual site tasks -> adminListOpenManualTasks.\n- There is no fixed deadline field per site. Deadlines only exist if they are in description, notes, or documents; say honestly when none is stored.\n`;
-
-  const contextLogic = `\nWORK-CONTEXT LOGIC:\n- Most questions are about work, statistics, hours, daily plan, workers, sites, machines, and reports. Treat short questions in that operational context, not as small talk.\n- Recent user questions: ${recentUsers.map((m) => `"${m.replace(/\s+/g, " ").slice(0, 120)}"`).join(" | ") || "(none)"}.\n- Current user question is ${shortFollowUp ? "a short follow-up" : "a standalone question"}. Inferred topic: ${inferredTopic}.\n- Relative dates: today=${currentDate}, yesterday=${yesterdayDate}, tomorrow=${tomorrowDate}. If the question contains "dje/gestern/yesterday", use ${yesterdayDate}. If it contains "neser/morgen/tomorrow", use ${tomorrowDate}.\n- Short follow-ups like "po dje", "edhe dje", "und gestern", or "sot?" inherit the intent of the previous user question. Example: after "sa ore punuan punetoret?", "po dje" means the same hours analysis for yesterday.\n- For questions about hours, who worked, or what was done, always use a data tool. Do not answer with generic excuses.\n- Never say "capacity maximum" or similar fallback text unless the API request itself truly failed. If data is missing, say briefly which data was not found.\n`;
-
-  const result = streamText({
-    model: openai("gpt-4o-mini"),
-    stopWhen: stepCountIs(14),
-    system: `You are the identity-aware Team Assistant. Always speak as the addressed persona when a persona is addressed.\n\nRequester: ${requester.displayName} (${requester.kind})\nPersona: ${targetName}${target?.type ? ` (${target.type})` : ""}\nPersona note: ${systemStyle}\n${workerScope}${contextLogic}\nDual-Identity Privacy Logic (STRICT):\n- Decide every answer from Requester identity (bk_admin_id / bk_worker_id) and Target Persona.\n- Admin: may use admin, HR, project, and report tools listed above, but remains read-only.\n- Worker: only own person + public Workzone sites + operational team info.\n- Worker to worker: only operational data such as location, machine, and material. Never expose sensitive HR data, hours, daily reports, timesheets, or private notes of another person.\n- Worker to admin: only answer within worker scope; no admin-only internals.\n- If unsure, ask a clarifying question or give a short safe answer.\n\nWording:\n- Answer naturally in first person of the persona when a persona was addressed.\n- Keep answers short, human, and clear. Do not list tool names stiffly.\n- For vacation/availability, do not output links unless the user explicitly asks for a link.\n\nSystem Flags:\n- allowSensitiveWorkerData: ${policy.allowSensitiveWorkerData ? "yes" : "no"}\n- allowSensitiveAdminData: ${policy.allowSensitiveAdminData ? "yes" : "no"}\n\nRules:\n- Read-only: never write or change data.\n- Use tools for data; do not hallucinate numbers.\n- Core principle: the assistant may see what the same logged-in user/admin could see in the UI with the mouse, but not more.\n- Response language: ${assistantLanguagePromptLabel(turnLanguage)}.\n`,
-    messages: parsed.data.messages,
-    tools: {
-      getMyOperationalSnapshot: {
-        description:
-          'Logged-in worker: current live location and today\'s machine/plan assignment. No parameters. Always use this for "ku je?", "wo arbeite ich?", or "where am I?".',
-        inputSchema: z.object({}),
-        execute: async () => getMyOperationalSnapshot(requester),
-      },
-      getMyHoursSummary: {
-        description: "Worker only: own worked hours over the last days, optional days (1-31, default 14).",
-        inputSchema: z.object({ days: z.number().optional() }),
-        execute: async (input: { days?: number }) => getMyHoursSummary(requester, input),
-      },
-      getMyDailyReport: {
-        description:
-          "Worker only: own daily report as shown in the UI, including live timesheet sessions, local start/end times, hours so far, sites, colleagues, material actions, completed trees, manual tasks, and notes. Optional date as YYYY-MM-DD. Always use startTime/endTime for visible times.",
-        inputSchema: z.object({ date: z.string().optional() }),
-        execute: async (input: { date?: string }) => getMyDailyReport(requester, { date: turnDate ?? input.date }),
-      },
-      getMyMonthlyTimesheet: {
-        description:
-          "Worker only: own monthly timesheet as shown in the UI, including day rows, local start/end times, breaks, sites, live hours so far, admin time rows, and notes. Optional month as YYYY-MM.",
-        inputSchema: z.object({ month: z.string().optional() }),
-        execute: async (input: { month?: string }) => getMyMonthlyTimesheet(requester, { month: asksForCurrentMonth(lastUser) ? currentMonth : input.month }),
-      },
-      getMyVacationSummary: {
-        description:
-          "Worker only: own vacation data as shown in the profile. Includes vacation balance, approved days, pending days, remaining days, and own vacation history. Summarize briefly and without links.",
-        inputSchema: z.object({}),
-        execute: async () => getMyVacationSummary(requester),
-      },
-      getLiveLocation: {
-        description: "Where is a worker currently live on a site? No hours or private reports.",
-        inputSchema: z.object({ workerName: z.string() }),
-        execute: async (input: { workerName: string }) => getLiveLocation(requester, input),
-      },
-      getAssignedMachine: {
-        description: "Which machine is assigned to a worker in the daily plan?",
-        inputSchema: z.object({ workerName: z.string(), date: z.string().optional() }),
-        execute: async (input: { workerName: string; date?: string }) => getAssignedMachine(requester, { ...input, date: turnDate ?? input.date }),
-      },
-      getEquipmentStatus: {
-        description: "Where is safety material (SIGN/PLATE/FENCE) currently on site?",
-        inputSchema: z.object({ category: z.enum(["SIGN", "PLATE", "FENCE"]), limit: z.number().optional() }),
-        execute: async (input: { category: "SIGN" | "PLATE" | "FENCE"; limit?: number }) => getEquipmentStatus(requester, input),
-      },
-      getKnowledge: {
-        description: "Retrieve company/app knowledge (CompanyKnowledge).",
-        inputSchema: z.object({ query: z.string(), language: z.enum(ASSISTANT_LANGUAGE_CODES).optional() }),
-        execute: async (input: { query: string; language?: AssistantLanguageCode }) => getKnowledge(requester, input),
-      },
-      getWorkerPrivateSummary: {
-        description: "Admin only: sensitive worker summary with hours/sessions.",
-        inputSchema: z.object({ workerName: z.string(), days: z.number().optional() }),
-        execute: async (input: { workerName: string; days?: number }) => getWorkerPrivateSummary(requester, input),
-      },
-      getWorkerHrProfile: {
-        description:
-          "Admin only: HR/profile data for a worker, licenses, position, level, contact details, work equipment, and clothing.",
-        inputSchema: z.object({ workerName: z.string() }),
-        execute: async (input: { workerName: string }) => getWorkerHrProfile(requester, input),
-      },
-      adminGetWorkerDailyReport: {
-        description:
-          "Admin only: worker daily report as shown in the UI. Includes live timesheet sessions, local start/end times, hours so far, sites, colleagues, material actions, completed trees, manual tasks, and notes. workerName required, date optional YYYY-MM-DD. Always use startTime/endTime for visible times.",
-        inputSchema: z.object({ workerName: z.string(), date: z.string().optional() }),
-        execute: async (input: { workerName: string; date?: string }) =>
-          adminGetWorkerDailyReport(requester, { ...input, date: turnDate ?? input.date }),
-      },
-      adminGetTeamDailyReport: {
-        description:
-          "Admin only: team daily report for a date. Use for questions such as who completed trees today, how many trees per worker, who worked today, or who had material actions. Returns all active daily data from one source.",
-        inputSchema: z.object({ date: z.string().optional() }),
-        execute: async (input: { date?: string }) => adminGetTeamDailyReport(requester, { date: turnDate ?? input.date }),
-      },
-      adminGetWorkerMonthlyTimesheet: {
-        description:
-          "Admin only: worker monthly timesheet as shown in the UI. Includes day rows, local start/end times, live total hours so far, admin time rows, and notes. workerName required, month optional YYYY-MM.",
-        inputSchema: z.object({ workerName: z.string(), month: z.string().optional() }),
-        execute: async (input: { workerName: string; month?: string }) =>
-          adminGetWorkerMonthlyTimesheet(requester, { ...input, month: asksForCurrentMonth(lastUser) ? currentMonth : input.month }),
-      },
-      adminGetOwnDailyReport: {
-        description: "Admin only: own admin daily report as shown in the UI, including own tasks and completed trees. date optional YYYY-MM-DD.",
-        inputSchema: z.object({ date: z.string().optional() }),
-        execute: async (input: { date?: string }) => adminGetOwnDailyReport(requester, { date: turnDate ?? input.date }),
-      },
-      getCompanyBaustellenDirectory: {
-        description: "Active company sites: name, type, address, and short description. Available to workers and admins.",
-        inputSchema: z.object({}),
-        execute: async () => getCompanyBaustellenDirectory(requester),
-      },
-      adminGetLiveWorkforce: {
-        description: "Admin only: all workers currently clocked in live, site, and since when.",
-        inputSchema: z.object({}),
-        execute: async () => adminGetLiveWorkforce(requester),
-      },
-      adminGetDashboardSnapshot: {
-        description:
-          "Admin only: read-only snapshot of the real admin dashboard with KPI statistics, site progress, weekly hours per site, and worker rankings. Prefer this for dashboard/KPI questions and never invent numbers.",
-        inputSchema: z.object({
-          includeWeeklyBaustellen: z.boolean().optional(),
-          includeProgress: z.boolean().optional(),
-          includeWorkerRanking: z.boolean().optional(),
-        }),
-        execute: async (input: {
-          includeWeeklyBaustellen?: boolean;
-          includeProgress?: boolean;
-          includeWorkerRanking?: boolean;
-        }) => adminGetDashboardSnapshot(requester, input),
-      },
-      adminGetAvailabilityForDate: {
-        description:
-          "Admin only: checks which active workers are available/ready for a date. Considers approved vacation and profile status (sick, vacation, unavailable). Shows pending vacation requests for that date separately. Do not output links in answers.",
-        inputSchema: z.object({ date: z.string().optional() }),
-        execute: async (input: { date?: string }) => adminGetAvailabilityForDate(requester, { date: turnDate ?? input.date }),
-      },
-      adminAnalyzeDailyPlanLicenses: {
-        description:
-          "Admin only: analyzes the daily plan for a date against worker licenses/driver permissions and machine requirements. Use for questions such as whether licenses match machines, who is planned with which machine, or whether the plan makes sense.",
-        inputSchema: z.object({ date: z.string().optional() }),
-        execute: async (input: { date?: string }) => adminAnalyzeDailyPlanLicenses(requester, { date: turnDate ?? input.date }),
-      },
-      adminQueryDailyPlan: {
-        description:
-          "Admin only: reads the daily plan for a date and returns groups with site, workers, and machines. Use for questions such as which machines Noah/Mario had today, who is on Prio 1 site, or which machine is planned for a site.",
-        inputSchema: z.object({ date: z.string().optional(), workerName: z.string().optional(), baustelleName: z.string().optional() }),
-        execute: async (input: { date?: string; workerName?: string; baustelleName?: string }) =>
-          adminQueryDailyPlan(requester, { ...input, date: turnDate ?? input.date }),
-      },
-      adminListVacationRequests: {
-        description:
-          "Admin only: vacation requests from worker profiles. Default status PENDING for open requests; status ALL/APPROVED/REJECTED possible. Optional date YYYY-MM-DD for requests affecting that day. Answer briefly and without links.",
-        inputSchema: z.object({
-          status: z.enum(["PENDING", "APPROVED", "REJECTED", "ALL"]).optional(),
-          date: z.string().optional(),
-          limit: z.number().optional(),
-        }),
-        execute: async (input: { status?: "PENDING" | "APPROVED" | "REJECTED" | "ALL"; date?: string; limit?: number }) =>
-          adminListVacationRequests(requester, { ...input, date: turnDate ?? input.date }),
-      },
-      adminGetHoursAggregate: {
-        description: "Admin only: total working hours for today, month, or date range; optionally grouped by worker.",
-        inputSchema: z.object({
-          period: z.enum(["today", "month", "range"]),
-          referenceDate: z.string().optional(),
-          rangeFrom: z.string().optional(),
-          rangeTo: z.string().optional(),
-          groupByWorker: z.boolean().optional(),
-        }),
-        execute: async (input: {
-          period: "today" | "month" | "range";
-          referenceDate?: string;
-          rangeFrom?: string;
-          rangeTo?: string;
-          groupByWorker?: boolean;
-        }) => {
-          if (!turnDate) return adminGetHoursAggregate(requester, input);
-          if (input.period === "range") {
-            return adminGetHoursAggregate(requester, {
-              ...input,
-              rangeFrom: input.rangeFrom ?? turnDate,
-              rangeTo: input.rangeTo ?? turnDate,
-            });
-          }
-          return adminGetHoursAggregate(requester, { ...input, referenceDate: input.referenceDate ?? turnDate });
-        },
-      },
-      adminSearchWorkersByLicense: {
-        description: "Admin only: find workers whose profile licenses field contains a text such as CE, C, or truck.",
-        inputSchema: z.object({ contains: z.string() }),
-        execute: async (input: { contains: string }) => adminSearchWorkersByLicense(requester, input),
-      },
-      adminGetHoursRanking: {
-        description: "Admin only: ranking by hours in a calendar month (YYYY-MM).",
-        inputSchema: z.object({ yearMonth: z.string(), limit: z.number().optional() }),
-        execute: async (input: { yearMonth: string; limit?: number }) => adminGetHoursRanking(requester, input),
-      },
-      adminListBaustellenOverview: {
-        description: "Admin only: sites with status, trees todo/done, document names, and short description.",
-        inputSchema: z.object({ status: z.enum(["active", "inactive"]).optional() }),
-        execute: async (input: { status?: "active" | "inactive" }) => adminListBaustellenOverview(requester, input),
-      },
-      adminListProjects: {
-        description: "Admin only: calculation projects with title, customer, status, date, and internal notes excerpt.",
-        inputSchema: z.object({ limit: z.number().optional(), status: z.string().optional() }),
-        execute: async (input: { limit?: number; status?: string }) => adminListProjects(requester, input),
-      },
-      adminListOpenManualTasks: {
-        description: "Admin only: marked/open manual tasks per site.",
-        inputSchema: z.object({ limit: z.number().optional() }),
-        execute: async (input: { limit?: number }) => adminListOpenManualTasks(requester, input),
-      },
-    },
-  });
-
-  return result.toTextStreamResponse();
 }

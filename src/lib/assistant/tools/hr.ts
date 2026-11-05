@@ -3,13 +3,15 @@
 import { prisma } from "@/lib/db/prisma";
 import type { RequesterContext } from "../requester";
 import { assistantToolText } from "./text";
+import {assistantAssetGrounding,assetGroundingFields} from '../asset-grounding';
 import {
   startOfLocalDay,
   todayKey,
   endOfLocalDay,
   dateKeyFromDate,
   normalizeName,
-  workerByNameFilter,
+  resolveWorkerByName,
+  workerLookupMessage,
 } from "./shared";
 
 export async function getWorkerHrProfile(
@@ -28,6 +30,8 @@ export async function getWorkerHrProfile(
       birthDate: string | null;
       startedAtCompany: string | null;
       assetItems: Array<{ kind: string; itemName: string; itemCode: string | null }>;
+      assetItemsComplete: boolean;
+      assetItemsTruncated: boolean;
       message: string;
     }
   | { ok: false; message: string }
@@ -37,8 +41,10 @@ export async function getWorkerHrProfile(
     return { ok: false, message: text.hrAdminOnly };
   }
 
+  const resolution = await resolveWorkerByName(requester.companyId, input.workerName);
+  if (resolution.status !== 'found') return { ok: false, message: workerLookupMessage(resolution, requester.preferredLanguage) };
   const worker = await prisma.worker.findFirst({
-    where: workerByNameFilter(requester.companyId, input.workerName),
+    where: { id: resolution.worker.id, companyProfileId: requester.companyId },
     select: {
       id: true,
       firstName: true,
@@ -57,10 +63,11 @@ export async function getWorkerHrProfile(
 
   const assets = await prisma.workerAssetItem.findMany({
     where: { workerId: worker.id, status: "ACTIVE" },
-    select: { kind: true, itemName: true, itemCode: true },
+    select: { kind: true, itemName: true, itemCode: true,companyInventoryItemId:true,isPrivate:true },
     orderBy: { handedOverAt: "desc" },
-    take: 40,
+    take: 41,
   });
+  const assetGrounding=await assistantAssetGrounding(requester,assets.filter(a=>a.companyInventoryItemId&&!a.isPrivate).map(a=>({kind:'inventory',id:a.companyInventoryItemId!})));
 
   const label = `${worker.firstName} ${worker.lastName}`.trim();
   const lic = worker.licenses?.trim() ?? null;
@@ -79,8 +86,11 @@ export async function getWorkerHrProfile(
     emailAccount: worker.emailAccount,
     birthDate: worker.birthDate ? worker.birthDate.toISOString().slice(0, 10) : null,
     startedAtCompany: worker.startedAtCompany ? worker.startedAtCompany.toISOString().slice(0, 10) : null,
-    assetItems: assets.map((a) => ({ kind: a.kind, itemName: a.itemName, itemCode: a.itemCode })),
-    message,
+    assetItems: assets.slice(0, 40).map((a) => ({ kind: a.kind, itemName: a.itemName, itemCode: a.itemCode,
+      ...(assetGrounding.applicable?{evidenceBasis:'recorded_assignment_not_proof_of_current_physical_possession',...(a.companyInventoryItemId&&!a.isPrivate?assetGroundingFields(assetGrounding,{kind:'inventory',id:a.companyInventoryItemId}):{operationalAvailability:null,usable:null,operationalWarning:'Private/unlinked legacy belongings are recorded rows only; operational condition and physical possession are not verified.'})}:{}) })),
+    assetItemsComplete: assets.length <= 40,
+    assetItemsTruncated: assets.length > 40,
+    message:assetGrounding.applicable&&assetGrounding.warning?`${message} ${assetGrounding.warning}`:message,
   };
 }
 
@@ -131,8 +141,8 @@ export async function getMyVacationSummary(requester: RequesterContext) {
   if (requester.kind === "anonymous") return { ok: false as const, message: text.notSignedIn };
   if (requester.kind !== "worker") return { ok: false as const, message: text.vacationAdminHint };
 
-  const worker = await prisma.worker.findUnique({
-    where: { id: requester.workerId },
+  const worker = await prisma.worker.findFirst({
+    where: { id: requester.workerId, companyProfileId: requester.companyId },
     select: {
       id: true,
       firstName: true,
@@ -157,8 +167,15 @@ export async function getMyVacationSummary(requester: RequesterContext) {
   });
   if (!worker) return { ok: false as const, message: text.workerNotFound };
 
-  const approvedDays = worker.vacationRequests.filter((request) => request.status === "APPROVED").reduce((sum, request) => sum + request.requestedDays, 0);
-  const pendingDays = worker.vacationRequests.filter((request) => request.status === "PENDING").reduce((sum, request) => sum + request.requestedDays, 0);
+  const totals = await prisma.vacationRequest.groupBy({
+    by: ['status'],
+    where: { companyProfileId: requester.companyId, workerId: requester.workerId },
+    _sum: { requestedDays: true },
+    _count: { _all: true },
+  });
+  const approvedDays = totals.find(row => row.status === 'APPROVED')?._sum.requestedDays ?? 0;
+  const pendingDays = totals.find(row => row.status === 'PENDING')?._sum.requestedDays ?? 0;
+  const totalRequests = totals.reduce((sum, row) => sum + row._count._all, 0);
   const remainingDays = Math.max(0, worker.vacationAllowanceDays - approvedDays);
 
   return {
@@ -168,6 +185,13 @@ export async function getMyVacationSummary(requester: RequesterContext) {
     approvedDays,
     pendingDays,
     remainingDays,
+    summaryComplete: true,
+    balanceBasis: 'Stored allowance minus all recorded approved request days; no annual reset or carry-over is inferred.',
+    totalRequests,
+    returnedCount: worker.vacationRequests.length,
+    complete: worker.vacationRequests.length === totalRequests,
+    historyComplete: worker.vacationRequests.length === totalRequests,
+    truncated: worker.vacationRequests.length < totalRequests,
     requests: worker.vacationRequests.map((request) => ({
       id: request.id,
       startDate: dateKeyFromDate(request.startDate),
@@ -192,28 +216,32 @@ export async function adminListVacationRequests(
 
   const status = input.status ?? "PENDING";
   const take = Math.min(100, Math.max(1, Math.floor(Number(input.limit ?? 50) || 50)));
-  const day = input.date ? startOfLocalDay(input.date) : null;
+  const day = input.date ? startOfLocalDay(input.date, requester.timeZone) : null;
   if (input.date && !day) return { ok: false as const, message: text.invalidDate };
 
-  const rows = await prisma.vacationRequest.findMany({
-    where: {
+  const where = {
       companyProfileId: requester.companyId,
       ...(status === "ALL" ? {} : { status }),
-      ...(day ? { startDate: { lte: endOfLocalDay(day) }, endDate: { gte: day } } : {}),
-    },
+      ...(day ? { startDate: { lte: endOfLocalDay(day, requester.timeZone) }, endDate: { gte: day } } : {}),
+  };
+  const [rows, count] = await Promise.all([prisma.vacationRequest.findMany({
+    where,
     orderBy: [{ status: "asc" }, { startDate: "asc" }, { createdAt: "desc" }],
     take,
     include: {
       worker: { select: { id: true, firstName: true, lastName: true } },
       reviewedByAdmin: { select: { name: true, email: true } },
     },
-  });
+  }), prisma.vacationRequest.count({ where })]);
 
   return {
     ok: true as const,
     status,
     date: input.date ?? null,
-    count: rows.length,
+    count,
+    returnedCount: rows.length,
+    complete: rows.length === count,
+    truncated: rows.length < count,
     requests: rows.map((request) => ({
       id: request.id,
       worker: `${request.worker.firstName} ${request.worker.lastName}`.trim(),
@@ -230,7 +258,7 @@ export async function adminListVacationRequests(
     message:
       rows.length === 0
         ? text.noVacationRequests
-        : text.vacationRequestsFound(rows.length, status),
+        : text.vacationRequestsFound(count, status),
   };
 }
 
@@ -238,10 +266,10 @@ export async function adminGetAvailabilityForDate(requester: RequesterContext, i
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const key = (input.date ?? todayKey()).trim();
-  const day = startOfLocalDay(key);
+  const key = (input.date ?? todayKey(requester.timeZone)).trim();
+  const day = startOfLocalDay(key, requester.timeZone);
   if (!day) return { ok: false as const, message: text.invalidDate };
-  const dayEnd = endOfLocalDay(day);
+  const dayEnd = endOfLocalDay(day, requester.timeZone);
 
   const workers = await prisma.worker.findMany({
     where: { companyProfileId: requester.companyId, status: "active" },
@@ -314,8 +342,8 @@ export async function adminAnalyzeDailyPlanLicenses(requester: RequesterContext,
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const key = (input.date ?? todayKey()).trim();
-  const day = startOfLocalDay(key);
+  const key = (input.date ?? todayKey(requester.timeZone)).trim();
+  const day = startOfLocalDay(key, requester.timeZone);
   if (!day) return { ok: false as const, message: text.invalidDate };
 
   const plan = await prisma.dailyWorkPlan.findUnique({
@@ -339,6 +367,8 @@ export async function adminAnalyzeDailyPlanLicenses(requester: RequesterContext,
 
   if (!plan) return { ok: true as const, date: key, groups: [], warnings: [], message: text.noDailyPlan(key) };
 
+  const grounding=await assistantAssetGrounding(requester,plan.columns.flatMap(column=>column.assignments.filter(a=>a.kind==='MACHINE'&&a.machine&&a.machineId).map(a=>({kind:'machine',id:a.machineId!}))));
+
   const groups = plan.columns.map((column) => {
     const workers = column.assignments
       .filter((assignment) => assignment.kind === "WORKER" && assignment.worker)
@@ -354,12 +384,13 @@ export async function adminAnalyzeDailyPlanLicenses(requester: RequesterContext,
         plate: assignment.machine!.targe,
         model: assignment.machine!.model,
         active: assignment.machine!.isActive,
+        ...assetGroundingFields(grounding,{kind:'machine',id:assignment.machineId!},assignment.machine!.isActive),
       }));
     return {
       baustelle: column.baustelle?.name ?? column.title,
       workers,
       machines,
-      warnings: analyzePlanLicenseWarnings(workers, machines, text),
+      warnings: [...analyzePlanLicenseWarnings(workers, machines, text),...(grounding.applicable?machines.filter(m=>'usable' in m&&m.usable===false).map(m=>`${m.name}: operational asset block; base active flag is not usability.`):[]),...(grounding.warning?[grounding.warning]:[])],
     };
   });
 
@@ -381,8 +412,8 @@ export async function adminQueryDailyPlan(
   const text = assistantToolText(requester);
   if (requester.kind !== "admin") return { ok: false as const, message: text.adminOnly };
 
-  const key = (input.date ?? todayKey()).trim();
-  const day = startOfLocalDay(key);
+  const key = (input.date ?? todayKey(requester.timeZone)).trim();
+  const day = startOfLocalDay(key, requester.timeZone);
   if (!day) return { ok: false as const, message: text.invalidDate };
   const workerNeedle = normalizeName(input.workerName ?? "").toLowerCase();
   const baustelleNeedle = normalizeName(input.baustelleName ?? "").toLowerCase();
@@ -409,6 +440,8 @@ export async function adminQueryDailyPlan(
 
   if (!plan) return { ok: true as const, date: key, groups: [], message: text.noDailyPlan(key) };
 
+  const grounding=await assistantAssetGrounding(requester,plan.columns.flatMap(column=>column.assignments.filter(a=>a.kind==='MACHINE'&&a.machineId).map(a=>({kind:'machine',id:a.machineId!}))));
+
   const liveGroups = plan.columns.map((column) => {
     const workers = column.assignments
       .filter((assignment) => assignment.kind === "WORKER")
@@ -424,6 +457,7 @@ export async function adminQueryDailyPlan(
         plate: assignment.machine?.targe ?? null,
         model: assignment.machine?.model ?? null,
         active: assignment.machine?.isActive ?? null,
+        ...assetGroundingFields(grounding,{kind:'machine',id:assignment.machineId??'unresolved'},assignment.machine?.isActive??null),
       }));
     return {
       source: "live-plan" as const,
@@ -431,7 +465,7 @@ export async function adminQueryDailyPlan(
       note: column.note,
       workers,
       machines,
-      warnings: analyzePlanLicenseWarnings(workers, machines, text),
+      warnings: [...analyzePlanLicenseWarnings(workers, machines, text),...(grounding.applicable?machines.filter(m=>'usable' in m&&m.usable===false).map(m=>`${m.name}: operational asset block; base active flag is not usability.`):[]),...(grounding.warning?[grounding.warning]:[])],
     };
   });
 
@@ -448,7 +482,7 @@ export async function adminQueryDailyPlan(
       .split(",")
       .map((name) => name.trim())
       .filter(Boolean)
-      .map((name) => ({ name, requiredLicense: null, plate: null, model: null, active: null })),
+      .map((name) => ({ name, requiredLicense: null, plate: null, model: null, active: null,...(grounding.applicable?{operationalAvailability:null,usable:null,operationalWarning:'Saved plan names are not resolved asset identities or availability evidence.'}:{}) })),
     warnings: [] as string[],
   }));
 

@@ -33,7 +33,8 @@ export async function requestVacationAction(formData: FormData): Promise<ActionR
   if (!startDate || !endDate) return { ok: false, message: tr("invalidDate") };
   if (endDate.getTime() < startDate.getTime()) return { ok: false, message: tr("vacationEndBeforeStart") };
 
-  const maxWorkdays = countVacationWorkdays(startDate, endDate);
+  const company = await prisma.companyProfile.findUnique({ where: { id: worker.companyProfileId }, select: { country: true } });
+  const maxWorkdays = countVacationWorkdays(startDate, endDate, company?.country);
   if (maxWorkdays <= 0) return { ok: false, message: tr("vacationNoWorkdays") };
 
   const requestedDaysRaw = intValue(formData.get("requestedDays"), maxWorkdays);

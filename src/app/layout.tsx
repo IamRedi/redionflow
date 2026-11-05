@@ -1,11 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { FooterBrandProvider } from '@/components/branding/FooterBrand';
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { Bell, Home, LayoutDashboard } from "lucide-react";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
+import { KidrahtButton } from "@/components/kidraht/kidraht-button";
+import { Button } from "@/components/ui/button";
+import { ProductionHeaderTools } from "@/components/shell/ProductionHeaderTools";
+import { TopbarAnnouncementButton } from "@/app/(workzone)/workzone/topbar-announcement-button";
+import { notifyTeamAction } from "@/app/(workzone)/workzone/announcement-actions";
+import { isSteelCompany } from "@/lib/dashboard/steel-access";
+import { prisma } from "@/lib/db/prisma";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { appName, appSuffix, appSuperscript, brandAppleIconSrc, brandIconSrc, saasAppName, saasAppSuffix } from "@/lib/branding";
 import { getCompanyMode } from "@/lib/db/company";
+import { getCurrentCompanyId } from "@/lib/db/tenant";
+import { kidrahtAvailable } from "@/lib/kidraht/company-link";
+import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { t } from "@/lib/i18n";
 import { productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
@@ -14,6 +26,7 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 const rootTitle = isSaasMode ? `${saasAppName}${saasAppSuffix}` : `${appName} ${appSuffix}`;
+export const viewport: Viewport = { interactiveWidget: 'resizes-content' };
 
 export const metadata: Metadata = {
   title: rootTitle,
@@ -41,8 +54,13 @@ export default async function RootLayout({
   const initialLang = await resolveRequestLanguage();
   const admin = await getCurrentAdmin();
   const companyMode = await getCompanyMode();
+  const worker = admin ? null : await getCurrentWorker();
+  const companyId = admin || worker ? await getCurrentCompanyId() : null;
+  const kidraht = await kidrahtAvailable(companyId);
+  const production = companyMode === "bau" && companyId !== null && await isSteelCompany(companyId);
+  const announcement = production && admin ? await prisma.workzoneAnnouncement.findFirst({ where: { companyProfileId: companyId!, isActive: true }, select: { message: true }, orderBy: { createdAt: "desc" } }) : null;
   const brand = productBranding(companyMode);
-  const showSaasPublicBrand = isSaasMode && !admin;
+  const showSaasPublicBrand = isSaasMode && !admin && !worker;
   // Fall back to the static brand for pre-session pages where no company is
   // resolvable; otherwise show the tenant's own product name.
   const displayName = showSaasPublicBrand ? saasAppName : (brand?.name ?? appName);
@@ -72,20 +90,32 @@ export default async function RootLayout({
     >
       <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
-          <div
-            className={`fixed right-2 top-2 z-[1000] border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${
-              admin ? "" : "pointer-events-none"
-            }`}
-          >
-            {admin ? (
-              <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle} className="block transition hover:text-brand-green">
-                {brandBadge}
-              </Link>
-            ) : (
-              brandBadge
-            )}
-          </div>
+          <FooterBrandProvider mark={production ? (admin ? <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle}>{brandBadge}</Link> : brandBadge) : null}>
+          {/* Operational tools align with the header; the steel product mark lives in the shared footer. */}
+          {production ? <ProductionHeaderTools
+            navigation={<>
+              <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
+              {admin && <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>}
+            </>}
+            alerts={admin ? <>
+              <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px] bg-transparent shadow-none" />
+              <form action={notifyTeamAction}><Button type="submit" variant="outline" size="icon" className="size-[44px] rounded-full bg-transparent text-foreground/80 shadow-none hover:bg-muted hover:text-foreground" title={t("workzone.notifyTeam", initialLang)} aria-label={t("workzone.notifyTeam", initialLang)}><Bell className="size-4" /></Button></form>
+            </> : null}
+            book={kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} iconOnly /> : null}
+          /> : <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
+            {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} /> : null}
+            <div className={`border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${admin ? "" : "pointer-events-none"}`}>
+              {admin ? (
+                <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle} className="block transition hover:text-brand-green">
+                  {brandBadge}
+                </Link>
+              ) : (
+                brandBadge
+              )}
+            </div>
+          </div>}
           {children}
+          </FooterBrandProvider>
         </LanguageProvider>
       </body>
     </html>

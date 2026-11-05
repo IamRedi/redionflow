@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { withTenantContext } from '@/lib/db/tenant-context';
 
 /**
  * T-032 — Company data export.
@@ -150,6 +151,13 @@ export async function buildCompanyExport(companyProfileId: string): Promise<Comp
   const workLogs = await prisma.workLog.findMany({
     where: { baustelle: { companyProfileId } },
   });
+  const [steelDefinitions, steelSelections, steelVisuals, siteElements, siteElementWork] = await withTenantContext(companyProfileId, tx => Promise.all([
+    tx.steelWorkDefinition.findMany({ where }),
+    tx.steelSiteTask.findMany({ where }),
+    tx.steelWorkVisual.findMany({ where }),
+    tx.siteElement.findMany({ where }),
+    tx.siteElementWork.findMany({ where }),
+  ]));
 
   const tables: Record<string, unknown[]> = {
     CompanyProfile: [company],
@@ -168,6 +176,11 @@ export async function buildCompanyExport(companyProfileId: string): Promise<Comp
     WorkSession: workSessions,
     Baustelle: baustellen,
     TreeItem: treeItems,
+    SteelWorkDefinition: steelDefinitions,
+    SteelSiteTask: steelSelections,
+    SteelWorkVisual: steelVisuals.map(({ data, ...visual }) => ({ ...visual, dataBase64: data ? Buffer.from(data).toString('base64') : null })),
+    SiteElement: siteElements,
+    SiteElementWork: siteElementWork,
     ManualTask: manualTasks,
     WorkLog: workLogs,
     InventoryMovement: inventoryMovements,

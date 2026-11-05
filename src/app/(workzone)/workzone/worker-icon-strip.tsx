@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Mail, Phone, UserRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -85,17 +85,24 @@ export function WorkerIconStrip({
   workers,
   admin,
   profileHrefBase,
+  insetClassName = "",
+  comfortable = false,
+  trailing,
 }: {
   workers: WorkerBadge[];
   admin: boolean;
   profileHrefBase?: string;
+  /** Room on the left for what floats above the strip (the logo); scrolled items pass under it. */
+  insetClassName?: string;
+  comfortable?: boolean;
+  trailing?: ReactNode;
 }) {
   const { currentLang } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState<{ workerId: string; top: number; left: number } | null>(null);
   const [dismissedDecisionKey, setDismissedDecisionKey] = useState<string | null>(null);
-  const [decisionStateReady, setDecisionStateReady] = useState(false);
+  const [clientStateReady, setClientStateReady] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   function dismissOwnVacationSignal(worker: WorkerBadge) {
@@ -114,7 +121,7 @@ export function WorkerIconStrip({
       window.setTimeout(() => setDismissedDecisionKey(latestSeen), 0);
     }
     window.localStorage.removeItem(LEGACY_VACATION_DECISION_SEEN_KEY);
-    window.setTimeout(() => setDecisionStateReady(true), 0);
+    window.setTimeout(() => setClientStateReady(true), 0);
   }, []);
 
   function popupLeft(rightEdge: number) {
@@ -163,15 +170,17 @@ export function WorkerIconStrip({
   const canContact = Boolean(openWorker?.phone || openWorker?.emailAccount || whatsapp);
 
   return (
-    <div ref={wrapRef} className="no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1">
-      <div className="flex min-w-max items-start gap-2 pr-5">
+    <div ref={wrapRef} className={cn("no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1", comfortable && 'lg:scroll-pr-[112px]')}>
+      <div className={`flex min-w-max items-start gap-2 pr-5 ${comfortable ? 'lg:pr-[112px]' : ''} ${insetClassName}`}>
         {workers.map((worker) => {
           const badge = workerBadgeLabel(worker.lastName);
           const nameLabel = firstNameLabel(worker.firstName);
-          const birthdayToday = isBirthdayToday(worker.birthDate);
+          // Browser-local dates can differ from the server. Add the birthday
+          // badge only after the shared server/first-client render has hydrated.
+          const birthdayToday = clientStateReady && isBirthdayToday(worker.birthDate);
           const hasVacationRequest = worker.pendingVacationRequest;
           const hasVacationDecision =
-            decisionStateReady &&
+            clientStateReady &&
             worker.activeProfile &&
             worker.vacationDecisionSignal &&
             Boolean(worker.vacationDecisionSignalKey) &&
@@ -202,7 +211,8 @@ export function WorkerIconStrip({
                   );
                 }}
                 className={cn(
-                  "relative flex size-10 flex-col items-center justify-center overflow-visible rounded-full border text-[8px] font-semibold leading-none tracking-tight shadow-sm",
+                  "relative flex flex-col items-center justify-center overflow-visible rounded-full border text-[8px] font-semibold leading-none tracking-tight shadow-sm",
+                  comfortable ? "size-11" : "size-10",
                   availabilityTone(worker.availability, worker.live),
                   worker.live && worker.availability === "AVAILABLE"
                     ? "after:absolute after:inset-0 after:-z-10 after:rounded-full after:bg-brand-green after:opacity-50 after:content-[''] after:animate-[workzone-worker-live-ping_1.6s_cubic-bezier(0,0,0.2,1)_infinite] motion-reduce:after:animate-none"
@@ -255,6 +265,7 @@ export function WorkerIconStrip({
             </div>
           );
         })}
+        {trailing}
       </div>
       {openWorker ? (
         <div className="fixed z-40 w-44 rounded-md border bg-card p-2 shadow-lg" style={{ top: openMenu!.top, left: openMenu!.left }}>

@@ -1,8 +1,14 @@
 import { SettingsForm } from "./settings-form";
+import { CompanyLogoForm } from "./company-logo-form";
+import { safeCompanyLogo } from "@/lib/company-logo";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
 import { decimalToNumber } from "@/lib/db/prisma-types";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { regionConfig, resolveCountry } from "@/lib/region";
+import Link from "next/link";
+import { wanwayEnabled } from "@/lib/fleet/wanway/service";
+import { wanwayCopy } from "@/lib/fleet/wanway/copy";
 
 export default async function SettingsPage() {
   const [company, mode, currentLang] = await Promise.all([
@@ -15,11 +21,12 @@ export default async function SettingsPage() {
   const defaultValues = {
     displayName: company.displayName,
     legalName: company.legalName,
+    country: resolveCountry(company.country),
     bgkPct: overhead ? decimalToNumber(overhead.bgkPct) * 100 : 18,
     agkPct: overhead ? decimalToNumber(overhead.agkPct) * 100 : 10,
     riskPct: overhead ? decimalToNumber(overhead.riskPct) * 100 : 3,
     profitPct: overhead ? decimalToNumber(overhead.profitPct) * 100 : 6,
-    vatPct: overhead ? decimalToNumber(overhead.vatPct) * 100 : 19,
+    vatPct: overhead ? decimalToNumber(overhead.vatPct) * 100 : regionConfig(company.country).defaultVatPct,
     bgkBase: (overhead?.bgkBase ?? "EK_TOTAL") as "EK_TOTAL" | "LABOR_ONLY",
     riskProfitMode: (overhead?.riskProfitMode ?? "SEPARATE") as "SEPARATE" | "COMBINED",
     applyVatByDefault: overhead?.applyVatByDefault ?? true,
@@ -37,6 +44,10 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsForm companyId={company.id} currentLang={currentLang} defaultValues={defaultValues} />
+
+      <CompanyLogoForm currentLang={currentLang} logo={safeCompanyLogo(company.logoDataUrl)} companyName={company.displayName} />
+
+      {wanwayEnabled() && <section className="rounded-xl border bg-card p-5"><h2 className="font-semibold">{wanwayCopy(currentLang).integrations}</h2><Link href="/app/settings/integrations/wanway" className="mt-3 inline-block text-sm font-medium text-primary underline">{`${wanwayCopy(currentLang).title} →`}</Link></section>}
 
       <div className="rounded-xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">

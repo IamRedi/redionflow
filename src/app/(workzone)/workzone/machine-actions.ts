@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from 'node:crypto';
 
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { prisma } from "@/lib/db/prisma";
@@ -10,6 +11,10 @@ import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { parseMachineNotes, serializeMachineNotes, type MachineDefect } from "@/lib/workzone/machine-notes";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import type { ActionResult } from "@/lib/validation/action-result";
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { runAssetMutation } from '@/lib/company-assets/service';
+import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
+import { updateMachineWithAssetGuard } from '@/lib/company-assets/legacy-machine';
 
 async function actorName() {
   const admin = await getCurrentAdmin();
@@ -68,6 +73,16 @@ export async function addMachineDefectAction(formData: FormData): Promise<Action
   const machine = await prisma.machine.findUnique({ where: { id: machineId }, select: { id: true, notes: true, companyProfileId: true } });
   if (!machine || machine.companyProfileId !== currentCompanyId) return { ok: false, message: tr("machineNotFound") };
 
+  if (await isSteelCompany(currentCompanyId)) {
+    try {
+      await runAssetMutation({ requestId: randomUUID(), command: { type: 'report', asset: { kind: 'machine', id: machineId }, kind: 'defect', note: text } });
+      revalidateMachine(machineId);
+      revalidatePath('/workzone', 'layout');
+      revalidatePath('/app/workshop');
+      return { ok: true, message: tr('defectSaved') };
+    } catch (error) { return assetActionError(error); }
+  }
+
   const notes = parseMachineNotes(machine.notes);
   const defect: MachineDefect = {
     id: defectId(),
@@ -91,6 +106,7 @@ export async function resolveMachineDefectAction(formData: FormData): Promise<Ac
   if (!currentCompanyId) return { ok: false, message: tr("notSignedIn") };
   const machine = await prisma.machine.findUnique({ where: { id: machineId }, select: { id: true, notes: true, companyProfileId: true } });
   if (!machine || machine.companyProfileId !== currentCompanyId) return { ok: false, message: tr("machineNotFound") };
+  if (await isSteelCompany(currentCompanyId)) return { ok: false, message: await assetWorkflowMessage() };
 
   const actor = await actorName();
   const notes = parseMachineNotes(machine.notes);
@@ -123,7 +139,8 @@ export async function blockMachineAction(formData: FormData): Promise<ActionResu
   const machine = await prisma.machine.findUnique({ where: { id: machineId }, select: { companyProfileId: true } });
   if (!machine || machine.companyProfileId !== currentCompanyId) return { ok: false, message: tr("machineNotFound") };
 
-  await prisma.machine.update({ where: { id: machineId }, data: { isActive: false } });
+  try { await updateMachineWithAssetGuard(currentCompanyId, machineId, { isActive: false }); }
+  catch (error) { return assetActionError(error); }
 
   revalidateMachine(machineId);
   return { ok: true, message: tr("machineBlockedSaved") };

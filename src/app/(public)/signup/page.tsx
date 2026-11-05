@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getTranslator } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { isSaasMode } from "@/lib/saas-config";
+import { signupInviteRequired } from "@/lib/auth/signup-invite";
 
 import { SignupForm } from "./signup-form";
 
@@ -41,7 +42,7 @@ async function SignupPageAsync({
           {t("public.signupDescription")}
         </p>
       </header>
-      <SignupForm preselectedMode={preselectedMode} />
+      <SignupForm preselectedMode={preselectedMode} inviteRequired={signupInviteRequired()} />
       <p className="text-xs text-muted-foreground">
         {t("public.signupTerms")}
       </p>

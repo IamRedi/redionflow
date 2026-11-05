@@ -57,8 +57,8 @@ export function LanguageDropdown() {
         type="button"
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "flex w-full items-center justify-between gap-2 rounded-xl border bg-background/80 px-3 py-2 text-[13px] font-medium shadow-sm backdrop-blur transition hover:bg-muted",
-          open && "bg-muted",
+          "flex h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground transition hover:bg-foreground/[0.05] hover:text-foreground",
+          open && "bg-foreground/[0.05]",
         )}
         aria-haspopup="listbox"
         aria-expanded={open}

@@ -1,19 +1,27 @@
 import { requireAdminTenant } from "@/lib/auth/authorization";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { BriefcaseBusiness, Eye, HardHat, Trash2 } from "lucide-react";
+import { BriefcaseBusiness, Eye, HardHat, Plus, ReceiptText, Trash2, Truck, UserMinus, UsersRound, UserX } from "lucide-react";
+import { fleetCopy } from '@/lib/fleet/copy';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MachineArt, machineKind } from "@/components/steel/machine-art";
+import { AssetPhoto } from "@/components/asset-photo";
+import { assetPhotoUrl } from "@/lib/asset-photos/shared";
+
 import { AdminWorkerCard } from "./admin-worker-card";
 import { deleteWorkerAction, updateWorkerAction } from "./worker-admin-actions";
+import { isLoginCodeTaken } from "@/lib/auth/login-code";
 import { hashPassword } from "@/lib/auth/password";
+import { redirect } from "next/navigation";
 import { ASSISTANT_LANGUAGE_OPTIONS, normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { checkLimit } from "@/lib/billing/limits";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
+import { regionConfig } from "@/lib/region";
 import { prisma } from "@/lib/db/prisma";
 import { getAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/authorization";
 import { t } from "@/lib/i18n";
@@ -26,6 +34,7 @@ import { reportLocale } from "@/lib/workzone/date-utils";
 import { dateKey, monthKey } from "@/lib/workzone/reporting";
 import { WorkerAvailability, WorkerLevel } from "@/generated/prisma/enums";
 import { parseEnumInput } from "@/lib/validation/enum-input";
+import { CREW_ROLES, readCrewRole } from "@/lib/workzone/crew-roles";
 
 function cleanText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -200,8 +209,15 @@ async function createWorker(formData: FormData) {
 
   const isTemporary = formData.get("isTemporary") === "on";
   const enteredLoginCode = normalizeLoginCode(formData.get("loginCode"));
-  const loginCode = enteredLoginCode || (isTemporary ? "" : generatedLoginCode());
-  if (loginCode && loginCode.length !== 6) return;
+  if (enteredLoginCode && enteredLoginCode.length !== 6) redirect("/app/admin?code=format");
+  if (enteredLoginCode && (await isLoginCodeTaken(prisma, enteredLoginCode))) redirect("/app/admin?code=taken");
+  let loginCode = enteredLoginCode;
+  if (!loginCode && !isTemporary) {
+    do loginCode = generatedLoginCode();
+    while (await isLoginCodeTaken(prisma, loginCode));
+  }
+  const companyRow = await prisma.companyProfile.findUnique({ where: { id: companyId }, select: { country: true } });
+  const regionDefaults = regionConfig(companyRow?.country);
 
   await prisma.worker.create({
     data: {
@@ -214,7 +230,7 @@ async function createWorker(formData: FormData) {
       licenses: cleanText(formData.get("licenses")),
       status: formData.get("status") === "inactive" ? "inactive" : "active",
       availability: parseEnumInput(formData.get("availability"), WorkerAvailability, WorkerAvailability.AVAILABLE),
-      vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), 26),
+      vacationAllowanceDays: cleanInt(formData.get("vacationAllowanceDays"), regionDefaults.defaultVacationDays),
       // BDF-P1-005: hash the raw code into `loginCodeHash`; never persist
       // it verbatim into `loginCode` (the legacy plaintext column is
       // read-only from here on).
@@ -224,6 +240,7 @@ async function createWorker(formData: FormData) {
       birthDate: cleanDate(formData.get("birthDate")),
       startedAtCompany: cleanDate(formData.get("startedAtCompany")),
       level: parseEnumInput(formData.get("level"), WorkerLevel, WorkerLevel.JUNIOR),
+      crewRole: readCrewRole(formData.get("crewRole")),
       preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
       motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
     },
@@ -285,12 +302,14 @@ async function deleteMachine(formData: FormData) {
   notifyRealtimeUpdate("machine.updated", ["machine-sidebar"]);
 }
 
-export default async function AdminHrFleetPage() {
+export default async function AdminHrFleetPage({ searchParams }: { searchParams?: Promise<{ code?: string }> } = {}) {
+  const codeNotice = (await searchParams)?.code;
   const [company, mode, currentLang] = await Promise.all([
     getOrCreateDefaultCompany(),
     getCompanyMode(),
     resolveRequestLanguage(),
   ]);
+  const region = regionConfig(company.country);
   const reportTodayKey = todayKey();
   const reportMonthKey = currentMonthKey();
   const [workers, machines] = await Promise.all([
@@ -305,6 +324,8 @@ export default async function AdminHrFleetPage() {
         id: true,
         name: true,
         nickname: true,
+        coverPhotoAt: true,
+        imageUrl: true,
         model: true,
         targe: true,
         category: true,
@@ -326,60 +347,53 @@ export default async function AdminHrFleetPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <div className="rounded-3xl border bg-card/60 p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t("admin.hrHeading", currentLang, mode)}</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("admin.hrSubtitle", currentLang, mode)}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="#workers">{t("admin.hrJumpWorkers", currentLang, mode)}</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="#machines">{t("admin.hrJumpFleet", currentLang, mode)}</Link>
-            </Button>
-          </div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">{t("admin.operations", currentLang, mode)}</div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("admin.navPersonalFleet", currentLang, mode)}</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("admin.hrSubtitle", currentLang, mode)}</p>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border bg-background/80 p-4">
-            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.hrActiveWorkers", currentLang, mode)}</div>
-            <div className="mt-2 text-2xl font-semibold">{activeWorkers}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{t("admin.hrOfTotal", currentLang, mode)} {workers.length}</div>
-          </div>
-          <div className="rounded-2xl border bg-background/80 p-4">
-            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.hrUnavailable", currentLang, mode)}</div>
-            <div className="mt-2 text-2xl font-semibold">{unavailableWorkers}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{t("admin.hrUnavailableSub", currentLang, mode)}</div>
-          </div>
-          <div className="rounded-2xl border bg-background/80 p-4">
-            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.hrMachinesActive", currentLang, mode)}</div>
-            <div className="mt-2 text-2xl font-semibold">{activeMachines}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{t("admin.hrMachinesActiveSub", currentLang, mode)}</div>
-          </div>
-          <div className="rounded-2xl border bg-background/80 p-4">
-            <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.hrInactiveWorkers", currentLang, mode)}</div>
-            <div className="mt-2 text-2xl font-semibold">{inactiveWorkers}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{t("admin.hrInactiveWorkersSub", currentLang, mode)}</div>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg">
+            <Link href="#workers">
+              <UsersRound className="size-4" strokeWidth={1.8} /> {t("admin.hrJumpWorkers", currentLang, mode)}
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg">
+            <Link href="#machines">
+              <Truck className="size-4" strokeWidth={1.8} /> {t("admin.hrJumpFleet", currentLang, mode)}
+            </Link>
+          </Button>
         </div>
       </div>
-      <div>
-        <div className="sr-only">{t("admin.operations", currentLang, mode)}</div>
-        <p className="sr-only">
-          {t("admin.hrFleetDescription", currentLang, mode)}
-        </p>
+      {codeNotice === "taken" || codeNotice === "format" ? (
+        <div role="alert" className="rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-900 dark:text-amber-100">
+          {t(codeNotice === "taken" ? "admin.loginCodeTaken" : "admin.loginCodeFormat", currentLang, mode)}
+        </div>
+      ) : null}
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        {(
+          [
+            [t("admin.hrActiveWorkers", currentLang, mode), activeWorkers, `${t("admin.hrOfTotal", currentLang, mode)} ${workers.length}`, UsersRound, "text-green-600 bg-green-500/10"],
+            [t("admin.hrUnavailable", currentLang, mode), unavailableWorkers, t("admin.hrUnavailableSub", currentLang, mode), UserX, "text-amber-600 bg-amber-500/10"],
+            [t("admin.hrMachinesActive", currentLang, mode), activeMachines, t("admin.hrMachinesActiveSub", currentLang, mode), Truck, "text-primary bg-primary/10"],
+            [t("admin.hrInactiveWorkers", currentLang, mode), inactiveWorkers, t("admin.hrInactiveWorkersSub", currentLang, mode), UserMinus, "text-slate-500 bg-slate-500/10"],
+          ] as const
+        ).map(([label, value, sub, Icon, tone]) => (
+          <div key={label} className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5">
+            <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${tone}`}>
+              <Icon className="size-4.5" strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-xl font-semibold leading-none tabular-nums">{value}</div>
+              <div className="mt-1 line-clamp-2 text-xs font-medium leading-tight text-foreground/80">{label}</div>
+              <div className="hidden truncate text-[11px] text-muted-foreground sm:block">{sub}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <section className="space-y-3">
-        <div className="rounded-2xl border bg-muted/20 p-4">
-          <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.hrStaffLabel", currentLang, mode)}</div>
-          <h2 className="mt-2 text-lg font-semibold">{t("admin.hrWorkerManagement", currentLang, mode)}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("admin.hrWorkerManagementSub", currentLang, mode)}
-          </p>
-        </div>
-
       <Card id="workers" className="scroll-mt-28">
         <CardHeader className="py-4">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -389,21 +403,14 @@ export default async function AdminHrFleetPage() {
           <CardDescription>{t("admin.workersCardDescription", currentLang, mode)}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-2xl border bg-muted/20 p-3">
-            <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.quickAccess", currentLang, mode)}</div>
-            <div className="flex flex-wrap gap-2">
-            {workers.map((worker) => (
-              <Button key={worker.id} asChild variant="outline" size="sm" className={workerAvailabilityClass(worker.availability)}>
-                <Link href={`/app/admin/workers/${worker.id}`}>
-                  {worker.firstName} {worker.lastName}
-                </Link>
-              </Button>
-            ))}
-            </div>
-          </div>
-
-          <details className="rounded-2xl border bg-card/50 p-3">
-            <summary className="cursor-pointer list-none text-sm font-medium">{t("admin.createWorkerToggle", currentLang, mode)}</summary>
+          <details className="group rounded-xl border border-dashed bg-card/50 open:border-solid open:bg-card">
+            <summary className="flex h-11 cursor-pointer list-none items-center gap-2 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+              <span className="grid size-6 place-items-center rounded-md bg-primary text-primary-foreground">
+                <Plus className="size-4 transition-transform group-open:rotate-45" />
+              </span>
+              {t("admin.createWorkerToggle", currentLang, mode)}
+            </summary>
+            <div className="border-t px-3 pb-3 pt-2">
             <p className="mt-1 text-sm text-muted-foreground">
               {t("admin.createWorkerDescription", currentLang, mode)}
             </p>
@@ -439,8 +446,21 @@ export default async function AdminHrFleetPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="vacationAllowanceDays">{t("admin.vacationDays", currentLang, mode)}</Label>
-              <Input id="vacationAllowanceDays" name="vacationAllowanceDays" type="number" min="0" defaultValue={26} />
+              <Input id="vacationAllowanceDays" name="vacationAllowanceDays" type="number" min="0" defaultValue={region.defaultVacationDays} />
             </div>
+            {mode === "bau" ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="crewRole">{t("admin.crewRole", currentLang, mode)}</Label>
+                <select id="crewRole" name="crewRole" defaultValue="FIELD_WORKER" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+                  <option value="">{t("admin.crewRoleNone", currentLang, mode)}</option>
+                  {CREW_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {t(`admin.crewRoles.${role}`, currentLang, mode)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="level">{t("admin.colLevel", currentLang, mode)}</Label>
               <select id="level" name="level" defaultValue="JUNIOR" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
@@ -462,7 +482,7 @@ export default async function AdminHrFleetPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="motherTongue">{t("admin.colMotherTongue", currentLang, mode)}</Label>
-              <select id="motherTongue" name="motherTongue" defaultValue="DE" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <select id="motherTongue" name="motherTongue" defaultValue={region.defaultLanguage.toUpperCase()} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
                 {ASSISTANT_LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.code} value={option.code}>{option.label}</option>
                 ))}
@@ -470,7 +490,7 @@ export default async function AdminHrFleetPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="preferredLanguage">{t("admin.colResponseLanguage", currentLang, mode)}</Label>
-              <select id="preferredLanguage" name="preferredLanguage" defaultValue="DE" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+              <select id="preferredLanguage" name="preferredLanguage" defaultValue={region.defaultLanguage.toUpperCase()} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
                 {ASSISTANT_LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.code} value={option.code}>{option.label}</option>
                 ))}
@@ -494,6 +514,7 @@ export default async function AdminHrFleetPage() {
               <Label htmlFor="isTemporary">{t("admin.temporaryShort", currentLang, mode)}</Label>
             </div>
             </form>
+            </div>
           </details>
 
           <div className="grid gap-3">
@@ -528,8 +549,9 @@ export default async function AdminHrFleetPage() {
                     availabilityClass: workerAvailabilityClass(worker.availability),
                     isTemporary: worker.isTemporary,
                     status: worker.status,
-                    vacationAllowanceDays: worker.vacationAllowanceDays ?? 26,
+                    vacationAllowanceDays: worker.vacationAllowanceDays ?? region.defaultVacationDays,
                     level: worker.level,
+                    crewRole: worker.crewRole ?? null,
                     motherTongue: worker.motherTongue ?? "DE",
                     preferredLanguage: worker.preferredLanguage ?? "DE",
                   }}
@@ -694,26 +716,25 @@ export default async function AdminHrFleetPage() {
       </section>
 
       <section className="space-y-3">
-        <div className="rounded-2xl border bg-muted/20 p-4">
-          <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("admin.hrFleetLabel", currentLang, mode)}</div>
-          <h2 className="mt-2 text-lg font-semibold">{t("admin.hrFleetManagement", currentLang, mode)}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("admin.hrFleetManagementSub", currentLang, mode)}
-          </p>
-        </div>
 
       <Card id="machines" className="scroll-mt-28">
         <CardHeader className="py-4">
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-base">
             <BriefcaseBusiness className="size-4" />
             {t("admin.fleetCardTitle", currentLang, mode)}
+            <Link href="/app/machines/fuel" className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium hover:bg-muted"><ReceiptText className="size-4" />{fleetCopy(currentLang).fuelLog}</Link>
           </CardTitle>
           <CardDescription>{t("admin.fleetCardDescription", currentLang, mode)}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <details className="rounded-2xl border bg-card/50 p-3">
-            <summary className="cursor-pointer list-none text-sm font-medium">{t("admin.createMachineToggle", currentLang, mode)}</summary>
-            <form action={createMachine} className="mt-4 grid gap-3 md:grid-cols-8">
+          <details className="group rounded-xl border border-dashed bg-card/50 open:border-solid open:bg-card">
+            <summary className="flex h-11 cursor-pointer list-none items-center gap-2 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+              <span className="grid size-6 place-items-center rounded-md bg-primary text-primary-foreground">
+                <Plus className="size-4 transition-transform group-open:rotate-45" />
+              </span>
+              {t("admin.createMachineToggle", currentLang, mode)}
+            </summary>
+            <form action={createMachine} className="grid gap-3 border-t p-3 md:grid-cols-8">
               <input type="hidden" name="companyId" value={company.id} />
               <div className="space-y-1.5">
                 <Label htmlFor="nickname">{t("admin.machineName", currentLang, mode)}</Label>
@@ -771,22 +792,29 @@ export default async function AdminHrFleetPage() {
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="w-[24%]">{t("admin.machineName", currentLang, mode)}</TableHead>
-                <TableHead className="w-[16%]">{t("admin.machinePlate", currentLang, mode)}</TableHead>
+                <TableHead>{t("admin.machineName", currentLang, mode)}</TableHead>
+                <TableHead className="w-[110px]">{t("admin.machinePlate", currentLang, mode)}</TableHead>
                 <TableHead>{t("admin.machineTuv", currentLang, mode)}</TableHead>
                 <TableHead>{t("admin.machineSp", currentLang, mode)}</TableHead>
                 <TableHead>{t("admin.machineUvv", currentLang, mode)}</TableHead>
-                <TableHead className="w-[16%] text-right">{t("admin.colActions", currentLang, mode)}</TableHead>
+                <TableHead className="w-[90px] text-right">{t("admin.colActions", currentLang, mode)}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {machines.map((machine) => (
                 <TableRow key={machine.id} className="h-11">
                   <TableCell className="py-1.5">
-                    <div className="font-medium">{machineOptionLabel(machine)}</div>
-                    <div className="max-w-xl truncate text-xs text-muted-foreground">{machineCategoryText(machine.category, currentLang, mode)}</div>
+                    <div className="flex items-center gap-3">
+                      <span className="h-10 w-14 shrink-0 overflow-hidden rounded-lg border bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
+                        <AssetPhoto key={`${machine.id}:${machine.coverPhotoAt}`} kind="machine" id={machine.id} src={assetPhotoUrl('machine',machine.id,machine.coverPhotoAt)??machine.imageUrl} alt={machine.nickname??machine.name}><MachineArt kind={machineKind(machine)} animate={false} className="size-full" /></AssetPhoto>
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">{machine.nickname ?? machine.name}</div>
+                        <div className="max-w-xl truncate text-xs text-muted-foreground">{[machine.model, machine.funksioni || machineCategoryText(machine.category, currentLang, mode)].filter(Boolean).join(" · ")}</div>
+                      </div>
+                    </div>
                   </TableCell>
-                  <TableCell className="py-1.5 text-sm font-medium">{machine.targe ?? "-"}</TableCell>
+                  <TableCell className="whitespace-nowrap py-1.5 font-mono text-xs font-semibold">{machine.targe ?? "-"}</TableCell>
                   <TableCell className="py-1.5">
                     <InspectionDot label="HU" date={machine.tuvDate} status={machine.huStatus} currentLang={currentLang} mode={mode} />
                   </TableCell>
@@ -797,16 +825,15 @@ export default async function AdminHrFleetPage() {
                     <InspectionDot label="UVV" date={machine.uvvDate} status={machine.uvvStatus} currentLang={currentLang} mode={mode} />
                   </TableCell>
                   <TableCell className="py-1.5 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/app/admin/machines/${machine.id}`}>
-                          <Eye className="size-4" />
-                          {t("common.open", currentLang, mode)}
+                    <div className="flex justify-end gap-0.5">
+                      <Button asChild variant="ghost" size="icon" className="size-8 rounded-lg text-muted-foreground hover:text-foreground" title={t("common.open", currentLang, mode)}>
+                        <Link href={`/app/admin/machines/${machine.id}`} aria-label={t("common.open", currentLang, mode)}>
+                          <Eye className="size-4" strokeWidth={1.8} />
                         </Link>
                       </Button>
                       <form action={deleteMachine}>
                         <input type="hidden" name="id" value={machine.id} />
-                        <Button type="submit" size="icon" variant="destructive" aria-label={t("admin.deleteMachine", currentLang, mode)}>
+                        <Button type="submit" size="icon" variant="ghost" className="size-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600" title={t("admin.deleteMachine", currentLang, mode)} aria-label={t("admin.deleteMachine", currentLang, mode)}>
                           <Trash2 className="size-4" />
                         </Button>
                       </form>

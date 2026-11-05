@@ -1,3 +1,4 @@
+import { steelPresentation } from '@/lib/dashboard/steel-presentation';
 import { CalendarDays, ClipboardList, HardDriveDownload, HardHat, MapPinned, MonitorSmartphone, ScanLine, Truck, Users2, Workflow } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SupportedLanguage } from "@/lib/i18n/language";
@@ -152,7 +153,7 @@ const baseLandingContent = {
         { title: "Workzone", icon: HardHat, points: ["Baustellenstatus live", "Aufgaben und Fortschritt vor Ort"] },
         { title: "Rapport & Export", icon: ClipboardList, points: ["Berichte aus dem Arbeitsfluss", "Nachweis ohne Nacharbeit"] },
         { title: "Team & Profile", icon: Users2, points: ["Zeiten, Urlaub, Dokumente", "Ausruestung je Mitarbeiter"] },
-        { title: "Flotte & Inventar", icon: Truck, points: ["Maschinen, GPS und TUEV im Blick", "Tagesbericht mit Einsatzkontext"] },
+        { title: "Flotte & Inventar", icon: Truck, points: ["Maschinen, GPS und TUEV im Blick", "Workzone-Karte und Tankbelege mit GPS-Zeitvergleich bei eingerichtetem GPS", "Fotos für Fahrzeuge, Baustellen und Werkstatt per Kamera oder Upload, automatisch als kleines WebP"] },
         { title: "Scan & Benachrichtigung", icon: ScanLine, points: ["Barcode per Handykamera", "Push bei wichtigen Meldungen"] },
       ],
       flowEyebrow: "Ablauf",
@@ -270,7 +271,7 @@ const baseLandingContent = {
         { title: "Workzone", icon: HardHat, points: ["Live job site status", "Tasks and progress on site"] },
         { title: "Reports & export", icon: ClipboardList, points: ["Reports from the work flow", "Proof without rework"] },
         { title: "Crew & profiles", icon: Users2, points: ["Time, vacation, documents", "Equipment per worker"] },
-        { title: "Fleet & inventory", icon: Truck, points: ["Machines, GPS and inspections visible", "Daily report with work context"] },
+        { title: "Fleet & inventory", icon: Truck, points: ["Machines, GPS and inspections visible", "Workzone map and fuel receipts with GPS time comparison when GPS is configured", "Vehicle, site and workshop photos from camera or upload, automatically stored as small WebP"] },
         { title: "Scan & alerts", icon: ScanLine, points: ["Phone-camera barcode", "Push for important updates"] },
       ],
       flowEyebrow: "Flow",
@@ -388,7 +389,7 @@ const baseLandingContent = {
         { title: "Workzone", icon: HardHat, points: ["Status live i kantiereve", "Detyra dhe progres ne vend"] },
         { title: "Raport & eksport", icon: ClipboardList, points: ["Raporte nga rrjedha e punes", "Dokumentim pa pune dyfish"] },
         { title: "Ekip & profile", icon: Users2, points: ["Ore, pushime, dokumente", "Pajisje per cdo punetor"] },
-        { title: "Flotile & inventar", icon: Truck, points: ["Makineri, GPS dhe TUEV ne pamje", "Raport ditor me kontekst pune"] },
+        { title: "Flotile & inventar", icon: Truck, points: ["Makineri, GPS dhe TUEV ne pamje", "Harta Workzone dhe fatura karburanti me krahasim të orës GPS kur GPS është konfiguruar", "Foto mjeti, kantieri dhe fabrike nga kamera ose ngarkimi, automatikisht WebP të vogla"] },
         { title: "Scan & njoftime", icon: ScanLine, points: ["Barcode me kameren e telefonit", "Push per lajme te rendesishme"] },
       ],
       flowEyebrow: "Rrjedha",
@@ -510,7 +511,7 @@ export const landingContent: Record<LandingLanguage, LandingContent> = {
         { title: "Workzone", icon: HardHat, points: ["Stato cantiere live", "Attivita e avanzamento sul posto"] },
         { title: "Report & export", icon: ClipboardList, points: ["Report dal flusso di lavoro", "Prova senza lavoro doppio"] },
         { title: "Squadra & profili", icon: Users2, points: ["Ore, ferie, documenti", "Attrezzatura per ogni operatore"] },
-        { title: "Flotta & inventario", icon: Truck, points: ["Macchine, GPS e controlli visibili", "Rapporto giornaliero con contesto"] },
+        { title: "Flotta & inventario", icon: Truck, points: ["Macchine, GPS e controlli visibili", "Mappa Workzone e scontrini carburante con confronto orario GPS quando configurato", "Foto di veicoli, cantieri e officina da fotocamera o caricamento, salvate come piccoli WebP"] },
         { title: "Scan & notifiche", icon: ScanLine, points: ["Barcode con camera del telefono", "Push per aggiornamenti importanti"] },
       ],
       flowEyebrow: "Flusso",
@@ -628,7 +629,7 @@ export const landingContent: Record<LandingLanguage, LandingContent> = {
         { title: "Workzone", icon: HardHat, points: ["Status miejsca pracy live", "Zadania i postep na miejscu"] },
         { title: "Raport & eksport", icon: ClipboardList, points: ["Raporty z przeplywu pracy", "Dowod bez dodatkowej pracy"] },
         { title: "Zespol & profile", icon: Users2, points: ["Czas, urlopy, dokumenty", "Wyposazenie na pracownika"] },
-        { title: "Flota & magazyn", icon: Truck, points: ["Maszyny, GPS i kontrole widoczne", "Raport dzienny z kontekstem pracy"] },
+        { title: "Flota & magazyn", icon: Truck, points: ["Maszyny, GPS i kontrole widoczne", "Mapa Workzone i paragony paliwowe z porównaniem czasu przy skonfigurowanym GPS", "Zdjęcia pojazdów, budów i warsztatu z aparatu lub pliku, automatycznie zapisywane jako małe WebP"] },
         { title: "Skan & powiadomienia", icon: ScanLine, points: ["Barcode kamera telefonu", "Push dla waznych informacji"] },
       ],
       flowEyebrow: "Przeplyw",
@@ -746,7 +747,7 @@ export const landingContent: Record<LandingLanguage, LandingContent> = {
         { title: "Workzone", icon: HardHat, points: ["Status santier live", "Sarcini si progres pe teren"] },
         { title: "Raport & export", icon: ClipboardList, points: ["Rapoarte din fluxul de lucru", "Dovada fara munca dubla"] },
         { title: "Echipa & profile", icon: Users2, points: ["Ore, concedii, documente", "Echipament pe fiecare worker"] },
-        { title: "Flota & inventar", icon: Truck, points: ["Masini, GPS si controale vizibile", "Raport zilnic cu context de lucru"] },
+        { title: "Flota & inventar", icon: Truck, points: ["Masini, GPS si controale vizibile", "Hartă Workzone și bonuri de carburant cu comparația orei GPS când este configurat", "Fotografii pentru vehicule, șantiere și atelier din cameră sau fișier, salvate automat ca WebP mici"] },
         { title: "Scan & notificari", icon: ScanLine, points: ["Barcode cu camera telefonului", "Push pentru mesaje importante"] },
       ],
       flowEyebrow: "Flux",
@@ -825,3 +826,7 @@ export const landingContent: Record<LandingLanguage, LandingContent> = {
     footer: { text: "Platforma operationala pentru firme moderne de servicii arboricole.", access: "Acces intern" },
   },
 };
+
+for (const lang of ["sq", "en", "de", "it", "pl", "ro"] as const) {
+  landingContent[lang].features.cards.find(card => card.title === "Workzone")?.points.push(steelPresentation[lang]);
+}

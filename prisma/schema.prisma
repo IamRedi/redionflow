@@ -72,6 +72,9 @@ enum BaustelleType {
   FIBER_TRENCH
   FIBER_DRILLING
   FIBER_HOUSE_CONNECTION
+  // Metal construction (Stahlbau)
+  STEEL_WORKSHOP
+  STEEL_ASSEMBLY
   OTHER
 }
 
@@ -189,6 +192,7 @@ enum AssistantLanguage {
 }
 
 model User {
+  companyAssetFiles CompanyAssetFile[] @relation("AssetFileUser")
   id                String            @id @default(cuid())
   email             String            @unique
   name              String?
@@ -236,9 +240,25 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@index([companyProfileId])
+  @@unique([companyProfileId,id])
 }
 
 model CompanyProfile {
+  operationalAssets CompanyOperationalAsset[]
+  assetHandovers CompanyAssetHandover[]
+  assetIncidents CompanyAssetIncident[]
+  assetRepairs CompanyAssetRepair[]
+  assetEvents CompanyAssetEvent[]
+  assetFiles CompanyAssetFile[]
+  assetCommandReceipts CompanyAssetCommandReceipt[]
+  steelWorkDefinitions SteelWorkDefinition[]
+  steelWorkVisuals SteelWorkVisual[]
+  steelSiteTasks SteelSiteTask[]
+  assistantQuotaBuckets AssistantQuotaBucket[]
+  assistantConversations AssistantConversation[]
+  assistantRuns AssistantRun[]
+  assistantToolTraces AssistantToolTrace[]
+  wanwayIntegration WanwayIntegration?
   id                    String  @id @default(cuid())
   legalName             String
   displayName           String
@@ -247,8 +267,16 @@ model CompanyProfile {
   email                 String?
   /// "baumdienst" | "bau" — controls feature flags and product branding (DB CHECK constraint)
   mode                  String  @default("baumdienst")
+  /// "DE" | "AL" — currency, public holidays and defaults (DB CHECK constraint)
+  country               String  @default("DE")
+  /// Company logo as a data: URL (png, jpeg, webp or svg), shown in the top bar
+  logoDataUrl           String?
   fleetGpsEnabled       Boolean @default(false)
   workerPhoneGpsEnabled Boolean @default(false)
+  /// KiDraht (company knowledge, rules and briefings): the company's workspace id and API key there.
+  /// Created automatically on first open; the key signs the short sign-in links and is never shown.
+  kidrahtWorkspaceId    String?
+  kidrahtApiKey         String?
 
   street String?
   zip    String?
@@ -257,8 +285,14 @@ model CompanyProfile {
   overheadSettings          OverheadSettings?
   laborRoles                LaborRole[]
   machines                  Machine[]
+  fuelReceipts              FuelReceipt[]
   workers                   Worker[]
   inventoryItems            CompanyInventoryItem[]
+  productionBatches         ProductionBatch[]
+  productionEvents          ProductionEvent[]
+  siteFiles                 SiteFile[]
+  siteElements              SiteElement[]
+  siteElementWork           SiteElementWork[]
   inventoryCatalog          CompanyInventoryCatalog[]
   inventoryMovements        InventoryMovement[]
   inventoryAssetMovements   InventoryAssetMovement[]
@@ -276,6 +310,7 @@ model CompanyProfile {
   workzoneSyncActions WorkzoneSyncAction[]
   users               User[]               @relation("CompanyUsers")
   auditLogs           AuditLog[]
+  assetPhotos         AssetPhoto[]
 
   /// T-026: SaaS trial expiry. Null for dedicated deployments.
   trialEndsAt DateTime?
@@ -287,6 +322,106 @@ model CompanyProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Per-tenant cost limits only; never contains prompts, transcripts or API keys.
+model AssistantQuotaBucket {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  actorKey         String
+  window           String
+  windowStart      DateTime
+  requests         Int            @default(0)
+  tokens           Int            @default(0)
+
+  @@unique([companyProfileId, actorKey, window, windowStart], map: "AssistantQuotaBucket_scope_window_key")
+  @@index([companyProfileId, windowStart])
+}
+
+/// Private admin-owned history, separate from cost buckets and sensitive-action audit logs.
+model AssistantConversation {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  /// Historical actor ID; removing an admin must not delete or reassign a transcript.
+  adminId          String
+  title            String
+  clientContext    Json?
+  contextUnverified Boolean       @default(false)
+  contextRedacted  Boolean        @default(false)
+  contextTruncated Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  lastRunAt        DateTime       @default(now())
+  runs             AssistantRun[]
+
+  @@unique([companyProfileId, adminId, id], map: "AssistantConversation_owner_id_key")
+  @@index([companyProfileId, adminId, lastRunAt, id], map: "AssistantConversation_owner_time_idx")
+}
+
+/// One server-accepted question and the exact emitted answer (secret-redacted).
+model AssistantRun {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  adminId          String
+  conversationId   String
+  conversation     AssistantConversation @relation(fields: [companyProfileId, adminId, conversationId], references: [companyProfileId, adminId, id], onDelete: Cascade, map: "AssistantRun_conversation_owner_fkey")
+  clientMessageId  String?
+  question         String
+  answer           String         @default("")
+  status           String         @default("running")
+  model            String?
+  finishReason     String?
+  errorCode        String?
+  httpStatus       Int?
+  inputTokens      Int?
+  outputTokens     Int?
+  totalTokens      Int?
+  diagnostics      Json?
+  diagnosticsRedacted Boolean    @default(false)
+  diagnosticsTruncated Boolean   @default(false)
+  questionRedacted Boolean        @default(false)
+  answerRedacted   Boolean        @default(false)
+  answerTruncated  Boolean        @default(false)
+  traceTruncated   Boolean        @default(false)
+  traceBytes       Int            @default(0)
+  startedAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  finishedAt       DateTime?
+  toolTraces       AssistantToolTrace[]
+
+  @@unique([companyProfileId, adminId, id], map: "AssistantRun_owner_id_key")
+  @@unique([companyProfileId, adminId, clientMessageId], map: "AssistantRun_owner_message_key")
+  @@index([companyProfileId, adminId, conversationId, startedAt, id], map: "AssistantRun_conversation_time_idx")
+}
+
+/// Bounded sanitized execution evidence. Never provider headers or raw exceptions.
+model AssistantToolTrace {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  adminId          String
+  runId            String
+  run              AssistantRun   @relation(fields: [companyProfileId, adminId, runId], references: [companyProfileId, adminId, id], onDelete: Cascade, map: "AssistantToolTrace_run_owner_fkey")
+  toolCallId       String
+  toolName         String
+  step             Int?
+  status           String
+  input            Json?
+  result           Json?
+  evidence         Json?
+  redacted         Boolean        @default(false)
+  truncated        Boolean        @default(false)
+  originalBytes    Int            @default(0)
+  storedBytes      Int            @default(0)
+  startedAt        DateTime       @default(now())
+  durationMs       Int?
+  createdAt        DateTime       @default(now())
+
+  @@unique([companyProfileId, adminId, runId, toolCallId], map: "AssistantToolTrace_run_call_key")
+  @@index([companyProfileId, adminId, runId, createdAt, id], map: "AssistantToolTrace_run_time_idx")
 }
 
 enum PlanTier {
@@ -448,6 +583,7 @@ model CompanyInventoryCatalog {
 }
 
 model CompanyInventoryItem {
+  operationalAsset CompanyOperationalAsset?
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -467,6 +603,7 @@ model CompanyInventoryItem {
   updatedAt DateTime @updatedAt
 
   @@unique([companyProfileId, itemCode])
+  @@unique([companyProfileId,id])
   @@index([companyProfileId, category])
   @@index([isActive])
 }
@@ -518,6 +655,9 @@ model LaborRole {
 }
 
 model Machine {
+  operationalAsset CompanyOperationalAsset?
+  wanwayDevices WanwayDevice[]
+  fuelReceipts FuelReceipt[]
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -543,6 +683,17 @@ model Machine {
   funksioni         String?
   patentaEnevojshme String?
   imageUrl          String?
+  coverPhotoAt      DateTime?
+  coverPhoto        AssetPhoto?
+  /// Albanian vehicle papers (Kolaudimi uses tuvDate): insurance, road tax,
+  /// transport permit and tachograph check, each the day it runs out.
+  insuranceDate       DateTime?
+  taxDate             DateTime?
+  transportPermitDate DateTime?
+  tachographDate      DateTime?
+  /// Registered owner when it is not the company itself (leased, private car).
+  ownership           String?
+  tonnage             Float?
 
   notes       String?
   isActive    Boolean   @default(true)
@@ -565,6 +716,95 @@ model Machine {
   updatedAt DateTime @updatedAt
 
   @@unique([companyProfileId, name])
+  @@unique([companyProfileId, id])
+}
+
+/// Private fuel evidence: immutable uploader/upload time, confirmed invoice time
+/// and only the nearest GPS evidence for that event, never a continuous archive.
+model FuelReceipt {
+  id                   String @id @default(cuid())
+  companyProfileId     String
+  companyProfile       CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  machineId            String
+  machine              Machine @relation(fields: [companyProfileId, machineId], references: [companyProfileId, id], onDelete: NoAction, map: "FuelReceipt_machine_tenant_fkey")
+  requestId            String
+  uploadedByUserId      String?
+  uploadedByWorkerId    String?
+  uploadedByName        String
+  uploadedAt           DateTime @default(now())
+  confirmedAt          DateTime?
+  fueledAt             DateTime?
+  fueledByWorkerId     String?
+  fueledByUserId       String?
+  fueledByName         String?
+  timeZone             String
+  receiptTime          String?
+  timeSource           String?
+  stationAddress       String?
+  liters               Float?
+  amount               Float?
+  currency             String
+  fileName             String
+  mime                 String
+  size                 Int
+  data                 Bytes
+  sha256               String
+  gpsStatus            String @default("pending")
+  gpsDeviceId          String?
+  gpsLat               Float?
+  gpsLng               Float?
+  gpsRecordedAt        DateTime?
+  gpsDeltaSeconds      Int?
+  gpsSource            String?
+  gpsEvidence          Json?
+  gpsResolvedAt        DateTime?
+
+  @@unique([companyProfileId, requestId])
+  @@index([companyProfileId, machineId, uploadedAt])
+}
+
+/// Server-only provider credentials and distributed operation/token cache.
+model WanwayIntegration {
+  companyProfileId String @id
+  companyProfile CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  appid String?
+  encryptedKey String?
+  encryptedToken String?
+  tokenExpiresAt DateTime?
+  status String @default("disconnected")
+  lastSuccessfulSync DateTime?
+  lastError String?
+  nextRequestAt DateTime @default(now())
+  busyUntil DateTime @default(now())
+  operationId String?
+  devices WanwayDevice[]
+  updatedAt DateTime @updatedAt
+}
+
+model WanwayDevice {
+  id String @id @default(cuid())
+  companyProfileId String
+  integration WanwayIntegration @relation(fields: [companyProfileId], references: [companyProfileId], onDelete: Cascade)
+  imei String
+  name String
+  model String?
+  machineId String?
+  machine Machine? @relation(fields: [companyProfileId, machineId], references: [companyProfileId, id], onDelete: Cascade, map: "WanwayDevice_machine_tenant_fkey")
+  available Boolean @default(true)
+  plate String?
+  lat Float?
+  lng Float?
+  reportedAt DateTime?
+  signalAt DateTime?
+  providerStatus String?
+  speedKmh Float?
+  voltage Float?
+  mileage24hKm Float?
+  mileageAt DateTime?
+  mileageError String?
+  syncedAt DateTime?
+  @@unique([companyProfileId, imei])
+  @@unique([companyProfileId, machineId])
 }
 
 model MachineConeMovement {
@@ -604,6 +844,11 @@ model MachineConeMovement {
 }
 
 model Worker {
+  operationalAssets CompanyOperationalAsset[] @relation("AssetHolder")
+  assetHandoversFrom CompanyAssetHandover[] @relation("AssetHandoverFrom")
+  assetHandoversTo CompanyAssetHandover[] @relation("AssetHandoverTo")
+  assetRepairOrigins CompanyAssetRepair[] @relation("AssetRepairOrigin")
+  companyAssetFiles CompanyAssetFile[] @relation("AssetFileWorker")
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -624,6 +869,9 @@ model Worker {
   loginCodeHash         String?
   isTemporary           Boolean            @default(false)
   birthDate             DateTime?
+  /// National ID / personal number from the company's staff list. HR data:
+  /// shown only on the worker's own profile and to the office.
+  nationalId            String?
   startedAtCompany      DateTime?
   emailAccount          String?
   clothingTopSize       String?
@@ -632,6 +880,8 @@ model Worker {
   profileImageUrl       String?
   documents             Json?
   level                 WorkerLevel        @default(JUNIOR)
+  /// Metal construction role (see src/lib/workzone/crew-roles.ts); null = plain worker.
+  crewRole              String?
   preferredLanguage     AssistantLanguage  @default(DE)
   motherTongue          AssistantLanguage  @default(DE)
   aiPersonalityNote     String?
@@ -665,6 +915,161 @@ model Worker {
   @@index([companyProfileId])
   @@index([status])
   @@index([availability])
+  @@unique([companyProfileId,id])
+}
+
+/// Operational overlay; existing machines, issued rows and history are retained.
+model CompanyOperationalAsset {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  machineId String? @unique
+  machine Machine? @relation(fields:[companyProfileId,machineId],references:[companyProfileId,id],onDelete:Restrict)
+  inventoryItemId String? @unique
+  inventoryItem CompanyInventoryItem? @relation(fields:[companyProfileId,inventoryItemId],references:[companyProfileId,id],onDelete:Restrict)
+  disposition String @default("active")
+  revision Int @default(0)
+  holderWorkerId String?
+  holder Worker? @relation("AssetHolder",fields:[companyProfileId,holderWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  siteId String?
+  site Baustelle? @relation("AssetSite",fields:[companyProfileId,siteId],references:[companyProfileId,id],onDelete:Restrict)
+  wasActive Boolean?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  handovers CompanyAssetHandover[]
+  incidents CompanyAssetIncident[]
+  repairs CompanyAssetRepair[]
+  events CompanyAssetEvent[]
+  files CompanyAssetFile[]
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,disposition])
+  @@unique([companyProfileId,machineId])
+  @@unique([companyProfileId,inventoryItemId])
+}
+
+model CompanyAssetHandover {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  kind String
+  status String @default("pending")
+  revision Int @default(1)
+  fromWorkerId String?
+  fromWorker Worker? @relation("AssetHandoverFrom",fields:[companyProfileId,fromWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  toWorkerId String?
+  toWorker Worker? @relation("AssetHandoverTo",fields:[companyProfileId,toWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  siteId String?
+  site Baustelle? @relation("AssetHandoverSite",fields:[companyProfileId,siteId],references:[companyProfileId,id],onDelete:Restrict)
+  required Json
+  confirmations Json
+  createdByKey String
+  createdByName String
+  note String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,status])
+}
+
+model CompanyAssetIncident {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  kind String
+  status String @default("pending")
+  revision Int @default(1)
+  note String
+  reportedByKey String
+  reportedByName String
+  decisionNote String?
+  decidedByName String?
+  decidedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,status])
+}
+
+model CompanyAssetRepair {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  phase String @default("reported")
+  location String @default("internal")
+  provider String @default("")
+  problem String
+  repairNote String @default("")
+  tested Boolean @default(false)
+  revision Int @default(1)
+  reportedByKey String
+  reportedByName String
+  originWorkerId String?
+  originWorker Worker? @relation("AssetRepairOrigin",fields:[companyProfileId,originWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files CompanyAssetFile[]
+  events CompanyAssetEvent[]
+  @@unique([companyProfileId,assetId,id])
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,phase])
+}
+
+model CompanyAssetEvent {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  repairId String?
+  repair CompanyAssetRepair? @relation(fields:[companyProfileId,assetId,repairId],references:[companyProfileId,assetId,id],onDelete:Restrict)
+  type String
+  actorKey String
+  actorName String
+  note String @default("")
+  createdAt DateTime @default(now())
+  @@index([companyProfileId,assetId,createdAt])
+}
+
+model CompanyAssetFile {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  repairId String?
+  repair CompanyAssetRepair? @relation(fields:[companyProfileId,assetId,repairId],references:[companyProfileId,assetId,id],onDelete:Restrict)
+  kind String
+  mime String
+  name String
+  size Int
+  dataBytes Bytes
+  sha256 String
+  uploadedByUserId String?
+  uploadedByUser User? @relation("AssetFileUser",fields:[companyProfileId,uploadedByUserId],references:[companyProfileId,id],onDelete:Restrict)
+  uploadedByWorkerId String?
+  uploadedByWorker Worker? @relation("AssetFileWorker",fields:[companyProfileId,uploadedByWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  uploadedByName String
+  createdAt DateTime @default(now())
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,assetId,createdAt])
+}
+
+model CompanyAssetCommandReceipt {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  requestId String
+  actorKey String
+  fingerprint String
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([companyProfileId,requestId])
 }
 
 model NotificationSubscription {
@@ -873,6 +1278,9 @@ model MachineBaustellePresence {
 }
 
 model Baustelle {
+  operationalAssets CompanyOperationalAsset[] @relation("AssetSite")
+  assetHandovers CompanyAssetHandover[] @relation("AssetHandoverSite")
+  steelTasks SteelSiteTask[]
   id               String         @id @default(cuid())
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
@@ -889,8 +1297,13 @@ model Baustelle {
   canvasY               Int?
   canvasMobileX         Int?
   canvasMobileY         Int?
+  coverPhotoAt          DateTime?
+  coverPhoto            AssetPhoto?
 
   treeItems                 TreeItem[]
+  productionBatches         ProductionBatch[]
+  siteFiles                 SiteFile[]
+  siteElements              SiteElement[]
   workLogs                  WorkLog[]
   workSessions              WorkSession[]
   manualTasks               ManualTask[]
@@ -904,6 +1317,22 @@ model Baustelle {
   updatedAt DateTime @updatedAt
 
   @@index([companyProfileId])
+  @@unique([companyProfileId,id])
+}
+
+/// Bounded WebP covers kept out of ordinary machine/site row payloads.
+model AssetPhoto {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  machineId String?
+  machine Machine? @relation(fields:[companyProfileId,machineId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_machine_tenant_fkey")
+  baustelleId String?
+  baustelle Baustelle? @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_site_tenant_fkey")
+  data Bytes
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,machineId])
+  @@unique([companyProfileId,baustelleId])
 }
 
 model InventoryMovement {
@@ -1073,6 +1502,7 @@ model DailyWorkPlanSnapshotRow {
 }
 
 model TreeItem {
+  steelTask SteelSiteTask?
   id          String    @id @default(cuid())
   treeId      String
   baustelleId String
@@ -1099,6 +1529,8 @@ model TreeItem {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([baustelleId, id])
 
   @@unique([baustelleId, treeId])
   @@index([baustelleId])
@@ -1338,4 +1770,206 @@ model LoginAttempt {
 
   @@unique([scope, clientKey])
   @@index([updatedAt])
+}
+
+/// Factory production (BauFlow "Stahlbau mit Produktion"): a group of
+/// material processed in the factory for one construction site.
+model ProductionBatch {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  title            String
+  quantity         Float?
+  unit             String         @default("t")
+  /// Ordered line: [{ key, status, note, by, at }]
+  steps            Json
+  readyAt          DateTime?
+  createdByName    String         @default("")
+  /// Supplier order this material came from (order number), if any.
+  orderRef         String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  events           ProductionEvent[]
+
+  @@index([companyProfileId])
+  @@index([baustelleId])
+}
+
+/// Append-only history of every change on a production batch.
+model ProductionEvent {
+  id               String          @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile  @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  batchId          String
+  batch            ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  stepKey          String?
+  action           String
+  fromStatus       String?
+  toStatus         String?
+  note             String?
+  actorName        String
+  actorUserId      String?
+  actorWorkerId    String?
+  createdAt        DateTime        @default(now())
+
+  @@index([batchId])
+  @@index([companyProfileId])
+}
+
+/// Files of one construction site kept in the database (pilot storage):
+/// documents and photos for the team, orders and invoices for the office.
+model SiteFile {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  /// document | photo | order | invoice
+  kind             String
+  /// true: only the office (admins) may see it (prices, invoices).
+  officeOnly       Boolean        @default(false)
+  fileName         String
+  mime             String
+  size             Int
+  data             Bytes
+  amount           Float?
+  currency         String?
+  supplier         String?
+  reference        String?
+  uploadedByName   String         @default("")
+  createdAt        DateTime       @default(now())
+
+  @@index([companyProfileId])
+  @@index([baustelleId, kind])
+}
+
+/// One element of a steel project as the drawing office lists it (Tekla
+/// "Lista assemblaggi" = assemblies like B/12 or C/40, "Lista parti" = cut
+/// parts like plate 1001). The factory and the field team check off, per
+/// element and stage, which workers made or mounted it.
+model SiteElement {
+  processRoutes Json?
+  processRevision Int @default(0)
+  processEditedBy String?
+  processEditedAt DateTime?
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  baustelleId      String
+  baustelle        Baustelle      @relation(fields: [baustelleId], references: [id], onDelete: Cascade)
+  /// assembly | part
+  list             String
+  /// Drawing mark: "B/12", "C/40", "1001".
+  mark             String
+  /// BEAM, COLUMN, ... (assemblies only).
+  kind             String?
+  profile          String?
+  material         String?
+  quantity         Int            @default(1)
+  lengthMm         Float?
+  /// Per piece.
+  weightKg         Float?
+  areaM2           Float?
+  sortIndex        Int            @default(0)
+  sourceFile       String?
+  /// The factory engineer finished the element: the steps it went through are
+  /// its route, the others are not needed. Pieces that passed every step of
+  /// the route are on the field list, the rest stays in the factory.
+  factoryDoneAt    DateTime?
+  factoryDoneBy    String?
+  /// The same on site, for the field steps.
+  fieldDoneAt      DateTime?
+  fieldDoneBy      String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  work             SiteElementWork[]
+
+  @@unique([baustelleId, list, mark])
+  @@index([companyProfileId])
+}
+
+/// Who did one stage of one element: factory steps (cutting ... loading) or
+/// "mounted" on site. Saved by the engineer who checked it.
+model SteelWorkDefinition {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  kind String
+  key String
+  label String @default("")
+  description String @default("")
+  sortOrder Int @default(0)
+  revision Int @default(1)
+  archivedAt DateTime?
+  linkedProcessKey String?
+  linkedList String?
+  linkedKind String?
+  visualUpdatedAt DateTime?
+  visualStatus String @default("fallback")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  siteTasks SteelSiteTask[]
+  visual SteelWorkVisual?
+  @@unique([companyProfileId,id])
+  @@unique([companyProfileId,key])
+  @@index([companyProfileId,kind,archivedAt,sortOrder])
+}
+
+model SteelWorkVisual {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  definitionId String @unique
+  definition SteelWorkDefinition @relation(fields:[companyProfileId,definitionId],references:[companyProfileId,id],onDelete:Cascade)
+  data Bytes?
+  scene Json?
+  mime String
+  updatedAt DateTime @default(now()) @updatedAt
+  @@unique([companyProfileId,definitionId])
+}
+
+model SteelSiteTask {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  baustelleId String
+  baustelle Baustelle @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade)
+  definitionId String
+  definition SteelWorkDefinition @relation(fields:[companyProfileId,definitionId],references:[companyProfileId,id],onDelete:Restrict)
+  treeItemId String @unique
+  treeItem TreeItem @relation(fields:[baustelleId,treeItemId],references:[baustelleId,id],onDelete:Cascade)
+  enabled Boolean @default(true)
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  @@unique([companyProfileId,baustelleId,definitionId])
+  @@unique([baustelleId,treeItemId])
+  @@index([companyProfileId,definitionId])
+}
+
+model SiteElementWork {
+  id                String         @id @default(cuid())
+  companyProfileId  String
+  companyProfile    CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  elementId         String
+  element           SiteElement    @relation(fields: [elementId], references: [id], onDelete: Cascade)
+  stage             String
+  /// Pieces of the element done in this entry (0 = all, older checks). One
+  /// step may have several entries: 2 pieces today, 2 tomorrow by others.
+  pieces            Int            @default(0)
+  workerIds         String[]
+  /// Names at the time of checking, so the record stays readable.
+  workerNames       String         @default("")
+  checkedByName     String
+  checkedByUserId   String?
+  checkedByWorkerId String?
+  checkedAt         DateTime       @default(now())
+  /// Immutable list/mark/quantity/unit-weight at confirmation. Null = legacy.
+  productionSnapshot Json?
+
+  @@index([elementId, stage])
+  @@index([companyProfileId])
+  @@index([companyProfileId, checkedAt, id])
 }

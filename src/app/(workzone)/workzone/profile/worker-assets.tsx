@@ -2,7 +2,7 @@
 
 import { DragEvent, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, FileText, Trash2, UploadCloud } from "lucide-react";
+import { Camera, FileImage, FileSpreadsheet, FileText, type LucideIcon, Plus, UploadCloud, X } from "lucide-react";
 
 import { SimpleDialog } from "@/components/ui/simple-dialog";
 import { t } from "@/lib/i18n";
@@ -29,6 +29,21 @@ function documentLabel(type: string, currentLang: Language) {
 
 function fileBaseName(name: string) {
   return name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim() || name;
+}
+
+function fileKind(document: WorkerDocument): { Icon: LucideIcon; ext: string; tone: string } {
+  const name = (document.filename || document.label || "").toLowerCase();
+  const ext = (name.match(/\.([a-z0-9]{2,4})$/)?.[1] ?? (document.url.match(/\.([a-z0-9]{2,4})(?:$|[?#])/i)?.[1] ?? "")).toLowerCase();
+  if (["jpg", "jpeg", "png", "webp", "heic", "gif"].includes(ext)) return { Icon: FileImage, ext: ext || "img", tone: "bg-sky-500/12 text-sky-600 dark:text-sky-300" };
+  if (["xls", "xlsx", "csv"].includes(ext)) return { Icon: FileSpreadsheet, ext, tone: "bg-green-500/12 text-green-600 dark:text-green-300" };
+  if (["doc", "docx"].includes(ext)) return { Icon: FileText, ext, tone: "bg-blue-500/12 text-blue-600 dark:text-blue-300" };
+  return { Icon: FileText, ext: ext || "pdf", tone: "bg-red-500/12 text-red-600 dark:text-red-300" };
+}
+
+function shortDate(value: string) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return `${String(date.getDate()).padStart(2, "0")}.${String(date.getMonth() + 1).padStart(2, "0")}.${date.getFullYear()}`;
 }
 
 function UploadMessage({ message }: { message?: string }) {
@@ -131,33 +146,54 @@ export function WorkerAssets({
           event.currentTarget.value = "";
         }}
       />
-      <div className="grid gap-3 md:grid-cols-[1fr_8.5rem] md:items-start">
-        <div className="flex min-h-24 flex-wrap content-start gap-2">
-          {documents.length === 0 ? <p className="text-sm text-muted-foreground">{t("workzone.noDocumentsYet", currentLang)}</p> : null}
-          {documents.map((document) => (
-            <div key={document.id} className="group flex max-w-full items-center gap-1 rounded-md border bg-background px-2 py-1.5 text-sm shadow-sm">
-              <a href={document.url} target="_blank" rel="noreferrer" title={document.label} className="flex min-w-0 items-center gap-2">
-                <FileText className="size-4 shrink-0 text-brand-green" />
-                <span className="max-w-36 truncate font-medium">{document.label}</span>
-                <span className="hidden text-xs text-muted-foreground sm:inline">{documentLabel(document.type, currentLang)}</span>
+      {/* Documents as small tiles: an icon and a short name. Type and date show on hover. */}
+      <div className="flex flex-wrap gap-2.5">
+        {documents.map((document) => {
+          const kind = fileKind(document);
+          return (
+            <div key={document.id} className="group relative w-[88px]">
+              <a
+                href={document.url}
+                target="_blank"
+                rel="noreferrer"
+                title={[document.label, documentLabel(document.type, currentLang), shortDate(document.uploadedAt)].filter(Boolean).join(" · ")}
+                className="flex flex-col items-center gap-1.5 rounded-2xl border bg-card p-2.5 text-center transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+              >
+                <span className={cn("relative grid h-12 w-10 place-items-center rounded-lg", kind.tone)}>
+                  <kind.Icon className="size-5" strokeWidth={1.8} />
+                  <span className="absolute -bottom-1 rounded bg-background px-1 font-mono text-[8px] font-bold uppercase leading-3 text-foreground/70 ring-1 ring-border">
+                    {kind.ext}
+                  </span>
+                </span>
+                <span className="line-clamp-2 w-full break-words text-[11px] font-medium leading-tight">{document.label}</span>
+                <span className="pointer-events-none absolute inset-x-1 -bottom-1 translate-y-full rounded-md bg-foreground px-1.5 py-1 text-[10px] leading-tight text-background opacity-0 shadow-lg transition group-hover:opacity-100">
+                  {documentLabel(document.type, currentLang)}
+                  {shortDate(document.uploadedAt) ? ` · ${shortDate(document.uploadedAt)}` : ""}
+                </span>
               </a>
               <button
                 type="button"
                 title={t("workzone.deleteDocument", currentLang)}
+                aria-label={t("workzone.deleteDocument", currentLang)}
                 disabled={isPending}
                 onClick={() => setDocumentToDelete(document)}
-                className="ml-1 rounded p-1 text-muted-foreground opacity-70 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 disabled:opacity-40"
+                className="absolute -right-1.5 -top-1.5 grid size-6 place-items-center rounded-full border bg-background text-muted-foreground opacity-0 shadow-sm transition hover:text-destructive group-hover:opacity-100 focus:opacity-100 disabled:opacity-40 max-md:opacity-100"
               >
-                <Trash2 className="size-3.5" />
+                <X className="size-3.5" />
               </button>
             </div>
-          ))}
-        </div>
+          );
+        })}
 
         <div
           role="button"
           tabIndex={0}
+          title={t("workzone.documentUploadTypes", currentLang)}
+          aria-label={t("workzone.clickDrag", currentLang)}
           onClick={() => fileRef.current?.click()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") fileRef.current?.click();
+          }}
           onDragOver={(event) => {
             event.preventDefault();
             setDragging(true);
@@ -165,14 +201,16 @@ export function WorkerAssets({
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={cn(
-            "flex h-24 cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-2 text-center transition hover:bg-muted/40",
-            dragging ? "border-brand-green bg-brand-green/10" : "border-border",
+            "flex w-[88px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed p-2.5 text-center transition hover:border-primary/50 hover:bg-primary/5",
+            documents.length === 0 ? "min-h-[104px]" : "",
+            dragging ? "border-primary bg-primary/10" : "border-border",
             isPending ? "pointer-events-none opacity-70" : "",
           )}
         >
-          <UploadCloud className="mb-1 size-5 text-brand-green" />
-          <div className="text-xs font-semibold">{isPending ? t("workzone.uploading", currentLang) : t("workzone.clickDrag", currentLang)}</div>
-          <div className="mt-1 text-[11px] leading-tight text-muted-foreground">{t("workzone.documentUploadTypes", currentLang)}</div>
+          <span className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
+            {isPending ? <UploadCloud className="size-5 animate-pulse" /> : <Plus className="size-5" />}
+          </span>
+          <span className="text-[11px] font-medium leading-tight text-muted-foreground">{isPending ? t("workzone.uploading", currentLang) : t("workzone.addDocumentShort", currentLang)}</span>
         </div>
       </div>
       <UploadMessage message={message} />

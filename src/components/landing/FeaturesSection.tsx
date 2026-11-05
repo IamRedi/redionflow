@@ -13,7 +13,7 @@ function FeatureCard({ title, icon: Icon, points }: FeatureCardData) {
       <h3 className="mt-3 text-[0.96rem] font-semibold tracking-tight text-white">{title}</h3>
 
       <div className="mt-4 space-y-1">
-        {points.slice(0, 2).map((point) => (
+        {points.map((point) => (
           <div key={point} className="flex items-start gap-2 rounded-md bg-[#10211a]/88 px-2.5 py-1.5 text-[0.83rem] leading-[1.24] text-white/86">
             <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-300/90" aria-hidden="true" />
             <span>{point}</span>

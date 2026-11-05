@@ -24,7 +24,9 @@
     "importSuccessSummary": "Zaimportowano {created} nowych zadan, zaktualizowano {updated}, bez zmian {unchanged}.",
     "baustelleTypeFiberTrench": "Trasa światłowodu",
     "baustelleTypeFiberDrilling": "Przewiert sterowany (HDD)",
-    "baustelleTypeFiberHouseConnection": "Przyłącza światłowodowe"
+    "baustelleTypeFiberHouseConnection": "Przyłącza światłowodowe",
+    "baustelleTypeSteelWorkshop": "Warsztat konstrukcji stalowych",
+    "baustelleTypeSteelAssembly": "Montaż na budowie"
   },
   "report": {
     "crownWidth": "Szerokosc / miara",

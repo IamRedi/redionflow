@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, CalendarRange, Eye, Pencil, Trash2 } from "lucide-react";
 
 import { deleteWorkerAction, updateWorkerAction } from "@/app/(admin)/app/admin/worker-admin-actions";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
 import type { CompanyMode } from "@/lib/mode-config";
 import { cn } from "@/lib/ui/cn";
+import { CREW_ROLES } from "@/lib/workzone/crew-roles";
 
 type AdminWorkerCardProps = {
   worker: {
@@ -33,6 +34,7 @@ type AdminWorkerCardProps = {
     status: string;
     vacationAllowanceDays: number;
     level: string;
+    crewRole: string | null;
     motherTongue: string;
     preferredLanguage: string;
   };
@@ -47,17 +49,27 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
   const tx = (path: string) => t(path, currentLang, companyMode);
 
   return (
-    <div className="rounded-2xl border bg-card/40 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="text-sm font-semibold">{worker.firstName} {worker.lastName}</div>
+    <div className="rounded-xl border bg-card px-3 py-2.5 transition hover:border-primary/30">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/12 text-xs font-bold text-primary ring-1 ring-primary/20">
+          {`${worker.firstName[0] ?? ""}${worker.lastName[0] ?? ""}`.toUpperCase()}
+        </span>
+        <div className="min-w-[12rem] flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Link href={`/app/admin/workers/${worker.id}`} className="text-sm font-semibold hover:text-primary">
+              {worker.firstName} {worker.lastName}
+            </Link>
             <span className={cn("rounded-md border px-2 py-0.5 text-[11px] font-medium", worker.availabilityClass)}>
               {worker.availabilityLabel}
             </span>
             {worker.isTemporary ? <span className="rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground">{tx("admin.colTemporary")}</span> : null}
+            {companyMode === "bau" && worker.crewRole ? (
+              <span className="rounded-md border border-orange-500/40 bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:text-orange-300">
+                {tx(`admin.crewRoles.${worker.crewRole}`)}
+              </span>
+            ) : null}
           </div>
-          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
             {/* Only filled fields; empty ones are edited via the pencil. */}
             {(
               [
@@ -79,21 +91,30 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="icon" aria-label={tx("common.edit")} onClick={() => setIsEditing((value) => !value)}>
-            <Pencil className="size-4" />
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/app/admin/workers/${worker.id}`}>
-              <Eye className="size-4" />
-              {tx("admin.profile")}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/app/admin/workers/${worker.id}/day/${reportTodayKey}`}>{tx("common.today")}</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/app/admin/workers/${worker.id}/month/${reportMonthKey}`}>{tx("common.month")}</Link>
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
+          {(
+            [
+              [`/app/admin/workers/${worker.id}`, tx("admin.profile"), Eye],
+              [`/app/admin/workers/${worker.id}/day/${reportTodayKey}`, tx("common.today"), CalendarDays],
+              [`/app/admin/workers/${worker.id}/month/${reportMonthKey}`, tx("common.month"), CalendarRange],
+            ] as const
+          ).map(([href, label, Icon]) => (
+            <Button key={href} asChild variant="ghost" size="icon" className="size-8 rounded-lg text-muted-foreground hover:text-foreground" title={label}>
+              <Link href={href} aria-label={label}>
+                <Icon className="size-4" strokeWidth={1.8} />
+              </Link>
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant={isEditing ? "secondary" : "ghost"}
+            size="icon"
+            className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+            title={tx("common.edit")}
+            aria-label={tx("common.edit")}
+            onClick={() => setIsEditing((value) => !value)}
+          >
+            <Pencil className="size-4" strokeWidth={1.8} />
           </Button>
         </div>
       </div>
@@ -135,6 +156,19 @@ export function AdminWorkerCard({ worker, currentLang, companyMode, reportTodayK
               {tx("admin.vacationDays")}
               <Input name="vacationAllowanceDays" type="number" min="0" defaultValue={worker.vacationAllowanceDays} className="h-8 text-sm" />
             </label>
+            {companyMode === "bau" ? (
+              <label className="grid gap-1 text-[11px] font-medium text-muted-foreground">
+                {tx("admin.crewRole")}
+                <select name="crewRole" defaultValue={worker.crewRole ?? ""} className="h-8 w-full rounded-md border bg-background px-2 text-sm">
+                  <option value="">{tx("admin.crewRoleNone")}</option>
+                  {CREW_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {tx(`admin.crewRoles.${role}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="grid gap-1 text-[11px] font-medium text-muted-foreground">
               {tx("admin.colLevel")}
               <select name="level" defaultValue={worker.level} className="h-8 w-full rounded-md border bg-background px-2 text-sm">

@@ -22,6 +22,10 @@ export async function provisionLocalPilotRole(databaseUrl: string): Promise<stri
     await db.query(`GRANT SELECT (id,"companyProfileId",name,email) ON "User" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT (id,"companyProfileId","firstName","lastName",licenses,availability,status,"isTemporary",level) ON "Worker" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT (id,"companyProfileId",name,nickname,"isActive","patentaEnevojshme") ON "Machine" TO bk_saas_pilot_runtime`);
+    // Read-only availability gates: no custody, notes, attachments or asset writes.
+    await db.query(`GRANT SELECT (id,"companyProfileId","machineId",disposition) ON "CompanyOperationalAsset" TO bk_saas_pilot_runtime`);
+    await db.query(`GRANT SELECT ("companyProfileId","assetId",status) ON "CompanyAssetIncident", "CompanyAssetHandover" TO bk_saas_pilot_runtime`);
+    await db.query(`GRANT SELECT ("companyProfileId","assetId",phase) ON "CompanyAssetRepair" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT (id,"companyProfileId","workerId",status,"startDate","endDate") ON "VacationRequest" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT (id,"workerId","baustelleId","startTime","isLive","endTime") ON "WorkSession" TO bk_saas_pilot_runtime`);
     // Initial tree and import-clear are existing dependent parts of Baustelle CRUD.

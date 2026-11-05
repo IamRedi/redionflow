@@ -1,0 +1,19 @@
+.tools {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+}
+.navigation,.alerts { display: flex; align-items: center; gap: 6px; }
+.tools :is(a,button) { flex-shrink: 0; }
+.navigation > a,.alerts > div > button,.alerts > form > button,.book > a { background-color: hsl(var(--background)); }
+@media(min-width:1024px) {
+  .tools { display: grid; grid-template-columns: repeat(2,44px); }
+  .navigation { display: none; }
+  .book { grid-column: 1/-1; grid-row: 1; justify-self: center; }
+  .alerts { grid-column: 1/-1; grid-row: 2; }
+}

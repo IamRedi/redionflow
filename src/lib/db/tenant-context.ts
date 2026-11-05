@@ -22,6 +22,7 @@ import { prisma } from "@/lib/db/prisma";
 export async function withTenantContext<T>(
   companyProfileId: string,
   fn: (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => Promise<T>,
+  options?: { timeout?: number; maxWait?: number },
 ): Promise<T> {
   return prisma.$transaction(async (tx) => {
     // SET LOCAL scopes the variable to this transaction only; the pooled
@@ -31,7 +32,7 @@ export async function withTenantContext<T>(
       companyProfileId,
     );
     return fn(tx);
-  });
+  }, options);
 }
 
 /**

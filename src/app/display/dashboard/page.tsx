@@ -4,6 +4,12 @@ import { BriefcaseBusiness, ChevronLeft, ChevronRight, HardHat, MapPinned, Wrenc
 import { WorkerHoursToggleChart } from "@/app/(admin)/app/dashboard/worker-hours-toggle-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
+import { notFound, redirect } from "next/navigation";
+import { getCurrentDisplayUser } from '@/lib/auth/display-session';
+import { isSaasMode } from '@/lib/saas-config';
+import { SteelDashboard } from "@/components/dashboard/steel-dashboard";
+import { isSteelCompany, productionAudience } from "@/lib/dashboard/steel-access";
+import { steelDashboardData, type SteelParams } from "@/lib/dashboard/steel-data";
 import { getDashboardSnapshotForWeek } from "@/lib/dashboard/dashboard-snapshot";
 import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
@@ -280,13 +286,20 @@ function MonthlyHoursTrend({
   );
 }
 
-export default async function DisplayDashboardPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
+export default async function DisplayDashboardPage({ searchParams }: { searchParams: Promise<SteelParams> }) {
   const params = await searchParams;
+  const audience = await productionAudience(true);
+  if (!audience && (isSaasMode || !await getCurrentDisplayUser())) redirect('/display-login');
+  if (audience && audience.company.mode === 'bau' && await isSteelCompany(audience.company.id)) {
+    const lang = await resolveRequestLanguage();
+    const data = await steelDashboardData(audience.company, params, true).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
+    return <SteelDashboard data={data} lang={lang} />;
+  }
   const rawWeek = Number(params.week ?? "0");
   const weekOffset = Number.isFinite(rawWeek) ? Math.min(0, Math.trunc(rawWeek)) : 0;
   const [company, mode, currentLang] = await Promise.all([
-    getOrCreateDefaultCompany(),
-    getCompanyMode(),
+    audience ? Promise.resolve(audience.company) : getOrCreateDefaultCompany(),
+    audience ? Promise.resolve(audience.company.mode === 'bau' ? 'bau' as const : 'baumdienst' as const) : getCompanyMode(),
     resolveRequestLanguage(),
   ]);
   const snapshot = await getDashboardSnapshotForWeek(company.id, weekOffset, currentLang);
