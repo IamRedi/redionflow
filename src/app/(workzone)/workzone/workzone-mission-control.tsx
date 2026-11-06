@@ -323,13 +323,17 @@ export function WorkzoneMissionControl({
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
+  const [musterReady, setMusterReady] = useState(false);
   useEffect(() => {
     const element = workspaceRef.current;
     if (!muster || !element) return;
-    const observer = new ResizeObserver(entries => setCanvasWidth(Math.round(entries[0].contentRect.width)));
+    const observer = new ResizeObserver(entries => {
+      const width = Math.round(entries[0].contentRect.width);
+      if (width > 0) setCanvasWidth(width);
+    });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [muster]);
+  }, [muster, isMapMode]);
   const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:width-${canvasWidth}` : ""}`, [items, muster, canvasWidth]);
   // Restore browser-only saved positions in the effect below, after hydration.
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
@@ -401,8 +405,9 @@ export function WorkzoneMissionControl({
     saveCanvasLayout(canvasLayoutSignature, next);
     queueMicrotask(() => {
       setPositionsByViewport((current) => (sameViewportLayouts(current, next) ? current : next));
+      if (muster && canvasWidth > 0) setMusterReady(true);
     });
-  }, [canvasLayoutSignature, items, canvasWidth]);
+  }, [canvasLayoutSignature, items, canvasWidth, muster]);
 
   function resetCurrentCanvasLayout() {
     const nextViewportPositions = autoCanvasLayout(items, canvasViewport, canvasWidth);
@@ -524,7 +529,7 @@ export function WorkzoneMissionControl({
             </Button>
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
-          {items.map((item) => {
+          {(!muster || musterReady) && items.map((item) => {
             const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey);
             const animateLive = item.activeLiveCount > 0 && !(item.demoPhotoKey && reducedMotion);
             const target = positions[item.id] ?? { x: 20, y: 20 };
@@ -533,6 +538,7 @@ export function WorkzoneMissionControl({
               <motion.div
                 key={item.id}
                 data-testid={item.demoPhotoKey ? "muster-site-card" : undefined}
+                initial={item.demoPhotoKey ? false : undefined}
                 drag={!readOnly || allowCanvasDrag}
                 dragMomentum={false}
                 dragElastic={0.08}

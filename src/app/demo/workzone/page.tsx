@@ -7,9 +7,9 @@ import { equipmentQuantity, readLatLng } from "@/lib/workzone/site-json";
 import { WorkzoneMissionControl } from "@/app/(workzone)/workzone/workzone-mission-control";
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
 import { WorkshopOverview } from "@/components/demo/workshop/workshop-overview";
-import { workshopCopy } from "@/lib/workshop/copy";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoSiteKey } from "@/lib/workshop/shared-store";
+import { WoodOverview } from "@/components/demo/workshop/wood-overview";
 
 const workzoneName="Workzone";
 
@@ -28,7 +28,7 @@ function materialIndicators(
 export default async function DemoWorkzonePage() {
   const company = await getOrCreateDefaultCompany();
   const currentLang = await resolveRequestLanguage();
-  const mode = await getCompanyMode(); const c = workshopCopy(currentLang);
+  const mode = await getCompanyMode();
   const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
   const [baustellen, coneMoves] = await Promise.all([
     prisma.baustelle.findMany({
@@ -140,7 +140,7 @@ export default async function DemoWorkzonePage() {
 
   return (
     <div className="space-y-4">
-      {workshopEnabled ? <header className="py-2"><p className="text-xs font-semibold uppercase tracking-widest text-primary">{c.summary}</p><h1 className="mt-2 text-3xl font-bold tracking-tight">{workzoneName}</h1><p className="mt-2 text-sm text-muted-foreground">{c.focus}</p></header> : <div className="rounded-xl border bg-card p-4">
+      {workshopEnabled ? <h1 className="sr-only">{workzoneName}</h1> : <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">{t("admin.publicDemo", currentLang)}</div>
           <DemoReadonlyBadge />
@@ -157,7 +157,7 @@ export default async function DemoWorkzonePage() {
         allowCanvasDrag={!workshopEnabled}
         mode={mode}
       />}
-      {workshopEnabled ? <WorkshopOverview /> : null}
+      {workshopEnabled ? <><WoodOverview /><WorkshopOverview /></> : null}
     </div>
   );
 }

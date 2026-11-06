@@ -1,5 +1,75 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
+## Punëtoria e drurit dhe ekipi — 6 nëntor 2026
+
+**Zbatim në degën `feat/baumdienst-wood-production-20261106`, mbi PR72. Publikimi dhe pranimi përfundimtar regjistrohen pas kontrolleve.** Vetëm Musterfirma fiktive `Baumdienst Musterstadt GmbH`. AL Steel është referencë vetëm për lexim; nuk bashkohet kodi i pilotit dhe nuk kopjohen punonjës, klientë apo adresa reale.
+
+### Krahasimi me AL Steel dhe kufiri i përshtatjes
+
+Burimi i lexuar: dega aktive e AL Steel `claude/project-thread-an04j1`, runtime/source `d6289f218422f7301d2782592ab8c4d11cce90dc` (header-i kompakt, PR71). Worktree referencë detached, pa shkrime. U kontrollua edhe Workzone-ja reale për strukturën vizuale; përmbajtja private nuk hyn në media/dokumentet publike.
+
+| Rrjedha e referencës | Përshtatja në Musterfirma |
+| --- | --- |
+| Header kompakt dhe WorkerIconStrip | Rikthehet komponenti ekzistues i ekipit, me profile `/demo/workers`, kontrolle 44px dhe gjendjet e disponueshmërisë. Role, gjuhë e temë grupohen te menuja More. Hiqet blloku i madh prezantues i Workzone-s. |
+| Fusha e lirë, harta, plani dhe kalendari | Ruhet integrimi i PR72, pa një sistem të dytë planifikimi. |
+| Fabrika / përmbledhja e prodhimit | `Holzwerkstatt` / Punëtoria e drurit në `/demo/wood` dhe përmbledhje në Workzone. Oficina ekzistuese e riparimeve mbetet veçmas. |
+| Katalogu i përbashkët i punëve/fazave | Një katalog për përpunimin e drurit dhe punët e kantierit. Shto/ndrysho emër, udhëzime dhe ikonë; arkivo në vend të fshirjes. Emrat e barabartë pas normalizimit nuk regjistrohen dy herë, as kur janë arkivuar. |
+| Zgjedhja dhe renditja e proceseve | Çdo porosi zgjedh e rendit deri në 20 faza. Ruhet një snapshot i përkufizimeve, jo një listë që ndryshon kur redaktohet katalogu. |
+| Motorri i fazave të fabrikës | Ripërdoret funksioni ekzistues `applyStepCommand`: pritje, në punim, kryer, problem. Nuk kopjohen fazat e çelikut, kg apo tonët. |
+| Materiali i lidhur me kantierin | Ngarkesa e drurit lidhet me identitetin e qëndrueshëm të Baustelle-s ose me një burim tjetër të emërtuar; nuk krijohet Baustelle e dytë për punëtorinë. |
+| Foto, figurë AI dhe ikonë e procesit | Foto e ngarkuar → figurë AI e ruajtur → figurë editoriale e kuruar → SVG. Nuk kryhet gjenerim gjatë hapjes së faqes. |
+
+Kjo është përshtatje e rrjedhave për Baumdienst, jo deklarim se të gjitha modulet administrative/financiare të AL Steel janë kopjuar.
+
+### Identitetet dhe modeli i ruajtjes
+
+Moduli ruhet në rreshtin e veçantë `baumdienst-wood:v1` të tabelës ekzistuese `BaumdienstDemoWorkspace`. Nuk ndryshohet skema Prisma, V3 i inventarit, rreshti i planeve apo reset-i i natës. Rreshti nuk ka FK me punonjësit/kantieret që rikrijohen nga seed-i; lidhjet përdorin `demoSiteKey`/`demoWorkerKey` ekzistues. Pajisja mbetet po ai asset ID i inventarit, me po atë barkod/NFC dhe histori dorëzimi. Druri, ngarkesat, porositë, paketat dhe daljet kanë identitete materiale të veçanta dhe nuk shndërrohen në pajisje.
+
+GET inicializon vetëm një herë shembujt fiktivë: një ngarkesë, dy porosi druri, një proces kantieri, tre paketa shembull dhe një dalje shembull. Asnjë gjendje e ruajtur nuk zëvendësohet në hapje apo deploy. Shembujt kanë aktor/kohë dhe shënim të dallueshëm fiktiv. Nuk futen pajisje të dyfishta.
+
+Çdo mutacion ka UUID kërkese, revision optimist dhe receipt të qëndrueshëm. Riprovimi i së njëjtës kërkesë nuk krijon ngarkesë, dalje, stok apo foto tjetër; ripërdorimi me përmbajtje/aktor tjetër refuzohet. Kur humbet përgjigjja, klienti ruan kërkesën/UUID-n origjinale në memorie dhe e ripërdor në riprovimin manual, përfshirë foton me fingerprint të përmbajtjes. Nuk deklarohet pa konfirmim se ruajtja dështoi; para veprimit tjetër sqarohet kërkesa e pasigurt. Rreshti i punëtorisë dhe V3 i inventarit kyçen në rend të qëndrueshëm gjatë kontrollit/shkrimit. Revision i vjetër kthen 409 dhe UI ngarkon gjendjen e fundit pa bërë mbishkrim të heshtur. Kufij: 80 shkrime/minutë, JSON 4 MB, katalog 160, ngarkesa/porosi/dalje prodhimi nga 1000, dalje stoku 4000 dhe histori 12000 ngjarje. Kufiri nuk pret historikun fshehurazi; shkrimi refuzohet.
+
+### Pranimi → prodhimi → paketimi → dalja
+
+1. Shefi regjistron llojin e drurit, origjinën, sasinë e matur dhe njësinë; shënimi/fotoja janë plotësuese.
+2. Një porosi rezervon sasi nga ngarkesa. Sasia e lirë është pranimi minus rezervimet aktive. Nuk lejohet tejkalim, sasi negative apo rezervim i dyfishtë nga kërkesa konkurruese. Anulimi lejohet vetëm pa nisur asnjë fazë dhe e liron rezervimin; regjistrimi/historiku nuk fshihen.
+3. Shefi zgjedh/rendit fazat dhe ekipin/pajisjet. Parazgjedhja përfundon me paketimin; përgatitja për ngarkim mbetet fazë zgjedhore. Vetë një fazë nuk e zbret stokun. Lëvizja fizike për shitje/dërgesë regjistrohet te dalja e stokut.
+4. Punonjësi i caktuar ose shefi nis/përfundon fazën e radhës. Nuk anashkalohen fazat e mëparshme. Një problem kërkon shënim dhe zgjidhje të shprehur para vazhdimit. Rihapet vetëm faza e fundit e përfunduar pa punë të prekur më tej. Çdo veprim ruan aktorin, kohën, fazën dhe shënimin.
+5. Pas përfundimit të të gjitha fazave, shefi regjistron produktin, numrin e paketave dhe vëllimin e matur për paketë. Dalja e prodhimit regjistrohet një herë. Ajo e kyç rrjedhën e përfunduar, që rihapja të mos krijojë stok të dytë ose të ndryshojë historikun e materialit.
+6. Shitja ose dërgesa zbret paketa të plota nga ai output ID, me marrës/referencë, aktor dhe kohë. Nuk lejohet stok negativ. Nuk ka faturim, çmim, TVSH ose regjistrim pagese në këtë modul.
+
+Vëllimet ruhen si numra të plotë në të mijtat e njësisë. Fm, Rm dhe Srm janë tri baza matjeje të ndryshme: masë e plotë druri, dru i stivuar me boshllëqe dhe dru i hedhur lirshëm me boshllëqe. Nuk mbledhen si një total i vetëm dhe nuk konvertohen me faktor të fshehtë. Dalja e matur veçmas nuk është konvertim automatik i hyrjes. Burim: [Bayerische Landesanstalt für Wald und Forstwirtschaft – Bereitstellung und Verkauf von Scheitholz](https://lwf.bayern.de/forsttechnik-holz/holzverwendung/051664/index.php).
+
+### Lidhjet me njerëzit, inventarin dhe pemët
+
+Porosia dhe profili i punonjësit kanë lidhje kthimi te e njëjta punë; po kështu karta e pajisjes dhe procesi që e përdor. Karta e Baustelle-s përmbledh proceset dhe ngarkesat që vijnë prej saj. Shefi mund ta ndryshojë ekipin me histori para/pas. Pajisjet ndryshohen vetëm kur nuk ka fazë aktive; përfundimi i bllokuar/raportuar ruan provën e veprimit.
+
+Zgjedhja në porosi është referencë planifikimi, jo dorëzim pajisjeje. Para nisjes/vazhdimit/përfundimit kontrollohet sërish që pajisja nuk është në riparim, nuk ka kontroll të skaduar, nuk po përdoret në fazë aktive të një porosie tjetër dhe nuk ka dorëzim të pakonfirmuar. Duhet t’i jetë dorëzuar një anëtari të ekipit ose të jetë caktuar në atë kantier. Në magazinë ose te një ekip tjetër, përdoret rrjedha ekzistuese e skanimit/dorëzimit me konfirmime. Hapja e kartës ose zgjedhja e pajisjes nuk e kalon pronësinë automatikisht.
+
+Fazat e kantierit mund të kërkojnë përfundimin e të gjitha pemëve. Ky kusht është aktiv për shembujt e kujdesit/prerjes/Hecke-s dhe kontrollon TreeItem + mbivendosjen V3 ekzistuese. Nuk krijohet një flamur i dytë “pema u krye”. Konfirmimi i fazës është ngjarje historike; nëse më pas rihapet një pemë, UI shfaq sërish paralajmërimin dhe historiku i mëparshëm nuk rishkruhet.
+
+### Foto, AI, ikona dhe privatësi
+
+Katër figura të reja origjinale: ambienti i përpunimit, sharra e mbrojtur, çarësi hidraulik dhe paleta e paketuar. Stili vazhdon familjen ekzistuese Baumdienst/KiDraht: petrol, jeshile pylli, dru natyral, materiale mat dhe dritë studio. Manifesti `assets/baumdienst-wood/v1/manifest.json` ruan promptet dhe SHA-256 të PNG/WebP. Origjinalet PNG ruhen veçmas; konvertimi vetëm optimizon formatin WebP, pa ndryshime krijuese. Mjeti i integruar nuk ekspozon zgjedhje modeli, prandaj nuk i atribuohet një model i caktuar API.
+
+Nëntë simbole SVG të reja vazhdojnë familjen vendore me viewBox/stroke të njëjtë. Figurat janë referenca ilustruese, jo fotografi të punës së kryer dhe jo udhëzime sigurie të certifikuara. Fotografitë reale të ngarkuara kanë përparësi; nuk mbishkruhen nga AI.
+
+Gjenerimi i fazave përdor të njëjtin adapter/provider dhe **të njëjtin ledger 5 tentativa/ditë UTC, 50 gjithsej**, bashkë me pajisjet. Dështimet numërohen; cache dhe lease parandalojnë pagesa të përsëritura; nuk ka retry automatik me pagesë. Nuk krijohet çelës i dytë, provider i ri apo kuotë e dytë. Jashtë aplikacionit dërgohen vetëm emri/kategoria/ikona e fazës, jo shënime, klientë, punonjës, inventar ose adresa. Janë të dhëna të pasigurta brenda promptit dhe nuk trajtohen si udhëzime. Gjenerimi aktivizohet shprehimisht nga shefi.
+
+Foto JPG/PNG/WebP kalojnë përmes validimit/stripimit të metadatave ekzistues, me kufi hyrjeje 12 MB dhe konvertim të kufizuar në proces. Ruhen në workspace-in e drurit me target të emërtuar `phase:`, `job:` ose `intake:` dhe shërbehen vetëm nga rruga e tij; lloji teknik raster ekzistues mbetet `asset`, pa migrim/check-constraint të ri. Kufij: 160 foto / 22 MB për këtë modul. Galeria e porosisë ruan fotot e mëparshme.
+
+### Siguria dhe pranimi
+
+Të gjitha UI/API/art/files kërkojnë kombinimin e njëjtë demo + profil opt-in + SaaS joaktiv + saktësisht një firmë fiktive. Komandat nuk pranojnë kompani, aktor, kohë apo gjendje të plotë nga klienti. Shkrimet kontrollojnë same-origin, trup të kufizuar dhe skemë strikte. Shefi menaxhon katalogun, hyrjet, rezervimet, stokun dhe ekipin; punonjësi i caktuar konfirmon punën dhe ngarkon foto të porosisë. Role-demo nuk është autentikim i punonjësve realë.
+
+Gjendja e biznesit ruhet në server dhe UI rifreskohet ndërmjet pajisjeve; nuk mbështetet në localStorage. Pozicionet e fushës së Workzone-s mbeten preferencë e shfletuesit si më parë. Header/footer, modalet dhe scroll-i ruajnë kontratën e mëparshme: një zonë kryesore vertikale, footer në fund të përmbajtjes, 44px për prekje, tastierë/fokus dhe tema të lexueshme. Përkthime të reja pune DE/SQ/EN; prezantimi i ri DE/SQ/EN/IT. Gjuhët e tjera përdorin fallback të shënuar, jo pretendim për përkthim të plotë.
+
+Pranimi lokal në laptopin Windows: **679 unit PASS / 1 skip ekzistues, 9 integrime Postgres PASS dhe 28 prova shfletuesi PASS** në build-in Production. U ruajtën kontrollet e riparimeve, dokumenteve, skanimit, etiketave, konfirmimeve, planit, hartës, atlasit, temave/gjuhëve dhe ruajtjes në disa pajisje. Provat e drurit shtojnë paketimin/daljen, katalogun, rolet, pemët dhe një përgjigje të humbur pas commit-it me vetëm një ngarkesë të krijuar. Një nisje nën ngarkesë shkaktoi timeout në provën ekzistuese të zonave kohore; i gjithë seti u përsërit pa ndryshuar timeout/assertions dhe kaloi. Katër selektorë të testeve u përshtatën për menunë e grupuar. Zilja e njoftimeve mbetet e dukshme me badge; roli/gjuha/tema janë në More.
+
+U kontrolluan desktop 1440px, telefon 390/320px, landscape 740×360, tekst 200%, të dyja temat, fokus, footer natyral dhe mungesa e scroll-it horizontal. Rregullimi përfundimtar i fushës e pret gjerësinë e matur para montimit të kartave Musterfirma, që hapja e parë të mos i animojë nga një grumbull në kënd; hartë→fushë rilidh matjen. Sjellja pa `demoPhotoKey` ruhet. Faqja ekzistuese e privatësisë përshkruan tani edhe drurin dhe përshkruesit e fazës që dërgohen në AI, në gjashtë gjuhët e saj.
+
+Build/TypeScript dhe lint i plotë dhe i shprehur për demo: PASS; Gitleaks pa gjetje. Profilet pa opt-in, profil tjetër dhe SaaS: 404 edhe për wood API/art/files/images. Pas dy korrigjimeve të fundit të kufizuara të pamjes/tekstit përsëriten build-i dhe provat e prekura; runtime-i i publikimit dhe ruajtja online shtohen më poshtë. Kamera/NFC/tastiera fizike në telefon nuk deklarohen nga një viewport desktop.
+
 ## Workzone, harta dhe plani — 6 nëntor 2026
 
 **Publikuar dhe kontrolluar online vetëm te Musterfirma.** Runtime `8527efcf7d12ce8475f8ea66f814e5e72e2e5282`, Railway `d7abd753-d944-4175-9338-ee3c4f0bf7c0` SUCCESS, [Draft PR72](https://github.com/IamRedi/redionflow/pull/72) mbi PR63. Pa merge në main/pilot dhe pa shkrim në shërbime të tjera.

@@ -1,6 +1,7 @@
 "use client";
 
 import { MonitorPlay } from "lucide-react";
+import Image from "next/image";
 
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
 import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
@@ -17,6 +18,7 @@ import { SideNavigation } from "@/components/landing/SideNavigation";
 import { landingContent, normalizeLandingLanguage } from "./landing-content";
 import { studioSummary } from "@/lib/workshop/studio-copy";
 import { workshopCopy } from "@/lib/workshop/copy";
+import { woodSummary } from "@/lib/workshop/wood-summary";
 
 function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return (
@@ -64,6 +66,7 @@ export function LandingPage({
   const landingLang = normalizeLandingLanguage(currentLang);
   const content = landingContent[landingLang];
   const workshop = workshopCopy(landingLang);
+  const wood=woodSummary(landingLang);
   const demoPush = {
     de: {
       title: "Live sehen statt lesen.",
@@ -168,7 +171,7 @@ export function LandingPage({
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/75">{workshop.featureSummary} {studioSummary(landingLang)}</p>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/75">{workshop.demoHint}</p>
           <a href="/demo/workshop" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-emerald-300 px-5 text-sm font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#10211a]">{workshop.open}</a>
-        </section></div> : null}
+        </section><section id="holzwerkstatt-demo" className="my-12 grid overflow-hidden rounded-xl border border-white/10 bg-white/[0.045] shadow-[0_16px_32px_rgba(0,0,0,0.12)] md:grid-cols-2"><div className="relative min-h-48"><Image unoptimized fill src="/api/demo/baumdienst/wood/art/wood-yard?v=1" alt="" sizes="(max-width:768px) 100vw, 50vw" className="object-cover"/></div><div className="p-5 sm:p-8"><SectionIntro eyebrow={workshop.demo} title={wood.title} text={wood.text}/><a href="/demo/wood" className="mt-5 inline-flex min-h-11 items-center rounded-full bg-emerald-300 px-5 text-sm font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#10211a]">{wood.open}</a></div></section></div> : null}
       </section>
 
       <div className={`relative z-10 mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 ${workshopDemoEnabled ? "" : "pb-8"}`}>

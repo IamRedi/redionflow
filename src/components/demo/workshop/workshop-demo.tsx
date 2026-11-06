@@ -1,6 +1,7 @@
 "use client";
 
 import { CustodyAssetActions } from "./custody-panels";
+import { WoodAssignmentLinks } from "./wood-overview";
 import { AssetRegister } from "./asset-register";
 import { InventoryAssetCard } from "./inventory-asset-card";
 import Image from "next/image";
@@ -134,6 +135,7 @@ export function WorkshopDemo({ tab, initialAsset = "", initialSite = "", initial
         {assetStatus(selectedAsset)}<p className="text-sm text-muted-foreground">{selectedAsset.holder || c.storagePlace} · {selectedAsset.location}</p>
         <InventoryPlacementLinks placement={selectedAsset.placement} directory={directory} />
         <CustodyAssetActions key={selectedAsset.id} asset={selectedAsset} now={now} method={scanned ? "scan" : "selection"} />
+        <WoodAssignmentLinks assetId={selectedAsset.id}/>
         {activeJob(state, selectedAsset.id) && <Button className={action} onClick={() => open({type:"job", id:activeJob(state, selectedAsset.id)!.id})}><Wrench />{c.open}</Button>}
         <details className="rounded-xl border p-3"><summary className={`${styles.barcodeToggle} text-sm font-medium focus-visible:outline focus-visible:outline-2`}><span>{c.barcode} · {selectedAsset.code}</span><ChevronDown className="size-4" aria-hidden="true" /></summary><BarcodeLabel value={selectedAsset.code} title={selectedAsset.name} shortCode={selectedAsset.code} /><Link className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary" href={`/demo/inventory/print?asset=${encodeURIComponent(selectedAsset.id)}`}><Printer className="size-4" />{c.print}</Link><p className="mt-2 text-xs text-muted-foreground">{c.tagHint}</p></details>
         <details className="rounded-xl border px-3"><summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium"><Settings2 className="size-4" />{c.service}</summary><div className="space-y-3 pb-3"><p className="text-sm">{c.inspection}: {selectedAsset.inspection}</p>{selectedAsset.details && <div className="space-y-2 text-sm text-muted-foreground">{[selectedAsset.details.manufacturer, selectedAsset.details.model, selectedAsset.details.serial, selectedAsset.details.note].filter(Boolean).map((v,i)=><p className="whitespace-pre-wrap break-words" key={i}>{v}</p>)}</div>}<div className="flex flex-wrap gap-2">{!activeJob(state, selectedAsset.id) && (actor.role === "admin" || selectedAsset.placement?.workerKey === actor.key) && <Button variant="outline" className={action} disabled={disabled} onClick={() => open({type:"receive", id:selectedAsset.id})}><Wrench />{c.newJob}</Button>}{actor.role === "admin" && <><Button variant="outline" className={action} disabled={disabled} onClick={() => open({type:"inspection", id:selectedAsset.id})}><ShieldCheck />{c.inspect}</Button><Button variant="outline" className={action} onClick={() => {setModal(null); setRegistering({asset:selectedAsset});}}><Pencil />{c.edit}</Button></>}<Link className="inline-flex min-h-11 items-center gap-2 px-2 text-sm text-primary" href={`/demo/workshop?tab=documents&asset=${selectedAsset.id}`}><FileText className="size-4" />{c.documents}</Link></div></div></details>

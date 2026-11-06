@@ -7,7 +7,7 @@ export class ImageProviderError extends Error {
 }
 
 /** One fixed-provider call. Never retry an uncertain paid request automatically. */
-export async function generateEquipmentImage(asset: WorkshopAsset) {
+export async function generateStudioImage(prompt: string) {
   const key = process.env.BAUMDIENST_IMAGE_OPENAI_API_KEY?.trim();
   if (!key) throw new ImageProviderError("aiUnavailable");
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
@@ -15,7 +15,7 @@ export async function generateEquipmentImage(asset: WorkshopAsset) {
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST", redirect: "error", cache: "no-store", signal: controller.signal,
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: IMAGE_MODEL, prompt: imagePrompt(asset), n: 1, size: "1024x1024", quality: "medium", complexity: "low", background: "opaque", output_format: "webp", output_compression: 80, moderation: "auto" }),
+      body: JSON.stringify({ model: IMAGE_MODEL, prompt, n: 1, size: "1024x1024", quality: "medium", complexity: "low", background: "opaque", output_format: "webp", output_compression: 80, moderation: "auto" }),
     });
     if (!response.ok) {
       await response.body?.cancel();
@@ -37,3 +37,4 @@ export async function generateEquipmentImage(asset: WorkshopAsset) {
     throw new ImageProviderError(controller.signal.aborted ? "aiTimeout" : "aiFailed");
   } finally { clearTimeout(timer); }
 }
+export async function generateEquipmentImage(asset: WorkshopAsset) { return generateStudioImage(imagePrompt(asset)); }
