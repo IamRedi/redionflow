@@ -38,6 +38,25 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 
 **Lager, Werkstatt und Fuhrpark · Am 6. November 2026 für einen realen Stahlbetrieb veröffentlicht ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Werkzeuge, Kleidung und Baustellenausrüstung werden als einzelne Einheiten mit Code und gegebenenfalls Größe geführt. Ausgabe und Rückgabe brauchen Büro- und Mitarbeiterbestätigung; einen Kollegenwechsel bestätigen beide Beteiligten. Verlust und Ausmusterung bleiben bis zur Entscheidung der Leitung offen. Reparaturen durchlaufen gemeldet → angenommen → in Reparatur → einsatzbereit; die Freigabe erfordert Funktionsprüfung und Reparaturnotiz oder Beleg. Private Fotos, Rechnungen und Verlauf bleiben beim jeweiligen Betriebsmittel. Zwei kompakte Aktionen öffnen Flotte und Werkstatt; die Fahrzeugauswahl zeigt am Handy drei Spalten mit Namen und Kennzeichen. Verifizierter Produktivstand: [c91a95a](https://github.com/IamRedi/redionflow/commit/c91a95ae379a8ed2ac25306001a41f96e7f4c258). Die Firmenanmeldung ist erforderlich; diese Erweiterung ist in den öffentlichen Demos nicht freigeschaltet.
 
+## Dokumentübergabe und Gerätecodes in BauFlow
+
+Sechs Baustellenphasen bündeln Dokumente mit Download und Teilen-Dialog.
+Büro und Ingenieure bestätigen den Empfang persönlich mit Name und Zeitpunkt.
+Neue Dateiversionen behalten die alten Dateien und Bestätigungen im Verlauf;
+eine Empfangsbestätigung schließt keinen Produktionsschritt ab.
+
+Hersteller-Barcodes und QR-Codes bleiben lesbar, auch mit führenden Nullen,
+Groß-/Kleinschreibung und Satzzeichen. Ein gemeinsamer Modellcode verlangt die
+Auswahl des einzelnen Geräts. Jedes Gerät erhält eine eigene druckbare Etikette;
+bisherige Codes bleiben gültig. Firmenanmeldung erforderlich. Kamera und Drucker
+am realen Gerät werden getrennt von der lokalen Browserprüfung abgenommen.
+
+Die Aufnahme stammt aus der lokalen Anwendung mit ausschließlich synthetischen
+Daten. Diese Dokumentations-PR wird erst mit der freigegebenen App-Erweiterung
+veröffentlicht; sie schaltet die privaten Abläufe nicht in den öffentlichen Demos frei.
+
+<img src="docs/assets/screenshots/steel-phase-documents-synthetic.png" alt="Lokale fiktive BauFlow-Firma mit Phasendokumenten und persönlicher Empfangsbestätigung" width="300">
+
 ## Warum dieses Projekt?
 
 Kleine und mittlere Betriebe planen ihre Baustellen oft mit Zetteln, WhatsApp-Gruppen und Excel. Was draußen passiert (wer arbeitet wo, was ist erledigt, wo fehlt Absicherung, welches Werkzeug ist bei wem), kommt spät oder gar nicht im Büro an, und Stunden werden am Monatsende aus dem Gedächtnis rekonstruiert. RediOnFlow bringt beides auf einen Bildschirm: Die Mitarbeitenden tippen auf der Baustelle zwei, drei Mal, und das Büro sieht es sofort.
