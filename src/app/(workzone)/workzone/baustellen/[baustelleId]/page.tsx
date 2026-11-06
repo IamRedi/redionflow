@@ -36,6 +36,7 @@ import { SiteFactoryView } from "../../production/factory-output-view";
 import { factoryOutput } from "@/lib/elements/factory-output";
 import type { FactoryBatchView } from "../../production/production-ui";
 import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
+import { PhaseDocumentsButton } from '@/components/steel/phase-documents';
 import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
 import { compareMarks } from "@/lib/elements/tekla-list";
 import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
@@ -344,6 +345,7 @@ export default async function BaustelleDetailPage({
                 isAdmin={isAdmin}
                 canUpload={Boolean(currentActorView)}
               />
+              {can.office||can.siteSteps||can.factorySteps?<PhaseDocumentsButton siteId={baustelle.id}/>:null}
               <WorkingBadge workers={activeWorkerNames} />
             </div>
             {baustelle.type !== "STEEL_WORKSHOP" ? (

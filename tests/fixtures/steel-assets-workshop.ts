@@ -38,6 +38,11 @@ export async function cleanupSteelAssetsWorkshop(companyId: string) {
   if(company?.displayName!=='Synthetic Assets · DEMO')throw new Error('Refusing cleanup outside the synthetic assets fixture.');
   const where={companyProfileId:companyId};
   // Explicit FK order preserves Restrict protections in the production schema.
+  await prisma.sitePhaseDocumentReceipt.deleteMany({where});
+  while(await prisma.sitePhaseDocument.count({where})){
+    const deleted=await prisma.sitePhaseDocument.deleteMany({where:{...where,nextVersion:{is:null}}});if(!deleted.count)throw new Error('Synthetic document version cycle');
+  }
+  await prisma.companyAssetCode.deleteMany({where});
   await prisma.companyAssetFile.deleteMany({where});
   await prisma.companyAssetEvent.deleteMany({where});
   await prisma.companyAssetHandover.deleteMany({where});

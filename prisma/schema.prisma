@@ -192,6 +192,8 @@ enum AssistantLanguage {
 }
 
 model User {
+  phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentUser")
+  phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptUser")
   companyAssetFiles CompanyAssetFile[] @relation("AssetFileUser")
   id                String            @id @default(cuid())
   email             String            @unique
@@ -244,6 +246,9 @@ model User {
 }
 
 model CompanyProfile {
+  phaseDocuments SitePhaseDocument[]
+  phaseReceipts SitePhaseDocumentReceipt[]
+  assetCodes CompanyAssetCode[]
   operationalAssets CompanyOperationalAsset[]
   assetHandovers CompanyAssetHandover[]
   assetIncidents CompanyAssetIncident[]
@@ -844,6 +849,8 @@ model MachineConeMovement {
 }
 
 model Worker {
+  phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentWorker")
+  phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptWorker")
   operationalAssets CompanyOperationalAsset[] @relation("AssetHolder")
   assetHandoversFrom CompanyAssetHandover[] @relation("AssetHandoverFrom")
   assetHandoversTo CompanyAssetHandover[] @relation("AssetHandoverTo")
@@ -920,6 +927,7 @@ model Worker {
 
 /// Operational overlay; existing machines, issued rows and history are retained.
 model CompanyOperationalAsset {
+  codes CompanyAssetCode[]
   id String @id @default(cuid())
   companyProfileId String
   companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
@@ -1278,6 +1286,7 @@ model MachineBaustellePresence {
 }
 
 model Baustelle {
+  phaseDocuments SitePhaseDocument[]
   operationalAssets CompanyOperationalAsset[] @relation("AssetSite")
   assetHandovers CompanyAssetHandover[] @relation("AssetHandoverSite")
   steelTasks SteelSiteTask[]
@@ -1820,6 +1829,74 @@ model ProductionEvent {
 
 /// Files of one construction site kept in the database (pilot storage):
 /// documents and photos for the team, orders and invoices for the office.
+model CompanyAssetCode {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  assetId String
+  asset CompanyOperationalAsset @relation(fields:[companyProfileId,assetId],references:[companyProfileId,id],onDelete:Restrict)
+  kind String
+  value String
+  matchValue String
+  revokedAt DateTime?
+  createdByKey String
+  createdByName String
+  createdAt DateTime @default(now())
+  @@unique([companyProfileId,assetId,kind,matchValue])
+  @@index([companyProfileId,matchValue])
+}
+
+/// Immutable file versions; authorized office/engineers acknowledge their own receipt.
+model SitePhaseDocument {
+  id String @id @default(uuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  baustelleId String
+  baustelle Baustelle @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Restrict)
+  phase String
+  title String
+  note String @default("")
+  fileName String
+  mime String
+  size Int
+  dataBytes Bytes
+  sha256 String
+  createdByUserId String?
+  createdByUser User? @relation("PhaseDocumentUser",fields:[companyProfileId,createdByUserId],references:[companyProfileId,id],onDelete:Restrict)
+  createdByWorkerId String?
+  createdByWorker Worker? @relation("PhaseDocumentWorker",fields:[companyProfileId,createdByWorkerId],references:[companyProfileId,id],onDelete:Restrict)
+  createdByKey String
+  createdByName String
+  supersedesId String?
+  supersedes SitePhaseDocument? @relation("PhaseDocumentVersion",fields:[companyProfileId,baustelleId,phase,supersedesId],references:[companyProfileId,baustelleId,phase,id],onDelete:Restrict)
+  nextVersion SitePhaseDocument? @relation("PhaseDocumentVersion")
+  createdAt DateTime @default(now())
+  archivedAt DateTime?
+  archivedByKey String?
+  receipts SitePhaseDocumentReceipt[]
+  @@unique([companyProfileId,id])
+  @@unique([companyProfileId,baustelleId,phase,id])
+  @@unique([companyProfileId,baustelleId,phase,supersedesId])
+  @@index([companyProfileId,baustelleId,phase,createdAt])
+}
+
+model SitePhaseDocumentReceipt {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  documentId String
+  document SitePhaseDocument @relation(fields:[companyProfileId,documentId],references:[companyProfileId,id],onDelete:Restrict)
+  actorKey String
+  actorName String
+  userId String?
+  user User? @relation("PhaseReceiptUser",fields:[companyProfileId,userId],references:[companyProfileId,id],onDelete:Restrict)
+  workerId String?
+  worker Worker? @relation("PhaseReceiptWorker",fields:[companyProfileId,workerId],references:[companyProfileId,id],onDelete:Restrict)
+  receivedAt DateTime @default(now())
+  @@unique([companyProfileId,documentId,actorKey])
+  @@index([companyProfileId,actorKey,receivedAt])
+}
+
 model SiteFile {
   id               String         @id @default(cuid())
   companyProfileId String

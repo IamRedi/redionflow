@@ -1,5 +1,14 @@
 type Lang = 'sq' | 'en' | 'de' | 'it' | 'pl' | 'ro';
 const words = {
+  factoryCode: ['Kodi i fabrikës · barkod / QR','Factory code · barcode / QR','Herstellercode · Barcode / QR','Codice fabbrica · barcode / QR','Kod producenta · kreskowy / QR','Cod fabrică · bare / QR'],
+  unitCode: ['Kodi unik i pajisjes','Unique item code','Eindeutiger Gerätecode','Codice univoco articolo','Unikalny kod przedmiotu','Cod unic articol'],
+  codes: ['Kodet dhe etiketa','Codes and label','Codes und Etikett','Codici ed etichetta','Kody i etykieta','Coduri și etichetă'],
+  generateCode: ['Gjenero kod','Generate code','Code erzeugen','Genera codice','Generuj kod','Generează cod'],
+  printLabels: ['Printo etiketat','Print labels','Etiketten drucken','Stampa etichette','Drukuj etykiety','Tipărește etichetele'],
+  removeCode: ['Hiq lidhjen e kodit','Unlink code','Code-Verknüpfung entfernen','Scollega codice','Odłącz kod','Elimină asocierea codului'],
+  codeHint: ['Kodi i fabrikës mund të jetë i njëjtë për disa vegla. Etiketa jonë dallon çdo pajisje më vete.','A factory code may match several tools. Our label identifies each individual item.','Ein Herstellercode kann mehrere Werkzeuge treffen. Unser Etikett kennzeichnet jedes einzelne Gerät.','Il codice fabbrica può identificare più utensili. La nostra etichetta distingue ogni articolo.','Kod producenta może pasować do wielu narzędzi. Nasza etykieta identyfikuje każdy egzemplarz.','Codul fabricii poate corespunde mai multor unelte. Eticheta noastră identifică fiecare exemplar.'],
+  scanMultiple: ['Ky kod i përket disa pajisjeve. Zgjidh atë të saktën.','This code matches several items. Choose the correct one.','Dieser Code passt zu mehreren Geräten. Das richtige auswählen.','Questo codice corrisponde a più articoli. Scegli quello corretto.','Kod pasuje do kilku przedmiotów. Wybierz właściwy.','Codul corespunde mai multor articole. Alege exemplarul corect.'],
+  scanUnknown: ['Kodi nuk është regjistruar ende.','This code has not been registered.','Dieser Code ist noch nicht erfasst.','Codice non ancora registrato.','Kod nie jest jeszcze zarejestrowany.','Codul nu este încă înregistrat.'],
   warehouse: ['Magazina', 'Warehouse', 'Lager', 'Magazzino', 'Magazyn', 'Magazie'],
   workshop: ['Oficina', 'Workshop', 'Werkstatt', 'Officina', 'Warsztat', 'Atelier'],
   tools: ['Vegla', 'Tools', 'Werkzeuge', 'Utensili', 'Narzędzia', 'Unelte'],

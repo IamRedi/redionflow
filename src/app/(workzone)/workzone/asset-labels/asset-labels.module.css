@@ -1,0 +1,4 @@
+@media print {
+  :global(body):has(.sheet) :global(footer) { display: none !important; }
+  .sheet > div { margin-top: 0; }
+}

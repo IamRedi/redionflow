@@ -24,6 +24,7 @@ export function useAssetMutation(c: AssetCopy, after: () => Promise<unknown>) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [result, setResult] = useState<unknown>(null);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   async function run(command: AssetCommand) {
     if (guard.current) return false;
@@ -35,6 +36,7 @@ export function useAssetMutation(c: AssetCopy, after: () => Promise<unknown>) {
       if (!result.ok) { if (alive.current) { setMessage(result.message || c.saveError); setFailed(true); } return false; }
       receipt.current = null;
       if (alive.current) {
+        setResult(result.data);
         setMessage(c.saved);
         try { await after(); } catch { setMessage(c.refreshError); setFailed(true); }
         router.refresh();
@@ -48,7 +50,7 @@ export function useAssetMutation(c: AssetCopy, after: () => Promise<unknown>) {
       if (alive.current) setPending(false);
     }
   }
-  return { run, pending, message, failed };
+  return { run, pending, message, failed, result };
 }
 
 export function useAssetSnapshot(query: AssetQuery, c: AssetCopy) {

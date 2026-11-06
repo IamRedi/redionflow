@@ -3,6 +3,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { assetActor, assetActorKey, assetFail, type AssetActor } from './access';
 import { assetMutationSchema, assetQuerySchema, assetRefSchema } from './validation';
+import { generateAssetLabelCode, scanCodeCandidates, scanCodeKey } from '@/lib/inventory/scan-code';
 import type { AssetRef, AssetQuery, AssetSnapshot, AssetDetail, AssetSummary, AssetHandoverView, AssetRepairView, AssetIncidentView, AssetMutation, AssetOperationalStatus } from './types';
 
 type Tx = Prisma.TransactionClient;
@@ -19,6 +20,13 @@ const personName = (person: { firstName: string; lastName: string }) => `${perso
 function expectRevision(actual: number, expected: number) { if (actual !== expected) assetFail('CONFLICT'); }
 function requireManage(actor: AssetActor) { if (!actor.canManage) assetFail('DENIED'); }
 function requireRepair(actor: AssetActor) { if (!actor.canRepair) assetFail('DENIED'); }
+async function freshLabel(tx:Tx,actor:AssetActor){
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`asset-label:${actor.companyId}`}))`;
+  for(let attempt=0;attempt<5;attempt++){
+    const value=generateAssetLabelCode();
+    if(!await tx.companyInventoryItem.findFirst({where:{barcode:{equals:value,mode:'insensitive'}},select:{id:true}})&&!await tx.companyAssetCode.findFirst({where:{...owned(actor),matchValue:scanCodeKey(value),revokedAt:null},select:{id:true}}))return value;
+  }return assetFail('CONFLICT');
+}
 const event = (tx: Tx, actor: AssetActor, assetId: string, type: string, note = '', repairId?: string) => tx.companyAssetEvent.create({ data: { ...owned(actor),assetId,type,note,repairId,actorKey:assetActorKey(actor),actorName:actor.name } });
 
 async function baseAsset(tx: Tx, actor: AssetActor, ref: AssetRef) {
@@ -147,10 +155,31 @@ export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
       requireManage(actor); const refs:AssetRef[]=[];
       for(let i=0;i<(c.quantity??1);i++){
         const suffix=(c.quantity??1)>1?`-${String(i+1).padStart(3,'0')}`:'';
-        const item=await tx.companyInventoryItem.create({data:{...owned(actor),category:c.category==='clothing'?'CLOTHING':c.category==='equipment'?'SITE_EQUIPMENT':'WORK_TOOL',name:c.name,itemCode:c.code?`${c.code}${suffix}`:`INV-${randomUUID().slice(0,12)}`,barcode:c.barcode?`${c.barcode}${suffix}`:`AS-${randomUUID()}`,sizeLabel:c.size,note:c.note}});
+        const item=await tx.companyInventoryItem.create({data:{...owned(actor),category:c.category==='clothing'?'CLOTHING':c.category==='equipment'?'SITE_EQUIPMENT':'WORK_TOOL',name:c.name,itemCode:c.code?`${c.code}${suffix}`:`INV-${randomUUID().slice(0,12)}`,barcode:c.barcode?`${c.barcode}${suffix}`:await freshLabel(tx,actor),sizeLabel:c.size,note:c.note}});
         const a=await lockOwnedAsset(tx,actor,{kind:'inventory',id:item.id}); await event(tx,actor,a.id,'registered',c.note??''); refs.push(a.ref);
+        if(c.factoryCode)await tx.companyAssetCode.create({data:{...owned(actor),assetId:a.id,kind:'factory',value:c.factoryCode,matchValue:scanCodeKey(c.factoryCode),createdByKey:assetActorKey(actor),createdByName:actor.name}});
       }
       result={assets:refs};
+    } else if(c.type==='code-add'||c.type==='code-generate'||c.type==='code-remove') {
+      requireManage(actor);const a=await lockOwnedAsset(tx,actor,c.asset);
+      if(c.type==='code-remove'){
+        const code=await tx.companyAssetCode.findFirst({where:{id:c.codeId,...owned(actor),assetId:a.id,kind:'factory',revokedAt:null}});if(!code)return assetFail('NOT_FOUND');
+        await tx.companyAssetCode.update({where:{id:code.id},data:{revokedAt:new Date()}});await event(tx,actor,a.id,'code.removed',code.value);
+      }else if(c.type==='code-add'){
+        const matchValue=scanCodeKey(c.value),existing=await tx.companyAssetCode.findFirst({where:{...owned(actor),assetId:a.id,kind:'factory',matchValue}});
+        if(!existing||existing.revokedAt){
+          if(await tx.companyAssetCode.count({where:{...owned(actor),assetId:a.id,kind:'factory',revokedAt:null}})>=10)return assetFail('INVALID_INPUT');
+          await tx.companyAssetCode.upsert({where:{companyProfileId_assetId_kind_matchValue:{...owned(actor),assetId:a.id,kind:'factory',matchValue}},create:{...owned(actor),assetId:a.id,kind:'factory',value:c.value,matchValue,createdByKey:assetActorKey(actor),createdByName:actor.name},update:{revokedAt:null,value:c.value}});
+          await event(tx,actor,a.id,'code.added',c.value);
+        }
+      }else{
+        const existing=await tx.companyAssetCode.findFirst({where:{...owned(actor),assetId:a.id,kind:'label',revokedAt:null}});
+        if(existing)result={code:existing.value};
+        else if(a.code&&/^AS-[A-Z0-9-]+$/i.test(a.code)&&a.code.length<=24)result={code:a.code};
+        else{
+          const value=await freshLabel(tx,actor);await tx.companyAssetCode.create({data:{...owned(actor),assetId:a.id,kind:'label',value,matchValue:scanCodeKey(value),createdByKey:assetActorKey(actor),createdByName:actor.name}});await event(tx,actor,a.id,'code.generated',value);result={code:value};
+        }
+      }
     } else if(c.type==='handover') {
       const a=await lockOwnedAsset(tx,actor,c.asset); await unblocked(tx,actor,a,c.kind==='return');
       if(!actor.canManage && (c.kind==='issue'?!!a.holderWorkerId||c.toWorkerId!==actor.workerId:a.holderWorkerId!==actor.workerId)) return assetFail('DENIED');
@@ -310,8 +339,9 @@ function incidentView(r:IncidentRow):AssetIncidentView{return{id:r.id,asset:refO
 export async function readAssetSnapshot(input:AssetQuery={}):Promise<AssetSnapshot>{
  const parsed=assetQuerySchema.safeParse(input);if(!parsed.success)return assetFail('INVALID_INPUT');const q=parsed.data,actor=await assetActor(),page=q.page??1,limit=30;
  return withTenantContext(actor.companyId,async tx=>{
-  const search=q.query?Prisma.sql`AND (name ILIKE ${`%${q.query}%`} OR code ILIKE ${`%${q.query}%`} OR "searchCode" ILIKE ${`%${q.query}%`} OR plate ILIKE ${`%${q.query}%`})`:Prisma.empty;
-  const filters=Prisma.sql`${visibleSql(actor,q.workerId)} ${q.includeInactive?Prisma.empty:Prisma.sql`AND availability NOT IN ('lost','retired','inactive')`} ${q.category?Prisma.sql`AND category=${q.category}`:Prisma.empty} ${search}`;
+  const search=q.query?Prisma.sql`AND (name ILIKE ${`%${q.query}%`} OR code ILIKE ${`%${q.query}%`} OR "searchCode" ILIKE ${`%${q.query}%`} OR plate ILIKE ${`%${q.query}%`} OR EXISTS(SELECT 1 FROM "CompanyAssetCode" ac WHERE ac."companyProfileId"=${actor.companyId} AND ac."assetId"=assets.aid AND ac."revokedAt" IS NULL AND ac.value ILIKE ${`%${q.query}%`}))`:Prisma.empty;
+  const scanned=q.scan?Prisma.sql`AND (code IN (${Prisma.join(scanCodeCandidates(q.scan))}) OR "searchCode" IN (${Prisma.join(scanCodeCandidates(q.scan))}) OR ${scanCodeKey(q.scan).startsWith('unit:')?Prisma.sql`upper(code)=upper(${q.scan})`:Prisma.sql`false`} OR plate=${q.scan} OR EXISTS(SELECT 1 FROM "CompanyAssetCode" ac WHERE ac."companyProfileId"=${actor.companyId} AND ac."assetId"=assets.aid AND ac."revokedAt" IS NULL AND ac."matchValue"=${scanCodeKey(q.scan)}))`:Prisma.empty;
+  const filters=Prisma.sql`${visibleSql(actor,q.workerId)} ${q.includeInactive?Prisma.empty:Prisma.sql`AND availability NOT IN ('lost','retired','inactive')`} ${q.category?Prisma.sql`AND category=${q.category}`:Prisma.empty} ${search} ${scanned}`;
   const rows=await tx.$queryRaw<RawAsset[]>(Prisma.sql`${assetProjection(actor)} SELECT * FROM assets WHERE ${filters} ORDER BY lower(name),kind,id LIMIT ${limit+1} OFFSET ${(page-1)*limit}`);
   const [counts]=await tx.$queryRaw<AssetSnapshot['counts'][]>(Prisma.sql`${assetProjection(actor)} SELECT count(*)::int AS total,count(*) FILTER(WHERE availability='available')::int AS available,count(*) FILTER(WHERE availability='issued')::int AS issued,count(*) FILTER(WHERE availability IN ('reported','workshop'))::int AS workshop,count(*) FILTER(WHERE availability IN ('handover','loss_pending','retirement_pending'))::int AS pending,count(*) FILTER(WHERE availability='lost')::int AS lost,count(*) FILTER(WHERE availability='retired')::int AS retired FROM assets WHERE ${filters}`);
   const workerScope=q.workerId??actor.workerId;
@@ -339,15 +369,16 @@ export async function readAssetDetail(input:AssetRef):Promise<AssetDetail>{
  const ref=assetRefSchema.parse(input),actor=await assetActor();return withTenantContext(actor.companyId,async tx=>{
   const [row]=await tx.$queryRaw<RawAsset[]>(Prisma.sql`${assetProjection(actor)} SELECT * FROM assets WHERE kind=${ref.kind} AND id=${ref.id} AND ${visibleSql(actor)}`);if(!row)return assetFail('NOT_FOUND');
   const asset=summary(row);
-  const [repairs,incidents,handovers,history,files,legacy]=await Promise.all([
+  const [repairs,incidents,handovers,history,files,legacy,codes]=await Promise.all([
    row.aid?tx.companyAssetRepair.findMany({where:{...owned(actor),assetId:row.aid},include:assetInclude,orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
    row.aid?tx.companyAssetIncident.findMany({where:{...owned(actor),assetId:row.aid},include:assetInclude,orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
    row.aid?tx.companyAssetHandover.findMany({where:{...owned(actor),assetId:row.aid},include:assetInclude,orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
    row.aid?tx.companyAssetEvent.findMany({where:{...owned(actor),assetId:row.aid},orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
    row.aid?tx.companyAssetFile.findMany({where:{...owned(actor),assetId:row.aid,...(!actor.canRepair&&!actor.canManage?{kind:{not:'invoice'}}:{})},select:{id:true,name:true,kind:true,mime:true,size:true,repairId:true,uploadedByName:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
    ref.kind==='inventory'?tx.inventoryAssetMovement.findMany({where:{...owned(actor),itemId:ref.id,isPrivate:false},orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
+   row.aid?tx.companyAssetCode.findMany({where:{...owned(actor),assetId:row.aid,revokedAt:null},select:{id:true,kind:true,value:true},orderBy:{createdAt:'asc'},take:12}):[],
   ]);
-  return {asset,permissions:permissions(actor),repairs:repairs.map(job=>repairView(job,asset)),incidents:incidents.map(incidentView),handovers:handovers.map(h=>handoverView(h,actor)),files:files.map(f=>({id:f.id,name:f.name,kind:f.kind as 'photo'|'invoice'|'document'|'cover',mime:f.mime,bytes:f.size,repairId:f.repairId,url:`/api/company-assets/files/${f.id}`,uploadedBy:f.uploadedByName,uploadedAt:f.createdAt.toISOString()})),history:[...history.map(h=>({id:h.id,type:h.type,actor:h.actorName,at:h.createdAt.toISOString(),note:h.note,repairId:h.repairId})),...legacy.map(h=>({id:`legacy:${h.id}`,type:`legacy.${h.action}`,actor:h.actorName??'',at:h.createdAt.toISOString(),note:h.note??'',repairId:null}))].sort((a,b)=>b.at.localeCompare(a.at)||b.id.localeCompare(a.id))};
+  return {asset,codes:codes.map(c=>({...c,kind:c.kind as 'factory'|'label'})),permissions:permissions(actor),repairs:repairs.map(job=>repairView(job,asset)),incidents:incidents.map(incidentView),handovers:handovers.map(h=>handoverView(h,actor)),files:files.map(f=>({id:f.id,name:f.name,kind:f.kind as 'photo'|'invoice'|'document'|'cover',mime:f.mime,bytes:f.size,repairId:f.repairId,url:`/api/company-assets/files/${f.id}`,uploadedBy:f.uploadedByName,uploadedAt:f.createdAt.toISOString()})),history:[...history.map(h=>({id:h.id,type:h.type,actor:h.actorName,at:h.createdAt.toISOString(),note:h.note,repairId:h.repairId})),...legacy.map(h=>({id:`legacy:${h.id}`,type:`legacy.${h.action}`,actor:h.actorName??'',at:h.createdAt.toISOString(),note:h.note??'',repairId:null}))].sort((a,b)=>b.at.localeCompare(a.at)||b.id.localeCompare(a.id))};
  });
 }
 

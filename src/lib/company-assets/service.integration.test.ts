@@ -40,8 +40,38 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{
  const where={companyProfileId:{in:companies}};
+ await prisma.companyAssetCode.deleteMany({where});
  await prisma.companyAssetFile.deleteMany({where});await prisma.companyAssetEvent.deleteMany({where});await prisma.companyAssetHandover.deleteMany({where});await prisma.companyAssetIncident.deleteMany({where});await prisma.companyAssetRepair.deleteMany({where});await prisma.companyOperationalAsset.deleteMany({where});await prisma.companyAssetCommandReceipt.deleteMany({where});
  await prisma.workerAssetItem.deleteMany({where:{worker:{companyProfileId:{in:companies}}}});await prisma.inventoryAssetMovement.deleteMany({where});await prisma.user.deleteMany({where});await prisma.companyProfile.deleteMany({where:{id:{in:companies}}});
+});
+it('resolves exact factory QR and GTIN identities, keeps multiple units explicit, and never treats names as scans',async()=>{
+ const qr='https://factory.example.test/Drill?serial=001-aB&part=M_7';
+ const result=await mutate({type:'register',name:'Fictional factory drill',category:'tool',quantity:2,factoryCode:qr}) as {assets:AssetRef[]};
+ expect((await readAssetSnapshot({scan:qr})).assets.map(a=>a.id).sort()).toEqual(result.assets.map(a=>a.id).sort());
+ expect((await readAssetSnapshot({scan:qr.toUpperCase()})).total).toBe(0);
+ expect((await readAssetSnapshot({scan:'Fictional factory drill'})).total).toBe(0);
+ const codes=await Promise.all(result.assets.map(async r=>(await readAssetDetail(r)).asset.code!));
+ expect(new Set(codes).size).toBe(2);expect(codes.every(c=>/^AS-[A-F0-9]{12}$/.test(c))).toBe(true);
+ expect((await readAssetSnapshot({scan:codes[0].toLowerCase()})).assets.map(a=>a.id)).toEqual([result.assets[0].id]);
+ await mutate({type:'code-add',asset:ref,value:'012345678905'});expect((await readAssetSnapshot({scan:'0012345678905'})).assets[0].id).toBe(ref.id);
+ await expect(mutate({type:'code-add',asset:other,value:qr})).rejects.toMatchObject({code:'NOT_FOUND'});
+ as(workerA);await expect(mutate({type:'code-add',asset:ref,value:'Worker cannot alias'})).rejects.toMatchObject({code:'DENIED'});
+});
+it('reuses generated unit labels, soft-unlinks factory aliases, and preserves legacy codes and custody guards',async()=>{
+ const generated=await mutate({type:'code-generate',asset:ref}) as {code:string};
+ expect(await mutate({type:'code-generate',asset:ref})).toEqual(generated);
+ expect((await readAssetSnapshot({scan:generated.code})).assets[0].id).toBe(ref.id);
+ await mutate({type:'code-add',asset:ref,value:'Factory:Abc_001'});
+ const detail=await readAssetDetail(ref),factory=detail.codes.find(c=>c.kind==='factory')!;
+ await mutate({type:'code-remove',asset:ref,codeId:factory.id});expect((await readAssetSnapshot({scan:factory.value})).total).toBe(0);
+ expect((await prisma.companyAssetCode.findUniqueOrThrow({where:{id:factory.id}})).revokedAt).not.toBeNull();
+ await mutate({type:'code-add',asset:ref,value:factory.value});expect((await readAssetDetail(ref)).codes.find(c=>c.kind==='factory')?.id).toBe(factory.id);
+ await expect(mutate({type:'code-remove',asset:ref,codeId:detail.codes.find(c=>c.kind==='label')!.id})).rejects.toMatchObject({code:'NOT_FOUND'});
+ const legacy=(await prisma.companyInventoryItem.findUniqueOrThrow({where:{id:ref.id}})).barcode!;
+ expect((await readAssetSnapshot({scan:legacy})).assets[0].id).toBe(ref.id);
+ await mutate({type:'report',asset:ref,kind:'defect',note:'Synthetic drill jammed'});
+ expect((await readAssetSnapshot({scan:generated.code,includeInactive:true})).assets[0].availability).toBe('reported');
+ await expect(mutate({type:'handover',asset:ref,kind:'issue',toWorkerId:workerA.workerId!})).rejects.toMatchObject({code:'ASSET_UNAVAILABLE'});
 });
 it('reads legacy rows without backfill, counts the whole filtered dataset and paginates individual clothing units',async()=>{
  expect((await readAssetDetail(ref)).asset.revision).toBe(0);expect(await prisma.companyOperationalAsset.count({where:{companyProfileId:boss.companyId}})).toBe(0);
