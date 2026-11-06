@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**Musterfirma Workzone · 6 November 2026:** The original movable work field is restored with map mode, reflow and plan/calendar access. The daily plan reuses the existing planning board with isolated Musterfirma storage, saved versions, a worker view and inventory/workshop checks. Planning does not replace an equipment handover. [Logic and rollout status](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![Musterfirma Workzone with the restored field, map and planning controls](docs/assets/screenshots/baum-workzone-restored-online.jpg)
+
 **Species atlas and artwork library · 6 November 2026:** The Musterfirma gains 41 original AI illustrations in the Baumdienst style: 26 botanical plates, seven area scenes and eight equipment categories. The tree-card magnifier opens tree form, leaf/needles, bark and flowers/fruit or cones with individual zoom. Species notes and botanical sources stay under “More about this species”. Own photos and saved equipment images take priority. The public AI allowance remains 5/UTC day and 50 total. [Musterfirma](https://redionflow-production.up.railway.app/demo/workzone) · [Logic and evidence](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![BaumdienstFlow species atlas in the actual fictional demo](docs/assets/screenshots/baum-atlas-online.jpg)

@@ -148,7 +148,7 @@ export default async function DemoWorkzonePage() {
         <h1 className="mt-1 text-xl font-semibold">{workzoneName}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("demo.workzoneDescription", currentLang)}</p>
       </div>}
-      {workshopEnabled ? <MusterWorkzone now={new Date().toISOString()} sites={baustellen.map(b=>({id:b.id,key:demoSiteKey(b),name:b.name,address:b.address,trees:b.treeItems,workers:b.workSessions.map(s=>`${s.worker.firstName} ${s.worker.lastName}`),note:b.manualTasks[0]?.description || null}))} /> : <WorkzoneMissionControl
+      {workshopEnabled ? <MusterWorkzone now={new Date().toISOString()} missions={missionItems} defaultAddress={defaultAddress} sites={baustellen.map(b=>({id:b.id,key:demoSiteKey(b),trees:b.treeItems}))} /> : <WorkzoneMissionControl
         items={liveMission}
         archive={archivedMission}
         defaultAddress={defaultAddress}
