@@ -15,6 +15,7 @@ import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
 import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, Wrench, X } from "lucide-react";
 import { FleetDock } from '@/components/company-assets/fleet-dock';
+import { ProductionHeaderActions } from '@/components/shell/ProductionHeaderActions';
 import { FleetPicker } from '@/components/company-assets/fleet-picker';
 import { AssetDetailDialog } from '@/components/company-assets/asset-detail-panel';
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
@@ -305,8 +306,8 @@ export function MachineSidebar({
   if (machines.length === 0 && !enhancedOperations) return null;
 
   return (
-    <aside data-testid="fleet-rail" className={enhancedOperations ? 'flex min-h-0 min-w-0 items-center justify-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:justify-start lg:px-2' : embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
-      {enhancedOperations ? <FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={() => openWorkshop()} /> : <>
+    <aside data-testid="fleet-rail" className={enhancedOperations ? 'contents print:hidden' : embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
+      {enhancedOperations ? <ProductionHeaderActions><FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={() => openWorkshop()} /></ProductionHeaderActions> : <>
       <button
         type="button"
         title={t("workzone.fleet", lang)}

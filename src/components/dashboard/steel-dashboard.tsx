@@ -127,10 +127,10 @@ export function SteelDashboard({ data: d, lang }: {
       <section className={styles.kpis} aria-label={c.month}>
         {SERIES.map((s, i) => <article className={styles.kpi} key={s} style={{ '--accent': colors[s] } as CSSProperties}>
           <div className={styles.kpiTop}><span>{c[s]}</span>{i < 2 ? <Scissors size={17}/> : <CheckCheck size={18}/>}</div>
-          <div className={styles.kpiNumber} data-testid={`metric-${s}`}>{metricText(d.totals[s])}<small>{kgUnit}</small></div>
+          <div className={styles.kpiNumber} data-testid={`metric-${s}`}><span>{metricText(d.totals[s])}</span><small>{kgUnit}</small></div>
           {badge(d.totals[s])}<div className={styles.spark} aria-hidden="true">{d.days.map(day => <i key={day.key} style={{ height: `${Math.max(3, day.metrics[s].kg / Math.max(1, ...d.days.map(x => x.metrics[s].kg)) * 30)}px` }}/>)}</div>
         </article>)}
-        <article className={`${styles.kpi} ${styles.readyKpi}`}><div className={styles.kpiTop}><span>{c.ready}</span><Factory size={17}/></div><div className={styles.kpiNumber}>{n(d.totalProgress.readyKg)}<small>{kgUnit}</small></div><span className={styles.micro}>{n(d.totalProgress.readyPieces, 0)} / {n(d.totalProgress.totalPieces, 0)} {c.pieces} · {c.knowledge}</span><div className={styles.progressTrack}><span style={{ width: `${readyPct}%` }}/></div><div className={styles.readyFoot}>{readyPct}% · {c.percentHint}</div></article>
+        <article className={`${styles.kpi} ${styles.readyKpi}`}><div className={styles.kpiTop}><span>{c.ready}</span><Factory size={17}/></div><div className={styles.kpiNumber}><span>{n(d.totalProgress.readyKg)}</span><small>{kgUnit}</small></div><span className={styles.micro}>{n(d.totalProgress.readyPieces, 0)} / {n(d.totalProgress.totalPieces, 0)} {c.pieces} · {c.knowledge}</span><div className={styles.progressTrack}><span style={{ width: `${readyPct}%` }}/></div><div className={styles.readyFoot}>{readyPct}% · {c.percentHint}</div></article>
       </section>
 
       <div className={styles.mainGrid}>

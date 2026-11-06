@@ -42,8 +42,11 @@ Evidence pages use checkedAt/id keysets scoped to the same company/project/day;
 paging does not change totals. Month/day filters do not alter records. Dates and
 numeric weights have deterministic SQ/EN/DE/IT/PL/RO formats.
 
-The steel admin workspace uses the available width. The compact Flota/Oficina
-action dock uses an allocated shell row/column; vehicles appear in its searchable
+The steel admin workspace uses the available width and height. Owner correction,
+6 November 2026: compact Flota/Oficina triggers join the transparent header beside
+alerts on desktop and between Panel and alerts on phones. Their dialogs retain
+workspace-owned state and focus restoration through a React portal; no separate
+side column or bottom dock row is reserved. Vehicles appear in the searchable
 dialog rather than a permanently visible thumbnail rail. Fleet administration
 also remains under Personnel & Fleet. Header and
 navigation remain outside the primary content scroll region. The transparent
@@ -59,6 +62,9 @@ The header/team wrapper is transparent; on desktop the announcement/bell control
 sit directly beneath the single book icon, without a group backplate. The team
 can scroll underneath, with enough end space to reach its last profile. Steel
 admin navigation does not repeat the KiDraht link. The map navigation pane scrolls independently with its bar hidden.
+Phone dashboard controls share compact44px touch targets and intrinsic widths;
+the monitor action no longer stretches across the row. Reduced gaps/padding keep
+the existing metric, filter and calendar hierarchy without changing any numbers.
 The author link stays centered over the full footer width, with the small product
 mark at the side. Long public pages retain document scrolling.
 
