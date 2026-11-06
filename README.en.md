@@ -40,6 +40,25 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 
 **Warehouse, workshop and fleet · Released for a real steel company, 6 November 2026 ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Tools, clothing and site equipment are tracked as individual units with codes and sizes where relevant. Issues and returns require office and worker confirmation; colleague transfers require both colleagues. Loss and retirement remain pending until management decides. Repairs move through reported → received → repairing → ready; release requires a function test and a repair note or evidence. Private photos, invoices and history stay with the original asset. Two compact actions open fleet and workshop; the phone vehicle picker has three columns with names and plates. Verified production source: [c91a95a](https://github.com/IamRedi/redionflow/commit/c91a95ae379a8ed2ac25306001a41f96e7f4c258). Company sign-in is required; this extension is not enabled in the public demos.
 
+## Document handovers and asset codes in BauFlow
+
+Six site phases group documents with download and a share chooser. Office staff
+and engineers personally confirm receipt with their name and timestamp. New
+versions retain previous files and confirmations in history; receiving a document
+does not complete a production step.
+
+Factory barcodes and QR payloads retain leading zeroes, case and punctuation.
+A shared model code requires choosing the individual unit. Each unit gets a
+unique printable label, while existing codes remain valid. Company sign-in is
+required. Physical camera and printer acceptance remain separate from local
+browser verification.
+
+This capture comes from the local application with entirely synthetic data.
+This documentation PR is published with the approved application update; it does
+not enable the private workflows in the public demos.
+
+<img src="docs/assets/screenshots/steel-phase-documents-synthetic.png" alt="Local fictional BauFlow company with phase documents and a personal receipt confirmation" width="300">
+
 ## Why this project?
 
 Small and mid-sized contractors often plan their sites with paper, WhatsApp groups and Excel. What happens outside (who works where, what is done, where safety equipment is missing, who has which tool) reaches the office late or never, and hours get reconstructed from memory at the end of the month. RediOnFlow puts both on one screen: the crew taps two or three times on site, and the office sees it right away.
