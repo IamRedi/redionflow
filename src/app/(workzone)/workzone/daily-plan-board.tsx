@@ -15,6 +15,14 @@ import {
   updateDailyPlanColumnNoteAction,
 } from "./daily-plan-actions";
 
+export type DailyPlanActions = {
+  move: typeof moveDailyPlanItemAction;
+  remove: typeof removeDailyPlanItemAction;
+  save: typeof saveDailyPlanAction;
+  clear: typeof clearDailyPlanAction;
+  note: typeof updateDailyPlanColumnNoteAction;
+};
+const operationalActions: DailyPlanActions = { move: moveDailyPlanItemAction, remove: removeDailyPlanItemAction, save: saveDailyPlanAction, clear: clearDailyPlanAction, note: updateDailyPlanColumnNoteAction };
 type DraggableWorker = { id: string; name: string; licenses: string | null; availability: string; hasApprovedVacation: boolean };
 type DraggableMachine = { id: string; name: string; requiredLicense: string | null; isActive: boolean };
 type Column = {
@@ -79,6 +87,8 @@ export function DailyPlanBoard({
   baustellen,
   savedRows,
   showCurrentVersionHint,
+  actions = operationalActions,
+  touchLabels,
 }: {
   date: string;
   columns: Column[];
@@ -87,6 +97,8 @@ export function DailyPlanBoard({
   baustellen: Array<{ id: string; name: string }>;
   savedRows: SavedRow[];
   showCurrentVersionHint?: boolean;
+  actions?: DailyPlanActions;
+  touchLabels?: { choose: string; remove: string };
 }) {
   const { currentLang } = useLanguage();
   const [message, setMessage] = useState<string>();
@@ -108,7 +120,7 @@ export function DailyPlanBoard({
     if (!activeItem) return;
     const itemToAssign = activeItem;
     startTransition(async () => {
-      const result = await moveDailyPlanItemAction({
+      const result = await actions.move({
         date,
         columnId,
         kind: itemToAssign.kind,
@@ -130,7 +142,7 @@ export function DailyPlanBoard({
     const confirmation = pendingConfirmation;
     setPendingConfirmation(null);
     startTransition(async () => {
-      const confirmedResult = await moveDailyPlanItemAction({
+      const confirmedResult = await actions.move({
         date,
         columnId: confirmation.columnId,
         kind: confirmation.item.kind,
@@ -143,7 +155,7 @@ export function DailyPlanBoard({
   }
 
   function openNoteEdit(column: Column) {
-    setNoteDraft(columnNotes[column.id] ?? "");
+    setNoteDraft(touchLabels ? column.note ?? "" : columnNotes[column.id] ?? "");
     setPendingNoteEdit({ columnId: column.id, title: column.title });
   }
 
@@ -155,7 +167,8 @@ export function DailyPlanBoard({
     setPendingNoteEdit(null);
     setColumnNotes((prev) => ({ ...prev, [columnId]: note }));
     startTransition(async () => {
-      await updateDailyPlanColumnNoteAction({ date, columnId, note, lang: currentLang });
+      const result = await actions.note({ date, columnId, note, lang: currentLang });
+      setMessage(result.message);
     });
   }
 
@@ -169,9 +182,10 @@ export function DailyPlanBoard({
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
+          className={touchLabels ? "min-h-11" : undefined}
           onClick={() => {
             startTransition(async () => {
-              const result = await saveDailyPlanAction({ date, lang: currentLang });
+              const result = await actions.save({ date, lang: currentLang });
               setMessage(result.message);
             });
           }}
@@ -182,9 +196,10 @@ export function DailyPlanBoard({
         <Button
           type="button"
           variant="outline"
+          className={touchLabels ? "min-h-11" : undefined}
           onClick={() => {
             startTransition(async () => {
-              const result = await clearDailyPlanAction({ date, lang: currentLang });
+              const result = await actions.clear({ date, lang: currentLang });
               setMessage(result.message);
             });
           }}
@@ -219,6 +234,7 @@ export function DailyPlanBoard({
                     key={worker.id}
                     type="button"
                     draggable
+                    aria-label={touchLabels ? worker.name : undefined}
                     disabled={assignedWorkerIds.has(worker.id)}
                     title={needsConfirmation ? t("workzone.planRequiresConfirmation", currentLang).replace("{name}", worker.name) : worker.name}
                     onDragStart={() => setActiveItem({ kind: "WORKER", id: worker.id })}
@@ -244,7 +260,7 @@ export function DailyPlanBoard({
         </div>
 
         <div className="min-w-0 space-y-3">
-          <div className="grid grid-cols-3 gap-2 md:grid-cols-3 xl:grid-cols-3">
+          <div className={touchLabels ? "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-3 gap-2 md:grid-cols-3 xl:grid-cols-3"}>
             {columns.map((column) => {
               const warnings = columnLicenseWarnings(column, workers, machines, currentLang);
               return (
@@ -266,7 +282,7 @@ export function DailyPlanBoard({
                   <h4 className="line-clamp-2 text-[12px] font-semibold leading-4 sm:text-[13px] xl:text-sm">{column.title}</h4>
                   <button
                     type="button"
-                    className="shrink-0 rounded p-1 text-muted-foreground transition hover:bg-black/5 hover:text-foreground dark:text-emerald-100/80 dark:hover:bg-white/10"
+                    className={`${touchLabels ? "flex size-11 items-center justify-center" : "p-1"} shrink-0 rounded text-muted-foreground transition hover:bg-black/5 hover:text-foreground dark:text-emerald-100/80 dark:hover:bg-white/10`}
                     onClick={(event) => {
                       event.stopPropagation();
                       openNoteEdit(column);
@@ -292,15 +308,17 @@ export function DailyPlanBoard({
                       title={t("workzone.doubleClickRemove", currentLang)}
                       onDoubleClick={() => {
                         startTransition(async () => {
-                          const result = await removeDailyPlanItemAction({ date, assignmentId: item.id, lang: currentLang });
+                          const result = await actions.remove({ date, assignmentId: item.id, lang: currentLang });
                           setMessage(result.message);
                         });
                       }}
                     >
                       {item.kind === "WORKER" ? "👷" : "🚚"} {item.labelSnapshot}
+                      {touchLabels && <button type="button" aria-label={`${touchLabels.remove} ${item.labelSnapshot}`} className="ml-1 inline-flex min-h-11 items-center rounded px-2 text-primary underline" onClick={event => { event.stopPropagation(); startTransition(async () => { const result = await actions.remove({ date, assignmentId: item.id, lang: currentLang }); setMessage(result.message); }); }}>{touchLabels.remove}</button>}
                     </div>
                   ))}
                 </div>
+                {touchLabels && activeItem && <Button type="button" className="mt-3 min-h-11 w-full" disabled={isPending} onClick={event => { event.stopPropagation(); assignToColumn(column.id); }}>{touchLabels.choose}</Button>}
               </div>
               );
             })}
@@ -316,6 +334,7 @@ export function DailyPlanBoard({
                   key={machine.id}
                   type="button"
                   draggable
+                  aria-label={touchLabels ? machine.name : undefined}
                   disabled={assignedMachineIds.has(machine.id)}
                   onDragStart={() => setActiveItem({ kind: "MACHINE", id: machine.id })}
                   onDragEnd={() => setActiveItem(null)}
@@ -342,7 +361,7 @@ export function DailyPlanBoard({
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20">
+      {!touchLabels && <div className="rounded-xl border bg-card p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20">
         <h3 className="text-sm font-semibold">{t("workzone.dailyTable", currentLang)}</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse border text-sm dark:border-white/10">
@@ -373,7 +392,7 @@ export function DailyPlanBoard({
             </tbody>
           </table>
         </div>
-      </div>
+      </div>}
       <SimpleDialog
         open={Boolean(pendingConfirmation)}
         title={t("workzone.planWarningTitle", currentLang)}

@@ -2,6 +2,8 @@
 
 # RediOnFlow
 
+**Workzone der Musterfirma · 6. November 2026:** Das ursprüngliche frei anordbare Arbeitsfeld mit Kartenmodus, Neuordnung und Plan-/Kalenderzugang ist wieder eingebunden. Der Tagesplan verwendet das bestehende Planungsboard mit einer eigenen Musterfirma-Speicherung: bestätigtes Speichern, Versionen, Mitarbeitersicht und Inventar-/Werkstattprüfung. Planung ersetzt keine Geräteübergabe. [Logik und Rolloutstand](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
 **Artenatlas und Bildarchiv · 6. November 2026:** Die Musterfirma erhält 41 originale KI-Illustrationen im Baumdienst-Stil: 26 botanische Tafeln, sieben Bereichsmotive und acht Gerätekategorien. Die Lupe in der Baumkarte öffnet Baumform, Blatt/Nadeln, Rinde und Blüten/Früchte oder Zapfen einzeln vergrößert. Artbezogene Hinweise und botanische Quellen bleiben hinter „Mehr über diese Art“. Eigene Fotos und bereits gespeicherte Gerätebilder haben Vorrang. Das öffentliche KI-Kontingent bleibt 5/UTC-Tag und 50 insgesamt. [Musterfirma](https://redionflow-production.up.railway.app/demo/workzone) · [Logik und Nachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![BaumdienstFlow species atlas in the actual fictional demo](docs/assets/screenshots/baum-atlas-online.jpg)

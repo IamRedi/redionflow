@@ -22,7 +22,7 @@ import mapStyles from "./workzone-map-index.module.css";
 import { useMapFleet, useSetWorkzoneMapMode } from "./workzone-map-fleet";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 
-type MissionItem = {
+export type MissionItem = {
   id: string;
   name: string;
   status: string;
@@ -46,6 +46,7 @@ type MissionItem = {
   demoPhotoKey?: string;
   material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
+  planSummary?: string;
 };
 
 type CanvasViewport = "desktop" | "mobile";
@@ -86,12 +87,20 @@ function orderedCanvasItems(items: MissionItem[]) {
   });
 }
 
-function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
+function canvasMetrics(viewport: CanvasViewport, items: MissionItem[], availableWidth = 0) {
   const count = items.length;
   const mobile = viewport === "mobile";
   // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
   const tall = items.some((item) => isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey));
   const inventory = items.some(item => item.demoPhotoKey);
+  if (inventory) {
+    const width = availableWidth || (mobile ? 330 : 1100);
+    const cardWidth = mobile ? Math.min(280, width - 24) : 240;
+    const columns = Math.max(1, Math.min(3, Math.floor((width + 12) / (cardWidth + 24))));
+    const rows = Math.max(1, Math.ceil(count / columns));
+    const rowGap = 390;
+    return { columns, left: 12, top: 76, columnGap: columns > 1 ? (width - 24 - cardWidth) / (columns - 1) : 0, rowGap, height: 76 + (rows - 1) * rowGap + 375 + 24, maxX: Math.max(12, width - cardWidth - 12), maxY: 76 + (rows - 1) * rowGap };
+  }
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
@@ -131,8 +140,8 @@ function softOffset(index: number, viewport: CanvasViewport) {
   return viewport === "mobile" ? mobileOffsets[index % mobileOffsets.length] : desktopOffsets[index % desktopOffsets.length];
 }
 
-function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport): CanvasPositions {
-  const metrics = canvasMetrics(viewport, items);
+function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport, width = 0): CanvasPositions {
+  const metrics = canvasMetrics(viewport, items, width);
   return Object.fromEntries(
     orderedCanvasItems(items).map((item, index) => {
       const column = index % metrics.columns;
@@ -149,10 +158,10 @@ function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport): Canva
   );
 }
 
-function autoLayouts(items: MissionItem[]): Record<CanvasViewport, CanvasPositions> {
+function autoLayouts(items: MissionItem[], width = 0): Record<CanvasViewport, CanvasPositions> {
   return {
-    desktop: autoCanvasLayout(items, "desktop"),
-    mobile: autoCanvasLayout(items, "mobile"),
+    desktop: autoCanvasLayout(items, "desktop", width),
+    mobile: autoCanvasLayout(items, "mobile", width),
   };
 }
 
@@ -167,8 +176,8 @@ function sameViewportLayouts(a: Record<CanvasViewport, CanvasPositions>, b: Reco
   return sameCanvasPositions(a.desktop, b.desktop) && sameCanvasPositions(a.mobile, b.mobile);
 }
 
-function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, viewport: CanvasViewport, fallbackPositions = autoCanvasLayout(items, viewport)) {
-  const metrics = canvasMetrics(viewport, items);
+function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, viewport: CanvasViewport, fallbackPositions = autoCanvasLayout(items, viewport), width = 0) {
+  const metrics = canvasMetrics(viewport, items, width);
   return Object.fromEntries(
     items.map((item) => {
       const position = positions[item.id] ?? fallbackPositions[item.id] ?? { x: metrics.left, y: metrics.top };
@@ -290,6 +299,7 @@ export function WorkzoneMissionControl({
   canEditPhotos?: boolean;
 }) {
   const { currentLang } = useLanguage();
+  const muster = items.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
   const reducedMotion = useReducedMotion();
   const mapFleet = useMapFleet();
   const indexVehicles = (mapFleet ?? fleetLocations).map(v => {
@@ -311,12 +321,21 @@ export function WorkzoneMissionControl({
     if (window.innerWidth < 1024) mapFrameRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
-  const canvasLayoutSignature = useMemo(() => canvasSignature(items), [items]);
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const [canvasWidth, setCanvasWidth] = useState(0);
+  useEffect(() => {
+    const element = workspaceRef.current;
+    if (!muster || !element) return;
+    const observer = new ResizeObserver(entries => setCanvasWidth(Math.round(entries[0].contentRect.width)));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [muster]);
+  const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:width-${canvasWidth}` : ""}`, [items, muster, canvasWidth]);
   // Restore browser-only saved positions in the effect below, after hydration.
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
   const positions = positionsByViewport[canvasViewport];
-  const canvasHeight = canvasMetrics(canvasViewport, items).height;
+  const canvasHeight = canvasMetrics(canvasViewport, items, canvasWidth).height;
   const isBauMode = mode !== "baumdienst";
   // Steel firms get the site panorama (SteelSiteScene) on a plain yard colour; Baumdienst keeps its green field.
   const canvasBackground = isBauMode
@@ -372,21 +391,21 @@ export function WorkzoneMissionControl({
 
   useEffect(() => {
     const saved = readSavedCanvasLayout(canvasLayoutSignature);
-    const fallback = autoLayouts(items);
+    const fallback = autoLayouts(items, canvasWidth);
     const next = saved
       ? {
-          desktop: clampCanvasLayout(items, saved.desktop, "desktop", fallback.desktop),
-          mobile: clampCanvasLayout(items, saved.mobile, "mobile", fallback.mobile),
+          desktop: clampCanvasLayout(items, saved.desktop, "desktop", fallback.desktop, canvasWidth),
+          mobile: clampCanvasLayout(items, saved.mobile, "mobile", fallback.mobile, canvasWidth),
         }
       : fallback;
     saveCanvasLayout(canvasLayoutSignature, next);
     queueMicrotask(() => {
       setPositionsByViewport((current) => (sameViewportLayouts(current, next) ? current : next));
     });
-  }, [canvasLayoutSignature, items]);
+  }, [canvasLayoutSignature, items, canvasWidth]);
 
   function resetCurrentCanvasLayout() {
-    const nextViewportPositions = autoCanvasLayout(items, canvasViewport);
+    const nextViewportPositions = autoCanvasLayout(items, canvasViewport, canvasWidth);
     setPositionsByViewport((prev) => {
       const next = {
         ...prev,
@@ -434,7 +453,7 @@ export function WorkzoneMissionControl({
   }, [isMapMode, items, addressCoords]);
 
   return (
-    <div className="w-full min-w-0 space-y-4">
+    <div ref={workspaceRef} className="w-full min-w-0 space-y-4">
       {isMapMode ? (
         <div className={mapStyles.layout} data-testid="workzone-map-layout">
           <div ref={mapFrameRef} className={mapStyles.frame} data-testid="workzone-map-frame">
@@ -442,7 +461,7 @@ export function WorkzoneMissionControl({
               type="button"
               variant="outline"
               size="icon"
-              className="absolute left-14 top-3 z-[500] h-8 w-8 border-border bg-card text-foreground shadow-sm hover:bg-muted"
+              className={`absolute left-14 top-3 z-[500] ${muster ? "size-11" : "h-8 w-8"} border-border bg-card text-foreground shadow-sm hover:bg-muted`}
               onClick={() => setIsMapMode(false)}
               title={t("workzone.planMode", currentLang)}
               aria-label={t("workzone.planMode", currentLang)}
@@ -457,6 +476,7 @@ export function WorkzoneMissionControl({
         </div>
       ) : (
         <div
+          data-testid="workzone-canvas"
           className="relative overflow-hidden rounded-xl border border-border bg-muted/40 dark:border-emerald-950/20 dark:bg-[#183428]"
           style={{
             minHeight: canvasHeight,
@@ -483,7 +503,7 @@ export function WorkzoneMissionControl({
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"
+                className={`${muster ? "size-11" : "h-8 w-8"} border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white`}
                 onClick={resetCurrentCanvasLayout}
                 title={t("workzone.reflowPlayground", currentLang)}
                 aria-label={t("workzone.reflowPlayground", currentLang)}
@@ -495,7 +515,7 @@ export function WorkzoneMissionControl({
               type="button"
               variant="outline"
               size="icon"
-              className="h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"
+              className={`${muster ? "size-11" : "h-8 w-8"} border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white`}
               onClick={() => setIsMapMode(true)}
               title={t("workzone.mapMode", currentLang)}
               aria-label={t("workzone.mapMode", currentLang)}
@@ -512,13 +532,14 @@ export function WorkzoneMissionControl({
             return (
               <motion.div
                 key={item.id}
+                data-testid={item.demoPhotoKey ? "muster-site-card" : undefined}
                 drag={!readOnly || allowCanvasDrag}
                 dragMomentum={false}
                 dragElastic={0.08}
                 onDragEnd={(_, info) => {
                   if (readOnly && !allowCanvasDrag) return;
                   const current = positions[item.id] ?? { x: 20, y: 20 };
-                  const { maxX, maxY } = canvasMetrics(canvasViewport, items);
+                  const { maxX, maxY } = canvasMetrics(canvasViewport, items, canvasWidth);
                   const next = {
                     x: clamp(Math.round(current.x + info.offset.x), 10, maxX),
                     y: clamp(Math.round(current.y + info.offset.y), 10, maxY),
@@ -543,7 +564,7 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: animateLive ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
+                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${item.demoPhotoKey ? isCompactCanvas ? "w-[min(280px,calc(100%-24px))]" : "w-[240px]" : isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
                 {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
@@ -573,6 +594,7 @@ export function WorkzoneMissionControl({
                 </div>
                 <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
                 {item.workers.length > 0 ? <p className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
+                {item.demoPhotoKey && item.planSummary && <p className="mt-1 line-clamp-2 text-[11px] text-primary">{t("workzone.plan", currentLang)}: {item.planSummary}</p>}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
                 </p>
