@@ -158,3 +158,69 @@ Camera capture also honors the selected attachment kind: a receipt selected as
 Invoice stays a private invoice. The affected mechanic browser flow passed with
 both PDF and camera-image invoices denied to an ordinary worker, followed by
 tested repair release. No physical camera was opened by the automated test.
+
+
+## Vehicle editing and service entry — 6 November 2026
+
+Vehicle cards now expose a management-only editor for identity, model, plate,
+years, function/license, ownership, weight, active flag and paper expiry dates.
+The same editor uses the established photo pipeline and private attachment
+store. Vehicle papers remain unbound to repair jobs. No GPS configuration,
+financial rates or unrelated machine fields are overwritten. Server-side fresh
+tenant/role checks and the existing asset lock/activation guard remain mandatory.
+A checksum of editable metadata rejects competing drafts without treating an
+intervening GPS or cover update as a conflicting paperwork edit. Legacy defects
+are retained when the free-text note changes.
+
+The vehicle's Workshop action opens a short choice between defect reporting (or
+its current repair) and service history. The home Workshop action opens the full
+workspace: small vehicle cards in four illustrated bays. Cards and the service
+history carry the exact repair ID, including a historical completed visit while
+the same vehicle has a newer open job. Current vehicle availability stays visible
+separately. The selected visit owns its attachments; invoices remain private.
+Notes, external routing and evidence use progressive disclosure. One final
+All details button reveals the established exhaustive asset record. Warehouse
+flows keep their complete default presentation. No process transition or release
+permission changed: mechanic/management, saved evidence and an explicit successful
+function test remain required. No migration or new dependency/provider was added.
+
+The workshop illustration follows the existing fleet SVG palette and uses native
+vector shapes. KEEP_CURRENT: suitable existing native graphics avoid a new image
+provider/cost path. Official Images API model documentation was consulted
+(https://developers.openai.com/api/reference/resources/images/methods/generate);
+GPT Image 2.6 candidates are documented, not account-tested or adopted here.
+
+Local acceptance on the Windows laptop, using its isolated WSL databases and
+synthetic identities only:
+- Full unit suite: 1,087 tests / 114 files passed.
+- Full database integration suite: 416 tests / 34 files passed, including fresh
+  office/worker/mechanic and foreign-tenant checks, invalid input, stale drafts,
+  GPS/photo concurrency, retained defects and blocked repair reactivation.
+- All three asset browser flows passed on the final app source: warehouse
+  regression; worker report to mechanic/external/private-evidence/tested-ready;
+  and fleet/editor/workshop/history on desktop/390px/360px in light and dark.
+  The last flow also checks an actual photo and document upload while editing
+  papers, exact historical/current job selection and dialog focus return.
+- The bounded visual follow-up passed with the vehicle editor at 200% text size
+  in an 844×390 window: Save and close stay reachable; no horizontal overflow.
+- Full lint and explicit typecheck passed; the guarded browser runner performed
+  npm run build and started the production build successfully. Before/after
+  renders were inspected. The asset regression rechecks the header underlay
+  and click access. Footer code is unchanged; its preceding PR71 acceptance is
+  retained rather than claimed as a newly repeated full footer-suite result.
+
+Artifacts are in the local steel-fleet-workshop-flow evidence directory. Camera,
+printer, real customer browser and production role mutation were not exercised.
+All checks above concern preparation, not deployment or owner production acceptance.
+The native presentation is updated in six locales. Companion showcase/portfolio
+changes use synthetic workshop media, keep readiness unchanged and are held for
+approval plus core live verification; their source, local checks and publication
+are separate states. No paid provider call or production write was performed.
+
+The native landing preview was also compared before/after at desktop and 390px
+in SQ/EN. The long existing feature-card paragraph is condensed into a short
+summary in all six locales; its layout and material remain unchanged. The
+presentation follow-up changes copy only. Service editing also preserves unsaved
+repair notes across phase changes and keeps clothing out of defect reporting,
+including manual-code lookup from the workshop. These paths use the existing
+domain rules and are covered by the asset browser flow.

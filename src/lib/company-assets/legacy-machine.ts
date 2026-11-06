@@ -5,6 +5,7 @@ import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { parseMachineNotes, serializeMachineNotes } from '@/lib/workzone/machine-notes';
 import { assetActor, assetActorKey, assetFail, type AssetActor } from './access';
 import { assertAssetUsable, lockOwnedAsset } from './service';
+import { editableMachine, machineEditSelect } from './machine-edit-data';
 
 /** Planning reads only status under the same lock as asset commands; it creates nothing. */
 export async function assertPlanningMachineUsable(tx: Prisma.TransactionClient, actor: Pick<AssetActor, 'companyId'>, machineId: string) {
@@ -26,13 +27,17 @@ export async function assertPlanningMachineUsable(tx: Prisma.TransactionClient, 
 }
 
 /** Keep legacy forms, but an activation cannot clear a production asset block. */
-export async function updateMachineWithAssetGuard(companyId: string, machineId: string, data: Prisma.MachineUpdateInput) {
+export async function updateMachineWithAssetGuard(companyId: string, machineId: string, data: Prisma.MachineUpdateInput, expectedVersion?: string) {
   if (!await isSteelCompany(companyId)) return prisma.machine.update({ where: { id: machineId, companyProfileId: companyId }, data });
   const actor = await assetActor();
   if (actor.companyId !== companyId || !actor.canManage) return assetFail('DENIED');
   return withTenantContext(companyId, async tx => {
     const ref = { kind: 'machine' as const, id: machineId };
     const asset = await lockOwnedAsset(tx, actor, ref);
+    if (expectedVersion) {
+      const current = await tx.machine.findUniqueOrThrow({ where: { id: machineId }, select: machineEditSelect });
+      if (editableMachine(current).version !== expectedVersion) return assetFail('CONFLICT');
+    }
     const write = { ...data };
     if (typeof write.notes === 'string' || write.notes === null) {
       const previous = await tx.machine.findUniqueOrThrow({ where: { id: machineId }, select: { notes: true } });
