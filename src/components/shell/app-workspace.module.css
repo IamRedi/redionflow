@@ -36,7 +36,7 @@
 .page { min-width: 0; flex: 1 0 auto; }
 .scroll > footer { flex-shrink: 0; margin-inline: -12px; }
 .scroll:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: -2px; }
-.workzone { grid-template-columns: minmax(0, 1fr) auto; }
+.workzone { grid-template-columns: minmax(0, 1fr); }
 .workzone .scroll { padding-top: calc(var(--workspace-header-height) + 12px); }
 @media(max-width:767px) {
   .admin { grid-template-columns: minmax(0, 1fr); padding: 0; }
@@ -46,14 +46,6 @@
 }
 @media(min-width:1024px) {
   .shell { --workspace-header-height: 110px; }
-  .workzone > aside { margin-top: var(--workspace-header-height); }
-  .admin { grid-template-columns: 208px minmax(0, 1fr) auto; }
-  .admin > aside:last-child { margin-top: var(--workspace-header-height); }
-}
-@media(max-width:1023px) {
-  .admin { grid-template-rows: minmax(0, 1fr) auto; }
-  .admin > aside:last-child { grid-column: 1 / -1; grid-row: 2; }
-  .workzone { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
 }
 @media print {
   :global(html):has(.shell) { height: auto; overflow: visible; }

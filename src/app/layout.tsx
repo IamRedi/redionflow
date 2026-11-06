@@ -10,6 +10,7 @@ import { LanguageProvider } from "@/components/i18n/language-provider";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { Button } from "@/components/ui/button";
 import { ProductionHeaderTools } from "@/components/shell/ProductionHeaderTools";
+import { ProductionHeaderActionsProvider } from '@/components/shell/ProductionHeaderActions';
 import { TopbarAnnouncementButton } from "@/app/(workzone)/workzone/topbar-announcement-button";
 import { notifyTeamAction } from "@/app/(workzone)/workzone/announcement-actions";
 import { isSteelCompany } from "@/lib/dashboard/steel-access";
@@ -96,6 +97,7 @@ export default async function RootLayout({
       <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
+          <ProductionHeaderActionsProvider>
           <FooterBrandProvider mark={production ? (admin ? <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle}>{brandBadge}</Link> : brandBadge) : null}>
           {/* Operational tools align with the header; the steel product mark lives in the shared footer. */}
           {production ? <ProductionHeaderTools
@@ -122,6 +124,7 @@ export default async function RootLayout({
           </div>}
           {children}
           </FooterBrandProvider>
+          </ProductionHeaderActionsProvider>
         </LanguageProvider>
       </body>
     </html>

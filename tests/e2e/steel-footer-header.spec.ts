@@ -29,13 +29,14 @@ test('steel footer ends the content and the transparent header keeps one book en
     await prisma.user.createMany({ data: Array.from({ length: 3 }, (_, i) => ({ companyProfileId: companyId!, name: `Office Demo ${i + 1}`, email: `office-${i}-${email}`, passwordHash: owner.passwordHash, role: 'ADMIN' as const })) });
     for (const theme of ['light', 'dark']) {
       await context.addCookies([{ name: 'bk_theme', value: theme, url: info.project.use.baseURL! }]);
-      for (const [width, height] of underlaySmoke ? [[1440, 900], [360, 800]] : [[1440, 900], [360, 800], [320, 640], [760, 360]]) {
+      for (const [width, height] of underlaySmoke ? [[1440, 900], [360, 800]] : [[1440, 900], [1280, 800], [360, 800], [320, 640], [760, 360]]) {
         await page.setViewportSize({ width, height });
         for (const [view, url] of [['dashboard', '/app/dashboard?month=2026-10&day=2026-10-14'], ['workzone', '/workzone?view=map']]) {
           if (underlaySmoke && view !== (theme === 'light' ? 'dashboard' : 'workzone')) continue;
           await page.goto(url);
           const main = page.getByTestId('app-workspace-scroll');
           await expect(main).toBeVisible();
+          if (!baseline) await expect(page.getByTestId('flow-header-fleet-actions').getByTestId('fleet-dock-open')).toBeVisible();
           await page.evaluate(() => document.fonts.ready);
           const state = await page.evaluate(() => {
             const main = document.querySelector('[data-testid="app-workspace-scroll"]')!, header = document.querySelector('[data-testid="admin-topbar"],[data-testid="workzone-topbar"]')!, strip = document.querySelector('[data-testid="flow-team-strip"]')!;
@@ -58,6 +59,51 @@ test('steel footer ends the content and the transparent header keeps one book en
             expect(state.bookVisibleText).toBe('');
             expect(state.outerHeight).toBeLessThanOrEqual(height + 1);
             expect(state.horizontalOverflow).toBe(false);
+            const commands = await page.evaluate(() => {
+              const tools = document.querySelector('[data-testid="flow-global-tools"]')!;
+              const fleet = document.querySelector('[data-testid="fleet-dock-open"]')!, workshop = document.querySelector('[data-testid="workshop-dock-open"]')!;
+              const panel = tools.querySelector('a[href="/app/dashboard"]')!, firstAlert = tools.querySelector('[data-testid="flow-header-alerts"] button')!;
+              const f = fleet.getBoundingClientRect(), w = workshop.getBoundingClientRect(), p = panel.getBoundingClientRect(), a = firstAlert.getBoundingClientRect();
+              const main = document.querySelector('[data-testid="app-workspace-scroll"]')!.getBoundingClientRect();
+              const buttons = [...tools.querySelectorAll('a,button')].filter(el => el.getClientRects().length).map(el => el.getBoundingClientRect());
+              const dashboard = document.querySelector('[data-testid="steel-dashboard"]');
+              const actions = dashboard?.querySelector('header a[target="_blank"]')?.getBoundingClientRect();
+              const actionButtons = dashboard ? [...dashboard.querySelectorAll('header button,header a')].map(el => el.getBoundingClientRect()) : [];
+              return {
+                inHeader: tools.contains(fleet) && tools.contains(workshop),
+                mobileOrder: p.right <= f.left && f.right <= w.left && w.right <= a.left,
+                sameRow: Math.abs(f.top - w.top) < 1 && Math.abs(f.top - a.top) < 1,
+                targets: buttons.every(r => r.width >= 44 && r.height >= 44 && r.left >= 0 && r.right <= innerWidth),
+                mainRight: main.right, mainBottom: main.bottom,
+                actionHeights: actionButtons.map(r => r.height), monitorWidth: actions?.width,
+              };
+            });
+            console.log('HEADER_COMMANDS', JSON.stringify({ theme, view, width, height, ...commands }));
+            expect(commands.inHeader).toBe(true);
+            expect(commands.sameRow).toBe(true);
+            expect(commands.targets).toBe(true);
+            expect(commands.mainRight).toBeGreaterThanOrEqual(width - 1);
+            expect(commands.mainBottom).toBeGreaterThanOrEqual(height - 1);
+            if (width < 1024) expect(commands.mobileOrder).toBe(true);
+            if (width <= 760 && view === 'dashboard') {
+              expect(commands.monitorWidth).toBeLessThan(210);
+              expect(commands.actionHeights.every(h => Math.abs(h - 44) < 1)).toBe(true);
+            }
+            if (width === 1440 || width === 360) {
+              const fleet = page.getByTestId('fleet-dock-open'), workshop = page.getByTestId('workshop-dock-open');
+              await fleet.click();
+              await expect(page.getByTestId('fleet-picker')).toBeVisible();
+              await page.getByTestId('fleet-search').fill('DEMO-01');
+              await expect(page.getByTestId('fleet-picker').locator('[data-machine-id]')).toHaveCount(1);
+              await page.keyboard.press('Escape');
+              await expect(page.getByTestId('fleet-picker')).not.toBeVisible();
+              await expect(fleet).toBeFocused();
+              await workshop.click();
+              await expect(page.getByRole('dialog', { name: 'Oficina', exact: true })).toBeVisible();
+              await page.keyboard.press('Escape');
+              await expect(page.getByRole('dialog', { name: 'Oficina', exact: true })).not.toBeVisible();
+              await expect(workshop).toBeFocused();
+            }
             if (width >= 1024) {
               expect(state.alertsBelowBook).toBe(true);
               expect(state.alertsCentered).toBe(true);

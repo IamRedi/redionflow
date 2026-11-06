@@ -160,12 +160,14 @@
 .primaryButton {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  height: 36px;
   gap: 8px;
   background: var(--primary);
   color: var(--primary-ink);
   border: 1px solid var(--primary-edge);
   border-radius: 10px;
-  padding: 10px 13px;
+  padding: 0 12px;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap
@@ -239,6 +241,7 @@
   --accent: var(--green);
   position: relative;
   min-width: 0;
+  container-type: inline-size;
   background: var(--card);
   border: 1px solid var(--edge);
   border-radius: 16px;
@@ -261,7 +264,11 @@
   flex-shrink: 0
 }
 .kpiNumber {
-  font-size: clamp(25px,3vw,38px);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  font-size: clamp(22px,16cqw,38px);
   font-weight: 600;
   letter-spacing: -.05em;
   line-height: 1.2;
@@ -271,10 +278,11 @@
 .kpiNumber small {
   color: var(--subtle);
   font-size: 13px;
-  margin-left: 7px;
+  white-space: nowrap;
   font-weight: 400;
   letter-spacing: 0
 }
+.kpiNumber>span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .micro {
   font-size: 10px;
   color: var(--muted);
@@ -1015,15 +1023,18 @@
 }
 @media(max-width:760px) {
   .root {
-    padding: 18px 13px;
+    padding: 14px 12px;
     border-radius: 18px
   }
   .hero {
     flex-direction: column;
-    gap: 17px
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 14px
   }
   .hero h1 {
-    font-size: 30px
+    font-size: 26px;
+    margin: 8px 0 6px
   }
   .eyebrow {
     font-size: 8px;
@@ -1033,23 +1044,28 @@
     font-size: 9px
   }
   .actions {
-    flex-direction: row-reverse;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px
   }
   .updated {
+    align-self: flex-end;
     font-size: 9px
   }
   .primaryButton {
-    font-size: 10px;
-    padding: 10px
+    height: 44px;
+    font-size: 11px;
+    padding: 0 10px
   }
   .filters {
-    margin-top: 2px
+    padding: 10px 0;
+    margin-top: 0;
+    margin-bottom: 14px;
+    gap: 8px
   }
   .filterFields {
-    width: 100%
+    width: 100%;
+    gap: 6px
   }
   .filterFields>label:first-child {
     flex-shrink: 0
@@ -1062,7 +1078,9 @@
     width: 100%
   }
   .filterFields label {
-    padding: 8px
+    min-height: 44px;
+    gap: 6px;
+    padding: 0 8px
   }
   .filterFields input {
     max-width: 120px
@@ -1077,11 +1095,16 @@
     gap: 8px
   }
   .kpi {
-    min-height: 143px
+    min-height: 0;
+    padding: 12px
   }
   .kpiNumber {
-    font-size: 29px;
-    margin-top: 14px
+    font-size: clamp(18px,17cqw,26px);
+    margin-top: 10px
+  }
+  .spark {
+    height: 22px;
+    margin: 8px 0 -12px
   }
   .kpiNumber small {
     font-size: 10px
@@ -1096,7 +1119,7 @@
     gap: 14px
   }
   .panel,.dayPanel {
-    padding: 17px 12px;
+    padding: 14px 12px;
     border-radius: 14px
   }
   .panelHead h2,.sectionHead h2 {
@@ -1112,6 +1135,8 @@
   .calendarNav strong {
     font-size: 13px
   }
+  .calendarNav { gap: 6px; }
+  .calendarNav>div { gap: 2px; }
   .legend {
     font-size: 8px;
     gap: 7px 9px
@@ -1225,8 +1250,11 @@
     min-height: 44px
   }
   .textButton {
-    height: 44px
+    height: 44px;
+    min-width: 44px;
+    padding-inline: 8px
   }
+  .evidencePagination a { min-height: 44px; }
 }
 .evidenceDisclosure>summary {
   display: flex;
@@ -1255,21 +1283,16 @@
   outline-offset: 4px
 }
 @media(max-width:760px) {
-  .actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px
-  }
-  .updated {
-    align-self: flex-end
-  }
   .actionRow {
-    width: 100%
+    width: auto;
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 6px
   }
   .actionRow .primaryButton {
-    flex: 1;
-    justify-content: center
+    flex: 0 0 auto
   }
+  .evidenceDisclosure>summary { min-height: 44px; padding-block: 8px; }
 }
 .monitor {
   padding: 24px
