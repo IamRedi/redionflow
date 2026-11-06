@@ -2,7 +2,7 @@
 
 ## Punëtoria e drurit dhe ekipi — 6 nëntor 2026
 
-**Zbatim në degën `feat/baumdienst-wood-production-20261106`, mbi PR72. Publikimi dhe pranimi përfundimtar regjistrohen pas kontrolleve.** Vetëm Musterfirma fiktive `Baumdienst Musterstadt GmbH`. AL Steel është referencë vetëm për lexim; nuk bashkohet kodi i pilotit dhe nuk kopjohen punonjës, klientë apo adresa reale.
+**Publikuar dhe kontrolluar online vetëm te Musterfirma.** Runtime `b894b20c8313abca956fa505d885ab0ff08820c0`, Railway `a53e6bf6-db80-4080-bfe1-49f67f274330` SUCCESS, [Draft PR75](https://github.com/IamRedi/redionflow/pull/75) mbi PR72. [Punëtoria online](https://redionflow-production.up.railway.app/demo/wood). Vetëm Musterfirma fiktive `Baumdienst Musterstadt GmbH`. AL Steel është referencë vetëm për lexim; nuk bashkohet kodi i pilotit dhe nuk kopjohen punonjës, klientë apo adresa reale.
 
 ### Krahasimi me AL Steel dhe kufiri i përshtatjes
 
@@ -68,7 +68,15 @@ Pranimi lokal në laptopin Windows: **679 unit PASS / 1 skip ekzistues, 9 integr
 
 U kontrolluan desktop 1440px, telefon 390/320px, landscape 740×360, tekst 200%, të dyja temat, fokus, footer natyral dhe mungesa e scroll-it horizontal. Rregullimi përfundimtar i fushës e pret gjerësinë e matur para montimit të kartave Musterfirma, që hapja e parë të mos i animojë nga një grumbull në kënd; hartë→fushë rilidh matjen. Sjellja pa `demoPhotoKey` ruhet. Faqja ekzistuese e privatësisë përshkruan tani edhe drurin dhe përshkruesit e fazës që dërgohen në AI, në gjashtë gjuhët e saj.
 
-Build/TypeScript dhe lint i plotë dhe i shprehur për demo: PASS; Gitleaks pa gjetje. Profilet pa opt-in, profil tjetër dhe SaaS: 404 edhe për wood API/art/files/images. Pas dy korrigjimeve të fundit të kufizuara të pamjes/tekstit përsëriten build-i dhe provat e prekura; runtime-i i publikimit dhe ruajtja online shtohen më poshtë. Kamera/NFC/tastiera fizike në telefon nuk deklarohen nga një viewport desktop.
+Build/TypeScript dhe lint i plotë dhe i shprehur për demo: PASS; Gitleaks pa gjetje. Profilet pa opt-in, profil tjetër dhe SaaS: 404 edhe për wood API/art/files/images. Pas dy korrigjimeve të fundit të kufizuara u përsëritën build-i, dy prova të prekura të shfletuesit (PASS), kufijtë e tri profileve dhe kontrolli vizual i privatësisë në desktop/telefon. Kamera/NFC/tastiera fizike në telefon nuk deklarohen nga një viewport desktop.
+
+**Prova online:** në 1440×1000 dhe 390×844 u kontrolluan ekipi, header-i/zilja, porositë, rrjedha me katër faza dhe pamja e procesit. Te porosia fiktive `wood-sample-active` u konfirmua Spalten dhe u rihap; API e pavarur konfirmon revision 2 dhe dy ngjarje, me statusin fillestar aktiv të rikthyer. Nuk u krijua sasi prodhimi/dalje shtesë dhe nuk u fshi historiku. Pas rifreskimit në pamjen telefon të dhënat dalin sërish nga serveri. Të katër WebP-të online përputhen byte për byte me SHA-256 të manifestit. Nuk u përdor gjenerim prove me pagesë në API-n e demos.
+
+**Ruajtja e gjendjes:** V3 mbeti revision **45 → 45**, me dhjetë pajisje, gjashtë riparime dhe dy dokumente; JSON identik. Katër fotot e ngarkuara, dokumenti binar dhe pesë figurat AI japin dhjetë hash-e identike para/pas; dokumenti tjetër inline mbulohet nga krahasimi i JSON-it. Plani mbeti revision 1, me të njëjtën përmbajtje. Konfigurimi i Railway ndryshoi vetëm degën dhe pin-in e commit-it të shërbimit Musterfirma. Asnjë variabël/sekret, shërbim tjetër, bazë të dhënash apo reset nuk u ndryshua.
+
+**Referenca AL Steel:** gjatë kësaj pune rrjedha e veçantë e pilotit publikoi vetë runtime `cc386f508340cf3229e7e6a69294b032bfc1ec1d`, deployment `2a606edd-6ac2-4aa6-b0ff-f0e46d292dbe`. Dega e tij mbeti `claude/project-thread-an04j1`; në këtë punë nuk u kryen shkrime në atë shërbim/dege. Kjo lëvizje e jashtme regjistrohet veçmas nga prova e ruajtjes së Musterfirma-s dhe nuk u kthye mbrapsht.
+
+**Prezantimi:** seksioni vendor i Holzwerkstatt-it është online në katër gjuhë. README-t përditësohen në PR75 me pamjen reale online. About/website/topics dhe maturiteti i përgjithshëm i repos mbeten të saktë (NO_CONTENT_CHANGE); moduli i drurit mbetet shembull fiktiv, pa pretendim përdorimi nga klient real. Përditësimi shoqërues i portofolit ruan PR52 të publikuar ndërkohë dhe përgatitet në degën `docs/baumdienst-wood-production-20261106`, pa publikim Production të paautorizuar.
 
 ## Workzone, harta dhe plani — 6 nëntor 2026
 

@@ -4,6 +4,8 @@
 
 **Holzwerkstatt der Musterfirma · 6. November 2026:** Die Teamleiste ist wieder sichtbar. Der eigene Holzbereich verbindet Baustellen-Holzeingang, konfigurierbare Arbeitsphasen, Team/Geräte, Verpackung und Bestandsabgänge in getrennten Fm/Rm/Srm-Maßen. Reparaturen bleiben in der vorhandenen Werkstatt; Geräteübergaben behalten ihre Bestätigungen. Fotos haben Vorrang vor KI, deren 5/UTC-Tag- und 50-Gesamtkontingent mit den Geräten geteilt wird. Nur das fiktive Baumdienst-Template. [Holzwerkstatt](https://redionflow-production.up.railway.app/demo/wood) · [Logik und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
+![Tatsächliche Online-Musterfirma mit Teamleiste und Holzproduktion](docs/assets/screenshots/baum-wood-production-online.jpg)
+
 **Workzone der Musterfirma · 6. November 2026:** Das ursprüngliche frei anordbare Arbeitsfeld mit Kartenmodus, Neuordnung und Plan-/Kalenderzugang ist wieder eingebunden. Der Tagesplan verwendet das bestehende Planungsboard mit einer eigenen Musterfirma-Speicherung: bestätigtes Speichern, Versionen, Mitarbeitersicht und Inventar-/Werkstattprüfung. Planung ersetzt keine Geräteübergabe. [Logik und Rolloutstand](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Musterfirma Workzone with the restored field, map and planning controls](docs/assets/screenshots/baum-workzone-restored-online.jpg)

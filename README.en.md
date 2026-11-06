@@ -4,6 +4,8 @@
 
 **Musterfirma wood workshop · 6 November 2026:** The staff strip is restored. The separate wood workspace links worksite timber intake, configurable phases, team/equipment, packaging and stock issues, with distinct Fm/Rm/Srm volume bases. Repairs stay in the existing workshop; inventory handovers retain their confirmations. Uploaded photos take priority over AI, which shares the existing 5/UTC day and 50-total allowance with equipment. Fictional Baumdienst template only. [Wood workshop](https://redionflow-production.up.railway.app/demo/wood) · [Logic and rollout status](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
+![Actual online Musterfirma with the team strip and wood production](docs/assets/screenshots/baum-wood-production-online.jpg)
+
 **Musterfirma Workzone · 6 November 2026:** The original movable work field is restored with map mode, reflow and plan/calendar access. The daily plan reuses the existing planning board with isolated Musterfirma storage, saved versions, a worker view and inventory/workshop checks. Planning does not replace an equipment handover. [Logic and rollout status](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Musterfirma Workzone with the restored field, map and planning controls](docs/assets/screenshots/baum-workzone-restored-online.jpg)
