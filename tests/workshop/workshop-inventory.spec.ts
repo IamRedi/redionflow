@@ -109,7 +109,7 @@ test("upgrade preserves existing data/files and directory changes invalidate its
   await prisma.baumdienstDemoWorkspace.create({ data: { key: DEMO_WORKSPACE_KEY, data: legacy, revision: 17 } });
   const file = await prisma.baumdienstDemoFile.create({ data: { id: randomUUID(), workspaceKey: DEMO_WORKSPACE_KEY, kind: "asset", target: "crane", name: "DEMO-retained.webp", mime: "image/webp", data: Buffer.from("DEMO"), bytes: 4 } });
   const first = await request.get(api), snapshot = await first.json() as WorkshopSnapshot;
-  expect(snapshot.revision).toBe(18); expect(snapshot.state.version).toBe(3);
+  expect(snapshot.revision).toBe(18); expect(snapshot.state.version).toBe(4);
   expect(snapshot.state.jobs).toEqual(legacy.jobs); expect(snapshot.state.parts).toEqual(legacy.parts); expect(snapshot.state.documents).toEqual(legacy.documents);
   expect(await prisma.baumdienstDemoFile.count({ where: { id: file.id } })).toBe(1);
   expect(Buffer.from((await prisma.baumdienstDemoFile.findUniqueOrThrow({ where: { id: file.id } })).data)).toEqual(Buffer.from("DEMO"));

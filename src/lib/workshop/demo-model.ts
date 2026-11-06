@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { identityCollision } from "./asset-identity";
 import { assetDetailsSchema, custodySchema, emptyCustody } from "./custody-schema";
 
 // Fictional workshop rules, independent of operational fleet and planning actions.
@@ -9,16 +10,18 @@ export const placementSchema = z.object({ workerKey: text.optional(), workerName
 });
 export type InventoryPlacement = z.infer<typeof placementSchema>;
 const eventSchema = z.object({ id: text, at: stamp, kind: z.enum(["received", "started", "repaired", "released", "issued", "transferred", "returned", "part", "inspection", "document", "photo", "registered", "updated", "handover_requested", "handover_confirmed", "handover_declined", "handover_cancelled"]), note: z.string().max(2000), actor: text, actorKey: text.optional(), method: z.enum(["scan", "selection"]).optional(), ref: z.string().optional(), placement: placementSchema.optional() });
-const assetSchema = z.object({ id: text, name: text, code: text, kind: z.enum(["fleet", "tool"]), location: text, holder: z.string().max(100), inspection: z.iso.date(), events: z.array(eventSchema), placement: placementSchema.optional(), details: assetDetailsSchema.optional() });
+const assetSchema = z.object({ id: text, name: text, code: text, plate: z.string().trim().min(1).max(24).optional(), barcode: z.string().trim().regex(/^[A-Z0-9 .$/+%\-]{1,80}$/).optional(), kind: z.enum(["fleet", "tool"]), location: text, holder: z.string().max(100), inspection: z.iso.date(), events: z.array(eventSchema), placement: placementSchema.optional(), details: assetDetailsSchema.optional() });
 const originSchema = z.object({ holder: z.string().max(100), location: text, placement: placementSchema.optional() });
 const jobSchema = z.object({ id: text, assetId: text, problem: text, priority: z.enum(["normal", "urgent"]), status: z.enum(["received", "repairing", "repaired"]), assignee: z.string().max(100), createdAt: stamp, repairedAt: stamp.optional(), releasedAt: stamp.optional(), repairNote: z.string().max(2000), tested: z.boolean(), origin: originSchema.optional(), parts: z.array(z.object({ id: text, name: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative() })) });
 export const documentSchema = z.object({ id: text, name: z.string().min(1).max(120), assetId: text, jobId: z.string().optional(), mime: z.enum(["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"]), data: z.string().max(360000).optional(), fileId: z.uuid().optional(), bytes: z.number().int().min(1).max(1_000_000), at: stamp });
 const movementSchema = z.object({ id: text, at: stamp, kind: z.enum(["consume", "restock"]), partId: text, qty: z.number().int().positive(), unitCents: z.number().int().nonnegative(), jobId: z.string().optional(), actor: text });
-const stateShape = z.object({ version: z.literal(3), custody: custodySchema.default(emptyCustody), assets: z.array(assetSchema).min(1).max(100), jobs: z.array(jobSchema).max(1000), parts: z.array(z.object({ id: text, name: text, stock: z.number().int().nonnegative(), minimum: z.number().int().nonnegative(), unitCents: z.number().int().nonnegative() })).max(100), documents: z.array(documentSchema).max(80), movements: z.array(movementSchema).max(10000).default([]) });
+const stateShape = z.object({ version: z.literal(4), custody: custodySchema.default(emptyCustody), assets: z.array(assetSchema).min(1).max(100), jobs: z.array(jobSchema).max(1000), parts: z.array(z.object({ id: text, name: text, stock: z.number().int().nonnegative(), minimum: z.number().int().nonnegative(), unitCents: z.number().int().nonnegative() })).max(100), documents: z.array(documentSchema).max(80), movements: z.array(movementSchema).max(10000).default([]) });
 export const legacyWorkshopSchema = stateShape.extend({ version: z.literal(1) });
 export const previousWorkshopSchema = stateShape.extend({ version: z.literal(2) });
+export const versionThreeWorkshopSchema = stateShape.extend({ version: z.literal(3) });
 export const workshopSchema = stateShape.superRefine((state, ctx) => {
   const ids = new Set(state.assets.map(a => a.id));
+  if (state.assets.some(asset => identityCollision(asset, state.assets))) ctx.addIssue({ code: "custom", message: "Duplicate inventory identifier" });
   const jobs = new Map(state.jobs.map(j => [j.id, j]));
   const open = state.jobs.filter(j => !j.releasedAt).map(j => j.assetId);
   const pending = state.custody.handovers.filter(h => h.status === "pending");

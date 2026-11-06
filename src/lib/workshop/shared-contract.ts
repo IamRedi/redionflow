@@ -5,8 +5,8 @@ import { actorSchema, assetDetailsSchema, demoOffice, treeUpdateSchema } from ".
 const id = z.string().trim().min(1).max(128);
 const note = z.string().trim().min(1).max(2000);
 export const publicWorkshopCommand = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("register"), assetId: z.uuid(), name: z.string().trim().min(1).max(120), code: z.string().trim().max(80).optional(), inspection: z.iso.date(), details: assetDetailsSchema }).strict(),
-  z.object({ type: z.literal("edit-asset"), assetId: id, name: z.string().trim().min(1).max(120), details: assetDetailsSchema }).strict(),
+  z.object({ type: z.literal("register"), assetId: z.uuid(), name: z.string().trim().min(1).max(120), code: z.string().trim().max(80).optional(), plate: z.string().trim().max(24).optional(), barcode: z.string().trim().max(80).optional(), inspection: z.iso.date(), details: assetDetailsSchema }).strict(),
+  z.object({ type: z.literal("edit-asset"), assetId: id, name: z.string().trim().min(1).max(120), plate: z.string().trim().max(24).optional(), barcode: z.string().trim().max(80).optional(), details: assetDetailsSchema }).strict(),
   z.object({ type: z.literal("handover"), assetId: id, kind: z.enum(["take", "issue", "return", "transfer"]), workerKey: id.optional(), siteKey: id.optional(), method: z.enum(["scan", "selection"]).default("selection") }).strict(),
   z.object({ type: z.literal("confirm-handover"), handoverId: id }).strict(),
   z.object({ type: z.literal("decline-handover"), handoverId: id, reason: z.string().trim().max(2000).default("") }).strict(),

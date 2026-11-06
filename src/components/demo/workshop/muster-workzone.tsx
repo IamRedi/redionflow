@@ -7,7 +7,7 @@ import type { DemoPlanSnapshot } from "@/lib/workshop/plan-model";
 import { workshopDay } from "@/lib/workshop/demo-model";
 export type MusterMission = { id: string; key: string; trees: { treeId: string; status: string }[] };
 /** Preserve the original canvas/map; overlay only Musterfirma shared tree progress. */
-export function MusterWorkzone({ sites, missions, defaultAddress, now }: { sites: MusterMission[]; missions: MissionItem[]; defaultAddress: string; now: string }) {
+export function MusterWorkzone({ sites, missions, defaultAddress, now, monitor = false }: { monitor?: boolean; sites: MusterMission[]; missions: MissionItem[]; defaultAddress: string; now: string }) {
   const { state } = useWorkshopDemo();
   const [plan, setPlan] = useState<DemoPlanSnapshot | null>(null);
   const date = workshopDay(now);
@@ -29,5 +29,5 @@ export function MusterWorkzone({ sites, missions, defaultAddress, now }: { sites
     return { ...item, done, pct: site.trees.length ? Math.round(done / site.trees.length * 100) : 0, planSummary: row ? [row.workerNames, row.machineNames].filter(Boolean).join(" · ") : undefined };
   });
   const active = (item: MissionItem) => item.pct < 100 || item.equipmentIndicators.length > 0 || Boolean(item.pendingSiteTask);
-  return <WorkzoneMissionControl items={items.filter(active)} archive={items.filter(i => !active(i))} defaultAddress={defaultAddress} detailHrefBase="/demo/baustellen" mode="baumdienst" readOnly allowCanvasDrag toolbar={<DemoPlanToolbar now={now} />} />;
+  return <WorkzoneMissionControl items={items.filter(active)} archive={items.filter(i => !active(i))} defaultAddress={defaultAddress} detailHrefBase="/demo/baustellen" mode="baumdienst" readOnly allowCanvasDrag={!monitor} toolbar={monitor ? undefined : <DemoPlanToolbar now={now} />} />;
 }

@@ -1,5 +1,40 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
+## Korrigjimi i pronarit — navigimi dhe targa, 6 nëntor 2026
+
+**Në verifikim; portofoli është në HOLD.** Pronari kërkoi të mos publikohet prezantimi në portofol, sepse demoja ende nuk është në nivelin e kërkuar. PR53 shoqëruese është shënuar HOLD dhe nuk është bashkuar/publikuar. Miratimi i vjetër për PR38 nuk vlen për PR53. Pretendimi i mëparshëm “demo DONE” zëvendësohet nga ky kontroll i rihapur; mbetet në vlerësim nga pronari.
+
+Korrigjimi: optimizimi duhet të ruajë hyrjet dhe rrjedhat, jo t'i fshehë. Dashboard është përsëri buton më vete; Paneli i kontrollit dhe Hap në TV janë të dukshme jashtë menusë More. More mban vetëm përzgjedhjen e rolit demo, gjuhën, temën dhe hyrjen ekzistuese KiDraht. Nuk hiqen fusha/harta, plani, kalendari, profili i punonjësit, flota, inventari, riparimet ose punëtoria e drurit.
+
+### Hyrjet dhe burimi i logjikës
+
+| Hyrja | Sjellja në Musterfirma |
+| --- | --- |
+| Dashboard | I njëjti `/demo/dashboard`, me statistikat dhe progresin ekzistues të pemëve. |
+| Paneli i kontrollit | `/demo/control` lidh drejtpërdrejt rrjedhat ekzistuese: Workzone, Dashboard, plan/kalendari, të dyja punëtoritë, flotë, vegla, pjesë, dokumente/histori dhe po ato profile punonjësish/kantieresh. Nuk ka databazë, punonjës ose inventar të dytë. Cilësimi i dorëzimeve hap kontrollin ekzistues me të njëjtat leje. |
+| Hap në TV | `/demo/tv` hapet në skedë të veçantë. Workzone dhe Dashboard lexohen nga implementimet ekzistuese, jo nga llogaritje të kopjuara. Përzgjedhje pamjeje, rifreskim manual/çdo 60 sekonda kur skeda është e dukshme dhe ekran i plotë. Header-i operacional dhe flota lundruese fshihen vetëm në TV; karta, navigimi i hartës dhe footer-i natyral ruhen. Në TV nuk riorganizohet/tërhiqet fusha dhe nuk shfaqet krijimi i planit. Dalja kthen te Workzone. |
+| Hyrjet e tjera | Ruajnë rrugët, identitetet, rolet dhe veprimet ekzistuese; kontrolli i ri nuk lidhet me `/app` ose `/display` të pilotit dhe nuk anashkalon hyrjen e firmave reale. |
+
+Krahasimi është bërë me burimin origjinal Workzone/FlowTopBar, navigimin e administrimit dhe kontrollin TV të AL Steel. Dega e pilotit në kontrollin read-only mbeti `claude/project-thread-an04j1`, HEAD `cc386f5`. Ky korrigjim nuk deklaron se financat, administrimi i klientëve ose çdo modul i firmës reale është kopjuar në demo. Këto kërkojnë vlerësim të mëtejshëm të pronarit; nuk zëvendësohen me butona pa funksion.
+
+### Targa dhe barkodi opsional
+
+Mjetet me targa identifikohen me **targën**. `plate` është fusha e dukshme e mjetit; `barcode` është etiketë shtesë opsionale. Veglat vazhdojnë të përdorin kodin/barkodin ekzistues. ID e regjistrimit, riparimet, dokumentet, fotografitë, dorëzimet dhe lidhjet e punës mbeten të njëjta. Fusha `code` e regjistrimeve ekzistuese mbetet çelës teknik për pajtueshmërinë dhe lidhjen e flotës; nuk printohet automatikisht si barkod për mjetet.
+
+Regjistrimi i mjetit kërkon targë. Nuk krijon barkod automatik. Shefi mund ta shtojë/gjenerojë shprehimisht një kod shtesë ose ta heqë atë në editim. Targa nuk pranohet si barkodi i vetvetes. Kërkimi dhe leximi i etiketës hapin të njëjtin asset ID; normalizohen germat/hapësirat dhe refuzohen përplasjet mes targave, barkodeve të veglave dhe etiketave shtesë. Ndryshimi i targës ka audit para/pas dhe nuk e kthen targën e vjetër në identifikim të ri aktiv. Shënimet/specifikimet nuk futen të plota në audit të dyfishuar; nuk tejkalohet kufiri i historikut.
+
+Karta e mjetit shfaq Targa dhe, vetëm nëse ka, Barkod opsional. Pa etiketë shtesë, faqja e printimit kthen 404; nuk prodhon barkod nga targa. Veglat ruajnë printimin dhe rrjedhën Barcode/NFC. Lista e flotës, plani, punëtoria dhe lidhjet e pajisjes përdorin të njëjtin identifikim të dukshëm. Fotografitë e ngarkuara dhe gjenerimet e ruajtura nuk preken.
+
+Formati JSON i inventarit kalon në **V4** me të njëjtin rresht `baumdienst-workshop:v1`. Për një V3 të vlefshëm, tranzicioni ruan përmbajtjen dhe ndryshon vetëm versionin, me një revision shtesë; kryhet nën kyçjen ekzistuese dhe është idempotent. Nuk ka migrim Prisma ose seed/reset. Versionet e vjetra me parser V3 e refuzojnë V4, që një shkrues i vjetër të mos heqë fushat e targës/barkodit gjatë një ruajtjeje tjetër. Rollback përdor build të pajtueshëm me V4 ose migrim të shprehur, jo ulje të heshtur të versionit. Rreshtat e planeve dhe të drurit nuk migrohen.
+
+### Pranimi i këtij korrigjimi
+
+Pranimi lokal i build-it V4: **685 unit PASS / një skip ekzistues, 10 integrime Postgres PASS dhe 32 rrjedha shfletuesi PASS**. Build/TypeScript, lint i plotë, lint i shprehur për skedarët demo dhe tri profilet e përjashtuara: PASS. Katër rrjedhat e reja verifikojnë hyrjet e dukshme, TV pa ndryshim gjendjeje, targën pa etiketë automatike dhe regjistrimin/shtimin e shprehur të barkodit në formularin touch. Prova e migrimit kontrollon përmbajtjen e plotë dhe revision-in vetëm një herë. Provat ekzistuese ruajnë dorëzimet, rolet, skanimin, pemët, hartën, planin, drurin, fotot dhe dokumentet.
+
+Prova e parë e tri rrjedhave të reja u ndal nga guard-i i fixture-it: procesi i testit nuk kishte DATABASE_URL të bazës së izoluar; nuk u krye reset në një bazë tjetër. Mungonte edhe çelësi kalimtar lokal i nënshkrimit të rolit; u gjenerua vetëm në memorien e procesit të provës, pa lehtësuar asnjë kontroll ose ndryshuar sekretet online. Një pritje e vjetër e testit për “version i panjohur 4” u zhvendos te versioni i panjohur 5, duke ruajtur refuzimin. Gabimi real në tekst 200% ishte header-i që konsumonte viewport-in: kontrollet ruajnë përmasa CSS 44px dhe navigimi mund të scroll-ojë vetëm kur tejkalon 48dvh, ndërsa përmbajtja mbetet zona kryesore. More i hapur nuk pritet nga ky kufi. U përsërit i gjithë seti dhe kaloi pa hequr assertions ose rritur timeout-et.
+
+Miratimi automatik i origjinës lokale dështoi teknikisht (`Bad Request`); pronari autorizoi më pas shprehimisht `http://127.0.0.1:8765`. Kontrolli vizual lokal u krye pas këtij miratimi. Telefon 390/320px, desktop 1440px, landscape, tekst 200%, tema, fokus dhe footer natyral janë pjesë e pranimit. Telefoni fizik/NFC/kamera/printeri mbeten provë më vete. Editimi i metadatave nuk e ka gjenerimin AI të përzgjedhur si parazgjedhje; regjistrimet e reja ruajnë zgjedhjen ekzistuese. Nuk bëhet publikim në portofol ose gjenerim me pagesë për këtë korrigjim. Publikimi i demos dhe kontrolli i ruajtjes online regjistrohen veçmas më poshtë.
+
 ## Punëtoria e drurit dhe ekipi — 6 nëntor 2026
 
 **Publikuar dhe kontrolluar online vetëm te Musterfirma.** Runtime `b894b20c8313abca956fa505d885ab0ff08820c0`, Railway `a53e6bf6-db80-4080-bfe1-49f67f274330` SUCCESS, [Draft PR75](https://github.com/IamRedi/redionflow/pull/75) mbi PR72. [Punëtoria online](https://redionflow-production.up.railway.app/demo/wood). Vetëm Musterfirma fiktive `Baumdienst Musterstadt GmbH`. AL Steel është referencë vetëm për lexim; nuk bashkohet kodi i pilotit dhe nuk kopjohen punonjës, klientë apo adresa reale.

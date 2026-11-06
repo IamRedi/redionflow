@@ -1,11 +1,12 @@
-import { activeJob, legacyWorkshopSchema, previousWorkshopSchema, workshopSchema, type WorkshopAsset, type WorkshopState } from "./demo-model";
+import { identityTokens, normalizeIdentity } from "./asset-identity";
+import { activeJob, legacyWorkshopSchema, previousWorkshopSchema, versionThreeWorkshopSchema, workshopSchema, type WorkshopAsset, type WorkshopState } from "./demo-model";
 import type { WorkshopDirectory } from "./shared-contract";
 
 /** Add relationships without replacing an existing asset, order, event or file. */
 export function upgradeWorkshopInventory(raw: unknown, directory: WorkshopDirectory): WorkshopState {
   const version = (raw as { version?: unknown })?.version;
-  const state = version === 1 ? legacyWorkshopSchema.parse(raw) : version === 2 ? previousWorkshopSchema.parse(raw) : workshopSchema.parse(raw);
-  return workshopSchema.parse({ ...state, version: 3, assets: state.assets.map(asset => {
+  const state = version === 1 ? legacyWorkshopSchema.parse(raw) : version === 2 ? previousWorkshopSchema.parse(raw) : version === 3 ? versionThreeWorkshopSchema.parse(raw) : workshopSchema.parse(raw);
+  return workshopSchema.parse({ ...state, version: 4, assets: state.assets.map(asset => {
     if (!asset.holder || asset.placement || activeJob(state as WorkshopState, asset.id)) return asset;
     const matches = directory.workers.filter(w => w.name === asset.holder);
     return matches.length === 1 ? { ...asset, placement: { workerKey: matches[0].key, workerName: matches[0].name } } : asset;
@@ -24,8 +25,8 @@ export function resolveInventoryTag(raw: string, assets: WorkshopAsset[], origin
       return assets.find(a => a.id === id);
     } catch { return undefined; }
   }
-  code = code.toUpperCase();
-  const matches = assets.filter(a => a.code.trim().toUpperCase() === code);
+  code = normalizeIdentity(code);
+  const matches = assets.filter(a => identityTokens(a).includes(code));
   return matches.length === 1 ? matches[0] : undefined;
 }
 

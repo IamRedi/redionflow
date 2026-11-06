@@ -43,12 +43,12 @@ export async function workshopDirectory(tx: Prisma.TransactionClient = prisma): 
 export async function ensureWorkshopDemo() {
   const directory = await workshopDirectory();
   const row = await prisma.baumdienstDemoWorkspace.upsert({ where: { key: DEMO_WORKSPACE_KEY }, update: {}, create: { key: DEMO_WORKSPACE_KEY, data: json(upgradeWorkshopInventory(createWorkshopDemo(), directory)) } });
-  if ((row.data as { version?: unknown })?.version === 3) return row;
-  // Version 3 makes older writers fail closed rather than losing confirmations.
+  if ((row.data as { version?: unknown })?.version === 4) return row;
+  // Version 4 makes older writers fail closed rather than losing confirmations.
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT "key" FROM "BaumdienstDemoWorkspace" WHERE "key" = ${DEMO_WORKSPACE_KEY} FOR UPDATE`;
     const current = await tx.baumdienstDemoWorkspace.findUniqueOrThrow({ where: { key: DEMO_WORKSPACE_KEY } });
-    if ((current.data as { version?: unknown })?.version === 3) return current;
+    if ((current.data as { version?: unknown })?.version === 4) return current;
     return tx.baumdienstDemoWorkspace.update({ where: { key: DEMO_WORKSPACE_KEY }, data: { data: json(upgradeWorkshopInventory(current.data, directory)), revision: { increment: 1 } } });
   });
 }

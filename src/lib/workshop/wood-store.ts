@@ -1,3 +1,4 @@
+import { assetIdentity } from "./asset-identity";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@/generated/prisma/client";
@@ -24,7 +25,7 @@ export async function woodSnapshot(tx:Prisma.TransactionClient=prisma):Promise<W
     tx.treeItem.findMany({where:{baustelleId:{in:directory.sites.map(s=>s.id)}},select:{baustelleId:true,treeId:true,status:true}}),
   ]);
   const openTrees=Object.fromEntries(directory.sites.map(site=>[site.key,trees.filter(t=>t.baustelleId===site.id&&(snapshot.state.custody.trees[treeIdentity(site.key,t.treeId)]?.status??t.status)!=="done").length]));
-  return {...state,revision:row?.revision??0,actor:await currentDemoActor(directory),directory,equipment:snapshot.state.assets.map(a=>({id:a.id,name:`${a.name} · ${a.code}`,available:!["workshop","inspection"].includes(availability(snapshot.state,a,new Date().toISOString())),holder:a.placement?.workerKey,site:a.placement?.siteKey,pending:snapshot.state.custody.handovers.some(h=>h.assetId===a.id&&h.status==="pending")})),
+  return {...state,revision:row?.revision??0,actor:await currentDemoActor(directory),directory,equipment:snapshot.state.assets.map(a=>({id:a.id,name:`${a.name} · ${assetIdentity(a)}`,available:!["workshop","inspection"].includes(availability(snapshot.state,a,new Date().toISOString())),holder:a.placement?.workerKey,site:a.placement?.siteKey,pending:snapshot.state.custody.handovers.some(h=>h.assetId===a.id&&h.status==="pending")})),
     openTrees,media:media.filter(m=>/^(phase|job|intake):/.test(m.target)).map(m=>({id:m.id,target:m.target.slice(m.target.indexOf(":")+1),kind:m.target.slice(0,m.target.indexOf(":")) as WoodMediaTarget["kind"],name:m.name,at:m.createdAt.toISOString(),url:`/api/demo/baumdienst/wood/files/${m.id}`})),
     illustrations:state.definitions.flatMap(d=>{const candidates=generations.filter(g=>g.fingerprint===digest(phaseImageIdentity(d)));const g=candidates.find(g=>g.status==="ready")??candidates[0];if(!g)return [];const expired=g.status==="pending"&&Date.now()-g.startedAt.getTime()>=IMAGE_LEASE_MS;return [{target:d.id,status:expired?"error":g.status,...(g.status==="ready"?{url:imageUrl(g.id)}:{}),...(expired?{error:"aiTimeout"}:g.errorCode?{error:g.errorCode}:{})}];}),imageGenerationEnabled:imageEnabled()};
 }
