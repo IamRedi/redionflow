@@ -13,12 +13,13 @@ import { fleetCopy } from "@/lib/fleet/copy";
 import { fleetTime } from "@/lib/fleet/format";
 import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, Wrench, X } from "lucide-react";
+import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, PenLine, Wrench, X } from "lucide-react";
 import { FleetDock } from '@/components/company-assets/fleet-dock';
 import { ProductionHeaderActions } from '@/components/shell/ProductionHeaderActions';
 import { FleetPicker } from '@/components/company-assets/fleet-picker';
 import { AssetDetailDialog } from '@/components/company-assets/asset-detail-panel';
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
+import { MachineEditor } from '@/components/company-assets/machine-editor';
 import { WorkshopWorkspace } from '@/components/company-assets/workshop-workspace';
 import { assetCopy } from '@/components/company-assets/copy';
 import type { AssetOperationalStatus, AssetRef } from '@/lib/company-assets/types';
@@ -188,7 +189,7 @@ export function MachineSidebar({
   const [pickerSelection, setPickerSelection] = useState<string | null>(null);
   const [returnToFleet, setReturnToFleet] = useState(false);
   const [workshopOpen, setWorkshopOpen] = useState(false);
-  const [workshopAsset, setWorkshopAsset] = useState<AssetRef>();
+  const [editMachine, setEditMachine] = useState(false);
   const [detail, setDetail] = useState<{ asset: AssetRef; initialReport?: 'defect' } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const mapMode = useWorkzoneMapMode();
@@ -229,8 +230,8 @@ export function MachineSidebar({
     if (open) void reloadStatuses();
   }
 
-  function openWorkshop(asset?: AssetRef) {
-    setWorkshopAsset(asset); setWorkshopOpen(true);
+  function openWorkshop() {
+    setWorkshopOpen(true);
   }
 
   function blockMachine() {
@@ -366,8 +367,9 @@ export function MachineSidebar({
 
       {enhancedOperations ? <>
         <FleetPicker open={pickerOpen} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} />
-        <AssetWorkspaceDialog open={workshopOpen} onOpenChange={open => { setWorkshopOpen(open); if (!open) void reloadStatuses(); }} title={assets.workshop}><WorkshopWorkspace embedded initialAsset={workshopAsset} /></AssetWorkspaceDialog>
-        <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} onClose={() => { setDetail(null); void reloadStatuses(); }} />
+        <AssetWorkspaceDialog open={workshopOpen} onOpenChange={open => { setWorkshopOpen(open); if (!open) void reloadStatuses(); }} title={assets.workshop} fullScreen><WorkshopWorkspace embedded /></AssetWorkspaceDialog>
+        {editMachine && selected ? <MachineEditor machine={selected} country={country} onClose={() => { setEditMachine(false); void reloadStatuses(); }}/> : null}
+        <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} mode="service" onClose={() => { setDetail(null); void reloadStatuses(); }} />
       </> : null}
 
       {selected && typeof document !== "undefined"
@@ -382,7 +384,7 @@ export function MachineSidebar({
                   <X className="size-6" />
                 </button>
                 <div className="min-w-0 flex-1 truncate text-center text-sm font-medium text-muted-foreground">{t("workzone.fleet", lang)}</div>
-                {enhancedOperations ? <button type="button" data-testid="fleet-machine-history" onClick={() => setDetail({ asset: { kind: 'machine', id: selected.id } })} className="grid size-11 shrink-0 place-items-center rounded-xl border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" aria-label={t('workzone.history', lang)}><Wrench className="size-5" /></button> : <span
+                {enhancedOperations ? <>{canEditPhotos ? <button type="button" data-testid="fleet-machine-edit" onClick={() => setEditMachine(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><PenLine className="size-4"/>{assets.edit}</button> : null}</> : <span
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-bold",
                     !selected.isActive
@@ -637,8 +639,8 @@ export function MachineSidebar({
                     <p className="line-clamp-3 rounded-xl bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">{getVisibleMachineNotes(selected.notes)}</p>
                   ) : null}
 
-                  <div className={cn('mt-auto grid gap-2 pb-[env(safe-area-inset-bottom)]', enhancedOperations && statusFor(selected.id)?.activeRepairPhase ? 'grid-cols-1' : 'grid-cols-2')}>
-                    {!(enhancedOperations && statusFor(selected.id)?.activeRepairPhase) ?
+                  <div className={cn('mt-auto grid gap-2 pb-[env(safe-area-inset-bottom)]', enhancedOperations ? 'grid-cols-1' : 'grid-cols-2')}>
+                    {!enhancedOperations ?
                     <button
                       type="button"
                       data-testid={enhancedOperations ? 'fleet-machine-report' : undefined}
@@ -649,7 +651,7 @@ export function MachineSidebar({
                       <AlertTriangle className="size-5" /> {t("machineSheet.reportDefect", lang)}
                     </button>
                     : null}
-                    {enhancedOperations ? <button type="button" onClick={() => openWorkshop({ kind: 'machine', id: selected.id })} className="flex min-h-16 min-w-0 items-center justify-center gap-2 rounded-2xl border bg-card px-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Wrench className="size-5 shrink-0" /><span className="break-words">{assets.workshop}</span></button> : isAdmin ? (
+                    {enhancedOperations ? <button type="button" data-testid="fleet-machine-workshop" onClick={() => setDetail({ asset: { kind: 'machine', id: selected.id } })} className="flex min-h-11 min-w-0 items-center justify-center gap-2 self-start rounded-xl border bg-card px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Wrench className="size-5 shrink-0" /><span className="break-words">{assets.workshop}</span></button> : isAdmin ? (
                       <button
                         type="button"
                         disabled={isPending || !selected.isActive}

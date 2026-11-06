@@ -120,7 +120,7 @@ test('mechanic repairs with external provider and private evidence before tested
     const fixture=await setup(page,context,info);companyId=fixture.companyId;const {seed}=fixture;
     const before=await production(companyId);
     const worker=await loginWorker(browser,info,seed.worker,seed.workerCode);other.push(worker.context);
-    await worker.page.goto('/workzone');await worker.page.getByTestId('fleet-dock-open').click();await worker.page.locator(`[data-machine-id="${seed.machines[0].id}"]`).click();await worker.page.getByTestId('fleet-machine-report').click();
+    await worker.page.goto('/workzone');await worker.page.getByTestId('fleet-dock-open').click();await worker.page.locator(`[data-machine-id="${seed.machines[0].id}"]`).click();await worker.page.getByTestId('fleet-machine-workshop').click();await detail(worker.page).getByRole('button',{name:c.sendWorkshop,exact:true}).click();
     await detail(worker.page).getByLabel(c.note,{exact:true}).fill('Synthetic brake inspection required.');await detail(worker.page).getByRole('button',{name:c.report,exact:true}).click();
     await expect.poll(()=>prisma.companyAssetRepair.count({where:{companyProfileId:companyId,phase:'reported'}})).toBe(1);
     const mechanic=await loginWorker(browser,info,seed.mechanic,seed.mechanicCode);other.push(mechanic.context);
@@ -128,11 +128,11 @@ test('mechanic repairs with external provider and private evidence before tested
     await mechanic.page.getByTestId('workshop-workspace').getByRole('button').filter({hasText:seed.machines[0].name}).click();
     await detail(mechanic.page).getByRole('button',{name:c.receive,exact:true}).click();await expect(detail(mechanic.page).getByRole('button',{name:c.startRepair,exact:true})).toBeEnabled();
     await detail(mechanic.page).getByRole('button',{name:c.startRepair,exact:true}).click();
-    await detail(mechanic.page).getByRole('combobox',{name:c.location,exact:true}).selectOption('external');await detail(mechanic.page).getByLabel(c.provider,{exact:true}).fill('Aurora Repair · DEMO');
+    await detail(mechanic.page).getByText(c.serviceRoute,{exact:true}).click();await detail(mechanic.page).getByRole('combobox',{name:c.location,exact:true}).selectOption('external');await detail(mechanic.page).getByLabel(c.provider,{exact:true}).fill('Aurora Repair · DEMO');
     const locationForm=detail(mechanic.page).locator('form').filter({has:mechanic.page.getByRole('combobox',{name:c.location,exact:true})});await locationForm.getByLabel(c.note,{exact:true}).fill('Synthetic external booking.');await locationForm.getByRole('button',{name:c.save,exact:true}).click();
     await expect.poll(async()=>(await prisma.companyAssetRepair.findFirstOrThrow({where:{companyProfileId:companyId}})).location).toBe('external');
     await expect(detail(mechanic.page).getByRole('button',{name:c.markReady,exact:true})).toBeDisabled();
-    await detail(mechanic.page).getByRole('combobox',{name:c.files,exact:true}).selectOption('invoice');
+    await detail(mechanic.page).getByText(c.serviceEvidence,{exact:true}).click();await detail(mechanic.page).getByRole('combobox',{name:c.files,exact:true}).selectOption('invoice');
     const pdf=Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF');
     await detail(mechanic.page).getByTestId('asset-file-input').setInputFiles({name:'synthetic-repair.pdf',mimeType:'application/pdf',buffer:pdf});
     await expect(detail(mechanic.page).getByRole('link',{name:/synthetic-repair.pdf/})).toBeVisible();
@@ -150,7 +150,7 @@ test('mechanic repairs with external provider and private evidence before tested
     const photo=await prisma.companyAssetFile.findFirstOrThrow({where:{companyProfileId:companyId,kind:'photo'}});expect(photo.mime).toBe('image/webp');expect(photo.size).toBeLessThanOrEqual(180000);
     await detail(mechanic.page).getByRole('checkbox',{name:c.tested,exact:true}).check();await detail(mechanic.page).getByRole('button',{name:c.markReady,exact:true}).click();
     await expect.poll(async()=>(await prisma.companyAssetRepair.findFirstOrThrow({where:{companyProfileId:companyId}})).phase).toBe('ready');
-    await expect(detail(mechanic.page).getByRole('heading',{name:c.history,exact:true})).toBeVisible();
+    await detail(mechanic.page).getByRole('button',{name:c.allDetails,exact:true}).click();await expect(detail(mechanic.page).getByRole('heading',{name:c.history,exact:true})).toBeVisible();
     expect(await prisma.companyAssetEvent.count({where:{companyProfileId:companyId,type:'repair.ready',actorName:`${seed.mechanic.firstName} ${seed.mechanic.lastName}`}})).toBe(1);
     await closeDetail(mechanic.page);await expect(mechanic.page.locator('#workshop-phase-ready')).toContainText(seed.machines[0].name);
     expect(await production(companyId)).toEqual(before);
@@ -163,11 +163,19 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
   try{
     const fixture=await setup(page,context,info);companyId=fixture.companyId;const {seed}=fixture;
     await prisma.companyInventoryItem.createMany({data:Array.from({length:29},(_,index)=>({companyProfileId:companyId!,category:'WORK_TOOL' as const,itemCode:`SCROLL-${companyId}-${index}`,name:`ZZ Scroll Tool ${String(index+1).padStart(2,'0')} · DEMO`}))});
+    // Populated bays and two visits for one asset exercise exact historical job selection.
+    const visualJobs=[];
+    for (const [index,phase] of ['reported','received','repairing','ready'].entries()) {
+      const asset=await prisma.companyOperationalAsset.create({data:{companyProfileId:companyId,machineId:seed.machines[index+2].id}});
+      const job=await prisma.companyAssetRepair.create({data:{companyProfileId:companyId,assetId:asset.id,phase,problem:`Synthetic ${phase} service`,reportedByKey:'synthetic',reportedByName:'Synthetic Operator',...(phase==='ready'?{tested:true,repairNote:'Synthetic completed service'}:{})}});
+      visualJobs.push(job);
+    }
+    const historical=await prisma.companyAssetRepair.create({data:{companyProfileId:companyId,assetId:visualJobs[0].assetId,phase:'ready',problem:'Earlier synthetic oil service',repairNote:'Historical evidence only',tested:true,reportedByKey:'synthetic',reportedByName:'Synthetic Operator',createdAt:new Date('2026-01-01T10:00:00Z')}});
     await page.goto('/workzone');
     for(const theme of ['light','dark'])for(const width of [1440,390,360]){
       const height=width===1440?1000:844;await page.setViewportSize({width,height});
       await context.addCookies([{name:'bk_theme',value:theme,url:info.project.use.baseURL!}]);await page.reload();
-      await expect(page.getByTestId('fleet-rail').getByRole('button')).toHaveCount(2);
+      await expect(page.getByTestId('fleet-dock-open')).toBeVisible();await expect(page.getByTestId('workshop-dock-open')).toBeVisible();
       await page.screenshot({path:info.outputPath(`assets-before-${theme}-${width}.png`)});
       await page.getByTestId('fleet-dock-open').click();const picker=page.getByTestId('fleet-picker');
       if(width<500)expect(await picker.getByTestId('fleet-card-grid').evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(3);
@@ -177,12 +185,40 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
       await page.screenshot({path:info.outputPath(`fleet-picker-${theme}-${width}.png`)});await picker.locator('[data-machine-id]').click();
       const machine=page.getByTestId('fleet-machine-card');await expect(machine).toBeVisible();
       await expect(machine.locator(`a[href="/workzone/fuel?machine=${seed.machines[0].id}"]`)).toBeVisible();await expect(machine.locator('a[href*="google.com/maps"]')).toBeVisible();
-      await touch(machine.getByTestId('fleet-machine-report'),width,height);expect(await machine.evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
-      await page.screenshot({path:info.outputPath(`fleet-machine-${theme}-${width}.png`)});await page.keyboard.press('Escape');
+      await touch(machine.getByTestId('fleet-machine-workshop'),width,height);await touch(machine.getByTestId('fleet-machine-edit'),width,height);expect(await machine.evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
+      await page.screenshot({path:info.outputPath(`fleet-machine-${theme}-${width}.png`)});
+      await machine.getByTestId('fleet-machine-edit').click();const editor=page.getByTestId('machine-editor');await expect(editor).toBeVisible();
+      expect(await currentDialog(page).evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
+      if(theme==='light'&&width===1440){
+        await editor.locator('input[name="model"]').fill('Aurora 2027');await editor.locator('input[name="insuranceDate"]').fill('2027-11-06');
+        const photo=await sharp({create:{width:240,height:160,channels:3,background:'#f97316'}}).png().toBuffer();
+        const cover=editor.getByTestId(`asset-photo-machine-${seed.machines[0].id}`);
+        await cover.locator('input[data-photo-input="upload"]').setInputFiles({name:'synthetic-vehicle.png',mimeType:'image/png',buffer:photo});
+        await expect(cover.locator('img')).toHaveAttribute('src',/api\/asset-photos/);
+        const pdf=Buffer.from('%PDF-1.4\nSynthetic insurance\n%%EOF');
+        await editor.locator('summary').filter({hasText:c.files}).click();await editor.getByRole('combobox',{name:c.files,exact:true}).selectOption('document');
+        await editor.getByTestId('asset-file-input').setInputFiles({name:'synthetic-insurance.pdf',mimeType:'application/pdf',buffer:pdf});
+        await expect(editor.getByRole('link',{name:/synthetic-insurance.pdf/})).toBeVisible();
+        await editor.getByRole('button',{name:c.save,exact:true}).click();await expect(editor).toHaveCount(0);
+        await expect(machine).toContainText('Aurora 2027');await expect(machine).toContainText('6.11.2027');
+        const paper=await prisma.companyAssetFile.findFirstOrThrow({where:{companyProfileId:companyId,name:'synthetic-insurance.pdf'}});expect(paper.repairId).toBeNull();
+        await machine.getByTestId('fleet-machine-edit').click();await expect(editor).toBeVisible();
+      }
+      await expect(editor.getByTestId('asset-detail')).toBeVisible();await page.screenshot({path:info.outputPath(`vehicle-edit-${theme}-${width}.png`)});await page.keyboard.press('Escape');await expect(machine.getByTestId('fleet-machine-edit')).toBeFocused();
+      await machine.getByTestId('fleet-machine-workshop').click();await expect(detail(page).getByRole('button',{name:c.sendWorkshop,exact:true})).toBeVisible();await expect(detail(page).getByRole('button',{name:c.serviceHistory,exact:true})).toBeVisible();
+      await expect(detail(page).getByRole('heading',{name:c.history,exact:true})).toHaveCount(0);
+      await page.screenshot({path:info.outputPath(`vehicle-service-${theme}-${width}.png`)});await page.keyboard.press('Escape');await expect(machine.getByTestId('fleet-machine-workshop')).toBeFocused();await page.keyboard.press('Escape');
       await expect(picker.locator('[data-machine-id]')).toBeFocused();await page.keyboard.press('Escape');
       await page.getByTestId('workshop-dock-open').click();await expect(page.getByTestId('workshop-workspace')).toBeVisible();
       expect(await currentDialog(page).evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-      await page.screenshot({path:info.outputPath(`workshop-${theme}-${width}.png`)});await page.keyboard.press('Escape');
+      await expect(page.getByTestId('workshop-repair-card').first()).toBeVisible();await page.screenshot({path:info.outputPath(`workshop-${theme}-${width}.png`)});
+      if(width===1440){
+        await page.getByTestId('workshop-workspace').locator(`[data-repair-id="${historical.id}"]`).click();
+        await expect(detail(page).getByTestId('service-repair')).toHaveAttribute('data-repair-id',historical.id);await expect(detail(page)).toContainText('Historical evidence only');await expect(detail(page).getByRole('button',{name:c.receive,exact:true})).toHaveCount(0);
+        await detail(page).getByRole('button',{name:c.openRepair,exact:true}).click();await expect(detail(page).getByTestId('service-repair')).toHaveAttribute('data-repair-id',visualJobs[0].id);await expect(detail(page).getByRole('button',{name:c.receive,exact:true})).toBeVisible();
+        await page.screenshot({path:info.outputPath(`service-job-${theme}.png`)});await page.keyboard.press('Escape');
+      }
+      await page.keyboard.press('Escape');
       await expect(page.getByTestId('workshop-dock-open')).toBeFocused();
       await page.goto('/app/inventory');await expect(page.getByRole('tab',{name:c.clothing,exact:true})).toBeVisible();await readablePrimary(page.getByRole('button',{name:c.addAsset,exact:true}));expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(`warehouse-${theme}-${width}.png`)});await page.goto('/workzone');
     }
@@ -193,7 +229,13 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
     expect(await currentDialog(page).evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
     await touch(currentDialog(page).getByRole('button',{name:c.close,exact:true}),844,390);
     await page.screenshot({path:info.outputPath('fleet-landscape-text-zoom.png')});
-    await page.keyboard.press('Escape');
+    await page.getByTestId('fleet-picker').locator('[data-machine-id]').first().click();
+    await page.getByTestId('fleet-machine-edit').click();
+    const zoomEditor=page.getByTestId('machine-editor');await expect(zoomEditor).toBeVisible();
+    expect(await currentDialog(page).evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
+    await touch(zoomEditor.getByRole('button',{name:c.save,exact:true}),844,390);
+    await page.screenshot({path:info.outputPath('vehicle-edit-landscape-text-zoom.png')});
+    await page.keyboard.press('Escape');await page.keyboard.press('Escape');await page.keyboard.press('Escape');
     await page.getByTestId('workshop-dock-open').click();
     await expect(page.getByTestId('workshop-workspace')).toBeVisible();
     expect(await currentDialog(page).evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);

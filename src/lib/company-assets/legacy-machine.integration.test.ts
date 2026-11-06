@@ -12,6 +12,7 @@ import { addMachineDefectAction, resolveMachineDefectAction } from '@/app/(workz
 import { moveDailyPlanItemAction, saveDailyPlanAction } from '@/app/(workzone)/workzone/daily-plan-actions';
 import { runAssetMutation, readAssetDetail } from './service';
 import { updateMachineWithAssetGuard } from './legacy-machine';
+import { getMachineEditAction, saveMachineEditAction } from '@/app/(workzone)/workzone/machine-edit-actions';
 
 let tenants: Awaited<ReturnType<typeof seedSecurityTenants>>;
 const date = '2026-01-12';
@@ -26,6 +27,51 @@ beforeEach(async () => {
   await login();
 });
 afterEach(async () => { if (tenants) await removeSecurityTenants(tenants.map(tenant => tenant.company.id)); vi.unstubAllEnvs(); });
+
+it('edits vehicle papers without clearing a repair, GPS, rates or legacy defect history', async () => {
+  const id = tenants[0].machine.id;
+  const defect = { id: 'earlier', text: 'Historical fault', reportedBy: 'Fixture', reportedAt: '2026-01-01T10:00:00Z' };
+  await prisma.machine.update({where:{id},data:{notes:serializeMachineNotes({body:'Old note',defects:[defect]}),lastGpsLat:41.1,lastGpsLng:19.1}});
+  await report();
+  const draft = await getMachineEditAction(id); expect(draft.ok).toBe(true); if (!draft.ok) return;
+  expect(draft.data.notes).toBe('Old note');
+  expect(await saveMachineEditAction({...draft.data, nickname:'Aurora truck',targe:'ZZ 123 DM',insuranceDate:'2027-11-06',notes:'Updated paperwork'})).toMatchObject({ok:true});
+  expect(await prisma.machine.findUniqueOrThrow({where:{id}})).toMatchObject({nickname:'Aurora truck',targe:'ZZ 123 DM',insuranceDate:new Date('2027-11-06T00:00:00Z'),hourlyRateCents:100,notes:serializeMachineNotes({body:'Updated paperwork',defects:[defect]})});
+  expect((await readAssetDetail({kind:'machine',id})).asset.availability).toBe('reported');
+});
+
+it('rejects stale paperwork but accepts an intervening GPS or cover photo update', async () => {
+  const id = tenants[0].machine.id;
+  const draft = await getMachineEditAction(id); if (!draft.ok) throw new Error('Fixture draft unavailable');
+  await prisma.machine.update({where:{id},data:{lastGpsAt:new Date(),lastGpsLat:41.2,coverPhotoAt:new Date()}});
+  expect(await saveMachineEditAction({...draft.data,model:'Aurora 200'})).toMatchObject({ok:true});
+  expect(await saveMachineEditAction({...draft.data,targe:'Must not overwrite'})).toMatchObject({ok:false,code:'CONFLICT'});
+  expect((await prisma.machine.findUniqueOrThrow({where:{id}})).model).toBe('Aurora 200');
+});
+
+it('refuses cross-tenant, worker and mechanic vehicle editing and allows existing office management', async () => {
+  const draft = await getMachineEditAction(tenants[0].machine.id); if (!draft.ok) throw new Error('Fixture draft unavailable');
+  expect(await getMachineEditAction(tenants[1].machine.id)).toMatchObject({ok:false,code:'NOT_FOUND'});
+  expect(await saveMachineEditAction({...draft.data,id:tenants[1].machine.id})).toMatchObject({ok:false,code:'NOT_FOUND'});
+  session.values.clear(); session.values.set('bk_worker_id',await createTestSession('worker',tenants[0].worker.id));
+  for (const crewRole of ['FIELD_WORKER','MECHANIC'] as const) {
+    await prisma.worker.update({where:{id:tenants[0].worker.id},data:{crewRole}});
+    expect(await getMachineEditAction(draft.data.id)).toMatchObject({ok:false,code:'DENIED'});
+    expect(await saveMachineEditAction(draft.data)).toMatchObject({ok:false,code:'DENIED'});
+  }
+  await prisma.worker.update({where:{id:tenants[0].worker.id},data:{crewRole:'OFFICE'}});
+  expect(await saveMachineEditAction({...draft.data,model:'Office update'})).toMatchObject({ok:true});
+});
+
+it('validates dates and unexpected fields and refuses reactivation during a repair', async () => {
+  const id = tenants[0].machine.id;
+  await prisma.machine.update({where:{id},data:{isActive:false}}); await report();
+  const draft = await getMachineEditAction(id); if (!draft.ok) throw new Error('Fixture draft unavailable');
+  expect(await saveMachineEditAction({...draft.data,insuranceDate:'2027-02-30'})).toMatchObject({ok:false,code:'INVALID_INPUT'});
+  expect(await saveMachineEditAction({...draft.data,gpsDeviceId:'untrusted'} as never)).toMatchObject({ok:false,code:'INVALID_INPUT'});
+  expect(await saveMachineEditAction({...draft.data,isActive:true})).toMatchObject({ok:false,code:'ASSET_UNAVAILABLE'});
+  expect((await prisma.machine.findUniqueOrThrow({where:{id}})).isActive).toBe(false);
+});
 
 it('rolls back legacy activation and metadata edits when a pending workshop job blocks an inactive machine', async () => {
   const machine = tenants[0].machine;

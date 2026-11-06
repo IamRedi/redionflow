@@ -1,5 +1,17 @@
 type Lang = 'sq' | 'en' | 'de' | 'it' | 'pl' | 'ro';
 const words = {
+  editVehicle: ['Edito mjetin','Edit vehicle','Fahrzeug bearbeiten','Modifica mezzo','Edytuj pojazd','Editează vehiculul'],
+  serviceHistory: ['Historiku i serviseve','Service history','Serviceverlauf','Storico interventi','Historia serwisowa','Istoric service'],
+  openRepair: ['Hap riparimin','Open repair','Reparatur öffnen','Apri riparazione','Otwórz naprawę','Deschide reparația'],
+  sendWorkshop: ['Dërgo në oficinë · raporto defekt','Send to workshop · report defect','Zur Werkstatt · Defekt melden','Invia in officina · segnala guasto','Do warsztatu · zgłoś usterkę','Trimite în atelier · raportează defect'],
+  allDetails: ['Të gjitha detajet','All details','Alle Details','Tutti i dettagli','Wszystkie szczegóły','Toate detaliile'],
+  fewerDetails: ['Mbyll detajet','Hide details','Details ausblenden','Nascondi dettagli','Ukryj szczegóły','Ascunde detaliile'],
+  serviceEvidence: ['Shënime, foto dhe fatura','Notes, photos and invoices','Notizen, Fotos und Rechnungen','Note, foto e fatture','Notatki, zdjęcia i faktury','Note, fotografii și facturi'],
+  serviceRoute: ['Ku riparohet','Repair location','Reparaturort','Luogo riparazione','Miejsce naprawy','Locul reparației'],
+  noServiceHistory: ['Nuk ka servise të regjistruara.','No service visits recorded.','Keine Servicebesuche erfasst.','Nessun intervento registrato.','Brak zapisanych wizyt.','Nicio intervenție înregistrată.'],
+  vehicleData: ['Të dhënat e mjetit','Vehicle information','Fahrzeugdaten','Dati del mezzo','Dane pojazdu','Date vehicul'],
+  vehiclePapers: ['Afatet dhe dokumentet','Dates and documents','Fristen und Dokumente','Scadenze e documenti','Terminy i dokumenty','Termene și documente'],
+  vehicleActive: ['Aktiv në flotë','Active in fleet','In Flotte aktiv','Attivo nella flotta','Aktywny we flocie','Activ în flotă'],
   factoryCode: ['Kodi i fabrikës · barkod / QR','Factory code · barcode / QR','Herstellercode · Barcode / QR','Codice fabbrica · barcode / QR','Kod producenta · kreskowy / QR','Cod fabrică · bare / QR'],
   unitCode: ['Kodi unik i pajisjes','Unique item code','Eindeutiger Gerätecode','Codice univoco articolo','Unikalny kod przedmiotu','Cod unic articol'],
   codes: ['Kodet dhe etiketa','Codes and label','Codes und Etikett','Codici ed etichetta','Kody i etykieta','Coduri și etichetă'],
