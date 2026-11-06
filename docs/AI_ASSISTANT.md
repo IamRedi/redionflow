@@ -120,6 +120,12 @@ Failed reads are unknown, never zero or “nobody received it”. The existing p
 conversation/tool archive records these reads without adding tables or writes
 to business data. Model/provider, quota and UI remain unchanged.
 
+Receipt lookup is unavailable to the model until a successful, bounded document
+page has returned actual version IDs in the current request. Its execution also
+rejects IDs absent from those pages before any receipt/database read. Project,
+cursor, superseded-version IDs and chat history cannot unlock it. Empty/failed
+document reads make no receipt call; each new turn resolves documents afresh.
+
 ## Private conversation archive
 
 The additive `20261105120000_assistant_history` migration creates three tables

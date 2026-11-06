@@ -9,6 +9,7 @@ vi.mock('@/lib/db/tenant-context', () => ({ withTenantContext: () => { throw Err
 import { createOpenAI } from '@ai-sdk/openai';
 import { asSchema, generateText, stepCountIs, type ToolSet } from 'ai';
 import { z } from 'zod';
+import { createDocumentResolution } from './document-resolution';
 import type { LanguageModelV3CallOptions } from '@ai-sdk/provider';
 import { groundedTools } from './grounding';
 import { assistantGeneration } from './generation';
@@ -54,7 +55,7 @@ it('measures real steel registries and enforces the existing accumulated-input l
   const requester: RequesterContext = { kind: 'admin', adminId: 'admin-demo', companyId: 'company-demo', displayName: 'Admin Demo', preferredLanguage: 'SQ', timeZone: 'Europe/Tirane' };
   const question = 'Sa materiale ka bërë fabrika dje?';
   const turn = assistantTurnContext([{ role: 'user', content: question }], { timeZone: 'Europe/Tirane', now: new Date('2026-11-05T10:00Z') });
-  const registry: ToolSet = { ...legacyAssistantTools(requester, turn, true), ...companyAssistantTools(requester, true), ...steelAssistantTools(requester, turn) };
+  const registry: ToolSet = { ...legacyAssistantTools(requester, turn, true), ...companyAssistantTools(requester, true), ...steelAssistantTools(requester, turn, createDocumentResolution()) };
   expect(registry).toHaveProperty('adminSearchCompanyAssets');
   expect(registry).toHaveProperty('adminGetCompanyWorkshop');
   expect(registry).toHaveProperty('adminGetSitePhaseDocuments');

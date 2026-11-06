@@ -356,7 +356,7 @@ it("invalid/tampered/expired session and disabled pilot never open a tenant tran
     await expect(withTenantDbContext(tenants[0].company.id, callback)).rejects.toThrow("No authenticated tenant");
   }
   request.values.set("bk_admin_id", cookie);
-  const now = Date.now(); const clock = vi.spyOn(Date, "now").mockReturnValue(now + 31 * 24 * 60 * 60 * 1000);
+  const now = Date.now(); const clock = vi.spyOn(Date, "now").mockReturnValue(now + 366 * 24 * 60 * 60 * 1000);
   try { await expect(withTenantDbContext(tenants[0].company.id, callback)).rejects.toThrow("No authenticated tenant"); }
   finally { clock.mockRestore(); }
   vi.stubEnv("RLS_ENFORCE", "false");

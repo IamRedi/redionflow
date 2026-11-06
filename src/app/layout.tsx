@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { FooterBrandProvider } from '@/components/branding/FooterBrand';
+import { SessionKeepAlive } from '@/components/auth/SessionKeepAlive';
+import { installationBrand } from '@/lib/installation-brand';
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Bell, Home, LayoutDashboard } from "lucide-react";
@@ -28,19 +30,22 @@ import "./globals.css";
 const rootTitle = isSaasMode ? `${saasAppName}${saasAppSuffix}` : `${appName} ${appSuffix}`;
 export const viewport: Viewport = { interactiveWidget: 'resizes-content' };
 
-export const metadata: Metadata = {
-  title: rootTitle,
-  description: "Clean operational flow platform for field work and office control.",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: rootTitle,
-  },
-  icons: {
-    icon: brandIconSrc,
-    apple: brandAppleIconSrc,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await installationBrand();
+  return {
+    title: brand?.name ?? rootTitle,
+    description: "Clean operational flow platform for field work and office control.",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: brand?.name ?? rootTitle,
+    },
+    icons: {
+      icon: brand ? '/app-icon/192' : brandIconSrc,
+      apple: brand ? '/app-icon/180' : brandAppleIconSrc,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -90,6 +95,7 @@ export default async function RootLayout({
     >
       <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
+          {admin || worker ? <SessionKeepAlive /> : null}
           <FooterBrandProvider mark={production ? (admin ? <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle}>{brandBadge}</Link> : brandBadge) : null}>
           {/* Operational tools align with the header; the steel product mark lives in the shared footer. */}
           {production ? <ProductionHeaderTools

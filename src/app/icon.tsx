@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { installationBrand } from '@/lib/installation-brand';
+import { installationIcon } from '@/lib/installation-icon';
 
 import { appName, appSuffix, appSuperscript } from "@/lib/branding";
 
@@ -11,7 +13,10 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function Icon() {
+export const dynamic = 'force-dynamic';
+export default async function Icon() {
+  const brand = await installationBrand();
+  if (brand) return new Response(new Uint8Array(await installationIcon(brand.logo, size.width)), { headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=300' } });
   return new ImageResponse(
     (
       <div
