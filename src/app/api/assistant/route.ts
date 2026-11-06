@@ -15,6 +15,7 @@ import { adminAssistantPrompt } from '@/lib/assistant/admin-prompt';
 import { assistantInitialTool, assistantMetaQuestion, groundedStep, groundedTools } from '@/lib/assistant/grounding';
 import { legacyAssistantTools } from '@/lib/assistant/legacy-tools';
 import { companyAssistantTools, steelAssistantTools } from '@/lib/assistant/business-tools';
+import { createDocumentResolution } from '@/lib/assistant/document-resolution';
 import { createAssistantRunDiagnostics, categorizeAssistantFailure, type AssistantFailureCode } from '@/lib/assistant/diagnostics';
 import { AssistantHistoryError, startRun, appendTrace, finishRun, checkpointRun, type AssistantTerminalStatus } from '@/lib/assistant/history';
 import { assistantResponseStream } from '@/lib/assistant/response-stream';
@@ -113,7 +114,8 @@ export async function POST(req: Request) {
     const metaQuestion = assistantMetaQuestion(question);
     const productionIntent = steel && !metaQuestion ? resolveCanonicalProductionIntent(parsed.data.messages) : null;
     const assetIntent = steel && !metaQuestion && !productionIntent ? resolveCanonicalAssetIntent(question) : null;
-    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel, assetIntent), ...(steel ? steelAssistantTools(requester, turn) : {}) };
+    const documents = createDocumentResolution();
+    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel, assetIntent), ...(steel ? steelAssistantTools(requester, turn, documents) : {}) };
     if (!metaQuestion) delete registry.getAssistantCapabilities;
     else for (const name of Object.keys(registry)) if (name !== 'getAssistantCapabilities') delete registry[name];
     const diagnostics = createAssistantRunDiagnostics();
@@ -124,6 +126,7 @@ export async function POST(req: Request) {
     const tools = groundedTools(registry, turn.timeZone, () => new Date(), async event => {
       const stored = await appendTrace(requester, { ...event, runId, evidence: { ...event.evidence, ...(event.failure ? { failure: event.failure } : {}) } });
       if (!stored) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+      documents.observe(event);
       weightQualifier.observe(event);
       productionAnswer.observe(event);
       assetAnswer.observe(event);
@@ -138,7 +141,7 @@ export async function POST(req: Request) {
       system: adminAssistantPrompt({ requester, turn, steel, target: identity.status === 'found' ? identity.target : null }),
       messages: parsed.data.messages,
       tools,
-      prepareStep: step => groundedStep(step, metaQuestion, productionIntent ? 'adminGetSteelProductionSummary' : assetIntent?.toolName ?? assistantInitialTool(question, steel)),
+      prepareStep: step => ({ ...groundedStep(step, metaQuestion, productionIntent ? 'adminGetSteelProductionSummary' : assetIntent?.toolName ?? assistantInitialTool(question, steel)), activeTools: documents.activeTools(Object.keys(tools)) }),
       onFinish: async event => { usage = event.totalUsage; await generation.onFinish(event); },
     });
     return assistantResponseStream(result.fullStream, {

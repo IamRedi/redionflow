@@ -3,7 +3,7 @@ import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
 import { confirmLegacyAssetAssignment } from '@/lib/company-assets/legacy';
 
-import { createSessionCookie } from "@/lib/auth/session-cookie";
+import { createSessionCookie, sessionMaxAge } from "@/lib/auth/session-cookie";
 
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -368,7 +368,7 @@ export async function loginWorkerAction(_prevState: LoginState, formData: FormDa
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: sessionMaxAge("worker"),
   });
   jar.delete(ADMIN_COOKIE);
   jar.delete(DISPLAY_COOKIE);
@@ -420,7 +420,7 @@ export async function changeOwnLoginCodeAction(_prev: ChangeCodeState, formData:
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: sessionMaxAge("worker"),
   });
   await clearFailedLogin("worker", clientIp);
   revalidateWorkerProfile(worker.id);

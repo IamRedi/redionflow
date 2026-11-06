@@ -8,6 +8,7 @@ import { adminGetStartedSteelProjects } from './project-activity';
 import { adminSearchCompanyAssets, adminGetCompanyWorkshop } from './asset-tools';
 import { applyCanonicalAssetFilters, type CanonicalAssetIntent } from './asset-answer';
 import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts, phaseDocumentListInput, phaseDocumentReceiptInput } from './document-tools';
+import type { createDocumentResolution } from './document-resolution';
 
 const text = z.string().trim().min(1).max(180);
 const id = z.string().trim().min(1).max(120);
@@ -72,7 +73,7 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
   };
 }
 
-export function steelAssistantTools(requester: RequesterContext, turn: Turn): ToolSet {
+export function steelAssistantTools(requester: RequesterContext, turn: Turn, documents: ReturnType<typeof createDocumentResolution>): ToolSet {
   return {
     adminGetSitePhaseDocuments: {
       description: 'Which documents does a steel site have? Use exact projectName or discovered projectId; duplicate names require selection. Lists six-phase document metadata, exact filtered counts and version-specific receipt counts. Defaults current unarchived versions; includeArchived only for requested history. Optional title/filename query and phase filter; bounded cursor pages. Does not read file contents or general site files.',
@@ -82,7 +83,9 @@ export function steelAssistantTools(requester: RequesterContext, turn: Turn): To
     adminGetSitePhaseDocumentReceipts: {
       description: 'Who confirmed E mora for an exact document version, and who has not? Resolve documentId with the phase-document list first. status=received lists immutable named/time-stamped receipts, including people whose access changed. status=unconfirmed lists active currently authorized office/engineer/admin accounts without that receipt, NOT assigned recipients or proof of unread files. status=all includes both. Exact counts and bounded cursor pages. Account identities can share a human/name; never merge by name or carry receipts across versions.',
       inputSchema: phaseDocumentReceiptInput,
-      execute: input => adminGetSitePhaseDocumentReceipts(requester, input),
+      execute: input => !documents.has(input.documentId)
+        ? Promise.resolve({ ok: false, code: 'DOCUMENT_NOT_RESOLVED', message: 'Use an exact document ID returned by the phase-document list in this turn. Never substitute a project ID or guess; resolve the document first.' })
+        : adminGetSitePhaseDocumentReceipts(requester, input),
     },
     adminGetStartedSteelProjects: {
       description: 'Which/how many steel sites have started work? Returns exact count and compact project names with first/last stored activity. Defaults active STEEL_ASSEMBLY sites, any recorded factory/site activity; import/status alone never counts. scope=factory uses factory confirmations/start-done legacy events; scope=site uses field confirmations/project clock-ins. Not proof of current ongoing physical work.',

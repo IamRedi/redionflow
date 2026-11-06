@@ -2,7 +2,9 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type SessionKind = "admin" | "worker" | "display";
 type SessionClaims = { v: 1; kind: SessionKind; id: string; epoch: number; expiresAt: number };
-const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+/** Persistent sign-in; display-only accounts retain their existing lifetime. */
+export function sessionMaxAge(kind: SessionKind) { return 60 * 60 * 24 * (kind === 'display' ? 30 : 365); }
+export const SESSION_RENEW_AFTER_SECONDS = 24 * 60 * 60;
 
 function signingKey(): string | null {
   const key = process.env.SESSION_SIGNING_SECRET;
@@ -14,7 +16,7 @@ export async function createSessionCookie(kind: SessionKind, id: string, authent
   const key = signingKey();
   if (!key) throw new Error("SESSION_SIGNING_SECRET must contain at least 32 characters.");
   if (!id || !Number.isSafeInteger(authenticatedEpoch) || authenticatedEpoch < 0) throw new Error("Verified account epoch is required.");
-  const claims: SessionClaims = { v: 1, kind, id, epoch: authenticatedEpoch, expiresAt: Date.now() + MAX_AGE_MS };
+  const claims: SessionClaims = { v: 1, kind, id, epoch: authenticatedEpoch, expiresAt: Date.now() + sessionMaxAge(kind) * 1000 };
   const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
   return `${payload}.${createHmac("sha256", key).update(payload).digest("base64url")}`;
 }

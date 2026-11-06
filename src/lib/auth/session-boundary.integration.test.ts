@@ -12,6 +12,7 @@ import { getCurrentAdmin, ADMIN_COOKIE } from "@/lib/auth/admin-session";
 import { createTestSession as createSessionCookie } from "../../../tests/security/fixtures";
 import { getCurrentDisplayUser, DISPLAY_COOKIE } from "@/lib/auth/display-session";
 import { getCurrentWorker, WORKER_COOKIE } from "@/lib/workzone/worker-session";
+import { POST as refreshSession } from '@/app/api/session/refresh/route';
 
 const companies: string[] = [];
 let adminB: string;
@@ -70,7 +71,7 @@ it("altering a signed subject is rejected", async () => {
 it("signed session expiry is enforced server-side", async () => {
   const now = Date.now();
   request.values.set(ADMIN_COOKIE, await createSessionCookie("admin", adminB));
-  vi.spyOn(Date, "now").mockReturnValue(now + 31 * 24 * 60 * 60 * 1000);
+  vi.spyOn(Date, "now").mockReturnValue(now + 366 * 24 * 60 * 60 * 1000);
   expect(await getCurrentAdmin()).toBeNull();
 });
 it("epoch rotation invalidates admin and worker sessions", async () => {
@@ -80,6 +81,23 @@ it("epoch rotation invalidates admin and worker sessions", async () => {
   await prisma.worker.update({ where: { id: workerB }, data: { sessionEpoch: { increment: 1 } } });
   expect(await getCurrentAdmin()).toBeNull();
   expect(await getCurrentWorker()).toBeNull();
+});
+it('persistent renewal rechecks actual roles, mixed identities and revoked epochs', async () => {
+  const refresh = () => refreshSession(new Request('http://localhost/api/session/refresh', { method: 'POST', headers: { origin: 'http://localhost' } }));
+  for (const [kind, cookie, account] of [['admin', ADMIN_COOKIE, adminB], ['worker', WORKER_COOKIE, workerB]] as const) {
+    request.values.clear();
+    request.values.set(cookie, await createSessionCookie(kind, account));
+    const now = Date.now(); vi.spyOn(Date, 'now').mockReturnValue(now + 32 * 86400000);
+    expect((await refresh()).headers.get('set-cookie')).toContain(`bk_${kind}_id=`);
+    if (kind === 'admin') await prisma.user.update({ where: { id: account }, data: { sessionEpoch: { increment: 1 } } });
+    else await prisma.worker.update({ where: { id: account }, data: { sessionEpoch: { increment: 1 } } });
+    expect((await refresh()).status).toBe(401);
+    vi.restoreAllMocks();
+  }
+  request.values.clear();
+  request.values.set(ADMIN_COOKIE, await createSessionCookie('admin', adminB));
+  request.values.set(WORKER_COOKIE, await createSessionCookie('worker', workerB));
+  expect((await refresh()).status).toBe(401);
 });
 it("inactive workers cannot keep an authenticated session", async () => {
   request.values.set(WORKER_COOKIE, await createSessionCookie("worker", workerB));

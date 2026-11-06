@@ -1,6 +1,6 @@
 "use server";
 
-import { createSessionCookie } from "@/lib/auth/session-cookie";
+import { createSessionCookie, sessionMaxAge } from "@/lib/auth/session-cookie";
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -82,7 +82,7 @@ export async function loginAdminAction(_prevState: LoginState, formData: FormDat
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: sessionMaxAge("admin"),
   });
   jar.delete(WORKER_COOKIE);
   jar.delete(DISPLAY_COOKIE);

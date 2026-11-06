@@ -7,7 +7,7 @@ type CapturedGeneration = {
   temperature: number;
   messages: Array<{ role: string; content: string }>;
   tools: Record<string, { execute: (input: unknown, options: ToolExecutionOptions) => Promise<unknown> }>;
-  prepareStep: (input: { stepNumber: number }) => { toolChoice: string | { type: string; toolName: string } };
+  prepareStep: (input: { stepNumber: number }) => { toolChoice: string | { type: string; toolName: string }; activeTools: string[] };
   onFinish: (event: { finishReason: string; totalUsage: { totalTokens?: number } }) => Promise<void>;
 };
 const state = vi.hoisted(() => ({
@@ -30,6 +30,12 @@ const state = vi.hoisted(() => ({
   sourceCall: null as { input: Record<string, unknown> } | null,
   assetSourceCall: null as { toolName: 'adminSearchCompanyAssets' | 'adminGetCompanyWorkshop'; input: Record<string, unknown> } | null,
   assetResult: null as unknown,
+  documentResult: null as unknown,
+  documentReceipts: vi.fn(),
+}));
+vi.mock('@/lib/assistant/document-tools', async original => ({ ...await original<typeof import('./document-tools')>(),
+  adminGetSitePhaseDocuments: async () => state.documentResult ?? { ok: true, documents: [], totalMatching: 0 },
+  adminGetSitePhaseDocumentReceipts: async (...args: unknown[]) => { state.documentReceipts(...args); return { ok: true, received: [] }; },
 }));
 vi.mock('@/lib/assistant/history', () => {
   class AssistantHistoryError extends Error { constructor(readonly status: number, readonly code: string) { super(code); } }
@@ -121,8 +127,28 @@ beforeEach(() => {
   state.replayed = false; state.archiveUnavailable = false;
   state.summaryResult = null; state.sourceCall = null;
   state.assetResult = null; state.assetSourceCall = null;
+  state.documentResult = null;
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
+
+it('resolves document IDs before offering receipt calls, blocks guessed versions and resets each turn', async () => {
+  const id = '60000000-0000-4000-8000-000000000001', foreign = '60000000-0000-4000-8000-000000000002';
+  await (await POST(request('Kush i mori dokumentet e kantierit Synthetic?'))).text();
+  const initial = options(), execution = { toolCallId: 'synthetic-doc', messages: [] };
+  expect(initial.prepareStep({ stepNumber: 0 }).activeTools).not.toContain('adminGetSitePhaseDocumentReceipts');
+  await initial.tools.adminGetSitePhaseDocuments.execute({ projectName: 'Synthetic' }, execution);
+  expect(initial.prepareStep({ stepNumber: 1 }).activeTools).not.toContain('adminGetSitePhaseDocumentReceipts');
+  state.documentResult = { ok: true, documents: [{ id, supersedesId: foreign }] };
+  await initial.tools.adminGetSitePhaseDocuments.execute({ projectName: 'Synthetic' }, execution);
+  expect(initial.prepareStep({ stepNumber: 2 }).activeTools).toContain('adminGetSitePhaseDocumentReceipts');
+  await initial.tools.adminGetSitePhaseDocumentReceipts.execute({ documentId: foreign }, execution);
+  expect(state.documentReceipts).not.toHaveBeenCalled();
+  await initial.tools.adminGetSitePhaseDocumentReceipts.execute({ documentId: id, status: 'received' }, execution);
+  expect(state.documentReceipts).toHaveBeenCalledWith(expect.objectContaining({ companyId: 'company-demo' }), { documentId: id, status: 'received' });
+  expect(initial.prepareStep({ stepNumber: 3 }).toolChoice).toBe('none');
+  await (await POST(request('Po versioni i ri?'))).text();
+  expect(options().prepareStep({ stepNumber: 0 }).activeTools).not.toContain('adminGetSitePhaseDocumentReceipts');
+});
 
 it.each(['anonymous', 'worker'] as const)('denies %s before company, quota or model access', async kind => {
   state.requester = kind === 'worker'
@@ -187,8 +213,8 @@ it.each([
 ])('routes %s through fresh tenant-scoped read-only evidence and private diagnostics', async (question, toolName) => {
   const response = await POST(request(question)); await response.text();
   const captured = options();
-  expect(captured.prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName } });
-  expect(captured.prepareStep({ stepNumber: 3 })).toEqual({ toolChoice: 'none' });
+  expect(captured.prepareStep({ stepNumber: 0 })).toMatchObject({ toolChoice: { type: 'tool', toolName } });
+  expect(captured.prepareStep({ stepNumber: 3 })).toMatchObject({ toolChoice: 'none' });
   const result = await captured.tools[toolName].execute({ query: 'Synthetic drill' }, { toolCallId: 'synthetic-asset-read', messages: [] });
   expect(result).toMatchObject({ evidence: { source: toolName, readOnly: true, scope: 'authenticated_company' }, result: { ok: true, data: { totalMatching: 1 } } });
   expect(state.toolCalls).toContainEqual({ name: toolName, args: [expect.objectContaining({ kind: 'admin', companyId: 'company-demo' }), toolName === 'adminGetCompanyWorkshop' ? expect.objectContaining({ assetKind: 'machine', category: 'vehicle', repairPhase: 'repairing' }) : { query: 'Synthetic drill' }] });
@@ -198,9 +224,9 @@ it.each([
 });
 it('routes a harmless greeting to static capabilities instead of private business reads', async () => {
   const response = await POST(request('hello')); await response.text();
-  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName: 'getAssistantCapabilities' } });
+  expect(options().prepareStep({ stepNumber: 0 })).toMatchObject({ toolChoice: { type: 'tool', toolName: 'getAssistantCapabilities' } });
   expect(Object.keys(options().tools)).toEqual(['getAssistantCapabilities']);
-  expect(options().prepareStep({ stepNumber: 1 })).toEqual({ toolChoice: 'none' });
+  expect(options().prepareStep({ stepNumber: 1 })).toMatchObject({ toolChoice: 'none' });
   const capabilities = await options().tools.getAssistantCapabilities.execute({}, { toolCallId: 'synthetic-capabilities', messages: [] });
   expect(capabilities).toMatchObject({ evidence: { source: 'getAssistantCapabilities', readOnly: true } });
   expect(state.toolCalls).toEqual([]);
@@ -245,9 +271,9 @@ it('uses the company calendar across UTC midnight and routes fresh grounded evid
   const evidence = await captured.tools.adminGetSteelProductionSummary.execute({ date: '2026-10-30', month: '2026-10' }, { toolCallId: 'synthetic-call', messages: [] });
   expect(state.toolCalls).toContainEqual({ name: 'adminGetSteelProductionSummary', args: [expect.objectContaining({ companyId: 'company-demo', kind: 'admin', timeZone: 'Europe/Tirane' }), { date: '2026-11-01', month: '2026-11' }] });
   expect(evidence).toMatchObject({ evidence: { source: 'adminGetSteelProductionSummary', timeZone: 'Europe/Tirane', readOnly: true, scope: 'authenticated_company' }, result: { ok: true, syntheticMetricKg: 250 } });
-  expect(captured.prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: 'required' });
-  expect(captured.prepareStep({ stepNumber: 1 })).toEqual({ toolChoice: 'auto' });
-  expect(captured.prepareStep({ stepNumber: 3 })).toEqual({ toolChoice: 'none' });
+  expect(captured.prepareStep({ stepNumber: 0 })).toMatchObject({ toolChoice: 'required' });
+  expect(captured.prepareStep({ stepNumber: 1 })).toMatchObject({ toolChoice: 'auto' });
+  expect(captured.prepareStep({ stepNumber: 3 })).toMatchObject({ toolChoice: 'none' });
   expect(state.generation).toHaveBeenCalledWith(expect.any(Request), 'admin', state.settle, expect.objectContaining({ onProviderCall: expect.any(Function), onFailure: expect.any(Function) }));
 });
 it('returns quota rejection before generation or inference', async () => {
@@ -325,7 +351,7 @@ it.each([
   ['sa kantier', 'adminSearchSteelProjects'],
 ] as const)('routes %s to its canonical steel source', async (question, toolName) => {
   await (await POST(request(question))).text();
-  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName } });
+  expect(options().prepareStep({ stepNumber: 0 })).toMatchObject({ toolChoice: { type: 'tool', toolName } });
   expect(options().system).toContain('normally one or two sentences');
   expect(options().system).toContain('Expand only when the user explicitly asks for details');
 });
@@ -352,7 +378,7 @@ it('replaces a model sum with separate canonical factory metrics and archives ex
   state.responseText = 'Fabrika prodhoi 191.34 kg gjithsej.';
   const response = await POST(request('Sa materiale ka bërë fabrika dje? Përgjigju shkurt me një fjali.'));
   const answer = await response.text();
-  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName: 'adminGetSteelProductionSummary' } });
+  expect(options().prepareStep({ stepNumber: 0 })).toMatchObject({ toolChoice: { type: 'tool', toolName: 'adminGetSteelProductionSummary' } });
   expect(answer).toContain('Prerje asamblesh: 5 copë, ≈123,45 kg');
   expect(answer).toContain('Asambluar: 2 copë, 67,89 kg');
   expect(answer).not.toContain('191.34'); expect(answer).not.toContain('gjithsej');
@@ -371,7 +397,7 @@ it('uses daily project facts for a detail follow-up instead of returning the inv
   const answer = await (await POST(req)).text();
   expect(answer).toContain('"Demo site":'); expect(answer).toContain('≈123,45 kg'); expect(answer).toContain('67,89 kg');
   expect(answer).not.toContain('Invented');
-  expect(options().prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName: 'adminGetSteelProductionSummary' } });
+  expect(options().prepareStep({ stepNumber: 0 })).toMatchObject({ toolChoice: { type: 'tool', toolName: 'adminGetSteelProductionSummary' } });
 });
 it('does not turn a failed factory source into a guessed total or zero confirmations', async () => {
   state.summaryResult = { ok: false, error: 'unavailable' }; state.sourceCall = { input: {} };

@@ -670,3 +670,30 @@ Laut `docs/DEPLOYMENT.md` läuft die Demo auf Railway. `railway.json` legt fest:
    - Optional Admin-Zugang: `ALLOW_DEMO_ADMIN_BOOTSTRAP=true`, `DEMO_ADMIN_EMAIL`, `DEMO_ADMIN_PASSWORD` (12+ Zeichen)
 4. Nächtlicher Reset: zweiter Service aus demselben Repo mit denselben Variablen, Start-Befehl `npm run demo:reset`, Cron `0 2 * * *` (UTC, also ca. 03:00/04:00 Uhr deutscher Zeit).
 5. BauFlow-Demo: dieselben Schritte noch einmal mit eigener, neuer Datenbank und `DEMO_SEED_MODE=bau` auf App- und Reset-Service. Die beiden Demos teilen sich nichts außer dem Code.
+
+## Dedicated mobile installation and persistent sign-in
+
+On an explicitly provisioned deployment, the manifest and app icons publish only
+the unique company's current display name, logo and regional language. They
+use server-only `INSTALLATION_COMPANY_ID` to bind the dedicated public install
+identity. Older provisioning settings can resolve a unique exact legal name;
+missing/ambiguous matches retain generic platform branding. No contacts, other
+provisioning fields or file contents enter public metadata. The existing logo is
+resized into PNG icons with white mask-safe padding, including Android192/512
+and Apple180. The stable install ID remains `/start` (the previous implicit start_url identity),
+with scope `/`; `/start` selects the current
+admin, worker or display landing page. Chrome can install through its menu; the
+physical Android install/launcher result remains separate from Chromium checks.
+
+Admin and worker sign-in cookies persist365 days. The signed token and browser
+cookie share the same lifetime. While the app is visible a small client renews
+through a same-origin POST at most every6 hours; the server issues a new cookie
+only after a day (including an existing valid30-day session). Fresh active role,
+company and exact sessionEpoch checks are mandatory. Mixed identities, revoked,
+tampered and expired sessions cannot renew. Logout, password/code rotation and
+account deactivation continue to work; display-only sessions retain30 days.
+Cookies remain Secure in production, HttpOnly and SameSite=Lax, never in browser
+localStorage. Clearing browser data/manual logout or a full year without renewal
+requires login again; installation does not override browser storage controls.
+See [Chrome's cookie lifetime/renewal contract](https://developer.chrome.com/blog/cookie-max-age-expires)
+and [Chrome installation criteria](https://developer.chrome.com/blog/update-install-criteria).

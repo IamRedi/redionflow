@@ -1,7 +1,7 @@
 import { rejectCrossOriginMutation } from "@/lib/auth/same-origin";
 import { NextResponse } from "next/server";
 
-import { createSessionCookie } from "@/lib/auth/session-cookie";
+import { createSessionCookie, sessionMaxAge } from "@/lib/auth/session-cookie";
 
 import { ADMIN_COOKIE, ensureDefaultAdmins } from "@/lib/auth/admin-session";
 import { authenticateAdmin, readAdminPassword } from "@/lib/auth/authenticate-admin";
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: sessionMaxAge("admin"),
     });
     response.cookies.delete(WORKER_COOKIE);
     response.cookies.delete(DISPLAY_COOKIE);
