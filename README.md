@@ -167,7 +167,13 @@ Redion Cekrezi arbeitet seit 2021 als Baumpfleger und Teamleiter in einem Baumdi
 
 Interessant für Baumdienste, Bau-, Tiefbau- und Glasfaserbetriebe, die ihre Baustellen digital führen wollen, und für Partner, die einen Pilotbetrieb begleiten möchten. Eine Vorführung oder einen Admin-Zugang zur Demo gibt es auf Anfrage über das **[Portfolio](https://www.redioncekrezi.de)** oder [GitHub](https://github.com/IamRedi).
 
-**Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
+**Redion Cekrezi · Full-Stack & Applied AI Developer** · [by RediON](https://www.redioncekrezi.de/)
+
+## BauFlow: Fahrzeugkarte und Serviceablauf
+
+Die Fahrzeugkarte bündelt Datenbearbeitung, Foto und Dokumentfristen. Die Werkstattaktion am Fahrzeug öffnet Defektmeldung oder den genauen Serviceverlauf; die Vollansicht zeigt kompakte Karten nach Reparaturphase. Mechanik oder Leitung schalten weiter, Belege und Rechnungen bleiben beim jeweiligen Auftrag. Die Aufnahme und Browserprüfung nutzen ausschließlich synthetische Daten. Die privaten Firmenabläufe werden damit nicht in den öffentlichen Demos freigeschaltet.
+
+<img src="docs/assets/screenshots/steel-service-workspace-synthetic.png" alt="BauFlow service workspace with fictional vehicles grouped by phase" width="100%">
 
 ## Lizenz
 
