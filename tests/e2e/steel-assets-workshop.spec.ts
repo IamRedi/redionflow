@@ -126,8 +126,15 @@ test('mechanic repairs with external provider and private evidence before tested
     const mechanic=await loginWorker(browser,info,seed.mechanic,seed.mechanicCode);other.push(mechanic.context);
     await mechanic.page.goto('/workzone/workshop');
     await mechanic.page.getByTestId('workshop-workspace').getByRole('button').filter({hasText:seed.machines[0].name}).click();
+    await detail(mechanic.page).getByTestId('service-repair').locator('summary').filter({hasText:c.repairNote}).click();
+    const draftNote=detail(mechanic.page).getByRole('textbox',{name:c.repairNote,exact:true});await draftNote.fill('Synthetic note retained through reception.');
+    await detail(mechanic.page).getByRole('button',{name:c.allDetails,exact:true}).click();await expect(draftNote).toHaveValue('Synthetic note retained through reception.');
+    await detail(mechanic.page).getByRole('button',{name:c.fewerDetails,exact:true}).click();await expect(draftNote).toHaveValue('Synthetic note retained through reception.');
     await detail(mechanic.page).getByRole('button',{name:c.receive,exact:true}).click();await expect(detail(mechanic.page).getByRole('button',{name:c.startRepair,exact:true})).toBeEnabled();
-    await detail(mechanic.page).getByRole('button',{name:c.startRepair,exact:true}).click();
+    await expect(draftNote).toHaveValue('Synthetic note retained through reception.');
+    await detail(mechanic.page).getByRole('button',{name:c.startRepair,exact:true}).click();await expect(draftNote).toHaveValue('Synthetic note retained through reception.');
+    const draftForm=detail(mechanic.page).locator('form').filter({has:mechanic.page.getByRole('textbox',{name:c.repairNote,exact:true})});await expect(draftForm).toHaveCount(1);
+    await draftForm.getByRole('button',{name:c.save,exact:true}).click();
     await detail(mechanic.page).getByText(c.serviceRoute,{exact:true}).click();await detail(mechanic.page).getByRole('combobox',{name:c.location,exact:true}).selectOption('external');await detail(mechanic.page).getByLabel(c.provider,{exact:true}).fill('Aurora Repair · DEMO');
     const locationForm=detail(mechanic.page).locator('form').filter({has:mechanic.page.getByRole('combobox',{name:c.location,exact:true})});await locationForm.getByLabel(c.note,{exact:true}).fill('Synthetic external booking.');await locationForm.getByRole('button',{name:c.save,exact:true}).click();
     await expect.poll(async()=>(await prisma.companyAssetRepair.findFirstOrThrow({where:{companyProfileId:companyId}})).location).toBe('external');
@@ -159,10 +166,12 @@ test('mechanic repairs with external provider and private evidence before tested
 });
 
 test('fleet grid and workshop stay usable at desktop and narrow sizes in both themes',async({page,context},info)=>{
-  test.setTimeout(150_000);let companyId:string|undefined;
+  test.setTimeout(240_000);let companyId:string|undefined;
   try{
     const fixture=await setup(page,context,info);companyId=fixture.companyId;const {seed}=fixture;
     await prisma.companyInventoryItem.createMany({data:Array.from({length:29},(_,index)=>({companyProfileId:companyId!,category:'WORK_TOOL' as const,itemCode:`SCROLL-${companyId}-${index}`,name:`ZZ Scroll Tool ${String(index+1).padStart(2,'0')} · DEMO`}))});
+    const garmentCode=`SYNTHETIC-CLOTHING-${companyId}`;
+    await prisma.companyInventoryItem.update({where:{id:seed.clothing.id},data:{barcode:garmentCode}});
     // Populated bays and two visits for one asset exercise exact historical job selection.
     const visualJobs=[];
     for (const [index,phase] of ['reported','received','repairing','ready'].entries()) {
@@ -217,6 +226,13 @@ test('fleet grid and workshop stay usable at desktop and narrow sizes in both th
         await expect(detail(page).getByTestId('service-repair')).toHaveAttribute('data-repair-id',historical.id);await expect(detail(page)).toContainText('Historical evidence only');await expect(detail(page).getByRole('button',{name:c.receive,exact:true})).toHaveCount(0);
         await detail(page).getByRole('button',{name:c.openRepair,exact:true}).click();await expect(detail(page).getByTestId('service-repair')).toHaveAttribute('data-repair-id',visualJobs[0].id);await expect(detail(page).getByRole('button',{name:c.receive,exact:true})).toBeVisible();
         await page.screenshot({path:info.outputPath(`service-job-${theme}.png`)});await page.keyboard.press('Escape');
+      }
+      if(width===1440&&theme==='light'){
+        await page.getByTestId('workshop-workspace').getByRole('button',{name:c.scan,exact:true}).click();
+        await currentDialog(page).getByRole('textbox').fill(garmentCode);await currentDialog(page).getByRole('button',{name:c.find,exact:true}).click();
+        await expect(detail(page).getByRole('heading',{name:seed.clothing.name,exact:true})).toBeVisible();
+        await expect(detail(page).getByRole('button',{name:c.sendWorkshop,exact:true})).toHaveCount(0);
+        await expect(detail(page).getByRole('button',{name:c.serviceHistory,exact:true})).toBeVisible();await page.keyboard.press('Escape');
       }
       await page.keyboard.press('Escape');
       await expect(page.getByTestId('workshop-dock-open')).toBeFocused();

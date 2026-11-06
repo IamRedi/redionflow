@@ -216,3 +216,11 @@ The native presentation is updated in six locales. Companion showcase/portfolio
 changes use synthetic workshop media, keep readiness unchanged and are held for
 approval plus core live verification; their source, local checks and publication
 are separate states. No paid provider call or production write was performed.
+
+The native landing preview was also compared before/after at desktop and 390px
+in SQ/EN. The long existing feature-card paragraph is condensed into a short
+summary in all six locales; its layout and material remain unchanged. The
+presentation follow-up changes copy only. Service editing also preserves unsaved
+repair notes across phase changes and keeps clothing out of defect reporting,
+including manual-code lookup from the workshop. These paths use the existing
+domain rules and are covered by the asset browser flow.
