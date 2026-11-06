@@ -54,6 +54,7 @@ it('resolves exact factory QR and GTIN identities, keeps multiple units explicit
  expect(new Set(codes).size).toBe(2);expect(codes.every(c=>/^AS-[A-F0-9]{12}$/.test(c))).toBe(true);
  expect((await readAssetSnapshot({scan:codes[0].toLowerCase()})).assets.map(a=>a.id)).toEqual([result.assets[0].id]);
  await mutate({type:'code-add',asset:ref,value:'012345678905'});expect((await readAssetSnapshot({scan:'0012345678905'})).assets[0].id).toBe(ref.id);
+ const gs1='0101234567890128\u001d21AbC_123';await mutate({type:'code-add',asset:ref,value:gs1});expect((await readAssetSnapshot({scan:gs1})).assets[0].id).toBe(ref.id);
  await expect(mutate({type:'code-add',asset:other,value:qr})).rejects.toMatchObject({code:'NOT_FOUND'});
  as(workerA);await expect(mutate({type:'code-add',asset:ref,value:'Worker cannot alias'})).rejects.toMatchObject({code:'DENIED'});
 });

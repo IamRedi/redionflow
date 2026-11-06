@@ -178,8 +178,9 @@ test.describe("SaaS authenticated smoke", () => {
     await page.route("**/api/assistant", async route => {
       requests++;
       const payload = route.request().postDataJSON() as { messages: { role: string; content: string }[] };
-      expect(payload.messages).toHaveLength(16);
+      expect(payload.messages).toHaveLength(Math.min(16,2*(requests-1)+1));
       expect(payload.messages.reduce((size, message) => size + message.content.length, 0)).toBeLessThanOrEqual(12000);
+      if(requests<=8){await route.fulfill({status:200,contentType:'text/plain',body:`Synthetic reply ${requests}`});return;}
       expect(payload.messages.at(-1)?.content).toBe("Test assistant limit");
       await route.fulfill({ status: 429, contentType: "application/json", headers: { "Retry-After": "60" }, body: JSON.stringify({ error: "The assistant's daily limit has been reached. Please try again tomorrow." }) });
     });
@@ -188,10 +189,15 @@ test.describe("SaaS authenticated smoke", () => {
     const panel = page.getByRole("dialog");
     const input = panel.locator("input, textarea").first();
     await expect(input).toHaveAttribute("maxlength", "4000");
+    // Conversations no longer read the old global browser cache. Build actual panel history instead.
+    for(let i=0;i<8;i++){
+      await input.fill(`Synthetic warmup ${i}`);await input.press('Enter');
+      await expect(panel.getByText(`Synthetic reply ${i+1}`,{exact:true})).toBeVisible();
+    }
     await input.fill("Test assistant limit");
     await input.press("Enter");
     await expect(panel.getByText("The assistant's daily limit has been reached. Please try again tomorrow.", { exact: true })).toBeVisible();
-    expect(requests).toBe(1);
+    expect(requests).toBe(9);
   });
   test("native image optimizer serves the allowlisted landing PNG as WebP", async ({ request }) => {
     const response = await request.get("/_next/image", {

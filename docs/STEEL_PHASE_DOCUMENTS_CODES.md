@@ -44,7 +44,7 @@ current status. The user chooses the unit; scanning never performs a handover or
 repair transition automatically. Unknown codes offer registration with the raw
 factory value prefilled. Existing allocation and workshop blocks still apply.
 
-Factory payload case, punctuation and leading zeroes are preserved. QR URLs are
+Factory payload case, punctuation, leading zeroes and GS1 field separators are preserved. QR URLs are
 matched as data and never followed. Checksum-valid UPC/EAN variants share a GTIN
 identity; arbitrary numeric strings do not. Lookup uses exact codes, not fuzzy
 name matching, and applies the existing asset visibility boundary before results

@@ -5,7 +5,8 @@ export function normalizeScanCode(value: string) {
 
 export const MAX_SCAN_CODE_LENGTH = 2048;
 export function validScanCode(value: string) {
-  return value.length > 0 && value.length <= MAX_SCAN_CODE_LENGTH && !/[\u0000-\u001f\u007f]/.test(value);
+  // GS1 DataMatrix / GS1-128 use ASCII 29 (FNC1) between variable-length fields.
+  return value.length > 0 && value.length <= MAX_SCAN_CODE_LENGTH && !/[\u0000-\u001c\u001e-\u001f\u007f]/.test(value);
 }
 
 /** Only checksum-valid GTINs share an EAN/UPC zero-padded identity. */

@@ -4,6 +4,7 @@ it('preserves exact factory QR payloads instead of applying Code39 normalization
   const value='https://factory.example.test/a/B?serial=00-ab&part=Drill_7';
   expect(normalizeScanCode(` ${value} `)).toBe(value);expect(scanCodeKey(value)).not.toBe(scanCodeKey(value.toUpperCase()));
   expect(validScanCode(value)).toBe(true);expect(validScanCode('a\0b')).toBe(false);expect(validScanCode('x'.repeat(2049))).toBe(false);
+  const gs1='0101234567890128\u001d21AbC_123';expect(validScanCode(gs1)).toBe(true);expect(scanCodeKey(gs1)).toBe(`raw:${gs1}`);
 });
 it('equates checksum-valid UPC/EAN variants without guessing arbitrary numeric identities',()=>{
   expect(scanCodeKey('012345678905')).toBe(scanCodeKey('0012345678905'));
