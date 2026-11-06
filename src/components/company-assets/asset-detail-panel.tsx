@@ -5,6 +5,7 @@ import { Camera, Check, FileText, ImagePlus, PenLine, RotateCcw, Upload, Wrench 
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/i18n/language-provider';
 import { getAssetDetailAction, getAssetSnapshotAction, uploadAssetFileAction } from '@/app/(workzone)/workzone/asset-operations-actions';
+import { AssetCodes } from './asset-codes';
 import type { AssetDetail, AssetHandoverView, AssetPerson, AssetRef, AssetRepairView } from '@/lib/company-assets/types';
 import { operationalStatusFromSummary } from '@/lib/company-assets/status';
 import { assetCopy, type AssetCopy } from './copy';
@@ -134,6 +135,7 @@ export function AssetDetailPanel({ asset: incomingAsset, initialReport, onClose 
     </div>
     <input ref={cover} hidden type="file" accept="image/*" onChange={event => fileChange(event.target,'cover')} /><input ref={coverCamera} hidden type="file" accept="image/*" capture="environment" onChange={event => fileChange(event.target,'cover')} />
     <AssetFeedback message={error} failed /><AssetFeedback message={mutation.message} failed={mutation.failed} /><AssetFeedback message={uploadMessage} failed={uploadFailed} />
+    <AssetCodes detail={detail} c={c} pending={busy} run={mutation.run}/>
     {editing && canManage ? <form className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2" onSubmit={async event => {event.preventDefault();if(await mutation.run({type:'edit',asset,revision:item.revision,name:editName.trim(),size:editSize.trim()}))setEditing(false);}}><AssetField label={c.name}><input required maxLength={120} value={editName} onChange={event=>setEditName(event.target.value)} className={assetInput} disabled={busy} /></AssetField>{item.category==='clothing' ? <AssetField label={c.size}><input value={editSize} maxLength={40} onChange={event=>setEditSize(event.target.value)} className={assetInput} disabled={busy} /></AssetField> : null}<div className="flex gap-2 sm:col-span-2"><button disabled={busy||!editName.trim()} className={assetPrimary}>{c.save}</button><button type="button" disabled={busy} onClick={()=>setEditing(false)} className={assetButton}>{c.cancel}</button></div></form> : null}
 
     <div className="flex flex-wrap gap-2">
@@ -164,6 +166,9 @@ export function AssetDetailPanel({ asset: incomingAsset, initialReport, onClose 
 }
 
 function historyLabel(type: string, c: AssetCopy) {
+  if(type==='code.added')return `${c.add}: ${c.factoryCode}`;
+  if(type==='code.removed')return c.removeCode;
+  if(type==='code.generated')return c.generateCode;
   const labels: Record<string,string> = {registered:c.addAsset,updated:c.edit,restored:c.restore,'inactive-holder-return':c.return,'legacy.TAKE':c.issue,'legacy.RETURN':c.return,'machine.activated':c.available,'machine.blocked':c.inactive,'machine.updated':c.edit,'incident.defect.confirmed':c.ready,'incident.defect.rejected':c.rejected,'invoice-added':c.invoice,'file-added':c.files,'cover-added':c.cover,'handover.requested':c.handover,'handover.confirmed':c.confirm,'handover.declined':c.decline,'handover.cancelled':c.cancel,'handover.issue.completed':c.issue,'handover.return.completed':c.return,'handover.transfer.completed':c.transfer,'incident.defect.reported':c.reportDefect,'incident.lost.reported':c.reportLost,'incident.retire.reported':c.reportRetire,'incident.lost.confirmed':c.lost,'incident.retire.confirmed':c.retired,'incident.lost.rejected':c.rejected,'incident.retire.rejected':c.rejected,'repair.received':c.received,'repair.repairing':c.repairing,'repair.ready':c.ready,'repair.note':c.repairNote,'repair.location.internal':c.internal,'repair.location.external':c.external};
   return labels[type] || c.history;
 }

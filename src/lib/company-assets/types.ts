@@ -35,7 +35,8 @@ export type AssetRepairView = {
 };
 export type AssetFileView = { id: string; name: string; kind: 'photo' | 'invoice' | 'document' | 'cover'; mime: string; bytes: number; url: string; uploadedBy: string; uploadedAt: string; repairId: string | null };
 export type AssetHistoryView = { id: string; type: string; actor: string; at: string; note: string; repairId: string | null };
-export type AssetDetail = { asset: AssetSummary; repairs: AssetRepairView[]; incidents: AssetIncidentView[]; handovers: AssetHandoverView[]; history: AssetHistoryView[]; files: AssetFileView[]; permissions: AssetPermissions };
+export type AssetCodeView = { id: string; kind: 'factory' | 'label'; value: string };
+export type AssetDetail = { asset: AssetSummary; codes: AssetCodeView[]; repairs: AssetRepairView[]; incidents: AssetIncidentView[]; handovers: AssetHandoverView[]; history: AssetHistoryView[]; files: AssetFileView[]; permissions: AssetPermissions };
 export type AssetSnapshot = {
   assets: AssetSummary[]; total: number; page: number; hasMore: boolean;
   counts: { total: number; available: number; issued: number; workshop: number; pending: number; lost: number; retired: number };
@@ -43,7 +44,7 @@ export type AssetSnapshot = {
   permissions: AssetPermissions; serverNow: string;
   queueHasMore?: { handovers: boolean; incidents: boolean; repairs: boolean };
 };
-export type AssetQuery = { query?: string; page?: number; category?: AssetCategory; includeInactive?: boolean; workerId?: string };
+export type AssetQuery = { query?: string; scan?: string; page?: number; category?: AssetCategory; includeInactive?: boolean; workerId?: string };
 export type AssetCommand =
   | { type: 'report'; asset: AssetRef; kind: 'defect' | 'lost' | 'retire'; note: string }
   | { type: 'decide-incident'; incidentId: string; revision: number; approve: boolean; note: string }
@@ -53,7 +54,10 @@ export type AssetCommand =
   | { type: 'repair-location'; repairId: string; revision: number; location: RepairLocation; provider?: string; note: string }
   | { type: 'repair-note'; repairId: string; revision: number; note: string }
   | { type: 'restore'; asset: AssetRef; revision: number; note: string }
-  | { type: 'register'; name: string; category: Exclude<AssetCategory, 'vehicle'>; code?: string; barcode?: string; size?: string; note?: string; quantity?: number }
+  | { type: 'register'; name: string; category: Exclude<AssetCategory, 'vehicle'>; code?: string; barcode?: string; factoryCode?: string; size?: string; note?: string; quantity?: number }
+  | { type: 'code-add'; asset: AssetRef; value: string }
+  | { type: 'code-generate'; asset: AssetRef }
+  | { type: 'code-remove'; asset: AssetRef; codeId: string }
   | { type: 'edit'; asset: AssetRef; revision: number; name: string; size?: string; note?: string };
 export type AssetMutation = { requestId: string; command: AssetCommand };
 export type AssetResult<T> = { ok: true; data: T; message?: string } | { ok: false; message: string; code?: string };

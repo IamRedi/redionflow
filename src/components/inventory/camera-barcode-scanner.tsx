@@ -1,133 +1,77 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
+import { normalizeBarcodeInput } from '@/lib/inventory/barcode';
+import { useLanguage } from '@/components/i18n/language-provider';
+import { scanCopy } from '@/lib/inventory/scan-copy';
 
-import { normalizeBarcodeInput } from "@/lib/inventory/barcode";
+type DetectorLike = { detect(source: ImageBitmapSource): Promise<{rawValue?: string}[]> };
+type DetectorCtor = { new(options?: {formats?: string[]}): DetectorLike; getSupportedFormats?: () => Promise<string[]> };
+type Controls = {stop: () => void};
+const formats = ['code_128','code_39','code_93','codabar','ean_13','ean_8','upc_a','upc_e','itf','qr_code','data_matrix','pdf417','aztec'];
 
-type BarcodeDetectorLike = {
-  detect(source: ImageBitmapSource): Promise<Array<{ rawValue?: string }>>;
-};
-
-type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => BarcodeDetectorLike;
-type ScannerControls = { stop: () => void };
-
-export function CameraBarcodeScanner({
-  active,
-  onDetected,
-  onError,
-  normalizeValue = normalizeBarcodeInput,
-}: {
-  active: boolean;
-  onDetected: (barcode: string) => void;
-  onError: (message: string) => void;
-  normalizeValue?: (value: string) => string;
+export function CameraBarcodeScanner({active,onDetected,onError,normalizeValue=normalizeBarcodeInput}: {
+  active:boolean;onDetected:(value:string)=>void;onError:(message:string)=>void;normalizeValue?:(value:string)=>string;
 }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const foundRef = useRef(false);
-  const controlsRef = useRef<ScannerControls | null>(null);
-
-  useEffect(() => {
-    if (!active) return;
-
-    let mounted = true;
-
-    const startNativeDetector = () => {
-      const Detector = (window as Window & { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector;
-      if (!Detector) return false;
-
-      const detector = new Detector({
-        formats: ["code_128", "code_39", "ean_13", "ean_8", "qr_code", "upc_a", "upc_e"],
-      });
-
-      const scan = async () => {
-        if (!mounted || foundRef.current || !videoRef.current || videoRef.current.readyState < 2) {
-          frameRef.current = window.requestAnimationFrame(scan);
-          return;
-        }
-
-        try {
-          const results = await detector.detect(videoRef.current);
-          const value = normalizeValue(String(results[0]?.rawValue ?? ""));
-          if (value) {
-            foundRef.current = true;
-            onDetected(value);
-            return;
-          }
-        } catch {
-          onError("Skanimi deshtoi. Provo perseri ose shkruaje barkodin manualisht.");
-          return;
-        }
-
-        frameRef.current = window.requestAnimationFrame(scan);
-      };
-
-      void navigator.mediaDevices
-        .getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false,
-        })
-        .then((stream) => {
-          if (!mounted) return;
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            void videoRef.current.play();
-          }
-          frameRef.current = window.requestAnimationFrame(scan);
-        })
-        .catch(() => {
-          onError("Kamera nuk u hap. Kontrollo lejet e browser-it.");
-        });
-
-      return true;
-    };
-
-    const startZxingFallback = async () => {
-      try {
-        const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        if (!mounted || !videoRef.current) return;
-
-        const reader = new BrowserMultiFormatReader();
-        controlsRef.current = await reader.decodeFromConstraints(
-          {
-            video: { facingMode: { ideal: "environment" } },
-            audio: false,
-          },
-          videoRef.current,
-          (result, _error, controls) => {
-            if (!mounted || foundRef.current) return;
-            const value = normalizeValue(String(result?.getText?.() ?? ""));
-            if (value) {
-              foundRef.current = true;
-              controls.stop();
-              controlsRef.current = null;
-              onDetected(value);
-            }
-          },
-        );
-      } catch {
-        onError("Ky browser nuk e mbeshtet skanimin direkt. Shkruaje barkodin manualisht.");
-      }
-    };
-
-    if (!startNativeDetector()) {
-      void startZxingFallback();
+  const {currentLang}=useLanguage();
+  const video=useRef<HTMLVideoElement>(null);
+  const callbacks=useRef({onDetected,onError,normalizeValue,message:scanCopy(currentLang).camera});
+  useEffect(()=>{callbacks.current={onDetected,onError,normalizeValue,message:scanCopy(currentLang).camera};},[onDetected,onError,normalizeValue,currentLang]);
+  useEffect(()=>{
+    if(!active)return;
+    let alive=true,found=false,frame:number|undefined,stream:MediaStream|null=null,controls:Controls|null=null;
+    function stopNative(){if(frame!==undefined)cancelAnimationFrame(frame);stream?.getTracks().forEach(track=>track.stop());stream=null;}
+    function accept(raw:string){
+      if(!alive||found)return;
+      const value=callbacks.current.normalizeValue(raw);
+      if(!value)return;
+      found=true;stopNative();controls?.stop();callbacks.current.onDetected(value);
     }
-
-    return () => {
-      mounted = false;
-      foundRef.current = false;
-      controlsRef.current?.stop();
-      controlsRef.current = null;
-      if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-    };
-  }, [active, onDetected, onError, normalizeValue]);
-
-  return <video ref={videoRef} className="aspect-[4/3] w-full rounded-md border bg-black object-cover" muted playsInline />;
+    async function fallback(){
+      stopNative();
+      try{
+        const {BrowserMultiFormatReader}=await import('@zxing/browser');
+        if(!alive||!video.current)return;
+        const reader=new BrowserMultiFormatReader();
+        const next=await reader.decodeFromConstraints({video:{facingMode:{ideal:'environment'}},audio:false},video.current,(result,_error,own)=>{
+          if(result&&alive&&!found){own.stop();accept(result.getText());}
+        });
+        if(!alive||found)next.stop();else controls=next;
+      }catch{if(alive)callbacks.current.onError(callbacks.current.message);}
+    }
+    async function start(){
+      const Detector=(window as Window&{BarcodeDetector?:DetectorCtor}).BarcodeDetector;
+      if(!Detector?.getSupportedFormats){await fallback();return;}
+      let detector:DetectorLike;
+      try{
+        const supported=await Detector.getSupportedFormats();
+        if(!alive)return;
+        if(!formats.every(format=>supported.includes(format))){await fallback();return;}
+        detector=new Detector({formats:formats.filter(format=>supported.includes(format))});
+      }catch{await fallback();return;}
+      try{
+        const next=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+        if(!alive){next.getTracks().forEach(track=>track.stop());return;}
+        stream=next;
+        if(!video.current){stopNative();return;}
+        video.current.srcObject=stream;await video.current.play();
+      }catch{stopNative();if(alive)callbacks.current.onError(callbacks.current.message);return;}
+      const scan=async()=>{
+        if(!alive||found)return;
+        if(video.current&&video.current.readyState>=2){
+          try{
+            const values=await detector.detect(video.current);
+            if(!alive||found)return;
+            const raw=values.find(value=>callbacks.current.normalizeValue(value.rawValue??''))?.rawValue;
+            if(raw){accept(raw);return;}
+          }catch{if(alive&&!found)await fallback();return;}
+        }
+        if(alive&&!found)frame=requestAnimationFrame(scan);
+      };
+      if(alive&&!found)frame=requestAnimationFrame(scan);
+    }
+    void start();
+    return()=>{alive=false;stopNative();controls?.stop();};
+  },[active]);
+  return <video ref={video} aria-label={scanCopy(currentLang).code} className="aspect-[4/3] w-full rounded-xl border bg-black object-cover" muted playsInline/>;
 }

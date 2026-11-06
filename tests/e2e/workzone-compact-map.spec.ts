@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
+import { assetCopy } from '../../src/components/company-assets/copy';
 import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 
-test('Workzone map has a compact site and fleet index without a floating team header', async ({ page, context }, info) => {
+for (const theme of ['light', 'dark'] as const) {
+test(`Workzone map has a compact site and fleet index without a floating team header (${theme})`, async ({ page, context }, info) => {
   assertE2ETestDatabase(process.env);
   test.setTimeout(180_000);
   const email = `compact-map-${Date.now()}@example.test`;
@@ -35,7 +37,6 @@ test('Workzone map has a compact site and fleet index without a floating team he
     foreignId = (await prisma.companyProfile.create({ data: { legalName: 'Foreign company · DEMO', displayName: 'Foreign company · DEMO' } })).id;
     await prisma.machine.create({ data: { companyProfileId: foreignId, name: 'FOREIGN_PRIVATE_VEHICLE', hourlyRateCents: 0, gpsEnabled: true, lastGpsLat: 52.5, lastGpsLng: 13.4, lastGpsAt: new Date() } });
 
-    for (const theme of ['light', 'dark'] as const) {
       await context.addCookies([{ name: 'bk_theme', value: theme, url: info.project.use.baseURL! }]);
       for (const [width, height, device] of [[1440, 1000, 'desktop'], [1024, 900, 'tablet'], [390, 844, 'phone'], [320, 760, 'small-phone']] as const) {
         await page.setViewportSize({ width, height });
@@ -44,17 +45,22 @@ test('Workzone map has a compact site and fleet index without a floating team he
         const frame = page.getByTestId('workzone-map-frame'), index = page.getByTestId('workzone-map-index'), header = page.getByTestId('workzone-topbar');
         const headerDocTop = await header.evaluate(el => el.getBoundingClientRect().top + window.scrollY);
         await expect(page.getByTestId('workzone-fleet-map')).toBeVisible();
-        await expect(page.getByTestId('fleet-rail-items')).toHaveCount(0);
-        await page.getByTestId('fleet-rail-toggle').click();
-        await expect(page.getByTestId('fleet-rail-items')).toBeVisible();
-        await page.getByTestId('fleet-rail-toggle').click();
-        await expect(page.getByTestId('fleet-rail-items')).toHaveCount(0);
+        await expect(page.getByTestId('fleet-picker')).toHaveCount(0);
+        await page.getByTestId('fleet-dock-open').click();
+        await expect(page.getByTestId('fleet-picker')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(page.getByTestId('fleet-picker')).toHaveCount(0);
         await expect(index.locator('[data-testid^="map-index-site-"]')).toHaveCount(4);
         await expect(index.locator('[data-testid^="map-index-vehicle-"]')).toHaveCount(18);
         await expect(page.getByText('FOREIGN_PRIVATE_VEHICLE', { exact: true })).toHaveCount(0);
-        for (const row of await index.locator('[data-testid^="map-index-"]').all()) {
-          expect(await row.locator('button,a').count()).toBe(2);
-          expect((await row.innerText()).trim().split('\n')).toHaveLength((await row.getAttribute('data-testid'))?.startsWith('map-index-vehicle-') ? 2 : 1);
+        const rows = await index.locator('[data-testid^="map-index-"]').evaluateAll(elements => elements.map(el => ({
+          id: el.getAttribute('data-testid'), actions: el.querySelectorAll('button,a').length, text: (el as HTMLElement).innerText.trim(),
+        })));
+        for (const row of rows) {
+          expect(row.actions).toBe(2);
+          const vehicle = row.id?.startsWith('map-index-vehicle-');
+          if (vehicle) expect(row.text).toContain(assetCopy('sq').statusAvailableShort);
+          expect(row.text.split('\n')).toHaveLength(vehicle ? 3 : 1);
         }
         const missingSite = page.getByTestId(`map-index-site-${sites[2].id}`), missingVehicle = page.getByTestId(`map-index-vehicle-${vehicles[2].id}`);
         await expect(missingSite.getByRole('button', { name: 'Zmadhim: Projekt pa GPS', exact: true })).toBeDisabled();
@@ -108,15 +114,18 @@ test('Workzone map has a compact site and fleet index without a floating team he
         const contrast = await signature.evaluate(el => {
           const rgb = (color: string) => color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
           const lum = (color: string) => rgb(color).map(v => { const s = v / 255; return s <= .04045 ? s / 12.92 : ((s + .055) / 1.055) ** 2.4; }).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
-          const bg = lum(getComputedStyle(el.closest('footer')!).backgroundColor);
+          // The accepted footer is transparent: measure the first opaque backdrop it actually paints over.
+          let parent:Element|null=el.closest('footer'),background='rgb(255,255,255)';
+          while(parent){const color=getComputedStyle(parent).backgroundColor,parts=color.match(/[\d.]+/g)?.map(Number)??[];if(parts.length===3||parts[3]===1){background=color;break;}parent=parent.parentElement;}
+          const bg = lum(background);
           return [...el.querySelectorAll('span')].map(span => { const fg = lum(getComputedStyle(span).color); return (Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05); });
         });
         expect(Math.min(...contrast)).toBeGreaterThanOrEqual(4.5);
         if (device === 'desktop' || device === 'phone') await signature.locator('..').screenshot({ path: info.outputPath(`workzone-signature-${theme}-${device}.png`) });
       }
-    }
   } finally {
     if (companyId) { await prisma.user.deleteMany({ where: { companyProfileId: companyId } }); await prisma.companyProfile.delete({ where: { id: companyId } }); }
     if (foreignId) await prisma.companyProfile.delete({ where: { id: foreignId } });
   }
 });
+}

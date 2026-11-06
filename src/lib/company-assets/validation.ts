@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { normalizeScanCode, validScanCode } from '@/lib/inventory/scan-code';
+const scanCode = z.string().transform(normalizeScanCode).refine(validScanCode);
 const id = z.string().trim().min(1).max(128), note = z.string().trim().min(1).max(2000), revision = z.number().int().min(0);
 export const assetRefSchema = z.object({ kind: z.enum(['machine','inventory']), id }).strict();
 const optionalNote = z.string().trim().max(2000).optional();
@@ -11,7 +13,10 @@ export const assetMutationSchema = z.object({ requestId: z.uuid(), command: z.di
   z.object({ type:z.literal('repair-location'),repairId:id,revision,location:z.enum(['internal','external']),provider:z.string().trim().max(200).optional(),note }).strict(),
   z.object({ type:z.literal('repair-note'),repairId:id,revision,note }).strict(),
   z.object({ type:z.literal('restore'),asset:assetRefSchema,revision,note }).strict(),
-  z.object({ type:z.literal('register'),name:z.string().trim().min(1).max(120),category:z.enum(['tool','clothing','equipment']),code:z.string().trim().max(80).optional(),barcode:z.string().trim().max(128).optional(),size:z.string().trim().max(80).optional(),note:optionalNote,quantity:z.number().int().min(1).max(100).optional() }).strict(),
+  z.object({ type:z.literal('register'),name:z.string().trim().min(1).max(120),category:z.enum(['tool','clothing','equipment']),code:z.string().trim().max(80).optional(),barcode:z.string().trim().max(128).optional(),factoryCode:scanCode.optional(),size:z.string().trim().max(80).optional(),note:optionalNote,quantity:z.number().int().min(1).max(100).optional() }).strict(),
+  z.object({ type:z.literal('code-add'),asset:assetRefSchema,value:scanCode }).strict(),
+  z.object({ type:z.literal('code-generate'),asset:assetRefSchema }).strict(),
+  z.object({ type:z.literal('code-remove'),asset:assetRefSchema,codeId:id }).strict(),
   z.object({ type:z.literal('edit'),asset:assetRefSchema,revision,name:z.string().trim().min(1).max(120),size:z.string().trim().max(80).optional(),note:optionalNote }).strict(),
 ]) }).strict();
-export const assetQuerySchema = z.object({query:z.string().trim().max(120).optional(),page:z.number().int().min(1).max(100000).optional(),category:z.enum(['vehicle','tool','clothing','equipment']).optional(),includeInactive:z.boolean().optional(),workerId:id.optional()}).strict();
+export const assetQuerySchema = z.object({query:z.string().trim().max(120).optional(),scan:scanCode.optional(),page:z.number().int().min(1).max(100000).optional(),category:z.enum(['vehicle','tool','clothing','equipment']).optional(),includeInactive:z.boolean().optional(),workerId:id.optional()}).strict();

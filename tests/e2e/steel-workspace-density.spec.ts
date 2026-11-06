@@ -39,7 +39,10 @@ test('steel workspace uses the screen, compact calendar, quiet footer and compan
           const root = document.querySelector('[data-testid="steel-dashboard"]')!, credit = document.querySelector('a[aria-label="by RediON"]')!, footer = credit.closest('footer')!;
           const day = document.querySelector('[data-testid="production-day-2026-10-14"]')!;
           const r = root.getBoundingClientRect(), f = footer.getBoundingClientRect(), c = credit.getBoundingClientRect();
-          return { width: innerWidth, rightGap: innerWidth - r.right, outerHeight: document.documentElement.scrollHeight, height: innerHeight, overflow: document.documentElement.scrollWidth > innerWidth, dayHeight: day.getBoundingClientRect().height, footerHeight: f.height, footerBg: getComputedStyle(footer).backgroundColor, creditOffset: Math.abs(c.x + c.width / 2 - f.x - f.width / 2), bodyHeight: document.body.getBoundingClientRect().height, bodyOverflow: getComputedStyle(document.body).overflow };
+          const main=document.querySelector('[data-testid="app-workspace-scroll"]')!.getBoundingClientRect();
+          const dock=document.querySelector('[data-testid="fleet-rail"]')?.closest('aside')?.getBoundingClientRect();
+          const occupiedRight=dock&&dock.left>=main.right?innerWidth-dock.left:0;
+          return { width: innerWidth, rightGap: main.right-r.right, unusedOuterRight:innerWidth-main.right-occupiedRight, outerHeight: document.documentElement.scrollHeight, height: innerHeight, overflow: document.documentElement.scrollWidth > innerWidth, dayHeight: day.getBoundingClientRect().height, footerHeight: f.height, footerBg: getComputedStyle(footer).backgroundColor, creditOffset: Math.abs(c.x + c.width / 2 - f.x - f.width / 2), bodyHeight: document.body.getBoundingClientRect().height, bodyOverflow: getComputedStyle(document.body).overflow };
         });
         console.log('DENSITY', JSON.stringify({ baseline, theme, ...state }));
         await page.screenshot({ path: info.outputPath(`${baseline ? 'before' : 'after'}-dashboard-${theme}-${width}.png`) });
@@ -49,6 +52,7 @@ test('steel workspace uses the screen, compact calendar, quiet footer and compan
           expect(state.overflow).toBe(false);
           expect(state.outerHeight).toBeLessThanOrEqual(height + 1);
           expect(state.rightGap).toBeLessThanOrEqual(32);
+          expect(state.unusedOuterRight).toBeLessThanOrEqual(32);
           expect(state.dayHeight).toBeLessThanOrEqual(76);
           expect(state.footerHeight).toBeLessThanOrEqual(48);
           expect(state.footerBg).toBe('rgba(0, 0, 0, 0)');
@@ -78,10 +82,10 @@ test('steel workspace uses the screen, compact calendar, quiet footer and compan
           await last.scrollIntoViewIfNeeded();
           await expect(last).toBeInViewport();
           if (width === 1440) {
-            await page.getByTestId('fleet-rail-toggle').click();
-            await page.getByTestId('fleet-rail-items').getByRole('button').first().click();
-            await expect(page.getByRole('dialog').getByRole('link', { name: 'Ngarko karburant', exact: true })).toHaveAttribute('href', /\/workzone\/fuel\?machine=/);
-            await page.getByRole('dialog').getByRole('button', { name: 'Mbyll', exact: true }).click();
+            await page.getByTestId('fleet-dock-open').click();
+            await page.getByTestId('fleet-card-grid').getByRole('button').first().click();
+            await expect(page.getByTestId('fleet-machine-card').getByRole('link', { name: 'Ngarko karburant', exact: true })).toHaveAttribute('href', /\/workzone\/fuel\?machine=/);
+            await page.keyboard.press('Escape');await page.keyboard.press('Escape');
           }
         }
       }

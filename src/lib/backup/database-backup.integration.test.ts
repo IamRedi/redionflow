@@ -16,7 +16,12 @@ function run(command: "create" | "verify", env: Record<string, string | undefine
   });
 }
 afterEach(async () => {
-  if (companyId) await prisma.companyProfile.deleteMany({ where: { id: companyId } });
+  if (companyId) {
+    const where={companyProfileId:companyId};
+    await prisma.sitePhaseDocumentReceipt.deleteMany({where});await prisma.sitePhaseDocument.deleteMany({where});
+    await prisma.companyAssetCode.deleteMany({where});await prisma.companyOperationalAsset.deleteMany({where});
+    await prisma.companyProfile.deleteMany({ where: { id: companyId } });
+  }
   if (dir) await rm(dir, { recursive: true, force: true });
   if (restoreName) {
     if (!/^bauflow_restore_[a-f0-9]+$/.test(restoreName)) throw new Error("Unsafe test cleanup target");
@@ -42,6 +47,10 @@ it("encrypted consistent snapshot restores all tables, 40 workers, 37 vehicles a
   const site = await prisma.baustelle.create({ data: { companyProfileId: companyId, name: "Synthetic site", type: "STEEL_ASSEMBLY" } });
   const bytes = Buffer.from("%PDF-1.4\nsynthetic preserved file\n");
   await prisma.siteFile.create({ data: { companyProfileId: companyId, baustelleId: site.id, kind: "document", fileName: "synthetic.pdf", mime: "application/pdf", size: bytes.length, data: bytes } });
+  const phaseDoc=await prisma.sitePhaseDocument.create({data:{companyProfileId:companyId,baustelleId:site.id,phase:'piketim',title:'Synthetic phase document',fileName:'synthetic-phase.pdf',mime:'application/pdf',size:bytes.length,dataBytes:bytes,sha256:createHash('sha256').update(bytes).digest('hex'),createdByWorkerId:worker.id,createdByKey:`worker:${worker.id}`,createdByName:'Synthetic engineer'}});
+  await prisma.sitePhaseDocumentReceipt.create({data:{companyProfileId:companyId,documentId:phaseDoc.id,workerId:worker.id,actorKey:`worker:${worker.id}`,actorName:'Synthetic engineer'}});
+  const asset=await prisma.companyOperationalAsset.create({data:{companyProfileId:companyId,machineId:machine.id}});
+  await prisma.companyAssetCode.create({data:{companyProfileId:companyId,assetId:asset.id,kind:'factory',value:'Factory:Abc_001',matchValue:'raw:Factory:Abc_001',createdByKey:`worker:${worker.id}`,createdByName:'Synthetic engineer'}});
   const env = { BACKUP_DATABASE_URL: source.toString(), BACKUP_EXPECTED_COMPANY_ID: companyId, BACKUP_OUTPUT_DIR: dir, BACKUP_PUBLIC_KEY_FILE: path.join(dir, "public.pem"), BACKUP_PRIVATE_KEY_FILE: path.join(dir, "private.pem") };
   const created = await run("create", env); expect(created.code).toBe(0);
   expect((await readFile(String(created.data.file))).includes(bytes)).toBe(false);
@@ -57,6 +66,9 @@ it("encrypted consistent snapshot restores all tables, 40 workers, 37 vehicles a
     expect((await check.query('SELECT count(*)::int AS n FROM "Machine"')).rows[0].n).toBe(37);
     expect((await check.query('SELECT data FROM "SiteFile"')).rows[0].data).toEqual(bytes);
     expect((await check.query('SELECT data FROM "FuelReceipt"')).rows[0].data).toEqual(receiptBytes);
+    expect((await check.query('SELECT "dataBytes" FROM "SitePhaseDocument"')).rows[0].dataBytes).toEqual(bytes);
+    expect((await check.query('SELECT "actorName" FROM "SitePhaseDocumentReceipt"')).rows[0].actorName).toBe('Synthetic engineer');
+    expect((await check.query('SELECT value FROM "CompanyAssetCode"')).rows[0].value).toBe('Factory:Abc_001');
   } finally { await check.end(); }
   expect(await prisma.worker.count({ where: { companyProfileId: companyId } })).toBe(40);
   expect(await prisma.machine.count({ where: { companyProfileId: companyId } })).toBe(37);

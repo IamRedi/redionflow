@@ -118,13 +118,10 @@ test('camera/upload covers replace vehicle, site and factory art with private co
         loginCodeHash: hashPassword('692814'),
       },
     });
-    await page.goto('/workzone');
-    await page.locator('button[title="Synthetic photo van"]').click();
+    // Vehicle photos remain available in fleet control after the compact dock replaced the sidebar.
+    await page.goto('/app/fleet-gps');
     const vehicleUrl = await uploadCover(page, 'machine', machine.id);
-    await page
-      .getByRole('dialog', { name: 'Synthetic photo van', exact: true })
-      .getByRole('button', { name: /Mbyll|Close/ })
-      .click();
+    await page.goto('/workzone');
     await uploadCover(page, 'site', site.id);
     await uploadCover(page, 'site', factory.id);
     await page.reload();
