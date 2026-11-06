@@ -64,6 +64,7 @@ const SECURITY_HEADERS = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: { "/api/demo/baumdienst/art/*": ["./assets/baumdienst-studio/v1/*.webp"] },
   // Opt-in for disk-constrained local verification; provider builds keep caching.
   ...(process.env.BDF_LOCAL_BUILD_NO_CACHE === "1" ? {
     webpack(config) { config.cache = false; return config; },

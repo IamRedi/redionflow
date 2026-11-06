@@ -14,9 +14,16 @@ test("botanical studio keeps six/two columns, characteristic leaves, seasons and
     await page.getByRole("combobox",{name:"Sommer · Herbst",exact:true}).selectOption("autumn");
     const art=grid.locator("svg[data-botanical-kind]").first();expect(await art.locator("linearGradient stop").first().getAttribute("stop-color")).toBeTruthy();
     await page.getByRole("button",{name:"Artenstudio",exact:true}).click();const d=page.getByRole("dialog");await d.getByRole("button",{name:"Hecken",exact:true}).click();await d.getByRole("button",{name:/Hainbuchenhecke/}).click();
-    await expect(d.getByTestId("botanical-reference")).toContainText("Gerippt, doppelt gesägt");await expect(d.locator('svg[data-botanical-form="hedge"]')).toHaveCount(1);await d.getByRole("button",{name:"Herbst",exact:true}).click();
+    await expect(d.getByTestId("species-reference")).toContainText("Gerippt, doppelt gesägt"); await d.getByText("Mehr über diese Art",{exact:true}).click();await expect(d.locator('svg[data-botanical-form="hedge"]')).toHaveCount(1);await expect(d.getByTestId("atlas-plate").locator("img")).toBeVisible(); await d.getByRole("button",{name:/^Blatt \/ Nadeln/}).click(); await expect(d.getByTestId("atlas-plate")).toHaveAttribute("data-area","leaf");
     expect(await d.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);await page.screenshot({path:info.outputPath(`studio-hedge-${width}.png`)});
-    await d.getByRole("button",{name:"Schließen",exact:true}).click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await d.getByRole("button",{name:"Schließen",exact:true}).click();
+    await grid.locator('article > button').first().click();
+    const magnifier=page.getByRole("button",{name:"Artenkarte öffnen",exact:true});
+    const box=await magnifier.boundingBox();expect(box?.width).toBeGreaterThanOrEqual(44);expect(box?.height).toBeGreaterThanOrEqual(44);
+    await magnifier.click();const atlas=page.getByRole("dialog").last();await expect(atlas.getByTestId("species-reference")).toBeVisible();
+    await atlas.getByRole("button",{name:/^Rinde/}).click();await expect(atlas.getByTestId("atlas-plate")).toHaveAttribute("data-area","bark");
+    expect(await atlas.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    await atlas.getByRole("button",{name:"Schließen",exact:true}).click();await expect(magnifier).toBeFocused();await page.getByRole("dialog").getByRole("button",{name:"Schließen",exact:true}).click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   }
   const after=await(await request.get("/api/demo/baumdienst/workshop")).json() as WorkshopSnapshot;expect(after.state.custody.treeEvents).toEqual(s.state.custody.treeEvents);
 });

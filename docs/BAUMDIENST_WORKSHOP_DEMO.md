@@ -1,6 +1,29 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-Stand: 5. November 2026. **AI-Studiobilder und botanische Referenzen der Musterfirma online.** Runtime `dbf58ce63c3ba62fd8afcea1f963dc2c361c7fa1`, Branch `feat/baumdienst-ai-botanical-studio-20261105`, [Draft PR61](https://github.com/IamRedi/redionflow/pull/61), gestapelt auf PR56. Railway `6ef59b42-73eb-4ede-880e-7bdc395d4d66`: SUCCESS seit 20:49:43 UTC, eine Replica. Kein Main-/Pilot-Merge. Der vorherige Runtime-Stand `4ac289f` lieferte die erste tatsächlich generierte und gespeicherte Geräteillustration; frühere Releases sind unten als Historie erhalten.
+Stand: 6. November 2026. Artenatlas und 41 kuratierte Originalillustrationen lokal verifiziert; Veröffentlichung der Musterfirma wird vorbereitet.
+
+## Atlasi me lupë dhe biblioteka editoriale — 6 nëntor 2026
+
+Vetëm template-i fiktiv Baumdienst Musterfirma. AL Steel, SaaS dhe demot e tjera nuk marrin këtë ndërfaqe. Nuk ka ndryshim skeme, migrim, reset inventari, konfigurim çelësi apo ndryshim kufijsh të gjenerimit.
+
+**Biblioteka e përfunduar:** 41 figura origjinale të krijuara me mjetin e integruar image_gen: 26 pllaka botanike, shtatë motive për Werkstatt/Inventar/Baustelle/Flotte/pjesë/dokumente/ekip dhe tetë kategori pajisjesh. KiDraht u lexua vetëm si referencë stili: editorial 3D realist, materiale mat, petrol/navy, dritë e butë dhe thekse portokalli. Baumdienst ruan jeshilen e pyllit, sipërfaqet, tipografinë dhe komponentët e vet. Skedarët përfundimtarë WebP 1536×1024 zënë 11.13 MB gjithsej; një pllakë ngarkohet kur hapet referenca. PNG-të burim mbeten të paprekura. `assets/baumdienst-studio/v1/manifest.json` ruan promptin, emrin e origjinalit, dimensionet dhe SHA-256 për çdo figurë. Një korrigjim i vetëm i synuar rregulloi strukturat e polenit të Eibe-s; nuk u bënë gjenerime provë në endpoint-in publik.
+
+**Pema dhe lupa:** kartat mbajnë dy kolona në telefon dhe gjashtë në laptop. Pema dhe gjethja SVG u zmadhuan; Lärche merr halat në tufa dhe paletën e verdhë të vjeshtës, në vend të figurës së përgjithshme. Prekja hap po ato veprime U krye/Raporto; mbajtja ose menuja hap detajet. Lupa e vogël në krye ka objektiv prekjeje 44×44 dhe hap kartën informuese të llojit. Mbyllja kthen fokusin te lupa dhe ruan pemën e hapur.
+
+**Atlasi:** pamja Blueprint tregon formën e plotë, gjethen/halat, lëvoren dhe lulet/frutat ose boçet. Katër butona hapin zmadhimin përkatës nga i njëjti origjinal. Ndarjet reale të secilës pllakë u matën dhe ruhen në `atlas-crops.ts`, që zmadhimi të mos kapë panelin fqinj dhe të mos shtrembërojë formën. “Më shumë për këtë lloj” hap dallimet specifike, çfarë të krahasosh në terren dhe burimin botanik. Shpjegimet janë në DE/SQ/EN/IT/PL/RO. Kurora e krasitur si Hecke dallohet nga specia; lulet ose frutat mund të mungojnë pas krasitjes. Pllakat ilustrojnë struktura nga stinë të ndryshme dhe nuk identifikojnë pemën reale nga foto.
+
+**Zgjedhja sipas emrit:** `resolveAtlas` përdor lista emrash të kontrolluar, jo hamendësim AI gjatë hapjes. Mbulohet i gjithë katalogu dhe të gjitha llojet e tre Baustelle-ve ekzistuese, përfshirë Winterlinde/Sommerlinde, Spitzahorn/Bergahorn dhe Lärche. Një emër grupi si Linde, Birke apo Kiefer shënohet shprehimisht si shembull; emra të tjerë të saktë si Acer palmatum ose Salix caprea, Kirschlorbeer, Hecke dhe emra të panjohur nuk marrin pllakën e një specieje tjetër. Skica e përgjithshme dhe shpjegimi i mungesës mbeten të përdorshëm.
+
+**Identiteti i pajisjes dhe fotot:** përparësia është foto e ngarkuar → figura AI ekzistuese e pajisjes → ilustrimi i kuruar i kategorisë → SVG. Fotoja e ngarkuar nuk mbishkruhet dhe asnjë ilustrim katalogu nuk regjistrohet si foto reale apo provë riparimi. Kartat dhe dialogu i porosisë përdorin të njëjtin identitet të pajisjes; fotoja e porosisë ka përparësi, më pas pamja e pajisjes. Fotot e raportit mbeten të lidhura me porosinë e tyre. Pajisjet e plota përdorin object-contain që kamioni, platforma ose vegla të mos priten në kartat e ngushta. Ngarkimi i fotos, barkodet, NFC, konfirmimet dhe historiku nuk ndryshojnë.
+
+**Ruajtja dhe kufijtë:** biblioteka statike versionohet bashkë me aplikacionin dhe shërbehet nga `/api/demo/baumdienst/art/[id]`, vetëm pas kontrollit të profilit demo dhe kompanisë së vetme Baumdienst Musterstadt GmbH. ID-të janë një allowlist; nuk lexohen rrugë të dhëna nga përdoruesi. Përgjigjet janë WebP me nosniff, CORP same-origin dhe cache private. Nuk ka gjenerim AI gjatë GET, hapjes së lupës, sezonit apo zmadhimit. Gjeneruesi publik i pajisjeve vazhdon me konfigurimin ekzistues dhe 5 tentativa/ditë UTC, 50 gjithsej; krijimi i kësaj biblioteke të kuruar nuk përdori ose anashkaloi atë endpoint. Të dhënat e inventarit dhe fotot e ngarkuara mbeten në ruajtjen e përbashkët ekzistuese.
+
+**Kontrolli vizual dhe korrigjimet:** ndërfaqja ruan temën Baumdienst, veprimet touch, ikonat SVG origjinale dhe footer-in ekzistues. U korrigjuan lartësia zero e figurave rezervë dhe prerja e panelit fqinj në zmadhim. Në versionin për publikim u gjet një import i hartës që kërkonte window gjatë hapjes së drejtpërdrejtë të Baustelle-s; vetëm komponenti MusterSite tani e ngarkon hartën në klient kur hapet seksioni. Komponenti operacional i hartës nuk u ndryshua.
+
+Burimet botanike lidhen në secilën kartë: Woodland Trust, RHS, Kew, European Commission JRC dhe burime universitare të dendrologjisë. Figurat janë origjinale të gjeneruara, jo riprodhime të fotografive të burimeve.
+
+
+Historischer Stand: 5. November 2026. **AI-Studiobilder und botanische Referenzen der Musterfirma online.** Runtime `dbf58ce63c3ba62fd8afcea1f963dc2c361c7fa1`, Branch `feat/baumdienst-ai-botanical-studio-20261105`, [Draft PR61](https://github.com/IamRedi/redionflow/pull/61), gestapelt auf PR56. Railway `6ef59b42-73eb-4ede-880e-7bdc395d4d66`: SUCCESS seit 20:49:43 UTC, eine Replica. Kein Main-/Pilot-Merge. Der vorherige Runtime-Stand `4ac289f` lieferte die erste tatsächlich generierte und gespeicherte Geräteillustration; frühere Releases sind unten als Historie erhalten.
 
 
 ## Studio AI dhe referencat botanike — 5 nëntor 2026
