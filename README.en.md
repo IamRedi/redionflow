@@ -157,7 +157,13 @@ Redion Cekrezi has worked as an arborist and team lead at a tree care company in
 
 Of interest to tree care, construction, civil works and fibre-optic companies that want to run their job sites digitally, and to partners who want to accompany a pilot. A walkthrough or admin access to the demo is available on request via the **[portfolio](https://www.redioncekrezi.de)** or [GitHub](https://github.com/IamRedi).
 
-**Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
+**Redion Cekrezi · Full-Stack & Applied AI Developer** · [by RediON](https://www.redioncekrezi.de/)
+
+## BauFlow: vehicle card and service workflow
+
+The vehicle card brings together data editing, photo and document expiry dates. Its workshop action opens defect reporting or the exact service history; the full workspace groups compact cards by repair phase. Mechanics or management progress the work, with evidence and invoices retained for the correct job. This capture and browser verification use synthetic data only. This does not enable the private company workflows in the public demos.
+
+<img src="docs/assets/screenshots/steel-service-workspace-synthetic.png" alt="BauFlow service workspace with fictional vehicles grouped by phase" width="100%">
 
 ## License
 
