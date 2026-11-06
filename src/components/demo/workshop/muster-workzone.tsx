@@ -29,5 +29,5 @@ export function MusterWorkzone({ sites, missions, defaultAddress, now, monitor =
     return { ...item, done, pct: site.trees.length ? Math.round(done / site.trees.length * 100) : 0, planSummary: row ? [row.workerNames, row.machineNames].filter(Boolean).join(" · ") : undefined };
   });
   const active = (item: MissionItem) => item.pct < 100 || item.equipmentIndicators.length > 0 || Boolean(item.pendingSiteTask);
-  return <WorkzoneMissionControl items={items.filter(active)} archive={items.filter(i => !active(i))} defaultAddress={defaultAddress} detailHrefBase="/demo/baustellen" mode="baumdienst" readOnly allowCanvasDrag={!monitor} toolbar={monitor ? undefined : <DemoPlanToolbar now={now} />} />;
+  return <WorkzoneMissionControl items={items.filter(active)} archive={items.filter(i => !active(i))} defaultAddress={defaultAddress} detailHrefBase="/demo/baustellen" mode="baumdienst" readOnly demoPhotoReadOnly={monitor} allowCanvasDrag={!monitor} toolbar={monitor ? undefined : <DemoPlanToolbar now={now} />} />;
 }

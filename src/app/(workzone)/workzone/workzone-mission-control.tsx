@@ -283,6 +283,7 @@ export function WorkzoneMissionControl({
   gpsSyncAvailable = false,
   initialMap = false,
   canEditPhotos = false,
+  demoPhotoReadOnly = false,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -297,6 +298,7 @@ export function WorkzoneMissionControl({
   gpsSyncAvailable?: boolean;
   initialMap?: boolean;
   canEditPhotos?: boolean;
+  demoPhotoReadOnly?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const muster = items.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
@@ -574,7 +576,7 @@ export function WorkzoneMissionControl({
               >
                 {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
-                    {item.demoPhotoKey ? <DemoPhoto kind="site" target={item.id} photoKey={item.demoPhotoKey} alt={item.name} className="h-full w-full"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto> : <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
+                    {item.demoPhotoKey ? <DemoPhoto readOnly={demoPhotoReadOnly} kind="site" target={item.id} photoKey={item.demoPhotoKey} alt={item.name} className="h-full w-full"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto> : <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>}
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
