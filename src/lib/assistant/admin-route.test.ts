@@ -28,6 +28,8 @@ const state = vi.hoisted(() => ({
   replayed: false, archiveUnavailable: false,
   summaryResult: null as unknown,
   sourceCall: null as { input: Record<string, unknown> } | null,
+  assetSourceCall: null as { toolName: 'adminSearchCompanyAssets' | 'adminGetCompanyWorkshop'; input: Record<string, unknown> } | null,
+  assetResult: null as unknown,
 }));
 vi.mock('@/lib/assistant/history', () => {
   class AssistantHistoryError extends Error { constructor(readonly status: number, readonly code: string) { super(code); } }
@@ -62,6 +64,9 @@ vi.mock('ai', async original => ({ ...await original<typeof import('ai')>(), str
   return { fullStream: (async function* () {
     if (state.sourceCall) {
       await options.tools.adminGetSteelProductionSummary.execute(state.sourceCall.input, { toolCallId: 'synthetic-production', messages: [] });
+    }
+    if (state.assetSourceCall) {
+      await options.tools[state.assetSourceCall.toolName].execute(state.assetSourceCall.input, { toolCallId: 'synthetic-asset', messages: [] });
     }
     yield { type: 'start-step' };
     if (state.streamFailure) {
@@ -98,7 +103,7 @@ vi.mock('@/lib/assistant/company-tools', () => Object.fromEntries([
 vi.mock('@/lib/assistant/project-activity', () => ({ adminGetStartedSteelProjects: async (...args: unknown[]) => { state.toolCalls.push({ name: 'adminGetStartedSteelProjects', args }); return { ok: true, totalMatches: 2, projects: [{ name: 'Synthetic site' }] }; } }));
 vi.mock('@/lib/assistant/asset-tools', () => Object.fromEntries([
   'adminSearchCompanyAssets', 'adminGetCompanyWorkshop',
-].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, data: { totalMatching: 1, complete: true, items: [{ name: 'Synthetic drill', availability: 'reported' }] } }; }])));
+].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return state.assetResult ?? { ok: true, data: { totalMatching: 1, complete: true, items: [{ name: 'Synthetic drill', availability: 'reported' }] } }; }])));
 
 import { POST } from '@/app/api/assistant/route';
 const origin = 'http://127.0.0.1:3100';
@@ -115,6 +120,7 @@ beforeEach(() => {
   state.responseText = 'Synthetic grounded answer'; state.finishReason = 'stop';
   state.replayed = false; state.archiveUnavailable = false;
   state.summaryResult = null; state.sourceCall = null;
+  state.assetResult = null; state.assetSourceCall = null;
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
@@ -185,7 +191,7 @@ it.each([
   expect(captured.prepareStep({ stepNumber: 3 })).toEqual({ toolChoice: 'none' });
   const result = await captured.tools[toolName].execute({ query: 'Synthetic drill' }, { toolCallId: 'synthetic-asset-read', messages: [] });
   expect(result).toMatchObject({ evidence: { source: toolName, readOnly: true, scope: 'authenticated_company' }, result: { ok: true, data: { totalMatching: 1 } } });
-  expect(state.toolCalls).toContainEqual({ name: toolName, args: [expect.objectContaining({ kind: 'admin', companyId: 'company-demo' }), { query: 'Synthetic drill' }] });
+  expect(state.toolCalls).toContainEqual({ name: toolName, args: [expect.objectContaining({ kind: 'admin', companyId: 'company-demo' }), toolName === 'adminGetCompanyWorkshop' ? expect.objectContaining({ assetKind: 'machine', category: 'vehicle', repairPhase: 'repairing' }) : { query: 'Synthetic drill' }] });
   expect(state.trace).toHaveBeenCalledWith(expect.objectContaining({ kind: 'admin', companyId: 'company-demo' }), expect.objectContaining({ runId: 'run-demo', toolName, status: 'ok' }));
   expect(captured.system).toContain('Pending issue/return/transfer is not a completed handover');
   expect(captured.system).toContain('no bin/shelf location is tracked');
@@ -198,6 +204,39 @@ it('routes a harmless greeting to static capabilities instead of private busines
   const capabilities = await options().tools.getAssistantCapabilities.execute({}, { toolCallId: 'synthetic-capabilities', messages: [] });
   expect(capabilities).toMatchObject({ evidence: { source: 'getAssistantCapabilities', readOnly: true } });
   expect(state.toolCalls).toEqual([]);
+});
+function assetRead(items: Array<Record<string, unknown>>, filters: Record<string, unknown>, totalMatching = items.length) {
+  return { ok: true, readOnly: true, source: 'Canonical current company asset custody and workshop records', retrievedAt: new Date().toISOString(), data: {
+    items, filters: { query: null, assetKind: null, assetId: null, category: null, holderWorkerId: null, repairPhase: null, repairLocation: null, ...filters },
+    totalMatching, returned: items.length, hasMore: items.length < totalMatching, complete: items.length === totalMatching,
+    countsScope: 'all_matching_assets_before_pagination',
+    nextCursor: items.length < totalMatching ? 'inventory:tool-c' : null, scope: items.length < totalMatching ? 'first_page' : 'all_matching_rows',
+    countsByRepairPhase: { reported: 0, received: 0, repairing: 0 },
+  } };
+}
+it('enforces the requested repair phase and delivers/archives canonical zero instead of model phase conflation', async () => {
+  state.assetSourceCall = { toolName: 'adminGetCompanyWorkshop', input: { limit: 20, repairPhase: 'active' } };
+  state.assetResult = assetRead([], { assetKind: 'machine', category: 'vehicle', repairPhase: 'repairing' });
+  state.responseText = 'Dy mjete janë në riparim: Synthetic van dhe Synthetic loader.';
+  const response = await POST(request('Cilat mjete janë tani në riparim? Përgjigju shkurt me emrat dhe targat, nëse ka.'));
+  const answer = await response.text();
+  expect(answer).not.toContain('Synthetic van'); expect(answer).not.toContain('Dy mjete');
+  expect(answer.toLowerCase()).toContain('riparim');
+  expect(state.toolCalls).toContainEqual({ name: 'adminGetCompanyWorkshop', args: [expect.objectContaining({ kind: 'admin' }), expect.objectContaining({ repairPhase: 'repairing', assetKind: 'machine', category: 'vehicle' })] });
+  expect(state.historyFinish).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ answer, diagnostics: expect.objectContaining({ canonicalAsset: expect.objectContaining({ applied: true }) }) }));
+});
+it('enforces inventory tool scope and preserves a partial list instead of an all-company no-holder claim', async () => {
+  state.assetSourceCall = { toolName: 'adminSearchCompanyAssets', input: { limit: 3, query: '' } };
+  const items = ['a', 'b', 'c'].map(id => ({ kind: 'inventory', id: `tool-${id}`, name: `Synthetic tool ${id}`, category: 'tool', code: `D-${id}`, plate: null, size: null,
+    baseRecordActive: true, operationalAvailability: 'available', usable: true, recordedHolder: null, assignedSite: null, custodyBasis: 'no_recorded_holder', activeRepair: null,
+    pendingHandover: null, latestCompletedHandover: null, truncatedFields: [] }));
+  state.assetResult = assetRead(items, { assetKind: 'inventory', category: 'tool' }, 37);
+  state.responseText = 'Të gjitha veglat janë pa mbajtës të regjistruar.';
+  const response = await POST(request('Kujt i janë dorëzuar veglat e regjistruara? Jep deri në 3 emra me kodet dhe kantierin e caktuar, nëse figuron. Pa hamendësime.'));
+  const answer = await response.text();
+  expect(answer).not.toContain('Të gjitha'); expect(answer).toContain('37'); expect(answer).toContain('Synthetic tool a');
+  expect(state.toolCalls).toContainEqual({ name: 'adminSearchCompanyAssets', args: [expect.any(Object), expect.objectContaining({ assetKind: 'inventory', category: 'tool', limit: 3 })] });
+  expect(state.historyFinish).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ answer, diagnostics: expect.objectContaining({ canonicalAsset: expect.objectContaining({ applied: true }) }) }));
 });
 it('uses the company calendar across UTC midnight and routes fresh grounded evidence with the forced date', async () => {
   const response = await POST(request()); await response.text();

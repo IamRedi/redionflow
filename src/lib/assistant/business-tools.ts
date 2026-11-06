@@ -6,6 +6,7 @@ import { adminSearchSteelProjects, adminSearchSteelElements, adminGetSteelElemen
 import { adminSearchCompanyWorkers, adminSearchCompanyFleet, adminGetCompanyFuelReceipts, adminSearchCompanyInventory } from './company-tools';
 import { adminGetStartedSteelProjects } from './project-activity';
 import { adminSearchCompanyAssets, adminGetCompanyWorkshop } from './asset-tools';
+import { applyCanonicalAssetFilters, type CanonicalAssetIntent } from './asset-answer';
 
 const text = z.string().trim().min(1).max(180);
 const id = z.string().trim().min(1).max(120);
@@ -17,7 +18,7 @@ const companyText = z.string().trim().min(1).max(100);
 const companyPage = { cursor: z.string().trim().min(1).max(80).optional(), limit: page.limit };
 const assetPage = { cursor: z.string().regex(/^(machine|inventory):[a-z0-9_-]{1,120}$/i).optional(), limit: z.number().int().min(1).max(20).optional() };
 const assetFilters = {
-  query: companyText.optional(), assetKind: z.enum(['machine', 'inventory']).optional(), assetId: id.optional(),
+  query: z.string().trim().max(100).optional(), assetKind: z.enum(['machine', 'inventory']).optional(), assetId: id.optional(),
   category: z.enum(['vehicle', 'tool', 'clothing', 'equipment']).optional(), holderWorkerId: id.optional(),
   repairPhase: z.enum(['active', 'reported', 'received', 'repairing']).optional(), repairLocation: z.enum(['internal', 'external']).optional(), ...assetPage,
 };
@@ -28,7 +29,7 @@ function productionPeriod(turn: Turn, input: { date?: string; month?: string }) 
   return { date: chosenDate, month: chosenDate ? chosenDate.slice(0, 7) : input.month ?? (turn.currentMonthRequested ? turn.currentMonth : undefined) };
 }
 
-export function companyAssistantTools(requester: RequesterContext, steel = false): ToolSet {
+export function companyAssistantTools(requester: RequesterContext, steel = false, assetIntent: CanonicalAssetIntent | null = null): ToolSet {
   return {
     getAssistantCapabilities: {
       description: 'Static capabilities and limitations only, for greetings or questions about this assistant. Reads no workers, fleet, receipts or other business records. It provides no operational facts or statistics.',
@@ -59,12 +60,12 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
       adminSearchCompanyAssets: {
         description: 'Read company warehouse/fleet asset records by name/code/plate or exact assetKind+assetId. Returns recorded current holder, assigned site, pending versus completed handovers, availability and current repair. holderWorkerId filters only current responsibility, never pending recipient or repair origin; discover worker ID first. Exact filtered total and bounded cursor page. Multiple name matches require clarification. Unassigned does not prove physical warehouse presence; no GPS or file contents.',
         inputSchema: z.object(assetFilters),
-        execute: (input: Parameters<typeof adminSearchCompanyAssets>[1]) => adminSearchCompanyAssets(requester, input),
+        execute: (input: Parameters<typeof adminSearchCompanyAssets>[1]) => adminSearchCompanyAssets(requester, applyCanonicalAssetFilters(assetIntent, 'adminSearchCompanyAssets', input ?? {})),
       },
       adminGetCompanyWorkshop: {
         description: 'Which vehicles/tools are in the workshop? Same canonical asset read, filtered before totals/pagination to CURRENT active repair jobs. Default repairPhase=active includes reported, received and repairing; these are distinct phases. Use repairing for actively being repaired, received for accepted, reported for awaiting reception. Filter assetKind=machine for vehicles, repairLocation=external for outside service. A reported defect is not physical reception. Repair route/provider is recorded workflow, not GPS/address. No invoices or file contents.',
         inputSchema: z.object(assetFilters),
-        execute: (input: Parameters<typeof adminGetCompanyWorkshop>[1]) => adminGetCompanyWorkshop(requester, input),
+        execute: (input: Parameters<typeof adminGetCompanyWorkshop>[1]) => adminGetCompanyWorkshop(requester, applyCanonicalAssetFilters(assetIntent, 'adminGetCompanyWorkshop', input ?? {})),
       },
     } : {}),
   };

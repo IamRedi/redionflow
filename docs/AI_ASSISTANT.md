@@ -183,6 +183,22 @@ answers give the asset name/code/plate plus holder or repair phase and one usefu
 recorded location/route; expand only when asked for details. The existing private
 conversation and sanitized tool-trace archive records these reads automatically.
 
+Simple current company-wide asset and workshop questions also use a canonical
+answer guard. One trusted question intent supplies the requested phase, asset
+kind/category and bounded list size at the tool execution boundary; an empty
+optional search is accepted. This prevents a model from requesting all active
+workshop phases when the question explicitly asks for `repairing`, or reading
+vehicles when the question asks for tools.
+
+The delivery guard verifies the successful source's actual filters, row kinds,
+phases and page coverage. It renders the concise answer from those facts before
+delivery and archival, with explicit shown/total scope for partial lists. A
+filtered empty result does not establish an empty company, and missing or
+mismatched evidence yields an unavailable answer. Named, historical, worker-
+specific, GPS and other complex questions retain the normal grounded path;
+this bounded guard does not certify arbitrary model answers. Private diagnostics
+record whether the guard applied without logging business labels.
+
 ## Activation and limits
 
 The existing OpenAI `gpt-4o-mini` provider and installed AI SDK remain unchanged.
