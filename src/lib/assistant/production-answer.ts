@@ -35,6 +35,9 @@ export function resolveCanonicalProductionIntent(messages: AssistantMessage[]): 
   const questions = messages.filter(message => message.role === 'user').map(message => normalized(message.content));
   let inherited: Intent | null = null;
   for (const question of questions) {
+    // The repair workshop and company assets are separate from steel throughput,
+    // even when a short question uses "bërë" (made/done) and "officina".
+    if (/\b(oficin\w*|officin\w*|repair\w*|reparatur\w*|ripar\w*|defekt\w*|vegl\w*|vegel\w*|pajis\w*|pais\w*|mjet\w*)\b/u.test(question)) { inherited = null; continue; }
     if (question.length > 500 || excluded.test(question)) { inherited = null; continue; }
     if (factory.test(question) && production.test(question) && quantity.test(question) && !explicitProject(question)) inherited = { details: details.test(question), ...(unsupportedScope(question) ? { unsupportedScope: true } : {}) };
     else if (inherited && detailFollowUp(question)) inherited = { ...(inherited as Intent), details: true };

@@ -136,6 +136,8 @@ these private tables. Worker Helper has no access to this archive.
 | `adminSearchCompanyFleet` | Vehicle/plate/properties and last stored GPS report time/age/staleness. No provider refresh or device command. |
 | `adminGetCompanyFuelReceipts` | Metadata, upload/fueling actors and dates, captured GPS provenance, confirmation filters and exact sums by currency. Select uploaded/fueled date basis; latest uses that selected event time. No image/OCR read. |
 | `adminSearchCompanyInventory` | Catalog and active worker assignments, not physical stock/available balances. |
+| `adminSearchCompanyAssets` (steel admin) | Canonical warehouse/fleet assets with recorded holder, assigned site, availability, pending versus completed handovers and current repair. Exact filters/counts before cursor pagination. |
+| `adminGetCompanyWorkshop` (steel admin) | Current active repair jobs, filtered by vehicle/tool, phase and internal/external route before counts/pages. Reported, received and repairing remain separate; ready/cancelled history is excluded. |
 | Hours/timesheets | Existing reports. Company totals/rankings aggregate all closed rows in PostgreSQL and live hours at one as-of instant in a repeatable-read transaction; no5,000/8,000-session clipping. |
 | Plan/licenses/availability/vacation | Existing authorized plan/report/profile data with company-calendar boundaries and explicit limitations. |
 | `getKnowledge` | Bounded stored CompanyKnowledge excerpts, not external or complete document search. |
@@ -149,6 +151,37 @@ No tool reads PDF/image content, performs OCR, searches KiDraht content, queries
 external GPS history or knows unstored deadlines. Legacy batch steps are not a
 complete ProductionEvent history. State which evidence is unavailable instead
 of inventing a completion, promise, duration, forecast or worker productivity.
+
+### Warehouse custody and workshop questions
+
+The steel admin tools reuse the asset service's canonical availability projection
+and a narrow read-only projection. They revalidate current ADMIN membership in
+the authenticated company and expose no worker-private belongings, file bytes,
+invoice contents, authentication keys or unbounded history. Worker Helper gains
+no company asset lookup. No schema, model/provider, quota or UI change is needed.
+
+For “who has this drill?”, search by name/code and ask which one if several
+assets match. For a worker's equipment list, resolve the worker first, then filter
+by `holderWorkerId`: only current recorded responsibility matches, not a pending
+recipient or a repair's former origin worker. A pending issue/return/transfer
+does not change custody until its required confirmations complete. Legacy
+assignment responsibility is labelled separately from completed handover evidence.
+Lost/retired responsibility records do not prove current physical possession.
+
+Assigned site, recorded workshop route and a vehicle's last stored GPS fix are
+separate sources. Available/unassigned does not prove physical warehouse stock
+or a bin/shelf location. A defect report does not prove workshop reception;
+reception clears current custody, and the repair origin remains historical.
+External provider text does not establish a street address. Use the existing
+fleet GPS tool when requested, retaining its report time/staleness.
+
+Workshop queries default to active jobs (reported, received, repairing). Use an
+explicit phase for a narrower question and name the returned phases accurately.
+Results use cursor pages of at most 20 rows (8 by default) with exact matching totals,
+coverage and current-read time. Earlier chat answers remain no evidence. Short
+answers give the asset name/code/plate plus holder or repair phase and one useful
+recorded location/route; expand only when asked for details. The existing private
+conversation and sanitized tool-trace archive records these reads automatically.
 
 ## Activation and limits
 

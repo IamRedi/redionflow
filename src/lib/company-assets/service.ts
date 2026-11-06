@@ -337,3 +337,103 @@ export async function readAssetDetail(input:AssetRef):Promise<AssetDetail>{
   return {asset,permissions:permissions(actor),repairs:repairs.map(repairView),incidents:incidents.map(incidentView),handovers:handovers.map(h=>handoverView(h,actor)),files:files.map(f=>({id:f.id,name:f.name,kind:f.kind as 'photo'|'invoice'|'document'|'cover',mime:f.mime,bytes:f.size,repairId:f.repairId,url:`/api/company-assets/files/${f.id}`,uploadedBy:f.uploadedByName,uploadedAt:f.createdAt.toISOString()})),history:[...history.map(h=>({id:h.id,type:h.type,actor:h.actorName,at:h.createdAt.toISOString(),note:h.note,repairId:h.repairId})),...legacy.map(h=>({id:`legacy:${h.id}`,type:`legacy.${h.action}`,actor:h.actorName??'',at:h.createdAt.toISOString(),note:h.note??'',repairId:null}))].sort((a,b)=>b.at.localeCompare(a.at)||b.id.localeCompare(a.id))};
  });
 }
+
+/** Compact read-only assistant projection. Never initializes an asset overlay. */
+export type CanonicalAssistantAssetInput = {
+ query?:string;assetKind?:AssetRef['kind'];assetId?:string;category?:AssetSummary['category'];holderWorkerId?:string;
+ repairPhase?:'active'|'reported'|'received'|'repairing';repairLocation?:'internal'|'external';cursor?:string;limit?:number;
+};
+type AssistantPerson={id:string;name:string|null};
+type AssistantHandover={
+ id:string;kind:string;status:string;from:AssistantPerson|null;to:AssistantPerson|null;assignedSite:AssistantPerson|null;
+ requestedAt:string|null;statusRecordedAt:string|null;confirmationEvidenceComplete:boolean;allRequiredConfirmed:boolean;
+ confirmations:{participant:'office'|'worker';workerId:string|null;requiredName:string|null;confirmed:boolean;confirmedBy:string|null;confirmedAt:string|null}[];
+};
+type AssistantAssetRow=RawAsset&{isActive:boolean;repairPhase:string|null;repairLocation:string|null;repairProvider:string|null;repairProblem:string|null;repairUpdatedAt:Date|null;repairCreatedAt:Date|null;repairOriginId:string|null;repairOriginName:string|null;pendingHandover:unknown;latestCompletedHandover:unknown};
+type StoredAssistantHandover={id:string;kind:string;status:string;fromWorkerId:string|null;fromWorkerName:string|null;toWorkerId:string|null;toWorkerName:string|null;siteId:string|null;siteName:string|null;required:unknown;confirmations:unknown;createdAt:string;updatedAt:string};
+const assistantId=/^[a-z0-9_-]{1,120}$/i;
+const assistantCursor=/^(machine|inventory):([a-z0-9_-]{1,120})$/i;
+const assistantIso=(value:Date|string|null|undefined)=>{if(!value)return null;const date=new Date(value);return Number.isFinite(date.getTime())?date.toISOString():null;};
+function assistantClip(value:string|null|undefined,path:string,truncated:string[],max=120){
+ if(value==null)return null;if(value.length>max)truncated.push(path);return value.slice(0,max);
+}
+function assistantPerson(id:string|null,name:string|null,path:string,truncated:string[]):AssistantPerson|null{return id?{id,name:assistantClip(name,path,truncated)}:null;}
+function assistantHandover(value:unknown,path:string,truncated:string[]):AssistantHandover|null{
+ if(!value||typeof value!=='object')return null;
+ const row=value as StoredAssistantHandover;
+ if(typeof row.id!=='string'||typeof row.status!=='string'||typeof row.kind!=='string')return null;
+ const required=Array.isArray(row.required)?row.required:[],approved=Array.isArray(row.confirmations)?row.confirmations:[];
+ let complete=Array.isArray(row.required)&&Array.isArray(row.confirmations)&&required.length>0&&required.length<=4&&approved.length<=4;
+ if(required.length>4||approved.length>4)truncated.push(`${path}.confirmations`);
+ const confirmations:AssistantHandover['confirmations']=[];
+ for(const raw of required.slice(0,4)){
+  if(!raw||typeof raw!=='object'||!('key' in raw)||typeof raw.key!=='string'||!('name' in raw)||typeof raw.name!=='string'){complete=false;continue;}
+  const workerId=raw.key.startsWith('worker:')?raw.key.slice(7):null;
+  if(raw.key!=='office'&&(!workerId||!assistantId.test(workerId))){complete=false;continue;}
+  const matching=approved.filter(p=>p&&typeof p==='object'&&'key' in p&&p.key===raw.key);
+  if(matching.length>1)complete=false;
+  const approval=matching[0] as {name?:unknown;at?:unknown}|undefined;
+  const at=typeof approval?.at==='string'?assistantIso(approval.at):null;
+  const confirmed=!!approval&&typeof approval.name==='string'&&!!at;
+  if(approval&&!confirmed)complete=false;
+  confirmations.push({participant:workerId?'worker':'office',workerId,requiredName:assistantClip(raw.name,`${path}.requiredName`,truncated),confirmed,confirmedBy:typeof approval?.name==='string'?assistantClip(approval.name,`${path}.confirmedBy`,truncated):null,confirmedAt:at});
+ }
+ if(confirmations.length!==required.length||new Set(required.map(p=>p&&typeof p==='object'&&'key'in p?p.key:null)).size!==required.length||approved.some(p=>!p||typeof p!=='object'||!('key'in p)||!required.some(r=>r&&typeof r==='object'&&'key'in r&&r.key===p.key)))complete=false;
+ return {id:row.id,kind:row.kind,status:row.status,from:assistantPerson(row.fromWorkerId,row.fromWorkerName,`${path}.from.name`,truncated),to:assistantPerson(row.toWorkerId,row.toWorkerName,`${path}.to.name`,truncated),assignedSite:assistantPerson(row.siteId,row.siteName,`${path}.assignedSite.name`,truncated),requestedAt:assistantIso(row.createdAt),statusRecordedAt:assistantIso(row.updatedAt),confirmationEvidenceComplete:complete,allRequiredConfirmed:complete&&confirmations.every(p=>p.confirmed),confirmations};
+}
+function assistantAssetRow(row:AssistantAssetRow){
+ const truncatedFields:string[]=[];
+ const pendingHandover=assistantHandover(row.pendingHandover,'pendingHandover',truncatedFields),latestCompletedHandover=assistantHandover(row.latestCompletedHandover,'latestCompletedHandover',truncatedFields);
+ const custodyBasis=row.holderWorkerId
+  ? ['lost','retired'].includes(row.availability)?'recorded_responsibility_not_physical_possession'
+   : latestCompletedHandover?.to?.id===row.holderWorkerId&&latestCompletedHandover.allRequiredConfirmed?'completed_handover'
+   : row.aid?'recorded_operational_holder':'legacy_recorded_assignment'
+  : !row.aid&&row.kind==='inventory'&&row.availability==='handover'?'legacy_pending_or_ambiguous':'no_recorded_holder';
+ return {kind:row.kind,id:row.id,name:assistantClip(row.name,'name',truncatedFields),category:row.category,code:assistantClip(row.code,'code',truncatedFields),plate:assistantClip(row.plate,'plate',truncatedFields),size:assistantClip(row.size,'size',truncatedFields),baseRecordActive:row.isActive,operationalAvailability:row.availability,usable:row.availability==='available'||row.availability==='issued',
+  recordedHolder:assistantPerson(row.holderWorkerId,row.holderName,'recordedHolder.name',truncatedFields),assignedSite:assistantPerson(row.siteId,row.siteName,'assignedSite.name',truncatedFields),custodyBasis,
+  activeRepair:row.activeRepairId?{id:row.activeRepairId,phase:row.repairPhase,location:row.repairLocation,provider:assistantClip(row.repairProvider,'activeRepair.provider',truncatedFields),problem:assistantClip(row.repairProblem,'activeRepair.problem',truncatedFields,240),createdAt:assistantIso(row.repairCreatedAt),updatedAt:assistantIso(row.repairUpdatedAt),originWorker:assistantPerson(row.repairOriginId,row.repairOriginName,'activeRepair.originWorker.name',truncatedFields)}:null,
+  pendingHandover,latestCompletedHandover,truncatedFields};
+}
+function assistantHandoverJoin(actor:AssetActor,status:'pending'|'completed',alias:'pending'|'completed'){
+ return Prisma.sql`LEFT JOIN LATERAL (
+  SELECT jsonb_build_object('id',h.id,'kind',h.kind,'status',h.status,'fromWorkerId',h."fromWorkerId",'fromWorkerName',concat_ws(' ',fw."firstName",fw."lastName"),'toWorkerId',h."toWorkerId",'toWorkerName',concat_ws(' ',tw."firstName",tw."lastName"),'siteId',h."siteId",'siteName',hs.name,'required',h.required,'confirmations',h.confirmations,'createdAt',h."createdAt" AT TIME ZONE 'UTC','updatedAt',h."updatedAt" AT TIME ZONE 'UTC') AS value
+  FROM "CompanyAssetHandover" h
+  LEFT JOIN "Worker" fw ON fw.id=h."fromWorkerId" AND fw."companyProfileId"=${actor.companyId}
+  LEFT JOIN "Worker" tw ON tw.id=h."toWorkerId" AND tw."companyProfileId"=${actor.companyId}
+  LEFT JOIN "Baustelle" hs ON hs.id=h."siteId" AND hs."companyProfileId"=${actor.companyId}
+  WHERE h."companyProfileId"=${actor.companyId} AND h."assetId"=assets.aid AND h.status=${status}
+  ORDER BY h."updatedAt" DESC,h.id DESC LIMIT 1
+ ) ${Prisma.raw(alias)} ON true`;
+}
+/** Caller supplies a freshly verified admin and a repeatable-read tenant transaction. */
+export async function readCanonicalAssistantAssets(tx:Tx,actor:AssetActor,input:CanonicalAssistantAssetInput={}){
+ if(!actor.companyId||!actor.userId||actor.workerId||!actor.canManage)return assetFail('DENIED');
+ const limit=input.limit??8,query=input.query?.trim().replace(/\s+/g,' ')??'',cursor=input.cursor?assistantCursor.exec(input.cursor):null;
+ if(!Number.isInteger(limit)||limit<1||limit>20||query.length>100||(input.cursor&&(!cursor||input.cursor.length>130))||(input.assetId&&(!input.assetKind||!assistantId.test(input.assetId)))||(input.holderWorkerId&&!assistantId.test(input.holderWorkerId))||(input.assetKind&&!['machine','inventory'].includes(input.assetKind))||(input.category&&!['vehicle','tool','clothing','equipment'].includes(input.category))||(input.repairPhase&&!['active','reported','received','repairing'].includes(input.repairPhase))||(input.repairLocation&&!['internal','external'].includes(input.repairLocation)))return assetFail('INVALID_INPUT');
+ const filters:Prisma.Sql[]=[Prisma.sql`true`];
+ if(input.assetKind)filters.push(Prisma.sql`assets.kind=${input.assetKind}`);
+ if(input.assetId)filters.push(Prisma.sql`assets.id=${input.assetId}`);
+ if(input.category)filters.push(Prisma.sql`assets.category=${input.category}`);
+ if(input.holderWorkerId)filters.push(Prisma.sql`assets."holderWorkerId"=${input.holderWorkerId}`);
+ if(input.repairPhase)filters.push(input.repairPhase==='active'?Prisma.sql`r.phase IN ('reported','received','repairing')`:Prisma.sql`r.phase=${input.repairPhase}`);
+ if(input.repairLocation)filters.push(Prisma.sql`r.location=${input.repairLocation}`);
+ if(query){
+  const pattern=`%${query.replace(/[\\%_]/g,'\\$&')}%`,compact=query.replace(/[\s-]/g,'');
+  const plate=compact&&/[a-z0-9]/i.test(compact)?Prisma.sql`OR regexp_replace(COALESCE(assets.plate,''),'[[:space:]-]','','g') ILIKE ${`%${compact.replace(/[\\%_]/g,'\\$&')}%`}`:Prisma.empty;
+  filters.push(Prisma.sql`(assets.name ILIKE ${pattern} OR assets.code ILIKE ${pattern} OR assets."searchCode" ILIKE ${pattern} OR assets.plate ILIKE ${pattern} ${plate})`);
+ }
+ const where=Prisma.join(filters,' AND '),repairJoin=Prisma.sql`LEFT JOIN "CompanyAssetRepair" r ON r.id=assets."activeRepairId" AND r."assetId"=assets.aid AND r."companyProfileId"=${actor.companyId}`;
+ if(cursor){const found=await tx.$queryRaw<{id:string}[]>(Prisma.sql`${assetProjection(actor)} SELECT assets.id FROM assets ${repairJoin} WHERE ${where} AND assets.kind=${cursor[1].toLowerCase()} AND assets.id=${cursor[2]} LIMIT 1`);if(!found.length)return assetFail('INVALID_CURSOR');}
+ const [counts]=await tx.$queryRaw<{totalMatching:number;reported:number;received:number;repairing:number}[]>(Prisma.sql`${assetProjection(actor)} SELECT count(*)::int AS "totalMatching",count(*) FILTER(WHERE r.phase='reported')::int AS reported,count(*) FILTER(WHERE r.phase='received')::int AS received,count(*) FILTER(WHERE r.phase='repairing')::int AS repairing FROM assets ${repairJoin} WHERE ${where}`);
+ const after=cursor?Prisma.sql`AND (assets.kind>${cursor[1].toLowerCase()} OR (assets.kind=${cursor[1].toLowerCase()} AND assets.id>${cursor[2]}))`:Prisma.empty;
+ const rows=await tx.$queryRaw<AssistantAssetRow[]>(Prisma.sql`${assetProjection(actor)}
+ SELECT assets.*,r.phase AS "repairPhase",r.location AS "repairLocation",r.provider AS "repairProvider",r.problem AS "repairProblem",r."updatedAt" AS "repairUpdatedAt",r."createdAt" AS "repairCreatedAt",r."originWorkerId" AS "repairOriginId",concat_ws(' ',origin."firstName",origin."lastName") AS "repairOriginName",pending.value AS "pendingHandover",completed.value AS "latestCompletedHandover"
+ FROM assets ${repairJoin}
+ LEFT JOIN "Worker" origin ON origin.id=r."originWorkerId" AND origin."companyProfileId"=${actor.companyId}
+ ${assistantHandoverJoin(actor,'pending','pending')} ${assistantHandoverJoin(actor,'completed','completed')}
+ WHERE ${where} ${after} ORDER BY assets.kind,assets.id LIMIT ${limit+1}`);
+ const hasMore=rows.length>limit,items=rows.slice(0,limit).map(assistantAssetRow);
+ return {items,totalMatching:counts.totalMatching,returned:items.length,hasMore,nextCursor:hasMore?`${items.at(-1)!.kind}:${items.at(-1)!.id}`:null,complete:!input.cursor&&!hasMore&&items.length===counts.totalMatching,scope:input.cursor?'continuation_page':hasMore?'first_page':'all_matching_rows',countsByRepairPhase:{reported:counts.reported,received:counts.received,repairing:counts.repairing},countsScope:'all_matching_assets_before_pagination',identityResolution:input.assetId?'exact_asset_ref':query&&counts.totalMatching>1?'multiple_candidates_require_clarification_if_targeting_one_asset':'matching_assets',filters:{query:query||null,assetKind:input.assetKind??null,assetId:input.assetId??null,category:input.category??null,holderWorkerId:input.holderWorkerId??null,repairPhase:input.repairPhase??null,repairLocation:input.repairLocation??null},
+ handoverCoverage:{pending:'at_most_one_operational_pending_handover_per_asset_by_database_constraint_legacy_pending_is_separate',completed:'latest_completed_only_not_full_history'},
+ caveats:['Current recorded workflow state, not a historical snapshot or independent physical check.','Holder and assigned site are recorded custody/allocation; no holder or available status does not prove a physical warehouse location or free stock.','Pending handover recipients are not current holders until completion; completed handovers remain historical when later custody changes.','Reported is not received in the workshop; originWorker is historical responsibility, not the current holder.','Repair internal/external is a recorded route/provider, not a live address or GPS fix.','Lost/retired holder rows describe recorded responsibility, not physical possession.','Legacy pending/ambiguous custody is unresolved; never select a worker from it. No file contents, invoice contents or full repair/history notes are returned.']};
+}

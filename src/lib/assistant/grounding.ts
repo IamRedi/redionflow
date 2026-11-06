@@ -22,6 +22,16 @@ export function assistantInitialTool(question: string, steel: boolean) {
   if (!steel) return undefined;
   const text = question.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
   if (text.length > 160) return undefined;
+  const asset = /\b(vegl\w*|vegel\w*|pajis\w*|pais\w*|makin\w*|mjet\w*|trapan\w*|vidator\w*|tools?|equipment|vehicles?|drills?|maschinen?|fahrzeug\w*|werkzeug\w*|attrezz\w*|utensil\w*|veicol\w*)\b/u.test(text);
+  const workshop = /\b(oficin\w*|officin\w*|ripar\w*|defekt\w*|repair\w*|workshops?|werkstatt\w*|reparatur\w*)\b/u.test(text);
+  if (/^(?:si\b|how (?:do|can) i\b|where (?:do|can) i\b|wie kann ich\b|come posso\b)/u.test(text)) return undefined;
+  const worker = /\b(punetor\w*|workers?|employees?|mitarbeiter\w*|operaio\w*|angajat\w*|pracownik\w*)\b/u.test(text);
+  if ((asset || workshop) && worker) return undefined;
+  // A mentioned site must not redirect an asset custody/location question to
+  // the site directory. Worker-specific lists still allow worker discovery first.
+  if (asset && /^(?:ku|kujt|kush|where|who|wo|wem|wer|dove|chi)\b/u.test(text)) return 'adminSearchCompanyAssets';
+  if (workshop && /\b(sa|cil\w*|cfare|which|how many|welche|wie viele|quali|quanti|quante)\b/u.test(text)) return 'adminGetCompanyWorkshop';
+  if (asset || workshop) return undefined;
   const site = /\b(kantier\w*|kanti\w*|projekt\w*|sites?|projects?|baustellen?)\b/u.test(text);
   const started = /\b(fill\w*|nis\w*|start\w*|begonn\w*)\b/u.test(text);
   if (site && started) return 'adminGetStartedSteelProjects';
