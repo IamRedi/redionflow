@@ -1,6 +1,10 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-Stand: 6. November 2026. Artenatlas und 41 kuratierte Originalillustrationen lokal verifiziert; Veröffentlichung der Musterfirma wird vorbereitet.
+Stand: 6. November 2026. **Artenatlas und 41 kuratierte Originalillustrationen ausschließlich in der Musterfirma online.** Runtime `2d7c645ce0dcf49aff9fd02831cc1a1ac814aff0`, Railway `ff77b18b-ba22-41b4-b065-a09e1c84b1c6` SUCCESS, [Draft PR63](https://github.com/IamRedi/redionflow/pull/63), gestapelt auf PR61. Kein Main-/Pilot-Merge.
+
+Verifiziert: 15 fokussierte Unit-Fälle, zwei Studio-Browserfälle am Production-Build, drei ausgeschlossene Profile, Build/TypeScript/lint/Gitleaks. Nach der letzten Galerievereinfachung wurde nur deren betroffener Browserfall auf beiden Viewports wiederholt. Tatsächliche Online-Ansichten bei 390×844 und 1440×1000, lokale helle/dunkle und kurze Querformatansicht, Zoom-Ausschnitte und Fokusrückgabe geprüft. Nativer Browser-Textzoom blieb NOT_VERIFIED; physische Kamera/NFC/Druck-Abnahme bleibt separat. V3/r43 blieb identisch: zehn Geräte, sechs Aufträge, zwei Dokumente, drei hochgeladene Foto-Hashes und fünf gespeicherte KI-Gerätebilder unverändert. Der online gelieferte Lärchen-WebP entspricht bytegenau dem gebauten Asset. Andere Servicequellen und Deployments wurden nur gelesen; keine Schreiboperation außerhalb der Musterfirma.
+
+Die native Musterfirma-Präsentation und README/English README beschreiben den Atlas. GitHub About, bestehende Projektlinks und Produktreife bleiben inhaltlich korrekt (NO_CONTENT_CHANGE). Der Portfolio-Begleitstand bleibt in Draft PR38 und wird nicht in Production befördert.
 
 ## Atlasi me lupë dhe biblioteka editoriale — 6 nëntor 2026
 
@@ -18,7 +22,7 @@ Vetëm template-i fiktiv Baumdienst Musterfirma. AL Steel, SaaS dhe demot e tjer
 
 **Ruajtja dhe kufijtë:** biblioteka statike versionohet bashkë me aplikacionin dhe shërbehet nga `/api/demo/baumdienst/art/[id]`, vetëm pas kontrollit të profilit demo dhe kompanisë së vetme Baumdienst Musterstadt GmbH. ID-të janë një allowlist; nuk lexohen rrugë të dhëna nga përdoruesi. Përgjigjet janë WebP me nosniff, CORP same-origin dhe cache private. Nuk ka gjenerim AI gjatë GET, hapjes së lupës, sezonit apo zmadhimit. Gjeneruesi publik i pajisjeve vazhdon me konfigurimin ekzistues dhe 5 tentativa/ditë UTC, 50 gjithsej; krijimi i kësaj biblioteke të kuruar nuk përdori ose anashkaloi atë endpoint. Të dhënat e inventarit dhe fotot e ngarkuara mbeten në ruajtjen e përbashkët ekzistuese.
 
-**Kontrolli vizual dhe korrigjimet:** ndërfaqja ruan temën Baumdienst, veprimet touch, ikonat SVG origjinale dhe footer-in ekzistues. U korrigjuan lartësia zero e figurave rezervë dhe prerja e panelit fqinj në zmadhim. Në versionin për publikim u gjet një import i hartës që kërkonte window gjatë hapjes së drejtpërdrejtë të Baustelle-s; vetëm komponenti MusterSite tani e ngarkon hartën në klient kur hapet seksioni. Komponenti operacional i hartës nuk u ndryshua.
+**Kontrolli vizual dhe korrigjimet:** ndërfaqja ruan temën Baumdienst, veprimet touch, ikonat SVG origjinale dhe footer-in ekzistues. Galeria e katalogut fsheh edhe kutinë e zbrazët “Ende pa foto”, ndërsa galeria e fotove të porosisë dhe e Baustelle-s ruan dallimin e fotove reale. U korrigjuan lartësia zero e figurave rezervë dhe prerja e panelit fqinj në zmadhim. Në versionin për publikim u gjet një import i hartës që kërkonte window gjatë hapjes së drejtpërdrejtë të Baustelle-s; vetëm komponenti MusterSite tani e ngarkon hartën në klient kur hapet seksioni. Komponenti operacional i hartës nuk u ndryshua.
 
 Burimet botanike lidhen në secilën kartë: Woodland Trust, RHS, Kew, European Commission JRC dhe burime universitare të dendrologjisë. Figurat janë origjinale të gjeneruara, jo riprodhime të fotografive të burimeve.
 
