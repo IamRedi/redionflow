@@ -60,6 +60,8 @@ Those tools retain their own non-steel audience.
 | `adminGetSteelProductionSummary` | Canonical current progress and monthly/daily kg, from the same steel dashboard service; project details paginate separately. |
 | `adminGetSteelProductionEvidence` | Confirmation events filtered by project/product/stage/credited worker/day/month, full-period aggregates and cursor-page evidence. |
 | `adminGetSteelProjectBatches` | Legacy order groups and recorded steps/state in their original units, separately from element throughput. |
+| `adminGetSitePhaseDocuments` | Exact site resolution, current/explicitly archived six-phase document metadata, filtered phase counts and cursor pages. No file contents. |
+| `adminGetSitePhaseDocumentReceipts` | Immutable personal receipts for one exact file version; active currently authorized accounts without a receipt, with exact counts and cursor pages. |
 
 Calculations reuse `steelDashboardData`, `steel-metrics` and element-stage helpers.
 Cut parts, cut assemblies and assembly can describe the same steel at successive
@@ -94,6 +96,29 @@ Unrelated, specific-product/process/person and stock questions keep their normal
 read-only tools. This bounded renderer does not certify arbitrary model answers.
 The Albanian style instruction `përgjigju shkurt` is distinguished from February
 when resolving a requested day; an explicit February comparison remains mixed.
+
+## Phase documents and receipt questions
+
+The steel administrator can ask which phase documents a site has, who confirmed
+receipt, and who has not confirmed. The tools use the existing document access
+rules, revalidate the authenticated administrator and read one repeatable-read
+tenant snapshot. They expose metadata and receipt names/times, never file bytes,
+credentials, national IDs, file parsing or OCR. Worker Helper receives no new tools.
+
+There are no assigned or required recipients. **Unconfirmed** means active
+currently authorized admin/office/engineer accounts without **E mora** for that
+exact version, not every company worker, proof of an unopened/unread file, or an
+overdue delivery. Account identities are not deduplicated by name and may refer
+to the same human. The returned current-access scope is not historical access.
+Archived versions retain their own receipt snapshots, including people whose
+role/name/activity changed; replacements do not inherit them. Ordinary site
+files and production confirmations remain separate sources.
+
+Answers stay short and disclose shown/total scope for pages. Duplicate site
+names require selection; a document must be resolved before listing its people.
+Failed reads are unknown, never zero or “nobody received it”. The existing private
+conversation/tool archive records these reads without adding tables or writes
+to business data. Model/provider, quota and UI remain unchanged.
 
 ## Private conversation archive
 

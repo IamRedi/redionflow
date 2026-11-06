@@ -7,6 +7,7 @@ import { adminSearchCompanyWorkers, adminSearchCompanyFleet, adminGetCompanyFuel
 import { adminGetStartedSteelProjects } from './project-activity';
 import { adminSearchCompanyAssets, adminGetCompanyWorkshop } from './asset-tools';
 import { applyCanonicalAssetFilters, type CanonicalAssetIntent } from './asset-answer';
+import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts, phaseDocumentListInput, phaseDocumentReceiptInput } from './document-tools';
 
 const text = z.string().trim().min(1).max(180);
 const id = z.string().trim().min(1).max(120);
@@ -34,7 +35,7 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
     getAssistantCapabilities: {
       description: 'Static capabilities and limitations only, for greetings or questions about this assistant. Reads no workers, fleet, receipts or other business records. It provides no operational facts or statistics.',
       inputSchema: z.object({}),
-      execute: async () => ({ ok: true, readOnly: true, canRead: ['authorized worker profiles, timesheets and availability', 'daily plan', 'vehicle metadata and last stored GPS', 'fuel receipt metadata', 'inventory catalog and recorded assignments', 'stored company knowledge', ...(steel ? ['steel projects, products, process progress and production confirmations', 'warehouse assets, recorded custody and assigned sites, pending handovers and current workshop phases/routes'] : [])], limitations: ['No edits or confirmations', 'No live GPS/device query or verified physical warehouse/bin location', 'No PDF/image/OCR or KiDraht content search', 'No unstored information or guaranteed prediction'], timeZone: requester.timeZone ?? 'Europe/Berlin' }),
+      execute: async () => ({ ok: true, readOnly: true, canRead: ['authorized worker profiles, timesheets and availability', 'daily plan', 'vehicle metadata and last stored GPS', 'fuel receipt metadata', 'inventory catalog and recorded assignments', 'stored company knowledge', ...(steel ? ['steel projects, products, process progress and production confirmations', 'warehouse assets, recorded custody and assigned sites, pending handovers and current workshop phases/routes', 'site phase-document metadata, version-specific personal receipts and currently authorized accounts without confirmation'] : [])], limitations: ['No edits or confirmations', 'No live GPS/device query or verified physical warehouse/bin location', 'No PDF/image/OCR or KiDraht content search', 'No unstored information or guaranteed prediction'], timeZone: requester.timeZone ?? 'Europe/Berlin' }),
     },
     adminSearchCompanyWorkers: {
       description: 'Discover workers by ID/name, operational profile/licenses/availability and exact matching count. Paginated candidates, not a guessed person. All statuses unless filtered.',
@@ -73,6 +74,16 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
 
 export function steelAssistantTools(requester: RequesterContext, turn: Turn): ToolSet {
   return {
+    adminGetSitePhaseDocuments: {
+      description: 'Which documents does a steel site have? Use exact projectName or discovered projectId; duplicate names require selection. Lists six-phase document metadata, exact filtered counts and version-specific receipt counts. Defaults current unarchived versions; includeArchived only for requested history. Optional title/filename query and phase filter; bounded cursor pages. Does not read file contents or general site files.',
+      inputSchema: phaseDocumentListInput,
+      execute: input => adminGetSitePhaseDocuments(requester, input),
+    },
+    adminGetSitePhaseDocumentReceipts: {
+      description: 'Who confirmed E mora for an exact document version, and who has not? Resolve documentId with the phase-document list first. status=received lists immutable named/time-stamped receipts, including people whose access changed. status=unconfirmed lists active currently authorized office/engineer/admin accounts without that receipt, NOT assigned recipients or proof of unread files. status=all includes both. Exact counts and bounded cursor pages. Account identities can share a human/name; never merge by name or carry receipts across versions.',
+      inputSchema: phaseDocumentReceiptInput,
+      execute: input => adminGetSitePhaseDocumentReceipts(requester, input),
+    },
     adminGetStartedSteelProjects: {
       description: 'Which/how many steel sites have started work? Returns exact count and compact project names with first/last stored activity. Defaults active STEEL_ASSEMBLY sites, any recorded factory/site activity; import/status alone never counts. scope=factory uses factory confirmations/start-done legacy events; scope=site uses field confirmations/project clock-ins. Not proof of current ongoing physical work.',
       inputSchema: z.object({ scope: z.enum(['any', 'factory', 'site']).optional(), includeInactive: z.boolean().optional(), ...page }),

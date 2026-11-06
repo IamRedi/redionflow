@@ -57,6 +57,8 @@ it('measures real steel registries and enforces the existing accumulated-input l
   const registry: ToolSet = { ...legacyAssistantTools(requester, turn, true), ...companyAssistantTools(requester, true), ...steelAssistantTools(requester, turn) };
   expect(registry).toHaveProperty('adminSearchCompanyAssets');
   expect(registry).toHaveProperty('adminGetCompanyWorkshop');
+  expect(registry).toHaveProperty('adminGetSitePhaseDocuments');
+  expect(registry).toHaveProperty('adminGetSitePhaseDocumentReceipts');
   delete registry.getAssistantCapabilities;
   const tools = groundedTools(registry, turn.timeZone);
   const wireTools = await Promise.all(Object.entries(tools).map(async ([name, tool]) => ({ type: 'function' as const, name, description: tool.description, inputSchema: await asSchema(tool.inputSchema).jsonSchema, strict: tool.strict })));
