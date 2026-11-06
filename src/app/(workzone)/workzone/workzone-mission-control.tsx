@@ -503,7 +503,7 @@ export function WorkzoneMissionControl({
                 type="button"
                 variant="outline"
                 size="icon"
-                className={`${muster ? "size-11" : "h-8 w-8"} border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white`}
+                className={muster ? "size-11 border-border bg-card text-foreground shadow-sm hover:bg-muted" : "h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"}
                 onClick={resetCurrentCanvasLayout}
                 title={t("workzone.reflowPlayground", currentLang)}
                 aria-label={t("workzone.reflowPlayground", currentLang)}
@@ -515,7 +515,7 @@ export function WorkzoneMissionControl({
               type="button"
               variant="outline"
               size="icon"
-              className={`${muster ? "size-11" : "h-8 w-8"} border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white`}
+              className={muster ? "size-11 border-border bg-card text-foreground shadow-sm hover:bg-muted" : "h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"}
               onClick={() => setIsMapMode(true)}
               title={t("workzone.mapMode", currentLang)}
               aria-label={t("workzone.mapMode", currentLang)}

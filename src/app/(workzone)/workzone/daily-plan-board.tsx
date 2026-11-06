@@ -222,11 +222,11 @@ export function DailyPlanBoard({
         {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
       </div>
 
-      <div className="grid items-stretch gap-3 lg:grid-cols-[260px_minmax(0,1fr)_260px]">
+      <div className={`${touchLabels ? "lg:min-h-[min(440px,60dvh)]" : ""} grid items-stretch gap-3 lg:grid-cols-[260px_minmax(0,1fr)_260px]`}>
         <div className="lg:relative lg:min-h-0">
           <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 lg:absolute lg:inset-0">
             <h3 className="text-sm font-semibold">{t("workzone.workers", currentLang)}</h3>
-            <div className="mt-2 grid max-h-[calc(100vh-18rem)] min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
+            <div style={touchLabels ? { gridAutoRows: "minmax(44px, max-content)" } : undefined} className="mt-2 grid max-h-[calc(100vh-18rem)] min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
               {workersByUsage.map((worker) => {
                 const needsConfirmation = worker.availability !== "AVAILABLE" || worker.hasApprovedVacation;
                 return (
@@ -328,7 +328,7 @@ export function DailyPlanBoard({
         <div className="lg:relative lg:min-h-0">
           <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-sky-200/80 bg-sky-50/70 p-3 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/[0.08] dark:shadow-black/20 lg:absolute lg:inset-0">
             <h3 className="text-sm font-semibold">{t("workzone.machines", currentLang)}</h3>
-            <div className="mt-2 grid max-h-[calc(100vh-18rem)] min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
+            <div style={touchLabels ? { gridAutoRows: "minmax(44px, max-content)" } : undefined} className="mt-2 grid max-h-[calc(100vh-18rem)] min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
               {machinesByUsage.map((machine) => (
                 <button
                   key={machine.id}

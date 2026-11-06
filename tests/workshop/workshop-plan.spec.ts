@@ -37,6 +37,7 @@ test("plan assignments, saved versions and worker read-only view persist across 
   const first = await (await request.get(`/api/demo/baumdienst/plans?date=${date}`)).json() as DemoPlanSnapshot;
   const worker = first.workers.find(w => w.availability === "AVAILABLE" && !w.hasApprovedVacation)!;
   const asset = first.machines.find(m => m.isActive)!; expect(asset).toBeTruthy();
+  for (const label of [worker.name, asset.name]) { const box = await page.getByRole("button", { name: label, exact: true }).boundingBox(); expect(box!.height).toBeGreaterThanOrEqual(44); }
   for (const label of [worker.name, asset.name]) { await page.getByRole("button", { name: label, exact: true }).click(); await page.getByRole("button", { name: "Hier zuordnen", exact: true }).first().click(); await expect(page.getByRole("button", { name: label, exact: true })).toBeDisabled(); }
   await page.getByRole("button", { name: "Plan speichern", exact: true }).click();
   await expect.poll(async () => (await (await request.get(`/api/demo/baumdienst/plans?date=${date}`)).json() as DemoPlanSnapshot).plans[0].versions.length).toBe(1);
