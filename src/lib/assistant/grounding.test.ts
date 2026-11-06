@@ -60,6 +60,29 @@ it('selects a construction-site source while leaving unrelated worker/quantity q
   expect(assistantInitialTool('Sa punëtorë ka te kantieri?', true)).toBeUndefined();
   expect(assistantInitialTool('Sa kantier?', false)).toBeUndefined();
 });
+it.each([
+  ['Cilat mjete janë në riparim?', 'adminGetCompanyWorkshop'],
+  ['Cilat makina janë në oficinë të jashtme?', 'adminGetCompanyWorkshop'],
+  ['Which vehicles are being repaired?', 'adminGetCompanyWorkshop'],
+  ['Welche Fahrzeuge sind in der Werkstatt?', 'adminGetCompanyWorkshop'],
+  ['Kujt i është dorëzuar trapan Bosch?', 'adminSearchCompanyAssets'],
+  ['Ku ndodhet vegla te kantieri Agroni?', 'adminSearchCompanyAssets'],
+  ['Who has the drill?', 'adminSearchCompanyAssets'],
+  ['Who has the drill from the workshop?', 'adminSearchCompanyAssets'],
+  ['Wo ist das Werkzeug?', 'adminSearchCompanyAssets'],
+])('routes the asset/workshop question %s to its canonical source', (question, tool) => {
+  expect(assistantInitialTool(question, true)).toBe(tool);
+  expect(assistantInitialTool(question, false)).toBeUndefined();
+});
+it('leaves worker-specific asset discovery open instead of forcing an invented worker ID', () => {
+  expect(assistantInitialTool('Cilat vegla i janë dorëzuar Arditit?', true)).toBeUndefined();
+  expect(assistantInitialTool('Sa mjete ka në kantierin Agroni?', true)).toBeUndefined();
+  expect(assistantInitialTool('Sa materiale janë dorëzuar në projektin Agroni?', true)).toBeUndefined();
+  expect(assistantInitialTool('Si mund të raportoj një defekt?', true)).toBeUndefined();
+  expect(assistantInitialTool('Si hap oficinën?', true)).toBeUndefined();
+  expect(assistantInitialTool('Where do I report a defect?', true)).toBeUndefined();
+  expect(assistantInitialTool('Ku ndodhen veglat e punëtorit Ardit?', true)).toBeUndefined();
+});
 it('preserves optional Zod arguments instead of letting Responses normalize them to required null', () => {
   const schema = z.object({ query: z.string().optional(), limit: z.number().int().optional() });
   const tools = groundedTools({ read: { inputSchema: schema, execute: async (input: z.infer<typeof schema>) => ({ ok: true, input }) } }, 'Europe/Tirane');

@@ -40,6 +40,10 @@ it.each([
   'Sa ka prodhuar fabrika për Shembullin dje?',
   'How much did the factory produce for Demo yesterday?',
   'How much did the factory produce for the Demo yesterday?',
+  'Sa ka bërë oficina sot?', 'Sa vegla ka bërë punishtja?',
+  'How many repairs has the workshop done today?',
+  'Wie viele Reparaturen hat die Werkstatt heute gemacht?',
+  'Cilat mjete janë në riparim?', 'Kujt i është dorëzuar trapan Bosch?',
 ])('does not replace other operational questions: %s', question => {
   expect(resolveCanonicalProductionIntent([user(question)])).toBeNull();
 });

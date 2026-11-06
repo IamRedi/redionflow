@@ -5,6 +5,7 @@ import { assistantToolDate, isAssistantDateKey, type assistantTurnContext } from
 import { adminSearchSteelProjects, adminSearchSteelElements, adminGetSteelElement, adminGetSteelProductionSummary, adminGetSteelProductionEvidence, adminGetSteelProjectBatches } from './steel-tools';
 import { adminSearchCompanyWorkers, adminSearchCompanyFleet, adminGetCompanyFuelReceipts, adminSearchCompanyInventory } from './company-tools';
 import { adminGetStartedSteelProjects } from './project-activity';
+import { adminSearchCompanyAssets, adminGetCompanyWorkshop } from './asset-tools';
 
 const text = z.string().trim().min(1).max(180);
 const id = z.string().trim().min(1).max(120);
@@ -14,6 +15,12 @@ const page = { cursor: id.optional(), limit: z.number().int().min(1).max(30).opt
 const project = { projectId: id.optional(), projectName: text.optional() };
 const companyText = z.string().trim().min(1).max(100);
 const companyPage = { cursor: z.string().trim().min(1).max(80).optional(), limit: page.limit };
+const assetPage = { cursor: z.string().regex(/^(machine|inventory):[a-z0-9_-]{1,120}$/i).optional(), limit: z.number().int().min(1).max(20).optional() };
+const assetFilters = {
+  query: companyText.optional(), assetKind: z.enum(['machine', 'inventory']).optional(), assetId: id.optional(),
+  category: z.enum(['vehicle', 'tool', 'clothing', 'equipment']).optional(), holderWorkerId: id.optional(),
+  repairPhase: z.enum(['active', 'reported', 'received', 'repairing']).optional(), repairLocation: z.enum(['internal', 'external']).optional(), ...assetPage,
+};
 type Turn = ReturnType<typeof assistantTurnContext>;
 
 function productionPeriod(turn: Turn, input: { date?: string; month?: string }) {
@@ -26,7 +33,7 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
     getAssistantCapabilities: {
       description: 'Static capabilities and limitations only, for greetings or questions about this assistant. Reads no workers, fleet, receipts or other business records. It provides no operational facts or statistics.',
       inputSchema: z.object({}),
-      execute: async () => ({ ok: true, readOnly: true, canRead: ['authorized worker profiles, timesheets and availability', 'daily plan', 'vehicle metadata and last stored GPS', 'fuel receipt metadata', 'inventory catalog and recorded assignments', 'stored company knowledge', ...(steel ? ['steel projects, products, process progress and production confirmations'] : [])], limitations: ['No edits or confirmations', 'No live GPS/device query', 'No PDF/image/OCR or KiDraht content search', 'No unstored information or guaranteed prediction'], timeZone: requester.timeZone ?? 'Europe/Berlin' }),
+      execute: async () => ({ ok: true, readOnly: true, canRead: ['authorized worker profiles, timesheets and availability', 'daily plan', 'vehicle metadata and last stored GPS', 'fuel receipt metadata', 'inventory catalog and recorded assignments', 'stored company knowledge', ...(steel ? ['steel projects, products, process progress and production confirmations', 'warehouse assets, recorded custody and assigned sites, pending handovers and current workshop phases/routes'] : [])], limitations: ['No edits or confirmations', 'No live GPS/device query or verified physical warehouse/bin location', 'No PDF/image/OCR or KiDraht content search', 'No unstored information or guaranteed prediction'], timeZone: requester.timeZone ?? 'Europe/Berlin' }),
     },
     adminSearchCompanyWorkers: {
       description: 'Discover workers by ID/name, operational profile/licenses/availability and exact matching count. Paginated candidates, not a guessed person. All statuses unless filtered.',
@@ -48,6 +55,18 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
       inputSchema: z.object({ query: companyText.optional(), itemId: id.optional(), ...companyPage }),
       execute: input => adminSearchCompanyInventory(requester, input),
     },
+    ...(steel && requester.kind === 'admin' ? {
+      adminSearchCompanyAssets: {
+        description: 'Read company warehouse/fleet asset records by name/code/plate or exact assetKind+assetId. Returns recorded current holder, assigned site, pending versus completed handovers, availability and current repair. holderWorkerId filters only current responsibility, never pending recipient or repair origin; discover worker ID first. Exact filtered total and bounded cursor page. Multiple name matches require clarification. Unassigned does not prove physical warehouse presence; no GPS or file contents.',
+        inputSchema: z.object(assetFilters),
+        execute: (input: Parameters<typeof adminSearchCompanyAssets>[1]) => adminSearchCompanyAssets(requester, input),
+      },
+      adminGetCompanyWorkshop: {
+        description: 'Which vehicles/tools are in the workshop? Same canonical asset read, filtered before totals/pagination to CURRENT active repair jobs. Default repairPhase=active includes reported, received and repairing; these are distinct phases. Use repairing for actively being repaired, received for accepted, reported for awaiting reception. Filter assetKind=machine for vehicles, repairLocation=external for outside service. A reported defect is not physical reception. Repair route/provider is recorded workflow, not GPS/address. No invoices or file contents.',
+        inputSchema: z.object(assetFilters),
+        execute: (input: Parameters<typeof adminGetCompanyWorkshop>[1]) => adminGetCompanyWorkshop(requester, input),
+      },
+    } : {}),
   };
 }
 

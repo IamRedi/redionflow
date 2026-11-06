@@ -96,6 +96,9 @@ vi.mock('@/lib/assistant/company-tools', () => Object.fromEntries([
   'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory',
 ].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, rows: [] }; }])));
 vi.mock('@/lib/assistant/project-activity', () => ({ adminGetStartedSteelProjects: async (...args: unknown[]) => { state.toolCalls.push({ name: 'adminGetStartedSteelProjects', args }); return { ok: true, totalMatches: 2, projects: [{ name: 'Synthetic site' }] }; } }));
+vi.mock('@/lib/assistant/asset-tools', () => Object.fromEntries([
+  'adminSearchCompanyAssets', 'adminGetCompanyWorkshop',
+].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, data: { totalMatching: 1, complete: true, items: [{ name: 'Synthetic drill', availability: 'reported' }] } }; }])));
 
 import { POST } from '@/app/api/assistant/route';
 const origin = 'http://127.0.0.1:3100';
@@ -158,7 +161,7 @@ it('uses the real steel registry while omitting legacy tree/calculation/dashboar
   expect(response.headers.get('content-type')).toContain('text/plain'); expect(response.headers.get('cache-control')).toBe('no-store');
   const registered = Object.keys(options().tools);
   expect(registered).not.toContain('getAssistantCapabilities');
-  for (const name of ['adminSearchSteelProjects', 'adminSearchSteelElements', 'adminGetSteelElement', 'adminGetSteelProductionSummary', 'adminGetSteelProductionEvidence', 'adminGetSteelProjectBatches', 'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory']) expect(registered).toContain(name);
+  for (const name of ['adminSearchSteelProjects', 'adminSearchSteelElements', 'adminGetSteelElement', 'adminGetSteelProductionSummary', 'adminGetSteelProductionEvidence', 'adminGetSteelProjectBatches', 'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory', 'adminSearchCompanyAssets', 'adminGetCompanyWorkshop']) expect(registered).toContain(name);
   for (const name of ['getEquipmentStatus', 'adminGetDashboardSnapshot', 'adminListBaustellenOverview', 'adminListProjects', 'getMyDailyReport']) expect(registered).not.toContain(name);
   expect(options().system).toContain('AL STEEL DATA ROUTING'); expect(options().temperature).toBe(0);
   expect(state.generationFinish).toHaveBeenCalledWith({ finishReason: 'stop', totalUsage: { totalTokens: 321 } });
@@ -170,6 +173,22 @@ it('retains legacy operational tools for a general company and does not register
   expect(response.status).toBe(200); await response.text();
   for (const name of ['adminGetDashboardSnapshot', 'adminListBaustellenOverview', 'adminListProjects', 'getEquipmentStatus']) expect(options().tools).toHaveProperty(name);
   expect(options().tools).not.toHaveProperty('adminSearchSteelProjects'); expect(options().tools).not.toHaveProperty('getAssistantCapabilities'); expect(options().system).toContain('GENERAL DASHBOARD ROUTING');
+  expect(options().tools).not.toHaveProperty('adminSearchCompanyAssets'); expect(options().tools).not.toHaveProperty('adminGetCompanyWorkshop');
+});
+it.each([
+  ['Kujt i është dorëzuar trapan Bosch?', 'adminSearchCompanyAssets'],
+  ['Cilat mjete janë në riparim?', 'adminGetCompanyWorkshop'],
+])('routes %s through fresh tenant-scoped read-only evidence and private diagnostics', async (question, toolName) => {
+  const response = await POST(request(question)); await response.text();
+  const captured = options();
+  expect(captured.prepareStep({ stepNumber: 0 })).toEqual({ toolChoice: { type: 'tool', toolName } });
+  expect(captured.prepareStep({ stepNumber: 3 })).toEqual({ toolChoice: 'none' });
+  const result = await captured.tools[toolName].execute({ query: 'Synthetic drill' }, { toolCallId: 'synthetic-asset-read', messages: [] });
+  expect(result).toMatchObject({ evidence: { source: toolName, readOnly: true, scope: 'authenticated_company' }, result: { ok: true, data: { totalMatching: 1 } } });
+  expect(state.toolCalls).toContainEqual({ name: toolName, args: [expect.objectContaining({ kind: 'admin', companyId: 'company-demo' }), { query: 'Synthetic drill' }] });
+  expect(state.trace).toHaveBeenCalledWith(expect.objectContaining({ kind: 'admin', companyId: 'company-demo' }), expect.objectContaining({ runId: 'run-demo', toolName, status: 'ok' }));
+  expect(captured.system).toContain('Pending issue/return/transfer is not a completed handover');
+  expect(captured.system).toContain('no bin/shelf location is tracked');
 });
 it('routes a harmless greeting to static capabilities instead of private business reads', async () => {
   const response = await POST(request('hello')); await response.text();

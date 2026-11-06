@@ -55,6 +55,8 @@ it('measures real steel registries and enforces the existing accumulated-input l
   const question = 'Sa materiale ka bërë fabrika dje?';
   const turn = assistantTurnContext([{ role: 'user', content: question }], { timeZone: 'Europe/Tirane', now: new Date('2026-11-05T10:00Z') });
   const registry: ToolSet = { ...legacyAssistantTools(requester, turn, true), ...companyAssistantTools(requester, true), ...steelAssistantTools(requester, turn) };
+  expect(registry).toHaveProperty('adminSearchCompanyAssets');
+  expect(registry).toHaveProperty('adminGetCompanyWorkshop');
   delete registry.getAssistantCapabilities;
   const tools = groundedTools(registry, turn.timeZone);
   const wireTools = await Promise.all(Object.entries(tools).map(async ([name, tool]) => ({ type: 'function' as const, name, description: tool.description, inputSchema: await asSchema(tool.inputSchema).jsonSchema, strict: tool.strict })));
@@ -74,9 +76,14 @@ it('measures real steel registries and enforces the existing accumulated-input l
   await streamed.stream.pipeTo(new WritableStream({ write() {} }));
   expect(calls[0].inputBytes).toBe(initialBytes);
   expect(initialBytes).toBeLessThanOrEqual(65_536);
+  expect(bytes(historyPrompt)).toBeLessThanOrEqual(65_536);
+  expect(bytes(typicalPrompt)).toBeLessThanOrEqual(65_536);
   expect(wireTools.every(tool => tool.strict === false)).toBe(true);
+  const followUp = await generation.model.doStream({ prompt: typicalPrompt, tools: wireTools, toolChoice: { type: 'auto' }, maxOutputTokens: 1024 });
+  await followUp.stream.pipeTo(new WritableStream({ write() {} }));
+  expect(calls[1].inputBytes).toBe(bytes(typicalPrompt));
   await expect(generation.model.doStream({ prompt: oversized, tools: wireTools, maxOutputTokens: 1024 })).rejects.toMatchObject({ code: 'input_payload' });
-  expect(state.fetch).toHaveBeenCalledOnce();
+  expect(state.fetch).toHaveBeenCalledTimes(2);
   expect(failures.at(-1)).toMatchObject({ code: 'input_payload', inputBytes: bytes(oversized) });
   process.stdout.write(`ASSISTANT_INPUT_BYTES ${JSON.stringify({ tools: wireTools.length, initial: initialBytes, history12000: bytes(historyPrompt), historyAnd12KiBResult: bytes(typicalPrompt), historyAndTwo24KiBResults: bytes(oversized), limit: 65_536 })}\n`);
 });
