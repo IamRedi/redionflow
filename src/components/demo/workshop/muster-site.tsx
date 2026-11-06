@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BookOpenCheck, Camera, ChevronDown, MapPin, Package, ShieldCheck, UsersRound } from "lucide-react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { siteInventory } from "@/lib/workshop/inventory-flow";
 import { treeIdentity } from "@/lib/workshop/identity-art";
-import { BaustelleMap } from "@/app/(workzone)/workzone/baustellen/[baustelleId]/baustelle-map";
+const BaustelleMap = dynamic(() => import("@/app/(workzone)/workzone/baustellen/[baustelleId]/baustelle-map").then(m=>m.BaustelleMap), { ssr: false });
 import { useWorkshopDemo } from "./use-workshop-demo";
 import { MusterTreeGrid, type TreeCardItem } from "./muster-tree-grid";
 import { DemoPhoto } from "./demo-photo";

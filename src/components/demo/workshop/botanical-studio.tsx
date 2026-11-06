@@ -8,6 +8,7 @@ import { botanicalIdentity, botanicalPalette, botanicalReferences, type Botanica
 import { studioCopy } from "@/lib/workshop/studio-copy";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { action, WorkshopDialog } from "./workshop-ui";
+import { SpeciesReference } from "./species-card";
 import { LeafArt, TreeArt } from "./tree-art";
 
 export function BotanicalReference({ species, latin }: { species: string; latin?: string }) {
@@ -32,10 +33,10 @@ export function BotanicalReference({ species, latin }: { species: string; latin?
 export function BotanicalStudio({ open, onClose }: { open: boolean; onClose: () => void }) {
   const {currentLang}=useLanguage(),s=studioCopy(currentLang),c=workshopCopy(currentLang);
   const [filter,setFilter]=useState("all"),[selected,setSelected]=useState<typeof botanicalReferences[number] | null>(null);
-  return <WorkshopDialog open={open} onClose={onClose} closeLabel={c.close} title={selected?.name || s.collection} description={s.collectionHint}>
-    {selected ? <div className="space-y-3"><Button type="button" variant="ghost" className={action} onClick={()=>setSelected(null)}><ArrowLeft />{s.collection}</Button><BotanicalReference key={selected.name} species={selected.name} latin={selected.latin} /></div> : <div className="space-y-4">
+  return <WorkshopDialog open={open} onClose={onClose} closeLabel={c.close} title={selected?.name || s.collection} description={s.collectionHint} wide>
+    {selected ? <div className="space-y-3"><Button type="button" variant="ghost" className={action} onClick={()=>setSelected(null)}><ArrowLeft />{s.collection}</Button><SpeciesReference key={selected.name} species={selected.name} /></div> : <div className="space-y-4">
       <div className="flex flex-wrap gap-2" role="group" aria-label={s.collection}>{([ ["all",s.all,Leaf], ["trees",s.trees,Trees], ["hedges",s.hedges,Fence] ] as const).map(([value,label,Icon])=><Button key={value} type="button" variant={filter===value ? "default":"outline"} className={action} aria-pressed={filter===value} onClick={()=>setFilter(value)}><Icon />{label}</Button>)}</div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{botanicalReferences.filter(ref=>filter==="all" || botanicalIdentity(ref.name).hedge===(filter==="hedges")).map(ref=><button key={ref.name} type="button" className="flex min-h-44 min-w-0 flex-col items-center rounded-xl border bg-muted/10 p-3 text-center transition-colors hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" onClick={()=>setSelected(ref)}><TreeArt species={ref.name} className="h-24 w-28 max-w-full" /><strong className="mt-2 break-words text-sm">{ref.name}</strong><span className="mt-1 break-words text-xs italic text-muted-foreground">{ref.latin}</span></button>)}</div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{botanicalReferences.filter(ref=>filter==="all" || botanicalIdentity(ref.name).hedge===(filter==="hedges")).map(ref=><button key={ref.name} type="button" className="flex min-h-44 min-w-0 flex-col items-center rounded-xl border bg-muted/10 p-3 text-center transition-colors hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" onClick={()=>setSelected(ref)}><TreeArt species={ref.name} className="h-36 w-44 max-w-full" /><strong className="mt-2 break-words text-sm">{ref.name}</strong><span className="mt-1 break-words text-xs italic text-muted-foreground">{ref.latin}</span></button>)}</div>
     </div>}
   </WorkshopDialog>;
 }

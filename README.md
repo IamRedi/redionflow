@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**Artenatlas und Bildarchiv · 6. November 2026:** Die Musterfirma erhält 41 originale KI-Illustrationen im Baumdienst-Stil: 26 botanische Tafeln, sieben Bereichsmotive und acht Gerätekategorien. Die Lupe in der Baumkarte öffnet Baumform, Blatt/Nadeln, Rinde und Blüten/Früchte oder Zapfen einzeln vergrößert. Artbezogene Hinweise und botanische Quellen bleiben hinter „Mehr über diese Art“. Eigene Fotos und bereits gespeicherte Gerätebilder haben Vorrang. Das öffentliche KI-Kontingent bleibt 5/UTC-Tag und 50 insgesamt. [Musterfirma](https://redionflow-production.up.railway.app/demo/workzone) · [Logik und Nachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![BaumdienstFlow species atlas in the actual fictional demo](docs/assets/screenshots/baum-atlas-online.jpg)
+
 **AI-Studio und Baumreferenzen online · 5. November 2026:** [Musterfirma testen](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Ohne hochgeladenes Foto kann die Geräteerfassung automatisch ein realistisches Studiobild aus dem Namen erzeugen; eigene Fotos haben Vorrang. Die Illustration bleibt auf allen Geräten gespeichert. Das Artenstudio ergänzt Kronenform, Blatt/Nadeln, saisonale Farben und Heckenreferenzen. Nur das fiktive Baumdienst-Template. KI-Kontingent: 5 Versuche pro UTC-Tag, 50 insgesamt; keine bezahlte Erstellung bei Seitenaufrufen. [Logik und Nachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Tatsächlicher Online-Fotodialog mit gespeicherter KI-Studioillustration](docs/assets/screenshots/baum-studio-equipment-online.jpg)

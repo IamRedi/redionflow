@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { AlertTriangle, Check, CheckCircle2, Clock3, Fence, Leaf, MoreHorizontal, Pencil, RotateCcw, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Clock3, Fence, Leaf, MoreHorizontal, Pencil, RotateCcw, ShieldCheck, Search } from "lucide-react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
 import { workshopCopy } from "@/lib/workshop/copy";
@@ -12,6 +12,8 @@ import { flowError } from "./custody-panels";
 import { TreeArt } from "./tree-art";
 import { BotanicalReference, BotanicalStudio } from "./botanical-studio";
 import type { BotanicalSeason } from "@/lib/workshop/botanical";
+import { SpeciesCard } from "./species-card";
+import { atlasCopy } from "@/lib/workshop/atlas";
 import { studioCopy } from "@/lib/workshop/studio-copy";
 
 export type TreeCardItem = { id: string; treeId: string; species: string | null; diameter: number | null; status: string; notes: string | null; siteEquipmentStatus?: unknown };
@@ -23,15 +25,15 @@ function baseEquipment(tree: TreeCardItem) {
 }
 export function MusterTreeGrid({ items, siteKey }: { items: TreeCardItem[]; siteKey: string }) {
   const { state, actor, hydrated, pending, status, dispatch } = useWorkshopDemo();
-  const { currentLang } = useLanguage(), c = workshopCopy(currentLang), studio = studioCopy(currentLang);
-  const [season, setSeason] = useState<BotanicalSeason>("summer"), [studioOpen, setStudioOpen] = useState(false);
+  const { currentLang } = useLanguage(), c = workshopCopy(currentLang), studio = studioCopy(currentLang), atlas = atlasCopy(currentLang);
+  const [season, setSeason] = useState<BotanicalSeason>("summer"), [studioOpen, setStudioOpen] = useState(false), [atlasOpen, setAtlasOpen] = useState(false);
   const [selected, setSelected] = useState<{ code: string; mode: "quick" | "detail" | "report" | "edit" | "equipment" } | null>(null), [message, setMessage] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined), held = useRef(false), start = useRef({ x: 0, y: 0 });
   useEffect(() => () => clearTimeout(timer.current), []);
   const view = (tree: TreeCardItem) => { const saved = state.custody.trees[treeIdentity(siteKey, tree.treeId)]; return { ...tree, ...(saved ? { status: saved.status, species: saved.species ?? tree.species, diameter: saved.diameter ?? tree.diameter } : {}), note: saved?.note ?? baseTreeNote(tree), equipment: saved?.equipment ?? baseEquipment(tree) }; };
   const rows = items.map(view), done = rows.filter(t => t.status === "done").length;
   const tree = rows.find(t => t.treeId === selected?.code), disabled = !hydrated || pending || status !== "ready";
-  function open(code: string, mode: NonNullable<typeof selected>["mode"]) { setMessage(""); setSelected({ code, mode }); }
+  function open(code: string, mode: NonNullable<typeof selected>["mode"]) { setMessage(""); setAtlasOpen(false); setSelected({ code, mode }); }
   async function change(command: DemoInventoryCommand) { setMessage(""); try { await dispatch(command); setSelected(null); setMessage(c.saved); } catch (e) { setMessage(flowError(e, c)); } }
   function form(e: FormEvent<HTMLFormElement>, actionName: "report" | "edit" | "equipment") {
     e.preventDefault(); if (!tree) return; const d = new FormData(e.currentTarget);
@@ -48,14 +50,15 @@ export function MusterTreeGrid({ items, siteKey }: { items: TreeCardItem[]; site
     {message && !selected && <p role="status" className="rounded-xl border bg-card p-3 text-sm">{message}</p>}
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="muster-tree-grid">{rows.map(row => <article key={row.treeId} className={`relative min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm transition-colors ${row.status === "done" ? "border-primary/35 bg-primary/5" : row.status === "blocked" ? "border-amber-600/40" : ""}`}>
       <button className="flex min-h-44 w-full touch-manipulation flex-col items-center justify-center px-3 pb-3 pt-6 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-ring" aria-label={`${row.treeId} · ${row.species || c.species} · ${row.status === "done" ? c.done : row.status === "blocked" ? c.openReport : c.ready}`} onPointerDown={e => { if (e.button !== 0) return; held.current = false; start.current = { x: e.clientX, y: e.clientY }; clearTimeout(timer.current); timer.current = setTimeout(() => { held.current = true; open(row.treeId, "detail"); }, 550); }} onPointerMove={e => { if (Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) > 10) clearTimeout(timer.current); }} onPointerUp={() => clearTimeout(timer.current)} onPointerCancel={() => clearTimeout(timer.current)} onPointerLeave={() => clearTimeout(timer.current)} onClick={e => { if (e.detail === 0 || !held.current) open(row.treeId, "quick"); }} onContextMenu={e => { e.preventDefault(); clearTimeout(timer.current); held.current = true; open(row.treeId, "detail"); }}>
-        <TreeArt species={row.species || ""} season={season} className="h-24 w-28 max-w-full" /><strong className="mt-2 line-clamp-2 min-h-9 text-sm leading-snug">{row.species || c.species}</strong><span className="mt-1 text-xs font-medium tracking-wide text-muted-foreground">{row.treeId}</span>
+        <TreeArt species={row.species || ""} season={season} className="h-36 w-44 max-w-full" /><strong className="mt-2 line-clamp-2 min-h-9 text-sm leading-snug">{row.species || c.species}</strong><span className="mt-1 text-xs font-medium tracking-wide text-muted-foreground">{row.treeId}</span>
       </button>
       <span className="pointer-events-none absolute left-2 top-2 text-primary" aria-hidden="true">{row.status === "done" ? <CheckCircle2 className="size-4" /> : row.status === "blocked" ? <AlertTriangle className="size-4 text-amber-600" /> : <Clock3 className="size-4 text-muted-foreground" />}</span>
       <button className="absolute right-0 top-0 flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2" aria-label={`${c.treeDetails} · ${row.treeId}`} onClick={() => open(row.treeId, "detail")}><MoreHorizontal className="size-4" /></button>
     </article>)}</div>
-    <WorkshopDialog open={Boolean(tree)} title={tree ? `${tree.species || c.species} · ${tree.treeId}` : c.treeDetails} description={selected?.mode === "quick" ? c.next : c.treeDetails} closeLabel={c.close} onClose={() => setSelected(null)}>
+    <SpeciesCard species={tree?.species || ""} open={Boolean(tree) && atlasOpen} onClose={()=>setAtlasOpen(false)} />
+    <WorkshopDialog headerAction={tree && <Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={atlas.open} title={atlas.open} onClick={()=>setAtlasOpen(true)}><Search className="size-5" /></Button>} open={Boolean(tree)} title={tree ? `${tree.species || c.species} · ${tree.treeId}` : c.treeDetails} description={selected?.mode === "quick" ? c.next : c.treeDetails} closeLabel={c.close} onClose={() => setSelected(null)}>
       {tree && <div className="space-y-4">
-        <div className="flex items-center gap-4"><TreeArt species={tree.species || ""} className="h-20 w-24 shrink-0" /><div><Status tone={tree.status === "done" ? "green" : tree.status === "blocked" ? "amber" : "neutral"}>{tree.status === "done" ? c.done : tree.status === "blocked" ? c.openReport : c.ready}</Status>{tree.diameter !== null && <p className="mt-2 text-xs text-muted-foreground">{c.diameter}: {tree.diameter}</p>}</div></div>
+        <div className="flex items-center gap-4"><TreeArt species={tree.species || ""} className="h-28 w-36 max-w-[45%] shrink-0" /><div><Status tone={tree.status === "done" ? "green" : tree.status === "blocked" ? "amber" : "neutral"}>{tree.status === "done" ? c.done : tree.status === "blocked" ? c.openReport : c.ready}</Status>{tree.diameter !== null && <p className="mt-2 text-xs text-muted-foreground">{c.diameter}: {tree.diameter}</p>}</div></div>
         {tree.status === "blocked" && <p className="rounded-xl border border-amber-600/40 bg-amber-500/5 p-3 text-sm">{tree.note || c.blocked}</p>}
         {selected?.mode === "quick" && <>{mainActions}<Button variant="ghost" className={`${action} w-full`} onClick={() => open(tree.treeId, "detail")}>{c.treeDetails}</Button></>}
         {selected?.mode === "report" && <form className="space-y-4" onSubmit={e => form(e, "report")}><Field label={c.reportNote}><textarea className={`${control} h-28 py-3`} name="note" required maxLength={2000} /></Field><Button className={`${action} w-full`} disabled={disabled}><AlertTriangle />{c.report}</Button></form>}

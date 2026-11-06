@@ -2,6 +2,10 @@
 
 # RediOnFlow
 
+**Species atlas and artwork library · 6 November 2026:** The Musterfirma gains 41 original AI illustrations in the Baumdienst style: 26 botanical plates, seven area scenes and eight equipment categories. The tree-card magnifier opens tree form, leaf/needles, bark and flowers/fruit or cones with individual zoom. Species notes and botanical sources stay under “More about this species”. Own photos and saved equipment images take priority. The public AI allowance remains 5/UTC day and 50 total. [Musterfirma](https://redionflow-production.up.railway.app/demo/workzone) · [Logic and evidence](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
+![BaumdienstFlow species atlas in the actual fictional demo](docs/assets/screenshots/baum-atlas-online.jpg)
+
 **AI & botanical studio online · 5 November 2026:** [Try the Musterfirma](https://redionflow-production.up.railway.app/demo/workshop?tab=tools). Equipment registration can automatically create a realistic studio image from its name when no photo is uploaded; your own photos take priority. The illustration persists across devices. The species studio adds crown and leaf/needle shapes, seasonal colours and hedge references. Fictional Baumdienst template only. AI allowance: 5 attempts per UTC day, 50 total; page views never start paid generation. [Logic and evidence](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Actual online photo dialog with a saved AI studio illustration](docs/assets/screenshots/baum-studio-equipment-online.jpg)
