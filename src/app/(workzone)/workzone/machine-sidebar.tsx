@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkzoneMapMode } from './workzone-map-fleet';
+import { useMapOperationalStatuses, useWorkzoneMapMode } from './workzone-map-fleet';
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -20,7 +20,8 @@ import { AssetDetailDialog } from '@/components/company-assets/asset-detail-pane
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
 import { WorkshopWorkspace } from '@/components/company-assets/workshop-workspace';
 import { assetCopy } from '@/components/company-assets/copy';
-import type { AssetRef } from '@/lib/company-assets/types';
+import type { AssetOperationalStatus, AssetRef } from '@/lib/company-assets/types';
+import { AssetOperationalStatusBadge, useMachineOperationalStatuses } from '@/components/company-assets/shared';
 
 import { Button } from "@/components/ui/button";
 import { MachineArt, machineKind } from "@/components/steel/machine-art";
@@ -60,6 +61,7 @@ export type MachineSideItem = {
   imageUrl: string | null;
   notes: string | null;
   isActive: boolean;
+  operationalStatus?: AssetOperationalStatus | null;
   coneTotal?: number;
   coneAvailable?: number;
   category?: string | null;
@@ -177,6 +179,9 @@ export function MachineSidebar({
   const { currentLang: lang } = useLanguage();
   const c = fleetCopy(lang);
   const assets = assetCopy(lang);
+  const sharedStatuses = useMapOperationalStatuses();
+  const ownStatuses = useMachineOperationalStatuses(machines, enhancedOperations && !sharedStatuses?.enabled);
+  const { statusFor, reload: reloadStatuses } = sharedStatuses?.enabled ? sharedStatuses : ownStatuses;
   const fleetButton = useRef<HTMLButtonElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSelection, setPickerSelection] = useState<string | null>(null);
@@ -207,15 +212,20 @@ export function MachineSidebar({
   useEffect(() => {
     const open = (event: Event) => {
       const id = (event as CustomEvent<{id?: string}>).detail?.id;
-      if (id && machines.some(m => m.id === id)) { setReturnToFleet(false); setPickerOpen(false); setSelectedId(id); }
+      if (id && machines.some(m => m.id === id)) { setReturnToFleet(false); setPickerOpen(false); setSelectedId(id); if (enhancedOperations) void reloadStatuses(); }
     };
     window.addEventListener("fleet:open-machine", open);
     return () => window.removeEventListener("fleet:open-machine", open);
-  }, [machines]);
+  }, [machines, enhancedOperations, reloadStatuses]);
 
   function closeMachine() {
     setSelectedId(null);
     if (enhancedOperations && returnToFleet) setPickerOpen(true);
+  }
+
+  function changePickerOpen(open: boolean) {
+    setPickerOpen(open);
+    if (open) void reloadStatuses();
   }
 
   function openWorkshop(asset?: AssetRef) {
@@ -296,7 +306,7 @@ export function MachineSidebar({
 
   return (
     <aside data-testid="fleet-rail" className={enhancedOperations ? 'flex min-h-0 min-w-0 items-center justify-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:justify-start lg:px-2' : embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
-      {enhancedOperations ? <FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); setPickerOpen(true); }} onWorkshop={() => openWorkshop()} /> : <>
+      {enhancedOperations ? <FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={() => openWorkshop()} /> : <>
       <button
         type="button"
         title={t("workzone.fleet", lang)}
@@ -354,9 +364,9 @@ export function MachineSidebar({
       </>}
 
       {enhancedOperations ? <>
-        <FleetPicker open={pickerOpen} onOpenChange={setPickerOpen} machines={machines} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} />
-        <AssetWorkspaceDialog open={workshopOpen} onOpenChange={setWorkshopOpen} title={assets.workshop}><WorkshopWorkspace initialAsset={workshopAsset} /></AssetWorkspaceDialog>
-        <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} onClose={() => setDetail(null)} />
+        <FleetPicker open={pickerOpen} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} />
+        <AssetWorkspaceDialog open={workshopOpen} onOpenChange={open => { setWorkshopOpen(open); if (!open) void reloadStatuses(); }} title={assets.workshop}><WorkshopWorkspace embedded initialAsset={workshopAsset} /></AssetWorkspaceDialog>
+        <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} onClose={() => { setDetail(null); void reloadStatuses(); }} />
       </> : null}
 
       {selected && typeof document !== "undefined"
@@ -389,7 +399,7 @@ export function MachineSidebar({
                 {/* Picture of the machine with its name on a plate in the corner */}
                 <div className={cn('relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950', enhancedOperations && 'h-[min(38dvh,300px)] min-h-[170px] lg:sticky lg:top-0 lg:h-[min(75dvh,650px)]')}>
                   <AssetPhoto key={`${selected.id}:${selected.imageUrl}`} kind="machine" id={selected.id} src={selected.imageUrl} alt={machineLabel(selected)} canEdit={canEditPhotos}>
-                    <MachineArt kind={machineKind(selected)} animate={selected.isActive} className="absolute inset-0 h-full w-full p-4 pt-14" />
+                    <MachineArt kind={machineKind(selected)} animate={enhancedOperations ? statusFor(selected.id)?.usable === true : selected.isActive} className="absolute inset-0 h-full w-full p-4 pt-14" />
                   </AssetPhoto>
                   <div className="absolute left-3 top-3 max-w-[80%] rounded-2xl border border-white/60 bg-white/90 px-3 py-2 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
                     <div className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">{selected.funksioni ?? t("workzone.fleet", lang)}</div>
@@ -402,6 +412,7 @@ export function MachineSidebar({
                 </div>
 
                 <div className={enhancedOperations ? 'flex min-h-0 min-w-0 flex-col gap-3' : 'flex min-h-0 flex-col gap-3 lg:overflow-y-auto'}>
+                  {enhancedOperations ? <AssetOperationalStatusBadge status={statusFor(selected.id)} c={assets} /> : null}
                   <div className="rounded-2xl border bg-card p-3">
                     <div className="flex flex-wrap gap-2">
                       {selected.gps ? <a href={mapsLink(selected.gps.lat, selected.gps.lng)} target="_blank" rel="noreferrer" className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-orange-600 px-4 font-semibold text-white">{c.maps}</a> : <span className="flex flex-1 items-center text-sm text-muted-foreground">{c.noGps}</span>}
@@ -625,7 +636,8 @@ export function MachineSidebar({
                     <p className="line-clamp-3 rounded-xl bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">{getVisibleMachineNotes(selected.notes)}</p>
                   ) : null}
 
-                  <div className="mt-auto grid grid-cols-2 gap-2 pb-[env(safe-area-inset-bottom)]">
+                  <div className={cn('mt-auto grid gap-2 pb-[env(safe-area-inset-bottom)]', enhancedOperations && statusFor(selected.id)?.activeRepairPhase ? 'grid-cols-1' : 'grid-cols-2')}>
+                    {!(enhancedOperations && statusFor(selected.id)?.activeRepairPhase) ?
                     <button
                       type="button"
                       data-testid={enhancedOperations ? 'fleet-machine-report' : undefined}
@@ -635,6 +647,7 @@ export function MachineSidebar({
                     >
                       <AlertTriangle className="size-5" /> {t("machineSheet.reportDefect", lang)}
                     </button>
+                    : null}
                     {enhancedOperations ? <button type="button" onClick={() => openWorkshop({ kind: 'machine', id: selected.id })} className="flex min-h-16 min-w-0 items-center justify-center gap-2 rounded-2xl border bg-card px-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Wrench className="size-5 shrink-0" /><span className="break-words">{assets.workshop}</span></button> : isAdmin ? (
                       <button
                         type="button"

@@ -1,4 +1,7 @@
 import { requireAdminTenant } from "@/lib/auth/authorization";
+import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
+import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
+import { assetCopy } from '@/components/company-assets/copy';
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { BriefcaseBusiness, Eye, HardHat, Plus, ReceiptText, Trash2, Truck, UserMinus, UsersRound, UserX } from "lucide-react";
@@ -341,6 +344,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
     }),
   ]);
   const activeWorkers = workers.filter((worker) => worker.status === "active").length;
+  const operationalStatuses = await loadMachineOperationalStatusMap(company.id, machines.map(machine => machine.id));
   const unavailableWorkers = workers.filter((worker) => worker.availability !== "AVAILABLE").length;
   const inactiveWorkers = workers.length - activeWorkers;
   const activeMachines = machines.filter((machine) => machine.isActive).length;
@@ -811,6 +815,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
                       <div className="min-w-0">
                         <div className="truncate font-medium">{machine.nickname ?? machine.name}</div>
                         <div className="max-w-xl truncate text-xs text-muted-foreground">{[machine.model, machine.funksioni || machineCategoryText(machine.category, currentLang, mode)].filter(Boolean).join(" · ")}</div>
+                        {operationalStatuses !== null ? <AssetOperationalStatusBadge status={operationalStatuses.get(machine.id)} c={assetCopy(currentLang)} compact className="mt-1" /> : null}
                       </div>
                     </div>
                   </TableCell>

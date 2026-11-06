@@ -6,6 +6,10 @@ import { Search } from 'lucide-react';
 import { MachineArt, machineKind } from '@/components/steel/machine-art';
 import type { MachineSideItem } from '@/app/(workzone)/workzone/machine-sidebar';
 import { AssetWorkspaceDialog } from './workspace-dialog';
+import { AssetOperationalStatusBadge } from './shared';
+import { assetCopy } from './copy';
+import { useLanguage } from '@/components/i18n/language-provider';
+import type { AssetOperationalStatus } from '@/lib/company-assets/types';
 
 function searchable(value: string) {
   return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -16,10 +20,13 @@ function FleetThumbnail({ machine }: { machine: MachineSideItem }) {
   return machine.imageUrl && failed !== machine.imageUrl ? <img src={machine.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" onError={() => setFailed(machine.imageUrl)} /> : <MachineArt kind={machineKind(machine)} animate={false} className="h-full w-full p-1.5" />;
 }
 
-export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId }: {
+export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId, statusFor }: {
   open: boolean; onOpenChange: (open: boolean) => void; machines: MachineSideItem[]; onSelect: (id: string) => void;
   title: string; searchLabel: string; emptyLabel: string; focusMachineId?: string | null;
+  statusFor?: (id: string) => AssetOperationalStatus | null | undefined;
 }) {
+  const { currentLang } = useLanguage();
+  const c = assetCopy(currentLang);
   const [query, setQuery] = useState('');
   const search = useRef<HTMLInputElement>(null);
   const grid = useRef<HTMLDivElement>(null);
@@ -50,11 +57,12 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
           {rows.map(machine => <button key={machine.id} type="button" data-machine-id={machine.id} onClick={() => onSelect(machine.id)} className="group flex min-h-[148px] min-w-0 flex-col overflow-hidden rounded-2xl border bg-card text-left transition hover:border-orange-500/60 hover:bg-orange-500/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-inset">
             <span className="relative block aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-950">
               <FleetThumbnail machine={machine} />
-              {!machine.isActive ? <span className="absolute right-2 top-2 size-2 rounded-full bg-red-500 ring-2 ring-background" /> : null}
+              {!statusFor && !machine.isActive ? <span className="absolute right-2 top-2 size-2 rounded-full bg-red-500 ring-2 ring-background" /> : null}
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-1 p-2">
               <span className="line-clamp-2 min-h-[2.5em] text-[11px] font-semibold leading-tight [overflow-wrap:anywhere] sm:text-sm">{machine.nickname || machine.name}</span>
               <span className="block font-mono text-[10px] font-medium leading-tight text-muted-foreground [overflow-wrap:anywhere] sm:text-xs">{machine.targe || '—'}</span>
+              {statusFor ? <AssetOperationalStatusBadge status={statusFor(machine.id)} c={c} compact className="mt-0.5" /> : null}
             </span>
           </button>)}
         </div>

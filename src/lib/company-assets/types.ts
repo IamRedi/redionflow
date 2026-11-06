@@ -3,12 +3,18 @@ export type AssetCategory = 'vehicle' | 'tool' | 'clothing' | 'equipment';
 export type AssetAvailability = 'available' | 'issued' | 'handover' | 'reported' | 'workshop' | 'loss_pending' | 'retirement_pending' | 'lost' | 'retired' | 'inactive';
 export type RepairPhase = 'reported' | 'received' | 'repairing' | 'ready' | 'cancelled';
 export type RepairLocation = 'internal' | 'external';
+export type ActiveRepairPhase = Exclude<RepairPhase, 'ready' | 'cancelled'>;
+export type AssetOperationalStatus = {
+  availability: AssetAvailability | null; activeRepairPhase: ActiveRepairPhase | null; activeRepairLocation: RepairLocation | null;
+  usable: boolean | null; known: boolean; readAt: string;
+};
 export type AssetPerson = { id: string; name: string };
 export type AssetPermissions = { canManage: boolean; canRepair: boolean; workerId: string | null };
 export type AssetSummary = AssetRef & {
   key: string; name: string; category: AssetCategory; code: string | null; plate: string | null; size: string | null;
   photoUrl: string | null; availability: AssetAvailability; revision: number;
   holder: AssetPerson | null; site: AssetPerson | null; activeRepairId: string | null;
+  activeRepairPhase: ActiveRepairPhase | null; activeRepairLocation: RepairLocation | null;
 };
 export type AssetHandoverView = {
   id: string; asset: AssetRef; name: string; kind: 'issue' | 'return' | 'transfer';
@@ -23,6 +29,7 @@ export type AssetIncidentView = {
 };
 export type AssetRepairView = {
   id: string; asset: AssetRef; name: string; code: string | null; plate: string | null; photoUrl: string | null;
+  category: AssetCategory;
   phase: RepairPhase; location: RepairLocation; provider: string; problem: string; repairNote: string; tested: boolean;
   revision: number; reportedBy: string; createdAt: string; updatedAt: string;
 };

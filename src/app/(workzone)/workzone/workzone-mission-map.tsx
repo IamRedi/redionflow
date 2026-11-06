@@ -15,6 +15,9 @@ import {
 import { HardHat, RefreshCw, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/i18n/language-provider';
+import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
+import { assetCopy } from '@/components/company-assets/copy';
+import { useMapOperationalStatuses } from './workzone-map-fleet';
 import { t } from '@/lib/i18n';
 import { fleetCopy } from '@/lib/fleet/copy';
 import { fleetTime } from '@/lib/fleet/format';
@@ -87,6 +90,7 @@ export function WorkzoneMissionMap({
 }) {
   const { currentLang } = useLanguage();
   const c = fleetCopy(currentLang);
+  const operational = useMapOperationalStatuses(), assets = assetCopy(currentLang);
   const [pending, start] = useTransition();
   const [message, setMessage] = useState('');
   const router = useRouter();
@@ -202,12 +206,13 @@ export function WorkzoneMissionMap({
               '🚚',
               v.online ? '#16a34a' : v.stale ? '#d97706' : '#64748b',
             )}
-            eventHandlers={{ click: () => onFocusChange('vehicle', v.id) }}
+            eventHandlers={{ click: () => { onFocusChange('vehicle', v.id); if (operational?.enabled) void operational.reload(); } }}
           >
-            <Popup>
+            <Popup className={operational?.enabled ? '[&_.leaflet-popup-content-wrapper]:bg-card [&_.leaflet-popup-content-wrapper]:text-foreground [&_.leaflet-popup-tip]:bg-card' : undefined}>
               <div className="min-w-44 space-y-2 text-xs">
                 <p className="font-semibold">{v.plate ?? v.name}</p>
                 <p>{v.name}</p>
+                {operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(v.id)} c={assets} compact /> : null}
                 <p>{v.online ? c.online : v.stale ? c.stale : c.unknown}</p>
                 <p>
                   {c.lastReport}:{' '}
@@ -215,7 +220,7 @@ export function WorkzoneMissionMap({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <a
-                    className="rounded-lg border px-3 py-2"
+                    className={operational?.enabled ? 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500' : 'rounded-lg border px-3 py-2'}
                     href={mapsLink(v.lat, v.lng)}
                     target="_blank"
                     rel="noreferrer"
@@ -223,7 +228,7 @@ export function WorkzoneMissionMap({
                     {c.maps}
                   </a>
                   <button
-                    className="rounded-lg border px-3 py-2"
+                    className={operational?.enabled ? 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500' : 'rounded-lg border px-3 py-2'}
                     onClick={() =>
                       window.dispatchEvent(
                         new CustomEvent('fleet:open-machine', {
@@ -235,7 +240,7 @@ export function WorkzoneMissionMap({
                     {c.fleet}
                   </button>
                   <Link
-                    className="rounded-lg border px-3 py-2"
+                    className={operational?.enabled ? 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500' : 'rounded-lg border px-3 py-2'}
                     href={`/workzone/fuel?machine=${v.id}`}
                   >
                     {c.fuel}

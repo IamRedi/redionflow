@@ -3,6 +3,8 @@ import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { readFleetLocations } from '@/lib/fleet/location';
 import { isSaasMode } from '@/lib/saas-config';
 import { assetPhotoUrl } from '@/lib/asset-photos/shared';
+import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
+import type { AssetOperationalStatus } from '@/lib/company-assets/types';
 
 type MachineSidebarRow = {
   id: string;
@@ -31,6 +33,7 @@ type MachineSidebarRow = {
   imageUrl: string | null;
   notes: string | null;
   isActive: boolean;
+  operationalStatus?: AssetOperationalStatus | null;
   usageCount: number;
   coneTotal: number;
   coneAvailable: number;
@@ -159,6 +162,7 @@ export async function getMachineSidebarData() {
     }),
   ]);
 
+  const operationalStatuses = companyId ? await loadMachineOperationalStatusMap(companyId, machinesRaw.map(machine => machine.id)) : null;
   const coneDeltaByMachine = new Map<string, number>();
   for (const movement of coneMovements) {
     const qty = Math.max(0, Number(movement.quantity ?? 0) || 0);
@@ -198,6 +202,7 @@ export async function getMachineSidebarData() {
       const available = Math.max(0, base + delta);
       return {
         ...machine,
+        operationalStatus: operationalStatuses?.get(machine.id) ?? null,
         imageUrl: assetPhotoUrl('machine',machine.id,machine.coverPhotoAt) ?? machine.imageUrl,
         gps: locations.find((p) => p.id === machine.id) ?? null,
         usageCount: machine._count.machineItems,
