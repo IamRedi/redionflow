@@ -3,7 +3,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { assetActor, assetActorKey, assetFail, type AssetActor } from './access';
 import { assetMutationSchema, assetQuerySchema, assetRefSchema } from './validation';
-import type { AssetRef, AssetQuery, AssetSnapshot, AssetDetail, AssetSummary, AssetHandoverView, AssetRepairView, AssetIncidentView, AssetMutation } from './types';
+import type { AssetRef, AssetQuery, AssetSnapshot, AssetDetail, AssetSummary, AssetHandoverView, AssetRepairView, AssetIncidentView, AssetMutation, AssetOperationalStatus } from './types';
 
 type Tx = Prisma.TransactionClient;
 export type OwnedAsset = {
@@ -243,8 +243,8 @@ async function setBaseActive(tx:Tx,actor:AssetActor,asset:OwnedAsset,isActive:bo
   else await tx.companyInventoryItem.update({where:{id:asset.inventoryItemId!,companyProfileId:actor.companyId},data:{isActive}});
 }
 
-type RawAsset = {kind:AssetRef['kind'];id:string;name:string;category:AssetSummary['category'];code:string|null;plate:string|null;size:string|null;photoUrl:string|null;availability:AssetSummary['availability'];revision:number;aid:string|null;holderWorkerId:string|null;holderName:string|null;siteId:string|null;siteName:string|null;activeRepairId:string|null};
-function summary(row:RawAsset):AssetSummary{return {kind:row.kind,id:row.id,key:`${row.kind}:${row.id}`,name:row.name,category:row.category,code:row.code,plate:row.plate,size:row.size,photoUrl:row.photoUrl,availability:row.availability,revision:row.revision,holder:row.holderWorkerId?{id:row.holderWorkerId,name:row.holderName??''}:null,site:row.siteId?{id:row.siteId,name:row.siteName??''}:null,activeRepairId:row.activeRepairId};}
+type RawAsset = {kind:AssetRef['kind'];id:string;name:string;category:AssetSummary['category'];code:string|null;plate:string|null;size:string|null;photoUrl:string|null;availability:AssetSummary['availability'];revision:number;aid:string|null;holderWorkerId:string|null;holderName:string|null;siteId:string|null;siteName:string|null;activeRepairId:string|null;activeRepairPhase:AssetSummary['activeRepairPhase'];activeRepairLocation:AssetSummary['activeRepairLocation']};
+function summary(row:RawAsset):AssetSummary{return {kind:row.kind,id:row.id,key:`${row.kind}:${row.id}`,name:row.name,category:row.category,code:row.code,plate:row.plate,size:row.size,photoUrl:row.photoUrl,availability:row.availability,revision:row.revision,holder:row.holderWorkerId?{id:row.holderWorkerId,name:row.holderName??''}:null,site:row.siteId?{id:row.siteId,name:row.siteName??''}:null,activeRepairId:row.activeRepairId,activeRepairPhase:row.activeRepairPhase,activeRepairLocation:row.activeRepairLocation};}
 
 /** A single canonical SQL projection computes availability before pagination/counts. */
 function assetProjection(actor:AssetActor){return Prisma.sql`
@@ -257,17 +257,17 @@ WITH base AS (
  FROM "CompanyInventoryItem" i WHERE i."companyProfileId"=${actor.companyId}
 ), decorated AS (
  SELECT b.*,a.id AS aid,COALESCE(a.revision,0) AS revision,COALESCE(a.disposition,'active') AS disposition,
- CASE WHEN a.id IS NOT NULL THEN a."holderWorkerId" WHEN legacy.n=1 AND NOT legacy.pending THEN legacy.worker END AS "holderWorkerId",a."siteId",r.id AS "activeRepairId",r.phase AS "repairPhase",
+ CASE WHEN a.id IS NOT NULL THEN a."holderWorkerId" WHEN legacy.n=1 AND NOT legacy.pending THEN legacy.worker END AS "holderWorkerId",a."siteId",r.id AS "activeRepairId",r.phase AS "repairPhase",r.location AS "repairLocation",
  EXISTS(SELECT 1 FROM "CompanyAssetHandover" h WHERE h."companyProfileId"=${actor.companyId} AND h."assetId"=a.id AND h.status='pending') OR (a.id IS NULL AND (legacy.n>1 OR legacy.pending)) AS handover,
  (SELECT inc.kind FROM "CompanyAssetIncident" inc WHERE inc."companyProfileId"=${actor.companyId} AND inc."assetId"=a.id AND inc.status='pending' ORDER BY CASE inc.kind WHEN 'lost' THEN 0 WHEN 'retire' THEN 1 ELSE 2 END LIMIT 1) AS incident,
  cover.id AS "coverId"
  FROM base b LEFT JOIN "CompanyOperationalAsset" a ON a."companyProfileId"=${actor.companyId} AND (b.kind='machine' AND a."machineId"=b.id OR b.kind='inventory' AND a."inventoryItemId"=b.id)
  LEFT JOIN LATERAL (SELECT count(*)::int AS n,min(w."workerId") AS worker,bool_or(w.status::text IN ('PENDING_ADMIN_CONFIRMATION','PENDING_WORKER_CONFIRMATION')) AS pending FROM "WorkerAssetItem" w JOIN "Worker" person ON person.id=w."workerId" WHERE person."companyProfileId"=${actor.companyId} AND NOT w."isPrivate" AND w."companyInventoryItemId"=b.id AND w.status::text<>'DELETED' AND b.kind='inventory') legacy ON true
- LEFT JOIN LATERAL (SELECT p.id,p.phase FROM "CompanyAssetRepair" p WHERE p."companyProfileId"=${actor.companyId} AND p."assetId"=a.id AND p.phase IN ('reported','received','repairing') ORDER BY p."createdAt" DESC LIMIT 1) r ON true
+ LEFT JOIN LATERAL (SELECT p.id,p.phase,p.location FROM "CompanyAssetRepair" p WHERE p."companyProfileId"=${actor.companyId} AND p."assetId"=a.id AND p.phase IN ('reported','received','repairing') ORDER BY p."createdAt" DESC LIMIT 1) r ON true
  LEFT JOIN LATERAL (SELECT f.id FROM "CompanyAssetFile" f WHERE f."companyProfileId"=${actor.companyId} AND f."assetId"=a.id AND f.kind='cover' ORDER BY f."createdAt" DESC,f.id DESC LIMIT 1) cover ON true
 ), assets AS (
- SELECT d.kind,d.id,d.name,d.category,d.code,d.plate,d.size,d."isActive",d."searchCode",CASE WHEN d.kind='machine' THEN d."photoUrl" ELSE COALESCE('/api/company-assets/files/'||d."coverId",d."photoUrl") END AS "photoUrl",d.aid,d.revision,d."holderWorkerId",d."siteId",d."activeRepairId",concat_ws(' ',w."firstName",w."lastName") AS "holderName",s.name AS "siteName",
- CASE WHEN d.disposition='lost' THEN 'lost' WHEN d.disposition='retired' THEN 'retired' WHEN d.incident='lost' THEN 'loss_pending' WHEN d.incident='retire' THEN 'retirement_pending' WHEN d."repairPhase"='reported' OR d.incident='defect' THEN 'reported' WHEN d."activeRepairId" IS NOT NULL THEN 'workshop' WHEN NOT d."isActive" THEN 'inactive' WHEN d.handover THEN 'handover' WHEN d."holderWorkerId" IS NOT NULL THEN 'issued' ELSE 'available' END AS availability
+ SELECT d.kind,d.id,d.name,d.category,d.code,d.plate,d.size,d."isActive",d."searchCode",CASE WHEN d.kind='machine' THEN d."photoUrl" ELSE COALESCE('/api/company-assets/files/'||d."coverId",d."photoUrl") END AS "photoUrl",d.aid,d.revision,d."holderWorkerId",d."siteId",d."activeRepairId",d."repairPhase" AS "activeRepairPhase",d."repairLocation" AS "activeRepairLocation",concat_ws(' ',w."firstName",w."lastName") AS "holderName",s.name AS "siteName",
+ CASE WHEN d.disposition='lost' THEN 'lost' WHEN d.disposition='retired' THEN 'retired' WHEN d.incident='lost' THEN 'loss_pending' WHEN d.incident='retire' THEN 'retirement_pending' WHEN d."repairPhase"='reported' THEN 'reported' WHEN d."activeRepairId" IS NOT NULL THEN 'workshop' WHEN d.incident='defect' THEN 'reported' WHEN NOT d."isActive" THEN 'inactive' WHEN d.handover THEN 'handover' WHEN d."holderWorkerId" IS NOT NULL THEN 'issued' ELSE 'available' END AS availability
  FROM decorated d LEFT JOIN "Worker" w ON w.id=d."holderWorkerId" AND w."companyProfileId"=${actor.companyId} LEFT JOIN "Baustelle" s ON s.id=d."siteId" AND s."companyProfileId"=${actor.companyId}
 )
 `;}
@@ -285,7 +285,16 @@ export async function readCanonicalAssetFacts(tx:Tx,actor:AssetActor,inputs:Asse
  const rows=await tx.$queryRaw<(RawAsset&{isActive:boolean})[]>(Prisma.sql`${assetProjection(actor)} SELECT * FROM assets WHERE (${filters}) AND ${visibleSql(actor)}`);
  return rows.map(row=>({ref:{kind:row.kind,id:row.id} as AssetRef,baseRecordActive:row.isActive,operationalAvailability:row.availability,usable:row.availability==='available'||row.availability==='issued'}));
 }
-const assetInclude={asset:{include:{machine:{select:{id:true,name:true,targe:true,imageUrl:true}},inventoryItem:{select:{id:true,name:true,barcode:true,itemCode:true}}}}} as const;
+/** Read-only exact-ID projection for current machine cards; no overlay initialization. */
+export async function readCanonicalAssetStatuses(tx:Tx,actor:AssetActor,inputs:AssetRef[]):Promise<{ref:AssetRef;status:AssetOperationalStatus}[]>{
+ if(inputs.length>500)return assetFail('INVALID_INPUT');
+ const refs=inputs.map(ref=>assetRefSchema.parse(ref));if(!refs.length)return [];
+ const filters=Prisma.join(refs.map(ref=>Prisma.sql`(kind=${ref.kind} AND id=${ref.id})`),' OR ');
+ const rows=await tx.$queryRaw<Pick<RawAsset,'kind'|'id'|'availability'|'activeRepairPhase'|'activeRepairLocation'>[]>(Prisma.sql`${assetProjection(actor)} SELECT kind,id,availability,"activeRepairPhase","activeRepairLocation" FROM assets WHERE (${filters}) AND ${visibleSql(actor)}`);
+ const readAt=new Date().toISOString();
+ return rows.map(row=>({ref:{kind:row.kind,id:row.id},status:{availability:row.availability,activeRepairPhase:row.activeRepairPhase,activeRepairLocation:row.activeRepairLocation,usable:row.availability==='available'||row.availability==='issued',known:true,readAt}}));
+}
+const assetInclude={asset:{include:{machine:{select:{id:true,name:true,targe:true,imageUrl:true}},inventoryItem:{select:{id:true,name:true,barcode:true,itemCode:true,category:true}}}}} as const;
 type HandoverRow=Prisma.CompanyAssetHandoverGetPayload<{include:typeof assetInclude}>;
 type RepairRow=Prisma.CompanyAssetRepairGetPayload<{include:typeof assetInclude}>;
 type IncidentRow=Prisma.CompanyAssetIncidentGetPayload<{include:typeof assetInclude}>;
@@ -295,7 +304,7 @@ function handoverView(h:HandoverRow,actor:AssetActor):AssetHandoverView{
  const keys=confirmationKeys(actor,required);
  return {id:h.id,asset:refOf(h.asset),name:queueName(h),kind:h.kind as AssetHandoverView['kind'],status:h.status as AssetHandoverView['status'],revision:h.revision,from:label(h.fromWorkerId),to:label(h.toWorkerId),site:h.siteId?{id:h.siteId,name:''}:null,confirmations:required.map(p=>({name:p.name,confirmed:approved.some(c=>c.key===p.key)})),canConfirm:h.status==='pending'&&keys.some(key=>!approved.some(c=>c.key===key)),canCancel:h.status==='pending'&&(actor.canManage||h.createdByKey===assetActorKey(actor)),createdAt:h.createdAt.toISOString(),note:h.note};
 }
-function repairView(r:RepairRow):AssetRepairView{return{id:r.id,asset:refOf(r.asset),name:queueName(r),code:r.asset.inventoryItem?.barcode??r.asset.inventoryItem?.itemCode??null,plate:r.asset.machine?.targe??null,photoUrl:r.asset.machine?.imageUrl??null,phase:r.phase as AssetRepairView['phase'],location:r.location as AssetRepairView['location'],provider:r.provider,problem:r.problem,repairNote:r.repairNote,tested:r.tested,revision:r.revision,reportedBy:r.reportedByName,createdAt:r.createdAt.toISOString(),updatedAt:r.updatedAt.toISOString()};}
+function repairView(r:RepairRow,current?:AssetSummary):AssetRepairView{return{id:r.id,asset:refOf(r.asset),name:queueName(r),code:r.asset.inventoryItem?.barcode??r.asset.inventoryItem?.itemCode??null,plate:r.asset.machine?.targe??null,photoUrl:current?.photoUrl??null,category:current?.category??(r.asset.machine?'vehicle':r.asset.inventoryItem?.category==='CLOTHING'?'clothing':r.asset.inventoryItem?.category==='WORK_TOOL'?'tool':'equipment'),phase:r.phase as AssetRepairView['phase'],location:r.location as AssetRepairView['location'],provider:r.provider,problem:r.problem,repairNote:r.repairNote,tested:r.tested,revision:r.revision,reportedBy:r.reportedByName,createdAt:r.createdAt.toISOString(),updatedAt:r.updatedAt.toISOString()};}
 function incidentView(r:IncidentRow):AssetIncidentView{return{id:r.id,asset:refOf(r.asset),name:queueName(r),kind:r.kind as AssetIncidentView['kind'],status:r.status as AssetIncidentView['status'],revision:r.revision,note:r.note,reportedBy:r.reportedByName,createdAt:r.createdAt.toISOString()};}
 
 export async function readAssetSnapshot(input:AssetQuery={}):Promise<AssetSnapshot>{
@@ -317,7 +326,11 @@ export async function readAssetSnapshot(input:AssetQuery={}):Promise<AssetSnapsh
    tx.worker.findMany({where:{...owned(actor),status:'active'},select:{id:true,firstName:true,lastName:true},orderBy:[{firstName:'asc'},{id:'asc'}]}),
    tx.baustelle.findMany({where:{...owned(actor),status:'active'},select:{id:true,name:true},orderBy:[{name:'asc'},{id:'asc'}]}),
   ]);
-  return {assets:rows.slice(0,limit).map(summary),total:counts.total,page,hasMore:rows.length>limit,counts,workers:workers.map(w=>({id:w.id,name:personName(w)})),sites,handovers:handovers.slice(0,100).map(h=>handoverView(h,actor)),incidents:incidents.slice(0,100).map(incidentView),repairs:[...repairs.slice(0,100),...ready.slice(0,20)].map(repairView),permissions:permissions(actor),serverNow:new Date().toISOString(),queueHasMore:{handovers:handovers.length>100,incidents:incidents.length>100,repairs:repairs.length>100||ready.length>20}};
+  const queue=[...repairs.slice(0,100),...ready.slice(0,20)];
+  const queueRefs=[...new Map(queue.map(job=>{const ref=refOf(job.asset);return [`${ref.kind}:${ref.id}`,ref] as const;})).values()];
+  const queueRows=queueRefs.length?await tx.$queryRaw<RawAsset[]>(Prisma.sql`${assetProjection(actor)} SELECT * FROM assets WHERE (${Prisma.join(queueRefs.map(ref=>Prisma.sql`(kind=${ref.kind} AND id=${ref.id})`),' OR ')}) AND ${visibleSql(actor)}`):[];
+  const currentAssets=new Map(queueRows.map(row=>[`${row.kind}:${row.id}`,summary(row)]));
+  return {assets:rows.slice(0,limit).map(summary),total:counts.total,page,hasMore:rows.length>limit,counts,workers:workers.map(w=>({id:w.id,name:personName(w)})),sites,handovers:handovers.slice(0,100).map(h=>handoverView(h,actor)),incidents:incidents.slice(0,100).map(incidentView),repairs:queue.map(job=>{const ref=refOf(job.asset);return repairView(job,currentAssets.get(`${ref.kind}:${ref.id}`));}),permissions:permissions(actor),serverNow:new Date().toISOString(),queueHasMore:{handovers:handovers.length>100,incidents:incidents.length>100,repairs:repairs.length>100||ready.length>20}};
  });
 }
 
@@ -334,7 +347,7 @@ export async function readAssetDetail(input:AssetRef):Promise<AssetDetail>{
    row.aid?tx.companyAssetFile.findMany({where:{...owned(actor),assetId:row.aid,...(!actor.canRepair&&!actor.canManage?{kind:{not:'invoice'}}:{})},select:{id:true,name:true,kind:true,mime:true,size:true,repairId:true,uploadedByName:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
    ref.kind==='inventory'?tx.inventoryAssetMovement.findMany({where:{...owned(actor),itemId:ref.id,isPrivate:false},orderBy:[{createdAt:'desc'},{id:'desc'}]}):[],
   ]);
-  return {asset,permissions:permissions(actor),repairs:repairs.map(repairView),incidents:incidents.map(incidentView),handovers:handovers.map(h=>handoverView(h,actor)),files:files.map(f=>({id:f.id,name:f.name,kind:f.kind as 'photo'|'invoice'|'document'|'cover',mime:f.mime,bytes:f.size,repairId:f.repairId,url:`/api/company-assets/files/${f.id}`,uploadedBy:f.uploadedByName,uploadedAt:f.createdAt.toISOString()})),history:[...history.map(h=>({id:h.id,type:h.type,actor:h.actorName,at:h.createdAt.toISOString(),note:h.note,repairId:h.repairId})),...legacy.map(h=>({id:`legacy:${h.id}`,type:`legacy.${h.action}`,actor:h.actorName??'',at:h.createdAt.toISOString(),note:h.note??'',repairId:null}))].sort((a,b)=>b.at.localeCompare(a.at)||b.id.localeCompare(a.id))};
+  return {asset,permissions:permissions(actor),repairs:repairs.map(job=>repairView(job,asset)),incidents:incidents.map(incidentView),handovers:handovers.map(h=>handoverView(h,actor)),files:files.map(f=>({id:f.id,name:f.name,kind:f.kind as 'photo'|'invoice'|'document'|'cover',mime:f.mime,bytes:f.size,repairId:f.repairId,url:`/api/company-assets/files/${f.id}`,uploadedBy:f.uploadedByName,uploadedAt:f.createdAt.toISOString()})),history:[...history.map(h=>({id:h.id,type:h.type,actor:h.actorName,at:h.createdAt.toISOString(),note:h.note,repairId:h.repairId})),...legacy.map(h=>({id:`legacy:${h.id}`,type:`legacy.${h.action}`,actor:h.actorName??'',at:h.createdAt.toISOString(),note:h.note??'',repairId:null}))].sort((a,b)=>b.at.localeCompare(a.at)||b.id.localeCompare(a.id))};
  });
 }
 

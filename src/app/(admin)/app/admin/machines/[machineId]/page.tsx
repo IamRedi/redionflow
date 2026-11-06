@@ -1,4 +1,7 @@
 import { requireAdminTenant } from '@/lib/auth/authorization';
+import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
+import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
+import { assetCopy } from '@/components/company-assets/copy';
 import { AssetPhoto } from '@/components/asset-photo';
 import { assetPhotoUrl } from '@/lib/asset-photos/shared';
 import Link from 'next/link';
@@ -176,6 +179,7 @@ export default async function FleetMachineDetailPage({
     getCompanyCountry(),
   ]);
   if (!machine) notFound();
+  const operationalStatuses = await loadMachineOperationalStatusMap(companyProfileId, [machine.id]);
   const t = getTranslator(currentLang, mode);
 
   return (
@@ -195,6 +199,7 @@ export default async function FleetMachineDetailPage({
             {machine.targe ?? t('workzone.noLicensePlate')} ·{' '}
             {machine.funksioni ?? t('workzone.fleet')}
           </p>
+          {operationalStatuses !== null ? <AssetOperationalStatusBadge status={operationalStatuses.get(machine.id)} c={assetCopy(currentLang)} className="mt-2" /> : null}
         </div>
         <div className="relative h-20 w-28 overflow-hidden rounded-md border"><AssetPhoto key={`${machine.id}:${machine.coverPhotoAt}`} kind="machine" id={machine.id} src={assetPhotoUrl('machine',machine.id,machine.coverPhotoAt)??machine.imageUrl} alt={machine.nickname??machine.name} canEdit>
           <div className="flex h-20 w-28 items-center justify-center rounded-md border bg-muted text-xs text-muted-foreground">

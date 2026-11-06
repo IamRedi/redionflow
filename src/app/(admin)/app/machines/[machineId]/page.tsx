@@ -1,4 +1,7 @@
 import { requireAdminTenant } from "@/lib/auth/authorization";
+import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
+import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
+import { assetCopy } from '@/components/company-assets/copy';
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -42,6 +45,7 @@ export default async function MachineEditPage({ params }: { params: Promise<{ ma
   const { machineId } = await params;
   const [machine, currentLang, mode] = await Promise.all([prisma.machine.findFirst({ where: { id: machineId, companyProfileId } }), resolveRequestLanguage(), getCompanyMode()]);
   if (!machine) notFound();
+  const operationalStatuses = await loadMachineOperationalStatusMap(companyProfileId, [machine.id]);
   const t = getTranslator(currentLang, mode);
 
   async function save(formData: FormData) {
@@ -88,6 +92,7 @@ export default async function MachineEditPage({ params }: { params: Promise<{ ma
       <div>
         <h1 className="text-xl font-semibold">{t("form.editMachine")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{machineOptionLabel(machine)}</p>
+        {operationalStatuses !== null ? <AssetOperationalStatusBadge status={operationalStatuses.get(machine.id)} c={assetCopy(currentLang)} className="mt-2" /> : null}
       </div>
 
       <Card>

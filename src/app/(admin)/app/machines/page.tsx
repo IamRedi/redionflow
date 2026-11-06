@@ -1,4 +1,7 @@
 import { requireAdminTenant } from "@/lib/auth/authorization";
+import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
+import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
+import { assetCopy } from '@/components/company-assets/copy';
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +74,7 @@ export default async function MachinesPage() {
     where: { companyProfileId: company.id },
     orderBy: [{ isActive: "desc" }, { name: "asc" }],
   });
+  const operationalStatuses = await loadMachineOperationalStatusMap(company.id, machines.map(machine => machine.id));
 
   async function create(formData: FormData) {
     "use server";
@@ -219,7 +223,7 @@ export default async function MachinesPage() {
                     <div>{machineOptionLabel(m)}</div>
                     <div className="text-xs font-normal text-muted-foreground">{machineCategoryLabel((m.category ?? "OTHER") as MachineCategoryCode, t)}</div>
                   </TableCell>
-                  <TableCell>{m.isActive ? t("form.active") : t("form.inactive")}</TableCell>
+                  <TableCell>{operationalStatuses !== null ? <AssetOperationalStatusBadge status={operationalStatuses.get(m.id)} c={assetCopy(currentLang)} /> : m.isActive ? t("form.active") : t("form.inactive")}</TableCell>
                   <TableCell>
                     {m.gpsEnabled ? (
                       <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">

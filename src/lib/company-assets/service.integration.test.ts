@@ -6,7 +6,7 @@ vi.mock('./access',async original=>({...await original<typeof import('./access')
 import {prisma} from '@/lib/db/prisma';
 import {withTenantContext} from '@/lib/db/tenant-context';
 import {assertAssistantTestDatabase} from '../../../tests/fixtures/assistant-database';
-import {runAssetMutation,readAssetSnapshot,readAssetDetail,assertAssetUsable} from './service';
+import {runAssetMutation,readAssetSnapshot,readAssetDetail,assertAssetUsable,readCanonicalAssetStatuses} from './service';
 import {saveCompanyAssetFile,readCompanyAssetFile} from './files';
 import {assistantAssetGrounding} from '@/lib/assistant/asset-grounding';
 import {adminSearchCompanyFleet} from '@/lib/assistant/company-tools';
@@ -104,6 +104,44 @@ it('enforces workshop transitions, external-only-in-repairing and tested evidenc
  await expect(mutate({type:'repair-phase',repairId:result.repairId,revision:4,phase:'ready',tested:true})).rejects.toMatchObject({code:'REPAIR_EVIDENCE_REQUIRED'});
  await mutate({type:'repair-phase',repairId:result.repairId,revision:4,phase:'ready',tested:true,repairNote:'Fictional connector replaced and tested'});
  expect((await readAssetDetail(machine)).asset.availability).toBe('available');expect((await readAssetSnapshot()).repairs.some(r=>r.id===result.repairId&&r.phase==='ready')).toBe(true);
+});
+it('projects exact open repair phases through reception and repair while keeping pending loss primary and tenant reads exact',async()=>{
+ const report=await mutate({type:'report',asset:machine,kind:'defect',note:'Fictional current-phase probe'}) as {repairId:string};
+ const read=()=>withTenantContext(boss.companyId,tx=>readCanonicalAssetStatuses(tx,boss,[machine,other]));
+ expect(await read()).toMatchObject([{ref:machine,status:{availability:'reported',activeRepairPhase:'reported',usable:false,known:true}}]);
+ as(mechanic);await mutate({type:'repair-phase',repairId:report.repairId,revision:1,phase:'received'});
+ expect(await read()).toMatchObject([{ref:machine,status:{availability:'workshop',activeRepairPhase:'received',usable:false}}]);
+ await mutate({type:'repair-phase',repairId:report.repairId,revision:2,phase:'repairing'});
+ expect(await read()).toMatchObject([{ref:machine,status:{availability:'workshop',activeRepairPhase:'repairing',activeRepairLocation:'internal',usable:false}}]);
+ const lost=await mutate({type:'report',asset:machine,kind:'lost',note:'Fictional missing asset during repair'}) as {incidentId:string};
+ expect(await read()).toMatchObject([{ref:machine,status:{availability:'loss_pending',activeRepairPhase:'repairing',usable:false}}]);
+ as(boss);await mutate({type:'decide-incident',incidentId:lost.incidentId,revision:1,approve:true,note:'Fictional confirmed loss'});
+ expect(await read()).toMatchObject([{ref:machine,status:{availability:'lost',activeRepairPhase:null,activeRepairLocation:null,usable:false}}]);
+});
+it('never converts a historical ready job into current availability when a newer report or inactive register blocks use',async()=>{
+ const first=await mutate({type:'report',asset:machine,kind:'defect',note:'Fictional earlier repair'}) as {repairId:string};as(mechanic);
+ await mutate({type:'repair-phase',repairId:first.repairId,revision:1,phase:'received'});
+ await mutate({type:'repair-phase',repairId:first.repairId,revision:2,phase:'repairing'});
+ await mutate({type:'repair-phase',repairId:first.repairId,revision:3,phase:'ready',tested:true,repairNote:'Fictional repair checked'});
+ await prisma.machine.update({where:{id:machine.id},data:{isActive:false}});
+ expect((await readAssetDetail(machine)).asset).toMatchObject({availability:'inactive',activeRepairPhase:null});
+ const second=await mutate({type:'report',asset:machine,kind:'defect',note:'Fictional new defect'}) as {repairId:string};
+ await mutate({type:'repair-phase',repairId:second.repairId,revision:1,phase:'received'});
+ const detail=await readAssetDetail(machine),snapshot=await readAssetSnapshot({includeInactive:true});
+ expect(detail.asset).toMatchObject({availability:'workshop',activeRepairId:second.repairId,activeRepairPhase:'received'});
+ expect(snapshot.repairs).toEqual(expect.arrayContaining([expect.objectContaining({id:first.repairId,phase:'ready'}),expect.objectContaining({id:second.repairId,phase:'received'})]));
+ expect(await withTenantContext(boss.companyId,tx=>readCanonicalAssetStatuses(tx,boss,[machine]))).toMatchObject([{status:{activeRepairPhase:'received',usable:false}}]);
+});
+it('uses canonical current machine and inventory covers plus actual category on compact workshop rows',async()=>{
+ const equipment=await mutate({type:'register',name:'Fictional barrier',category:'equipment'}) as {assets:AssetRef[]};
+ const photo=new File([new Uint8Array(await sharp({create:{width:4,height:3,channels:4,background:{r:120,g:140,b:180,alpha:1}}}).png().toBuffer())],'Synthetic cover.png',{type:'image/png'});
+ await saveCompanyAssetFile(fileForm(machine,'cover',photo));const inventoryCover=await saveCompanyAssetFile(fileForm(equipment.assets[0],'cover',photo));
+ const m=await mutate({type:'report',asset:machine,kind:'defect',note:'Fictional machine cover'}) as {repairId:string};
+ const i=await mutate({type:'report',asset:equipment.assets[0],kind:'defect',note:'Fictional equipment cover'}) as {repairId:string};
+ const snapshot=await readAssetSnapshot(),machineDetail=await readAssetDetail(machine),equipmentDetail=await readAssetDetail(equipment.assets[0]);
+ expect(snapshot.repairs.find(r=>r.id===m.repairId)).toMatchObject({category:'vehicle',photoUrl:machineDetail.asset.photoUrl});
+ expect(snapshot.repairs.find(r=>r.id===i.repairId)).toMatchObject({category:'equipment',photoUrl:`/api/company-assets/files/${inventoryCover.id}`});
+ expect(equipmentDetail.repairs[0]).toMatchObject({category:'equipment',photoUrl:equipmentDetail.asset.photoUrl});
 });
 it('lets the chief reject only an unreceived mistaken defect and never auto-reactivates a separately inactive machine',async()=>{
  await prisma.machine.update({where:{id:machine.id},data:{isActive:false}});

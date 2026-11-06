@@ -48,7 +48,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
   const production = mode === "bau" && await isSteelCompany(company.id);
 
   return (
-    <WorkzoneMapFleet vehicles={machines.filter(m => m.isActive).map(m => ({ id: m.id, name: m.nickname || m.name, plate: m.targe }))}>
+    <WorkzoneMapFleet enhancedOperations={production} statusMachines={machines.map(({ id, operationalStatus }) => ({ id, operationalStatus }))} vehicles={machines.filter(m => m.isActive).map(m => ({ id: m.id, name: m.nickname || m.name, plate: m.targe, operationalStatus: m.operationalStatus }))}>
     <div
       className={`${production ? workspace.shell : 'min-h-dvh overflow-x-hidden'} bg-background text-foreground ${
         mode === "baumdienst" ? "dark:bg-[#10211a]" : ""

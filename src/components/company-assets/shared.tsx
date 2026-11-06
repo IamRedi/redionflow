@@ -1,12 +1,14 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Search } from 'lucide-react';
 import { runAssetOperationAction, getAssetSnapshotAction } from '@/app/(workzone)/workzone/asset-operations-actions';
+import { getMachineOperationalStatusAction } from '@/app/(workzone)/workzone/asset-status-actions';
 import { MachineArt, machineKind } from '@/components/steel/machine-art';
-import type { AssetCommand, AssetQuery, AssetSnapshot, AssetSummary } from '@/lib/company-assets/types';
+import type { AssetCommand, AssetOperationalStatus, AssetQuery, AssetSnapshot, AssetSummary } from '@/lib/company-assets/types';
+import { operationalStatusLabels, unknownAssetStatus, type OperationalStatusKey } from '@/lib/company-assets/status';
 import type { AssetCopy } from './copy';
 
 export const assetButton = 'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-semibold outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50';
@@ -71,6 +73,12 @@ export function useAssetSnapshot(query: AssetQuery, c: AssetCopy) {
     queueMicrotask(() => { if (current) void load(); });
     return () => { current = false; invalidate(); };
   }, [load, invalidate]);
+  useEffect(() => {
+    let last = 0;
+    const refresh = () => { const now = Date.now(); if (document.visibilityState === 'hidden' || now - last < 1000) return; last = now; void load(); };
+    window.addEventListener('focus', refresh); document.addEventListener('visibilitychange', refresh);
+    return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [load]);
   // Refresh the same query in place; a new query can never expose an older result.
   const snapshot=loaded?.key===queryKey?loaded.snapshot:null;
   const loading=request.key!==queryKey||request.loading;
@@ -88,8 +96,66 @@ export function AssetSearch({ value, onChange, label }: { value: string; onChang
 }
 export function AssetStatus({ value, c }: { value: string; c: AssetCopy }) {
   const label = c[value as keyof AssetCopy] || value;
-  const tone = ['available','ready','completed','confirmed'].includes(value) ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300' : ['lost','retired','rejected','declined'].includes(value) ? 'bg-red-500/10 text-red-800 dark:text-red-300' : 'bg-orange-500/10 text-orange-800 dark:text-orange-300';
+  const tone = ['available','ready','completed','confirmed'].includes(value) ? 'bg-green-500/10 text-green-800 dark:text-green-300' : ['lost','retired','rejected','declined'].includes(value) ? 'bg-red-500/10 text-red-800 dark:text-red-300' : 'bg-orange-500/10 text-orange-800 dark:text-orange-300';
   return <span className={`inline-flex rounded-lg px-2 py-1 text-xs font-semibold ${tone}`}>{label}</span>;
+}
+export function AssetOperationalStatusBadge({ status, c, compact = false, className = '' }: { status: AssetOperationalStatus | null | undefined; c: AssetCopy; compact?: boolean; className?: string }) {
+  const { primary, secondary, location } = operationalStatusLabels(status);
+  const label = (key: OperationalStatusKey) => key === 'unknown' ? c.statusUnknown : key === 'available' ? (compact ? c.statusAvailableShort : c.statusAvailable) : key === 'reported' ? c.statusReported : key === 'received' ? (compact ? c.statusReceivedShort : c.received) : key === 'workshop' ? c.statusWorkshop : key === 'handover' ? c.statusHandover : c[key as keyof AssetCopy];
+  const tone = primary === 'unknown' || primary === 'inactive' ? 'bg-muted text-muted-foreground' : ['available','issued'].includes(primary) ? 'bg-green-500/10 text-green-800 dark:text-green-300' : ['lost','retired','loss_pending','retirement_pending'].includes(primary) ? 'bg-red-500/10 text-red-800 dark:text-red-300' : 'bg-orange-500/10 text-orange-800 dark:text-orange-300';
+  return <span data-testid="asset-operational-status" data-status-key={primary} data-phase={status?.activeRepairPhase ?? ''} data-availability={status?.availability ?? ''} className={`inline-flex max-w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 rounded-lg px-2 py-1 text-[11px] font-semibold leading-snug ${tone} ${className}`}>
+    <span className="min-w-0 break-words">{label(primary)}</span>
+    {secondary ? <span className="min-w-0 break-words">· {label(secondary)}</span> : null}
+    {location ? <span className="min-w-0 break-words">· {c[location]}</span> : null}
+  </span>;
+}
+
+/** One exact-ID batch per visible scope. An older request can never restore stale availability. */
+export function useMachineOperationalStatuses(machines: { id: string; operationalStatus?: AssetOperationalStatus | null }[], enabled: boolean) {
+  const key = JSON.stringify([...new Set(machines.map(machine => machine.id))].sort());
+  // A new SSR snapshot invalidates the client batch without comparing server and browser clocks.
+  const seedKey = JSON.stringify(machines.map(machine => [machine.id, machine.operationalStatus]).sort(([a], [b]) => String(a).localeCompare(String(b))));
+  const scopeKey = `${key}:${seedKey}`;
+  const initial = new Map(machines.map(machine => [machine.id, machine.operationalStatus]));
+  const [loaded, setLoaded] = useState<{ key: string; values: Map<string, AssetOperationalStatus> } | null>(null);
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const epoch = useRef(0);
+  const invalidate = useCallback(() => { epoch.current++; }, []);
+  const unknown = useMemo(() => unknownAssetStatus(''), []);
+  const reload = useCallback(async () => {
+    if (!enabled) return;
+    const own = ++epoch.current;
+    setLoadingKey(scopeKey);
+    let values = new Map<string, AssetOperationalStatus>();
+    try {
+      const ids = JSON.parse(key) as string[];
+      if (ids.length <= 500) {
+        const result = await getMachineOperationalStatusAction(ids);
+        if (result.ok) values = new Map(result.data.map(row => [row.id, row.status]));
+      }
+    } catch { /* Unknown is safer than a stale available badge. */ }
+    if (own !== epoch.current) return;
+    setLoaded({ key: scopeKey, values }); setLoadingKey(null);
+  }, [key, scopeKey, enabled]);
+  useEffect(() => {
+    let current = true;
+    queueMicrotask(() => { if (current) void reload(); });
+    return () => { current = false; invalidate(); };
+  }, [reload, invalidate]);
+  useEffect(() => {
+    if (!enabled) return;
+    let last = 0;
+    const refresh = () => { const now = Date.now(); if (document.visibilityState === 'hidden' || now - last < 1000) return; last = now; void reload(); };
+    window.addEventListener('focus', refresh); document.addEventListener('visibilitychange', refresh);
+    return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [enabled, reload]);
+  function statusFor(id: string): AssetOperationalStatus {
+    if (loadingKey === scopeKey) return unknown;
+    const seed = initial.get(id);
+    if (loaded?.key === scopeKey) return loaded.values.get(id) ?? unknown;
+    return seed ?? unknown;
+  }
+  return { statusFor, reload };
 }
 export function assetIdentity(asset: Pick<AssetSummary, 'code' | 'plate' | 'size'>) { return [asset.plate, asset.code, asset.size].filter(Boolean).join(' · '); }
 export function assetTime(value: string, language: string) {

@@ -4,6 +4,9 @@ import { Pencil } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
+import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
+import { assetCopy } from '@/components/company-assets/copy';
+import { useMapOperationalStatuses } from './workzone-map-fleet';
 import { Button } from "@/components/ui/button";
 import { SimpleDialog } from "@/components/ui/simple-dialog";
 import { t } from "@/lib/i18n";
@@ -89,6 +92,8 @@ export function DailyPlanBoard({
   showCurrentVersionHint?: boolean;
 }) {
   const { currentLang } = useLanguage();
+  const operational = useMapOperationalStatuses();
+  const assets = assetCopy(currentLang);
   const [message, setMessage] = useState<string>();
   const [activeItem, setActiveItem] = useState<{ kind: "WORKER" | "MACHINE"; id: string } | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState<PendingPlanConfirmation | null>(null);
@@ -288,7 +293,7 @@ export function DailyPlanBoard({
                   {column.assignments.map((item) => (
                     <div
                       key={item.id}
-                      className="truncate rounded-md border px-2 py-1 dark:border-white/10 dark:bg-black/10"
+                      className={`${operational?.enabled ? 'min-w-0' : 'truncate'} rounded-md border px-2 py-1 dark:border-white/10 dark:bg-black/10`}
                       title={t("workzone.doubleClickRemove", currentLang)}
                       onDoubleClick={() => {
                         startTransition(async () => {
@@ -298,6 +303,7 @@ export function DailyPlanBoard({
                       }}
                     >
                       {item.kind === "WORKER" ? "👷" : "🚚"} {item.labelSnapshot}
+                      {item.kind === 'MACHINE' && item.machineId && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact className="mt-1" /> : null}
                     </div>
                   ))}
                 </div>
@@ -323,18 +329,19 @@ export function DailyPlanBoard({
                   className={`min-h-12 w-full rounded-md border px-1.5 py-1 text-left text-[11px] leading-tight hover:bg-muted disabled:cursor-not-allowed sm:px-2 sm:text-xs lg:min-h-9 lg:px-2 lg:py-1 lg:text-xs ${
                     assignedMachineIds.has(machine.id)
                       ? "border-red-200 bg-red-50 text-red-800 opacity-90 dark:border-red-500/30 dark:bg-red-500/12 dark:text-red-100"
-                      : !machine.isActive
+                      : operational?.enabled ? operational.statusFor(machine.id)?.usable === false ? 'border-amber-500/40 bg-amber-500/5' : 'dark:border-white/10 dark:bg-white/[0.03]' : !machine.isActive
                         ? "border-sky-400/70 bg-sky-500/15 text-sky-900 shadow-[inset_0_0_0_1px_rgba(56,189,248,0.22)] dark:border-sky-400/50 dark:bg-sky-500/18 dark:text-sky-100"
                         : "dark:border-white/10 dark:bg-white/[0.03]"
                   } ${
                     activeItem?.kind === "MACHINE" && activeItem.id === machine.id ? "border-emerald-500 bg-emerald-500/10 dark:border-emerald-400 dark:bg-emerald-500/15" : ""
                   }`}
-                  title={!machine.isActive ? t("workzone.planRequiresConfirmation", currentLang).replace("{name}", machine.name) : machine.name}
+                  title={!operational?.enabled && !machine.isActive ? t("workzone.planRequiresConfirmation", currentLang).replace("{name}", machine.name) : machine.name}
                 >
                   <span className="line-clamp-1">{machine.name}</span>
                   {machine.requiredLicense ? (
                     <span className="mt-0.5 block truncate text-[10px] text-muted-foreground lg:mt-0">({machine.requiredLicense})</span>
                   ) : null}
+                  {operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(machine.id)} c={assets} compact className="mt-1" /> : null}
                 </button>
               ))}
             </div>

@@ -55,6 +55,40 @@ Past jobs, photos, invoices, authors and server timestamps remain attached to
 the original vehicle/item. Old notes-based defects remain visible as legacy
 history; their old resolve action cannot bypass the workshop.
 
+## Compact workshop and current vehicle status
+
+The workshop board uses small thumbnails and compact, whole-row actions, with
+name/plate, problem, exact phase, repair route and update time. Desktop columns
+fit their content; phone filters show phase counts and initially select a phase
+with work in it. Search also matches the problem and repair provider. The Ready
+column is recent completed-job history, not a claim that those vehicles are
+currently available: a newer report or allocation block takes precedence.
+
+Vehicle surfaces use the same tenant-scoped operational projection. Reported,
+received and repairing remain distinct; a pending defect incident cannot keep a
+received vehicle labelled Reported. Internal/external is the recorded repair
+route, not a GPS location. Loss, retirement and inactive states keep their
+blocking meaning. A base active flag or an online GPS device does not prove that
+a vehicle is available. Availability means the system has no recorded operational
+block; it is not a new inspection certificate. Missing/failed reads show unknown
+instead of a green all-clear. Photos keep their existing private access boundary.
+
+The exact-ID status read contains only current availability, open repair phase,
+internal/external route and read time. It does not copy repair notes, providers,
+invoices, holders or GPS into shared status badges. Reads are bounded to 500
+machine IDs; larger registries render unknown status rather than crash or show
+an apparently complete green subset. Opening/returning to fleet or map and
+resuming a visible window refresh the scoped batch. Same-query workshop refreshes
+keep card nodes and scroll position; the refresh icon remains available.
+
+Presentation assessment for this bounded accuracy/density correction:
+NO_CONTENT_CHANGE. The native six-language steel description, public showcase
+README/About and portfolio card/case study already describe the same four-phase
+workshop, repair history and compact fleet. Their workflow, links, access and
+stage/readiness claims remain accurate. Existing explicitly historical fictional
+captures are not represented as a capture of this candidate. No public demo,
+new capability or maturity change is implied by this UI correction.
+
 ## Files, isolation and compatibility
 
 Files are private database bytes behind an authenticated, tenant-scoped route.
