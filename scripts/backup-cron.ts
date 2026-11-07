@@ -94,8 +94,13 @@ async function main() {
   }
 }
 
-main().then(() => process.exit(0), () => {
+// Railway stops the container as soon as the process exits; give the log
+// collector a moment so the result line is never lost.
+const exitAfterFlush = (code: number) => setTimeout(() => process.exit(code), 5_000);
+
+console.log(JSON.stringify({ started: new Date().toISOString() }));
+main().then(() => exitAfterFlush(0), () => {
   // Raw errors may contain connection details; only the phase is logged.
   console.error(JSON.stringify({ ok: false, phase, error: "Nightly backup failed; previous copies are untouched" }));
-  process.exit(1);
+  exitAfterFlush(1);
 });
