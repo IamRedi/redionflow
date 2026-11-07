@@ -1,10 +1,10 @@
-export type PhotoKind = 'machine' | 'site';
+export type PhotoKind = 'machine' | 'site' | 'worker';
 export const assetPhotoUrl = (
   kind: PhotoKind,
   id: string,
   at?: Date | string | null,
 ) =>
-  at ? `/api/asset-photos/${kind}/${id}?v=${new Date(at).getTime()}` : null;
+  at ? `/api/asset-photos/${kind}/${encodeURIComponent(id)}?v=${new Date(at).getTime()}` : null;
 const en = {
   edit: 'Change photo',
   camera: 'Take photo',
@@ -14,6 +14,7 @@ const en = {
   error: 'Choose a JPG, PNG or WebP photo up to 12 MB.',
   denied: 'Your role cannot change this photo.',
   busy: 'Another photo is processing. Try again shortly.',
+  unavailable: 'The photo could not be saved. Try again shortly.',
 };
 export const photoCopy = (lang: string) =>
   lang === 'sq'
@@ -26,6 +27,7 @@ export const photoCopy = (lang: string) =>
         error: 'Zgjidh foto JPG, PNG ose WebP deri në 12 MB.',
         denied: 'Roli yt nuk mund ta ndryshojë këtë foto.',
         busy: 'Një foto tjetër po përpunohet. Provo pas pak.',
+        unavailable: 'Fotoja nuk u ruajt. Provo përsëri pas pak.',
       }
     : lang === 'de'
       ? {
@@ -37,6 +39,7 @@ export const photoCopy = (lang: string) =>
           error: 'JPG, PNG oder WebP bis 12 MB auswählen.',
           denied: 'Deine Rolle darf dieses Foto nicht ändern.',
           busy: 'Ein Foto wird verarbeitet. Bitte gleich erneut versuchen.',
+          unavailable: 'Das Foto konnte nicht gespeichert werden. Bitte gleich erneut versuchen.',
         }
       : lang === 'it'
         ? {
@@ -48,6 +51,7 @@ export const photoCopy = (lang: string) =>
             error: 'Scegli JPG, PNG o WebP fino a 12 MB.',
             denied: 'Il tuo ruolo non può cambiare questa foto.',
             busy: 'Una foto è in elaborazione. Riprova tra poco.',
+            unavailable: 'La foto non è stata salvata. Riprova tra poco.',
           }
         : lang === 'pl'
           ? {
@@ -59,6 +63,7 @@ export const photoCopy = (lang: string) =>
               error: 'Wybierz JPG, PNG lub WebP do 12 MB.',
               denied: 'Twoja rola nie pozwala zmienić tego zdjęcia.',
               busy: 'Inne zdjęcie jest przetwarzane. Spróbuj za chwilę.',
+              unavailable: 'Nie udało się zapisać zdjęcia. Spróbuj za chwilę.',
             }
           : lang === 'ro'
             ? {
@@ -70,5 +75,6 @@ export const photoCopy = (lang: string) =>
                 error: 'Alege JPG, PNG sau WebP de maximum 12 MB.',
                 denied: 'Rolul tău nu permite schimbarea acestei fotografii.',
                 busy: 'Se procesează altă fotografie. Încearcă din nou în curând.',
+                unavailable: 'Fotografia nu a putut fi salvată. Încearcă din nou în curând.',
               }
             : en;

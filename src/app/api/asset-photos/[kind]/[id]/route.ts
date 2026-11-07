@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { kind, id } = await params;
-    if (kind !== 'machine' && kind !== 'site')
+    if (kind !== 'machine' && kind !== 'site' && kind !== 'worker')
       return new Response(null, { status: 404, headers });
     const data = await readAssetPhoto(kind, id);
     return data

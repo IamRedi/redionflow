@@ -83,7 +83,9 @@ export function AssetPhoto({
               ? c.denied
               : r.code === 'PHOTO_BUSY'
                 ? c.busy
-                : c.error,
+                : r.code === 'PHOTO_UNAVAILABLE'
+                  ? c.unavailable
+                  : c.error,
           );
           setOpen(true);
           return;
@@ -109,7 +111,7 @@ export function AssetPhoto({
       )}
       {canEdit && (
         <div
-          className="absolute right-2 top-2 z-30"
+          className={kind === 'worker' ? 'absolute -bottom-1 -right-1 z-30' : 'absolute right-2 top-2 z-30'}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >

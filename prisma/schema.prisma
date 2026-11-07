@@ -890,6 +890,7 @@ model Worker {
   clothingBottomSize    String?
   shoeSize              String?
   profileImageUrl       String?
+  profilePhoto          AssetPhoto?
   documents             Json?
   level                 WorkerLevel        @default(JUNIOR)
   /// Metal construction role (see src/lib/workzone/crew-roles.ts); null = plain worker.
@@ -1336,7 +1337,7 @@ model Baustelle {
   @@unique([companyProfileId,id])
 }
 
-/// Bounded WebP covers kept out of ordinary machine/site row payloads.
+/// Bounded private WebP photos kept out of ordinary entity row payloads.
 model AssetPhoto {
   id String @id @default(cuid())
   companyProfileId String
@@ -1345,10 +1346,13 @@ model AssetPhoto {
   machine Machine? @relation(fields:[companyProfileId,machineId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_machine_tenant_fkey")
   baustelleId String?
   baustelle Baustelle? @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_site_tenant_fkey")
+  workerId String?
+  worker Worker? @relation(fields:[companyProfileId,workerId],references:[companyProfileId,id],onDelete:Cascade,map:"AssetPhoto_worker_tenant_fkey")
   data Bytes
   updatedAt DateTime @updatedAt
   @@unique([companyProfileId,machineId])
   @@unique([companyProfileId,baustelleId])
+  @@unique([companyProfileId,workerId])
 }
 
 model InventoryMovement {
