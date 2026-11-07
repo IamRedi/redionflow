@@ -41,7 +41,7 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 ## Dokumentübergabe und Gerätecodes in BauFlow
 
 Sechs Baustellenphasen bündeln Dokumente mit Download und Teilen-Dialog.
-Büro und Ingenieure bestätigen den Empfang persönlich mit Name und Zeitpunkt.
+Aktive Mitarbeitende bestätigen den Empfang persönlich mit Name und Zeitpunkt.
 Neue Dateiversionen behalten die alten Dateien und Bestätigungen im Verlauf;
 eine Empfangsbestätigung schließt keinen Produktionsschritt ab.
 
@@ -56,6 +56,22 @@ Daten. Diese Dokumentations-PR wird erst mit der freigegebenen App-Erweiterung
 veröffentlicht; sie schaltet die privaten Abläufe nicht in den öffentlichen Demos frei.
 
 <img src="docs/assets/screenshots/steel-phase-documents-synthetic.png" alt="Lokale fiktive BauFlow-Firma mit Phasendokumenten und persönlicher Empfangsbestätigung" width="300">
+
+## Baustellenrechte in BauFlow
+
+Mitarbeitende lesen Baustellendokumente und bestätigen ihren eigenen Empfang.
+Das Büro lädt Dokumente hoch; Ingenieure brauchen dafür eine explizite Freigabe
+je Baustelle. Die Leitung wählt sie beim Anlegen oder später unter **Zugriff**.
+Fabrik- und Baustellenschritte folgen weiterhin der jeweiligen Ingenieurrolle.
+Administratoren und Inhaber verwalten den Betrieb. Ein eigener Name/PIN-Zugang
+für Inhaber wird privat im angemeldeten Profil eingerichtet.
+
+Die lokale Prüfung deckt Erteilung, Entzug, konkurrierende Änderungen und
+Mandantengrenzen ab. Das Bild zeigt ausschließlich fiktive Daten. Veröffentlichung
+und Einrichtung realer Konten erfolgen getrennt nach Freigabe der App-Version;
+die öffentlichen Demos erhalten dadurch keine privaten Firmendaten.
+
+<img src="docs/assets/screenshots/steel-site-access-synthetic.png" alt="BauFlow: kompakte Auswahl der uploadberechtigten Baustelleningenieure mit fiktiven Daten" width="780">
 
 ## Warum dieses Projekt?
 
