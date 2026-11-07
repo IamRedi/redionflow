@@ -37,6 +37,7 @@ export async function cleanupSteelAssetsWorkshop(companyId: string) {
   const company=await prisma.companyProfile.findUnique({where:{id:companyId},select:{displayName:true}});
   if(company?.displayName!=='Synthetic Assets · DEMO')throw new Error('Refusing cleanup outside the synthetic assets fixture.');
   const where={companyProfileId:companyId};
+  await prisma.siteDocumentEngineer.deleteMany({where});
   // Explicit FK order preserves Restrict protections in the production schema.
   await prisma.sitePhaseDocumentReceipt.deleteMany({where});
   while(await prisma.sitePhaseDocument.count({where})){

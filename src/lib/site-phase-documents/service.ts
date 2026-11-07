@@ -7,6 +7,7 @@ import { safeFileName, sniffSiteFileMime, SITE_FILE_MAX_BYTES } from '@/lib/site
 import { scanFileContent } from '@/lib/storage/content-scan';
 import { assetFail } from '@/lib/company-assets/access';
 import { documentActor, assertDocumentSite } from './access';
+import { requireSiteDocumentUpload } from './site-access';
 import { DOCUMENT_PHASES, type DocumentPhase, type PhaseDocumentSnapshot } from './types';
 
 const id=z.string().min(1).max(128),phase=z.enum(DOCUMENT_PHASES);
@@ -17,9 +18,9 @@ const listSelect={id:true,phase:true,title:true,note:true,fileName:true,mime:tru
 export async function readPhaseDocuments(siteId:string):Promise<PhaseDocumentSnapshot>{
   id.parse(siteId);const actor=await documentActor();
   return withTenantContext(actor.companyId,async tx=>{
-    await assertDocumentSite(tx,actor,siteId);
+    const access=await assertDocumentSite(tx,actor,siteId);
     const rows=await tx.sitePhaseDocument.findMany({where:{companyProfileId:actor.companyId,baustelleId:siteId},select:listSelect,orderBy:[{createdAt:'desc'},{id:'desc'}],take:MAX_PHASE_DOCUMENTS});
-    return {actorName:actor.name,documents:rows.map(d=>({id:d.id,phase:d.phase as DocumentPhase,title:d.title,note:d.note,fileName:d.fileName,mime:d.mime,size:d.size,uploadedBy:d.createdByName,uploadedAt:d.createdAt.toISOString(),supersedesId:d.supersedesId,archivedAt:d.archivedAt?.toISOString()??null,canEdit:actor.office||d.createdByKey===actor.key,receipts:d.receipts.map(r=>({name:r.actorName,at:r.receivedAt.toISOString(),mine:r.actorKey===actor.key}))}))};
+    return {actorName:actor.name,canUpload:access.upload,documents:rows.map(d=>({id:d.id,phase:d.phase as DocumentPhase,title:d.title,note:d.note,fileName:d.fileName,mime:d.mime,size:d.size,uploadedBy:d.createdByName,uploadedAt:d.createdAt.toISOString(),supersedesId:d.supersedesId,archivedAt:d.archivedAt?.toISOString()??null,canEdit:access.upload&&(access.office||d.createdByKey===actor.key),receipts:d.receipts.map(r=>({name:r.actorName,at:r.receivedAt.toISOString(),mine:r.actorKey===actor.key}))}))};
   });
 }
 
@@ -29,7 +30,7 @@ export async function uploadPhaseDocument(form:FormData){
   const input=metadata.parse({requestId:form.get('requestId'),siteId:form.get('siteId'),phase:form.get('phase'),title:form.get('title'),note:form.get('note')??'',supersedesId:form.get('supersedesId')||null});
   const file=form.get('file');
   if(!(file instanceof File)||!file.size||file.size>SITE_FILE_MAX_BYTES)return assetFail('FILE_INVALID');
-  await withTenantContext(actor.companyId,tx=>assertDocumentSite(tx,actor,input.siteId));
+  await withTenantContext(actor.companyId,tx=>requireSiteDocumentUpload(tx,actor,input.siteId));
   const original=new Uint8Array(await file.arrayBuffer());
   const scan=await scanFileContent(new File([original],'phase-document-upload',{type:file.type}));
   if(!scan.ok)return assetFail('FILE_REFUSED');
@@ -45,7 +46,7 @@ export async function uploadPhaseDocument(form:FormData){
   const sha256=createHash('sha256').update(bytes).digest('hex');
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`phase-docs:${actor.companyId}:${input.siteId}`}))`;
-    await assertDocumentSite(tx,actor,input.siteId);
+    const access=await requireSiteDocumentUpload(tx,actor,input.siteId);
     const existing=await tx.sitePhaseDocument.findFirst({where:{id:input.requestId,companyProfileId:actor.companyId},select:{baustelleId:true,phase:true,title:true,note:true,supersedesId:true,sha256:true,fileName:true,createdByKey:true}});
     if(existing){
       if(existing.baustelleId!==input.siteId||existing.phase!==input.phase||existing.title!==input.title||existing.note!==input.note||existing.supersedesId!==input.supersedesId||existing.sha256!==sha256||existing.fileName!==fileName||existing.createdByKey!==actor.key)return assetFail('CONFLICT');
@@ -54,7 +55,7 @@ export async function uploadPhaseDocument(form:FormData){
     if(input.supersedesId){
       const previous=await tx.sitePhaseDocument.findFirst({where:{id:input.supersedesId,companyProfileId:actor.companyId,baustelleId:input.siteId,phase:input.phase},select:{createdByKey:true,archivedAt:true}});
       if(!previous)return assetFail('NOT_FOUND');
-      if(!actor.office&&previous.createdByKey!==actor.key)return assetFail('DENIED');
+      if(!access.office&&previous.createdByKey!==actor.key)return assetFail('DENIED');
       if(previous.archivedAt)return assetFail('CONFLICT');
       await tx.sitePhaseDocument.update({where:{id:input.supersedesId},data:{archivedAt:new Date(),archivedByKey:actor.key}});
     }
@@ -70,10 +71,10 @@ export async function actOnPhaseDocument(input:unknown){
   return withTenantContext(actor.companyId,async tx=>{
     const head=await tx.sitePhaseDocument.findFirst({where:{id:documentId,companyProfileId:actor.companyId},select:{baustelleId:true}});if(!head)return assetFail('NOT_FOUND');
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`phase-docs:${actor.companyId}:${head.baustelleId}`}))`;
-    await assertDocumentSite(tx,actor,head.baustelleId);
+    const access=await assertDocumentSite(tx,actor,head.baustelleId,true);
     const doc=await tx.sitePhaseDocument.findFirstOrThrow({where:{id:documentId,companyProfileId:actor.companyId},select:{createdByKey:true,archivedAt:true}});
     if(action==='archive'){
-      if(!actor.office&&doc.createdByKey!==actor.key)return assetFail('DENIED');
+      if(!access.upload||!access.office&&doc.createdByKey!==actor.key)return assetFail('DENIED');
       if(!doc.archivedAt)await tx.sitePhaseDocument.update({where:{id:documentId},data:{archivedAt:new Date(),archivedByKey:actor.key}});
     }else{
       if(doc.archivedAt)return assetFail('CONFLICT');

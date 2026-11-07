@@ -5,7 +5,6 @@ vi.mock('@/lib/site-phase-documents/access', () => ({ documentActor: identity.ac
 import { prisma } from '@/lib/db/prisma';
 import { assertAssistantTestDatabase } from '../../../tests/fixtures/assistant-database';
 import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts } from './document-tools';
-import { crewPermissions } from '@/lib/workzone/crew-roles';
 import type { RequesterContext } from './requester';
 assertAssistantTestDatabase();
 let companies: string[] = [], companyId: string, siteId: string, foreignSite: string, adminId: string, requester: RequesterContext;
@@ -63,7 +62,7 @@ it('lists only owned current versions with exact phase/filter counts and no byte
 it('defines unconfirmed from actual role eligibility, not all workers or assigned recipients', async () => {
   const doc = await document(); await receive(doc.id, crew[0].id); await receive(doc.id);
   const result = await people(doc.id, { status: 'unconfirmed', limit: 20 });
-  const eligible = crew.filter(w => { const p = crewPermissions({ isAdmin: false, ...w }); return w.status === 'active' && (p.office || p.factorySteps || p.siteSteps); });
+  const eligible = crew.filter(w => w.status === 'active');
   expect(result.summary).toEqual({ received: 2, currentlyEligible: eligible.length + 1, currentlyEligibleConfirmed: 2, currentlyEligibleUnconfirmed: eligible.length - 1 });
   expect(result.people.map(p => p.id).sort()).toEqual(eligible.filter(w => w.id !== crew[0].id).map(w => w.id).sort());
   expect(result.people.every(p => p.hasAccessNow && !p.confirmed && p.receivedAt === null)).toBe(true);
@@ -101,7 +100,7 @@ it('denies foreign sites, documents, stale roles and cursors from another query'
   const otherAdmin = await prisma.user.create({ data: { companyProfileId: companies[1], email: `other-${randomUUID()}@example.test`, role: 'ADMIN' } });
   const foreignDoc = await prisma.sitePhaseDocument.create({ data: { companyProfileId: companies[1], baustelleId: foreignSite, phase: 'porosi', title: 'Foreign', fileName: 'f.pdf', mime: 'application/pdf', size: 1, dataBytes: Buffer.from('x'), sha256: '0'.repeat(64), createdByName: 'Foreign', createdByKey: `user:${otherAdmin.id}`, createdByUserId: otherAdmin.id } });
   expect(await adminGetSitePhaseDocumentReceipts(requester, { documentId: foreignDoc.id })).toMatchObject({ ok: false, code: 'DOCUMENT_NOT_FOUND' });
-  expect(await adminGetSitePhaseDocumentReceipts(requester, { documentId: doc.id, cursor: `worker:${crew[4].id}`, status: 'unconfirmed' })).toMatchObject({ ok: false, code: 'INVALID_CURSOR' });
+  expect(await adminGetSitePhaseDocumentReceipts(requester, { documentId: doc.id, cursor: 'worker:missing-person', status: 'unconfirmed' })).toMatchObject({ ok: false, code: 'INVALID_CURSOR' });
   expect(await adminGetSitePhaseDocuments(requester, { projectId: siteId, cursor: foreignDoc.id })).toMatchObject({ ok: false, code: 'INVALID_CURSOR' });
   await prisma.user.update({ where: { id: adminId }, data: { isActive: false } });
   expect(await adminGetSitePhaseDocuments(requester, { projectId: siteId })).toMatchObject({ ok: false, code: 'FORBIDDEN' });

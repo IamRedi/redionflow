@@ -4,7 +4,7 @@
  * precisely the same policy.
  */
 
-const CREDENTIAL_FIELD = /(?:password|credential|login[_-]?code|^(?:pin|token|secret)$|(?:access|refresh|fcm|fleetIngest)Token$|api[_-]?key|reset[_-]?code|session(?:Token|Key)$)/i;
+const CREDENTIAL_FIELD = /(?:password|credential|login[_-]?(?:code|pin)|^(?:pin|token|secret)$|(?:access|refresh|fcm|fleetIngest)Token$|api[_-]?key|reset[_-]?code|session(?:Token|Key)$)/i;
 
 export type SnapshotRecord = Record<string, unknown>;
 

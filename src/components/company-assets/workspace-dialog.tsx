@@ -6,10 +6,11 @@ import { useRef, type ReactNode, type RefObject } from 'react';
 import { useLanguage } from '@/components/i18n/language-provider';
 import { assetCopy } from './copy';
 
-export function AssetWorkspaceDialog({ open, onOpenChange, title, children, scrollBody = false, layer = 1500, returnFocusRef, fullScreen = false }: {
+export function AssetWorkspaceDialog({ open, onOpenChange, title, children, scrollBody = false, layer = 1500, returnFocusRef, fullScreen = false, compact=false }: {
   open: boolean; onOpenChange: (open: boolean) => void; title: string; children: ReactNode;
   scrollBody?: boolean; layer?: number; returnFocusRef?: RefObject<HTMLElement | null>;
   fullScreen?: boolean;
+  compact?:boolean;
 }) {
   const { currentLang } = useLanguage();
   const c = assetCopy(currentLang);
@@ -24,7 +25,7 @@ export function AssetWorkspaceDialog({ open, onOpenChange, title, children, scro
           const target = returnFocusRef?.current?.isConnected ? returnFocusRef.current : opener.current;
           if (target?.isConnected) target.focus({ preventScroll: true });
         }}
-        className={`fixed inset-0 flex h-[100dvh] min-h-0 min-w-0 flex-col bg-background text-foreground outline-none ${fullScreen ? '' : 'sm:inset-3 sm:h-[calc(100dvh-1.5rem)] sm:rounded-2xl sm:border sm:shadow-xl'}`}>
+        className={`fixed flex min-h-0 min-w-0 flex-col bg-background text-foreground outline-none ${compact?'left-1/2 top-1/2 max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border shadow-xl':`inset-0 h-[100dvh] ${fullScreen?'':'sm:inset-3 sm:h-[calc(100dvh-1.5rem)] sm:rounded-2xl sm:border sm:shadow-xl'}`}`}>
         <div className="flex shrink-0 items-center gap-3 px-3 py-2 sm:px-5">
           <Dialog.Title className="min-w-0 flex-1 break-words text-lg font-semibold">{title}</Dialog.Title>
           <Dialog.Close aria-label={c.close} className="grid size-11 shrink-0 place-items-center rounded-xl hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><X size={20} /></Dialog.Close>

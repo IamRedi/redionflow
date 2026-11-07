@@ -12,6 +12,7 @@ import { initialFactorySteps, PRODUCTION_UNITS } from "@/lib/factory/production"
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { currentCompanyActor } from "@/lib/site-files/actor";
+import { mayUploadSiteDocuments, siteDocumentAccess } from '@/lib/site-phase-documents/site-access';
 import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime, type SiteFileKind } from "@/lib/site-files/validate";
 import type { ActionResult } from "@/lib/validation/action-result";
 
@@ -32,8 +33,8 @@ async function readUpload(file: FormDataEntryValue | null, kind: SiteFileKind) {
 const uploadKinds = z.enum(["document", "photo", "invoice"]);
 
 /**
- * Documents and photos: anyone signed in for the company (workers take site
- * photos). Invoices carry prices, so only the office can add or see them.
+ * Steel documents/photos: office/admin or explicitly assigned engineers.
+ * Invoices carry prices and remain office-only.
  */
 export async function uploadSiteFileAction(formData: FormData): Promise<ActionResult> {
   const tr = await getActionTranslator();
@@ -46,6 +47,8 @@ export async function uploadSiteFileAction(formData: FormData): Promise<ActionRe
   const baustelleId = String(formData.get("baustelleId") ?? "");
   if (!kind.success || !baustelleId) return { ok: false, message: tr("invalidInput") };
   if (kind.data === "invoice" && !actor.can.office) return { ok: false, message: tr("accessDenied") };
+  const identity={companyId,userId:actor.userId,workerId:actor.workerId};
+  if(!await withTenantContext(companyId,tx=>mayUploadSiteDocuments(tx,identity,baustelleId)))return {ok:false,message:tr('accessDenied')};
 
   const upload = await readUpload(formData.get("file"), kind.data);
   if (!upload) return { ok: false, message: tr("documentTypeAllowed") };
@@ -56,6 +59,8 @@ export async function uploadSiteFileAction(formData: FormData): Promise<ActionRe
   const saved = await withTenantContext(companyId, async (tx) => {
     const site = await tx.baustelle.findFirst({ where: { id: baustelleId, companyProfileId: companyId }, select: { id: true } });
     if (!site) return false;
+    if(!await mayUploadSiteDocuments(tx,identity,baustelleId))return false;
+    if(kind.data==='invoice'&&!(await siteDocumentAccess(tx,identity,baustelleId,true)).office)return false;
     await tx.siteFile.create({
       data: {
         companyProfileId: companyId,
