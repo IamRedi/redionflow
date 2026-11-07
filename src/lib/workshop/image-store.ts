@@ -48,7 +48,8 @@ async function requestStudioImage(targetId:string,requestId:string,actor:DemoAct
     const preference=mediaPreference((await readMediaState(tx)).preferences,{kind:phaseTarget?"phase":kind==="site"?"site":"asset",target:kind==="brand"?DEMO_BRAND_TARGET:targetId});
     const photos=await tx.baumdienstDemoFile.findMany({where:{workspaceKey:phaseTarget?WOOD_WORKSPACE_KEY:DEMO_WORKSPACE_KEY,kind:kind==="site"?"site":"asset",target:phaseTarget?`phase:${targetId}`:kind==="brand"?DEMO_BRAND_TARGET:targetId,jobId:null},select:{id:true}});
     if (photos.some(p=>mediaVisible(preference,p.id))) return { result: { status: "photo" } };
-    const rows = await tx.baumdienstDemoImageGeneration.findMany({ where: { workspaceKey: DEMO_WORKSPACE_KEY }, orderBy: { startedAt: "desc" }, select: { id: true, fingerprint: true, status: true, startedAt: true } });
+    const dayStart=new Date(now);dayStart.setUTCHours(0,0,0,0);
+    const rows = await tx.baumdienstDemoImageGeneration.findMany({ where: { workspaceKey: DEMO_WORKSPACE_KEY, OR:[{startedAt:{gte:dayStart}},{status:"pending"},{fingerprint}] }, orderBy: { startedAt: "desc" }, select: { id: true, fingerprint: true, status: true, startedAt: true } });
     if (rows.some(r => r.fingerprint === fingerprint && r.status === "ready")) return { result: { status: "ready" } };
     const stale = new Date(now.getTime() - IMAGE_LEASE_MS);
     if (rows.some(r => r.status === "pending" && r.startedAt > stale)) throw new SharedWorkshopError("aiBusy", 429);
@@ -60,7 +61,7 @@ async function requestStudioImage(targetId:string,requestId:string,actor:DemoAct
   }, { maxWait: 10000, timeout: 15000 });
   if (reservation.result) return reservation.result;
   let data: Uint8Array<ArrayBuffer> | undefined, errorCode: string | undefined;
-  try { data = new Uint8Array(reservation.phase?await generateStudioImage(phaseImagePrompt(reservation.phase)):reservation.coverName?await generateStudioImage(coverImagePrompt(kind as "site"|"brand",reservation.coverName)):await generateEquipmentImage(reservation.asset!)); }
+  try { data = new Uint8Array(reservation.phase?await generateStudioImage(phaseImagePrompt(reservation.phase),"phase"):reservation.coverName?await generateStudioImage(coverImagePrompt(kind as "site"|"brand",reservation.coverName),kind==="site"?"site-cover":"brand"):await generateEquipmentImage(reservation.asset!)); }
   catch (error) {
     errorCode = error instanceof ImageProviderError ? error.code : "aiFailed";
     console.warn("Baumdienst image generation", { requestId, code: errorCode });

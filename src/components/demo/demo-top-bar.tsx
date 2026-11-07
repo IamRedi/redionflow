@@ -16,6 +16,7 @@ import { workshopCopy } from "@/lib/workshop/copy";
 import { DemoActorBar } from "./workshop/demo-actor-bar";
 import { DemoTeamStrip } from "./workshop/demo-team-strip";
 import { navigationCopy } from "@/lib/workshop/navigation-copy";
+import { DemoDashboardLaunch } from "./workshop/demo-dashboard-launch";
 import { DemoBrand } from "./workshop/demo-brand";
 import { woodCopy } from "@/lib/workshop/wood-copy";
 
@@ -47,7 +48,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
       <nav data-demo-navigation aria-label="Demo" className="mt-1 flex min-w-0 flex-wrap items-center gap-2 pb-1 [&>*]:shrink-0">
         <Link href="/demo/workzone" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Home className="size-4" />{workzoneName}</Link>
         <Link href="/demo/control" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Settings2 className="size-4" />{n.panel}</Link>
-        <Link href="/demo/tv?view=dashboard" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Monitor className="size-4" />{n.tv}</Link>
+        <DemoDashboardLaunch href="/demo/tv?view=dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Monitor className="size-4" />{n.tv}</DemoDashboardLaunch>
         <Link href="/demo/wood" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><TreePine className="size-4" />{wood.title}</Link>
         <Link href="/demo/workshop" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Wrench className="size-4" />{c.title}</Link>
         <Link href="/demo/workshop?tab=tools" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Package className="size-4" />{c.tools}</Link>

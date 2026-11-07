@@ -1,7 +1,26 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
+## AKTUALE — korrigjimi i pronarit, 7 nëntor 2026
 
-## Figurat, kopertinat dhe Dashboard view — 7 nëntor 2026
+Dashboard view hap statistikat direkt në fullscreen nga klikimi i hyrjes. Nuk ka toolbar, kthim, ndërrues Workzone/Dashboard, rifreskim manual ose buton tjetër fullscreen brenda monitorit. Rifreskimi 60 sekonda vazhdon në prapavi. Kërkesa native kryhet gjatë klikimit dhe navigimi Next ruan të njëjtin dokument. URL direkte mbush viewport-in; shfletuesi kërkon gjest përdoruesi për fullscreen native. Rruga e zakonshme /demo/dashboard ruan funksionet ekzistuese.
+
+Kopertinat e Baustelle-ve mbushin kornizën ekzistuese me object-cover. Nuk ndryshohen përmasat e kartave ose skedarët origjinalë. Pajisjet/logot mbeten të plota me contain.
+
+Formati caktohet në server: kopertinë kantieri 1536×512 (3:1); fazë druri 1536×1024 (3:2); pajisje/logo 1024×1024 (1:1). Prompt-i dhe verifikimi i raportit ndjekin formatin. Cache përfshin formatin dhe ruan fallback për figurat e mëparshme. Fotot e ngarkuara kanë përparësi; kompresimi, modeli, provider-i dhe stili petrol mbeten ekzistues; nuk ka retry automatik me pagesë.
+
+Kuota Baumdienst është 20 tentativa gjenerimi/ditë UTC, e përbashkët për pajisje, kopertina, logo dhe faza. Ky vendim i ri zëvendëson 5/ditë dhe tavanin e vjetër provë 50 gjithsej. Dështimet numërohen; cache dhe ngarkimet nuk shpenzojnë gjenerim. Ledger-i nuk zerohet.
+
+Përjashtimi i vetëm i autorizuar për AL Steel është kuota e figurave: 20/kompani dhe 20/përdorues në ditë UTC; kompania mbetet tavani i përbashkët. Kufijtë 2/kompani dhe 1/përdorues për dritare 10-minutëshe, autentikimi/tenant-i dhe asistenti tekstual nuk ndryshojnë. Ndryshimi përgatitet veçmas nga Baumdienst. Tre teste ekzistuese marrin vetëm portabilitet të rrugëve/quoting për Windows, duke ruajtur assertions.
+
+Nuk bëhen gjenerime me pagesë për këto prova. Verifikimi përdor provider sintetik, PostgreSQL lokal të izoluar dhe pamje desktop/telefon. Vetëm Musterfirma merr UI-n e ndryshuar. Demot e tjera nuk preken. Portofoli PR53 mbetet OWNER_HOLD; vlerësimi i prezantimit është NO_CONTENT_CHANGE për këtë korrigjim. Seksioni historik më poshtë nuk është logjika aktuale.
+
+Verifikim lokal në laptopin Windows, 07.11.2026: 688 unit PASS, 1 skip ekzistues; 14 integrime PASS në PostgreSQL të izoluar (përfshirë 20/ditë, tentativa e 21-të, dita pasuese, arkivi pa tavan 50 dhe ruajtja e fotove); 35/35 rrjedha shfletuesi PASS, duke përfshirë hyrjen reale fullscreen pa butona, kopertinat cover, telefon/desktop/landscape/200% tekst, inventar/Werkstatt, planet dhe historikun. TypeScript, production build me webpack, ESLint dhe Gitleaks i staged diff PASS. Prova fillestare lokale u ndal dhe u përsërit me APP_BASE_URL të saktë loopback; kontrollet same-origin nuk u dobësuan. Build-i standard Turbopack nuk zgjidh junction-in lokal node_modules; webpack është rruga lokale e verifikuar, pa ndryshim konfigurimi/lockfile në produkt. Publikimi dhe kontrolli vizual online regjistrohen veçmas më poshtë.
+
+Burime zyrtare të lexuara: MDN Element.requestFullscreen/Fullscreen API për aktivizimin e përdoruesit; OpenAI Images API për formatet. Rezultatet dhe SHA e publikimit plotësohen pas verifikimit.
+
+
+
+## Historik — figurat, kopertinat dhe Dashboard view — 7 nëntor 2026
 
 **Vetëm Musterfirma; portofoli PR53 mbetet OWNER_HOLD.** Korrigjimi i ri i pronarit zëvendëson kërkesën e mëparshme për dy hyrje Dashboard/TV: mbetet një buton **Dashboard view**, që hap `/demo/tv?view=dashboard` në skedë tjetër. Brenda ruhen statistikat, Workzone, rifreskimi, fullscreen dhe kthimi. `/demo/dashboard` mbetet rrugë e vlefshme për pajtueshmërinë; nuk ka dy hyrje të njëjta në menu/panel. Paneli i kontrollit, plani/harta/kalendari, ekipi, inventari dhe të dyja punëtoritë mbeten.
 

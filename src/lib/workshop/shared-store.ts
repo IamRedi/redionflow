@@ -68,8 +68,10 @@ export async function workshopSnapshot(tx: Prisma.TransactionClient = prisma): P
     return [{ assetId: asset.id, id:g.id, legacy:g===legacy, status: (expired ? "error" : g.status) as "pending" | "ready" | "error", at: (g.finishedAt || g.startedAt).toISOString(), ...(g.status === "ready" ? { url: imageUrl(g.id) } : {}), ...(expired || g.errorCode ? { error: expired ? "aiTimeout" : g.errorCode! } : {}) }];
   });
   for(const target of [{assetId:DEMO_BRAND_TARGET,kind:"brand" as const,name:"BaumdienstFlow Musterfirma"},...directory.sites.map(s=>({assetId:`site-cover:${s.key}`,kind:"site" as const,name:s.name}))]) {
-    const g=generations.find(g=>g.fingerprint===digest(coverImageIdentity(target.kind,target.name)));
-    if(g){const expired=g.status==="pending"&&Date.now()-g.startedAt.getTime()>=IMAGE_LEASE_MS;illustrations.push({assetId:target.assetId,id:g.id,legacy:false,status:(expired?"error":g.status) as "pending"|"ready"|"error",at:(g.finishedAt||g.startedAt).toISOString(),...(g.status==="ready"?{url:imageUrl(g.id)}:{}),...(expired||g.errorCode?{error:expired?"aiTimeout":g.errorCode!}:{})});}
+    const current=generations.filter(g=>g.fingerprint===digest(coverImageIdentity(target.kind,target.name)));
+    const legacy=generations.find(g=>g.fingerprint===digest(coverImageIdentity(target.kind,target.name,false))&&g.status==="ready");
+    const g=current.find(g=>g.status==="ready")??legacy??current[0];
+    if(g){const expired=g.status==="pending"&&Date.now()-g.startedAt.getTime()>=IMAGE_LEASE_MS;illustrations.push({assetId:target.assetId,id:g.id,legacy:g===legacy,status:(expired?"error":g.status) as "pending"|"ready"|"error",at:(g.finishedAt||g.startedAt).toISOString(),...(g.status==="ready"?{url:imageUrl(g.id)}:{}),...(expired||g.errorCode?{error:expired?"aiTimeout":g.errorCode!}:{})});}
   }
   return { state, illustrations, mediaPreferences:media.preferences, imageGenerationEnabled: imageEnabled(), revision: row.revision, updatedAt: row.updatedAt.toISOString(), directory, photos: photos.map(p => ({ id: p.id, kind: p.kind as "asset" | "site", target: p.target, ...(p.jobId ? { jobId: p.jobId } : {}), name: p.name, at: p.createdAt.toISOString(), url: fileUrl(p.id) })) };
 }

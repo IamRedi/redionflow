@@ -47,7 +47,7 @@ export async function changeDemoMedia(envelope: z.infer<typeof mediaEnvelope>, a
     const imageId=command.mediaId.startsWith("generated:")?command.mediaId.slice(10):undefined;
     const asset=command.kind==="asset"?state.assets.find(a=>a.id===command.target):undefined;
     const site=command.kind==="site"?(await workshopDirectory(tx)).sites.find(s=>s.key===command.target):undefined;
-    const imageFilter=asset?{OR:[{fingerprint:digest(imageIdentity(asset))},{fingerprint:digest(imageIdentity(asset,IMAGE_LEGACY_STYLE))}]}:site?{fingerprint:digest(coverImageIdentity("site",site.name))}:{assetId:command.kind==="phase"?`wood-phase:${command.target}`:command.target};
+    const imageFilter=asset?{OR:[{fingerprint:digest(imageIdentity(asset))},{fingerprint:digest(imageIdentity(asset,IMAGE_LEGACY_STYLE))}]}:site?{OR:[{fingerprint:digest(coverImageIdentity("site",site.name))},{fingerprint:digest(coverImageIdentity("site",site.name,false))}]}:{assetId:command.kind==="phase"?`wood-phase:${command.target}`:command.target};
     const generation=imageId&&!command.jobId?await tx.baumdienstDemoImageGeneration.findFirst({where:{id:imageId,workspaceKey:DEMO_WORKSPACE_KEY,...imageFilter,status:"ready"},select:{id:true}}):null;
     if (!file && !generation && command.mediaId!=="catalogue") throw new SharedWorkshopError("missing",404);
     const media=applyMediaPreference(await readMediaState(tx),command,actor,at,id);

@@ -12,7 +12,9 @@ test.beforeEach(async ({ context }, info) => {
 test("original Workzone canvas, reflow, map and plan entries stay usable on desktop and phone", async ({ page, request }, info) => {
   const before = await (await request.get("/api/demo/baumdienst/workshop")).json() as WorkshopSnapshot;
   for (const width of [1440, 390, 320]) {
-    await page.setViewportSize({ width, height: 900 }); await page.goto("/demo/workzone");
+    await page.setViewportSize({ width, height: 900 }); await page.goto("/demo/workzone");await expect(page.locator('[data-testid^="demo-photo-site-"] img').first()).toBeVisible();
+  expect(await page.locator('[data-testid^="demo-photo-site-"] img').evaluateAll(images=>images.every(image=>getComputedStyle(image).objectFit==="cover"))).toBe(true);
+
     const canvas = page.getByTestId("workzone-canvas"); await expect(canvas).toBeVisible();
     const cards = canvas.getByTestId("muster-site-card"); await expect(cards).toHaveCount(before.directory.sites.length);
     await expect(page.getByRole("link", { name: "Tageplan +", exact: true })).toHaveAttribute("href", /\/demo\/plan\?date=/);

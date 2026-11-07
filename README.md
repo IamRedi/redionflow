@@ -2,9 +2,9 @@
 
 # RediOnFlow
 
-**Musterfirma weiterhin in Eigentümerprüfung · 7. November 2026:** Einheitlicher Petrol-Studiostil, keine Bild-Badges, explizite KI-Aktion und wiederherstellbare Bild-/Titelbild-/Logoverwaltung nur im Baumdienst-Template. Navigation: ein „Dashboard view“ mit bestehender TV-Ansicht. AL Steel und andere Demos bleiben unberührt; das Portfolio bleibt OWNER_HOLD. [Logik, Prüfungen und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Musterfirma weiterhin in Eigentümerprüfung · 7. November 2026:** „Dashboard view“ öffnet direkt aus dem Einstieg im Vollbild, ohne Monitor-Toolbar oder Rückkehr-/Umschaltknöpfe. Baustellenbilder füllen wieder ihre bestehende Titelbildfläche; KI erzeugt breite Cover und quadratische Geräte-/Logobilder passend zum Einsatzort. Gemeinsames Kontingent: 20 Bildversuche je UTC-Tag. AL Steel erhält separat ausschließlich die autorisierte Bild-Tagesquote 20; andere Demos und Pilotabläufe bleiben unverändert. Das Portfolio bleibt OWNER_HOLD. [Logik, Prüfungen und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
-**Holzwerkstatt der Musterfirma · 6. November 2026:** Die Teamleiste ist wieder sichtbar. Der eigene Holzbereich verbindet Baustellen-Holzeingang, konfigurierbare Arbeitsphasen, Team/Geräte, Verpackung und Bestandsabgänge in getrennten Fm/Rm/Srm-Maßen. Reparaturen bleiben in der vorhandenen Werkstatt; Geräteübergaben behalten ihre Bestätigungen. Fotos haben Vorrang vor KI, deren 5/UTC-Tag- und 50-Gesamtkontingent mit den Geräten geteilt wird. Nur das fiktive Baumdienst-Template. [Holzwerkstatt](https://redionflow-production.up.railway.app/demo/wood) · [Logik und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Holzwerkstatt der Musterfirma · 6. November 2026:** Die Teamleiste ist wieder sichtbar. Der eigene Holzbereich verbindet Baustellen-Holzeingang, konfigurierbare Arbeitsphasen, Team/Geräte, Verpackung und Bestandsabgänge in getrennten Fm/Rm/Srm-Maßen. Reparaturen bleiben in der vorhandenen Werkstatt; Geräteübergaben behalten ihre Bestätigungen. Fotos haben Vorrang vor KI, deren gemeinsames 20/UTC-Tag-Kontingent mit den Geräten geteilt wird. Nur das fiktive Baumdienst-Template. [Holzwerkstatt](https://redionflow-production.up.railway.app/demo/wood) · [Logik und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Tatsächliche Online-Musterfirma mit Teamleiste und Holzproduktion](docs/assets/screenshots/baum-wood-production-online.jpg)
 
@@ -12,7 +12,7 @@
 
 ![Musterfirma Workzone with the restored field, map and planning controls](docs/assets/screenshots/baum-workzone-restored-online.jpg)
 
-**Artenatlas und Bildarchiv · 6. November 2026:** Die Musterfirma erhält 41 originale KI-Illustrationen im Baumdienst-Stil: 26 botanische Tafeln, sieben Bereichsmotive und acht Gerätekategorien. Die Lupe in der Baumkarte öffnet Baumform, Blatt/Nadeln, Rinde und Blüten/Früchte oder Zapfen einzeln vergrößert. Artbezogene Hinweise und botanische Quellen bleiben hinter „Mehr über diese Art“. Eigene Fotos und bereits gespeicherte Gerätebilder haben Vorrang. Das öffentliche KI-Kontingent bleibt 5/UTC-Tag und 50 insgesamt. [Musterfirma](https://redionflow-production.up.railway.app/demo/workzone) · [Logik und Nachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+**Artenatlas und Bildarchiv · 6. November 2026:** Die Musterfirma erhält 41 originale KI-Illustrationen im Baumdienst-Stil: 26 botanische Tafeln, sieben Bereichsmotive und acht Gerätekategorien. Die Lupe in der Baumkarte öffnet Baumform, Blatt/Nadeln, Rinde und Blüten/Früchte oder Zapfen einzeln vergrößert. Artbezogene Hinweise und botanische Quellen bleiben hinter „Mehr über diese Art“. Eigene Fotos und bereits gespeicherte Gerätebilder haben Vorrang. Das öffentliche KI-Kontingent ist seit der Eigentümerkorrektur vom 7. November 20/UTC-Tag. [Musterfirma](https://redionflow-production.up.railway.app/demo/workzone) · [Logik und Nachweise](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![BaumdienstFlow species atlas in the actual fictional demo](docs/assets/screenshots/baum-atlas-online.jpg)
 

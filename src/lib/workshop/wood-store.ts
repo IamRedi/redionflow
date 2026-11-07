@@ -6,7 +6,7 @@ import { currentDemoActor } from "./demo-actor";
 import { availability } from "./demo-model";
 import { DEMO_WORKSPACE_KEY, digest, ensureWorkshopDemo, requireWorkshopDemo, SharedWorkshopError, workshopDirectory, workshopSnapshot } from "./shared-store";
 import { applyWoodCommand, initialWoodState, seedWoodState, WoodError, woodStateSchema, type woodEnvelope, type WoodSnapshot, type WoodState, type WoodMediaTarget } from "./wood-model";
-import { IMAGE_LEASE_MS, IMAGE_LEGACY_STYLE, imageEnabled, imageUrl } from "./image-identity";
+import { IMAGE_LEASE_MS, IMAGE_LEGACY_STYLE, IMAGE_STYLE, imageEnabled, imageUrl } from "./image-identity";
 import { phaseImageIdentity } from "./wood-image";
 import { prepareDemoFile } from "./shared-files";
 import { treeIdentity } from "./identity-art";
@@ -28,7 +28,7 @@ export async function woodSnapshot(tx:Prisma.TransactionClient=prisma):Promise<W
   const openTrees=Object.fromEntries(directory.sites.map(site=>[site.key,trees.filter(t=>t.baustelleId===site.id&&(snapshot.state.custody.trees[treeIdentity(site.key,t.treeId)]?.status??t.status)!=="done").length]));
   return {...state,revision:row?.revision??0,actor:await currentDemoActor(directory),directory,equipment:snapshot.state.assets.map(a=>({id:a.id,name:`${a.name} · ${assetIdentity(a)}`,available:!["workshop","inspection"].includes(availability(snapshot.state,a,new Date().toISOString())),holder:a.placement?.workerKey,site:a.placement?.siteKey,pending:snapshot.state.custody.handovers.some(h=>h.assetId===a.id&&h.status==="pending")})),
     openTrees,mediaPreferences:snapshot.mediaPreferences,media:media.filter(m=>/^(phase|job|intake):/.test(m.target)).map(m=>({id:m.id,target:m.target.slice(m.target.indexOf(":")+1),kind:m.target.slice(0,m.target.indexOf(":")) as WoodMediaTarget["kind"],name:m.name,at:m.createdAt.toISOString(),url:`/api/demo/baumdienst/wood/files/${m.id}`})),
-    illustrations:state.definitions.flatMap(d=>{const candidates=generations.filter(g=>g.fingerprint===digest(phaseImageIdentity(d)));const legacy=generations.find(g=>g.fingerprint===digest(phaseImageIdentity(d,IMAGE_LEGACY_STYLE))&&g.status==="ready");const g=candidates.find(g=>g.status==="ready")??candidates[0]??legacy;if(!g)return [];const expired=g.status==="pending"&&Date.now()-g.startedAt.getTime()>=IMAGE_LEASE_MS;return [{id:g.id,target:d.id,legacy:g===legacy,status:expired?"error":g.status,...(g.status==="ready"?{url:imageUrl(g.id)}:{}),...(expired?{error:"aiTimeout"}:g.errorCode?{error:g.errorCode}:{})}];}),imageGenerationEnabled:imageEnabled()};
+    illustrations:state.definitions.flatMap(d=>{const candidates=generations.filter(g=>g.fingerprint===digest(phaseImageIdentity(d)));const legacy=generations.find(g=>[digest(phaseImageIdentity(d,IMAGE_LEGACY_STYLE)),digest(phaseImageIdentity(d,IMAGE_STYLE,false))].includes(g.fingerprint)&&g.status==="ready");const g=candidates.find(g=>g.status==="ready")??legacy??candidates[0];if(!g)return [];const expired=g.status==="pending"&&Date.now()-g.startedAt.getTime()>=IMAGE_LEASE_MS;return [{id:g.id,target:d.id,legacy:g===legacy,status:expired?"error":g.status,...(g.status==="ready"?{url:imageUrl(g.id)}:{}),...(expired?{error:"aiTimeout"}:g.errorCode?{error:g.errorCode}:{})}];}),imageGenerationEnabled:imageEnabled()};
 }
 async function mutateWood(envelope:{requestId:string;revision:number},fingerprint:string,apply:(tx:Prisma.TransactionClient,state:WoodState,context:WoodSnapshot,at:string,id:string)=>Promise<WoodState>){
   await ensureWoodDemo();

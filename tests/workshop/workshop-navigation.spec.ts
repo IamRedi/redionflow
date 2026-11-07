@@ -22,19 +22,13 @@ test("dashboard, control panel and TV are directly reachable at desktop and touc
   const after=await(await request.get(api)).json() as WorkshopSnapshot;expect(after.revision).toBe(before.revision);expect(after.state).toEqual(before.state);
 });
 
-test("TV reuses current Workzone and dashboard without changing inventory or plans",async({page,request},info)=>{
+test("Dashboard view opens fullscreen with no monitor controls and preserves inventory",async({page,request},info)=>{
   const before=await(await request.get(api)).json() as WorkshopSnapshot;
-  await page.goto("/demo/tv");await expect(page.getByRole("heading",{name:"Dashboard view · BaumdienstFlow",exact:true})).toBeVisible();
-  await page.locator('[data-testid^="demo-photo-site-"] button').first().click();
-  await expect(page.getByRole("dialog").locator('input[type="file"]')).toHaveCount(0);
-  await expect(page.getByRole("dialog").getByRole("button")).toHaveCount(1);
-  await page.getByRole("dialog").getByRole("button",{name:"Schließen",exact:true}).click();
-  await expect(page.getByTestId("baum-demo-topbar")).toBeHidden();await expect(page.getByRole("button",{name:"Vollbild",exact:true})).toBeVisible();
-  await expect(page.getByRole("main").getByRole("button",{name:"Anordnung zurücksetzen"})).toHaveCount(0);
-  await page.getByRole("navigation",{name:"Dashboard view",exact:true}).getByRole("link",{name:"Dashboard",exact:true}).click();
-  await expect(page).toHaveURL(/view=dashboard/);await expect(page.getByRole("heading",{name:"Dashboard",exact:true})).toBeVisible();
-  await page.getByRole("button",{name:"Aktualisieren",exact:true}).click();
-  await page.screenshot({path:info.outputPath("tv-dashboard-desktop.png")});
+  await page.goto("/demo/workzone");await page.getByRole("navigation",{name:"Demo",exact:true}).getByRole("link",{name:"Dashboard view",exact:true}).click();
+  await expect(page).toHaveURL(/\/demo\/tv\?view=dashboard/);expect(await page.evaluate(()=>Boolean(document.fullscreenElement))).toBe(true);
+  await expect(page.getByRole("heading",{name:"Dashboard",exact:true})).toBeVisible();await expect(page.getByTestId("baum-demo-topbar")).toBeHidden();
+  await expect(page.locator("[data-demo-tv] button")).toHaveCount(0);await expect(page.locator("[data-demo-tv] nav")).toHaveCount(0);await expect(page.locator('[data-demo-tv] a[href*="workzone"]')).toHaveCount(0);
+  await page.screenshot({path:info.outputPath("dashboard-fullscreen-clean.png")});
   const after=await(await request.get(api)).json() as WorkshopSnapshot;expect(after.revision).toBe(before.revision);expect(after.state).toEqual(before.state);
 });
 
