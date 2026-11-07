@@ -14,6 +14,17 @@ function pgEnvironment(raw: string) {
   if (!local && !["require", "verify-full", "verify-ca"].includes(url.searchParams.get("sslmode") ?? "")) throw new Error("TLS required for remote database backup");
   return { ...process.env, PGHOST: url.hostname, PGPORT: url.port || "5432", PGDATABASE: decodeURIComponent(url.pathname.slice(1)), PGUSER: decodeURIComponent(url.username), PGPASSWORD: decodeURIComponent(url.password), PGSSLMODE: url.searchParams.get("sslmode") ?? "disable", PGCONNECT_TIMEOUT: "15" };
 }
+// node-postgres treats sslmode=require as verify-full, unlike libpq/pg_dump.
+// Railway's private Postgres uses a self-signed certificate, so "require"
+// keeps libpq's meaning here too: encrypted, certificate not verified.
+// verify-ca/verify-full still verify.
+function sourceClientConfig(raw: string) {
+  const url = new URL(raw);
+  const mode = url.searchParams.get("sslmode");
+  url.searchParams.delete("sslmode");
+  const ssl = mode === "require" ? { rejectUnauthorized: false } : mode === "verify-full" || mode === "verify-ca" ? { rejectUnauthorized: true } : false;
+  return { connectionString: url.toString(), ssl, connectionTimeoutMillis: 15_000 };
+}
 function pg(command: "pg_dump" | "pg_restore", args: string[], databaseUrl?: string) {
   const env = databaseUrl ? pgEnvironment(databaseUrl) : { ...process.env };
   const windows = process.platform === "win32";
@@ -52,7 +63,7 @@ async function create() {
   if (outputDir === process.cwd() || outputDir.startsWith(process.cwd() + path.sep)) throw new Error("Backups must stay outside the repository");
   await mkdir(outputDir, { recursive: true, mode: 0o700 });
   const recipient = await readFile(required("BACKUP_PUBLIC_KEY_FILE"), "utf8");
-  const db = new Client({ connectionString: databaseUrl, connectionTimeoutMillis: 15_000 });
+  const db = new Client(sourceClientConfig(databaseUrl));
   phase = "source-connect"; await db.connect();
   try {
     await db.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
