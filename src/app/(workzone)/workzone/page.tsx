@@ -32,6 +32,7 @@ import { loadSteelTaskProgress } from "@/lib/steel-work/read-progress";
 import { getSteelWorkCatalogAction } from "./steel-catalog-actions";
 import { readFleetLocations } from "@/lib/fleet/location";
 import { wanwayEnabled } from "@/lib/fleet/wanway/service";
+import { isDocumentEngineer } from '@/lib/site-phase-documents/site-access';
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -270,6 +271,8 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
 
   const defaultAddress = [company.street, [company.zip, company.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const photoPermissions=crewPermissions(worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:admin?{isAdmin:true}:null);
+  const photoGrants=new Set(worker&&isDocumentEngineer(worker.crewRole)?await withTenantContext(company.id,async tx=>(await tx.siteDocumentEngineer.findMany({where:{companyProfileId:company.id,workerId:worker.id},select:{baustelleId:true}})).map(g=>g.baustelleId)):[]);
+  const canEditSitePhoto=(id:string,type:string)=>photoPermissions.office||(type==='STEEL_ASSEMBLY'?photoGrants.has(id):photoPermissions.siteSteps);
   const missionItems = baustellen.map((b) => {
     const selected = selectedTaskProgress.get(b.id);
     const total = selected?.total ?? b.treeItems.length;
@@ -308,6 +311,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       id: b.id,
       name: b.name,
       photoUrl: assetPhotoUrl('site',b.id,b.coverPhotoAt),
+      canEditPhoto:canEditSitePhoto(b.id,b.type),
       status: b.status,
       type: b.type,
       pct,
@@ -477,7 +481,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
                   }`}
                 >
                   <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-                    <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit={photoPermissions.office||photoPermissions.siteSteps}>
+                    <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit={canEditSitePhoto(b.id,b.type)}>
                     <SteelSiteArt
                       type={b.type}
                       shape={steelSiteShape(b.name, b.description)}
@@ -539,7 +543,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
               >
                 {isSteelSiteType(b.type) ? (
                   <div className="relative h-28 overflow-hidden rounded-t-lg border-b">
-                    <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit={photoPermissions.office||photoPermissions.siteSteps}>
+                    <AssetPhoto key={`${b.id}:${b.coverPhotoAt}`} kind="site" id={b.id} src={assetPhotoUrl('site',b.id,b.coverPhotoAt)} alt={b.name} canEdit={canEditSitePhoto(b.id,b.type)}>
                     <SteelSiteArt type={b.type} pct={pct} live={b.workSessions.length > 0} className="absolute inset-0 h-full w-full" />
                     </AssetPhoto>
                     <div className="absolute bottom-2 right-2 rounded-full bg-background/85 text-orange-600 shadow-sm backdrop-blur dark:text-orange-400">

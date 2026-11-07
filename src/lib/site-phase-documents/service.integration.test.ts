@@ -39,9 +39,9 @@ afterEach(async()=>{
  }
  await prisma.user.deleteMany({where});await prisma.companyProfile.deleteMany({where:{id:{in:companies}}});
 });
-it('uses fresh office/engineer permissions and denies workers, mechanics, mixed sessions and foreign sites',async()=>{
- for(const i of [0,1,2,6]){asWorker(i);expect((await documentActor()).workerId).toBe(people[i].id);expect((await readPhaseDocuments(siteId)).documents).toEqual([]);}
- for(const i of [3,4,5]){asWorker(i);await expect(readPhaseDocuments(siteId)).rejects.toMatchObject({code:'DENIED'});}
+it('lets active workers read, restricts uploads, and denies mixed sessions and foreign sites',async()=>{
+ for(const i of [0,1,2,3,4,5,6]){asWorker(i);expect((await documentActor()).workerId).toBe(people[i].id);expect(await readPhaseDocuments(siteId)).toMatchObject({documents:[],canUpload:i===0});}
+ for(const i of [1,2,3,4,5,6]){asWorker(i);await expect(uploadPhaseDocument(form())).rejects.toMatchObject({code:'DENIED'});}
  asWorker(1);await prisma.worker.update({where:{id:people[1].id},data:{status:'inactive'}});await expect(documentActor()).rejects.toMatchObject({code:'DENIED'});
  asBoss();auth.worker.mockResolvedValue({id:people[0].id});await expect(documentActor()).rejects.toMatchObject({code:'DENIED'});
  asBoss();await expect(uploadPhaseDocument(form({site:foreignSite}))).rejects.toMatchObject({code:'NOT_FOUND'});

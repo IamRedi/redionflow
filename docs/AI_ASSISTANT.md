@@ -105,10 +105,10 @@ rules, revalidate the authenticated administrator and read one repeatable-read
 tenant snapshot. They expose metadata and receipt names/times, never file bytes,
 credentials, national IDs, file parsing or OCR. Worker Helper receives no new tools.
 
-There are no assigned or required recipients. **Unconfirmed** means active
-currently authorized admin/office/engineer accounts without **E mora** for that
-exact version, not every company worker, proof of an unopened/unread file, or an
-overdue delivery. Account identities are not deduplicated by name and may refer
+There are no assigned or required recipients. **Unconfirmed** means currently
+authorized admin and active worker accounts without **E mora** for that exact
+version, not inactive accounts, proof of an unopened/unread file, or an overdue
+delivery. Site upload grants are not recipient assignments. Account identities are not deduplicated by name and may refer
 to the same human. The returned current-access scope is not historical access.
 Archived versions retain their own receipt snapshots, including people whose
 role/name/activity changed; replacements do not inherit them. Ordinary site

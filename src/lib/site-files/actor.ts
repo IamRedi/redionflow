@@ -15,6 +15,8 @@ export type CompanyActor = {
 /** The signed-in person of the given company: a worker or an office admin. */
 export async function currentCompanyActor(companyId: string): Promise<CompanyActor | null> {
   const [worker, admin] = await Promise.all([getCurrentWorker(), getCurrentAdmin()]);
+  // One authenticated person; never combine privileges from two cookies.
+  if (worker && admin) return null;
   if (worker && worker.companyProfileId === companyId) {
     const can = crewPermissions({ isAdmin: false, crewRole: worker.crewRole, level: worker.level });
     return {

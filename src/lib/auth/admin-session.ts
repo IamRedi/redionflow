@@ -91,6 +91,7 @@ export async function getCurrentAdmin() {
         role: "ADMIN",
         isActive: true,
       },
+      omit:{passwordHash:true,loginPinHash:true},
     });
   } catch (error) {
     logger.error({ event: "auth.get_current_admin_failed" }, "getCurrentAdmin failed", error);

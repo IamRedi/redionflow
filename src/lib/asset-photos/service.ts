@@ -2,6 +2,7 @@ import { withTenantContext } from '@/lib/db/tenant-context';
 import { fleetActor } from '@/lib/fleet/access';
 import { compactPhoto, MAX_PHOTO_BYTES } from './image';
 import { assetPhotoUrl, type PhotoKind } from './shared';
+import { mayUploadSiteDocuments } from '@/lib/site-phase-documents/site-access';
 const validId = /^[a-z0-9]{10,40}$/i;
 export async function saveAssetPhoto(kind: PhotoKind, id: string, file: File) {
   const a = await fleetActor();
@@ -19,12 +20,13 @@ export async function saveAssetPhoto(kind: PhotoKind, id: string, file: File) {
         }),
   );
   if (!owned) throw new Error('PHOTO_NOT_FOUND');
-  const allowed =
+  let allowed =
     a.can.office ||
     (kind === 'site' &&
       ('type' in owned && owned.type === 'STEEL_WORKSHOP'
         ? a.can.factorySteps
         : a.can.siteSteps));
+  if(kind==='site'&&'type' in owned&&owned.type==='STEEL_ASSEMBLY')allowed=await withTenantContext(a.companyId,tx=>mayUploadSiteDocuments(tx,a,id));
   if (!allowed) throw new Error('PHOTO_DENIED');
   if (!(file instanceof File) || !file.size || file.size > MAX_PHOTO_BYTES)
     throw new Error('PHOTO_FILE');
@@ -38,6 +40,7 @@ export async function saveAssetPhoto(kind: PhotoKind, id: string, file: File) {
         Array<{ locked: boolean }>
       >`SELECT pg_try_advisory_xact_lock(71402004) AS locked`;
       if (!lock.locked) throw new Error('PHOTO_BUSY');
+      if(kind==='site'&&'type' in owned&&owned.type==='STEEL_ASSEMBLY'&&!await mayUploadSiteDocuments(tx,a,id))throw new Error('PHOTO_DENIED');
       const photo = await compactPhoto(input),
         at = new Date();
       const data = { coverPhotoAt: at };

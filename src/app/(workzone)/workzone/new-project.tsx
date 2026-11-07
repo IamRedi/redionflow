@@ -10,6 +10,7 @@ import { t } from "@/lib/i18n";
 
 import { createSiteFromProjectAction } from "./element-actions";
 import { Sheet } from "./production/production-ui";
+import { SiteEngineerPicker } from '@/components/steel/site-document-access';
 
 /**
  * New steel project from its documents: the office drops the Tekla lists (and
@@ -39,6 +40,7 @@ function NewProjectSheet({ onClose }: { onClose: () => void }) {
   const [files, setFiles] = useState<File[]>([]);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [documentEngineers,setDocumentEngineers]=useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const input = useRef<HTMLInputElement>(null);
@@ -58,6 +60,7 @@ function NewProjectSheet({ onClose }: { onClose: () => void }) {
     form.set("name", name.trim());
     form.set("address", address.trim());
     for (const file of files) form.append("file", file);
+    for(const id of documentEngineers)form.append('documentEngineerId',id);
     startTransition(async () => {
       const result = await createSiteFromProjectAction(form);
       if (!result.ok || !result.siteId) {
@@ -137,6 +140,7 @@ function NewProjectSheet({ onClose }: { onClose: () => void }) {
           />
         </label>
 
+        <SiteEngineerPicker selected={documentEngineers} onChange={setDocumentEngineers}/>
         {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
         <button
           type="button"

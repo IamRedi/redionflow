@@ -7,18 +7,19 @@ confirmations, custody, workshop transitions and printed legacy codes remain val
 ## Documents
 
 The **Fazat** button beside **Dokumentet** groups private site documents into
-Piketim, Rilevim, Projektim, Porosi, Prodhimi and Montimi. Office users, field
-engineers, factory engineers and existing legacy engineer roles can open,
-download, share and upload within their company. Ordinary workers and mechanics
-receive no additional document access. Every server action and file GET resolves
+Piketim, Rilevim, Projektim, Porosi, Prodhimi and Montimi. All active company
+workers may open, download, share and personally acknowledge these documents.
+Administrators and office workers can upload; explicit field/factory engineers
+need a grant for that site. See [site access](STEEL_SITE_ACCESS.md). Every server action and file GET resolves
 one fresh authenticated identity; mixed admin/worker sessions are refused.
 
 There are no assigned recipients. **E mora** records only the signed-in person's
 name and server timestamp. Repeating it is idempotent. It is a receipt, not proof
 of reading, a work-stage completion or a production confirmation. A new version
 stores a new immutable file, archives its predecessor and starts with no receipts.
-The predecessor's bytes and receipts remain in history. Uploaders can replace or
-archive their own files; office staff can manage all site phase files.
+The predecessor's bytes and receipts remain in history. Currently authorized
+uploaders can replace or archive their own files; office staff and administrators
+can manage all site phase files. Revoking upload rights preserves read/history access.
 
 **Dërgo** opens the device's native share chooser when supported. It shares the
 file where supported, otherwise its authenticated link. Without native sharing,

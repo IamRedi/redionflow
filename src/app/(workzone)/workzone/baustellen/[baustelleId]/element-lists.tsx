@@ -100,7 +100,7 @@ export function ElementListButtons({
   site: { id: string; name: string };
   elements: ElementView[];
   workers: ElementWorkerOption[];
-  can: { factory: boolean; field: boolean; office: boolean };
+  can: { factory: boolean; field: boolean; office: boolean;upload?:boolean };
   definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang: lang } = useLanguage();
@@ -118,7 +118,7 @@ export function ElementListButtons({
   const factoryDone = sum((element) => doneQty(element, "factory"));
   const fieldDone = sum((element) => doneQty(element, "field"));
 
-  if (items.length === 0 && !can.office) return null;
+  if (items.length === 0 && !(can.upload??can.office)) return null;
 
   const buttons: Array<{ side: ElementSide; label: string; sub: string; pct: number; icon: React.ReactNode }> = [
     {
@@ -169,7 +169,7 @@ export function ElementListButtons({
             setItems={setItems}
             workers={workers}
             canEdit={open === "factory" ? can.factory : can.field}
-            canImport={can.office}
+            canImport={can.upload??can.office}
             canPlan={can.office || can.factory || can.field}
             definitions={definitions}
             onClose={() => setOpen(null)}

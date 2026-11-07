@@ -9,6 +9,9 @@ import { MIN_PASSWORD_LENGTH } from "@/lib/auth/first-boot-setup";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { updateAdminProfileFormAction, upsertTestAdminFormAction } from "./actions";
+import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { siteAccessCopy } from '@/lib/site-phase-documents/access-copy';
+import { OwnerPinForm } from '@/components/steel/owner-pin-form';
 
 export default async function AdminProfilePage() {
   const admin = await getCurrentAdmin();
@@ -31,6 +34,9 @@ export default async function AdminProfilePage() {
   if (!user) return null;
 
   const canManageAdmins = isOwnerAdmin(user);
+  const steel=admin.companyProfileId?await isSteelCompany(admin.companyProfileId):false;
+  const accessCopy=siteAccessCopy(currentLang);
+  const pendingOwners=canManageAdmins&&steel?await prisma.user.findMany({where:{companyProfileId:admin.companyProfileId,role:'ADMIN',isOwner:true,isActive:false,passwordHash:null,loginPinHash:null},select:{name:true,email:true},take:10,orderBy:{createdAt:'asc'}}):[];
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -109,6 +115,7 @@ export default async function AdminProfilePage() {
         </CardContent>
       </Card>
 
+      {canManageAdmins&&steel?<Card><CardHeader><CardTitle>{accessCopy.pinTitle}</CardTitle></CardHeader><CardContent><OwnerPinForm pendingOwners={pendingOwners}/></CardContent></Card>:null}
       {canManageAdmins ? (
         <Card>
           <CardHeader>

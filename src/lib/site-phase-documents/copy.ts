@@ -10,7 +10,7 @@ const words={
   porosi:['Porosi','Orders','Bestellungen','Ordini','Zamówienia','Comenzi'],
   prodhimi:['Prodhimi','Production','Produktion','Produzione','Produkcja','Producție'],
   montimi:['Montimi','Installation','Montage','Montaggio','Montaż','Montaj'],
-  hint:['Inxhinierët dhe zyra hapin dokumentet dhe konfirmojnë personalisht marrjen.','Engineers and office staff open documents and personally confirm receipt.','Ingenieure und Büro öffnen Dokumente und bestätigen den Empfang persönlich.','Ingegneri e ufficio aprono i documenti e confermano personalmente la ricezione.','Inżynierowie i biuro otwierają dokumenty i osobiście potwierdzają odbiór.','Inginerii și biroul deschid documentele și confirmă personal primirea.'],
+  hint:['Lexo dokumentet dhe konfirmo personalisht marrjen. Ngarkojnë admini, zyra dhe inxhinierët e autorizuar për këtë kantier.','Read documents and personally confirm receipt. Admins, office staff and authorized site engineers can upload.','Dokumente lesen und den Empfang persönlich bestätigen. Admin, Büro und berechtigte Baustelleningenieure dürfen hochladen.','Leggi i documenti e conferma personalmente la ricezione. Caricano admin, ufficio e ingegneri autorizzati per questo cantiere.','Czytaj dokumenty i osobiście potwierdzaj odbiór. Przesyłają administrator, biuro i uprawnieni inżynierowie budowy.','Citește documentele și confirmă personal primirea. Încarcă administratorul, biroul și inginerii autorizați pentru șantier.'],
   upload:['Ngarko dokument','Upload document','Dokument hochladen','Carica documento','Prześlij dokument','Încarcă document'],
   name:['Titulli','Title','Titel','Titolo','Tytuł','Titlu'],
   note:['Shënim','Note','Notiz','Nota','Notatka','Notă'],
