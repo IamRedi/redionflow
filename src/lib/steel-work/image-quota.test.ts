@@ -23,7 +23,7 @@ it('requires the current authenticated company and actor, not caller-supplied id
 
 it.each([
   ['company', 'image-burst', 2, 'rate'], ['worker:worker-fixture', 'image-burst', 1, 'rate'],
-  ['company', 'image-day', 10, 'budget'], ['worker:worker-fixture', 'image-day', 5, 'budget'],
+  ['company', 'image-day', 20, 'budget'], ['worker:worker-fixture', 'image-day', 20, 'budget'],
 ])('enforces the fixed %s %s ceiling without partially charging other scopes', async (key, window, requests, reason) => {
   vi.stubEnv('ASSISTANT_COMPANY_DAILY_REQUESTS', '100000');
   mocks.tx.assistantQuotaBucket.findUnique.mockImplementation(async ({ where }) => {
@@ -49,4 +49,10 @@ it('fails closed when authentication or the durable quota store is unavailable',
   expect(await reserveSteelImageQuota(actor, now)).toEqual({ ok: false, status: 503, reason: 'unavailable', retryAfterSeconds: 60 });
   mocks.tenant.mockRejectedValueOnce(new Error('PRIVATE_DATABASE_ERROR'));
   expect(await reserveSteelImageQuota(actor, now)).toEqual({ ok: false, status: 503, reason: 'unavailable', retryAfterSeconds: 60 });
+});
+
+it('allows request twenty while preserving the company-wide cap across actors', async () => {
+  mocks.tx.assistantQuotaBucket.findUnique.mockImplementation(async ({where}) => where.companyProfileId_actorKey_window_windowStart.window === 'image-day' ? {requests:19} : null);
+  expect(await reserveSteelImageQuota(actor, now)).toEqual({ok:true});
+  expect(mocks.tx.assistantQuotaBucket.upsert).toHaveBeenCalledTimes(4);
 });

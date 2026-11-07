@@ -92,8 +92,8 @@ All scopes are checked and charged atomically under a company advisory lock:
 | --- | --- |
 | Authenticated actor / fixed10-minute window |1|
 | Company / fixed10-minute window |2|
-| Authenticated actor / UTC day |5|
-| Company / UTC day |10|
+| Authenticated actor / UTC day |20|
+| Company / UTC day |20|
 
 Actor/company identity is revalidated from the server context; request fields
 cannot choose either. Failure keeps the image reservation, so an uncertain
@@ -108,3 +108,15 @@ cost/access/quality depends on the provider account and actual request. See the
 [official model pricing notes](https://developers.openai.com/api/docs/models/gpt-image-2.5-flare).
 Safe diagnostic usage counts are recorded separately as `steel.visual_image_usage`.
 The owner's existing photo is never sent as a style reference or overwritten.
+
+## Owner correction — image generation, 7 November 2026
+
+The owner explicitly raised image generation to **20 attempts per UTC day** for AL Steel. Both the company-wide `image-day` bucket and each authenticated actor's `image-day` bucket now cap at 20; multiple actors cannot multiply the company's allowance. Existing daily counters continue without a reset. Failed/cancelled provider calls keep their reservations. Burst limits (company 2 / actor 1 per fixed 10-minute window), tenant/authentication checks, the provider/model, text-assistant limits, secrets, business data and UI are unchanged. This is the only pilot behavior changed by this work. No paid generation is used for quota tests.
+
+Baumdienst's separate fictional template uses its own 20/day image ledger. These counters/tenants are not shared. The owner requested these quota changes together with a Baumdienst-only fullscreen/cover correction; Baumdienst UI changes must never be merged into AL Steel. Portfolio publication remains on owner hold for Baumdienst.
+
+Local release verification also repairs three pre-existing Windows test path/quoting issues without removing assertions, and removes the optional default empty page-argument from the Workzone and admin page entry signatures so Next 16 page validation accepts it. Next always supplies page props; rendering, permissions and interactions are unchanged.
+
+The existing admin integration test now passes the empty page-props object Next supplies. Its cross-tenant deletion assertions are unchanged.
+
+Local laptop verification, 7 November 2026: 1,087 unit tests passed, one pre-existing skip; 18 integration tests passed on the separate disposable quota/tenant fixture (20 accepted, 21st denied, UTC next-day rollover, concurrent actor/company limits and unchanged tenant-security assertions). TypeScript, production webpack build and ESLint passed. No paid provider calls, production business writes, secrets or environment changes were used. The standard Turbopack build cannot resolve the existing local dependency junction; webpack is the verified local builder. Deployment/readback evidence is separate from these checks.
