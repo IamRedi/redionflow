@@ -2,9 +2,10 @@
 
 import { DragEvent, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, FileImage, FileSpreadsheet, FileText, type LucideIcon, Plus, UploadCloud, X } from "lucide-react";
+import { Camera, FileImage, FileSpreadsheet, FileText, FolderOpen, type LucideIcon, Plus, UploadCloud, X } from "lucide-react";
 
 import { SimpleDialog } from "@/components/ui/simple-dialog";
+import { AssetWorkspaceDialog } from "@/components/company-assets/workspace-dialog";
 import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
 import { cn } from "@/lib/ui/cn";
@@ -99,6 +100,8 @@ export function WorkerAssets({
   const [message, setMessage] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const [dragging, setDragging] = useState(false);
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [documentToDelete, setDocumentToDelete] = useState<WorkerDocument | null>(null);
 
   function uploadFiles(files: FileList | File[]) {
@@ -135,7 +138,22 @@ export function WorkerAssets({
   }
 
   return (
-    <div className="space-y-3">
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border bg-card px-3 text-xs font-medium transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        data-testid="worker-documents-open"
+      >
+        <FolderOpen className="size-4 text-primary" strokeWidth={1.8} />
+        {t("workzone.documentsTitle", currentLang)}
+        {documents.length ? <span className="text-muted-foreground tabular-nums">{documents.length}</span> : null}
+      </button>
+      <AssetWorkspaceDialog open={open} onOpenChange={setOpen} title={t("workzone.documentsTitle", currentLang)} compact scrollBody layer={1000} returnFocusRef={triggerRef}>
+      <div className="space-y-3" data-testid="worker-documents">
       <input
         ref={fileRef}
         type="file"
@@ -228,6 +246,8 @@ export function WorkerAssets({
           setDocumentToDelete(null);
         }}
       />
-    </div>
+      </div>
+      </AssetWorkspaceDialog>
+    </>
   );
 }

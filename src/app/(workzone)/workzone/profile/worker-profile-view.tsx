@@ -9,7 +9,6 @@ import {
   CalendarRange,
   ChevronDown,
   Clock3,
-  FolderOpen,
   HardHat,
   IdCard,
   LogOut,
@@ -275,19 +274,20 @@ export async function WorkerProfileView({
       [t("workzone.emailAccount", currentLang), worker.emailAccount],
     ] as const
   ).filter(([, value]) => Boolean(value));
-  const section = "rounded-3xl border bg-card p-4 sm:p-5";
+  const section = "rounded-2xl border bg-card p-3 sm:p-4";
   const sectionTitle = "flex items-center gap-2 text-sm font-semibold";
+  const metricLink = "group flex min-h-16 min-w-0 flex-col justify-center gap-1 px-2 py-2 transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4";
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-3">
+    <div className="mx-auto w-full max-w-4xl space-y-3" data-testid="worker-profile">
       {/* Who: photo, name, role. Start and stop right below. */}
-      <section className="relative overflow-hidden rounded-3xl border bg-card">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent" />
-        <div className="relative flex items-center gap-4 p-4 sm:p-5">
-          <div className="relative size-20 shrink-0 sm:size-24">
-            <div className="relative flex size-full items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted text-2xl font-semibold shadow-md">
+      <section className="relative overflow-hidden rounded-2xl border bg-card" data-testid="worker-profile-summary">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
+        <div className="relative flex flex-wrap items-center gap-3 p-3 sm:p-4">
+          <div className="relative size-14 shrink-0 sm:size-16">
+            <div className="relative flex size-full items-center justify-center overflow-hidden rounded-full border-2 border-background bg-muted text-lg font-semibold shadow-sm">
               {worker.profileImageUrl ? (
-                <Image src={worker.profileImageUrl} unoptimized={worker.profileImageUrl.startsWith("/api/private-files?")} alt={`${worker.firstName} ${worker.lastName}`} fill sizes="96px" className="object-cover" />
+                <Image src={worker.profileImageUrl} unoptimized={worker.profileImageUrl.startsWith("/api/private-files?")} alt={`${worker.firstName} ${worker.lastName}`} fill sizes="64px" className="object-cover" />
               ) : (
                 initials
               )}
@@ -295,7 +295,7 @@ export async function WorkerProfileView({
             <WorkerPhotoButton workerId={worker.id} currentLang={currentLang} />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
+            <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">
               {worker.firstName} {worker.lastName}
             </h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
@@ -306,7 +306,7 @@ export async function WorkerProfileView({
               </span>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1 self-start">
+          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1 self-start">
             {worker.phone ? (
               <a href={`tel:${worker.phone}`} title={worker.phone} aria-label={t("common.phone", currentLang)} className="grid size-9 place-items-center rounded-full text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
                 <Phone className="size-4" />
@@ -336,7 +336,7 @@ export async function WorkerProfileView({
             ) : null}
           </div>
         </div>
-        <div className="relative border-t px-4 py-3 sm:px-5">
+        <div className="relative flex flex-wrap items-start justify-between gap-2 px-3 pb-3 sm:px-4">
           <WorkSessionControls
             workerId={worker.id}
             workerPhoneGpsEnabled={mode === "worker" && (worker.companyProfile?.workerPhoneGpsEnabled ?? false)}
@@ -353,37 +353,32 @@ export async function WorkerProfileView({
                 : null
             }
           />
-        </div>
-      </section>
-
-      {/* Three quick tiles: today, this month, holidays. */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Link href={dayHref} className="group rounded-2xl border bg-card p-3 transition hover:border-primary/40 hover:shadow-sm">
-          <CalendarDays className="size-5 text-primary" strokeWidth={1.8} />
-          <div className="mt-2 text-lg font-semibold leading-none">{`${todayHours.toFixed(1)} h`}</div>
-          <div className="mt-1 truncate text-xs text-muted-foreground group-hover:text-foreground">{t("workzone.tileToday", currentLang)}</div>
-        </Link>
-        <Link href={monthHref} className="group rounded-2xl border bg-card p-3 transition hover:border-primary/40 hover:shadow-sm">
-          <CalendarRange className="size-5 text-primary" strokeWidth={1.8} />
-          <div className="mt-2 text-lg font-semibold leading-none">{`${monthHours.toFixed(0)} h`}</div>
-          <div className="mt-1 truncate text-xs text-muted-foreground group-hover:text-foreground">{t("workzone.tileMonth", currentLang)}</div>
-        </Link>
-        <a href="#pushimi" className="group rounded-2xl border bg-card p-3 transition hover:border-primary/40 hover:shadow-sm">
-          <Palmtree className="size-5 text-primary" strokeWidth={1.8} />
-          <div className="mt-2 text-lg font-semibold leading-none">
-            {remainingVacationDays}
-            <span className="text-xs font-normal text-muted-foreground">/{worker.vacationAllowanceDays}</span>
-          </div>
-          <div className="mt-1 truncate text-xs text-muted-foreground group-hover:text-foreground">{t("workzone.tileVacation", currentLang)}</div>
-        </a>
-      </div>
-
-      <section className={section}>
-        <div className={sectionTitle}>
-          <FolderOpen className="size-4 text-primary" strokeWidth={1.8} /> {t("workzone.documentsTitle", currentLang)}
-        </div>
-        <div className="mt-3">
           <WorkerAssets workerId={worker.id} documents={documents} currentLang={currentLang} />
+        </div>
+        <div className="relative grid grid-cols-3 divide-x border-t" data-testid="worker-profile-metrics">
+          <Link href={dayHref} className={metricLink}>
+            <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground">
+              <CalendarDays className="size-4 shrink-0 text-primary" strokeWidth={1.8} />
+              <span className="truncate">{t("workzone.tileToday", currentLang)}</span>
+            </span>
+            <span className="text-base font-semibold leading-tight tabular-nums">{`${todayHours.toFixed(1)} h`}</span>
+          </Link>
+          <Link href={monthHref} className={metricLink}>
+            <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground">
+              <CalendarRange className="size-4 shrink-0 text-primary" strokeWidth={1.8} />
+              <span className="truncate">{t("workzone.tileMonth", currentLang)}</span>
+            </span>
+            <span className="text-base font-semibold leading-tight tabular-nums">{`${monthHours.toFixed(0)} h`}</span>
+          </Link>
+          <a href="#pushimi" className={metricLink}>
+            <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground">
+              <Palmtree className="size-4 shrink-0 text-primary" strokeWidth={1.8} />
+              <span className="truncate">{t("workzone.tileVacation", currentLang)}</span>
+            </span>
+            <span className="text-base font-semibold leading-tight tabular-nums">
+              {remainingVacationDays}<span className="text-xs font-normal text-muted-foreground">/{worker.vacationAllowanceDays}</span>
+            </span>
+          </a>
         </div>
       </section>
 
