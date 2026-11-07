@@ -86,6 +86,47 @@ binary values. Files stored externally in object storage and external service
 state require their own backup/versioning policy. Database URLs pointing to
 those files do not constitute copies of their contents.
 
+## Nightly backup on Railway (no laptop needed)
+
+A separate Railway cron service in the pilot project runs
+`scripts/backup-cron.ts` every night at 19:00 UTC (20:00 CET). It builds from
+`ops/backup-cron/Dockerfile` (Node + `pg_dump` 18, no web server). The service
+has Root Directory `/ops/backup-cron`, cron `0 19 * * *` and restart policy
+NEVER, so the app's `railway.json` and healthcheck do not apply. Each run:
+
+1. runs `database-backup.ts create` over the private network (same checks and
+   same encrypted format as above, encrypted to the owner's PUBLIC key);
+2. uploads the `.enc` file to a private Railway bucket as
+   `bauflow/YYYY-MM/<file>.enc` and reads back its size and SHA-256;
+3. removes copies older than `BACKUP_RETENTION_DAYS` (default 90, minimum 7);
+   the newest copy is never removed.
+
+The service exits after each run, so it costs compute only for about a minute
+a night; the bucket costs about $0.015 per GB-month. Logs contain only the
+object key, size, hash and key fingerprint, or the failed phase.
+
+Variables on the cron service:
+
+| Variable | Value |
+| --- | --- |
+| `BACKUP_DATABASE_URL` | `${{Postgres.DATABASE_URL}}?sslmode=require` |
+| `BACKUP_EXPECTED_COMPANY_ID` | the pilot company's id |
+| `BACKUP_PUBLIC_KEY_PEM` | the owner's backup public key (PEM; `\n` allowed) |
+| `AWS_*` | references to the bucket's credentials |
+| `BACKUP_RETENTION_DAYS` | optional, default 90 |
+
+`sslmode=require` means what it means for `pg_dump`: encrypted, certificate not
+verified (Railway's private Postgres uses a self-signed certificate; the owner
+approved this on 2026-11-07). `verify-ca`/`verify-full` still verify.
+
+To run a backup right away, remove the cron schedule, redeploy, read the
+`ok` line in the deploy logs, then set `0 19 * * *` again and redeploy.
+
+The private key never goes to Railway. To check or restore a copy, download it
+from the bucket (Railway dashboard → bucket → file) and run `backup:verify` on
+the owner's machine as described above. The laptop Drive job can keep running
+as a second, independent copy.
+
 ## Tests and rollback
 
 Archive unit tests cover binary roundtrip, wrong key, header/ciphertext/tag
