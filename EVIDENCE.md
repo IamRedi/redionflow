@@ -1,5 +1,17 @@
 # Prüfprotokoll / Verification record
 
+## Lokaler Kandidat: Baustellenrechte, 7. November 2026
+
+Die Erweiterung trennt Dokumentlesen, Upload-Rechte je Baustelle, Ingenieurrollen
+und Verwaltung. Der Inhaber kann einen gesonderten Name/PIN-Zugang privat im
+Profil einrichten. Lokale Prüfungen: 1091 Unit-Tests, 428 PostgreSQL-Integrationstests
+und ein Browser-Durchgang mit fiktiven Konten (Erteilung/Entzug, Download,
+persönlicher Empfang und getrennte Inhabersitzung) bestanden. Desktop, Telefon,
+Hell/Dunkel, kurzes Querformat, Fokus und vergrößerte Schrift wurden geprüft.
+Ein frisches verschlüsseltes Backup bestand die isolierte Wiederherstellung.
+Veröffentlichung und Aktivierung echter Konten sind getrennte Freigabeschritte.
+Die folgenden älteren CI-/Messwerte bleiben historische Ergebnisse.
+
 **Stand: 27. Oktober 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
 ## Automatisierte Prüfungen (CI)

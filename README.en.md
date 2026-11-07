@@ -42,8 +42,8 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 
 ## Document handovers and asset codes in BauFlow
 
-Six site phases group documents with download and a share chooser. Office staff
-and engineers personally confirm receipt with their name and timestamp. New
+Six site phases group documents with download and a share chooser. Active staff
+personally confirm receipt with their name and timestamp. New
 versions retain previous files and confirmations in history; receiving a document
 does not complete a production step.
 
@@ -58,6 +58,20 @@ This documentation PR is published with the approved application update; it does
 not enable the private workflows in the public demos.
 
 <img src="docs/assets/screenshots/steel-phase-documents-synthetic.png" alt="Local fictional BauFlow company with phase documents and a personal receipt confirmation" width="300">
+
+## Site access in BauFlow
+
+Workers read site documents and confirm their own receipt. Office staff upload;
+engineers need an explicit upload grant for each site. Management selects them
+when creating the site or later under **Access**. Factory and field work keep
+their respective engineer roles. Administrators and owners manage the company.
+An owner name/PIN login is configured privately inside the signed-in profile.
+
+Local checks cover granting, revocation, competing changes and tenant boundaries.
+The image contains only fictional data. Publication and real-account setup follow
+the application release approval separately; public demos receive no private data.
+
+<img src="docs/assets/screenshots/steel-site-access-synthetic.png" alt="BauFlow compact selection of site engineers allowed to upload, using fictional data" width="780">
 
 ## Why this project?
 
