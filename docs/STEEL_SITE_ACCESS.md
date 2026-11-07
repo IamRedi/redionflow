@@ -51,6 +51,15 @@ administrator session. Full name or an unambiguous first name is required; an
 ambiguous name fails closed. The email/password path and worker six-digit codes
 retain their existing behavior. The PIN is never an email password.
 
+An explicitly authorized conversion may transfer an existing six-digit credential
+hash to the exact active owner account inside the database, without reading or
+regenerating the code. That owner signs in through the same name/code form and
+receives only an administrator session. The duplicate worker login is disabled
+and its sessions revoked, while the HR record is retained. There is no automatic
+owner lookup from a worker name/email and no role elevation for other workers.
+New PINs and rotations entered through the profile still require eight digits.
+Transferred owner codes stay reserved when issuing or changing worker codes.
+
 Only fresh sole-session owners can create/activate a company owner or rotate
 their own PIN. An already activated peer owner cannot have its PIN replaced
 through this form. A prepared inactive owner with no password/PIN stays unable
