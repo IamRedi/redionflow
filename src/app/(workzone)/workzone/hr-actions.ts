@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 
 import { ADMIN_COOKIE, getCurrentAdmin } from "@/lib/auth/admin-session";
 import { authenticateWorkerByCode } from "@/lib/auth/authenticate-worker";
+import { authenticateOwnerPin } from '@/lib/auth/owner-pin';
 import { normalizeAssistantLanguage } from "@/lib/assistant/language";
 import { DISPLAY_COOKIE } from "@/lib/auth/display-session";
 import { clearFailedLogin, ensureLoginAllowed, getClientIp, registerFailedLogin } from "@/lib/auth/login-guard";
@@ -323,6 +324,16 @@ export async function loginWorkerAction(_prevState: LoginState, formData: FormDa
   const access = await ensureLoginAllowed("worker", clientIp);
   if (!access.ok) {
     return { message: tr("tooManyAttemptsRetryMinutes", { minutes: Math.ceil(access.retryAfterSeconds / 60) }) };
+  }
+
+  const pin=String(formData.get('loginCode')??''),pinName=String(formData.get('name')??'');
+  if(/^\d{8}$/.test(pin)){
+    let owner:Awaited<ReturnType<typeof authenticateOwnerPin>>;
+    try{owner=await authenticateOwnerPin(pinName,pin);}catch{return {message:tr('workerOrCodeNotFound')};}
+    if(!owner){await registerFailedLogin('worker',clientIp);return {message:tr('workerOrCodeNotFound')};}
+    const jar=await cookies();
+    jar.set(ADMIN_COOKIE,await createSessionCookie('admin',owner.id,owner.sessionEpoch),{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/',maxAge:sessionMaxAge('admin')});
+    jar.delete(WORKER_COOKIE);jar.delete(DISPLAY_COOKIE);await clearFailedLogin('worker',clientIp);redirect('/app/dashboard');
   }
 
   const parsed = workerLoginSchema.safeParse({

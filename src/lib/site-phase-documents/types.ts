@@ -5,4 +5,4 @@ export type PhaseDocumentView = {
   uploadedBy:string;uploadedAt:string;supersedesId:string|null;archivedAt:string|null;canEdit:boolean;
   receipts:{name:string;at:string;mine:boolean}[];
 };
-export type PhaseDocumentSnapshot = {documents:PhaseDocumentView[];actorName:string};
+export type PhaseDocumentSnapshot = {documents:PhaseDocumentView[];actorName:string;canUpload:boolean};

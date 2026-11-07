@@ -37,6 +37,8 @@ import { factoryOutput } from "@/lib/elements/factory-output";
 import type { FactoryBatchView } from "../../production/production-ui";
 import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
 import { PhaseDocumentsButton } from '@/components/steel/phase-documents';
+import { SiteDocumentAccessButton } from '@/components/steel/site-document-access';
+import { siteDocumentAccess } from '@/lib/site-phase-documents/site-access';
 import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
 import { compareMarks } from "@/lib/elements/tekla-list";
 import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
@@ -228,6 +230,7 @@ export default async function BaustelleDetailPage({
     );
     const isAdmin = can.office;
     const canAdvance = can.factorySteps;
+    const documentAccess=await withTenantContext(currentCompanyId,tx=>siteDocumentAccess(tx,{companyId:currentCompanyId,userId:currentAdmin&&!currentWorker?currentAdmin.id:null,workerId:currentWorker?.id??null},baustelle.id));
     const [batchRows, fileRows, elementRows, workerRows] = await withTenantContext(currentCompanyId, (tx) =>
       Promise.all([
         tx.productionBatch.findMany({
@@ -330,7 +333,7 @@ export default async function BaustelleDetailPage({
     return (
       <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
         <div className="relative overflow-hidden rounded-3xl border bg-card">
-          <div className="absolute inset-0"><AssetPhoto key={`${baustelle.id}:${baustelle.coverPhotoAt}`} kind="site" id={baustelle.id} src={assetPhotoUrl('site',baustelle.id,baustelle.coverPhotoAt)} alt={baustelle.name} canEdit={can.office||can.siteSteps}><SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" /></AssetPhoto></div>
+          <div className="absolute inset-0"><AssetPhoto key={`${baustelle.id}:${baustelle.coverPhotoAt}`} kind="site" id={baustelle.id} src={assetPhotoUrl('site',baustelle.id,baustelle.coverPhotoAt)} alt={baustelle.name} canEdit={documentAccess.upload}><SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" /></AssetPhoto></div>
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
           <div className="relative flex min-h-[160px] flex-col justify-end gap-2 p-4 sm:min-h-[190px] sm:p-6">
             <Link className="w-fit text-xs text-muted-foreground hover:underline" href="/workzone">
@@ -343,9 +346,10 @@ export default async function BaustelleDetailPage({
                 site={{ id: baustelle.id, name: baustelle.name, address: baustelle.address ?? "", description: baustelle.description ?? "" }}
                 files={files}
                 isAdmin={isAdmin}
-                canUpload={Boolean(currentActorView)}
+                canUpload={documentAccess.upload}
               />
-              {can.office||can.siteSteps||can.factorySteps?<PhaseDocumentsButton siteId={baustelle.id}/>:null}
+              <PhaseDocumentsButton siteId={baustelle.id}/>
+              {documentAccess.manage?<SiteDocumentAccessButton siteId={baustelle.id}/>:null}
               <WorkingBadge workers={activeWorkerNames} />
             </div>
             {baustelle.type !== "STEEL_WORKSHOP" ? (
@@ -353,7 +357,7 @@ export default async function BaustelleDetailPage({
                 site={{ id: baustelle.id, name: baustelle.name }}
                 elements={elements}
                 workers={elementWorkers}
-                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin }}
+                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload }}
                 definitions={definitions}
               />
             ) : null}

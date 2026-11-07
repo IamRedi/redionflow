@@ -12,6 +12,9 @@ import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { deleteManagedFileByUrl, uploadManagedFile } from "@/lib/storage/object-storage";
 import type { ActionResult } from "@/lib/validation/action-result";
 import { dateKey } from "@/lib/workzone/reporting";
+import { currentCompanyActor } from '@/lib/site-files/actor';
+import { withTenantContext } from '@/lib/db/tenant-context';
+import { mayUploadSiteDocuments } from '@/lib/site-phase-documents/site-access';
 import {
   addExternalWorkerSchema,
   workzoneCheckTreeSchema,
@@ -28,6 +31,12 @@ async function getSystemUserId() {
   const user = await prisma.user.findFirst({ where: { companyProfileId }, orderBy: [{ role: "asc" }, { email: "asc" }], select: { id: true } });
   if (!user) throw new Error("No office user found for legacy ManualTask relation.");
   return user.id;
+}
+async function canChangeSteelManualTask(companyId:string,siteId:string,claimedActorId:string){
+  const site=await prisma.baustelle.findFirst({where:{id:siteId,companyProfileId:companyId},select:{type:true}});
+  if(!site)return false;if(!['STEEL_ASSEMBLY','STEEL_WORKSHOP'].includes(site.type))return true;
+  const actor=await currentCompanyActor(companyId);
+  return Boolean(actor&&(actor.workerId??actor.userId)===claimedActorId&&(actor.can.office||actor.can.siteSteps||actor.can.factorySteps));
 }
 
 function workerName(worker: { firstName: string; lastName: string }) {
@@ -225,12 +234,13 @@ export async function createExtraTreeItemAction(input: unknown): Promise<ActionR
   if (!currentCompanyId) return { ok: false, message: tr("notSignedIn") };
 
   const [baustelle, worker, adminUser] = await Promise.all([
-    prisma.baustelle.findUnique({ where: { id: baustelleId }, select: { id: true, companyProfileId: true } }),
+    prisma.baustelle.findUnique({ where: { id: baustelleId }, select: { id: true, companyProfileId: true,type:true } }),
     prisma.worker.findUnique({ where: { id: workerId }, select: { id: true, firstName: true, lastName: true, companyProfileId: true } }),
     prisma.user.findFirst({ where: { id: workerId, role: "ADMIN", isActive: true }, select: { id: true, name: true, email: true } }),
   ]);
   if (!baustelle) return { ok: false, message: tr("siteNotFound") };
   if (!isOwnedByCurrentCompany(baustelle, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
+  if(['STEEL_ASSEMBLY','STEEL_WORKSHOP'].includes(baustelle.type))return {ok:false,message:tr('accessDenied')};
   if (!worker && !adminUser) return { ok: false, message: tr("actorNotFound") };
   if (worker && !isOwnedByCurrentCompany(worker, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
   if (scanIdentity) {
@@ -349,6 +359,7 @@ export async function addManualTaskAction(input: unknown): Promise<ActionResult>
   if (!isOwnedByCurrentCompany(baustelle, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
   if (!worker && !adminUser) return { ok: false, message: tr("actorNotFound") };
   if (worker && !isOwnedByCurrentCompany(worker, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
+  if(!await canChangeSteelManualTask(currentCompanyId,baustelleId,workerId))return {ok:false,message:tr('accessDenied')};
   const systemUserId = adminUser?.id ?? (await getSystemUserId());
 
   try {
@@ -427,6 +438,7 @@ export async function clearManualTaskAction(input: unknown): Promise<ActionResul
   if (!isOwnedByCurrentCompany(task.baustelle, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
   if (!worker && !adminUser) return { ok: false, message: tr("actorNotFound") };
   if (worker && !isOwnedByCurrentCompany(worker, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
+  if(!await canChangeSteelManualTask(currentCompanyId,task.baustelle.id,workerId))return {ok:false,message:tr('accessDenied')};
   if (!task.isFlagged) return { ok: true, message: tr("taskAlreadyDone") };
 
   try {
@@ -603,13 +615,17 @@ export async function uploadBaustelleDocumentAction(formData: FormData): Promise
 
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId },
-    select: { id: true, companyProfileId: true, documents: true },
+    select: { id: true, companyProfileId: true, documents: true,type:true },
   });
   if (!baustelle) return { ok: false, message: tr("siteNotFound") };
   if (!isOwnedByCurrentCompany(baustelle, currentCompanyId)) {
     return { ok: false, message: tr("siteAccessDenied") };
   }
 
+  if(baustelle.type==='STEEL_ASSEMBLY'){
+    const actor=await currentCompanyActor(currentCompanyId);
+    if(!actor||!await withTenantContext(currentCompanyId,tx=>mayUploadSiteDocuments(tx,{companyId:currentCompanyId,userId:actor.userId,workerId:actor.workerId},baustelleId)))return {ok:false,message:tr('accessDenied')};
+  }
   const fileName = `${Date.now()}-${sanitizeFileName(file.name || "dokument")}`;
   const publicUrl = await uploadManagedFile({
     scope: "baustelle-documents",
@@ -618,10 +634,15 @@ export async function uploadBaustelleDocumentAction(formData: FormData): Promise
     fileName,
   });
 
-  await prisma.baustelle.update({
-    where: { id: baustelleId },
-    data: { documents: uniqueDocuments([...(baustelle.documents ?? []), publicUrl]) },
+  const attached=await withTenantContext(currentCompanyId,async tx=>{
+    if(baustelle.type==='STEEL_ASSEMBLY'){
+      const actor=await currentCompanyActor(currentCompanyId);
+      if(!actor||!await mayUploadSiteDocuments(tx,{companyId:currentCompanyId,userId:actor.userId,workerId:actor.workerId},baustelleId))return false;
+    }
+    const current=await tx.baustelle.findFirst({where:{id:baustelleId,companyProfileId:currentCompanyId},select:{documents:true}});if(!current)return false;
+    await tx.baustelle.update({where:{id:baustelleId},data:{documents:uniqueDocuments([...(current.documents??[]),publicUrl])}});return true;
   });
+  if(!attached){await deleteManagedFileByUrl(publicUrl,{scope:'baustelle-documents',entityId:baustelleId}).catch(()=>{});return {ok:false,message:tr('accessDenied')};}
 
   revalidatePath("/workzone");
   revalidatePath(`/workzone/baustellen/${baustelleId}`);
@@ -641,13 +662,14 @@ export async function deleteBaustelleDocumentAction(formData: FormData): Promise
 
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId },
-    select: { id: true, companyProfileId: true, documents: true },
+    select: { id: true, companyProfileId: true, documents: true,type:true },
   });
   if (!baustelle) return { ok: false, message: tr("siteNotFound") };
   if (!isOwnedByCurrentCompany(baustelle, currentCompanyId)) {
     return { ok: false, message: tr("siteAccessDenied") };
   }
 
+  if(baustelle.type==='STEEL_ASSEMBLY'&&!(await currentCompanyActor(currentCompanyId))?.can.office)return {ok:false,message:tr('accessDenied')};
   if (!(baustelle.documents ?? []).includes(documentRef)) {
     return { ok: false, message: tr("documentNotFound") };
   }

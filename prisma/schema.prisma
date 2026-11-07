@@ -192,6 +192,7 @@ enum AssistantLanguage {
 }
 
 model User {
+  siteDocumentGrants SiteDocumentEngineer[] @relation("SiteDocumentGrantedBy")
   phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentUser")
   phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptUser")
   companyAssetFiles CompanyAssetFile[] @relation("AssetFileUser")
@@ -200,6 +201,8 @@ model User {
   name              String?
   role              UserRole          @default(STAFF)
   passwordHash      String?
+  /// Optional owner-only name/PIN shortcut; separate from the email password.
+  loginPinHash      String?
   isActive          Boolean           @default(true)
   /// The company owner: the admin created by signup or first boot. Only the
   /// owner may add, edit or deactivate other admins, and the owner itself
@@ -246,6 +249,7 @@ model User {
 }
 
 model CompanyProfile {
+  siteDocumentEngineers SiteDocumentEngineer[]
   phaseDocuments SitePhaseDocument[]
   phaseReceipts SitePhaseDocumentReceipt[]
   assetCodes CompanyAssetCode[]
@@ -849,6 +853,7 @@ model MachineConeMovement {
 }
 
 model Worker {
+  siteDocumentGrants SiteDocumentEngineer[]
   phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentWorker")
   phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptWorker")
   operationalAssets CompanyOperationalAsset[] @relation("AssetHolder")
@@ -1286,6 +1291,8 @@ model MachineBaustellePresence {
 }
 
 model Baustelle {
+  documentAccessRevision Int @default(0)
+  documentEngineers SiteDocumentEngineer[]
   phaseDocuments SitePhaseDocument[]
   operationalAssets CompanyOperationalAsset[] @relation("AssetSite")
   assetHandovers CompanyAssetHandover[] @relation("AssetHandoverSite")
@@ -1846,7 +1853,23 @@ model CompanyAssetCode {
   @@index([companyProfileId,matchValue])
 }
 
-/// Immutable file versions; authorized office/engineers acknowledge their own receipt.
+/// Explicit, tenant-scoped permission for an engineer to upload to one site.
+model SiteDocumentEngineer {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  baustelleId String
+  baustelle Baustelle @relation(fields:[companyProfileId,baustelleId],references:[companyProfileId,id],onDelete:Cascade)
+  workerId String
+  worker Worker @relation(fields:[companyProfileId,workerId],references:[companyProfileId,id],onDelete:Cascade)
+  grantedByUserId String
+  grantedBy User @relation("SiteDocumentGrantedBy",fields:[companyProfileId,grantedByUserId],references:[companyProfileId,id],onDelete:Restrict)
+  createdAt DateTime @default(now())
+  @@unique([companyProfileId,baustelleId,workerId])
+  @@index([companyProfileId,workerId])
+}
+
+/// Immutable file versions; active company readers acknowledge their own receipt.
 model SitePhaseDocument {
   id String @id @default(uuid())
   companyProfileId String

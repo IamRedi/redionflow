@@ -24,8 +24,7 @@ function roleOf(actor: CrewActor) {
   if (!actor) return null;
   const role = readCrewRole(actor.crewRole);
   if (role) return role;
-  // Workers without a role yet: a master or foreman counts as engineer.
-  if (actor.level === "MEISTER" || actor.level === "VORARBEITER") return "ENGINEER_LEGACY" as const;
+  // Seniority/job title never grants production write access implicitly.
   return null;
 }
 
@@ -36,7 +35,7 @@ export type CrewPermissions = {
   factorySteps: boolean;
   /** Orders, invoices, costs, site address and details, new material groups. */
   office: boolean;
-  /** Report missing material on a phase (everyone signed in). */
+  /** Report a site material problem without granting ordinary readers a write path. */
   reportMissing: boolean;
 };
 
@@ -45,9 +44,9 @@ export function crewPermissions(actor: CrewActor): CrewPermissions {
   if (actor.isAdmin) return { siteSteps: true, factorySteps: true, office: true, reportMissing: true };
   const role = roleOf(actor);
   return {
-    siteSteps: role === "FIELD_ENGINEER" || role === "ENGINEER_LEGACY",
-    factorySteps: role === "FACTORY_ENGINEER" || role === "ENGINEER_LEGACY",
+    siteSteps: role === "FIELD_ENGINEER",
+    factorySteps: role === "FACTORY_ENGINEER",
     office: role === "OFFICE",
-    reportMissing: true,
+    reportMissing: role === 'OFFICE' || role === 'FIELD_ENGINEER' || role === 'FACTORY_ENGINEER',
   };
 }

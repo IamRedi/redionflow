@@ -14,6 +14,9 @@ import { geocodeAddress } from "@/lib/geo/geocode";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { currentCompanyActor } from "@/lib/site-files/actor";
+import { mayUploadSiteDocuments } from '@/lib/site-phase-documents/site-access';
+import { siteEngineerIds, writeSiteEngineerGrants } from '@/lib/site-phase-documents/grants';
+import { AssetOperationError } from '@/lib/company-assets/access';
 import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime } from "@/lib/site-files/validate";
 import type { ActionResult } from "@/lib/validation/action-result";
 
@@ -33,10 +36,12 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
-  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
+  if (!actor) return { ok: false, message: tr("accessDenied") };
   const baustelleId = String(formData.get("baustelleId") ?? "");
   const files = formData.getAll("file").filter((entry): entry is File => entry instanceof File && entry.size > 0).slice(0, 4);
   if (!baustelleId || files.length === 0) return { ok: false, message: tr("invalidInput") };
+  const identity={companyId,userId:actor.userId,workerId:actor.workerId};
+  if(!await withTenantContext(companyId,tx=>mayUploadSiteDocuments(tx,identity,baustelleId)))return {ok:false,message:tr('accessDenied')};
 
   const parsed: Array<{ list: ParsedElementList; bytes: Uint8Array<ArrayBuffer>; fileName: string }> = [];
   for (const file of files) {
@@ -58,6 +63,7 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
     async (tx) => {
       const site = await tx.baustelle.findFirst({ where: { id: baustelleId, companyProfileId: companyId }, select: { id: true, type: true } });
       if (!site || site.type === "STEEL_WORKSHOP") return null;
+      if(!await mayUploadSiteDocuments(tx,identity,baustelleId))return null;
       const done: ElementImportResult[] = [];
       for (const item of parsed) {
         done.push(await importElementList(tx, { companyId, baustelleId, parsed: item.list, fileName: item.fileName }));
@@ -363,6 +369,9 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
   if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
+  let documentEngineerIds:string[]=[];
+  try{documentEngineerIds=siteEngineerIds(formData.getAll('documentEngineerId'));}catch{return {ok:false,message:tr('invalidInput')};}
+  if(documentEngineerIds.length&&!actor.isAdmin)return {ok:false,message:tr('accessDenied')};
   const typedName = String(formData.get("name") ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
   const address = String(formData.get("address") ?? "").replace(/\s+/g, " ").trim().slice(0, 240);
   const files = formData.getAll("file").filter((entry): entry is File => entry instanceof File && entry.size > 0).slice(0, 10);
@@ -393,7 +402,8 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
   const company = await withTenantContext(companyId, (tx) => tx.companyProfile.findFirst({ where: { id: companyId }, select: { country: true } }));
   const coordinates = address ? await geocodeAddress(address, company?.country ?? null) : null;
 
-  const siteId = await withTenantContext(
+  let siteId:string|null;
+  try{siteId = await withTenantContext(
     companyId,
     async (tx) => {
       const existing = await tx.baustelle.findFirst({ where: { companyProfileId: companyId, name: { equals: name, mode: "insensitive" } }, select: { id: true, type: true, address: true, description: true } });
@@ -421,6 +431,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
             },
             select: { id: true },
           });
+      if(documentEngineerIds.length)await writeSiteEngineerGrants(tx,{companyId,userId:actor.userId,workerId:actor.workerId},site.id,documentEngineerIds,undefined,true);
       for (const item of lists) {
         await importElementList(tx, { companyId, baustelleId: site.id, parsed: item.list, fileName: item.fileName });
       }
@@ -448,7 +459,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
       return site.id;
     },
     { timeout: 30_000, maxWait: 10_000 },
-  );
+  );}catch(error){if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
   if (!siteId) return { ok: false, message: tr("invalidInput") };
   revalidatePath("/workzone");
   revalidateSite(siteId);

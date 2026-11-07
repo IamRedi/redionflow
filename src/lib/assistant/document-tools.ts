@@ -1,11 +1,9 @@
 /** Read-only phase-document metadata and version-specific receipt evidence. */
 import { z } from 'zod';
 import type { Prisma } from '@/generated/prisma/client';
-import { WorkerLevel } from '@/generated/prisma/enums';
 import { prisma } from '@/lib/db/prisma';
 import { documentActor } from '@/lib/site-phase-documents/access';
 import { DOCUMENT_PHASES } from '@/lib/site-phase-documents/types';
-import { CREW_ROLES, crewPermissions } from '@/lib/workzone/crew-roles';
 import { fuelTimeZone } from '@/lib/fleet/fuel/time';
 import { categorizeAssistantFailure } from './diagnostics';
 import type { RequesterContext } from './requester';
@@ -27,18 +25,10 @@ type ReceiptInput = z.infer<typeof phaseDocumentReceiptInput>;
 const deny = () => ({ ok: false as const, code: 'FORBIDDEN', message: 'A current administrator of this steel company is required.' });
 function fail(code: string, message: string) { return { ok: false as const, code, message }; }
 
-/** Derive SQL eligibility from the same role rules used by documentActor.
- * Explicit worker/mechanic roles override legacy foreman/master levels. */
+/** Every active company worker may read and acknowledge phase documents.
+ * Upload grants are deliberately separate from reader/receipt eligibility. */
 export function phaseDocumentEligibleWorkers(companyId: string): Prisma.WorkerWhereInput {
-  const allowed = (crewRole: string | null, level?: string) => {
-    const p = crewPermissions({ isAdmin: false, crewRole, level });
-    return p.office || p.siteSteps || p.factorySteps;
-  };
-  return { companyProfileId: companyId, status: 'active', OR: [
-    { crewRole: { in: CREW_ROLES.filter(role => allowed(role)) } },
-    { level: { in: Object.values(WorkerLevel).filter(level => allowed(null, level)) },
-      OR: [{ crewRole: null }, { crewRole: { notIn: [...CREW_ROLES] } }] },
-  ] };
+  return {companyProfileId:companyId,status:'active'};
 }
 
 async function read<T>(requester: RequesterContext, operation: (tx: Tx, companyId: string) => Promise<T>) {
@@ -154,8 +144,8 @@ export async function adminGetSitePhaseDocumentReceipts(requester: RequesterCont
       ...users.map(u => { const r = u.phaseReceipts[0]; return { key: `user:${u.id}`, kind: 'admin', id: u.id,
         name: r?.actorName ?? u.name ?? 'Administrator', currentName: u.name, hasAccessNow: u.isActive && u.role === 'ADMIN',
         confirmed: Boolean(r), receivedAt: r?.receivedAt.toISOString() ?? null }; }),
-      ...crew.map(w => { const r = w.phaseReceipts[0], p = crewPermissions({ isAdmin: false, ...w }); return { key: `worker:${w.id}`, kind: 'worker', id: w.id,
-        name: r?.actorName ?? personName(w), currentName: personName(w), hasAccessNow: w.status === 'active' && (p.office || p.factorySteps || p.siteSteps),
+      ...crew.map(w => { const r = w.phaseReceipts[0]; return { key: `worker:${w.id}`, kind: 'worker', id: w.id,
+        name: r?.actorName ?? personName(w), currentName: personName(w), hasAccessNow: w.status === 'active',
         confirmed: Boolean(r), receivedAt: r?.receivedAt.toISOString() ?? null }; }),
     ];
     const hasMore = candidates.length > take, page = candidates.slice(0, take), missing = unconfirmedAdmins + unconfirmedWorkers;
@@ -165,6 +155,6 @@ export async function adminGetSitePhaseDocumentReceipts(requester: RequesterCont
       returnedCount: page.length, complete: !filter.cursor && !hasMore, pageComplete: !hasMore,
       nextCursor: hasMore ? page.at(-1)!.key : null, people: page.map(p => ({ kind: p.kind, id: p.id, name: p.name, currentName: p.currentName, hasAccessNow: p.hasAccessNow, confirmed: p.confirmed, receivedAt: p.receivedAt })),
       recipientAssignmentsTracked: false, openedOrReadTracked: false,
-      semantics: 'Received means this account pressed E mora for this exact version, not proof it opened/read the file. Unconfirmed means active currently authorized admin/office/engineer accounts without that receipt, not assigned recipients or overdue people. Current access is not historical access. Account identities are not deduplicated by name; they may represent the same human. Historical receipts remain even after access changes. No inference across file versions.' };
+      semantics: 'Received means this account pressed E mora for this exact version, not proof it opened/read the file. Unconfirmed means active currently authorized administrator/worker accounts without that receipt, not assigned recipients or overdue people. Engineer upload grants do not restrict document readers. Current access is not historical access. Account identities are not deduplicated by name; they may represent the same human. Historical receipts remain even after access changes. No inference across file versions.' };
   });
 }

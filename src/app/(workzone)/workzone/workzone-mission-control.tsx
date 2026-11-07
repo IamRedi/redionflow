@@ -40,6 +40,7 @@ type MissionItem = {
   standortAddress: string;
   shape?: SteelSiteShape;
   photoUrl?: string | null;
+  canEditPhoto?:boolean;
   material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
 };
@@ -540,7 +541,7 @@ export function WorkzoneMissionControl({
               >
                 {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
-                    <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
+                    <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={(item.canEditPhoto??canEditPhotos)&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
@@ -548,7 +549,7 @@ export function WorkzoneMissionControl({
                     </span>
                   </div>
                 ) : null}
-                {!hasCover&&canEditPhotos&&!readOnly&&<AssetPhoto kind="site" id={item.id} alt={item.name} canEdit className="absolute right-1 top-1 h-10 w-10"><span/></AssetPhoto>}
+                {!hasCover&&(item.canEditPhoto??canEditPhotos)&&!readOnly&&<AssetPhoto kind="site" id={item.id} alt={item.name} canEdit className="absolute right-1 top-1 h-10 w-10"><span/></AssetPhoto>}
                 <div className={`flex items-center justify-between gap-2 ${hasCover ? "hidden" : ""}`}>
                   <ItemTypeIcon type={item.type} pct={item.pct} />
                   <div className={`flex flex-wrap items-center justify-end gap-1 ${isCompactCanvas ? "max-w-[88px]" : "max-w-[150px]"}`}>
