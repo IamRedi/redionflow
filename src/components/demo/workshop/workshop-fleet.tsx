@@ -1,4 +1,5 @@
 "use client";
+import { assetIdentity } from "@/lib/workshop/asset-identity";
 import { DemoMachineRail, type DemoMachine } from "@/components/demo/demo-machine-rail";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { availability } from "@/lib/workshop/demo-model";
@@ -15,7 +16,7 @@ export function WorkshopFleet({ machines, now }: { machines: DemoMachine[]; now:
     if (!asset) return machine;
     const status = availability(state, asset, now);
     links[machine.id] = { href: `/demo/workshop?tab=fleet&asset=${asset.id}&detail=1`, label: c.manage, status: c[status === "inspection" ? "inspectionDue" : status] };
-    return { ...machine, isActive: machine.isActive && status !== "workshop" && status !== "inspection" };
+    return { ...machine, targe: assetIdentity(asset), isActive: machine.isActive && status !== "workshop" && status !== "inspection" };
   });
-  return <div className="pointer-events-none fixed inset-0 z-20 hidden lg:block [&_aside]:pointer-events-auto"><DemoMachineRail machines={fleet} initiallyOpen={false} workshopLinks={links} /></div>;
+  return <div data-demo-fleet className="pointer-events-none fixed inset-0 z-20 hidden lg:block [&_aside]:pointer-events-auto"><DemoMachineRail machines={fleet} initiallyOpen={false} workshopLinks={links} /></div>;
 }

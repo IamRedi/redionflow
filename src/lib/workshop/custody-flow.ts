@@ -1,3 +1,4 @@
+import { assetPlate, identityCollision, normalizeIdentity } from "./asset-identity";
 import { applyWorkshopCommand, activeJob, availability, workshopSchema, WorkshopError, type WorkshopState, type WorkshopAsset, type InventoryPlacement } from "./demo-model";
 import { treeUpdateSchema, type DemoActor, type Handover } from "./custody-schema";
 import type { publicWorkshopCommand, WorkshopDirectory } from "./shared-contract";
@@ -36,13 +37,33 @@ export function applyCustodyCommand(input: WorkshopState, command: Command, acto
   switch (c.type) {
     case "register": {
       assert(actor.role === "admin", "permission");
-      const code = (c.code || `BF-${c.assetId.slice(0, 8)}`).trim().toUpperCase();
-      assert(/^[A-Z0-9 .$/+%\-]{1,80}$/.test(code), "required");
-      assert(!state.assets.some(a => a.id === c.assetId || a.code.trim().toUpperCase() === code), "duplicate");
-      const asset: WorkshopAsset = { id: c.assetId, name: c.name, code, kind: c.details.category === "vehicle" ? "fleet" : "tool", location: "Lager", holder: "", inspection: c.inspection, details: c.details, events: [] };
+      const vehicle = c.details.category === "vehicle";
+      const plate = vehicle ? normalizeIdentity(c.plate || c.code || "") : undefined;
+      const code = vehicle ? plate! : normalizeIdentity(c.code || `BF-${c.assetId.slice(0, 8)}`);
+      const barcode = vehicle && c.barcode?.trim() ? normalizeIdentity(c.barcode) : undefined;
+      assert(vehicle ? /^[A-ZÄÖÜ0-9 -]{1,24}$/.test(code) : /^[A-Z0-9 .$/+%\-]{1,80}$/.test(code), "required");
+      assert(!barcode || /^[A-Z0-9 .$/+%\-]{1,80}$/.test(barcode), "required");
+      assert(!barcode || barcode !== plate, "required");
+      const asset: WorkshopAsset = { id: c.assetId, name: c.name, code, kind: vehicle ? "fleet" : "tool", ...(plate ? { plate } : {}), ...(barcode ? { barcode } : {}), location: "Lager", holder: "", inspection: c.inspection, details: c.details, events: [] };
+      assert(!state.assets.some(a => a.id === c.assetId) && !identityCollision(asset, state.assets), "duplicate");
       state.assets.unshift(asset); event(asset, "registered", code); break;
     }
-    case "edit-asset": { assert(actor.role === "admin", "permission"); const a = assetFor(c.assetId); a.name = c.name; a.details = c.details; a.kind = c.details.category === "vehicle" ? "fleet" : "tool"; event(a, "updated", c.name); break; }
+    case "edit-asset": {
+      assert(actor.role === "admin", "permission"); const a = assetFor(c.assetId);
+      const before = { name: a.name, plate: assetPlate(a), barcode: a.barcode };
+      const vehicle = c.details.category === "vehicle";
+      const plate = vehicle ? normalizeIdentity(c.plate ?? assetPlate(a) ?? "") : undefined;
+      const barcode = vehicle ? (c.barcode === undefined ? a.barcode : normalizeIdentity(c.barcode) || undefined) : undefined;
+      assert(!vehicle || Boolean(plate && /^[A-ZÄÖÜ0-9 -]{1,24}$/.test(plate)), "required");
+      assert(!barcode || /^[A-Z0-9 .$/+%\-]{1,80}$/.test(barcode), "required");
+      assert(!barcode || barcode !== plate, "required");
+      a.name = c.name; a.details = c.details; a.kind = vehicle ? "fleet" : "tool";
+      if (plate) a.plate = plate; else delete a.plate;
+      if (barcode) a.barcode = barcode; else delete a.barcode;
+      assert(!identityCollision(a, state.assets), "duplicate");
+      // Preserve immutable record/code, custody, repairs and photographs on a plate change.
+      event(a, "updated", JSON.stringify({ before, after: { name: a.name, plate: assetPlate(a), barcode: a.barcode } })); break;
+    }
     case "policy": assert(actor.role === "admin", "permission"); state.custody.autoConfirm = c.autoConfirm; state.custody.policyEvents.unshift({ id, autoConfirm: c.autoConfirm, at: now, actor }); break;
     case "read-notifications": state.custody.notifications.forEach(n => { if (n.recipient === actor.key && c.ids.includes(n.id)) n.readAt = now; }); break;
     case "handover": {

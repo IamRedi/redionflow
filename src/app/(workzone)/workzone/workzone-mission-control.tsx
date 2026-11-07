@@ -283,6 +283,7 @@ export function WorkzoneMissionControl({
   gpsSyncAvailable = false,
   initialMap = false,
   canEditPhotos = false,
+  demoPhotoReadOnly = false,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -297,6 +298,7 @@ export function WorkzoneMissionControl({
   gpsSyncAvailable?: boolean;
   initialMap?: boolean;
   canEditPhotos?: boolean;
+  demoPhotoReadOnly?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const muster = items.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
@@ -323,13 +325,17 @@ export function WorkzoneMissionControl({
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const workspaceRef = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
+  const [musterReady, setMusterReady] = useState(false);
   useEffect(() => {
     const element = workspaceRef.current;
     if (!muster || !element) return;
-    const observer = new ResizeObserver(entries => setCanvasWidth(Math.round(entries[0].contentRect.width)));
+    const observer = new ResizeObserver(entries => {
+      const width = Math.round(entries[0].contentRect.width);
+      if (width > 0) setCanvasWidth(width);
+    });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [muster]);
+  }, [muster, isMapMode]);
   const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:width-${canvasWidth}` : ""}`, [items, muster, canvasWidth]);
   // Restore browser-only saved positions in the effect below, after hydration.
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
@@ -401,8 +407,9 @@ export function WorkzoneMissionControl({
     saveCanvasLayout(canvasLayoutSignature, next);
     queueMicrotask(() => {
       setPositionsByViewport((current) => (sameViewportLayouts(current, next) ? current : next));
+      if (muster && canvasWidth > 0) setMusterReady(true);
     });
-  }, [canvasLayoutSignature, items, canvasWidth]);
+  }, [canvasLayoutSignature, items, canvasWidth, muster]);
 
   function resetCurrentCanvasLayout() {
     const nextViewportPositions = autoCanvasLayout(items, canvasViewport, canvasWidth);
@@ -524,7 +531,7 @@ export function WorkzoneMissionControl({
             </Button>
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
-          {items.map((item) => {
+          {(!muster || musterReady) && items.map((item) => {
             const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey);
             const animateLive = item.activeLiveCount > 0 && !(item.demoPhotoKey && reducedMotion);
             const target = positions[item.id] ?? { x: 20, y: 20 };
@@ -533,6 +540,7 @@ export function WorkzoneMissionControl({
               <motion.div
                 key={item.id}
                 data-testid={item.demoPhotoKey ? "muster-site-card" : undefined}
+                initial={item.demoPhotoKey ? false : undefined}
                 drag={!readOnly || allowCanvasDrag}
                 dragMomentum={false}
                 dragElastic={0.08}
@@ -568,7 +576,7 @@ export function WorkzoneMissionControl({
               >
                 {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
-                    {item.demoPhotoKey ? <DemoPhoto kind="site" target={item.id} photoKey={item.demoPhotoKey} alt={item.name} className="h-full w-full"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto> : <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
+                    {item.demoPhotoKey ? <DemoPhoto readOnly={demoPhotoReadOnly} kind="site" target={item.id} photoKey={item.demoPhotoKey} alt={item.name} className="h-full w-full"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto> : <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>}
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">

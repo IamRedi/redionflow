@@ -1,5 +1,198 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
+## AKTUALE — korrigjimi i pronarit, 7 nëntor 2026
+
+Dashboard view hap statistikat direkt në fullscreen nga klikimi i hyrjes. Nuk ka toolbar, kthim, ndërrues Workzone/Dashboard, rifreskim manual ose buton tjetër fullscreen brenda monitorit. Rifreskimi 60 sekonda vazhdon në prapavi. Kërkesa native kryhet gjatë klikimit dhe navigimi Next ruan të njëjtin dokument. URL direkte mbush viewport-in; shfletuesi kërkon gjest përdoruesi për fullscreen native. Rruga e zakonshme /demo/dashboard ruan funksionet ekzistuese.
+
+Kopertinat e Baustelle-ve mbushin kornizën ekzistuese me object-cover. Nuk ndryshohen përmasat e kartave ose skedarët origjinalë. Pajisjet/logot mbeten të plota me contain.
+
+Formati caktohet në server: kopertinë kantieri 1536×512 (3:1); fazë druri 1536×1024 (3:2); pajisje/logo 1024×1024 (1:1). Prompt-i dhe verifikimi i raportit ndjekin formatin. Cache përfshin formatin dhe ruan fallback për figurat e mëparshme. Fotot e ngarkuara kanë përparësi; kompresimi, modeli, provider-i dhe stili petrol mbeten ekzistues; nuk ka retry automatik me pagesë.
+
+Kuota Baumdienst është 20 tentativa gjenerimi/ditë UTC, e përbashkët për pajisje, kopertina, logo dhe faza. Ky vendim i ri zëvendëson 5/ditë dhe tavanin e vjetër provë 50 gjithsej. Dështimet numërohen; cache dhe ngarkimet nuk shpenzojnë gjenerim. Ledger-i nuk zerohet.
+
+Përjashtimi i vetëm i autorizuar për AL Steel është kuota e figurave: 20/kompani dhe 20/përdorues në ditë UTC; kompania mbetet tavani i përbashkët. Kufijtë 2/kompani dhe 1/përdorues për dritare 10-minutëshe, autentikimi/tenant-i dhe asistenti tekstual nuk ndryshojnë. Ndryshimi përgatitet veçmas nga Baumdienst. Tre teste ekzistuese marrin vetëm portabilitet të rrugëve/quoting për Windows, duke ruajtur assertions.
+
+Nuk bëhen gjenerime me pagesë për këto prova. Verifikimi përdor provider sintetik, PostgreSQL lokal të izoluar dhe pamje desktop/telefon. Vetëm Musterfirma merr UI-n e ndryshuar. Demot e tjera nuk preken. Portofoli PR53 mbetet OWNER_HOLD; vlerësimi i prezantimit është NO_CONTENT_CHANGE për këtë korrigjim. Seksioni historik më poshtë nuk është logjika aktuale.
+
+Verifikim lokal në laptopin Windows, 07.11.2026: 688 unit PASS, 1 skip ekzistues; 14 integrime PASS në PostgreSQL të izoluar (përfshirë 20/ditë, tentativa e 21-të, dita pasuese, arkivi pa tavan 50 dhe ruajtja e fotove); 35/35 rrjedha shfletuesi PASS, duke përfshirë hyrjen reale fullscreen pa butona, kopertinat cover, telefon/desktop/landscape/200% tekst, inventar/Werkstatt, planet dhe historikun. TypeScript, production build me webpack, ESLint dhe Gitleaks i staged diff PASS. Prova fillestare lokale u ndal dhe u përsërit me APP_BASE_URL të saktë loopback; kontrollet same-origin nuk u dobësuan. Build-i standard Turbopack nuk zgjidh junction-in lokal node_modules; webpack është rruga lokale e verifikuar, pa ndryshim konfigurimi/lockfile në produkt. Publikimi dhe kontrolli vizual online regjistrohen veçmas më poshtë.
+
+Publikim dhe readback online: Baumdienst SHA `f2bbe984b097a9935dd79a7c1b0b93d3fcb5df2f`, deployment `1a5571c5-4520-4588-b027-455521976ad0` SUCCESS; health 200. Pamjet reale 1440×1000 dhe 390×844 konfirmuan cover në të tre kopertinat, skedarë të ngarkuar dhe pa overflow; përmasat desktop para/pas identike 238.67×79.33 CSS px në canvas. Monitori online ka 0 butona dhe 0 nav. Screenshot-et: `outputs/correction-workzone-online-desktop.png`, `correction-workzone-online-phone.png`, `correction-dashboard-online-desktop.png`, `correction-dashboard-online-phone.png`. Fullscreen native u verifikua nga testi real lokal Playwright; URL direkte ka kufirin e gjestit të shfletuesit të shpjeguar më sipër.
+
+Ruajtja pas rollout-it: revision 64 → 64; inventari me 10 pajisje, planet dhe përpunimi i drurit të pandryshuar; 15 skedarë/origjinale me SHA256 identik; 5 figura të gjeneruara aktive të ruajtura. `outputs/correction-preservation-after.json` është evidenca e leximit pa shkrime testuese online.
+
+AL Steel u publikua veçmas nga PR76: merge `e1c6f40114faced73c17b10dde3970cb8197ca1a`, deployment `f8f018a5-a7fc-4a91-b486-7762d8f5eb57` SUCCESS, health 200. Kuota e figurave 20/ditë është delta e vetme e sjelljes; tri teste Windows dhe dy nënshkrime page props plus thirrja e testit janë korrigjime kompatibiliteti pa ndryshim UI/rrjedhash. 1087 unit PASS / 1 skip ekzistues, 18 integrime PASS, TypeScript/build webpack/lint/Gitleaks PASS. Dega/konfigurimi i shërbimit dhe emrat e 28 variablave mbetën identikë. Nuk u lexuan sekrete ose shkruan të dhëna biznesi për testim.
+
+Shënimi aktual u shtua në Google Doc-in ekzistues me revision guard dhe seksioni i mëparshëm u shënua historik; tabela native 10×2 ruhet. PR75 mbetet draft për rishikim, jo merge në main/pilot; PR53 i portofolit u verifikua OPEN/draft/pa merge në OWNER_HOLD. Ky korrigjim nuk e shpall platformën gati. Pikë vazhdimi: pronari rishikon korrigjimin, pa rigjenerime, seed ose publikim promocional.
+
+Burime zyrtare të lexuara: MDN Element.requestFullscreen/Fullscreen API për aktivizimin e përdoruesit; OpenAI Images API për formatet. Rezultatet dhe SHA e publikimit plotësohen pas verifikimit.
+
+
+
+## Historik — figurat, kopertinat dhe Dashboard view — 7 nëntor 2026
+
+**Vetëm Musterfirma; portofoli PR53 mbetet OWNER_HOLD.** Korrigjimi i ri i pronarit zëvendëson kërkesën e mëparshme për dy hyrje Dashboard/TV: mbetet një buton **Dashboard view**, që hap `/demo/tv?view=dashboard` në skedë tjetër. Brenda ruhen statistikat, Workzone, rifreskimi, fullscreen dhe kthimi. `/demo/dashboard` mbetet rrugë e vlefshme për pajtueshmërinë; nuk ka dy hyrje të njëjta në menu/panel. Paneli i kontrollit, plani/harta/kalendari, ekipi, inventari dhe të dyja punëtoritë mbeten.
+
+### Një familje figurash
+
+`baumdienst-studio-petrol-v2` ruan adapterin OpenAI, modelin ekzistues `gpt-image-2.6-flare` dhe parametrat e kufizuar. Pajisje reale në formë/proporcione, jeshile pylli, metale/gomë natyrale, detaje portokalli dhe sfond studio petrol `#0c2b35`; pa tekst ose logo të shpikura mbi pajisje. Ndryshimi i versionit të stilit ndan cache-in e ri nga pesë figurat e vjetra me sfond të bardhë. Lexuesi ruan fallback të lexueshëm për V1 deri te krijimi i V2; origjinalet V1 nuk fshihen. Parametrat dhe çmimi për thirrje nuk rriten. U lexua dokumentacioni zyrtar i Images API më 07.11.2026; nuk u zgjodh provider/model tjetër dhe nuk u shtua varësi aplikacioni.
+
+Etiketa e mbivendosur “AI” hiqet nga kartat dhe miniaturat. Prejardhja mbetet në galeri dhe në ledger-in e gjenerimit. Ilustrimi nuk bëhet foto e njësisë reale ose provë riparimi. Fotot reale të ngarkuara kanë përparësi dhe ruhen pa editim gjenerativ.
+
+“Krijo me AI” është veprim i shprehur i shefit në galerinë e pajisjes, kopertinën e kantierit, logon/emblemën e Musterfirma-s te paneli dhe figurën e fazës së drurit. Emblema përdor një target të rezervuar, jo një pajisje ose firmë të dytë; header-i lexon të njëjtën zgjedhje. Dërgohen vetëm përshkruesit vizualë të lejuar; kantieri përdor emrin fiktiv, jo adresë/shënime/ekip. Kopertinat dhe emblema përdorin të njëjtin adapter, lease dhe ledger **5 tentativa/ditë UTC, 50 gjithsej** me pajisjet/fazat. Dështimet mbeten të numëruara. Nuk ka gjenerim në refresh ose retry automatik me pagesë. Cache-i ripërdor të njëjtin subjekt; një figurë e hequr mund të rikthehet pa pagesë. Ngarkimet aktive bllokojnë gjenerimin, përfshirë një foto të mbërritur gjatë tij.
+
+### Menaxhimi dhe ruajtja
+
+Galeritë kanë **Vendos si kopertinë**, **Hiq figurën** dhe **Rikthe figurën**. E njëjta zgjedhje përdoret në inventar, miniaturat e riparimeve, kantier, header-in e logos dhe fazat/porositë/hyrjet e drurit. “Hiq” e largon figurën nga pamja aktive, ndërsa origjinali mbetet te “Figurat e hequra”; është rikthim brenda produktit, jo fshirje e pakthyeshme. URL-të/origjinalet dhe historiku nuk fshihen. Kuotat e skedarëve/AI nuk zerohet duke hequr një figurë. Preferencat kanë kufij 500 targete, 200 referenca të fshehura/target dhe 2000 ngjarje; tejkalimi dështon atomikisht.
+
+Përdoret modeli ekzistues PostgreSQL `BaumdienstDemoWorkspace`, me një rresht të versionuar **`baumdienst-media:v1`** vetëm për referenca pamjeje, kopertinën, figurat e fshehura dhe auditin person/kohë/veprim. Nuk ka bazë/shërbim të ri, migrim Prisma, kopje inventari ose rrjedhë të dytë biznesi. Inventari mbetet V4. Shkruesit e mëparshëm të inventarit nuk i heqin preferencat, sepse nuk rishkruajnë rreshtin e pamjes. GET nuk krijon këtë rresht. Reset-i ekzistues i të dhënave bazë nuk e prek.
+
+Shkrimet përdorin kyçjen ekzistuese të inventarit, revision, UUID dhe receipt me aktor/përmbajtje. Ngarkimet e drurit mbajnë të njëjtin rend kyçjesh me inventarin. Ndryshimi i pamjes përditëson revision-in e inventarit për ETag/polling; sasia, pronari, riparimet, planet dhe historiku i përpunimit nuk ndryshojnë. Pajisje, kantier dhe porosi riparimi kanë targete të ndara; fotot e një riparimi nuk kthehen pa dashje në kopertinë të pajisjes. Të gjithë targetet/ID-të verifikohen në server; nuk pranohen URL arbitrare ose referenca të firmave të tjera. Menaxhimi i figurave është veprim shefi; ngarkimet ruajnë lejet ekzistuese. Në TV nuk ka këto veprime shkrimi.
+
+Një ngarkim i ri zgjedh foton e vet si kopertinë. E njëjta foto e përpunuar, me të njëjtin target dhe SHA-256, ripërdoret edhe kur riemërtohet; nuk shton skedar, foto-event ose pajisje të dyfishtë. Zgjedhja/rikthimi auditohen. Ngarkimi në një target tjetër mbetet veprim i veçantë. JPG/PNG/WebP vazhdojnë validimin dhe heqjen e metadatave, 12 MB input dhe 1024px/180KB output. Dokumentet ruajnë rrjedhën e tyre dhe nuk fshihen nga ky kontroll.
+
+### Pranimi i korrigjimit
+
+Kontroll lokal në laptopin Windows: 685 unit PASS / një skip ekzistues; 14 integrime PostgreSQL PASS, plus katër integrimet e prekura të ripërsëritura pas filtrit përfundimtar të targetit. Build/TypeScript dhe lint i plotë/i shprehur për skedarët demo PASS. Tri profile jashtë scope-it kthejnë 404, edhe për POST `/api/demo/baumdienst/media`. Provat e gjenerimit përdorin provider të simuluar; nuk shpenzojnë kuotë reale.
+
+Prova fillestare unit nën ngarkesë pati dy timeout-e; seti i plotë me ngarkesë të kufizuar kaloi pa ndryshuar timeout/assertions. Provat e reja UI u përshtatën me tekstin real gjerman dhe me Radix që fsheh sfondin nga lexuesi gjatë modalit; logoja verifikohet pasi mbyllet modali. Galeria ekzistuese ruan provën e prejardhjes me etiketat e reja, dhe kontrollon mungesën e badge-it mbi imazh. Refuzimi automatik i ndryshimit të kredencialit të fixture-it nuk u aplikua; provat u kryen me rolin/autentikimin ekzistues, pa ndryshim aksesi.
+
+**Pranimi i shfletuesit:** 34 PASS në setin e plotë dhe rasti i figurës së gjeneruar PASS në riprova pas përshtatjes së dy teksteve të galerisë. 35 rastet mbulojnë ruajtjen në pajisje të pavarura, kopertinë/heqje/rikthim, mosduplikimin, logon, fazat e drurit, gjashtë gjuhë, të dyja temat, desktop/telefon/landscape/tekst 200%, role, Barcode/NFC, riparime, plan/hartë, stok dhe skedarë. Assertions për origjinalet, përparësinë e fotos dhe prejardhjen nuk u hoqën. Telefon fizik/NFC/kamera/printeri mbeten provë më vete.
+
+**Publikuar dhe kontrolluar online më 07.11.2026:** commit `3c86921d2676cba1ff5e9ed0b6e58b2bbccb00b4`, Railway `3f22a254-7986-46b7-8e98-a2836b43577a` SUCCESS. Ndryshoi vetëm pin-i i source commit-it te shërbimi ekzistues Musterfirma; staged changes pas publikimit: zero. Emrat e 19 variablave mbetën të njëjtë, pa shkrim në vlerat/sekretet e tyre. Asnjë shërbim, degë piloti, main ose demo tjetër nuk u ndryshua nga kjo punë. PR75 mbetet draft mbi PR72; PR53 në portofol mbetet HOLD, draft dhe pa merge.
+
+U krijuan **saktësisht pesë variante reale V2**, nga një për Akku-Heckenschere, Akku-Freischneider, Motorsäge, Stangensäge dhe Laubbläser. Pesë kërkesa me receipt unik, pesë ready/HTTP 200, pa prova me pagesë ose retry. Ruhen në databazën e demos dhe shihen nga pajisjet e tjera. Origjinalet V1 ruhen dhe URL-të e tyre vazhdojnë të shërbehen. Kufijtë 5/ditë UTC dhe 50 gjithsej kontrollohen nga i njëjti ledger; nuk u resetua kuota. Për Kran-LKW u zgjodh shprehimisht si kopertinë figura e saktë ekzistuese `equipment-crane`, sepse ngarkimi ishte një logo e palidhur me mjetin. Origjinali i ngarkuar mbetet në galeri; kjo zgjedhje e auditueshme nuk kushtoi gjenerim. Përparësia automatike e fotos ka këtë përjashtim të qëllimshëm kur shefi zgjedh një kopertinë tjetër.
+
+Krahasimi i pavarur para/pas publikimit: V4/r49 → V4/r49, inventari/planet/druri identikë dhe **15 skedarë origjinalë byte-identikë**. Pas pesë gjenerimeve dhe një zgjedhjeje kopertine: V4/r60, e njëjta gjendje biznesi dhe 15 hash-et identike. Rritja e revision-it është dy faza ledger-i për çdo gjenerim + një zgjedhje kopertine. Janë pesë figura aktive V2 dhe zero fallback aktive V1. Nuk u shtua pajisje, riparim, dokument, ngjarje pune ose sasi stoku.
+
+Kontrolli online konfirmoi kartat, stilin petrol, mungesën e badge-ve, galerinë me veprimet e reja, menunë me një Dashboard view dhe përmasat 1440×1000 / 390×844 pa overflow horizontal ose scroll të dokumentit të jashtëm. Pamjet ruhen lokalisht te `outputs/media-inventory-online-desktop.png` dhe `outputs/media-inventory-online-phone.png`; receipt-et dhe hash-et te `media-petrol-generation-receipts.json` / `media-preservation-final.json`. Nuk u publikua media në portofol.
+
+Përmbledhja e këtij korrigjimi u ruajt dhe u lexua mbrapsht në Google Doc-in ekzistues: teksti i ri aktual u verifikua, seksioni i mëparshëm u shënua historik dhe tabela native 10×2 mbeti e pandryshuar.
+
+**Pikë e vetme vazhdimi:** pronari rishikon këtë korrigjim në Musterfirma. Mos përsërit gjenerimet, seed-in ose zgjedhjen e kopertinës së Kran-LKW. Dokumenti Google ekzistues merr të njëjtën përmbledhje dhe readback; nuk krijohet dokument tjetër. Vetëm korrigjimi i kësaj kërkese; demoja mbetet në rishikim. Portofoli dhe niveli i gatishmërisë nuk rriten. Vlerësim prezantimi: NO_CONTENT_CHANGE për faqen native dhe portofolin gjatë këtij korrigjimi; mesazhet ekzistuese për Musterfirma/AI mbeten të sakta, ndërsa publikimi promocional është në HOLD të pronarit.
+
+## Historike — korrigjimi i navigimit dhe targës, 6 nëntor 2026
+
+**Korrigjimi është online vetëm te Musterfirma; demoja mbetet në rishikim nga pronari dhe portofoli në HOLD.** Pronari kërkoi të mos publikohet prezantimi në portofol, sepse demoja ende nuk është në nivelin e kërkuar. PR53 shoqëruese është shënuar HOLD dhe nuk është bashkuar/publikuar. Miratimi i vjetër për PR38 nuk vlen për PR53. Pretendimi i mëparshëm “demo DONE” zëvendësohet nga ky kontroll i rihapur; mbetet në vlerësim nga pronari.
+
+Korrigjimi: optimizimi duhet të ruajë hyrjet dhe rrjedhat, jo t'i fshehë. Dashboard është përsëri buton më vete; Paneli i kontrollit dhe Hap në TV janë të dukshme jashtë menusë More. More mban vetëm përzgjedhjen e rolit demo, gjuhën, temën dhe hyrjen ekzistuese KiDraht. Nuk hiqen fusha/harta, plani, kalendari, profili i punonjësit, flota, inventari, riparimet ose punëtoria e drurit.
+
+### Hyrjet dhe burimi i logjikës
+
+| Hyrja | Sjellja në Musterfirma |
+| --- | --- |
+| Dashboard | I njëjti `/demo/dashboard`, me statistikat dhe progresin ekzistues të pemëve. |
+| Paneli i kontrollit | `/demo/control` lidh drejtpërdrejt rrjedhat ekzistuese: Workzone, Dashboard, plan/kalendari, të dyja punëtoritë, flotë, vegla, pjesë, dokumente/histori dhe po ato profile punonjësish/kantieresh. Nuk ka databazë, punonjës ose inventar të dytë. Cilësimi i dorëzimeve hap kontrollin ekzistues me të njëjtat leje. |
+| Hap në TV | `/demo/tv` hapet në skedë të veçantë. Workzone dhe Dashboard lexohen nga implementimet ekzistuese, jo nga llogaritje të kopjuara. Përzgjedhje pamjeje, rifreskim manual/çdo 60 sekonda kur skeda është e dukshme dhe ekran i plotë. Header-i operacional dhe flota lundruese fshihen vetëm në TV; karta, navigimi i hartës dhe footer-i natyral ruhen. Në TV nuk riorganizohet/tërhiqet fusha dhe nuk shfaqet krijimi i planit. Dalja kthen te Workzone. |
+| Hyrjet e tjera | Ruajnë rrugët, identitetet, rolet dhe veprimet ekzistuese; kontrolli i ri nuk lidhet me `/app` ose `/display` të pilotit dhe nuk anashkalon hyrjen e firmave reale. |
+
+Krahasimi është bërë me burimin origjinal Workzone/FlowTopBar, navigimin e administrimit dhe kontrollin TV të AL Steel. Dega e pilotit në kontrollin read-only mbeti `claude/project-thread-an04j1`, HEAD `cc386f5`. Ky korrigjim nuk deklaron se financat, administrimi i klientëve ose çdo modul i firmës reale është kopjuar në demo. Këto kërkojnë vlerësim të mëtejshëm të pronarit; nuk zëvendësohen me butona pa funksion.
+
+### Targa dhe barkodi opsional
+
+Mjetet me targa identifikohen me **targën**. `plate` është fusha e dukshme e mjetit; `barcode` është etiketë shtesë opsionale. Veglat vazhdojnë të përdorin kodin/barkodin ekzistues. ID e regjistrimit, riparimet, dokumentet, fotografitë, dorëzimet dhe lidhjet e punës mbeten të njëjta. Fusha `code` e regjistrimeve ekzistuese mbetet çelës teknik për pajtueshmërinë dhe lidhjen e flotës; nuk printohet automatikisht si barkod për mjetet.
+
+Regjistrimi i mjetit kërkon targë. Nuk krijon barkod automatik. Shefi mund ta shtojë/gjenerojë shprehimisht një kod shtesë ose ta heqë atë në editim. Targa nuk pranohet si barkodi i vetvetes. Kërkimi dhe leximi i etiketës hapin të njëjtin asset ID; normalizohen germat/hapësirat dhe refuzohen përplasjet mes targave, barkodeve të veglave dhe etiketave shtesë. Ndryshimi i targës ka audit para/pas dhe nuk e kthen targën e vjetër në identifikim të ri aktiv. Shënimet/specifikimet nuk futen të plota në audit të dyfishuar; nuk tejkalohet kufiri i historikut.
+
+Karta e mjetit shfaq Targa dhe, vetëm nëse ka, Barkod opsional. Pa etiketë shtesë, faqja e printimit kthen 404; nuk prodhon barkod nga targa. Veglat ruajnë printimin dhe rrjedhën Barcode/NFC. Lista e flotës, plani, punëtoria dhe lidhjet e pajisjes përdorin të njëjtin identifikim të dukshëm. Fotografitë e ngarkuara dhe gjenerimet e ruajtura nuk preken.
+
+Formati JSON i inventarit kalon në **V4** me të njëjtin rresht `baumdienst-workshop:v1`. Për një V3 të vlefshëm, tranzicioni ruan përmbajtjen dhe ndryshon vetëm versionin, me një revision shtesë; kryhet nën kyçjen ekzistuese dhe është idempotent. Nuk ka migrim Prisma ose seed/reset. Versionet e vjetra me parser V3 e refuzojnë V4, që një shkrues i vjetër të mos heqë fushat e targës/barkodit gjatë një ruajtjeje tjetër. Rollback përdor build të pajtueshëm me V4 ose migrim të shprehur, jo ulje të heshtur të versionit. Rreshtat e planeve dhe të drurit nuk migrohen.
+
+### Pranimi i këtij korrigjimi
+
+Pranimi lokal i build-it V4: **685 unit PASS / një skip ekzistues, 10 integrime Postgres PASS dhe 32 rrjedha shfletuesi PASS**. Build/TypeScript, lint i plotë, lint i shprehur për skedarët demo dhe tri profilet e përjashtuara: PASS. Katër rrjedhat e reja verifikojnë hyrjet e dukshme, TV pa ndryshim gjendjeje, targën pa etiketë automatike dhe regjistrimin/shtimin e shprehur të barkodit në formularin touch. Prova e migrimit kontrollon përmbajtjen e plotë dhe revision-in vetëm një herë. Provat ekzistuese ruajnë dorëzimet, rolet, skanimin, pemët, hartën, planin, drurin, fotot dhe dokumentet.
+
+Prova e parë e tri rrjedhave të reja u ndal nga guard-i i fixture-it: procesi i testit nuk kishte DATABASE_URL të bazës së izoluar; nuk u krye reset në një bazë tjetër. Mungonte edhe çelësi kalimtar lokal i nënshkrimit të rolit; u gjenerua vetëm në memorien e procesit të provës, pa lehtësuar asnjë kontroll ose ndryshuar sekretet online. Një pritje e vjetër e testit për “version i panjohur 4” u zhvendos te versioni i panjohur 5, duke ruajtur refuzimin. Gabimi real në tekst 200% ishte header-i që konsumonte viewport-in: kontrollet ruajnë përmasa CSS 44px dhe navigimi mund të scroll-ojë vetëm kur tejkalon 48dvh, ndërsa përmbajtja mbetet zona kryesore. More i hapur nuk pritet nga ky kufi. U përsërit i gjithë seti dhe kaloi pa hequr assertions ose rritur timeout-et.
+
+Miratimi automatik i origjinës lokale dështoi teknikisht (`Bad Request`); pronari autorizoi më pas shprehimisht `http://127.0.0.1:8765`. Kontrolli vizual lokal u krye pas këtij miratimi. Telefon 390/320px, desktop 1440px, landscape, tekst 200%, tema, fokus dhe footer natyral janë pjesë e pranimit. Telefoni fizik/NFC/kamera/printeri mbeten provë më vete. Editimi i metadatave nuk e ka gjenerimin AI të përzgjedhur si parazgjedhje; regjistrimet e reja ruajnë zgjedhjen ekzistuese. Nuk bëhet publikim në portofol ose gjenerim me pagesë për këtë korrigjim.
+
+Pas setit të plotë u përfundua një korrigjim i kufizuar për galerinë TV: fotot hapen/shkarkohen, por kamera, input-et e ngarkimit dhe gjenerimi nuk shfaqen atje. `demoPhotoReadOnly` ka parazgjedhje false dhe aktivizohet vetëm nga Musterfirma në monitor; ngarkimi në Workzone normale ruhet. Build/TypeScript dhe lint i skedarëve të prekur PASS. Tri rrjedhat e prekura (TV me galeri vetëm shikim, fusha/harta normale dhe foto/dokumente ndërmjet dy shfletuesve) u përsëritën dhe kaluan. Nuk u përsëritën teste të tjera pa ndryshime përkatëse.
+
+Publikimi i parë i korrigjimit `be11f6f5e74a386f49983de474fbf659a4ce8f3f`, Railway `54699ad2-e8fc-4102-a6d0-44f088bd7e8c`, ishte SUCCESS. Kontrolli online konfirmoi V3→V4 dhe revision 45→46, me të gjithë inventarin identik përveç versionit; 14 hash-e skedarësh identike, planet revision 1 dhe druri revision 2 të pandryshuar. Përfshin katër fotot e ngarkuara, dokumentin binar, pesë figurat e ruajtura AI dhe katër figurat e drurit. Dokumenti tjetër inline mbulohet nga krahasimi i plotë i JSON-it. U kontrolluan online butonat e dukshëm dhe karta me targë në desktop/telefon.
+
+**Readback përfundimtar, 7 nëntor 2026:** runtime i pin-uar `146cb4c2f2b3bd30ba6b42d576e2518952018095`, Railway `b8665f62-08dc-4981-abf6-6571b2a20687` SUCCESS. I njëjti krahasim i pavarur kaloi sërish: V4/r46, inventari i ruajtur, 14 hash-et identike, planet dhe druri të pandryshuar. Në TV galeria e Stadtpark-ut ruajti tri foto/shkarkime, me vetëm butonin Mbyll dhe zero input-e ngarkimi. Hyrjet Dashboard/Panel/TV dhe targa me barkod opsional janë të dukshme online. Nuk u krye mutacion prove online, gjenerim me pagesë, shkrim në AL Steel ose në demo tjetër. Source pin-i ishte i vetmi ndryshim Railway; variablat/sekretet nuk ndryshuan. Commit-et e mëvonshme vetëm të dokumentimit nuk publikohen automatikisht.
+
+**Pikë e vetme vazhdimi:** pronari rishikon Musterfirma-n dhe përcakton korrigjimet e tjera. PR75 mbetet draft mbi PR72, pa merge në main/pilot. Portofoli PR53 mbetet OWNER_HOLD; nuk vazhdohet automatikisht me publikim. Përmbledhja, korrigjimi i pronarit dhe ky readback u ruajtën në Google Doc-in ekzistues, duke ruajtur tabelën native 10×2. Mos përsërit seed-in/gjenerimet ose klikime që krijojnë historik të ri vetëm për të riprodhuar këtë provë. Rollback i UI-së te `be11f6f` ruan pajtueshmërinë V4; nuk rikthehet pa migrim një shkrues V3.
+
+## Punëtoria e drurit dhe ekipi — 6 nëntor 2026
+
+**Publikuar dhe kontrolluar online vetëm te Musterfirma.** Runtime `b894b20c8313abca956fa505d885ab0ff08820c0`, Railway `a53e6bf6-db80-4080-bfe1-49f67f274330` SUCCESS, [Draft PR75](https://github.com/IamRedi/redionflow/pull/75) mbi PR72. [Punëtoria online](https://redionflow-production.up.railway.app/demo/wood). Vetëm Musterfirma fiktive `Baumdienst Musterstadt GmbH`. AL Steel është referencë vetëm për lexim; nuk bashkohet kodi i pilotit dhe nuk kopjohen punonjës, klientë apo adresa reale.
+
+### Krahasimi me AL Steel dhe kufiri i përshtatjes
+
+Burimi i lexuar: dega aktive e AL Steel `claude/project-thread-an04j1`, runtime/source `d6289f218422f7301d2782592ab8c4d11cce90dc` (header-i kompakt, PR71). Worktree referencë detached, pa shkrime. U kontrollua edhe Workzone-ja reale për strukturën vizuale; përmbajtja private nuk hyn në media/dokumentet publike.
+
+| Rrjedha e referencës | Përshtatja në Musterfirma |
+| --- | --- |
+| Header kompakt dhe WorkerIconStrip | Rikthehet komponenti ekzistues i ekipit, me profile `/demo/workers`, kontrolle 44px dhe gjendjet e disponueshmërisë. Role, gjuhë e temë grupohen te menuja More. Hiqet blloku i madh prezantues i Workzone-s. |
+| Fusha e lirë, harta, plani dhe kalendari | Ruhet integrimi i PR72, pa një sistem të dytë planifikimi. |
+| Fabrika / përmbledhja e prodhimit | `Holzwerkstatt` / Punëtoria e drurit në `/demo/wood` dhe përmbledhje në Workzone. Oficina ekzistuese e riparimeve mbetet veçmas. |
+| Katalogu i përbashkët i punëve/fazave | Një katalog për përpunimin e drurit dhe punët e kantierit. Shto/ndrysho emër, udhëzime dhe ikonë; arkivo në vend të fshirjes. Emrat e barabartë pas normalizimit nuk regjistrohen dy herë, as kur janë arkivuar. |
+| Zgjedhja dhe renditja e proceseve | Çdo porosi zgjedh e rendit deri në 20 faza. Ruhet një snapshot i përkufizimeve, jo një listë që ndryshon kur redaktohet katalogu. |
+| Motorri i fazave të fabrikës | Ripërdoret funksioni ekzistues `applyStepCommand`: pritje, në punim, kryer, problem. Nuk kopjohen fazat e çelikut, kg apo tonët. |
+| Materiali i lidhur me kantierin | Ngarkesa e drurit lidhet me identitetin e qëndrueshëm të Baustelle-s ose me një burim tjetër të emërtuar; nuk krijohet Baustelle e dytë për punëtorinë. |
+| Foto, figurë AI dhe ikonë e procesit | Foto e ngarkuar → figurë AI e ruajtur → figurë editoriale e kuruar → SVG. Nuk kryhet gjenerim gjatë hapjes së faqes. |
+
+Kjo është përshtatje e rrjedhave për Baumdienst, jo deklarim se të gjitha modulet administrative/financiare të AL Steel janë kopjuar.
+
+### Identitetet dhe modeli i ruajtjes
+
+Moduli ruhet në rreshtin e veçantë `baumdienst-wood:v1` të tabelës ekzistuese `BaumdienstDemoWorkspace`. Nuk ndryshohet skema Prisma, V3 i inventarit, rreshti i planeve apo reset-i i natës. Rreshti nuk ka FK me punonjësit/kantieret që rikrijohen nga seed-i; lidhjet përdorin `demoSiteKey`/`demoWorkerKey` ekzistues. Pajisja mbetet po ai asset ID i inventarit, me po atë barkod/NFC dhe histori dorëzimi. Druri, ngarkesat, porositë, paketat dhe daljet kanë identitete materiale të veçanta dhe nuk shndërrohen në pajisje.
+
+GET inicializon vetëm një herë shembujt fiktivë: një ngarkesë, dy porosi druri, një proces kantieri, tre paketa shembull dhe një dalje shembull. Asnjë gjendje e ruajtur nuk zëvendësohet në hapje apo deploy. Shembujt kanë aktor/kohë dhe shënim të dallueshëm fiktiv. Nuk futen pajisje të dyfishta.
+
+Çdo mutacion ka UUID kërkese, revision optimist dhe receipt të qëndrueshëm. Riprovimi i së njëjtës kërkesë nuk krijon ngarkesë, dalje, stok apo foto tjetër; ripërdorimi me përmbajtje/aktor tjetër refuzohet. Kur humbet përgjigjja, klienti ruan kërkesën/UUID-n origjinale në memorie dhe e ripërdor në riprovimin manual, përfshirë foton me fingerprint të përmbajtjes. Nuk deklarohet pa konfirmim se ruajtja dështoi; para veprimit tjetër sqarohet kërkesa e pasigurt. Rreshti i punëtorisë dhe V3 i inventarit kyçen në rend të qëndrueshëm gjatë kontrollit/shkrimit. Revision i vjetër kthen 409 dhe UI ngarkon gjendjen e fundit pa bërë mbishkrim të heshtur. Kufij: 80 shkrime/minutë, JSON 4 MB, katalog 160, ngarkesa/porosi/dalje prodhimi nga 1000, dalje stoku 4000 dhe histori 12000 ngjarje. Kufiri nuk pret historikun fshehurazi; shkrimi refuzohet.
+
+### Pranimi → prodhimi → paketimi → dalja
+
+1. Shefi regjistron llojin e drurit, origjinën, sasinë e matur dhe njësinë; shënimi/fotoja janë plotësuese.
+2. Një porosi rezervon sasi nga ngarkesa. Sasia e lirë është pranimi minus rezervimet aktive. Nuk lejohet tejkalim, sasi negative apo rezervim i dyfishtë nga kërkesa konkurruese. Anulimi lejohet vetëm pa nisur asnjë fazë dhe e liron rezervimin; regjistrimi/historiku nuk fshihen.
+3. Shefi zgjedh/rendit fazat dhe ekipin/pajisjet. Parazgjedhja përfundon me paketimin; përgatitja për ngarkim mbetet fazë zgjedhore. Vetë një fazë nuk e zbret stokun. Lëvizja fizike për shitje/dërgesë regjistrohet te dalja e stokut.
+4. Punonjësi i caktuar ose shefi nis/përfundon fazën e radhës. Nuk anashkalohen fazat e mëparshme. Një problem kërkon shënim dhe zgjidhje të shprehur para vazhdimit. Rihapet vetëm faza e fundit e përfunduar pa punë të prekur më tej. Çdo veprim ruan aktorin, kohën, fazën dhe shënimin.
+5. Pas përfundimit të të gjitha fazave, shefi regjistron produktin, numrin e paketave dhe vëllimin e matur për paketë. Dalja e prodhimit regjistrohet një herë. Ajo e kyç rrjedhën e përfunduar, që rihapja të mos krijojë stok të dytë ose të ndryshojë historikun e materialit.
+6. Shitja ose dërgesa zbret paketa të plota nga ai output ID, me marrës/referencë, aktor dhe kohë. Nuk lejohet stok negativ. Nuk ka faturim, çmim, TVSH ose regjistrim pagese në këtë modul.
+
+Vëllimet ruhen si numra të plotë në të mijtat e njësisë. Fm, Rm dhe Srm janë tri baza matjeje të ndryshme: masë e plotë druri, dru i stivuar me boshllëqe dhe dru i hedhur lirshëm me boshllëqe. Nuk mbledhen si një total i vetëm dhe nuk konvertohen me faktor të fshehtë. Dalja e matur veçmas nuk është konvertim automatik i hyrjes. Burim: [Bayerische Landesanstalt für Wald und Forstwirtschaft – Bereitstellung und Verkauf von Scheitholz](https://lwf.bayern.de/forsttechnik-holz/holzverwendung/051664/index.php).
+
+### Lidhjet me njerëzit, inventarin dhe pemët
+
+Porosia dhe profili i punonjësit kanë lidhje kthimi te e njëjta punë; po kështu karta e pajisjes dhe procesi që e përdor. Karta e Baustelle-s përmbledh proceset dhe ngarkesat që vijnë prej saj. Shefi mund ta ndryshojë ekipin me histori para/pas. Pajisjet ndryshohen vetëm kur nuk ka fazë aktive; përfundimi i bllokuar/raportuar ruan provën e veprimit.
+
+Zgjedhja në porosi është referencë planifikimi, jo dorëzim pajisjeje. Para nisjes/vazhdimit/përfundimit kontrollohet sërish që pajisja nuk është në riparim, nuk ka kontroll të skaduar, nuk po përdoret në fazë aktive të një porosie tjetër dhe nuk ka dorëzim të pakonfirmuar. Duhet t’i jetë dorëzuar një anëtari të ekipit ose të jetë caktuar në atë kantier. Në magazinë ose te një ekip tjetër, përdoret rrjedha ekzistuese e skanimit/dorëzimit me konfirmime. Hapja e kartës ose zgjedhja e pajisjes nuk e kalon pronësinë automatikisht.
+
+Fazat e kantierit mund të kërkojnë përfundimin e të gjitha pemëve. Ky kusht është aktiv për shembujt e kujdesit/prerjes/Hecke-s dhe kontrollon TreeItem + mbivendosjen V3 ekzistuese. Nuk krijohet një flamur i dytë “pema u krye”. Konfirmimi i fazës është ngjarje historike; nëse më pas rihapet një pemë, UI shfaq sërish paralajmërimin dhe historiku i mëparshëm nuk rishkruhet.
+
+### Foto, AI, ikona dhe privatësi
+
+Katër figura të reja origjinale: ambienti i përpunimit, sharra e mbrojtur, çarësi hidraulik dhe paleta e paketuar. Stili vazhdon familjen ekzistuese Baumdienst/KiDraht: petrol, jeshile pylli, dru natyral, materiale mat dhe dritë studio. Manifesti `assets/baumdienst-wood/v1/manifest.json` ruan promptet dhe SHA-256 të PNG/WebP. Origjinalet PNG ruhen veçmas; konvertimi vetëm optimizon formatin WebP, pa ndryshime krijuese. Mjeti i integruar nuk ekspozon zgjedhje modeli, prandaj nuk i atribuohet një model i caktuar API.
+
+Nëntë simbole SVG të reja vazhdojnë familjen vendore me viewBox/stroke të njëjtë. Figurat janë referenca ilustruese, jo fotografi të punës së kryer dhe jo udhëzime sigurie të certifikuara. Fotografitë reale të ngarkuara kanë përparësi; nuk mbishkruhen nga AI.
+
+Gjenerimi i fazave përdor të njëjtin adapter/provider dhe **të njëjtin ledger 5 tentativa/ditë UTC, 50 gjithsej**, bashkë me pajisjet. Dështimet numërohen; cache dhe lease parandalojnë pagesa të përsëritura; nuk ka retry automatik me pagesë. Nuk krijohet çelës i dytë, provider i ri apo kuotë e dytë. Jashtë aplikacionit dërgohen vetëm emri/kategoria/ikona e fazës, jo shënime, klientë, punonjës, inventar ose adresa. Janë të dhëna të pasigurta brenda promptit dhe nuk trajtohen si udhëzime. Gjenerimi aktivizohet shprehimisht nga shefi.
+
+Foto JPG/PNG/WebP kalojnë përmes validimit/stripimit të metadatave ekzistues, me kufi hyrjeje 12 MB dhe konvertim të kufizuar në proces. Ruhen në workspace-in e drurit me target të emërtuar `phase:`, `job:` ose `intake:` dhe shërbehen vetëm nga rruga e tij; lloji teknik raster ekzistues mbetet `asset`, pa migrim/check-constraint të ri. Kufij: 160 foto / 22 MB për këtë modul. Galeria e porosisë ruan fotot e mëparshme.
+
+### Siguria dhe pranimi
+
+Të gjitha UI/API/art/files kërkojnë kombinimin e njëjtë demo + profil opt-in + SaaS joaktiv + saktësisht një firmë fiktive. Komandat nuk pranojnë kompani, aktor, kohë apo gjendje të plotë nga klienti. Shkrimet kontrollojnë same-origin, trup të kufizuar dhe skemë strikte. Shefi menaxhon katalogun, hyrjet, rezervimet, stokun dhe ekipin; punonjësi i caktuar konfirmon punën dhe ngarkon foto të porosisë. Role-demo nuk është autentikim i punonjësve realë.
+
+Gjendja e biznesit ruhet në server dhe UI rifreskohet ndërmjet pajisjeve; nuk mbështetet në localStorage. Pozicionet e fushës së Workzone-s mbeten preferencë e shfletuesit si më parë. Header/footer, modalet dhe scroll-i ruajnë kontratën e mëparshme: një zonë kryesore vertikale, footer në fund të përmbajtjes, 44px për prekje, tastierë/fokus dhe tema të lexueshme. Përkthime të reja pune DE/SQ/EN; prezantimi i ri DE/SQ/EN/IT. Gjuhët e tjera përdorin fallback të shënuar, jo pretendim për përkthim të plotë.
+
+Pranimi lokal në laptopin Windows: **679 unit PASS / 1 skip ekzistues, 9 integrime Postgres PASS dhe 28 prova shfletuesi PASS** në build-in Production. U ruajtën kontrollet e riparimeve, dokumenteve, skanimit, etiketave, konfirmimeve, planit, hartës, atlasit, temave/gjuhëve dhe ruajtjes në disa pajisje. Provat e drurit shtojnë paketimin/daljen, katalogun, rolet, pemët dhe një përgjigje të humbur pas commit-it me vetëm një ngarkesë të krijuar. Një nisje nën ngarkesë shkaktoi timeout në provën ekzistuese të zonave kohore; i gjithë seti u përsërit pa ndryshuar timeout/assertions dhe kaloi. Katër selektorë të testeve u përshtatën për menunë e grupuar. Zilja e njoftimeve mbetet e dukshme me badge; roli/gjuha/tema janë në More.
+
+U kontrolluan desktop 1440px, telefon 390/320px, landscape 740×360, tekst 200%, të dyja temat, fokus, footer natyral dhe mungesa e scroll-it horizontal. Rregullimi përfundimtar i fushës e pret gjerësinë e matur para montimit të kartave Musterfirma, që hapja e parë të mos i animojë nga një grumbull në kënd; hartë→fushë rilidh matjen. Sjellja pa `demoPhotoKey` ruhet. Faqja ekzistuese e privatësisë përshkruan tani edhe drurin dhe përshkruesit e fazës që dërgohen në AI, në gjashtë gjuhët e saj.
+
+Build/TypeScript dhe lint i plotë dhe i shprehur për demo: PASS; Gitleaks pa gjetje. Profilet pa opt-in, profil tjetër dhe SaaS: 404 edhe për wood API/art/files/images. Pas dy korrigjimeve të fundit të kufizuara u përsëritën build-i, dy prova të prekura të shfletuesit (PASS), kufijtë e tri profileve dhe kontrolli vizual i privatësisë në desktop/telefon. Kamera/NFC/tastiera fizike në telefon nuk deklarohen nga një viewport desktop.
+
+**Prova online:** në 1440×1000 dhe 390×844 u kontrolluan ekipi, header-i/zilja, porositë, rrjedha me katër faza dhe pamja e procesit. Te porosia fiktive `wood-sample-active` u konfirmua Spalten dhe u rihap; API e pavarur konfirmon revision 2 dhe dy ngjarje, me statusin fillestar aktiv të rikthyer. Nuk u krijua sasi prodhimi/dalje shtesë dhe nuk u fshi historiku. Pas rifreskimit në pamjen telefon të dhënat dalin sërish nga serveri. Të katër WebP-të online përputhen byte për byte me SHA-256 të manifestit. Nuk u përdor gjenerim prove me pagesë në API-n e demos.
+
+**Ruajtja e gjendjes:** V3 mbeti revision **45 → 45**, me dhjetë pajisje, gjashtë riparime dhe dy dokumente; JSON identik. Katër fotot e ngarkuara, dokumenti binar dhe pesë figurat AI japin dhjetë hash-e identike para/pas; dokumenti tjetër inline mbulohet nga krahasimi i JSON-it. Plani mbeti revision 1, me të njëjtën përmbajtje. Konfigurimi i Railway ndryshoi vetëm degën dhe pin-in e commit-it të shërbimit Musterfirma. Asnjë variabël/sekret, shërbim tjetër, bazë të dhënash apo reset nuk u ndryshua.
+
+**Referenca AL Steel:** gjatë kësaj pune rrjedha e veçantë e pilotit publikoi vetë runtime `cc386f508340cf3229e7e6a69294b032bfc1ec1d`, deployment `2a606edd-6ac2-4aa6-b0ff-f0e46d292dbe`. Dega e tij mbeti `claude/project-thread-an04j1`; në këtë punë nuk u kryen shkrime në atë shërbim/dege. Kjo lëvizje e jashtme regjistrohet veçmas nga prova e ruajtjes së Musterfirma-s dhe nuk u kthye mbrapsht.
+
+**Prezantimi:** seksioni vendor i Holzwerkstatt-it është online në katër gjuhë. README-t përditësohen në PR75 me pamjen reale online. About/website/topics dhe maturiteti i përgjithshëm i repos mbeten të saktë (NO_CONTENT_CHANGE); moduli i drurit mbetet shembull fiktiv, pa pretendim përdorimi nga klient real. [PR53 shoqëruese e portofolit](https://github.com/IamRedi/redion-portfolio-/pull/53), source `9a50ee6e10af201d90893f22828e3a41a65c1f49`, ruan PR52 të publikuar ndërkohë. Lint, TypeScript, testet e plota të përmbajtjes/prezantimeve, build/SSR/izolimi publik, GitHub sync dhe Gitleaks PASS. Karta SQ/EN dhe galeria u kontrolluan në desktop/telefon. Production i portofolit mbetet **PENDING_PUBLICATION**, pa merge të ri. Biblioteka ka 41 figura të mëparshme plus katër të drurit: 45 gjithsej.
+
+**Pikë vazhdimi:** puna e demos është e publikuar dhe e verifikuar; mos e përsërit seed-in, gjenerimet ose klikimet e provës. PR75/PR72 janë të hapura, të grumbulluara dhe pa merge në main. Hapi i mbetur i prezantimit është miratimi/merge i PR53 dhe kontrolli i Production pas atij publikimi. Pranimi në telefon fizik me NFC/kamerë/printer mbetet PENDING_RECHECK veçmas nga responsive viewport. Përmbledhja dhe kjo pikë vazhdimi ruhen në Google Doc-in ekzistues të projektit; logjika e plotë teknike mbetet këtu.
+
 ## Workzone, harta dhe plani — 6 nëntor 2026
 
 **Publikuar dhe kontrolluar online vetëm te Musterfirma.** Runtime `8527efcf7d12ce8475f8ea66f814e5e72e2e5282`, Railway `d7abd753-d944-4175-9338-ee3c4f0bf7c0` SUCCESS, [Draft PR72](https://github.com/IamRedi/redionflow/pull/72) mbi PR63. Pa merge në main/pilot dhe pa shkrim në shërbime të tjera.

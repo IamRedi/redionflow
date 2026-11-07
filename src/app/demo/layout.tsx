@@ -72,7 +72,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   const pageTone = mode === "baumdienst" ? "dark:bg-[#10211a]" : "";
 
   return (
-    <div className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
+    <div data-demo-shell={workshopEnabled ? "muster" : undefined} className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
       <header className={workshopEnabled ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         <div className="pt-3">
           <DemoTopBar

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, Home, LayoutDashboard, MoreHorizontal, Truck, Wrench } from "lucide-react";
+import { Bot, Home, LayoutDashboard, Monitor, Settings2, MoreHorizontal, Package, TreePine, Truck, Wrench } from "lucide-react";
 import { cookies } from "next/headers";
 
 import { AppBrand } from "@/components/branding/AppBrand";
@@ -14,6 +14,11 @@ import { DemoReadonlyBadge } from "./demo-readonly-badge";
 import { DemoThemeButton } from "./demo-theme-button";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { DemoActorBar } from "./workshop/demo-actor-bar";
+import { DemoTeamStrip } from "./workshop/demo-team-strip";
+import { navigationCopy } from "@/lib/workshop/navigation-copy";
+import { DemoDashboardLaunch } from "./workshop/demo-dashboard-launch";
+import { DemoBrand } from "./workshop/demo-brand";
+import { woodCopy } from "@/lib/workshop/wood-copy";
 
 const workzoneName="Workzone", dashboardName="Dashboard", aiLabel="AI", aiPreview="AI preview";
 
@@ -35,18 +40,19 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
 
   if (mode === "baumdienst" && workshopEnabled) {
     const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
-    return <div className="w-full min-w-0 px-5 pb-3 pt-8 lg:pr-20" data-testid="baum-demo-topbar">
-      <div data-demo-teamrow className="flex min-w-0 items-center gap-3"><Link href="/demo/workzone" aria-label="BaumdienstFlow · Workzone" className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><AppBrand compact mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} /></Link><DemoActorBar /></div>
-      <nav data-demo-navigation aria-label="Demo" className="mt-3 flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto pb-1 whitespace-nowrap [&>*]:shrink-0 sm:flex-wrap sm:overflow-visible">
+    const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
+    return <div className="w-full min-w-0 px-4 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
+      <div data-demo-teamrow className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
+        <div className="flex items-center gap-2"><DemoActorBar mode="notifications"/><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border bg-card focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 w-[min(21rem,calc(100vw-2rem))] space-y-3 rounded-2xl border bg-card p-3 shadow-xl"><DemoActorBar mode="roles"/><div className="flex flex-wrap items-center gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
+      </div>
+      <nav data-demo-navigation aria-label="Demo" className="mt-1 flex min-w-0 flex-wrap items-center gap-2 pb-1 [&>*]:shrink-0">
         <Link href="/demo/workzone" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Home className="size-4" />{workzoneName}</Link>
+        <Link href="/demo/control" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Settings2 className="size-4" />{n.panel}</Link>
+        <DemoDashboardLaunch href="/demo/tv?view=dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Monitor className="size-4" />{n.tv}</DemoDashboardLaunch>
+        <Link href="/demo/wood" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><TreePine className="size-4" />{wood.title}</Link>
         <Link href="/demo/workshop" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Wrench className="size-4" />{c.title}</Link>
+        <Link href="/demo/workshop?tab=tools" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Package className="size-4" />{c.tools}</Link>
         <Link href="/demo/workshop?tab=fleet" aria-label={`${c.fleet} · Demo`} className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><Truck className="size-4" />{c.fleet}</Link>
-        <details className="relative"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 rounded-full border bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-4" />{c.more}</summary><div className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2">
-        <Link href="/demo/dashboard" className="inline-flex min-h-11 items-center justify-center rounded-full border bg-card px-3 focus-visible:ring-2 focus-visible:ring-ring" aria-label={dashboardName} title={dashboardName}><LayoutDashboard className="size-4" /></Link>
-        {kidraht ? <KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle", currentLang)} className="h-11 min-w-11" /> : null}
-        <DemoThemeButton dark={dark} label={t("admin.themeToggle", currentLang)} />
-        <div className="[&_button]:min-h-11 [&_button]:min-w-11"><LanguageSwitcher /></div>
-        </div></details>
       </nav>
     </div>;
   }

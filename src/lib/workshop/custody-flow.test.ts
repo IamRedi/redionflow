@@ -99,7 +99,7 @@ describe("Musterfirma custody", () => {
   it("upgrades v2 without replacing old assets, jobs, files, events or part movements", () => {
     const old = { ...createWorkshopDemo(), version: 2 }; delete (old as Partial<typeof old>).custody;
     const upgraded = upgradeWorkshopInventory(old, directory);
-    expect(upgraded.version).toBe(3); expect(upgraded.jobs).toEqual(old.jobs); expect(upgraded.documents).toEqual(old.documents); expect(upgraded.movements).toEqual(old.movements);
+    expect(upgraded.version).toBe(4); expect(upgraded.jobs).toEqual(old.jobs); expect(upgraded.documents).toEqual(old.documents); expect(upgraded.movements).toEqual(old.movements);
     expect(workshopSchema.safeParse(old).success).toBe(false);
   });
 });

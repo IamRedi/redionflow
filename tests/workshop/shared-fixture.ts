@@ -8,5 +8,6 @@ export async function resetWorkshopFixture() {
   if (companies.length !== 1 || companies[0].mode !== "baumdienst" || companies[0].displayName !== "Baumdienst Musterstadt GmbH") throw new Error("Unexpected fixture company");
   // Only this new demo store is cleared; source/pilot/customer data is unreachable.
   await prisma.baumdienstDemoWorkspace.deleteMany({ where: { key: DEMO_WORKSPACE_KEY } });
+  await prisma.baumdienstDemoWorkspace.deleteMany({ where: { key: "baumdienst-media:v1" } });
 }
 export { prisma };

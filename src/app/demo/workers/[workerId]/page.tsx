@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoWorkerKey, requireWorkshopDemo } from "@/lib/workshop/shared-store";
 import { InventoryScope } from "@/components/demo/workshop/inventory-scope";
+import { WoodAssignmentLinks } from "@/components/demo/workshop/wood-overview";
 
 export default async function DemoWorkerProfilePage({ params }: { params: Promise<{ workerId: string }> }) {
   const company = await getOrCreateDefaultCompany();
@@ -45,7 +46,7 @@ export default async function DemoWorkerProfilePage({ params }: { params: Promis
       {!inventoryEnabled && <div className="flex justify-end">
         <DemoReadonlyBadge />
       </div>}
-      <DemoWorkerProfileView worker={{ ...worker, inventoryMovements }} inventoryContent={inventoryEnabled ? <InventoryScope scope="worker" identity={demoWorkerKey(worker)} now={new Date().toISOString()} /> : undefined} />
+      <DemoWorkerProfileView worker={{ ...worker, inventoryMovements }} inventoryContent={inventoryEnabled ? <><InventoryScope scope="worker" identity={demoWorkerKey(worker)} now={new Date().toISOString()} /><WoodAssignmentLinks workerKey={demoWorkerKey(worker)}/></> : undefined} />
     </div>
   );
 }

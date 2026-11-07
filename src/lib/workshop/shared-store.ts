@@ -9,7 +9,9 @@ import { upgradeWorkshopInventory } from "./inventory-flow";
 import type { DemoActor } from "./custody-schema";
 import { applyCustodyCommand, type BaseTree } from "./custody-flow";
 import type { z } from "zod";
-import { IMAGE_LEASE_MS, imageEnabled, imageIdentity, imageUrl } from "./image-identity";
+import { IMAGE_LEASE_MS, IMAGE_LEGACY_STYLE, coverImageIdentity, imageEnabled, imageIdentity, imageUrl } from "./image-identity";
+import { DEMO_BRAND_TARGET } from "./media";
+import { readMediaState } from "./media-store";
 
 export const DEMO_WORKSPACE_KEY = "baumdienst-workshop:v1";
 export class SharedWorkshopError extends Error {
@@ -43,12 +45,12 @@ export async function workshopDirectory(tx: Prisma.TransactionClient = prisma): 
 export async function ensureWorkshopDemo() {
   const directory = await workshopDirectory();
   const row = await prisma.baumdienstDemoWorkspace.upsert({ where: { key: DEMO_WORKSPACE_KEY }, update: {}, create: { key: DEMO_WORKSPACE_KEY, data: json(upgradeWorkshopInventory(createWorkshopDemo(), directory)) } });
-  if ((row.data as { version?: unknown })?.version === 3) return row;
-  // Version 3 makes older writers fail closed rather than losing confirmations.
+  if ((row.data as { version?: unknown })?.version === 4) return row;
+  // Version 4 makes older writers fail closed rather than losing confirmations.
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT "key" FROM "BaumdienstDemoWorkspace" WHERE "key" = ${DEMO_WORKSPACE_KEY} FOR UPDATE`;
     const current = await tx.baumdienstDemoWorkspace.findUniqueOrThrow({ where: { key: DEMO_WORKSPACE_KEY } });
-    if ((current.data as { version?: unknown })?.version === 3) return current;
+    if ((current.data as { version?: unknown })?.version === 4) return current;
     return tx.baumdienstDemoWorkspace.update({ where: { key: DEMO_WORKSPACE_KEY }, data: { data: json(upgradeWorkshopInventory(current.data, directory)), revision: { increment: 1 } } });
   });
 }
@@ -56,14 +58,22 @@ export async function workshopSnapshot(tx: Prisma.TransactionClient = prisma): P
   const row = await tx.baumdienstDemoWorkspace.findUniqueOrThrow({ where: { key: DEMO_WORKSPACE_KEY } });
   const photos = await tx.baumdienstDemoFile.findMany({ where: { workspaceKey: DEMO_WORKSPACE_KEY, kind: { in: ["asset", "site"] } }, orderBy: { createdAt: "desc" }, select: { id: true, kind: true, target: true, jobId: true, name: true, createdAt: true } });
   const state = workshopSchema.parse(row.data);
+  const directory=await workshopDirectory(tx), media=await readMediaState(tx);
   const generations = await tx.baumdienstDemoImageGeneration.findMany({ where: { workspaceKey: DEMO_WORKSPACE_KEY }, orderBy: { startedAt: "desc" }, select: { id: true, fingerprint: true, status: true, startedAt: true, finishedAt: true, errorCode: true } });
   const illustrations = state.assets.flatMap(asset => {
     const candidates = generations.filter(g => g.fingerprint === digest(imageIdentity(asset)));
-    const g = candidates.find(g => g.status === "ready") || candidates[0]; if (!g) return [];
+    const legacy=generations.find(g=>g.fingerprint===digest(imageIdentity(asset,IMAGE_LEGACY_STYLE))&&g.status==="ready");
+    const g = candidates.find(g => g.status === "ready") || candidates[0] || legacy; if (!g) return [];
     const expired = g.status === "pending" && Date.now() - g.startedAt.getTime() >= IMAGE_LEASE_MS;
-    return [{ assetId: asset.id, status: (expired ? "error" : g.status) as "pending" | "ready" | "error", at: (g.finishedAt || g.startedAt).toISOString(), ...(g.status === "ready" ? { url: imageUrl(g.id) } : {}), ...(expired || g.errorCode ? { error: expired ? "aiTimeout" : g.errorCode! } : {}) }];
+    return [{ assetId: asset.id, id:g.id, legacy:g===legacy, status: (expired ? "error" : g.status) as "pending" | "ready" | "error", at: (g.finishedAt || g.startedAt).toISOString(), ...(g.status === "ready" ? { url: imageUrl(g.id) } : {}), ...(expired || g.errorCode ? { error: expired ? "aiTimeout" : g.errorCode! } : {}) }];
   });
-  return { state, illustrations, imageGenerationEnabled: imageEnabled(), revision: row.revision, updatedAt: row.updatedAt.toISOString(), directory: await workshopDirectory(tx), photos: photos.map(p => ({ id: p.id, kind: p.kind as "asset" | "site", target: p.target, ...(p.jobId ? { jobId: p.jobId } : {}), name: p.name, at: p.createdAt.toISOString(), url: fileUrl(p.id) })) };
+  for(const target of [{assetId:DEMO_BRAND_TARGET,kind:"brand" as const,name:"BaumdienstFlow Musterfirma"},...directory.sites.map(s=>({assetId:`site-cover:${s.key}`,kind:"site" as const,name:s.name}))]) {
+    const current=generations.filter(g=>g.fingerprint===digest(coverImageIdentity(target.kind,target.name)));
+    const legacy=generations.find(g=>g.fingerprint===digest(coverImageIdentity(target.kind,target.name,false))&&g.status==="ready");
+    const g=current.find(g=>g.status==="ready")??legacy??current[0];
+    if(g){const expired=g.status==="pending"&&Date.now()-g.startedAt.getTime()>=IMAGE_LEASE_MS;illustrations.push({assetId:target.assetId,id:g.id,legacy:g===legacy,status:(expired?"error":g.status) as "pending"|"ready"|"error",at:(g.finishedAt||g.startedAt).toISOString(),...(g.status==="ready"?{url:imageUrl(g.id)}:{}),...(expired||g.errorCode?{error:expired?"aiTimeout":g.errorCode!}:{})});}
+  }
+  return { state, illustrations, mediaPreferences:media.preferences, imageGenerationEnabled: imageEnabled(), revision: row.revision, updatedAt: row.updatedAt.toISOString(), directory, photos: photos.map(p => ({ id: p.id, kind: p.kind as "asset" | "site", target: p.target, ...(p.jobId ? { jobId: p.jobId } : {}), name: p.name, at: p.createdAt.toISOString(), url: fileUrl(p.id) })) };
 }
 
 export async function mutateWorkshopDemo(envelope: { requestId: string; revision: number }, fingerprint: string, apply: (tx: Prisma.TransactionClient, state: WorkshopState, at: string, id: string) => Promise<WorkshopState>) {

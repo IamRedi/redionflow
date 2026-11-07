@@ -1,3 +1,4 @@
+import { assetIdentity } from "./asset-identity";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@/generated/prisma/client";
@@ -19,7 +20,7 @@ export async function demoPlanDirectory(date: string, tx: Prisma.TransactionClie
   return {
     sites: directory.sites.filter(s => s.active).map(s => ({ id: s.key, name: s.name })),
     workers: directory.workers.map(w => { const raw = workers.find(r => r.id === w.id); return { id: w.key, name: w.name, licenses: raw?.licenses ?? null, availability: raw?.availability ?? "UNAVAILABLE", hasApprovedVacation: Boolean(raw?.vacationRequests.length) }; }),
-    machines: snapshot.state.assets.map(a => ({ id: a.id, name: `${a.name} · ${a.code}`, requiredLicense: machines.find(m => m.targe === a.code)?.patentaEnevojshme ?? null, isActive: !["workshop", "inspection"].includes(availability(snapshot.state, a, `${date}T12:00:00Z`)) })),
+    machines: snapshot.state.assets.map(a => ({ id: a.id, name: `${a.name} · ${assetIdentity(a)}`, requiredLicense: machines.find(m => m.targe === a.code)?.patentaEnevojshme ?? null, isActive: !["workshop", "inspection"].includes(availability(snapshot.state, a, `${date}T12:00:00Z`)) })),
   };
 }
 export async function demoPlansSnapshot(date: string, tx: Prisma.TransactionClient): Promise<DemoPlanSnapshot> {
