@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { getPilotAdmin as getCurrentAdmin } from "@/lib/auth/pilot-session";
-import { getOrCreateDefaultCompany } from "@/lib/db/company";
+import { companyOrLogin } from "@/lib/workzone/company-or-login";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { dateKey, dayRange } from "@/lib/workzone/date-utils";
@@ -51,7 +51,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
     );
   }
 
-  const company = await getOrCreateDefaultCompany();
+  const company = await companyOrLogin();
   if (!company) return null;
 
   const { plan, workers, machines, baustellen } = await withPilotDbContext(company.id, async tx => {
