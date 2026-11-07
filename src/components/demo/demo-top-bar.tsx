@@ -16,6 +16,7 @@ import { workshopCopy } from "@/lib/workshop/copy";
 import { DemoActorBar } from "./workshop/demo-actor-bar";
 import { DemoTeamStrip } from "./workshop/demo-team-strip";
 import { navigationCopy } from "@/lib/workshop/navigation-copy";
+import { DemoBrand } from "./workshop/demo-brand";
 import { woodCopy } from "@/lib/workshop/wood-copy";
 
 const workzoneName="Workzone", dashboardName="Dashboard", aiLabel="AI", aiPreview="AI preview";
@@ -40,14 +41,13 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
     const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
     return <div className="w-full min-w-0 px-4 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
-      <div data-demo-teamrow className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"><Link href="/demo/workzone" aria-label="BaumdienstFlow · Workzone" className="shrink-0 rounded-full [&_img]:!size-14 [&_span]:!size-14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><AppBrand compact mode={mode} logoAlt={t("common.companyLogoAlt", currentLang)} /></Link><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
+      <div data-demo-teamrow className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
         <div className="flex items-center gap-2"><DemoActorBar mode="notifications"/><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border bg-card focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 w-[min(21rem,calc(100vw-2rem))] space-y-3 rounded-2xl border bg-card p-3 shadow-xl"><DemoActorBar mode="roles"/><div className="flex flex-wrap items-center gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
       </div>
       <nav data-demo-navigation aria-label="Demo" className="mt-1 flex min-w-0 flex-wrap items-center gap-2 pb-1 [&>*]:shrink-0">
         <Link href="/demo/workzone" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Home className="size-4" />{workzoneName}</Link>
-        <Link href="/demo/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><LayoutDashboard className="size-4" />{dashboardName}</Link>
         <Link href="/demo/control" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Settings2 className="size-4" />{n.panel}</Link>
-        <Link href="/demo/tv" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Monitor className="size-4" />{n.tv}</Link>
+        <Link href="/demo/tv?view=dashboard" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Monitor className="size-4" />{n.tv}</Link>
         <Link href="/demo/wood" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><TreePine className="size-4" />{wood.title}</Link>
         <Link href="/demo/workshop" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Wrench className="size-4" />{c.title}</Link>
         <Link href="/demo/workshop?tab=tools" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Package className="size-4" />{c.tools}</Link>

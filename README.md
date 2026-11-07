@@ -2,6 +2,8 @@
 
 # RediOnFlow
 
+**Musterfirma weiterhin in Eigentümerprüfung · 7. November 2026:** Einheitlicher Petrol-Studiostil, keine Bild-Badges, explizite KI-Aktion und wiederherstellbare Bild-/Titelbild-/Logoverwaltung nur im Baumdienst-Template. Navigation: ein „Dashboard view“ mit bestehender TV-Ansicht. AL Steel und andere Demos bleiben unberührt; das Portfolio bleibt OWNER_HOLD. [Logik, Prüfungen und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
 **Holzwerkstatt der Musterfirma · 6. November 2026:** Die Teamleiste ist wieder sichtbar. Der eigene Holzbereich verbindet Baustellen-Holzeingang, konfigurierbare Arbeitsphasen, Team/Geräte, Verpackung und Bestandsabgänge in getrennten Fm/Rm/Srm-Maßen. Reparaturen bleiben in der vorhandenen Werkstatt; Geräteübergaben behalten ihre Bestätigungen. Fotos haben Vorrang vor KI, deren 5/UTC-Tag- und 50-Gesamtkontingent mit den Geräten geteilt wird. Nur das fiktive Baumdienst-Template. [Holzwerkstatt](https://redionflow-production.up.railway.app/demo/wood) · [Logik und Rolloutstatus](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Tatsächliche Online-Musterfirma mit Teamleiste und Holzproduktion](docs/assets/screenshots/baum-wood-production-online.jpg)

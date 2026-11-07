@@ -12,7 +12,7 @@ async function verify(flags,label){
       const reply=await fetch('http://127.0.0.1:8766'+endpoint);
       if(reply.status!==404)throw new Error(`${label}: ${endpoint} leaked (${reply.status})`);
     }
-    for(const endpoint of ['/api/demo/baumdienst/wood','/api/demo/baumdienst/wood/files','/api/demo/baumdienst/wood/images','/api/demo/baumdienst/plans','/api/demo/baumdienst/workshop','/api/demo/baumdienst/files','/api/demo/baumdienst/actor','/api/demo/baumdienst/images']){
+    for(const endpoint of ['/api/demo/baumdienst/media','/api/demo/baumdienst/wood','/api/demo/baumdienst/wood/files','/api/demo/baumdienst/wood/images','/api/demo/baumdienst/plans','/api/demo/baumdienst/workshop','/api/demo/baumdienst/files','/api/demo/baumdienst/actor','/api/demo/baumdienst/images']){
       const reply=await fetch('http://127.0.0.1:8766'+endpoint,{method:'POST',headers:{Origin:'http://127.0.0.1:8766','Content-Type':'application/json'},body:'{}'});
       if(reply.status!==404)throw new Error(`${label}: write endpoint ${endpoint} leaked (${reply.status})`);
     }

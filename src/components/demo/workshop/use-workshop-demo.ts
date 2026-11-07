@@ -5,6 +5,7 @@ import { createWorkshopDemo } from "@/lib/workshop/demo-data";
 import { emptyDirectory, snapshotSchema, WORKSHOP_API, WORKSHOP_FILES_API, type publicWorkshopCommand, type WorkshopSnapshot } from "@/lib/workshop/shared-contract";
 import type { z } from "zod";
 import { demoOffice } from "@/lib/workshop/custody-schema";
+import type { MediaCommand } from "@/lib/workshop/media";
 export type DemoInventoryCommand = z.infer<typeof publicWorkshopCommand>;
 
 type View = WorkshopSnapshot & { status: "loading" | "ready" | "connection"; hydrated: boolean; pending: boolean; generating: string[]; imageErrors: Record<string,string> };
@@ -104,12 +105,15 @@ export function useWorkshopDemo() {
     etag = null; if (reading) await reading; await refresh();
     } finally { emit({pending: false}); }
   }
-  async function generateImage(assetId: string) {
+  async function manageMedia(command:MediaCommand) {
+    await change(()=>send("/api/demo/baumdienst/media",JSON.stringify(["media",command]),()=>JSON.stringify({requestId:crypto.randomUUID(),revision:cached.revision,command}),{"Content-Type":"application/json"}));
+  }
+  async function generateImage(assetId: string,kind:"asset"|"site"|"brand"="asset") {
     if (cached.generating.includes(assetId)) return;
     emit({ generating: [...cached.generating, assetId], imageErrors: { ...cached.imageErrors, [assetId]: "" } });
     const requestId = imageRequests.get(assetId) || crypto.randomUUID(); imageRequests.set(assetId, requestId);
     try {
-      const response = await fetch("/api/demo/baumdienst/images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assetId, requestId }) });
+      const response = await fetch("/api/demo/baumdienst/images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assetId, requestId, kind }) });
       const result = await response.json();
       imageRequests.delete(assetId);
       if (!response.ok || result.status === "error") throw new Error(result.error || "aiFailed");
@@ -118,5 +122,5 @@ export function useWorkshopDemo() {
       throw error;
     } finally { emit({ generating: cached.generating.filter(id => id !== assetId) }); etag = null; if (reading) await reading; await refresh(); }
   }
-  return { ...data, actor: data.actor || demoOffice, dispatch, upload, refresh, switchActor, generateImage };
+  return { ...data, actor: data.actor || demoOffice, dispatch, upload, refresh, switchActor, generateImage, manageMedia };
 }

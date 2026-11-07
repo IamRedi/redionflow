@@ -9,7 +9,7 @@ test("dashboard, control panel and TV are directly reachable at desktop and touc
   const before=await(await request.get(api)).json() as WorkshopSnapshot;
   for(const size of [{width:1440,height:1000},{width:390,height:844},{width:320,height:720},{width:740,height:360}]){
     await page.setViewportSize(size);await page.goto("/demo/workzone");const nav=page.getByRole("navigation",{name:"Demo",exact:true});
-    for(const label of ["Dashboard","Kontrollpanel","Auf TV öffnen"]){const link=nav.getByRole("link",{name:label,exact:true});await expect(link).toBeVisible();expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);expect(await link.evaluate(el=>!el.closest("details"))).toBe(true);}
+    for(const label of ["Kontrollpanel","Dashboard view"]){const link=nav.getByRole("link",{name:label,exact:true});await expect(link).toBeVisible();expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);expect(await link.evaluate(el=>!el.closest("details"))).toBe(true);}
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.addStyleTag({content:"html{font-size:200% !important}"});
     expect(await page.getByTestId("demo-workspace").evaluate(el=>el.clientHeight)).toBeGreaterThan(Math.min(180,size.height/3));
@@ -24,14 +24,14 @@ test("dashboard, control panel and TV are directly reachable at desktop and touc
 
 test("TV reuses current Workzone and dashboard without changing inventory or plans",async({page,request},info)=>{
   const before=await(await request.get(api)).json() as WorkshopSnapshot;
-  await page.goto("/demo/tv");await expect(page.getByRole("heading",{name:"TV-Ansicht · BaumdienstFlow",exact:true})).toBeVisible();
+  await page.goto("/demo/tv");await expect(page.getByRole("heading",{name:"Dashboard view · BaumdienstFlow",exact:true})).toBeVisible();
   await page.locator('[data-testid^="demo-photo-site-"] button').first().click();
   await expect(page.getByRole("dialog").locator('input[type="file"]')).toHaveCount(0);
   await expect(page.getByRole("dialog").getByRole("button")).toHaveCount(1);
   await page.getByRole("dialog").getByRole("button",{name:"Schließen",exact:true}).click();
   await expect(page.getByTestId("baum-demo-topbar")).toBeHidden();await expect(page.getByRole("button",{name:"Vollbild",exact:true})).toBeVisible();
   await expect(page.getByRole("main").getByRole("button",{name:"Anordnung zurücksetzen"})).toHaveCount(0);
-  await page.getByRole("navigation",{name:"TV-Ansicht",exact:true}).getByRole("link",{name:"Dashboard",exact:true}).click();
+  await page.getByRole("navigation",{name:"Dashboard view",exact:true}).getByRole("link",{name:"Dashboard",exact:true}).click();
   await expect(page).toHaveURL(/view=dashboard/);await expect(page.getByRole("heading",{name:"Dashboard",exact:true})).toBeVisible();
   await page.getByRole("button",{name:"Aktualisieren",exact:true}).click();
   await page.screenshot({path:info.outputPath("tv-dashboard-desktop.png")});

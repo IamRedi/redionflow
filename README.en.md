@@ -2,6 +2,8 @@
 
 # RediOnFlow
 
+**Musterfirma remains under owner review · 7 November 2026:** One petrol studio style, no image badges, explicit AI actions and recoverable image/cover/demo-logo management in the Baumdienst template only. One “Dashboard view” entry retains the existing TV views. AL Steel and other demos are outside this change; portfolio publication remains OWNER_HOLD. [Logic, checks and rollout status](docs/BAUMDIENST_WORKSHOP_DEMO.md).
+
 **Musterfirma wood workshop · 6 November 2026:** The staff strip is restored. The separate wood workspace links worksite timber intake, configurable phases, team/equipment, packaging and stock issues, with distinct Fm/Rm/Srm volume bases. Repairs stay in the existing workshop; inventory handovers retain their confirmations. Uploaded photos take priority over AI, which shares the existing 5/UTC day and 50-total allowance with equipment. Fictional Baumdienst template only. [Wood workshop](https://redionflow-production.up.railway.app/demo/wood) · [Logic and rollout status](docs/BAUMDIENST_WORKSHOP_DEMO.md).
 
 ![Actual online Musterfirma with the team strip and wood production](docs/assets/screenshots/baum-wood-production-online.jpg)

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { applyStepCommand, batchState, initialFactorySteps, type FactoryStep, type StepCommand } from "@/lib/factory/production";
 import { actorSchema, type DemoActor } from "./custody-schema";
 import type { WorkshopDirectory } from "./shared-contract";
+import type { MediaPreference } from "./media";
 
 const id = z.string().trim().min(1).max(128), label = z.string().trim().min(1).max(120);
 const note = z.string().trim().max(2000), at = z.iso.datetime();
@@ -38,7 +39,7 @@ export const woodMediaEnvelope = z.object({requestId:z.uuid(),revision:z.number(
 export type WoodMediaTarget = z.infer<typeof woodMediaEnvelope>;
 export type WoodMedia = {id:string;target:string;kind:"phase"|"job"|"intake";name:string;url:string;at:string};
 export type WoodEquipment={id:string;available:boolean;holder?:string;site?:string;pending?:boolean};
-export type WoodSnapshot = WoodState & {revision:number;actor:DemoActor;directory:WorkshopDirectory;equipment:Array<WoodEquipment&{name:string}>;openTrees:Record<string,number>;media:WoodMedia[];illustrations:Array<{target:string;status:string;url?:string;error?:string}>;imageGenerationEnabled:boolean};
+export type WoodSnapshot = WoodState & {revision:number;actor:DemoActor;directory:WorkshopDirectory;equipment:Array<WoodEquipment&{name:string}>;openTrees:Record<string,number>;media:WoodMedia[];mediaPreferences?:MediaPreference[];illustrations:Array<{id?:string;target:string;status:string;url?:string;error?:string;legacy?:boolean}>;imageGenerationEnabled:boolean};
 export class WoodError extends Error {}
 const normalize = (text:string)=>text.normalize("NFKC").replace(/\s+/g," ").trim().toLocaleLowerCase("de");
 const builtin = (key:string,kind:"wood"|"site",label:string,icon:WoodIcon,art?:WorkDefinition["art"]): WorkDefinition => ({id:`phase-${key}`,kind,label,description:"",icon,art,requiresTrees:["prune","fell","hedge"].includes(key),archived:false});

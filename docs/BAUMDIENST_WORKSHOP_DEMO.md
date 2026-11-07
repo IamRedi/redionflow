@@ -1,5 +1,36 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
+
+## Figurat, kopertinat dhe Dashboard view — 7 nëntor 2026
+
+**Vetëm Musterfirma; portofoli PR53 mbetet OWNER_HOLD.** Korrigjimi i ri i pronarit zëvendëson kërkesën e mëparshme për dy hyrje Dashboard/TV: mbetet një buton **Dashboard view**, që hap `/demo/tv?view=dashboard` në skedë tjetër. Brenda ruhen statistikat, Workzone, rifreskimi, fullscreen dhe kthimi. `/demo/dashboard` mbetet rrugë e vlefshme për pajtueshmërinë; nuk ka dy hyrje të njëjta në menu/panel. Paneli i kontrollit, plani/harta/kalendari, ekipi, inventari dhe të dyja punëtoritë mbeten.
+
+### Një familje figurash
+
+`baumdienst-studio-petrol-v2` ruan adapterin OpenAI, modelin ekzistues `gpt-image-2.6-flare` dhe parametrat e kufizuar. Pajisje reale në formë/proporcione, jeshile pylli, metale/gomë natyrale, detaje portokalli dhe sfond studio petrol `#0c2b35`; pa tekst ose logo të shpikura mbi pajisje. Ndryshimi i versionit të stilit ndan cache-in e ri nga pesë figurat e vjetra me sfond të bardhë. Lexuesi ruan fallback të lexueshëm për V1 deri te krijimi i V2; origjinalet V1 nuk fshihen. Parametrat dhe çmimi për thirrje nuk rriten. U lexua dokumentacioni zyrtar i Images API më 07.11.2026; nuk u zgjodh provider/model tjetër dhe nuk u shtua varësi aplikacioni.
+
+Etiketa e mbivendosur “AI” hiqet nga kartat dhe miniaturat. Prejardhja mbetet në galeri dhe në ledger-in e gjenerimit. Ilustrimi nuk bëhet foto e njësisë reale ose provë riparimi. Fotot reale të ngarkuara kanë përparësi dhe ruhen pa editim gjenerativ.
+
+“Krijo me AI” është veprim i shprehur i shefit në galerinë e pajisjes, kopertinën e kantierit, logon/emblemën e Musterfirma-s te paneli dhe figurën e fazës së drurit. Emblema përdor një target të rezervuar, jo një pajisje ose firmë të dytë; header-i lexon të njëjtën zgjedhje. Dërgohen vetëm përshkruesit vizualë të lejuar; kantieri përdor emrin fiktiv, jo adresë/shënime/ekip. Kopertinat dhe emblema përdorin të njëjtin adapter, lease dhe ledger **5 tentativa/ditë UTC, 50 gjithsej** me pajisjet/fazat. Dështimet mbeten të numëruara. Nuk ka gjenerim në refresh ose retry automatik me pagesë. Cache-i ripërdor të njëjtin subjekt; një figurë e hequr mund të rikthehet pa pagesë. Ngarkimet aktive bllokojnë gjenerimin, përfshirë një foto të mbërritur gjatë tij.
+
+### Menaxhimi dhe ruajtja
+
+Galeritë kanë **Vendos si kopertinë**, **Hiq figurën** dhe **Rikthe figurën**. E njëjta zgjedhje përdoret në inventar, miniaturat e riparimeve, kantier, header-in e logos dhe fazat/porositë/hyrjet e drurit. “Hiq” e largon figurën nga pamja aktive, ndërsa origjinali mbetet te “Figurat e hequra”; është rikthim brenda produktit, jo fshirje e pakthyeshme. URL-të/origjinalet dhe historiku nuk fshihen. Kuotat e skedarëve/AI nuk zerohet duke hequr një figurë. Preferencat kanë kufij 500 targete, 200 referenca të fshehura/target dhe 2000 ngjarje; tejkalimi dështon atomikisht.
+
+Përdoret modeli ekzistues PostgreSQL `BaumdienstDemoWorkspace`, me një rresht të versionuar **`baumdienst-media:v1`** vetëm për referenca pamjeje, kopertinën, figurat e fshehura dhe auditin person/kohë/veprim. Nuk ka bazë/shërbim të ri, migrim Prisma, kopje inventari ose rrjedhë të dytë biznesi. Inventari mbetet V4. Shkruesit e mëparshëm të inventarit nuk i heqin preferencat, sepse nuk rishkruajnë rreshtin e pamjes. GET nuk krijon këtë rresht. Reset-i ekzistues i të dhënave bazë nuk e prek.
+
+Shkrimet përdorin kyçjen ekzistuese të inventarit, revision, UUID dhe receipt me aktor/përmbajtje. Ngarkimet e drurit mbajnë të njëjtin rend kyçjesh me inventarin. Ndryshimi i pamjes përditëson revision-in e inventarit për ETag/polling; sasia, pronari, riparimet, planet dhe historiku i përpunimit nuk ndryshojnë. Pajisje, kantier dhe porosi riparimi kanë targete të ndara; fotot e një riparimi nuk kthehen pa dashje në kopertinë të pajisjes. Të gjithë targetet/ID-të verifikohen në server; nuk pranohen URL arbitrare ose referenca të firmave të tjera. Menaxhimi i figurave është veprim shefi; ngarkimet ruajnë lejet ekzistuese. Në TV nuk ka këto veprime shkrimi.
+
+Një ngarkim i ri zgjedh foton e vet si kopertinë. E njëjta foto e përpunuar, me të njëjtin target dhe SHA-256, ripërdoret edhe kur riemërtohet; nuk shton skedar, foto-event ose pajisje të dyfishtë. Zgjedhja/rikthimi auditohen. Ngarkimi në një target tjetër mbetet veprim i veçantë. JPG/PNG/WebP vazhdojnë validimin dhe heqjen e metadatave, 12 MB input dhe 1024px/180KB output. Dokumentet ruajnë rrjedhën e tyre dhe nuk fshihen nga ky kontroll.
+
+### Pranimi i korrigjimit
+
+Kontroll lokal në laptopin Windows: 685 unit PASS / një skip ekzistues; 14 integrime PostgreSQL PASS, plus katër integrimet e prekura të ripërsëritura pas filtrit përfundimtar të targetit. Build/TypeScript dhe lint i plotë/i shprehur për skedarët demo PASS. Tri profile jashtë scope-it kthejnë 404, edhe për POST `/api/demo/baumdienst/media`. Provat e gjenerimit përdorin provider të simuluar; nuk shpenzojnë kuotë reale.
+
+Prova fillestare unit nën ngarkesë pati dy timeout-e; seti i plotë me ngarkesë të kufizuar kaloi pa ndryshuar timeout/assertions. Provat e reja UI u përshtatën me tekstin real gjerman dhe me Radix që fsheh sfondin nga lexuesi gjatë modalit; logoja verifikohet pasi mbyllet modali. Galeria ekzistuese ruan provën e prejardhjes me etiketat e reja, dhe kontrollon mungesën e badge-it mbi imazh. Refuzimi automatik i ndryshimit të kredencialit të fixture-it nuk u aplikua; provat u kryen me rolin/autentikimin ekzistues, pa ndryshim aksesi.
+
+**Pranimi i shfletuesit dhe publikimi:** readback-u përfundimtar shtohet pas verifikimit të kandidatit. Vetëm korrigjimi i kësaj kërkese; demoja mbetet në rishikim. Portofoli dhe niveli i gatishmërisë nuk rriten. Vlerësim prezantimi: NO_CONTENT_CHANGE për faqen native dhe portofolin gjatë këtij korrigjimi; mesazhet ekzistuese për Musterfirma/AI mbeten të sakta, ndërsa publikimi promocional është në HOLD të pronarit.
+
 ## Korrigjimi i pronarit — navigimi dhe targa, 6 nëntor 2026
 
 **Korrigjimi është online vetëm te Musterfirma; demoja mbetet në rishikim nga pronari dhe portofoli në HOLD.** Pronari kërkoi të mos publikohet prezantimi në portofol, sepse demoja ende nuk është në nivelin e kërkuar. PR53 shoqëruese është shënuar HOLD dhe nuk është bashkuar/publikuar. Miratimi i vjetër për PR38 nuk vlen për PR53. Pretendimi i mëparshëm “demo DONE” zëvendësohet nga ky kontroll i rihapur; mbetet në vlerësim nga pronari.
