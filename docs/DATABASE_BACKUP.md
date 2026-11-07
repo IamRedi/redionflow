@@ -90,9 +90,9 @@ those files do not constitute copies of their contents.
 
 A separate Railway cron service in the pilot project runs
 `scripts/backup-cron.ts` every night at 19:00 UTC (20:00 CET). It builds from
-`ops/backup-cron/Dockerfile` (Node + `pg_dump` 18, no web server) with the
-config file `ops/backup-cron/railway.json`, so the app's healthcheck does not
-apply. Each run:
+`ops/backup-cron/Dockerfile` (Node + `pg_dump` 18, no web server). The service
+has Root Directory `/ops/backup-cron`, cron `0 19 * * *` and restart policy
+NEVER, so the app's `railway.json` and healthcheck do not apply. Each run:
 
 1. runs `database-backup.ts create` over the private network (same checks and
    same encrypted format as above, encrypted to the owner's PUBLIC key);
