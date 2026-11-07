@@ -79,6 +79,20 @@ company covers. Every read/write reauthenticates; image responses are
 private/no-store/nosniff. Replacing a cover records an audit event and is atomic.
 The image bytes are included in the existing PostgreSQL backup.
 
+### Worker profile photos — 7 November 2026
+
+`20261107160000_worker_profile_photos` extends the same private `AssetPhoto`
+store with a tenant-composite worker target. Administrators edit their own
+company's worker profiles; workers edit only their own photo. Every company
+member can read the team's photos through authenticated, private/no-store
+responses. Worker IDs from imports are supported without changing those IDs.
+The shared camera/file control performs the existing bounded WebP conversion;
+the worker URL, photo bytes and audit event commit together. Failed replacements
+keep the prior image and return a localized message rather than a page error.
+Neither photos nor credentials are sent to an additional provider. Legacy
+profile-photo actions delegate to this path as well. Profile document storage
+retains its separate managed-file contract; it is not moved by this migration.
+
 `20261104170000_fuel_receipts` adds one table; it does not rewrite existing
 vehicles, device bindings or customer projects. Original image bytes and SHA-256
 are in PostgreSQL, covered by the existing encrypted database backup. The local

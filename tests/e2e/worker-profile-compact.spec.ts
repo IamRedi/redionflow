@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { seedSteelAssetsWorkshop, cleanupSteelAssetsWorkshop } from '../fixtures/steel-assets-workshop';
 import { assertE2ETestDatabase, validateE2ETarget } from '../../scripts/lib/e2e-target';
+import sharp from 'sharp';
 
 const baseline = process.env.WORKER_PROFILE_BASELINE === 'true';
 const evidence = (name: string) => process.env.WORKER_PROFILE_EVIDENCE_DIR
@@ -77,6 +78,21 @@ test('worker profile keeps summaries compact and documents available on demand',
     await expect(page.getByTestId('worker-documents-open')).toBeVisible();
     await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
 
+    const photoFile = { name: 'Synthetic profile.png', mimeType: 'image/png', buffer: await sharp({ create: { width: 1200, height: 900, channels: 3, background: '#436b83' } }).png().toBuffer() };
+    const photo = page.getByTestId(`asset-photo-worker-${seed.worker.id}`);
+    await photo.getByRole('button', { name: /Ndrysho foton/ }).click();
+    await expect(page.getByRole('button', { name: 'Hap kamerën', exact: true })).toBeVisible();
+    await photo.locator('input[data-photo-input=upload]').setInputFiles(photoFile);
+    await expect(photo.getByRole('img')).toBeVisible();
+    const savedPhoto = (await prisma.worker.findUniqueOrThrow({ where: { id: seed.worker.id } })).profileImageUrl!;
+    expect(savedPhoto).toMatch(/^\/api\/asset-photos\/worker\//);
+    const imageResponse = await context.request.get(`${origin}${savedPhoto}`);
+    expect(imageResponse.status()).toBe(200);
+    expect(imageResponse.headers()['content-type']).toBe('image/webp');
+    await page.reload();
+    await expect(photo.getByRole('img')).toBeVisible();
+    expect(await photo.getByRole('img').evaluate(el => (el as HTMLImageElement).naturalWidth > 0)).toBe(true);
+
     workerContext = await browser.newContext({ viewport: { width: 360, height: 800 } });
     await workerContext.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort('blockedbyclient'));
     await workerContext.addCookies([{ name: 'bk_lang', value: 'sq', url: origin }]);
@@ -86,6 +102,12 @@ test('worker profile keeps summaries compact and documents available on demand',
     await workerPage.locator('input[name=loginCode]').fill(seed.workerCode);
     await workerPage.locator('button[type=submit]').click();
     await expect(workerPage).toHaveURL(/\/workzone\/profile$/);
+    const ownPhoto = workerPage.getByTestId(`asset-photo-worker-${seed.worker.id}`);
+    const beforeOwnPhoto = (await prisma.worker.findUniqueOrThrow({ where: { id: seed.worker.id } })).profileImageUrl;
+    await ownPhoto.locator('input[data-photo-input=upload]').setInputFiles(photoFile);
+    await expect.poll(async () => (await prisma.worker.findUniqueOrThrow({ where: { id: seed.worker.id } })).profileImageUrl).not.toBe(beforeOwnPhoto);
+    await expect(ownPhoto.getByRole('img')).toBeVisible();
+    expect((await workerContext.request.get(`${origin}${(await prisma.worker.findUniqueOrThrow({ where: { id: seed.worker.id } })).profileImageUrl}`)).status()).toBe(200);
     await expect(workerPage.getByTestId('worker-documents-open')).toBeVisible();
     await workerPage.getByTestId('worker-documents-open').click();
     await expect(workerPage.getByTestId('worker-documents').locator('input[type=file]')).toHaveCount(1);

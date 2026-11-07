@@ -1,7 +1,7 @@
 import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
-import Image from "next/image";
+import { AssetPhoto } from '@/components/asset-photo';
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -43,7 +43,7 @@ import { VacationRequestForm } from "./vacation-request-form";
 import { ReportPeriodPicker } from "./report-period-picker";
 import { WorkSessionControls } from "./work-session-controls";
 import { NotificationEnableButton } from "./notification-enable-button";
-import { WorkerAssets, WorkerPhotoButton } from "./worker-assets";
+import { WorkerAssets } from "./worker-assets";
 import { WorkerInventory } from "./worker-inventory";
 
 type WorkerDocument = {
@@ -284,16 +284,12 @@ export async function WorkerProfileView({
       <section className="relative overflow-hidden rounded-2xl border bg-card" data-testid="worker-profile-summary">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
         <div className="relative flex flex-wrap items-center gap-3 p-3 sm:p-4">
-          <div className="relative size-14 shrink-0 sm:size-16">
-            <div className="relative flex size-full items-center justify-center overflow-hidden rounded-full border-2 border-background bg-muted text-lg font-semibold shadow-sm">
-              {worker.profileImageUrl ? (
-                <Image src={worker.profileImageUrl} unoptimized={worker.profileImageUrl.startsWith("/api/private-files?")} alt={`${worker.firstName} ${worker.lastName}`} fill sizes="64px" className="object-cover" />
-              ) : (
-                initials
-              )}
+          <AssetPhoto kind="worker" id={worker.id} src={worker.profileImageUrl} alt={`${worker.firstName} ${worker.lastName}`} canEdit
+            className="relative size-14 shrink-0 sm:size-16" imageClassName="size-full rounded-full border-2 border-background object-cover shadow-sm">
+            <div className="flex size-full items-center justify-center rounded-full border-2 border-background bg-muted text-lg font-semibold shadow-sm">
+              {initials}
             </div>
-            <WorkerPhotoButton workerId={worker.id} currentLang={currentLang} />
-          </div>
+          </AssetPhoto>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">
               {worker.firstName} {worker.lastName}

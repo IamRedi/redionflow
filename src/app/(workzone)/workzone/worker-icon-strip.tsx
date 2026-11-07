@@ -222,7 +222,7 @@ export function WorkerIconStrip({
               >
                 {worker.profileImageUrl ? (
                   <Image
-                    src={worker.profileImageUrl} unoptimized={worker.profileImageUrl.startsWith("/api/private-files?")}
+                    src={worker.profileImageUrl} unoptimized={worker.profileImageUrl.startsWith("/api/")}
                     alt={`${worker.firstName} ${worker.lastName}`}
                     fill
                     sizes="40px"

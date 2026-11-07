@@ -2,7 +2,7 @@
 
 import { DragEvent, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, FileImage, FileSpreadsheet, FileText, FolderOpen, type LucideIcon, Plus, UploadCloud, X } from "lucide-react";
+import { FileImage, FileSpreadsheet, FileText, FolderOpen, type LucideIcon, Plus, UploadCloud, X } from "lucide-react";
 
 import { SimpleDialog } from "@/components/ui/simple-dialog";
 import { AssetWorkspaceDialog } from "@/components/company-assets/workspace-dialog";
@@ -49,41 +49,6 @@ function shortDate(value: string) {
 
 function UploadMessage({ message }: { message?: string }) {
   return message ? <p className="text-xs text-muted-foreground">{message}</p> : null;
-}
-
-export function WorkerPhotoButton({ workerId, currentLang }: { workerId: string; currentLang: Language }) {
-  const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [message, setMessage] = useState<string>();
-  const [isPending, startTransition] = useTransition();
-
-  function upload(file: File | undefined) {
-    if (!file) return;
-    const formData = new FormData();
-    formData.set("workerId", workerId);
-    formData.set("kind", "photo");
-    formData.set("file", file);
-    startTransition(async () => {
-      const result = await uploadWorkerAssetAction(formData);
-      setMessage(result.message);
-      if (result.ok) router.refresh();
-    });
-  }
-
-  return (
-    <>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(event) => upload(event.currentTarget.files?.[0])} />
-      <button
-        type="button"
-        title={message ?? t("workzone.uploadProfilePhoto", currentLang)}
-        disabled={isPending}
-        onClick={() => fileRef.current?.click()}
-        className="absolute bottom-1 right-1 flex size-8 items-center justify-center rounded-full border border-background bg-brand-green text-white shadow-sm hover:brightness-110 disabled:opacity-60"
-      >
-        <Camera className="size-4" />
-      </button>
-    </>
-  );
 }
 
 export function WorkerAssets({

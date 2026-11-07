@@ -27,6 +27,8 @@ import { scanFileContent } from "@/lib/storage/content-scan";
 import { isRecord } from "@/lib/workzone/site-json";
 import { validateFileAgainstAllowedCategories } from "@/lib/storage/file-validation";
 import { deleteManagedFileByUrl, uploadManagedFile } from "@/lib/storage/object-storage";
+import { saveAssetPhoto } from '@/lib/asset-photos/service';
+import { photoCopy } from '@/lib/asset-photos/shared';
 import type { ActionResult } from "@/lib/validation/action-result";
 import { reportNoteSchema, startWorkSessionSchema, stopWorkSessionSchema, workerLoginSchema } from "@/lib/validation/schemas";
 import { closePauseInterval, createPauseInterval, findPauseIntervalsForSession } from "@/lib/workzone/pause-interval-store";
@@ -704,17 +706,28 @@ export async function uploadWorkerAssetAction(formData: FormData): Promise<Actio
   const _access = await assertWorkerAccess(actor, workerId);
   if (!_access.ok) return _access;
 
-  const maxSize = kind === "photo" ? 2_000_000 : 15_000_000;
-  if (file.size > maxSize) return { ok: false, message: kind === "photo" ? tr("photoMax2Mb") : tr("documentMax15Mb") };
+  if (kind === 'photo') {
+    const copy = photoCopy(await resolveRequestLanguage());
+    try {
+      await saveAssetPhoto('worker', workerId, file);
+      revalidateWorkerProfile(workerId);
+      return { ok: true, message: copy.saved };
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      const known = /^PHOTO_(FILE|BUSY|DENIED|NOT_FOUND)$/.test(code);
+      if (!known) logger.warn({ event: 'worker.profile_photo_save_failed' }, 'Profile photo retained after save failure');
+      return { ok: false, message: code === 'PHOTO_BUSY' ? copy.busy : code === 'PHOTO_DENIED' || code === 'PHOTO_NOT_FOUND' ? copy.denied : known ? copy.error : copy.unavailable };
+    }
+  }
+  if (file.size > 15_000_000) return { ok: false, message: tr("documentMax15Mb") };
 
   // BDF-P8-007: validate against actual magic bytes, not the client-
   // supplied MIME. A photo must actually be an image; a document must
   // actually be a PDF, an Office file, or an image (worker photo cards
   // sometimes accept scanned images as documents).
-  const allowedCategories = kind === "photo" ? (["image"] as const) : (["pdf", "office", "image"] as const);
+  const allowedCategories = ["pdf", "office", "image"] as const;
   const signatureCheck = await validateFileAgainstAllowedCategories(file, allowedCategories);
   if (!signatureCheck.ok) {
-    if (kind === "photo") return { ok: false, message: tr("photoMustBeImage") };
     return { ok: false, message: tr("documentTypeAllowed") };
   }
   const ext = extensionOf(file);
@@ -737,30 +750,19 @@ export async function uploadWorkerAssetAction(formData: FormData): Promise<Actio
     fileName: filename,
   });
 
-  if (kind === "photo") {
-    const previous = await prisma.worker.findUnique({
-      where: { id: workerId },
-      select: { profileImageUrl: true },
-    });
-    await prisma.worker.update({ where: { id: workerId }, data: { profileImageUrl: url } });
-    if (previous?.profileImageUrl && previous.profileImageUrl !== url) {
-      await deleteManagedFileByUrl(previous.profileImageUrl, { scope: "worker-assets", entityId: workerId }).catch(() => undefined);
-    }
-  } else {
-    const documents = parseWorkerDocuments(worker.documents);
-    documents.unshift({
-      id: crypto.randomUUID(),
-      label: label || labelFromFileName(file.name),
-      type: kind === "document" ? documentTypeFromFileName(file.name) : kind,
-      url,
-      filename,
-      uploadedAt: new Date().toISOString(),
-    });
-    await prisma.worker.update({ where: { id: workerId }, data: { documents } });
-  }
+  const documents = parseWorkerDocuments(worker.documents);
+  documents.unshift({
+    id: crypto.randomUUID(),
+    label: label || labelFromFileName(file.name),
+    type: kind === "document" ? documentTypeFromFileName(file.name) : kind,
+    url,
+    filename,
+    uploadedAt: new Date().toISOString(),
+  });
+  await prisma.worker.update({ where: { id: workerId }, data: { documents } });
 
   revalidateWorkerProfile(workerId);
-  return { ok: true, message: kind === "photo" ? tr("photoSaved") : tr("documentUploaded") };
+  return { ok: true, message: tr("documentUploaded") };
 }
 
 export async function deleteWorkerDocumentAction(formData: FormData): Promise<ActionResult> {
