@@ -305,7 +305,7 @@ async function deleteMachine(formData: FormData) {
   notifyRealtimeUpdate("machine.updated", ["machine-sidebar"]);
 }
 
-export default async function AdminHrFleetPage({ searchParams }: { searchParams?: Promise<{ code?: string }> } = {}) {
+export default async function AdminHrFleetPage({ searchParams }: { searchParams?: Promise<{ code?: string }> }) {
   const codeNotice = (await searchParams)?.code;
   const [company, mode, currentLang] = await Promise.all([
     getOrCreateDefaultCompany(),

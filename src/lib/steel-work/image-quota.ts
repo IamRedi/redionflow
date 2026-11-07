@@ -3,6 +3,7 @@ import { withTenantContext } from '@/lib/db/tenant-context';
 import { getRequesterContext, type RequesterContext } from '@/lib/assistant/requester';
 
 const BURST_MS = 600_000, DAY_MS = 86_400_000;
+const DAILY_IMAGE_LIMIT = 20;
 type Denied = { ok: false; status: 403 | 429 | 503; reason: 'rate' | 'budget' | 'unavailable'; retryAfterSeconds: number };
 export type SteelImageQuota = { ok: true } | Denied;
 class ImageQuotaDenied extends Error {
@@ -21,8 +22,8 @@ export async function reserveSteelImageQuota(requester: RequesterContext, now = 
     const buckets = [
       { actorKey: 'company', window: 'image-burst', windowStart: burstStart, limit: 2, duration: BURST_MS },
       { actorKey: actor, window: 'image-burst', windowStart: burstStart, limit: 1, duration: BURST_MS },
-      { actorKey: 'company', window: 'image-day', windowStart: dayStart, limit: 10, duration: DAY_MS },
-      { actorKey: actor, window: 'image-day', windowStart: dayStart, limit: 5, duration: DAY_MS },
+      { actorKey: 'company', window: 'image-day', windowStart: dayStart, limit: DAILY_IMAGE_LIMIT, duration: DAY_MS },
+      { actorKey: actor, window: 'image-day', windowStart: dayStart, limit: DAILY_IMAGE_LIMIT, duration: DAY_MS },
     ];
     return await withTenantContext(companyId, async tx => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`assistant-image:${companyId}`}))`;

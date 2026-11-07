@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+import { join } from "node:path";
 const disk = vi.hoisted(() => ({ rm: vi.fn() }));
 vi.mock("node:fs/promises", () => ({ rm: disk.rm }));
 import { deleteManagedFileByUrl } from "./object-storage";
@@ -10,7 +11,7 @@ it("rejects traversal outside uploads without touching disk", async () => {
 it("can remove an ordinary legacy synthetic upload", async () => {
   disk.rm.mockClear();
   await deleteManagedFileByUrl("/uploads/baustellen/synthetic/file.pdf");
-  expect(disk.rm).toHaveBeenCalledWith(expect.stringContaining("/public/uploads/baustellen/synthetic/file.pdf"), { force: true });
+  expect(disk.rm).toHaveBeenCalledWith(join(process.cwd(), "public", "uploads", "baustellen", "synthetic", "file.pdf"), { force: true });
 });
 
 it("refuses an attached foreign object even if metadata was forged", async () => {
