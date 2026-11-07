@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { reloadOnStaleDeployment } from "@/lib/deploy/stale-deployment";
+
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,7 @@ export default function WorkzoneError({
   const { currentLang } = useLanguage();
 
   useEffect(() => {
+    if (reloadOnStaleDeployment(error)) return;
     console.error("[workzone-error]", error);
   }, [error]);
 

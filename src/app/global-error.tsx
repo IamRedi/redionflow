@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { reloadOnStaleDeployment } from "@/lib/deploy/stale-deployment";
+
 /**
  * Root error boundary. Wraps everything (including the root layout).
  * When this triggers, the app has failed catastrophically — most
@@ -17,6 +19,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    if (reloadOnStaleDeployment(error)) return;
     console.error("[global-error]", error);
   }, [error]);
 

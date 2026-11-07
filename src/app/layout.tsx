@@ -25,6 +25,7 @@ import { t } from "@/lib/i18n";
 import { productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { StaleDeploymentReload } from "@/components/stale-deployment-reload";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -122,6 +123,7 @@ export default async function RootLayout({
               )}
             </div>
           </div>}
+          <StaleDeploymentReload />
           {children}
           </FooterBrandProvider>
           </ProductionHeaderActionsProvider>
