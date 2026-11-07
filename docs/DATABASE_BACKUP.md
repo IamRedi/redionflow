@@ -115,6 +115,13 @@ Variables on the cron service:
 | `AWS_*` | references to the bucket's credentials |
 | `BACKUP_RETENTION_DAYS` | optional, default 90 |
 
+`sslmode=require` means what it means for `pg_dump`: encrypted, certificate not
+verified (Railway's private Postgres uses a self-signed certificate; the owner
+approved this on 2026-11-07). `verify-ca`/`verify-full` still verify.
+
+To run a backup right away, remove the cron schedule, redeploy, read the
+`ok` line in the deploy logs, then set `0 19 * * *` again and redeploy.
+
 The private key never goes to Railway. To check or restore a copy, download it
 from the bucket (Railway dashboard → bucket → file) and run `backup:verify` on
 the owner's machine as described above. The laptop Drive job can keep running
