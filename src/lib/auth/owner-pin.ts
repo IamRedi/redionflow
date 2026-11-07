@@ -11,9 +11,12 @@ import { isSteelCompany } from '@/lib/dashboard/steel-access';
 
 export const normalizePinName=(name:string)=>name.trim().replace(/\s+/g,' ').toLocaleLowerCase('sq');
 const pinSchema=z.string().regex(/^\d{8}$/);
+// An explicitly transferred existing owner credential may have six digits.
+// New PIN configuration still requires eight; no worker becomes an owner by name.
+const loginPinSchema=z.string().regex(/^(?:\d{6}|\d{8})$/);
 /** No global first-company fallback, no plaintext credential, no role from the browser. */
 export async function authenticateOwnerPin(name:string,pin:string){
- if(!pinSchema.safeParse(pin).success||!name.trim()||name.length>200)return null;
+ if(!loginPinSchema.safeParse(pin).success||!name.trim()||name.length>200)return null;
  const identity=normalizePinName(name),companyId=process.env.INSTALLATION_COMPANY_ID?.trim();
  const users=await prisma.user.findMany({where:{role:'ADMIN',isActive:true,isOwner:true,loginPinHash:{not:null},...(companyId?{companyProfileId:companyId}:{})},select:{id:true,name:true,loginPinHash:true,sessionEpoch:true,companyProfileId:true}});
  const matches=users.filter(u=>u.companyProfileId&&u.name&&(normalizePinName(u.name)===identity||normalizePinName(u.name).split(' ')[0]===identity));

@@ -327,13 +327,15 @@ export async function loginWorkerAction(_prevState: LoginState, formData: FormDa
   }
 
   const pin=String(formData.get('loginCode')??''),pinName=String(formData.get('name')??'');
-  if(/^\d{8}$/.test(pin)){
+  if(/^(?:\d{6}|\d{8})$/.test(pin)){
     let owner:Awaited<ReturnType<typeof authenticateOwnerPin>>;
     try{owner=await authenticateOwnerPin(pinName,pin);}catch{return {message:tr('workerOrCodeNotFound')};}
-    if(!owner){await registerFailedLogin('worker',clientIp);return {message:tr('workerOrCodeNotFound')};}
-    const jar=await cookies();
-    jar.set(ADMIN_COOKIE,await createSessionCookie('admin',owner.id,owner.sessionEpoch),{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/',maxAge:sessionMaxAge('admin')});
-    jar.delete(WORKER_COOKIE);jar.delete(DISPLAY_COOKIE);await clearFailedLogin('worker',clientIp);redirect('/app/dashboard');
+    if(!owner&&pin.length===8){await registerFailedLogin('worker',clientIp);return {message:tr('workerOrCodeNotFound')};}
+    if(owner){
+      const jar=await cookies();
+      jar.set(ADMIN_COOKIE,await createSessionCookie('admin',owner.id,owner.sessionEpoch),{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/',maxAge:sessionMaxAge('admin')});
+      jar.delete(WORKER_COOKIE);jar.delete(DISPLAY_COOKIE);await clearFailedLogin('worker',clientIp);redirect('/app/dashboard');
+    }
   }
 
   const parsed = workerLoginSchema.safeParse({

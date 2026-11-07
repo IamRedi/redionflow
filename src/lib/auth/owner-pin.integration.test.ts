@@ -6,8 +6,9 @@ vi.mock('@/lib/workzone/worker-session',()=>({getCurrentWorker:auth.worker}));
 import {prisma} from '@/lib/db/prisma';
 import {assertAssistantTestDatabase} from '../../../tests/fixtures/assistant-database';
 import {configureOwnerPin,authenticateOwnerPin} from './owner-pin';
-import {verifyPassword} from './password';
+import {hashPassword,verifyPassword} from './password';
 import {computeClientKey} from './client-key';
+import {isLoginCodeTaken} from './login-code';
 assertAssistantTestDatabase();
 let companyId:string,foreignId:string,bossId:string;
 const pin='58392071';
@@ -55,4 +56,18 @@ it('uses a durable account-wide limiter across short/full-name aliases',async()=
 it('respects dedicated installation binding and refuses ambiguous first names',async()=>{
  const first=await configureOwnerPin(input());await configureOwnerPin({...input(),name:'Synthetic Peer'});expect(await authenticateOwnerPin('Synthetic',pin)).toBeNull();expect(await authenticateOwnerPin('Synthetic Owner',pin)).toMatchObject({id:first.id});
  vi.stubEnv('INSTALLATION_COMPANY_ID',foreignId);expect(await authenticateOwnerPin('Synthetic Owner',pin)).toBeNull();
+});
+it('authenticates an explicitly activated owner with a transferred six-digit hash while new PINs stay eight digits',async()=>{
+ const data=input();await expect(configureOwnerPin({...data,pin:'473829'})).rejects.toThrow();
+ const owner=await prisma.user.create({data:{companyProfileId:companyId,email:data.email,name:data.name,role:'ADMIN',isOwner:true,isActive:true,loginPinHash:hashPassword('473829')}});
+ expect(await authenticateOwnerPin(data.name,'473829')).toEqual({id:owner.id,sessionEpoch:owner.sessionEpoch});
+ expect(await isLoginCodeTaken(prisma,'473829')).toBe(true);
+ await prisma.user.update({where:{id:owner.id},data:{isOwner:false}});expect(await authenticateOwnerPin(data.name,'473829')).toBeNull();
+ await prisma.user.update({where:{id:owner.id},data:{isOwner:true,isActive:false}});expect(await authenticateOwnerPin(data.name,'473829')).toBeNull();
+});
+it('rate-limits transferred owner codes across name aliases without granting workers owner access',async()=>{
+ const owner=await prisma.user.create({data:{companyProfileId:companyId,email:`legacy-${randomUUID()}@example.test`,name:'Transferred Owner',role:'ADMIN',isOwner:true,loginPinHash:hashPassword('473829')}});
+ for(let i=0;i<6;i++)expect(await authenticateOwnerPin(i%2?'Transferred':'Transferred Owner','000000')).toBeNull();
+ expect(await authenticateOwnerPin('Transferred Owner','473829')).toBeNull();
+ expect(await prisma.worker.count({where:{companyProfileId:companyId}})).toBe(0);expect(owner.id).toBeTruthy();
 });

@@ -4,8 +4,9 @@ import { hashPassword } from "@/lib/auth/password";
 
 import { isLoginCodeTaken, isValidLoginCode } from "./login-code";
 
-function client(rows: Array<{ id: string; loginCodeHash: string | null }>) {
+function client(rows: Array<{ id: string; loginCodeHash: string | null }>,owners:Array<{loginPinHash:string|null}>=[]) {
   return {
+    user:{findMany:async()=>owners},
     worker: {
       findMany: async (args: { where: { id?: { not: string } } }) =>
         rows.filter((row) => row.id !== args.where.id?.not).map(({ loginCodeHash }) => ({ loginCodeHash })),
@@ -28,5 +29,10 @@ describe("worker login codes", () => {
     expect(await isLoginCodeTaken(db, "222222")).toBe(true);
     expect(await isLoginCodeTaken(db, "222222", "b")).toBe(false);
     expect(await isLoginCodeTaken(db, "333333")).toBe(false);
+  });
+  it('does not reissue a transferred owner code to a worker',async()=>{
+    const db=client([],[{loginPinHash:hashPassword('473829')}]);
+    expect(await isLoginCodeTaken(db,'473829','former-worker')).toBe(true);
+    expect(await isLoginCodeTaken(db,'123456')).toBe(false);
   });
 });
