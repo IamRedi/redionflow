@@ -21,7 +21,9 @@ import { DemoBrand } from "./workshop/demo-brand";
 import { woodCopy } from "@/lib/workshop/wood-copy";
 
 /** Same compact round icon buttons as the production (AL-Steel) header; names stay in aria-label/title. */
-const navIcon="inline-flex size-11 items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring";
+/** Frosted ("ice glass") round shell: the page shows softly through it. */
+const demoGlass="border border-black/10 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]";
+const navIcon=`inline-flex size-11 items-center justify-center rounded-full ${demoGlass} text-foreground/80 transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring`;
 const workzoneName="Workzone", dashboardName="Dashboard", aiLabel="AI", aiPreview="AI preview";
 
 type DemoWorker = {
@@ -45,7 +47,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
     return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
       <div data-demo-teamrow className="relative min-w-0"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
-        {/* Only the round button sits over the strip; workers scroll underneath it. */}<div className="absolute right-0 top-1/2 z-20 -translate-y-1/2"><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-full border bg-transparent focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><div className="flex items-center justify-end gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
+        {/* Only the round button sits over the strip; workers scroll underneath it. */}<div className="absolute right-0 top-1/2 z-20 -translate-y-1/2"><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-full border border-black/10 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><div className="flex items-center justify-end gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
       </div>
       <nav data-demo-navigation aria-label="Demo" className="no-scrollbar mt-2 flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-1.5 pb-1 [&>*]:shrink-0">
         <Link href="/demo/workzone" aria-label={workzoneName} title={workzoneName} className={navIcon}><Home className="size-4" /></Link>
