@@ -154,3 +154,13 @@ Long-running or destructive migrations should be applied manually via
 - **Demo continues serving:** the Railway demo on the `prod` branch is
   independent and can act as a fallback presentation surface during a
   SaaS incident.
+
+## Open pages after a deployment
+
+A page opened before a deployment still calls the old server action ids.
+Next.js answers "Server Action ... was not found" and the click did nothing.
+Since 07.11.2026 `StaleDeploymentReload` (root layout) and the error
+boundaries reload the page once (at most once per 30 seconds, so a real
+fault cannot loop): `src/lib/deploy/stale-deployment.ts`. The click that
+hit the old version is not repeated; the user taps again on the fresh page.
+Still deploy production outside working hours when possible.
