@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { LayoutDashboard, Map, RotateCcw } from "lucide-react";
+import { LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -87,6 +87,11 @@ function orderedCanvasItems(items: MissionItem[]) {
   });
 }
 
+/** Compact Musterfirma site card on phones: half the canvas, never wider than 172px. */
+function musterMobileCardWidth(width: number) {
+  return Math.max(140, Math.min(172, Math.floor((width - 36) / 2)));
+}
+
 function canvasMetrics(viewport: CanvasViewport, items: MissionItem[], availableWidth = 0) {
   const count = items.length;
   const mobile = viewport === "mobile";
@@ -95,11 +100,13 @@ function canvasMetrics(viewport: CanvasViewport, items: MissionItem[], available
   const inventory = items.some(item => item.demoPhotoKey);
   if (inventory) {
     const width = availableWidth || (mobile ? 330 : 1100);
-    const cardWidth = mobile ? Math.min(280, width - 24) : 240;
-    const columns = Math.max(1, Math.min(3, Math.floor((width + 12) / (cardWidth + 24))));
+    // Phone: two compact cards side by side, like the steel Workzone; desktop keeps the wider cards.
+    const cardWidth = mobile ? musterMobileCardWidth(width) : 240;
+    const columns = mobile ? (width >= 2 * cardWidth + 36 ? 2 : 1) : Math.max(1, Math.min(3, Math.floor((width + 12) / (cardWidth + 24))));
     const rows = Math.max(1, Math.ceil(count / columns));
-    const rowGap = 390;
-    return { columns, left: 12, top: 76, columnGap: columns > 1 ? (width - 24 - cardWidth) / (columns - 1) : 0, rowGap, height: 76 + (rows - 1) * rowGap + 375 + 24, maxX: Math.max(12, width - cardWidth - 12), maxY: 76 + (rows - 1) * rowGap };
+    const cardHeight = mobile ? 270 : 375;
+    const rowGap = cardHeight + 15;
+    return { columns, left: 12, top: 76, columnGap: columns > 1 ? (width - 24 - cardWidth) / (columns - 1) : 0, rowGap, height: 76 + (rows - 1) * rowGap + cardHeight + 24, maxX: Math.max(12, width - cardWidth - 12), maxY: 76 + (rows - 1) * rowGap };
   }
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
@@ -336,7 +343,7 @@ export function WorkzoneMissionControl({
     observer.observe(element);
     return () => observer.disconnect();
   }, [muster, isMapMode]);
-  const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:width-${canvasWidth}` : ""}`, [items, muster, canvasWidth]);
+  const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:compact-width-${canvasWidth}` : ""}`, [items, muster, canvasWidth]);
   // Restore browser-only saved positions in the effect below, after hydration.
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
@@ -468,7 +475,7 @@ export function WorkzoneMissionControl({
               type="button"
               variant="outline"
               size="icon"
-              className={`absolute left-14 top-3 z-[500] ${muster ? "size-11" : "h-8 w-8"} border-border bg-card text-foreground shadow-sm hover:bg-muted`}
+              className={`absolute left-14 top-3 z-[500] ${muster ? "size-11 rounded-full" : "h-8 w-8"} border-border bg-card text-foreground shadow-sm hover:bg-muted`}
               onClick={() => setIsMapMode(false)}
               title={t("workzone.planMode", currentLang)}
               aria-label={t("workzone.planMode", currentLang)}
@@ -510,7 +517,7 @@ export function WorkzoneMissionControl({
                 type="button"
                 variant="outline"
                 size="icon"
-                className={muster ? "size-11 border-border bg-card text-foreground shadow-sm hover:bg-muted" : "h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"}
+                className={muster ? "size-11 rounded-full border-border bg-card/90 text-foreground shadow-sm hover:bg-muted" : "h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"}
                 onClick={resetCurrentCanvasLayout}
                 title={t("workzone.reflowPlayground", currentLang)}
                 aria-label={t("workzone.reflowPlayground", currentLang)}
@@ -522,7 +529,7 @@ export function WorkzoneMissionControl({
               type="button"
               variant="outline"
               size="icon"
-              className={muster ? "size-11 border-border bg-card text-foreground shadow-sm hover:bg-muted" : "h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"}
+              className={muster ? "size-11 rounded-full border-border bg-card/90 text-foreground shadow-sm hover:bg-muted" : "h-8 w-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white"}
               onClick={() => setIsMapMode(true)}
               title={t("workzone.mapMode", currentLang)}
               aria-label={t("workzone.mapMode", currentLang)}
@@ -572,7 +579,8 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: animateLive ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${item.demoPhotoKey ? isCompactCanvas ? "w-[min(280px,calc(100%-24px))]" : "w-[240px]" : isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
+                style={item.demoPhotoKey && isCompactCanvas ? { width: musterMobileCardWidth(canvasWidth || 330) } : undefined}
+                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${item.demoPhotoKey ? isCompactCanvas ? "p-2.5" : "w-[240px]" : isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
                 {hasCover ? (
                   <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
@@ -602,7 +610,7 @@ export function WorkzoneMissionControl({
                 </div>
                 <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
                 {item.workers.length > 0 ? <p className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
-                {item.demoPhotoKey && item.planSummary && <p className="mt-1 line-clamp-2 text-[11px] text-primary">{t("workzone.plan", currentLang)}: {item.planSummary}</p>}
+                {item.demoPhotoKey && item.planSummary && <p className={`mt-1 text-[11px] text-primary ${isCompactCanvas ? "line-clamp-1" : "line-clamp-2"}`}>{t("workzone.plan", currentLang)}: {item.planSummary}</p>}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
                 </p>
@@ -631,18 +639,19 @@ export function WorkzoneMissionControl({
                     {t("common.note", currentLang)}: {item.pendingSiteTask}
                   </p>
                 ) : null}
-                {item.demoPhotoKey && <div className="mt-2"><InventoryScope scope="site" identity={item.demoPhotoKey} compact now={new Date().toISOString()} /></div>}
+                {item.demoPhotoKey && !isCompactCanvas && <div className="mt-2"><InventoryScope scope="site" identity={item.demoPhotoKey} compact now={new Date().toISOString()} /></div>}
                 <div className="mt-2 flex items-center gap-1">
                   {allowDetailNavigation ? (
-                    <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "min-h-11 px-2" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
+                    <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "h-8 px-2.5" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
                       <Link href={`${detailHrefBase}/${item.id}`}>{t("common.open", currentLang)}</Link>
                     </Button>
                   ) : null}
-                  <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "min-h-11 px-2" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
-                    <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer">
-                      {t("common.location", currentLang)}
+                  <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? isCompactCanvas ? "h-8 w-8 px-0" : "h-8 px-2.5" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
+                    <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer" aria-label={t("common.location", currentLang)} title={t("common.location", currentLang)}>
+                      {item.demoPhotoKey && isCompactCanvas ? <MapPin className="size-3.5" /> : t("common.location", currentLang)}
                     </a>
                   </Button>
+                  {item.demoPhotoKey && isCompactCanvas ? <InventoryScope scope="site" identity={item.demoPhotoKey} tight now={new Date().toISOString()} /> : null}
                 </div>
               </motion.div>
             );

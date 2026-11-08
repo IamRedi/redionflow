@@ -15,7 +15,7 @@ import { useWorkshopDemo } from "./use-workshop-demo";
 export function DemoPlanToolbar({ now }: { now: string }) {
   const { currentLang } = useLanguage();
   const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(now));
-  return <><Button asChild variant="outline" size="icon" className="size-11 bg-card shadow-sm" title={t("workzone.dailyPlan", currentLang)} aria-label={t("workzone.dailyPlan", currentLang)}><Link href={`/demo/plan?date=${date}`}><ClipboardList className="size-4" /></Link></Button><Button asChild variant="outline" size="icon" className="size-11 bg-card shadow-sm" title={t("workzone.calendar", currentLang)} aria-label={t("workzone.calendar", currentLang)}><Link href={`/demo/plan?date=${date}&view=calendar`}><CalendarDays className="size-4" /></Link></Button></>;
+  return <><Button asChild variant="outline" size="icon" className="size-11 rounded-full bg-card/90 shadow-sm" title={t("workzone.dailyPlan", currentLang)} aria-label={t("workzone.dailyPlan", currentLang)}><Link href={`/demo/plan?date=${date}`}><ClipboardList className="size-4" /></Link></Button><Button asChild variant="outline" size="icon" className="size-11 rounded-full bg-card/90 shadow-sm" title={t("workzone.calendar", currentLang)} aria-label={t("workzone.calendar", currentLang)}><Link href={`/demo/plan?date=${date}&view=calendar`}><CalendarDays className="size-4" /></Link></Button></>;
 }
 
 export function DemoPlanPage({ date, calendar = false }: { date: string; calendar?: boolean }) {

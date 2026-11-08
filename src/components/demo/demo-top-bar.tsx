@@ -20,6 +20,8 @@ import { DemoDashboardLaunch } from "./workshop/demo-dashboard-launch";
 import { DemoBrand } from "./workshop/demo-brand";
 import { woodCopy } from "@/lib/workshop/wood-copy";
 
+/** Same compact round icon buttons as the production (AL-Steel) header; names stay in aria-label/title. */
+const navIcon="inline-flex size-11 items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring";
 const workzoneName="Workzone", dashboardName="Dashboard", aiLabel="AI", aiPreview="AI preview";
 
 type DemoWorker = {
@@ -41,18 +43,18 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
   if (mode === "baumdienst" && workshopEnabled) {
     const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
-    return <div className="w-full min-w-0 px-4 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
+    return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
       <div data-demo-teamrow className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
-        <div className="flex items-center gap-2"><DemoActorBar mode="notifications"/><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border bg-card focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 w-[min(21rem,calc(100vw-2rem))] space-y-3 rounded-2xl border bg-card p-3 shadow-xl"><DemoActorBar mode="roles"/><div className="flex flex-wrap items-center gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
+        <div className="flex items-center gap-2"><DemoActorBar mode="notifications"/><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-full border bg-transparent focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 w-[min(21rem,calc(100vw-2rem))] space-y-3 rounded-2xl border bg-card p-3 shadow-xl"><DemoActorBar mode="roles"/><div className="flex flex-wrap items-center gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
       </div>
-      <nav data-demo-navigation aria-label="Demo" className="mt-1 flex min-w-0 flex-wrap items-center gap-2 pb-1 [&>*]:shrink-0">
-        <Link href="/demo/workzone" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Home className="size-4" />{workzoneName}</Link>
-        <Link href="/demo/control" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Settings2 className="size-4" />{n.panel}</Link>
-        <DemoDashboardLaunch href="/demo/tv?view=dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Monitor className="size-4" />{n.tv}</DemoDashboardLaunch>
-        <Link href="/demo/wood" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><TreePine className="size-4" />{wood.title}</Link>
-        <Link href="/demo/workshop" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Wrench className="size-4" />{c.title}</Link>
-        <Link href="/demo/workshop?tab=tools" className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring"><Package className="size-4" />{c.tools}</Link>
-        <Link href="/demo/workshop?tab=fleet" aria-label={`${c.fleet} · Demo`} className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring lg:hidden"><Truck className="size-4" />{c.fleet}</Link>
+      <nav data-demo-navigation aria-label="Demo" className="no-scrollbar mt-2 flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-1.5 pb-1 [&>*]:shrink-0">
+        <Link href="/demo/workzone" aria-label={workzoneName} title={workzoneName} className={navIcon}><Home className="size-4" /></Link>
+        <Link href="/demo/control" aria-label={n.panel} title={n.panel} className={navIcon}><Settings2 className="size-4" /></Link>
+        <DemoDashboardLaunch href="/demo/tv?view=dashboard" label={n.tv} className={navIcon}><Monitor className="size-4" /></DemoDashboardLaunch>
+        <Link href="/demo/wood" aria-label={wood.title} title={wood.title} className={navIcon}><TreePine className="size-4" /></Link>
+        <Link href="/demo/workshop" aria-label={c.title} title={c.title} className={navIcon}><Wrench className="size-4" /></Link>
+        <Link href="/demo/workshop?tab=tools" aria-label={c.tools} title={c.tools} className={navIcon}><Package className="size-4" /></Link>
+        <Link href="/demo/workshop?tab=fleet" aria-label={`${c.fleet} · Demo`} title={c.fleet} className={`${navIcon} lg:hidden`}><Truck className="size-4" /></Link>
       </nav>
     </div>;
   }
