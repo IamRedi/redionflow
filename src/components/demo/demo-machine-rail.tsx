@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ImageIcon, X } from "lucide-react";
+import { ImageIcon, Truck, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { t } from "@/lib/i18n";
@@ -77,11 +77,11 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
         aria-expanded={fleetOpen}
         onClick={() => setFleetOpen((open) => !open)}
         className={cn(
-          "flex size-12 shrink-0 items-center justify-center rounded-full border bg-muted text-[11px] font-semibold shadow-sm transition hover:scale-105",
+          "flex size-11 shrink-0 items-center justify-center rounded-full border bg-background/85 text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground",
           fleetOpen ? "ring-2 ring-brand-green ring-offset-2 ring-offset-background" : "",
         )}
       >
-        {t("workzone.fleet", currentLang).toUpperCase()}
+        <Truck className="size-4" aria-hidden="true" />
       </button>
 
       {fleetOpen ? (
