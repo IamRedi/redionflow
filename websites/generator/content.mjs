@@ -106,7 +106,7 @@ export const baum = {
   aboutDir: 'about',
   themeColor: '#262624',
   ogImage: 'b-desk-wz',
-  sister: { name: 'BauFlow', href: (lang) => `/bauflow/about/${lang}.html`, label: l('Për ndërtim dhe çelik: BauFlow', 'For construction and steel: BauFlow', 'Für Bau und Stahlbau: BauFlow', 'Per edilizia e acciaio: BauFlow') },
+  sister: { name: 'BauFlow', href: (lang) => `/bauflow/about/${lang}.html`, label: l('Për ndërtime çeliku: BauFlow', 'For steel construction: BauFlow', 'Für Stahlbau: BauFlow', 'Per costruzioni in acciaio: BauFlow') },
   title: l('BaumdienstFlow · Softueri për kujdesin e pemëve', 'BaumdienstFlow · Software for tree care companies', 'BaumdienstFlow · Software für Baumdienste und Baumpflege', 'BaumdienstFlow · Software per la cura degli alberi'),
   description: l(
     'BaumdienstFlow lidh zyrën dhe ekipet e kujdesit të pemëve: çdo pemë me kartën e vet dhe atlasin e llojeve, flota, punishtja, punishtja e drurit dhe dashboard live.',

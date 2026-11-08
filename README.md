@@ -18,7 +18,7 @@ PR48 merged only into the existing website branch as f2fed3b. Existing Cloudflar
 
 ## P2-Präsentationsstand · 5. November 2026
 
-Die gemeinsame [RediOnFlow-Vorstellung](https://flow.redioncekrezi.de/de.html) führt zu den vier­sprachigen Produktvorstellungen von [BaumdienstFlow](https://www.baumdienstflow.de/about/de.html) und [BauFlow](https://www.baumdienstflow.de/bauflow/about/de.html). Beide behalten getrennte Links für Firmen-Admin, Mitarbeitende mit PIN und die vorhandene Demo. Die Vorstellungen kennzeichnen den tatsächlichen Funktionsstand und ersetzen keine Feld-, Geräte- oder Kundeneinführung.
+Die getrennten Produktvorstellungen von [BaumdienstFlow](https://www.baumdienstflow.de/about/de.html) und [BauFlow](https://www.baumdienstflow.de/bauflow/about/de.html) zeigen die jeweiligen Abläufe und fiktiven Bildschirmbeispiele in vier Sprachen. Das Portfolio führt beide Produkte separat mit eigenen Galerien; BaumdienstFlow für Baumpflege, BauFlow für Stahlbau. Administrator- und PIN-Zugänge bleiben getrennt. Die Websites sind eigenständige statische Deployments und ersetzen keine Kunden-, Geräte- oder Sicherheitsabnahme.
 
 Der P2-Quellstand und sein Veröffentlichungs-/Online-Readback werden separat im [Präsentationsreview](websites/products/P2_REVIEW.md) geführt. Historische App-Testzahlen und Revisionen bleiben unverändert. Änderungen an statischen Websites autorisieren keinen Merge des Railway-Piloten. Nach einem wesentlichen Produktfortschritt werden Vorstellung, Portfolio und betroffene README/About-Texte gemeinsam abgeglichen.
 

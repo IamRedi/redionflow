@@ -63,3 +63,13 @@ and demo entrances are clearly available for each product on the parent.
 The parent is live at https://flow.redioncekrezi.de/ in SQ/EN/DE/IT on the existing portfolio Vercel project. Approved portfolio head368e3ac was merged by PR29 as a12ab96 with the same source tree. Anonymous HTTPS, static source/body comparison, API404 isolation, responsive review, Office/Admin, worker/PIN and both demo destinations passed. The existing Cloudflare product websites are retained.
 
 Do not merge this source PR into the Railway-connected pilot as a side effect of website publication. Provider readback also shows main is connected to four demo/reset services; documentation integration belongs with a separately scoped app release. No app source/configuration, schema, seed or SaaS deployment was changed by this website delivery. About now points to the verified public parent; stage/readiness are unchanged.
+
+
+## Product branding candidate · 8 November 2026
+
+Reciprocal footer links use each product’s actual logo and wordmark in all four locales, with “Për ndërtime çeliku” for BauFlow. Decorative role-card counters are removed; meaningful process numbers remain. Legal links sit immediately above the natural author footer.
+
+Combined package: `deploy/baumdienstflow-bauflow-branding-2026-11-08.zip`
+SHA-256: `e185597955dae6259ebad75c549d5ca0a7c97af0c796c8a2c944510c6691c797`. It preserves the previous verified combined bundle and overlays the generated product pages/assets. Never deploy only the BauFlow subtree.
+
+Validation: generator build; ten HTML editions; 250 local image/link targets; reciprocal logos; no decorative role counters; desktop and narrow rendered review. Candidate only, pending merge/publication. Railway and customer records are outside this change.
