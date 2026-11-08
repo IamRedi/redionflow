@@ -77,7 +77,7 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
         aria-expanded={fleetOpen}
         onClick={() => setFleetOpen((open) => !open)}
         className={cn(
-          "flex size-11 shrink-0 items-center justify-center rounded-full border bg-background/85 text-foreground/80 shadow-sm transition hover:bg-muted hover:text-foreground",
+          "flex size-11 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] text-foreground/80 transition hover:bg-muted hover:text-foreground",
           fleetOpen ? "ring-2 ring-brand-green ring-offset-2 ring-offset-background" : "",
         )}
       >
