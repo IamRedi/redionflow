@@ -17,7 +17,11 @@ const imageRequests = new Map<string, string>();
 let actorEpoch = 0;
 let reading: Promise<void> | null = null;
 let cleanup: (() => void) | null = null;
-function emit(change: Partial<View>) { cached = { ...cached, ...change }; listeners.forEach(listener => listener()); }
+function emit(change: Partial<View>) {
+  // An unchanged poll (304) must not hand React a new snapshot: that re-rendered every demo screen every 8 s.
+  if ((Object.keys(change) as (keyof View)[]).every(key => Object.is(cached[key], change[key]))) return;
+  cached = { ...cached, ...change }; listeners.forEach(listener => listener());
+}
 function accept(value: unknown) {
   const snapshot = snapshotSchema.parse(value);
   if (snapshot.revision >= cached.revision) emit({ ...snapshot, status: "ready", hydrated: true });
