@@ -11,6 +11,11 @@
 /* The opt-in Musterfirma shell uses the established light emerald text variant
    on dark surfaces, including translucent primary badges and links. */
 :global(.dark) .shell :global(.text-primary) { color: #6ee7b7; }
+/* Layers: the page scrolls at the bottom; the transparent header (team strip and
+   round icons, then logo and the more ring on top) stays fixed above it. */
+.shell > .header { grid-area: 1 / 1; align-self: start; pointer-events: none; }
+.shell > .header :is(a, button, summary, select, input, details, [data-testid="baum-team-strip"]) { pointer-events: auto; }
+.shell > .workspace { grid-area: 1 / 1 / -1 / -1; padding-top: var(--demo-header-height, 152px); scroll-padding-top: calc(var(--demo-header-height, 152px) + 8px); }
 .header {
   min-width: 0;
   max-height: 48dvh;

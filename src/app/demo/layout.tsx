@@ -6,6 +6,7 @@ import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
 import { WorkshopFleet } from "@/components/demo/workshop/workshop-fleet";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
+import { DemoHeaderOffset } from "@/components/demo/demo-header-offset";
 import shellStyles from "@/components/demo/demo-workspace.module.css";
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
@@ -73,7 +74,8 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
 
   return (
     <div data-demo-shell={workshopEnabled ? "muster" : undefined} className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
-      <header className={workshopEnabled ? `${shellStyles.header} relative z-10 bg-background print:hidden ${pageTone}` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
+      <header className={workshopEnabled ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
+        {workshopEnabled ? <DemoHeaderOffset /> : null}
         <div className="pt-3">
           <DemoTopBar
             mode={mode}
