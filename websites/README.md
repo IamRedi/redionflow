@@ -73,3 +73,8 @@ Combined package: `deploy/baumdienstflow-bauflow-branding-2026-11-08.zip`
 SHA-256: `e185597955dae6259ebad75c549d5ca0a7c97af0c796c8a2c944510c6691c797`. It preserves the previous verified combined bundle and overlays the generated product pages/assets. Never deploy only the BauFlow subtree.
 
 Validation: generator build; ten HTML editions; 250 local image/link targets; reciprocal logos; no decorative role counters; desktop and narrow rendered review. Candidate only, pending merge/publication. Railway and customer records are outside this change.
+
+### Returning-browser correction
+
+Final branding package: `deploy/baumdienstflow-bauflow-branding-cache-2026-11-08.zip`
+SHA-256: `ce5517e16f1057875381e1eacd17f5027a20d15dd7108d1d8ada8bd0c714add2`. Supersedes the package above only to add a stylesheet-content-hash URL in ten pages. Runtime inspection found a four-hour browser CSS cache; the hash forces the matching stylesheet for returning visitors, without changing cache policy or infrastructure. Generator and all ten hash references PASS. Same owner-approved branding publication scope.

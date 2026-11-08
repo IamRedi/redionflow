@@ -6,10 +6,12 @@
 import { mkdir, writeFile, copyFile, readFile, readdir, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { baum, bau, common, links, locales } from './content.mjs';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const root = resolve(here('../products'));
+const styleVersion = createHash('sha256').update(await readFile(here('./site.css'))).digest('hex').slice(0, 12);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const ext = 'rel="noopener"';
 
@@ -48,7 +50,7 @@ function render(p, lang, isIndex) {
 
   const s = p.showcase;
   return `<!doctype html>
-<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="${p.themeColor}"><meta name="robots" content="index,follow"><title>${t(p.title)}</title><meta name="description" content="${t(p.description)}"><link rel="canonical" href="${url}"><meta property="og:type" content="website"><meta property="og:title" content="${t(p.title)}"><meta property="og:description" content="${t(p.description)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${p.origin}/about/assets/${p.ogImage}.webp"><meta name="twitter:card" content="summary_large_image">${locales.map((x) => `<link rel="alternate" hreflang="${x}" href="${p.origin}/about/${x}.html">`).join('')}<link rel="alternate" hreflang="x-default" href="${p.origin}/"><link rel="icon" href="${A}${p.key === 'baum' ? 'logo.webp' : 'mark.svg'}"><link rel="preload" href="${A}manrope-variable.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="${A}site.css"></head>
+<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="${p.themeColor}"><meta name="robots" content="index,follow"><title>${t(p.title)}</title><meta name="description" content="${t(p.description)}"><link rel="canonical" href="${url}"><meta property="og:type" content="website"><meta property="og:title" content="${t(p.title)}"><meta property="og:description" content="${t(p.description)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${p.origin}/about/assets/${p.ogImage}.webp"><meta name="twitter:card" content="summary_large_image">${locales.map((x) => `<link rel="alternate" hreflang="${x}" href="${p.origin}/about/${x}.html">`).join('')}<link rel="alternate" hreflang="x-default" href="${p.origin}/"><link rel="icon" href="${A}${p.key === 'baum' ? 'logo.webp' : 'mark.svg'}"><link rel="preload" href="${A}manrope-variable.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="${A}site.css?v=${styleVersion}"></head>
 <body class="t-${p.key}">${sprite}<a class="skip" href="#main">${t(c.skip)}</a><div class="bg" aria-hidden="true"><div class="grid"></div><div class="glow g1"></div><div class="glow g2"></div></div>
 <header class="top" id="top"><a href="${p.home}" class="brand">${brand}</a><nav class="nav" aria-label="${p.name}"><a href="#ablaeufe">${t(c.nav.processes)}</a><a href="#dashboard">${t(c.nav.dashboard)}</a><a href="#tools">${t(c.nav.tools)}</a><a href="#zugang">${t(c.nav.access)}</a></nav><nav class="langs" aria-label="Language">${locales.map((x) => `<a href="${L}${x}.html" lang="${x}" hreflang="${x}"${x === lang && !isIndex ? ' aria-current="page"' : ''}>${x.toUpperCase()}</a>`).join('')}</nav><a class="btn white sm" href="#zugang">${t(c.nav.login)}</a></header>
 <main id="main">
