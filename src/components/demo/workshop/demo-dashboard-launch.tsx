@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import type { MouseEvent, ReactNode } from "react";
 
 /** Fullscreen must be requested during this click, before same-document routing. */
-export function DemoDashboardLaunch({href="/demo/tv?view=dashboard",className,children}:{href?:string;className?:string;children:ReactNode}) {
+export function DemoDashboardLaunch({href="/demo/tv?view=dashboard",className,label,children}:{href?:string;className?:string;label?:string;children:ReactNode}) {
   const router=useRouter();
   async function open(event:MouseEvent<HTMLAnchorElement>) {
     if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
@@ -13,5 +13,5 @@ export function DemoDashboardLaunch({href="/demo/tv?view=dashboard",className,ch
     catch { /* Unsupported/denied native fullscreen still opens the clean viewport. */ }
     router.push(href);
   }
-  return <Link href={href} className={className} onClick={open}>{children}</Link>;
+  return <Link href={href} className={className} aria-label={label} title={label} onClick={open}>{children}</Link>;
 }
