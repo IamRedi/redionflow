@@ -16,19 +16,30 @@ import { useWorkshopDemo } from "./use-workshop-demo";
 import { WorkshopDialog } from "./workshop-ui";
 
 type Picture={id:string;url:string;name:string;at?:string;original?:boolean};
+type Demo=Pick<ReturnType<typeof useWorkshopDemo>,"state"|"photos"|"illustrations"|"mediaPreferences">;
+function demoPictures(demo:Demo,kind:"asset"|"site",target:string,photoKey?:string,jobId?:string,names:{generated:string;catalogue:string}={generated:"",catalogue:""}){
+  const storedTarget=photoKey??target,scope={kind,target:storedTarget,...(jobId?{jobId}:{})},brand=target===DEMO_BRAND_TARGET;
+  const preference=mediaPreference(demo.mediaPreferences,scope);
+  const uploaded=demo.photos.filter(photo=>photo.kind===kind&&photo.target===storedTarget&&photo.jobId===jobId);
+  const illustration=!jobId?demo.illustrations?.find(i=>i.assetId===(kind==="site"?`site-cover:${storedTarget}`:target)):undefined;
+  const asset=kind==="asset"?demo.state.assets.find(a=>a.id===target):undefined;
+  const catalogue=!jobId&&!brand?(kind==="site"?"card-worksite":asset?equipmentCatalogueId(assetArtKind(asset.id,asset.name,asset.details?.category)):undefined):undefined;
+  const items:Picture[]=[...uploaded.map(photo=>({...photo,original:true})),...(illustration?.status==="ready"&&illustration.url?[{id:`generated:${illustration.id}`,url:illustration.url,name:names.generated,at:illustration.at}]:[]),...(catalogue?[{id:"catalogue",url:studioMediaUrl(catalogue),name:names.catalogue}]:[])];
+  return {preference,uploaded,illustration,items};
+}
+/** The same cover DemoPhoto shows, as a plain URL for small thumbnails (no gallery, no dialog). */
+export function demoCoverUrl(demo:Demo,kind:"asset"|"site",target:string):string|null{
+  const {items,preference}=demoPictures(demo,kind,target);
+  return orderMedia(items,preference)[0]?.url??null;
+}
 /** Explicit Musterfirma adapter. Originals and generated provenance stay in the gallery. */
 export function DemoPhoto({kind,target,photoKey,jobId,alt,children,className="",readOnly=false,triggerOnly=false}:{kind:"asset"|"site";target:string;photoKey?:string;jobId?:string;alt:string;children?:ReactNode;className?:string;readOnly?:boolean;triggerOnly?:boolean}) {
   const {currentLang}=useLanguage(),c=workshopCopy(currentLang),p=photoCopy(currentLang),s=studioCopy(currentLang),m=mediaCopy(currentLang);
-  const demo=useWorkshopDemo(),{photos,state,actor,pending,status,illustrations,imageGenerationEnabled,generating,imageErrors}=demo;
+  const demo=useWorkshopDemo(),{photos,state,actor,pending,status,imageGenerationEnabled,generating,imageErrors}=demo;
   const [open,setOpen]=useState(false),[message,setMessage]=useState("");
   const camera=useRef<HTMLInputElement>(null),file=useRef<HTMLInputElement>(null);
   const storedTarget=photoKey??target,scope={kind,target:storedTarget,...(jobId?{jobId}:{})},brand=target===DEMO_BRAND_TARGET;
-  const preference=mediaPreference(demo.mediaPreferences,scope);
-  const uploaded=photos.filter(photo=>photo.kind===kind&&photo.target===storedTarget&&photo.jobId===jobId);
-  const illustration=!jobId?illustrations?.find(i=>i.assetId===(kind==="site"?`site-cover:${storedTarget}`:target)):undefined;
-  const asset=kind==="asset"?state.assets.find(a=>a.id===target):undefined;
-  const catalogue=!jobId&&!brand?(kind==="site"?"card-worksite":asset?equipmentCatalogueId(assetArtKind(asset.id,asset.name,asset.details?.category)):undefined):undefined;
-  const items:Picture[]=[...uploaded.map(photo=>({...photo,original:true})),...(illustration?.status==="ready"&&illustration.url?[{id:`generated:${illustration.id}`,url:illustration.url,name:m.generated,at:illustration.at}]:[]),...(catalogue?[{id:"catalogue",url:studioMediaUrl(catalogue),name:m.catalogue}]:[])];
+  const {preference,uploaded,illustration,items}=demoPictures(demo,kind,target,photoKey,jobId,m);
   const visible=orderMedia(items,preference),removed=items.filter(i=>preference?.hidden.includes(i.id)),current=visible[0];
   const imageTarget=kind==="site"?storedTarget:target,working=generating.includes(imageTarget)||illustration?.status==="pending";
   const canUpload=!readOnly&&canUploadDemoFile(state,actor,kind,target,jobId),canManage=!readOnly&&actor.role==="admin";
