@@ -88,7 +88,6 @@ section{scroll-margin-top:80px}
 .card::before{content:"";position:absolute;inset:0 24px auto;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
 .card:hover{border-color:var(--line-2);transform:translateY(-3px)}
 .card p{margin:10px 0 0;color:var(--muted);font-size:15px}
-.num{display:block;margin-bottom:20px;font:600 12px/1 var(--mono);letter-spacing:.14em;color:var(--acc)}
 
 /* Products */
 .product{position:relative;margin-top:120px;padding:72px 56px 56px;border-radius:32px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(250,249,245,.03),rgba(250,249,245,0) 40%),var(--panel);overflow:hidden}
@@ -223,3 +222,5 @@ footer{margin-top:96px;padding:28px 16px 16px}
 a.redion-signature{min-height:44px;align-items:center;padding:6px 0}
 .redion-author-footer{display:flex;justify-content:center;width:100%}
 @media(forced-colors:active){.redion-signature span{color:CanvasText!important}}
+
+.foot-row .sister{flex-wrap:wrap;justify-content:center;gap:10px 14px}.sister-bau .brand b{color:#fbbf24}.sister-baum .brand b{color:#4ade80}.sister .brand{white-space:nowrap}.sister img{border-radius:50%}
