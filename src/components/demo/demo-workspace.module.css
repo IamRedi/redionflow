@@ -60,3 +60,10 @@
   .shell { display: block; height: auto; overflow: visible; }
   .workspace { height: auto; overflow: visible; }
 }
+/* Ice glass: every card in the Musterfirma shell lets the page show softly through. */
+.shell :global(.bg-card),
+.shell :global(.bg-card\/95) {
+  background-color: hsl(var(--card) / .6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+}
