@@ -3,17 +3,13 @@
 import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import { studioMediaUrl, type StudioMediaId } from "@/lib/workshop/studio-media";
-import { useLanguage } from "@/components/i18n/language-provider";
-import { studioCopy } from "@/lib/workshop/studio-copy";
 
 /** Decorative catalogue artwork is never an uploaded file or proof of condition. */
 export function StudioArt({ id, className = "", children, fill = false }: { id: StudioMediaId; className?: string; children?: ReactNode; fill?: boolean }) {
   const [failed, setFailed] = useState(false);
-  const { currentLang } = useLanguage(), s = studioCopy(currentLang);
   if (failed) return <>{children}</>;
   return <div className={`${fill ? "absolute inset-0" : "relative"} overflow-hidden rounded-xl bg-[#0c2b35] ${className}`} data-studio-art={id}>
     <Image src={studioMediaUrl(id)} alt="" fill unoptimized sizes="(max-width:640px) 100vw, 420px" className={id.startsWith("equipment-") ? "object-contain" : "object-cover"} onError={() => setFailed(true)} />
-    <span title={s.generated} className="pointer-events-none absolute left-2 top-2 rounded-md bg-black/65 px-1.5 py-1 text-[10px] font-semibold text-white">{s.aiBadge}</span>
   </div>;
 }
 

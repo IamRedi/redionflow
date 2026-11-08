@@ -1,4 +1,5 @@
 "use client";
+import { assetIdentity } from "@/lib/workshop/asset-identity";
 
 import { useState, type FormEvent } from "react";
 import { ArrowRight, ArrowRightLeft, Check, Clock3, PackageCheck, Undo2, UserRound, X } from "lucide-react";
@@ -24,7 +25,7 @@ export function HandoverPanel({ id }: { id: string }) {
   const canConfirm = h.status === "pending" && h.required.includes(actor.key) && !h.confirmations.some(v => v.actorKey === actor.key);
   async function change(command: DemoInventoryCommand) { try { await dispatch(command); setMessage(c.saved); } catch (e) { setMessage(flowError(e, c)); } }
   return <div className="space-y-4">
-    <div><h3 className="font-semibold">{asset.name}</h3><p className="text-sm text-muted-foreground">{asset.code}</p></div>
+    <div><h3 className="font-semibold">{asset.name}</h3><p className="text-sm text-muted-foreground">{assetIdentity(asset)}</p></div>
     <Status tone={h.status === "completed" ? "green" : "amber"}>{h.status === "pending" ? c.pending : c[h.status]}</Status>
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl border bg-muted/20 p-3 text-sm"><div className="min-w-0"><p className="text-xs text-muted-foreground">{c.from}</p><p className="break-words font-medium">{h.from?.workerName || c.storagePlace}</p>{h.from?.siteName && <p className="mt-1 break-words text-xs text-muted-foreground">{h.from.siteName}</p>}</div><ArrowRight className="size-4 text-primary" /><div className="min-w-0"><p className="text-xs text-muted-foreground">{c.to}</p><p className="break-words font-medium">{h.to?.workerName || c.storagePlace}</p>{h.to?.siteName && <p className="mt-1 break-words text-xs text-muted-foreground">{h.to.siteName}</p>}</div></div>
     <div><p className="text-xs font-medium text-muted-foreground">{c.requiredPeople}</p><ul className="mt-2 space-y-2">{h.required.map(key => { const confirmed = h.confirmations.find(v => v.actorKey === key); return <li key={key} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"><span className="flex items-center gap-2"><UserRound className="size-4" />{name(key)}</span><span className="flex items-center gap-1 text-xs text-muted-foreground">{confirmed ? <Check className="size-4 text-primary" /> : <Clock3 className="size-4" />}{confirmed ? confirmed.mode === "policy" ? c.automatic : c.explicit : c.pending}</span></li>; })}</ul></div>
@@ -41,7 +42,7 @@ export function HandoverRequestForm({ asset, kind, siteKey, method = "selection"
   const [message, setMessage] = useState("");
   async function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const data = new FormData(e.currentTarget); setMessage(""); try { await dispatch({ type: "handover", assetId: asset.id, kind, method, ...(data.get("workerKey") ? { workerKey: String(data.get("workerKey")) } : {}), ...(data.get("siteKey") ? { siteKey: String(data.get("siteKey")) } : {}) }); setMessage(c.requestSaved); onDone?.(); } catch (e) { setMessage(flowError(e, c)); } }
   return <form className="space-y-4" onSubmit={e => void submit(e)}>
-    <div className="rounded-xl border bg-muted/20 p-3"><p className="font-semibold">{asset.name}</p><p className="text-sm text-muted-foreground">{asset.code} · {asset.holder || asset.location}</p></div>
+    <div className="rounded-xl border bg-muted/20 p-3"><p className="font-semibold">{asset.name}</p><p className="text-sm text-muted-foreground">{assetIdentity(asset)} · {asset.holder || asset.location}</p></div>
     {kind !== "take" && kind !== "return" && <Field label={c.chooseWorker}><select name="workerKey" className={control} required defaultValue=""><option value="">—</option>{directory.workers.filter(w => w.available && (kind !== "transfer" || w.key !== asset.placement?.workerKey)).map(w => <option value={w.key} key={w.key}>{w.name}</option>)}</select></Field>}
     {kind !== "return" && <Field label={c.siteOptional}><select name="siteKey" className={control} defaultValue={siteKey || asset.placement?.siteKey || ""}><option value="">—</option>{directory.sites.filter(s => s.active).map(s => <option key={s.key} value={s.key}>{s.name}</option>)}</select></Field>}
     <p className="text-sm text-muted-foreground">{c.confirmationHint}</p>

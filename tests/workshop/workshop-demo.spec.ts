@@ -105,7 +105,7 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
     expect((await signature.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/demo/workshop");
-  await page.getByText("Mehr",{exact:true}).click();
+  await page.getByLabel("Mehr",{exact:true}).click();
   await page.getByRole("button", { name: "Hell/Dunkel", exact: true }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -133,7 +133,9 @@ test("native presentation, shared Workzone header and the existing detail pages"
     const workerSize = await strip.getByRole("button").first().boundingBox(); expect(workerSize!.height).toBeGreaterThanOrEqual(44);
     await page.screenshot({ path: info.outputPath(`workzone-${theme}-${width}.png`), fullPage: true });
     const site = await page.locator('a[href^="/demo/baustellen/"]').first().getAttribute("href");
+    await strip.getByLabel("Mehr", {exact:true}).click();
     await expect(strip.getByRole("combobox", {name:"Demo ausprobieren als"})).toBeVisible();
+    await strip.getByLabel("Mehr", {exact:true}).click();
     await page.goto("/demo/dashboard"); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (site) { await page.goto(site); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); }
   }

@@ -10,7 +10,7 @@ describe("Baumdienst inventory relationships", () => {
   it("upgrades the existing store without changing IDs, stock, history or documents; old writers fail closed", () => {
     const before = { ...createWorkshopDemo(), version: 1 };
     const upgraded = upgradeWorkshopInventory(before, directory);
-    expect(upgraded.version).toBe(3);
+    expect(upgraded.version).toBe(4);
     expect(upgraded.jobs).toEqual(before.jobs); expect(upgraded.documents).toEqual(before.documents); expect(upgraded.parts).toEqual(before.parts);
     expect(upgraded.assets.map(a => a.id)).toEqual(before.assets.map(a => a.id));
     expect(upgraded.assets.find(a => a.id === "truck")?.placement?.workerKey).toBe("worker-jonas");
@@ -18,7 +18,7 @@ describe("Baumdienst inventory relationships", () => {
     expect(upgraded.assets.find(a => a.id === "pole-saw")?.placement).toBeUndefined();
     expect(legacyWorkshopSchema.safeParse(upgraded).success).toBe(false);
     expect(upgradeWorkshopInventory(upgraded, directory)).toEqual(upgraded);
-    expect(() => upgradeWorkshopInventory({ ...before, version: 4 }, directory)).toThrow();
+    expect(() => upgradeWorkshopInventory({ ...before, version: 5 }, directory)).toThrow();
   });
   it("uses one record through site, worker, transfer, repair, release and return", () => {
     let state = apply(createWorkshopDemo(), { type: "assign", assetId: "blower", placement }, at, "assigned");

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "style": "Baumdienst Studio / KiDraht manual family",
+  "created": "2026-11-06",
+  "provider": "built-in image_gen (model not selectable)",
+  "purpose": "Original fictional wood-production reference illustrations, not operational evidence",
+  "assets": [
+    {
+      "id": "wood-yard",
+      "prompt": "Original premium photorealistic editorial studio image for BaumdienstFlow wood production workshop. Wide 3:2 horizontal composition. An immaculate contemporary timber workshop, stacked natural beech logs left, safely guarded stationary log cutting equipment in the middle distance, a single neatly strapped pallet of split firewood on the right. No people. Dark petrol teal walls, matte forest-green machinery, restrained warm orange handles, natural honey coloured wood and realistic bark. Soft cinematic studio daylight, fine tactile materials, elegant calm composition matching a high-end digital manual. Authentic plausible equipment, clean yet realistic. Entire scene visible with margins, no text, no letters, no logos, no watermark, no UI or collage. This depicts a fictional wood processing workshop, separate from a repair garage.",
+      "sourceSha256": "444b33e61831f3ac276820fbec856ba2d4a349e6885c05e7ab34607bef21d0fc",
+      "sha256": "5d56701d40f3ae1fa0c7ab5b090648a2bc542807c756183bbfd58494f7d32e22",
+      "bytes": 341038
+    },
+    {
+      "id": "wood-cutting",
+      "prompt": "Original premium photorealistic editorial studio process illustration for BaumdienstFlow. Wide 3:2 horizontal composition. One recognizable modern stationary firewood crosscut saw with its protective enclosed blade guard fully closed, supported beech log on the infeed and several neatly cut short round logs on the outfeed. Machine switched off, no people, no flying chips. Matte forest-green and dark charcoal machine with tiny warm orange controls, natural pale beech wood, detailed bark. Seamless deep petrol teal studio setting with a subtle floor and soft directional professional lighting, realistic materials, calm high-end digital manual aesthetic. No text, letters, labels, logos, watermark, collage, or UI.",
+      "sourceSha256": "17def0453cc3f8a4c9560cdcd168100c6c6a7f4fa43340591847d031419de886",
+      "sha256": "f050adae4d8e9097dea4ca94722513746d385d2c80652899489ddc63f45d3487",
+      "bytes": 102524
+    },
+    {
+      "id": "wood-splitting",
+      "prompt": "Original premium photorealistic editorial studio process illustration for BaumdienstFlow. Wide 3:2 horizontal composition. One safe modern horizontal hydraulic log splitter, switched off, hydraulic ram retracted, one short beech round supported in its cradle and a few beautifully textured split firewood billets neatly beside it. No people. Matte forest green frame, dark charcoal protected hydraulic system, subtle warm orange controls, natural honey coloured wood and realistic bark. Seamless deep petrol teal studio setting with a subtle floor, soft professional light, physically plausible construction, elegant restrained digital manual visual style. No words, labels, letters, logos, watermark, UI, or collage.",
+      "sourceSha256": "11ed1dd74dc470fe04f1becc6cefb8eb58ace64b9fe7531c713201b77ed16a1f",
+      "sha256": "1537942dc6460c97385d0e2728ef6ab1018d7f087a75b859738724882e1f2c04",
+      "bytes": 121966
+    },
+    {
+      "id": "wood-packing",
+      "prompt": "Original premium photorealistic editorial studio process illustration for BaumdienstFlow. Wide 3:2 horizontal composition. A single cubic pallet crate filled with neatly stacked split beech firewood, secured with two simple dark reusable straps, full crate visible including wooden pallet base; a few natural split billets beside it. No people, no machine. Authentic warm honey wood, finely detailed bark and split grain. Deep petrol teal seamless studio backdrop and subtle floor, a forest green pallet jack parked behind, very restrained warm orange accent, soft professional daylight, premium calm digital manual aesthetic, realistic scale and proportions. No text, no measurement markings, labels, numbers, logos, watermark, UI, or collage.",
+      "sourceSha256": "5bc25776891d0718dc273bae2947beadc226b7ccff54795c2470a754b349a07b",
+      "sha256": "8514089b1e647779a8b66a774514ed0a122f66f7ab0842b5f798a571bc609745",
+      "bytes": 280392
+    }
+  ]
+}

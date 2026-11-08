@@ -1,3 +1,4 @@
+import { switchDemoRole } from "./demo-role";
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { resetWorkshopFixture, prisma } from "./shared-fixture";
@@ -21,7 +22,7 @@ test("phone worker takes → manager confirms → colleague transfer needs both 
   const errors:string[]=[]; page.on("pageerror",e=>errors.push(e.message)); desktop.on("pageerror",e=>errors.push(e.message));
   try {
     await page.setViewportSize({width:390,height:844}); await page.goto("/demo/workshop?tab=tools");
-    await page.getByRole("combobox",{name:"Demo ausprobieren als"}).selectOption(worker.key);
+    await switchDemoRole(page,worker.key);
     await page.getByRole("button",{name:"Scannen",exact:true}).click(); await page.getByLabel("Barcode / NFC-Code").fill("WG-103"); await page.getByRole("button",{name:"Gerät öffnen",exact:true}).click();
     let dialog=page.getByRole("dialog"); await dialog.getByRole("button",{name:"Gerät mitnehmen",exact:true}).click();
     await dialog.getByLabel("Baustelle (optional)").selectOption(site.key); await dialog.getByRole("button",{name:`Bestätigen · ${worker.name}`,exact:true}).click();
@@ -34,7 +35,7 @@ test("phone worker takes → manager confirms → colleague transfer needs both 
     await expect(dialog.getByRole("link",{name:site.name})).toHaveAttribute("href",`/demo/baustellen/${site.id}`);
     await dialog.getByRole("button",{name:"An Kollegen übergeben",exact:true}).click(); await dialog.getByLabel("Mitarbeiter wählen").selectOption(colleague.key); await dialog.getByRole("button",{name:"Anfrage senden",exact:true}).click();
     snapshot=await (await request.get(api)).json() as WorkshopSnapshot; expect(snapshot.state.assets.find(a=>a.id==="blower")?.holder).toBe(worker.name);
-    await dialog.getByRole("button",{name:"Schließen",exact:true}).click(); await page.getByRole("combobox",{name:"Demo ausprobieren als"}).selectOption(colleague.key);
+    await dialog.getByRole("button",{name:"Schließen",exact:true}).click(); await switchDemoRole(page,colleague.key);
     await page.getByRole("button",{name:/^Mitteilungen/}).click(); await page.getByRole("dialog").getByRole("button").filter({hasText:"Laubbläser"}).first().click(); await page.getByRole("dialog").getByRole("button",{name:"Bestätigen",exact:true}).click(); await expect(page.getByRole("dialog")).toContainText("Abgeschlossen");
     await desktop.goto(`/demo/workers/${colleague.id}`); await expect(desktop.getByRole("region",{name:"Geräte & Werkzeuge"})).toContainText("Laubbläser");
     await desktop.goto("/demo/workshop?tab=tools&asset=blower&detail=1"); const dd=desktop.getByRole("dialog"); await dd.getByText("Service & Details",{exact:true}).click(); await dd.getByRole("button",{name:"Defekt melden",exact:true}).click(); await dd.getByLabel("Defektbeschreibung").fill("DEMO · custody origin"); await dd.getByRole("button",{name:"In Werkstatt annehmen",exact:true}).click();
@@ -108,7 +109,7 @@ test("upgrade preserves existing data/files and directory changes invalidate its
   await prisma.baumdienstDemoWorkspace.create({ data: { key: DEMO_WORKSPACE_KEY, data: legacy, revision: 17 } });
   const file = await prisma.baumdienstDemoFile.create({ data: { id: randomUUID(), workspaceKey: DEMO_WORKSPACE_KEY, kind: "asset", target: "crane", name: "DEMO-retained.webp", mime: "image/webp", data: Buffer.from("DEMO"), bytes: 4 } });
   const first = await request.get(api), snapshot = await first.json() as WorkshopSnapshot;
-  expect(snapshot.revision).toBe(18); expect(snapshot.state.version).toBe(3);
+  expect(snapshot.revision).toBe(18); expect(snapshot.state.version).toBe(4);
   expect(snapshot.state.jobs).toEqual(legacy.jobs); expect(snapshot.state.parts).toEqual(legacy.parts); expect(snapshot.state.documents).toEqual(legacy.documents);
   expect(await prisma.baumdienstDemoFile.count({ where: { id: file.id } })).toBe(1);
   expect(Buffer.from((await prisma.baumdienstDemoFile.findUniqueOrThrow({ where: { id: file.id } })).data)).toEqual(Buffer.from("DEMO"));

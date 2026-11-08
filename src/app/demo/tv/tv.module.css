@@ -1,0 +1,7 @@
+.tv { min-width: 0; }
+/* TV keeps one main scroll region and the same natural footer; no operational shell controls. */
+:global([data-demo-shell="muster"]):has(.tv) > header,
+:global([data-demo-shell="muster"]):has(.tv) > :global([data-demo-fleet]) { display: none; }
+:global([data-demo-shell="muster"]):has(.tv) { grid-template-rows: minmax(0, 1fr); }
+
+:global([data-demo-shell="muster"]):has(.tv) > main { padding: 0; scrollbar-gutter: auto; }

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ImageIcon, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ImageIcon, Truck, X } from "lucide-react";
+import { memo, useMemo, useState, type ReactNode } from "react";
 
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/components/i18n/language-provider";
@@ -60,7 +60,7 @@ function Detail({ label, value }: { label: string; value: string | number | null
   );
 }
 
-export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks }: { machines: DemoMachine[]; initiallyOpen?: boolean; workshopLinks?: Record<string, { href: string; label: string; status: string }> }) {
+function DemoMachineRailView({ machines, initiallyOpen = true, workshopLinks, renderPhoto }: { machines: DemoMachine[]; initiallyOpen?: boolean; workshopLinks?: Record<string, { href: string; label: string; status: string }>; /** The vehicle's own card photo, shared everywhere it appears. */ renderPhoto?: (machine: DemoMachine) => ReactNode }) {
   const { currentLang } = useLanguage();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [fleetOpen, setFleetOpen] = useState(initiallyOpen);
@@ -77,11 +77,11 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
         aria-expanded={fleetOpen}
         onClick={() => setFleetOpen((open) => !open)}
         className={cn(
-          "flex size-12 shrink-0 items-center justify-center rounded-full border bg-muted text-[11px] font-semibold shadow-sm transition hover:scale-105",
+          "flex size-11 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] text-foreground/80 transition hover:bg-muted hover:text-foreground",
           fleetOpen ? "ring-2 ring-brand-green ring-offset-2 ring-offset-background" : "",
         )}
       >
-        {t("workzone.fleet", currentLang).toUpperCase()}
+        <Truck className="size-4" aria-hidden="true" />
       </button>
 
       {fleetOpen ? (
@@ -97,7 +97,7 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
                   title={`${label}${machine.isActive ? "" : ` - ${t("workzone.blockedStatus", currentLang).toUpperCase()}`}`}
                   onClick={() => setSelectedId(selectedMachine ? null : machine.id)}
                   className={cn(
-                    "relative flex h-11 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted text-xs font-semibold shadow-sm transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "relative flex h-11 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-white/40 text-xs font-semibold shadow-sm backdrop-blur-md transition dark:bg-white/[0.08] hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     selectedMachine ? "ring-2 ring-brand-green ring-offset-2 ring-offset-background" : "",
                     machine.isActive ? "border-border" : "border-red-500 bg-red-600 text-white",
                   )}
@@ -105,7 +105,7 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
                   {machine.imageUrl ? (
                     // Stored demo image URLs already use the existing asset pipeline.
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={machine.imageUrl} alt={label} className="size-full object-cover" />
+                    <img src={machine.imageUrl} alt={label} loading="lazy" decoding="async" draggable={false} className="size-full object-cover" />
                   ) : (
                     <span className="block whitespace-nowrap px-1 text-center text-[9px] leading-none tracking-tight">{shortLabel(label) || initials(label)}</span>
                   )}
@@ -123,16 +123,16 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
       ) : null}
 
       {selected ? (
-        <div className="fixed inset-x-3 bottom-20 max-h-[calc(100dvh-7rem)] overflow-hidden rounded-lg border bg-card shadow-2xl lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-14 lg:top-0 lg:w-[min(26rem,calc(100vw-6rem))] lg:max-h-none">
+        <div className="fixed inset-x-3 bottom-20 max-h-[calc(100dvh-7rem)] overflow-hidden rounded-2xl border border-white/15 bg-card/60 shadow-2xl backdrop-blur-xl lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-14 lg:top-0 lg:w-[min(26rem,calc(100vw-6rem))] lg:max-h-none">
           <div className="relative h-36 bg-muted">
-            {selected.imageUrl ? (
+            {renderPhoto?.(selected) ?? (selected.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- existing stored demo asset
               <img src={selected.imageUrl} alt={machineLabel(selected)} className="size-full object-cover" />
             ) : (
               <div className="flex size-full items-center justify-center text-muted-foreground">
                 <ImageIcon className="size-10" />
               </div>
-            )}
+            ))}
             <button
               type="button"
               className="absolute right-2 top-2 rounded-full border bg-background/85 p-1.5 shadow-sm"
@@ -141,7 +141,7 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
             >
               <X className="size-4" />
             </button>
-            <div className="absolute bottom-3 left-3 rounded-md bg-background/90 px-3 py-2 shadow-sm">
+            <div className="absolute bottom-3 left-3 rounded-xl border border-white/15 bg-background/55 px-3 py-2 shadow-sm backdrop-blur-md">
               <div className="text-lg font-semibold leading-none">{machineLabel(selected)}</div>
               <div className="mt-1 text-xs text-muted-foreground">
                 {selected.targe ?? t("workzone.noLicensePlate", currentLang)} · {selected.funksioni ?? t("workzone.fleet", currentLang)}
@@ -190,3 +190,6 @@ export function DemoMachineRail({ machines, initiallyOpen = true, workshopLinks 
     </aside>
   );
 }
+
+/** Memoised: the rail only re-renders when its machines, links or photo renderer change. */
+export const DemoMachineRail = memo(DemoMachineRailView);

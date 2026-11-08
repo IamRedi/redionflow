@@ -9,14 +9,18 @@ import { studioCopy } from "@/lib/workshop/studio-copy";
 import { useWorkshopDemo } from "./use-workshop-demo";
 import { WorkshopAssetArt } from "./workshop-art";
 import { StudioArt } from "./studio-art";
+import { mediaPreference, mediaVisible, orderMedia } from "@/lib/workshop/media";
 
 /** The asset identity follows a job. Reference artwork never becomes repair evidence. */
 export function EquipmentReference({ asset, jobId, className = "" }: { asset: WorkshopAsset; jobId?: string; className?: string }) {
-  const { photos, illustrations } = useWorkshopDemo(), { currentLang } = useLanguage(), s = studioCopy(currentLang);
-  const photo = photos.find(p=>p.kind === "asset" && p.target === asset.id && p.jobId === jobId) ?? photos.find(p=>p.kind === "asset" && p.target === asset.id && !p.jobId);
-  const ai = illustrations?.find(i=>i.assetId === asset.id && i.status === "ready");
+  const { photos, illustrations, mediaPreferences } = useWorkshopDemo(), { currentLang } = useLanguage(), s = studioCopy(currentLang);
+  const preference=mediaPreference(mediaPreferences,{kind:"asset",target:asset.id}),jobPreference=mediaPreference(mediaPreferences,{kind:"asset",target:asset.id,jobId});
+  const photo = (jobId?orderMedia(photos.filter(p=>p.kind==="asset"&&p.target===asset.id&&p.jobId===jobId),jobPreference)[0]:undefined) ?? orderMedia(photos.filter(p=>p.kind === "asset" && p.target === asset.id && !p.jobId),preference)[0];
+  const ai = illustrations?.find(i=>i.assetId === asset.id && i.status === "ready"&&mediaVisible(preference,`generated:${i.id}`));
   const catalogue = equipmentCatalogueId(assetArtKind(asset.id,asset.name,asset.details?.category));
-  if (photo || ai) return <div className={`relative overflow-hidden rounded-xl ${className}`}><Image src={photo?.url || ai!.url!} alt={`${asset.name}${photo ? "" : ` · ${s.generated}`}`} fill unoptimized sizes="160px" className={photo ? "object-cover" : "bg-[#f5f3ed] object-contain"} />{!photo && <span className="absolute left-1 top-1 rounded bg-black/70 px-1 text-[10px] text-white">{s.aiBadge}</span>}</div>;
+  const selectedGenerated=ai&&preference?.cover===`generated:${ai.id}`;
+  const selectedCatalogue=catalogue&&preference?.cover==="catalogue"&&mediaVisible(preference,"catalogue");
+  if(!selectedCatalogue&&(photo||ai)) return <div className={`relative overflow-hidden rounded-xl bg-[#0c2b35] ${className}`}><Image src={(!selectedGenerated&&photo?.url)||ai!.url!} alt={`${asset.name}${photo&&!selectedGenerated?"":` · ${s.generated}`}`} fill unoptimized sizes="160px" className={photo&&!selectedGenerated?"object-cover":"object-contain"}/></div>;
   const sketch = <WorkshopAssetArt id={asset.id} name={asset.name} category={asset.details?.category} className={className} />;
-  return catalogue ? <StudioArt id={catalogue} className={className}>{sketch}</StudioArt> : sketch;
+  return catalogue&&mediaVisible(preference,"catalogue") ? <StudioArt id={catalogue} className={className}>{sketch}</StudioArt> : sketch;
 }

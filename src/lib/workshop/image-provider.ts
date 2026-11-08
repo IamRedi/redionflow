@@ -1,13 +1,14 @@
 import { compactPhoto } from "@/lib/asset-photos/image";
 import type { WorkshopAsset } from "./demo-model";
 import { IMAGE_MODEL, IMAGE_TIMEOUT_MS, imagePrompt } from "./image-identity";
+import { imageFormats, type ImagePlacement } from "./image-format";
 
 export class ImageProviderError extends Error {
   constructor(public code: "aiFailed" | "aiTimeout" | "aiUnavailable") { super(code); }
 }
 
 /** One fixed-provider call. Never retry an uncertain paid request automatically. */
-export async function generateEquipmentImage(asset: WorkshopAsset) {
+export async function generateStudioImage(prompt: string, placement:ImagePlacement="equipment") {
   const key = process.env.BAUMDIENST_IMAGE_OPENAI_API_KEY?.trim();
   if (!key) throw new ImageProviderError("aiUnavailable");
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
@@ -15,7 +16,7 @@ export async function generateEquipmentImage(asset: WorkshopAsset) {
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST", redirect: "error", cache: "no-store", signal: controller.signal,
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: IMAGE_MODEL, prompt: imagePrompt(asset), n: 1, size: "1024x1024", quality: "medium", complexity: "low", background: "opaque", output_format: "webp", output_compression: 80, moderation: "auto" }),
+      body: JSON.stringify({ model: IMAGE_MODEL, prompt, n: 1, size: imageFormats[placement].size, quality: "medium", complexity: "low", background: "opaque", output_format: "webp", output_compression: 80, moderation: "auto" }),
     });
     if (!response.ok) {
       await response.body?.cancel();
@@ -31,9 +32,12 @@ export async function generateEquipmentImage(asset: WorkshopAsset) {
     const encoded = body?.data?.length === 1 ? body.data[0]?.b64_json : undefined;
     if (typeof encoded !== "string" || !encoded.length || encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new ImageProviderError("aiFailed");
     // Never follow provider URLs or render XML. Revalidate and strip raster metadata.
-    return (await compactPhoto(new Uint8Array(Buffer.from(encoded, "base64")))).data;
+    const photo=await compactPhoto(new Uint8Array(Buffer.from(encoded,"base64")));
+    if(Math.abs(photo.width/photo.height/imageFormats[placement].ratio-1)>.02)throw new ImageProviderError("aiFailed");
+    return photo.data;
   } catch (error) {
     if (error instanceof ImageProviderError) throw error;
     throw new ImageProviderError(controller.signal.aborted ? "aiTimeout" : "aiFailed");
   } finally { clearTimeout(timer); }
 }
+export async function generateEquipmentImage(asset: WorkshopAsset) { return generateStudioImage(imagePrompt(asset)); }

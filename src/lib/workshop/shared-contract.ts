@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { workshopSchema, type WorkshopState } from "./demo-model";
 import { actorSchema, assetDetailsSchema, demoOffice, treeUpdateSchema } from "./custody-schema";
+import { mediaPreferenceSchema, type MediaPreference } from "./media";
 
 const id = z.string().trim().min(1).max(128);
 const note = z.string().trim().min(1).max(2000);
 export const publicWorkshopCommand = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("register"), assetId: z.uuid(), name: z.string().trim().min(1).max(120), code: z.string().trim().max(80).optional(), inspection: z.iso.date(), details: assetDetailsSchema }).strict(),
-  z.object({ type: z.literal("edit-asset"), assetId: id, name: z.string().trim().min(1).max(120), details: assetDetailsSchema }).strict(),
+  z.object({ type: z.literal("register"), assetId: z.uuid(), name: z.string().trim().min(1).max(120), code: z.string().trim().max(80).optional(), plate: z.string().trim().max(24).optional(), barcode: z.string().trim().max(80).optional(), inspection: z.iso.date(), details: assetDetailsSchema }).strict(),
+  z.object({ type: z.literal("edit-asset"), assetId: id, name: z.string().trim().min(1).max(120), plate: z.string().trim().max(24).optional(), barcode: z.string().trim().max(80).optional(), details: assetDetailsSchema }).strict(),
   z.object({ type: z.literal("handover"), assetId: id, kind: z.enum(["take", "issue", "return", "transfer"]), workerKey: id.optional(), siteKey: id.optional(), method: z.enum(["scan", "selection"]).default("selection") }).strict(),
   z.object({ type: z.literal("confirm-handover"), handoverId: id }).strict(),
   z.object({ type: z.literal("decline-handover"), handoverId: id, reason: z.string().trim().max(2000).default("") }).strict(),
@@ -30,10 +31,10 @@ export type WorkshopPhoto = { id: string; kind: "asset" | "site"; target: string
 export const directorySchema = z.object({ sites: z.array(z.object({ key: id, id, name: z.string(), active: z.boolean() })), workers: z.array(z.object({ key: id, id, name: z.string(), available: z.boolean() })) });
 export type WorkshopDirectory = z.infer<typeof directorySchema>;
 export const emptyDirectory: WorkshopDirectory = { sites: [], workers: [] };
-export const illustrationSchema = z.object({ assetId: id, status: z.enum(["pending", "ready", "error"]), url: z.string().startsWith("/api/demo/baumdienst/images/").optional(), at: z.iso.datetime(), error: z.string().optional() });
+export const illustrationSchema = z.object({ assetId: id, id: z.string().optional(), status: z.enum(["pending", "ready", "error"]), url: z.string().startsWith("/api/demo/baumdienst/images/").optional(), at: z.iso.datetime(), error: z.string().optional(), legacy: z.boolean().optional() });
 export type WorkshopIllustration = z.infer<typeof illustrationSchema>;
-export type WorkshopSnapshot = { state: WorkshopState; revision: number; updatedAt: string; photos: WorkshopPhoto[]; directory: WorkshopDirectory; actor?: z.infer<typeof actorSchema>; illustrations?: WorkshopIllustration[]; imageGenerationEnabled?: boolean };
+export type WorkshopSnapshot = { state: WorkshopState; revision: number; updatedAt: string; photos: WorkshopPhoto[]; directory: WorkshopDirectory; actor?: z.infer<typeof actorSchema>; illustrations?: WorkshopIllustration[]; imageGenerationEnabled?: boolean; mediaPreferences?: MediaPreference[] };
 export const WORKSHOP_API = "/api/demo/baumdienst/workshop";
 export const WORKSHOP_FILES_API = "/api/demo/baumdienst/files";
 export const fileUrl = (id: string) => `${WORKSHOP_FILES_API}/${encodeURIComponent(id)}`;
-export const snapshotSchema = z.object({ state: workshopSchema, actor: actorSchema.default(demoOffice), revision: z.number().int().nonnegative(), updatedAt: z.iso.datetime(), directory: directorySchema.default(emptyDirectory), illustrations: z.array(illustrationSchema).default([]), imageGenerationEnabled: z.boolean().default(false), photos: z.array(z.object({ id: z.uuid(), kind: z.enum(["asset", "site"]), target: id, jobId: id.optional(), name: z.string(), at: z.iso.datetime(), url: z.string().startsWith(`${WORKSHOP_FILES_API}/`) })) });
+export const snapshotSchema = z.object({ state: workshopSchema, actor: actorSchema.default(demoOffice), revision: z.number().int().nonnegative(), updatedAt: z.iso.datetime(), directory: directorySchema.default(emptyDirectory), illustrations: z.array(illustrationSchema).default([]), imageGenerationEnabled: z.boolean().default(false), mediaPreferences:z.array(mediaPreferenceSchema).default([]), photos: z.array(z.object({ id: z.uuid(), kind: z.enum(["asset", "site"]), target: id, jobId: id.optional(), name: z.string(), at: z.iso.datetime(), url: z.string().startsWith(`${WORKSHOP_FILES_API}/`) })) });

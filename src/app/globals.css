@@ -343,3 +343,6 @@ body.mode-bau [class*="emerald-950"] {
     radial-gradient(circle at 12px 12px, rgb(255 255 255 / 0.03) 1.5px, transparent 1.6px),
     radial-gradient(circle at 36px 30px, rgb(255 255 255 / 0.025) 1px, transparent 1.1px);
 }
+
+/* Musterfirma demo: the product mark lives in the footer corner, not over the header. */
+body:has([data-demo-shell="muster"]) [data-testid="flow-global-tools"] { display: none; }

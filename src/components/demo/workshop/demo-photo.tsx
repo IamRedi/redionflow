@@ -1,66 +1,79 @@
 "use client";
-import { canUploadDemoFile } from "@/lib/workshop/inventory-flow";
-
 import Image from "next/image";
-import { Camera, Download, ImagePlus, LoaderCircle, Sparkles } from "lucide-react";
+import { Camera, Check, Download, ImagePlus, LoaderCircle, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
 import { photoCopy } from "@/lib/asset-photos/shared";
+import { canUploadDemoFile } from "@/lib/workshop/inventory-flow";
 import { workshopCopy } from "@/lib/workshop/copy";
+import { studioCopy } from "@/lib/workshop/studio-copy";
+import { mediaCopy } from "@/lib/workshop/media-copy";
+import { DEMO_BRAND_TARGET, mediaPreference, orderMedia, type MediaCommand } from "@/lib/workshop/media";
+import { equipmentCatalogueId, studioMediaUrl } from "@/lib/workshop/studio-media";
+import { assetArtKind } from "@/lib/workshop/identity-art";
 import { useWorkshopDemo } from "./use-workshop-demo";
 import { WorkshopDialog } from "./workshop-ui";
-import { StudioArt } from "./studio-art";
-import { atlasCopy } from "@/lib/workshop/atlas";
-import { assetArtKind } from "@/lib/workshop/identity-art";
-import { studioMediaUrl, type StudioMediaId } from "@/lib/workshop/studio-media";
-import { studioCopy } from "@/lib/workshop/studio-copy";
 
-/** Explicit demo adapter: never calls operational photo actions or storage. */
-export function DemoPhoto({ kind, target, photoKey, jobId, alt, children, className = "" }: { kind: "asset" | "site"; target: string; photoKey?: string; jobId?: string; alt: string; children?: ReactNode; className?: string }) {
-  const { currentLang } = useLanguage(), c = workshopCopy(currentLang), p = photoCopy(currentLang), studio = studioCopy(currentLang), atlas = atlasCopy(currentLang);
-  const { photos, state, actor, upload, pending, status, illustrations, imageGenerationEnabled, generateImage, generating, imageErrors } = useWorkshopDemo();
-  const images = photos.filter(photo => photo.kind === kind && photo.target === (photoKey ?? target) && (!jobId || photo.jobId === jobId));
-  const [open, setOpen] = useState(false), [message, setMessage] = useState("");
-  const illustration = kind === "asset" && !jobId ? illustrations?.find(i => i.assetId === target) : undefined;
-  const asset = kind === "asset" ? state.assets.find(a=>a.id === target) : undefined;
-  const artKind = asset ? assetArtKind(asset.id,asset.name,asset.details?.category) : "";
-  const catalogue = !jobId ? kind === "site" ? "card-worksite" : ["chipper","truck","platform","harness","helmet","spade","toolbox","crane"].includes(artKind) ? `equipment-${artKind}` as StudioMediaId : undefined : undefined;
-  const working = generating.includes(target) || illustration?.status === "pending";
-  const generatedUrl = !images.length && illustration?.status === "ready" ? illustration.url : undefined;
-  const imageError = imageErrors[target] || illustration?.error;
-  const imageErrorText = imageError && (studio[imageError as keyof typeof studio] || studio.aiFailed);
-  const camera = useRef<HTMLInputElement>(null), file = useRef<HTMLInputElement>(null);
-  async function choose(selected?: File) {
-    if (!selected) return;
-    setMessage("");
-    try {
-      if (!selected.size || selected.size > 12_000_000 || !["image/jpeg", "image/png", "image/webp"].includes(selected.type)) throw new Error("fileError");
-      await upload(selected, { kind, target, ...(jobId ? { jobId } : {}) });
-      setMessage(c.saved);
-    } catch (error) { const key = error instanceof Error ? error.message : "error"; setMessage(key === "conflict" ? c.conflict : key === "busy" ? c.busy : key === "connection" ? c.connection : c.fileError); }
-    finally { if (camera.current) camera.current.value = ""; if (file.current) file.current.value = ""; }
+type Picture={id:string;url:string;name:string;at?:string;original?:boolean};
+type Demo=Pick<ReturnType<typeof useWorkshopDemo>,"state"|"photos"|"illustrations"|"mediaPreferences">;
+function demoPictures(demo:Demo,kind:"asset"|"site",target:string,photoKey?:string,jobId?:string,names:{generated:string;catalogue:string}={generated:"",catalogue:""}){
+  const storedTarget=photoKey??target,scope={kind,target:storedTarget,...(jobId?{jobId}:{})},brand=target===DEMO_BRAND_TARGET;
+  const preference=mediaPreference(demo.mediaPreferences,scope);
+  const uploaded=demo.photos.filter(photo=>photo.kind===kind&&photo.target===storedTarget&&photo.jobId===jobId);
+  const illustration=!jobId?demo.illustrations?.find(i=>i.assetId===(kind==="site"?`site-cover:${storedTarget}`:target)):undefined;
+  const asset=kind==="asset"?demo.state.assets.find(a=>a.id===target):undefined;
+  const catalogue=!jobId&&!brand?(kind==="site"?"card-worksite":asset?equipmentCatalogueId(assetArtKind(asset.id,asset.name,asset.details?.category)):undefined):undefined;
+  const items:Picture[]=[...uploaded.map(photo=>({...photo,original:true})),...(illustration?.status==="ready"&&illustration.url?[{id:`generated:${illustration.id}`,url:illustration.url,name:names.generated,at:illustration.at}]:[]),...(catalogue?[{id:"catalogue",url:studioMediaUrl(catalogue),name:names.catalogue}]:[])];
+  return {preference,uploaded,illustration,items};
+}
+/** The same cover DemoPhoto shows, as a plain URL for small thumbnails (no gallery, no dialog). */
+export function demoCoverUrl(demo:Demo,kind:"asset"|"site",target:string):string|null{
+  const {items,preference}=demoPictures(demo,kind,target);
+  return orderMedia(items,preference)[0]?.url??null;
+}
+/** Explicit Musterfirma adapter. Originals and generated provenance stay in the gallery. */
+export function DemoPhoto({kind,target,photoKey,jobId,alt,children,className="",readOnly=false,triggerOnly=false}:{kind:"asset"|"site";target:string;photoKey?:string;jobId?:string;alt:string;children?:ReactNode;className?:string;readOnly?:boolean;triggerOnly?:boolean}) {
+  const {currentLang}=useLanguage(),c=workshopCopy(currentLang),p=photoCopy(currentLang),s=studioCopy(currentLang),m=mediaCopy(currentLang);
+  const demo=useWorkshopDemo(),{photos,state,actor,pending,status,imageGenerationEnabled,generating,imageErrors}=demo;
+  const [open,setOpen]=useState(false),[message,setMessage]=useState("");
+  const camera=useRef<HTMLInputElement>(null),file=useRef<HTMLInputElement>(null);
+  const storedTarget=photoKey??target,scope={kind,target:storedTarget,...(jobId?{jobId}:{})},brand=target===DEMO_BRAND_TARGET;
+  const {preference,uploaded,illustration,items}=demoPictures(demo,kind,target,photoKey,jobId,m);
+  const visible=orderMedia(items,preference),removed=items.filter(i=>preference?.hidden.includes(i.id)),current=visible[0];
+  const imageTarget=kind==="site"?storedTarget:target,working=generating.includes(imageTarget)||illustration?.status==="pending";
+  const canUpload=!readOnly&&canUploadDemoFile(state,actor,kind,target,jobId),canManage=!readOnly&&actor.role==="admin";
+  const error=imageErrors[imageTarget]||illustration?.error;
+  const errorText=(key:string)=>key in s?s[key as keyof typeof s]:key in c?c[key as keyof typeof c]:c.error;
+  async function choose(selected?:File) {
+    if(!selected||!canUpload)return;setMessage("");
+    try{if(!selected.size||selected.size>12_000_000||!["image/jpeg","image/png","image/webp"].includes(selected.type))throw new Error("fileError");await demo.upload(selected,{kind,target,...(jobId?{jobId}:{})});setMessage(c.saved);}
+    catch(error){setMessage(errorText(error instanceof Error?error.message:"fileError"));}
+    finally{if(camera.current)camera.current.value="";if(file.current)file.current.value="";}
   }
+  async function manage(action:MediaCommand["action"],mediaId:string){setMessage("");try{await demo.manageMedia({...scope,action,mediaId});setMessage(m.saved);}catch(error){setMessage(errorText(error instanceof Error?error.message:"error"));}}
   return <div className={`relative ${className}`} data-testid={`demo-photo-${kind}-${target}`}>
-    {images[0] ? <Image src={images[0].url} alt={alt} fill sizes="(max-width: 640px) 100vw, 420px" unoptimized className="object-cover" /> : generatedUrl ? <><Image src={generatedUrl} alt={`${alt} · ${studio.generated}`} fill sizes="(max-width: 640px) 100vw, 420px" unoptimized className="bg-[#f5f3ed] object-contain" /><span className="pointer-events-none absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-1 text-[10px] font-semibold text-white" title={studio.generated}>{studio.aiBadge}</span></> : catalogue ? <StudioArt id={catalogue} fill className="!rounded-none">{children}</StudioArt> : children}
-    {working && !images.length && <span role="status" aria-label={studio.generating} className="pointer-events-none absolute left-2 top-2 rounded-full bg-black/70 p-1.5 text-white"><LoaderCircle className="size-4 motion-safe:animate-spin" /></span>}
-    <button type="button" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setOpen(true); }} className="absolute bottom-1.5 right-1.5 inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-white/30 bg-black/70 px-3 text-xs font-semibold text-white shadow-sm backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label={`${c.photos}: ${alt}`}><Camera className="size-4" aria-hidden="true" />{images.length > 0 && <span>{images.length}</span>}</button>
-    <WorkshopDialog open={open} onClose={() => setOpen(false)} closeLabel={c.close} title={`${c.photos} · ${alt}`} description={c.photoHint}>
+    {!triggerOnly&&(current?<Image src={current.url} alt={alt} fill unoptimized sizes="(max-width:640px) 100vw, 520px" className={current.original||kind==="site"?"object-cover":"bg-[#0c2b35] object-contain"}/>:children)}
+    {working&&!current&&<span role="status" aria-label={s.generating} className="absolute left-2 top-2 rounded-full bg-black/70 p-2 text-white"><LoaderCircle className="size-4 motion-safe:animate-spin"/></span>}
+    <button type="button" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.preventDefault();e.stopPropagation();setOpen(true);}} className={`${triggerOnly?"inline-flex":"absolute bottom-1.5 right-1.5 inline-flex"} ${triggerOnly?"min-h-11 min-w-11 rounded-xl px-3":"min-h-8 min-w-8 rounded-full px-2"} items-center justify-center gap-1.5 border border-white/30 bg-black/70 text-xs font-semibold text-white backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`} aria-label={`${c.photos}: ${alt}`}><Camera className="size-4" aria-hidden="true"/>{uploaded.length>0&&!triggerOnly&&<span>{visible.filter(i=>i.original).length}</span>}</button>
+    <WorkshopDialog open={open} onClose={()=>setOpen(false)} closeLabel={c.close} title={`${c.photos} · ${alt}`} description={readOnly?undefined:m.hint}>
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" className="min-h-11" disabled={pending || status !== "ready" || !canUploadDemoFile(state,actor,kind,target,jobId)} onClick={() => camera.current?.click()}><Camera />{p.camera}</Button><Button type="button" variant="outline" className="min-h-11" disabled={pending || status !== "ready" || !canUploadDemoFile(state,actor,kind,target,jobId)} onClick={() => file.current?.click()}><ImagePlus />{p.upload}</Button></div>
-        <input ref={camera} data-photo-input="camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={e => void choose(e.target.files?.[0])} />
-        <input ref={file} data-photo-input="upload" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => void choose(e.target.files?.[0])} />
-        {kind === "asset" && !jobId && <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
-          {generatedUrl && <figure><Image src={generatedUrl} alt={`${alt} · ${studio.generated}`} width={1024} height={1024} unoptimized className="mx-auto aspect-square max-h-72 w-full rounded-lg bg-[#f5f3ed] object-contain" /><figcaption className="mt-2 flex items-center gap-2 text-xs font-medium"><Sparkles className="size-4 text-primary" />{studio.generated}</figcaption></figure>}
-          {!images.length && !generatedUrl && catalogue && <figure><Image src={studioMediaUrl(catalogue)} alt={`${alt} · ${atlas.catalogue}`} width={1536} height={1024} unoptimized className="mx-auto aspect-[3/2] max-h-72 w-full rounded-lg object-contain" /><figcaption className="mt-2 text-xs text-muted-foreground">{atlas.catalogue} · {studio.reference}</figcaption></figure>}
-          {!images.length && !generatedUrl && actor.role === "admin" && <Button type="button" variant="outline" className="min-h-11 w-full" disabled={!imageGenerationEnabled || working || pending || status !== "ready" || Boolean(generatedUrl)} onClick={() => void generateImage(target).catch(() => {})}>{working ? <LoaderCircle className="motion-safe:animate-spin" /> : <Sparkles />}{working ? studio.generating : generatedUrl ? studio.generated : studio.generate}</Button>}
-          <p className="text-xs leading-relaxed text-muted-foreground">{generatedUrl ? studio.reference : studio.hint}</p>
-          {!images.length && !imageGenerationEnabled && <p className="text-xs leading-relaxed text-muted-foreground">{studio.aiUnavailable}</p>}
-          {!images.length && imageErrorText && <p role="alert" className="text-sm">{imageErrorText}</p>}
-        </div>}
-        {pending && <p role="status" className="flex items-center gap-2 text-sm"><LoaderCircle className="size-4 motion-safe:animate-spin" />{c.saving}</p>}
-        {message && <p role={message === c.saved ? "status" : "alert"} className="rounded-xl border bg-muted/30 p-3 text-sm">{message}</p>}
-        {images.length ? <div className="grid gap-3 sm:grid-cols-2">{images.map(photo => <figure key={photo.id} className="overflow-hidden rounded-xl border"><a href={photo.url} target="_blank" rel="noopener noreferrer" aria-label={`${c.photos}: ${photo.name}`} className="block rounded-t-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"><Image src={photo.url} alt={alt} width={1024} height={768} unoptimized className="aspect-[4/3] w-full object-cover" /></a><figcaption className="break-words p-3 text-xs text-muted-foreground">{photo.name}<time className="mt-1 block" dateTime={photo.at}>{new Date(photo.at).toLocaleString(currentLang, { timeZone: "Europe/Berlin" })}</time><a href={photo.url} download={photo.name} className="mt-1 inline-flex min-h-11 items-center gap-2 rounded px-1 font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Download className="size-4" />{c.download}</a></figcaption></figure>)}</div> : !generatedUrl && !working && !(kind === "asset" && catalogue) ? <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground"><Camera className="mx-auto mb-3 size-8 opacity-50" />{c.noPhotos}</div> : null}
+        {!readOnly&&<><div className="flex flex-wrap gap-2"><Button variant="outline" className="min-h-11" disabled={!canUpload||pending||status!=="ready"} onClick={()=>camera.current?.click()}><Camera/>{p.camera}</Button><Button variant="outline" className="min-h-11" disabled={!canUpload||pending||status!=="ready"} onClick={()=>file.current?.click()}><ImagePlus/>{p.upload}</Button>
+          {canManage&&!jobId&&<Button variant="outline" className="min-h-11" disabled={!imageGenerationEnabled||working||pending||status!=="ready"||visible.some(i=>i.original)||Boolean(illustration?.status==="ready"&&!illustration.legacy)} onClick={()=>void demo.generateImage(imageTarget,kind==="site"?"site":brand?"brand":"asset").catch(()=>{})}>{working?<LoaderCircle className="motion-safe:animate-spin"/>:<Sparkles/>}{working?s.generating:m.generate}</Button>}</div>
+          <input ref={camera} data-photo-input="camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={e=>void choose(e.target.files?.[0])}/><input ref={file} data-photo-input="upload" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>void choose(e.target.files?.[0])}/>
+          {canManage&&!jobId&&<p className="text-xs leading-relaxed text-muted-foreground">{m.quota}</p>}
+        </>}
+        {message&&<p role="status" className="rounded-xl border bg-muted/20 p-3 text-sm">{message}</p>}
+        {error&&!readOnly&&<p role="alert" className="text-sm">{errorText(error)}</p>}
+        {!imageGenerationEnabled&&canManage&&!jobId&&<p className="text-xs text-muted-foreground">{s.aiUnavailable}</p>}
+        {visible.length?<div className="grid gap-3 sm:grid-cols-2">{visible.map(picture=><figure key={picture.id} className="min-w-0 overflow-hidden rounded-xl border bg-card">
+          <a href={picture.url} target="_blank" rel="noopener noreferrer" aria-label={`${c.photos}: ${picture.name}`} className="block focus-visible:ring-2 focus-visible:ring-ring"><Image src={picture.url} alt={alt} width={1024} height={768} unoptimized className={`aspect-[4/3] w-full bg-[#0c2b35] ${picture.original?"object-cover":"object-contain"}`}/></a>
+          <figcaption className="space-y-2 break-words p-3 text-xs text-muted-foreground"><p>{picture.name}</p>{picture.at&&<time className="block" dateTime={picture.at}>{new Date(picture.at).toLocaleString(currentLang,{timeZone:"Europe/Berlin"})}</time>}
+            <div className="flex flex-wrap gap-2"><a href={picture.url} download={picture.name} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-medium text-primary focus-visible:ring-2 focus-visible:ring-ring"><Download className="size-4"/>{c.download}</a>
+            {canManage&&<><Button variant="outline" className="min-h-11 text-xs" disabled={pending||current?.id===picture.id} onClick={()=>void manage("cover",picture.id)}><Check className="size-4"/>{current?.id===picture.id?m.current:m.cover}</Button><Button variant="outline" className="min-h-11 text-xs" disabled={pending} onClick={()=>void manage("remove",picture.id)}><Trash2 className="size-4"/>{m.remove}</Button></>}</div>
+            {!picture.original&&<p>{s.reference}</p>}
+          </figcaption></figure>)}</div>:<div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"><Camera className="mx-auto mb-3 size-8 opacity-50"/>{c.noPhotos}</div>}
+        {canManage&&removed.length>0&&<details className="rounded-xl border px-3"><summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm"><RotateCcw className="size-4"/>{m.removed} · {removed.length}</summary><div className="space-y-2 pb-3">{removed.map(picture=><div key={picture.id} className="flex items-center gap-3 rounded-lg border p-2"><Image src={picture.url} alt="" width={64} height={64} unoptimized className="size-14 rounded-lg bg-[#0c2b35] object-contain"/><span className="min-w-0 flex-1 break-words text-xs">{picture.name}</span><Button variant="outline" className="min-h-11" disabled={pending} onClick={()=>void manage("restore",picture.id)}><RotateCcw className="size-4"/>{m.restore}</Button></div>)}</div></details>}
       </div>
     </WorkshopDialog>
   </div>;

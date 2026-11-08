@@ -7,6 +7,8 @@ import { applyWorkshopCommand } from "./demo-model";
 import { DEMO_WORKSPACE_KEY, demoSiteKey, digest, mutateWorkshopDemo, SharedWorkshopError } from "./shared-store";
 import type { uploadEnvelope } from "./shared-contract";
 import type { z } from "zod";
+import { DEMO_BRAND_TARGET } from "./media";
+import { selectUploadedCover } from "./media-store";
 
 type Upload = Omit<z.infer<typeof uploadEnvelope>, "revision"> & { revision: number };
 let converting = 0;
@@ -45,20 +47,28 @@ export async function uploadWorkshopFile(input: Upload, file: File, companyId: s
   }
   const prepared = await prepareDemoFile(file, input.kind);
   const fingerprint = digest(JSON.stringify({ actorKey: actor.key, kind: input.kind, target, jobId: input.jobId, name: prepared.name, mime: prepared.mime, digest: digest(prepared.data) }));
-  return mutateWorkshopDemo(input, fingerprint, async (tx, state, at) => {
-    if (input.kind !== "site" && !state.assets.some(a => a.id === target)) throw new SharedWorkshopError("missing", 404);
+  return mutateWorkshopDemo(input, fingerprint, async (tx, state, at, eventId) => {
+    const brand=input.kind==="asset"&&target===DEMO_BRAND_TARGET&&!input.jobId;
+    if (brand&&actor.role!=="admin") throw new SharedWorkshopError("permission",403);
+    if (input.kind !== "site" && !brand && !state.assets.some(a => a.id === target)) throw new SharedWorkshopError("missing", 404);
     if (input.jobId && !state.jobs.some(j => j.id === input.jobId && j.assetId === target)) throw new SharedWorkshopError("missing", 404);
     if (!canUploadDemoFile(state, actor, input.kind, target, input.jobId)) throw new SharedWorkshopError("permission",403);
+    if(input.kind!=="document"){
+      const previous=await tx.baumdienstDemoFile.findMany({where:{workspaceKey:DEMO_WORKSPACE_KEY,kind:input.kind,target,jobId:input.jobId??null,bytes:prepared.data.length},select:{id:true,data:true}});
+      const same=previous.find(p=>digest(p.data)===digest(prepared.data));
+      if(same){await selectUploadedCover(tx,{kind:input.kind,target,...(input.jobId?{jobId:input.jobId}:{})},same.id,actor,at,eventId);return state;}
+    }
     const usage = await tx.baumdienstDemoFile.aggregate({ where: { workspaceKey: DEMO_WORKSPACE_KEY }, _sum: { bytes: true }, _count: true });
     if (usage._count >= 160 || (usage._sum.bytes ?? 0) + prepared.data.length > 22_000_000) throw new SharedWorkshopError("storage", 413);
     const fileId = randomUUID();
     await tx.baumdienstDemoFile.create({ data: { id: fileId, workspaceKey: DEMO_WORKSPACE_KEY, kind: input.kind, target, jobId: input.jobId, name: prepared.name, mime: prepared.mime, bytes: prepared.data.length, data: prepared.data } });
+    if(input.kind!=="document")await selectUploadedCover(tx,{kind:input.kind,target,...(input.jobId?{jobId:input.jobId}:{})},fileId,actor,at,eventId);
     state.custody.fileEvents.unshift({ id: fileId, kind: input.kind, target, name: prepared.name, at, actor });
     if (input.kind === "document") {
       const next = applyWorkshopCommand(state, { type: "document", document: { id: fileId, fileId, name: prepared.name, mime: prepared.mime, bytes: prepared.data.length, assetId: target, ...(input.jobId ? { jobId: input.jobId } : {}), at } }, at, fileId);
       next.assets.forEach(a => a.events.filter(e => e.id === fileId).forEach(e => { e.actor = actor.name; e.actorKey = actor.key; })); return next;
     }
-    if (input.kind === "asset") state.assets.find(a => a.id === target)!.events.unshift({ id: fileId, at, kind: "photo", note: prepared.name, actor: actor.name, actorKey: actor.key, ...(input.jobId ? { ref: input.jobId } : {}) });
+    if (input.kind === "asset"&&!brand) state.assets.find(a => a.id === target)!.events.unshift({ id: fileId, at, kind: "photo", note: prepared.name, actor: actor.name, actorKey: actor.key, ...(input.jobId ? { ref: input.jobId } : {}) });
     return state;
   });
 }

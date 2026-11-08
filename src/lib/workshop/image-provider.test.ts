@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { createWorkshopDemo } from "./demo-data";
-import { generateEquipmentImage } from "./image-provider";
+import { generateEquipmentImage, generateStudioImage } from "./image-provider";
 import { imageEnabled, imageIdentity, imagePrompt, imageSubject, IMAGE_MODEL, quotaAvailable } from "./image-identity";
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
 const asset=()=>({...createWorkshopDemo().assets[0],name:"  Akku-Freischneider  ",details:{category:"tool" as const,manufacturer:"Example",model:"B 42",serial:"SECRET-SERIAL",note:"PRIVATE-NOTE"}});
@@ -18,10 +18,10 @@ describe("bounded studio generation",()=>{
     vi.stubEnv("BAUMDIENST_IMAGE_AI_ENABLED","true");expect(imageEnabled()).toBe(false);
     vi.stubEnv("BAUMDIENST_IMAGE_OPENAI_API_KEY","synthetic-test-only");expect(imageEnabled()).toBe(true);
   });
-  it("enforces UTC daily and lifetime attempt caps including failed requests",()=>{
+  it("enforces twenty attempts per UTC day, including failures, without a lifetime cap",()=>{
     const now=new Date("2026-11-05T00:00:01Z"),today={startedAt:now},yesterday={startedAt:new Date("2026-11-04T23:59:59Z")};
-    expect(quotaAvailable(Array(4).fill(today),now)).toBe(true);expect(quotaAvailable(Array(5).fill(today),now)).toBe(false);
-    expect(quotaAvailable(Array(49).fill(yesterday),now)).toBe(true);expect(quotaAvailable(Array(50).fill(yesterday),now)).toBe(false);
+    expect(quotaAvailable(Array(19).fill(today),now)).toBe(true);expect(quotaAvailable(Array(20).fill(today),now)).toBe(false);
+    expect(quotaAvailable(Array(49).fill(yesterday),now)).toBe(true);expect(quotaAvailable(Array(500).fill(yesterday),now)).toBe(true);
   });
   it("makes exactly one fixed-model raster request and compacts the result",async()=>{
     vi.stubEnv("BAUMDIENST_IMAGE_OPENAI_API_KEY","synthetic-test-only");
@@ -29,6 +29,15 @@ describe("bounded studio generation",()=>{
     const fetcher=vi.fn().mockResolvedValue(Response.json({data:[{b64_json:bytes.toString("base64")}]}));vi.stubGlobal("fetch",fetcher);
     const result=await generateEquipmentImage(asset());expect((await sharp(result).metadata()).format).toBe("webp");expect(result.length).toBeLessThanOrEqual(180000);
     expect(fetcher).toHaveBeenCalledTimes(1);const [url,options]=fetcher.mock.calls[0];expect(url).toBe("https://api.openai.com/v1/images/generations");expect(JSON.parse(options.body)).toMatchObject({model:IMAGE_MODEL,n:1,quality:"medium",complexity:"low",size:"1024x1024"});expect(options.redirect).toBe("error");
+  });
+  it.each([
+    ["site-cover",1536,512,"1536x512"], ["phase",1536,1024,"1536x1024"], ["brand",1024,1024,"1024x1024"],
+  ] as const)("uses the %s placement format and preserves its aspect ratio",async(placement,width,height,size)=>{
+    vi.stubEnv("BAUMDIENST_IMAGE_OPENAI_API_KEY","synthetic-test-only");
+    const bytes=await sharp({create:{width,height,channels:3,background:"#0c2b35"}}).webp().toBuffer();
+    const fetcher=vi.fn().mockResolvedValue(Response.json({data:[{b64_json:bytes.toString("base64")}]}));vi.stubGlobal("fetch",fetcher);
+    const output=await generateStudioImage("synthetic placement fixture",placement),meta=await sharp(output).metadata();
+    expect(JSON.parse(fetcher.mock.calls[0][1].body).size).toBe(size);expect(Math.abs(meta.width!/meta.height!/(width/height)-1)).toBeLessThan(.02);expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it.each([401,429,500])("does not retry or expose a provider error body (%s)",async(status)=>{
     vi.stubEnv("BAUMDIENST_IMAGE_OPENAI_API_KEY","synthetic-test-only");const fetcher=vi.fn().mockResolvedValue(new Response("private provider diagnostic",{status}));vi.stubGlobal("fetch",fetcher);

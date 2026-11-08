@@ -11,8 +11,31 @@
 /* The opt-in Musterfirma shell uses the established light emerald text variant
    on dark surfaces, including translucent primary badges and links. */
 :global(.dark) .shell :global(.text-primary) { color: #6ee7b7; }
-.header { min-width: 0; }
+/* Layers: the page scrolls at the bottom; the transparent header (team strip and
+   round icons, then logo and the more ring on top) stays fixed above it. */
+.shell > .header { grid-area: 1 / 1; align-self: start; pointer-events: none; }
+.shell > .header :is(a, button, summary, select, input, details, [data-testid="baum-team-strip"]) { pointer-events: auto; }
+.shell > .workspace { grid-area: 1 / 1 / -1 / -1; padding-top: var(--demo-header-height, 152px); scroll-padding-top: calc(var(--demo-header-height, 152px) + 8px); }
+.header {
+  min-width: 0;
+  max-height: 48dvh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: 8px;
+}
+/* At enlarged text sizes the navigation can scroll independently, leaving the
+   primary work region reachable. An open settings popup may extend outside it. */
+.header:has(details[open]) { max-height: none; overflow: visible; }
 .header [data-demo-navigation] { scrollbar-width: thin; }
+/* Touch dimensions stay in CSS pixels when text grows. Labels can grow/wrap,
+   while the navigation never consumes the whole working viewport. */
+.header [data-demo-navigation] > a { min-height: 44px; padding-inline: 12px; }
+.header [data-demo-teamrow] button,
+.header [data-demo-teamrow] summary { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+.header [data-demo-teamrow] > a img,
+.header [data-demo-teamrow] > a span { width: 56px !important; height: 56px !important; }
+.header [data-demo-teamrow] svg { width: 20px; height: 20px; }
 .workspace {
   position: relative;
   min-height: 0;
@@ -29,10 +52,18 @@
   .header > div { padding-top: 0; }
   .header [data-testid="baum-demo-topbar"] { padding-top: 24px; padding-bottom: 4px; }
   .header [data-demo-teamrow] > a { display: none; }
+  .header [data-demo-teamrow] { grid-template-columns: minmax(0, 1fr) auto; }
   .header [data-demo-navigation] { margin-top: 0; max-width: 100%; min-height: 52px; flex-wrap: nowrap; overflow-x: auto; padding-block: 4px; scrollbar-width: thin; }
   .header [data-demo-navigation] > * { flex-shrink: 0; }
 }
 @media print {
   .shell { display: block; height: auto; overflow: visible; }
   .workspace { height: auto; overflow: visible; }
+}
+/* Ice glass: every card in the Musterfirma shell lets the page show softly through. */
+.shell :global(.bg-card),
+.shell :global(.bg-card\/95) {
+  background-color: hsl(var(--card) / .6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
 }

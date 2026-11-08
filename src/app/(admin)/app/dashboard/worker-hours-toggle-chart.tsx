@@ -19,6 +19,7 @@ type WorkerHoursToggleChartProps = {
   currentLang?: Language;
   companyMode?: CompanyMode;
   embedded?: boolean;
+  readOnly?: boolean;
 };
 
 function formatHours(value: number, lang?: string) {
@@ -53,6 +54,7 @@ export function WorkerHoursToggleChart({
   currentLang = "de",
   companyMode = "baumdienst",
   embedded = false,
+  readOnly = false,
 }: WorkerHoursToggleChartProps) {
   const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
   const rows = period === "weekly" ? weekly : monthly;
@@ -73,14 +75,14 @@ export function WorkerHoursToggleChart({
             {!embedded ? <div className="text-sm font-semibold text-foreground">{t("admin.topWorkersByHours", currentLang, companyMode)}</div> : null}
             <div className="text-[11px] text-muted-foreground">{t("admin.workerHoursEmpty", currentLang, companyMode)}</div>
           </div>
-          <div className="inline-flex rounded-lg border bg-background p-1 text-[11px]">
+          {!readOnly && <div className="inline-flex rounded-lg border bg-background p-1 text-[11px]">
             <button type="button" className="rounded-md px-2 py-1 font-medium">
               {t("admin.woche", currentLang, companyMode)}
             </button>
             <button type="button" className="rounded-md px-2 py-1 font-medium">
               {t("admin.monat", currentLang, companyMode)}
             </button>
-          </div>
+          </div>}
         </div>
       </div>
     );
@@ -93,7 +95,7 @@ export function WorkerHoursToggleChart({
           {!embedded ? <div className="text-sm font-semibold text-foreground">{t("admin.topWorkersByHours", currentLang, companyMode)}</div> : null}
           <div className="text-[11px] text-muted-foreground">{summary}</div>
         </div>
-        <div className="inline-flex rounded-full border border-border/70 bg-background/90 p-1 text-[11px] shadow-sm">
+        {!readOnly && <div className="inline-flex rounded-full border border-border/70 bg-background/90 p-1 text-[11px] shadow-sm">
           <button
             type="button"
             onClick={() => setPeriod("weekly")}
@@ -108,7 +110,7 @@ export function WorkerHoursToggleChart({
           >
             {t("admin.monat", currentLang, companyMode)}
           </button>
-        </div>
+        </div>}
       </div>
 
       <div

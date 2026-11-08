@@ -37,15 +37,15 @@ describe("demo image ledger in disposable Postgres",()=>{
     await uploadWorkshopFile({requestId:randomUUID(),revision:s.revision,kind:"asset",target:first},new File([photo],"DEMO-during.png",{type:"image/png"}),company.id,demoOffice);
     finish(await sharp(photo).webp().toBuffer());await running;expect((await workshopSnapshot()).photos.some(p=>p.target===first)).toBe(true);expect(await prisma.baumdienstDemoImageGeneration.count()).toBe(1);
   });
-  it("counts failures, enforces the shared daily and lifetime caps and retains retry receipts",async()=>{
+  it("counts failures, caps twenty per UTC day, keeps receipts and allows a new day beyond fifty total",async()=>{
     const first=await register("DEMO · Test"),receipt=randomUUID();generated.mockRejectedValueOnce(new Error("do-not-log-this-provider-body"));
     expect((await requestEquipmentImage(first,receipt,demoOffice)).status).toBe("error");await requestEquipmentImage(first,receipt,demoOffice);expect(generated).toHaveBeenCalledTimes(1);
     const base={workspaceKey:DEMO_WORKSPACE_KEY,fingerprint:"synthetic",assetId:first,actorKey:"admin",model:"synthetic",style:"synthetic",status:"error"};
-    await prisma.baumdienstDemoImageGeneration.createMany({data:Array.from({length:4},()=>({...base,id:randomUUID()}))});
+    await prisma.baumdienstDemoImageGeneration.createMany({data:Array.from({length:19},()=>({...base,id:randomUUID()}))});
     await expect(requestEquipmentImage(first,randomUUID(),demoOffice)).rejects.toMatchObject({code:"aiLimit"});
     await prisma.baumdienstDemoImageGeneration.updateMany({data:{startedAt:new Date("2026-01-01")}});
     await prisma.baumdienstDemoImageGeneration.createMany({data:Array.from({length:45},()=>({...base,id:randomUUID(),startedAt:new Date("2026-01-01")}))});
-    await expect(requestEquipmentImage(first,randomUUID(),demoOffice)).rejects.toMatchObject({code:"aiLimit"});expect(generated).toHaveBeenCalledTimes(1);
+    expect((await requestEquipmentImage(first,randomUUID(),demoOffice)).status).toBe("ready");expect(generated).toHaveBeenCalledTimes(2);
   });
   it("blocks workers and non-Muster profiles before calling the provider",async()=>{
     const first=await register("DEMO · Test"),s=await workshopSnapshot(),worker=s.directory.workers[0];
