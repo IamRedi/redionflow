@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { HubsteigerIcon } from "@/components/icons";
 import { prisma } from "@/lib/db/prisma";
-import { getOrCreateDefaultCompany, getCompanyMode } from "@/lib/db/company";
+import { getCompanyMode } from "@/lib/db/company";
+import { companyOrLogin } from "@/lib/workzone/company-or-login";
 import { autoLockPastWorkLogs } from "@/lib/workzone/auto-lock";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { t } from "@/lib/i18n";
@@ -57,7 +58,7 @@ function materialIndicators(
 export default async function WorkzoneHomePage({ searchParams }: { searchParams?: Promise<{view?: string}> }) {
   const initialMap = (await searchParams)?.view === 'map';
   await autoLockPastWorkLogs();
-  const company = await getOrCreateDefaultCompany();
+  const company = await companyOrLogin();
   const [admin, worker, mode] = await Promise.all([
     getCurrentAdmin(),
     getCurrentWorker(),

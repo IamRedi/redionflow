@@ -320,6 +320,7 @@ model CompanyProfile {
   users               User[]               @relation("CompanyUsers")
   auditLogs           AuditLog[]
   assetPhotos         AssetPhoto[]
+  managedFiles        ManagedFile[]
 
   /// T-026: SaaS trial expiry. Null for dedicated deployments.
   trialEndsAt DateTime?
@@ -1353,6 +1354,26 @@ model AssetPhoto {
   @@unique([companyProfileId,machineId])
   @@unique([companyProfileId,baustelleId])
   @@unique([companyProfileId,workerId])
+}
+
+/// Private company files (worker documents, site documents) kept in the
+/// database when no Supabase Storage is configured. Read only through
+/// /api/private-files after its access checks. RLS like every tenant table.
+model ManagedFile {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  /// worker-assets | baustelle-documents
+  scope            String
+  entityId         String
+  fileName         String
+  mime             String
+  size             Int
+  data             Bytes
+  createdAt        DateTime       @default(now())
+
+  @@unique([scope, entityId, fileName])
+  @@index([companyProfileId, scope, entityId])
 }
 
 model InventoryMovement {

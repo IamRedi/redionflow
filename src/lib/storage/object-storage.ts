@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { managedFileReference, parseManagedReference, safeObjectSegment, type ManagedReference, type StorageScope } from "./managed-reference";
 import { validateManagedUpload } from "./upload-validation";
+import { deleteDbObjects, putDbObject, readDbObject } from "./db-object-store";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 
@@ -173,8 +174,12 @@ export async function uploadManagedFile({ scope, entityId, file, fileName }: Upl
   if (!safeObjectSegment(entityId) || !safeObjectSegment(fileName)) throw new Error("Invalid managed object path.");
   const mime = await validateManagedUpload(file, scope);
   const config = STORAGE_CONFIG[scope];
-  await requirePrivateBucket(config.bucket);
   const storedName = `${randomUUID()}-${fileName}`;
+  if (!hasSupabaseStorage()) {
+    await putDbObject(scope, entityId, storedName, file, mime);
+    return managedFileReference({ scope, entityId, fileName: storedName });
+  }
+  await requirePrivateBucket(config.bucket);
   await uploadToSupabase(config.bucket, `${entityId}/${storedName}`, file, mime);
   return managedFileReference({ scope, entityId, fileName: storedName });
 }
@@ -182,6 +187,7 @@ export async function uploadManagedFile({ scope, entityId, file, fileName }: Upl
 /** Server only. Call after current auth, tenant and metadata-membership checks. */
 export async function readManagedFile(ref: ManagedReference) {
   if (!safeObjectSegment(ref.entityId) || !safeObjectSegment(ref.fileName)) throw new Error("Invalid managed object path.");
+  if (!hasSupabaseStorage()) return readDbObject(ref.scope, ref.entityId, ref.fileName);
   const config = STORAGE_CONFIG[ref.scope];
   await requirePrivateBucket(config.bucket);
   return fetch(`${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/authenticated/${encodeURIComponent(config.bucket)}/${encodeURIComponent(ref.entityId)}/${encodeURIComponent(ref.fileName)}`, {
@@ -208,7 +214,10 @@ export async function deleteManagedFileByUrl(url: string, owner?: ManagedOwner) 
 
   const ref = parseManagedReference(trimmed);
   if (ref) {
-    requireSupabaseStorage();
+    if (!hasSupabaseStorage()) {
+      await deleteDbObjects(ref.scope, ref.entityId, [ref.fileName]);
+      return;
+    }
     await removeFromSupabase(STORAGE_CONFIG[ref.scope].bucket, `${ref.entityId}/${ref.fileName}`);
     return;
   }
@@ -241,6 +250,8 @@ export async function deleteManagedFiles(urls: string[], owner: ManagedOwner) {
 export async function clearManagedEntityFolder(scope: StorageScope, entityId: string) {
   if (hasSupabaseStorage()) {
     await clearSupabasePrefix(STORAGE_CONFIG[scope].bucket, entityId);
+  } else {
+    await deleteDbObjects(scope, entityId);
   }
 
   // Keep this legacy cleanup for old local dev uploads. New uploads never write to public/uploads.
@@ -281,6 +292,11 @@ export function pendingImportReferences(batch: PendingImport) {
 export async function uploadPendingImport(batch: PendingImport, files: File[]) {
   if (batch.fileNames.length !== files.length) throw new Error("Invalid pending import files.");
   const mimeTypes = await Promise.all(files.map(file => validateManagedUpload(file, "baustelle-documents")));
+  if (!hasSupabaseStorage()) {
+    // Database storage: each file is its own row; abort removes them, finalize has nothing to clear.
+    for (const [index, file] of files.entries()) await putDbObject("baustelle-documents", batch.entityId, batch.fileNames[index], file, mimeTypes[index]);
+    return;
+  }
   await requirePrivateBucket(importBucket());
   // A private durable journal survives process termination and cleanup outages.
   await uploadToSupabase(importBucket(), pendingManifestPath(batch.id),
@@ -292,11 +308,16 @@ export async function uploadPendingImport(batch: PendingImport, files: File[]) {
 
 /** Idempotent. Keep the journal until every uncommitted object has been removed. */
 export async function abortPendingImport(batch: PendingImport) {
+  if (!hasSupabaseStorage()) {
+    await deleteDbObjects("baustelle-documents", batch.entityId, batch.fileNames);
+    return;
+  }
   for (const fileName of batch.fileNames) await removePendingObject( `${batch.entityId}/${fileName}`);
   await finalizePendingImport(batch);
 }
 /** DB references activate the objects atomically; no storage copy is necessary. */
 export async function finalizePendingImport(batch: PendingImport) {
+  if (!hasSupabaseStorage()) return;
   await removePendingObject( pendingManifestPath(batch.id));
 }
 
@@ -307,6 +328,7 @@ export async function finalizePendingImport(batch: PendingImport) {
 export async function reconcilePendingImport(id: string,
   readDocuments: (companyId: string, entityId: string) => Promise<string[]>, now = Date.now()) {
   if (!safeObjectSegment(id)) throw new Error("Invalid pending import ID.");
+  if (!hasSupabaseStorage()) return; // no journal in database storage
   await requirePrivateBucket(importBucket());
   const response = await fetch(`${SUPABASE_URL.replace(/\/+$/, "")}/storage/v1/object/authenticated/${importBucket()}/${pendingManifestPath(id)}`, {
     headers: { Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, apikey: SUPABASE_SERVICE_ROLE_KEY }, cache: "no-store",

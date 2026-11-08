@@ -44,7 +44,7 @@ PostgreSQL 16 mit Prisma 7 (Driver Adapter `@prisma/adapter-pg`), 59 Modelle, 49
 
 | Dienst | Wofür | Ohne ihn |
 |---|---|---|
-| Supabase Storage | Dokumente und Fotos | Dateien liegen im lokalen Dateisystem (für Entwicklung und Einzelinstanz) |
+| Supabase Storage | Dokumente und Fotos | Private Dokumente liegen in Postgres (Tabelle `ManagedFile`, siehe `docs/PRIVATE_FILES.md`) |
 | Firebase Cloud Messaging | Push-Benachrichtigungen | Keine Push-Nachrichten, alles andere läuft |
 | Stripe | Abos im SaaS-Modus | Eigene Instanz und Demo brauchen es nicht |
 | OpenAI | KI-Assistent für Admins und Mitarbeitende | Der Assistent meldet, dass der Schlüssel fehlt |
