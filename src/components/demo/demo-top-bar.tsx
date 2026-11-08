@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, Home, LayoutDashboard, Monitor, Settings2, MoreHorizontal, Package, TreePine, Truck, Wrench } from "lucide-react";
+import { Bot, Home, LayoutDashboard, Monitor, Settings2, MoreHorizontal, TreePine, Truck, Wrench } from "lucide-react";
 import { cookies } from "next/headers";
 
 import { AppBrand } from "@/components/branding/AppBrand";
@@ -45,7 +45,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
     return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
       <div data-demo-teamrow className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
-        <div className="flex items-center gap-2"><DemoActorBar mode="notifications"/><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-full border bg-transparent focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 w-[min(21rem,calc(100vw-2rem))] space-y-3 rounded-2xl border bg-card p-3 shadow-xl"><DemoActorBar mode="roles"/><div className="flex flex-wrap items-center gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
+        <div className="flex items-center gap-2"><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-full border bg-transparent focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 w-[min(21rem,calc(100vw-2rem))] space-y-3 rounded-2xl border bg-card p-3 shadow-xl"><DemoActorBar mode="roles"/><div className="flex flex-wrap items-center gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
       </div>
       <nav data-demo-navigation aria-label="Demo" className="no-scrollbar mt-2 flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-1.5 pb-1 [&>*]:shrink-0">
         <Link href="/demo/workzone" aria-label={workzoneName} title={workzoneName} className={navIcon}><Home className="size-4" /></Link>
@@ -53,8 +53,8 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
         <DemoDashboardLaunch href="/demo/tv?view=dashboard" label={n.tv} className={navIcon}><Monitor className="size-4" /></DemoDashboardLaunch>
         <Link href="/demo/wood" aria-label={wood.title} title={wood.title} className={navIcon}><TreePine className="size-4" /></Link>
         <Link href="/demo/workshop" aria-label={c.title} title={c.title} className={navIcon}><Wrench className="size-4" /></Link>
-        <Link href="/demo/workshop?tab=tools" aria-label={c.tools} title={c.tools} className={navIcon}><Package className="size-4" /></Link>
         <Link href="/demo/workshop?tab=fleet" aria-label={`${c.fleet} · Demo`} title={c.fleet} className={`${navIcon} lg:hidden`}><Truck className="size-4" /></Link>
+        <DemoActorBar mode="notifications"/>
       </nav>
     </div>;
   }
