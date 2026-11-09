@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutDashboard, Map, RotateCcw } from "lucide-react";
+import { LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -99,10 +99,10 @@ function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
   const columns = mobile ? 2 : count > 9 ? 4 : 3;
   const left = mobile ? 10 : 40;
   const top = mobile ? 58 : 58;
-  const columnGap = mobile ? 166 : count > 9 ? 250 : 285;
+  const columnGap = mobile ? 166 : count > 9 ? 226 : 256;
   // Cards carry badges and a note, so rows need room to avoid overlap.
-  const rowGap = tall ? (mobile ? 276 : 270) : mobile ? 252 : 224;
-  const cardHeight = tall ? (mobile ? 262 : 254) : mobile ? 236 : 204;
+  const rowGap = tall ? (mobile ? 236 : 232) : mobile ? 252 : 224;
+  const cardHeight = tall ? (mobile ? 222 : 216) : mobile ? 236 : 204;
   const rows = Math.max(1, Math.ceil(Math.max(count, 1) / columns));
 
   return {
@@ -547,10 +547,10 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
+                className={`absolute rounded-xl border bg-card/95 p-2.5 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[196px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
                 {hasCover ? (
-                  <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
+                  <div className={`relative -mx-2.5 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
                     <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={(item.canEditPhoto??canEditPhotos)&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>
@@ -605,22 +605,22 @@ export function WorkzoneMissionControl({
                     {t("common.note", currentLang)}: {item.pendingSiteTask}
                   </p>
                 ) : null}
-                {item.canOpen === false && cardWork ? (
+                {item.canOpen === false && cardWork && !isSteelSiteType(item.type) ? (
                   <div className="mt-2">
                     <WorkingControls compact baustelleId={item.id} currentWorker={cardWork.worker} activeWorkerIds={[]} activeSession={cardWork.activeSession} />
                   </div>
                 ) : null}
-                <div className="mt-2 flex items-center gap-1">
+                <div className="mt-2 flex items-center gap-1.5">
                   {allowDetailNavigation && item.canOpen !== false ? (
-                    <Button asChild size="sm" variant="outline" className={`text-[11px] ${isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
-                      <Link href={`${detailHrefBase}/${item.id}`}>{t("common.open", currentLang)}</Link>
-                    </Button>
+                    <Link href={`${detailHrefBase}/${item.id}`} data-testid="site-card-open"
+                      className={`inline-flex flex-1 items-center justify-center rounded-lg bg-orange-600 font-semibold text-white shadow-sm transition hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950 ${isCompactCanvas ? "h-7 text-[11px]" : "h-8 text-xs"}`}>
+                      {t("common.open", currentLang)}
+                    </Link>
                   ) : null}
-                  <Button asChild size="sm" variant="outline" className={`text-[11px] ${isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
-                    <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer">
-                      {t("common.location", currentLang)}
-                    </a>
-                  </Button>
+                  <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer" title={t("common.location", currentLang)} aria-label={t("common.location", currentLang)}
+                    className={`grid shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition hover:border-orange-400 hover:text-orange-600 ${isCompactCanvas ? "size-7" : "size-8"} ${allowDetailNavigation && item.canOpen !== false ? "" : "ml-auto"}`}>
+                    <MapPin className="size-3.5" aria-hidden />
+                  </a>
                 </div>
               </motion.div>
             );

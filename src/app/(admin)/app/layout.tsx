@@ -1,4 +1,5 @@
-import { LogOut, SunMoon } from "lucide-react";
+import { LogOut, SunMoon, UserRound } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -141,6 +142,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 <div className="min-w-0 flex-1">
                   <LanguageDropdown />
                 </div>
+                {admin ? (
+                  <Link
+                    href={`/workzone/admin-profile/${admin.id}`}
+                    title={t("admin.profile", currentLang, mode)}
+                    aria-label={t("admin.profile", currentLang, mode)}
+                    data-testid="admin-own-profile"
+                    className="grid size-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-foreground/[0.05] hover:text-foreground"
+                  >
+                    <UserRound className="size-4" strokeWidth={1.8} />
+                  </Link>
+                ) : null}
                 <form action="/app/toggle-theme" method="post">
                   <button
                     type="submit"

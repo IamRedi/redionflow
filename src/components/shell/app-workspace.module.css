@@ -29,7 +29,8 @@
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  padding: calc(var(--workspace-header-height) + 12px) 12px 12px;
+  /* No bottom padding: the RediON credit is the last line of the page. */
+  padding: calc(var(--workspace-header-height) + 12px) 12px 0;
   scroll-padding-top: calc(var(--workspace-header-height) + 12px);
   container-type: size;
 }
