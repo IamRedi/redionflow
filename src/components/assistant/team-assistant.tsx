@@ -10,6 +10,7 @@ import { conversationContentNotice, conversationStatus, useAdminConversations, t
 import { AppBrand } from "@/components/branding/AppBrand";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { t } from "@/lib/i18n";
+import { assistantNoAccessText } from "@/lib/assistant/access-text";
 
 const ADMIN_ASSISTANT_PANEL_STORAGE_KEY = "team-assistant:panel-state";
 const WORKER_ASSISTANT_PANEL_STORAGE_KEY = "worker-assistant:panel-state";
@@ -80,6 +81,8 @@ type AssistantChatProps = {
   lastAnswerLabel?: string;
   voiceHint?: string;
   speechLang?: string;
+  /** The boss has not enabled the AI for this person: show only a short message. */
+  blocked?: boolean;
 };
 
 function AssistantChat({
@@ -100,6 +103,7 @@ function AssistantChat({
   lastAnswerLabel = "Letzte Antwort",
   voiceHint = "Double-click = voice",
   speechLang = "de-DE",
+  blocked = false,
 }: AssistantChatProps) {
   // false on the server, the real capability after hydration.
   const speechSupported = useSyncExternalStore(subscribeNever, canUseSpeech, () => false);
@@ -108,7 +112,7 @@ function AssistantChat({
   const [isLoading, setIsLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const archive = useAdminConversations({ enabled: durableAdmin, language, setMessages, setInput, setLoading: setIsLoading });
+  const archive = useAdminConversations({ enabled: durableAdmin && !blocked, language, setMessages, setInput, setLoading: setIsLoading });
   useEffect(() => () => abortRef.current?.abort(), []);
 
   function clearChat() {
@@ -206,6 +210,17 @@ function AssistantChat({
       abortRef.current = null;
       setIsLoading(false);
     }
+  }
+
+  if (blocked) {
+    const notice = (
+      <div className={`chat-wallpaper flex h-full min-h-40 items-start justify-center px-3 pt-10 ${compact ? "" : "min-h-[30dvh] rounded-2xl border"}`} data-testid="assistant-no-access">
+        <div role="status" className="max-w-[18rem] rounded-xl bg-card/95 px-4 py-3 text-center text-[14px] leading-snug text-foreground shadow-sm">
+          {assistantNoAccessText(language)}
+        </div>
+      </div>
+    );
+    return compact ? notice : <div className="mx-auto max-w-2xl space-y-3"><div className="px-1 text-base font-semibold">{title}</div>{notice}</div>;
   }
 
   const canSend = !isLoading && Boolean(input.trim()) && (!durableAdmin || archive.ready && !archive.busy && archive.pageIndex === 0);
@@ -325,11 +340,12 @@ function AssistantChat({
   );
 }
 
-export function TeamAssistantChat({ compact = false }: { compact?: boolean }) {
+export function TeamAssistantChat({ compact = false, blocked = false }: { compact?: boolean; blocked?: boolean }) {
   const { currentLang } = useLanguage();
   return (
     <AssistantChat
       compact={compact}
+      blocked={blocked}
       endpoint="/api/assistant"
       title={t("admin.aiAssistantTitle", currentLang)}
       description={t("admin.aiAssistantDescription", currentLang)}
@@ -349,11 +365,13 @@ export function TeamAssistantChat({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function WorkerAssistantChat({ compact = false }: { compact?: boolean }) {
+export function WorkerAssistantChat({ compact = false, blocked = false }: { compact?: boolean; blocked?: boolean }) {
   const { currentLang } = useLanguage();
   return (
     <AssistantChat
       compact={compact}
+      blocked={blocked}
+      language={currentLang}
       endpoint="/api/assistant/worker"
       title={t("workzone.aiHelperButton", currentLang)}
       description={t("workzone.aiHelperDescription", currentLang)}
@@ -449,11 +467,13 @@ export function TeamAssistantLogoTrigger({
   className,
   mode,
   companyLogo,
+  blocked = false,
 }: {
   compact?: boolean;
   className?: string;
   mode?: import("@/lib/mode-config").CompanyMode;
   companyLogo?: string | null;
+  blocked?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -522,7 +542,7 @@ export function TeamAssistantLogoTrigger({
           closeLabel={t("common.close", currentLang)}
           anchor={panelPosition}
         >
-          <TeamAssistantChat compact />
+          <TeamAssistantChat compact blocked={blocked} />
         </AssistantSheet>
       ) : null}
     </>
@@ -533,10 +553,12 @@ export function WorkerAssistantTrigger({
   compact = false,
   mode,
   companyLogo,
+  blocked = false,
 }: {
   compact?: boolean;
   mode?: import("@/lib/mode-config").CompanyMode;
   companyLogo?: string | null;
+  blocked?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -605,7 +627,7 @@ export function WorkerAssistantTrigger({
           closeLabel={t("common.close", currentLang)}
           anchor={panelPosition}
         >
-          <WorkerAssistantChat compact />
+          <WorkerAssistantChat compact blocked={blocked} />
         </AssistantSheet>
       ) : null}
     </>

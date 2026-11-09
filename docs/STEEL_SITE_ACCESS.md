@@ -88,3 +88,23 @@ No production role is elevated by schema installation. A specific real account
 is prepared only under the owner's explicit identity/role authorization and
 keeps its PIN unset until entered privately in the application. Publication
 requires the repository's separate owner approval and a verified fresh backup.
+
+## AI assistant access
+
+By default every signed-in admin and worker may use the AI assistant. A
+company can be limited to selected people (`CompanyProfile.assistantAccessSelected`):
+then only the owner and the people the boss enabled may use it
+(`User.assistantAccess`, `Worker.assistantAccess`). Everyone else sees one short
+message in their language, e.g. "Nuk keni akses në AI. Aksesin jua hap shefi."
+No question is stored, no quota is used and no provider is called for them.
+
+The boss turns access on/off with the **Asistenti AI** card on a worker's
+profile (any admin) or on another admin's profile (owner only). The owner always
+has access.
+
+One-time setup for a single-company installation: set
+`ASSISTANT_ACCESS_ONLY="Megi,Almet"` on the app service. At boot
+(`scripts/assistant-access.ts`, called from `provision-company.ts`) it limits the
+company and enables each name that matches exactly one active admin or worker
+(full or first name, case/accents ignored). Ambiguous or unknown names enable
+nobody and are logged. It never removes access, so it can stay set.

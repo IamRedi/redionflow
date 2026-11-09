@@ -33,6 +33,8 @@ const state = vi.hoisted(() => ({
   documentResult: null as unknown,
   documentReceipts: vi.fn(),
 }));
+// Access per person is covered by access.integration.test.ts.
+vi.mock('@/lib/assistant/access', async original => ({ ...await original<typeof import('./access')>(), hasAssistantAccess: async () => true }));
 vi.mock('@/lib/assistant/document-tools', async original => ({ ...await original<typeof import('./document-tools')>(),
   adminGetSitePhaseDocuments: async () => state.documentResult ?? { ok: true, documents: [], totalMatching: 0 },
   adminGetSitePhaseDocumentReceipts: async (...args: unknown[]) => { state.documentReceipts(...args); return { ok: true, received: [] }; },

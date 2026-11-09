@@ -5,6 +5,7 @@ import { ensureLoginAllowed, getClientIp, registerFailedLogin } from '@/lib/auth
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { getRequesterContext } from '@/lib/assistant/requester';
+import { assistantNoAccessResponse, hasAssistantAccess } from '@/lib/assistant/access';
 import { readAssistantBody } from '@/lib/assistant/request-body';
 import { reserveAssistantQuota, assistantQuotaResponse } from '@/lib/assistant/quota';
 import { assistantGeneration } from '@/lib/assistant/generation';
@@ -79,6 +80,8 @@ export async function POST(req: Request) {
   const authenticated = await getRequesterContext();
   errorLanguage = authenticated.preferredLanguage;
   if (authenticated.kind !== 'admin') return NextResponse.json({ error: message(authenticated.preferredLanguage, 'admin') }, { status: 403 });
+  // Not enabled by the boss: a plain message, no history, quota or provider call.
+  if (!await hasAssistantAccess(authenticated)) return assistantNoAccessResponse(authenticated.preferredLanguage);
   actor = authenticated;
   const clientIp = getClientIp(req.headers);
   const access = await ensureLoginAllowed('assistant', clientIp);

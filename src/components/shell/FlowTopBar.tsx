@@ -7,6 +7,7 @@ import {
 } from '@/components/assistant/team-assistant';
 import { AppBrand } from '@/components/branding/AppBrand';
 import { Button } from '@/components/ui/button';
+import { hasAssistantAccess } from '@/lib/assistant/access';
 import { getCurrentAdmin } from '@/lib/auth/admin-session';
 import { getCompanyMode } from '@/lib/db/company';
 import { prisma } from '@/lib/db/prisma';
@@ -37,6 +38,10 @@ export async function FlowTopBar({
     getCurrentCompanyId(),
   ]);
   const currentWorkerId = (await getCurrentWorker())?.id;
+  // The boss decides who may use the AI; others get a short message instead.
+  const assistantBlocked = tenantId && (admin || currentWorkerId)
+    ? !(await hasAssistantAccess(admin ? { kind: 'admin', adminId: admin.id, companyId: tenantId } : { kind: 'worker', workerId: currentWorkerId!, companyId: tenantId }))
+    : false;
 
   // T-025b / SaaS: scope workers + admin profiles to the caller's tenant so
   // the top bar never leaks staff from another company.
@@ -157,12 +162,14 @@ export async function FlowTopBar({
             {admin ? (
               <TeamAssistantLogoTrigger
                 compact
+                blocked={assistantBlocked}
                 mode={companyMode}
                 companyLogo={companyLogo}
               />
             ) : currentWorkerId ? (
               <WorkerAssistantTrigger
                 compact
+                blocked={assistantBlocked}
                 mode={companyMode}
                 companyLogo={companyLogo}
               />
