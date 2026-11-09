@@ -7,7 +7,7 @@
  * Runs only with exactly one company. It touches only workers whose level is
  * still empty, so once applied it does nothing on later boots and never undoes
  * what the boss changes with the key button. Names that match no single
- * worker are skipped and logged.
+ * worker are skipped and logged, and then the "*" default is not applied.
  */
 import "dotenv/config";
 
@@ -58,7 +58,10 @@ export async function runStaffAccess() {
         }
         applied += 1;
       }
-      if (plan.everyoneElse) {
+      // A missed name must not fall into the default level by accident.
+      const missed = results.filter(r => r.matches.length !== 1).length;
+      if (missed && plan.everyoneElse) console.log(`[staff-access] ${missed} names not matched; the default for everyone else was NOT applied.`);
+      if (plan.everyoneElse && !missed) {
         for (const workerId of open) {
           if (named.has(workerId)) continue;
           await applyAccessLevel(tx, companyId, workerId, plan.everyoneElse, null);
