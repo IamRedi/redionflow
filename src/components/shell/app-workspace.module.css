@@ -55,3 +55,9 @@
   .navigation { position: static; margin-top: 0; }
   .scroll { overflow: visible; padding: 0; container-type: normal; }
 }
+/* A page that becomes its own full screen on phones (daily plan) must escape the isolated body. */
+@media (max-width: 1023.98px) {
+  .body:has(:global([data-phone-fullscreen])) { isolation: auto; }
+  .shell:has(:global([data-phone-fullscreen])) > header { display: none; }
+  :global(body:has([data-phone-fullscreen]) [data-testid="flow-global-tools"]) { display: none; }
+}

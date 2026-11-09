@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { plannedSiteNames } from "@/lib/workzone/plan-site";
 import { findMachinePresencesForBaustelles } from "@/lib/workzone/fleet-gps";
 import { effectiveSessionHours, isReportableSession } from "@/lib/workzone/session-rules";
 import { isRecord, readLatLng } from "@/lib/workzone/site-json";
@@ -520,13 +521,13 @@ export function groupDailyWorkByBaustelle(report: Awaited<ReturnType<typeof getW
     .sort((a, b) => a.baustelle.name.localeCompare(b.baustelle.name));
 }
 
+/** Midnight (business timezone) of every day in the month. The server runs in UTC, so
+ * stepping with `setDate` from a zoned midnight started one day early (31 Oct in November). */
 export function monthDays(key: string) {
-  const { start, end } = monthRange(key);
-  const days: Date[] = [];
-  for (const day = new Date(start); day < end; day.setDate(day.getDate() + 1)) {
-    days.push(new Date(day));
-  }
-  return days;
+  const [year, month] = key.split("-").map(Number);
+  if (!year || !month) return [];
+  const count = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return Array.from({ length: count }, (_, index) => dayRange(`${year}-${String(month).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`).start);
 }
 
 export function monthlySessionRows(report: Awaited<ReturnType<typeof getWorkerMonthlyReport>>, key: string, lang?: string) {
@@ -547,13 +548,13 @@ export function monthlySessionRows(report: Awaited<ReturnType<typeof getWorkerMo
 
     return {
       date: keyForDay,
-      dayOfMonth: String(day.getDate()).padStart(2, "0"),
+      dayOfMonth: keyForDay.slice(8, 10),
       dayName: formatReportDay(day, lang),
       startTime,
       endTime,
       hasLive,
       breakMinutes,
-      locations: locations.length ? locations.join(", ") : "-",
+      locations: locations.length ? locations.join(", ") : (sessions.length && report.plannedSites?.get(keyForDay)) || "-",
       totalHours,
       hasWork: sessions.length > 0,
     };
@@ -641,7 +642,8 @@ export async function getWorkerMonthlyReport(workerId: string, key: string) {
     prisma.workReportNote.findUnique({ where: { workerId_type_periodKey: { workerId, type: "MONTHLY", periodKey: key } } }),
   ]);
 
-  return { worker, sessions: sessions.filter(isReportableSession), tasks, trees, note };
+  const plannedSites = worker ? await plannedSiteNames(worker.companyProfileId, workerId, key).catch(() => new Map<string, string>()) : new Map<string, string>();
+  return { worker, sessions: sessions.filter(isReportableSession), tasks, trees, note, plannedSites };
 }
 
 export async function getAdminDailyReport(adminId: string, key: string) {
