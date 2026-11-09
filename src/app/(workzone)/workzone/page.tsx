@@ -365,9 +365,10 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         toolbar={
           canOpenCalendar ? (
             <>
-              {admin ? (
+              {admin ? <WorkzoneCreateBaustelleModal companyId={company.id} iconOnly triggerClassName={canvasToolbarButtonClass} mode={mode} /> : null}
+              {/* Daily plan: admins and people with Vepron on it (key button). */}
+              {admin || (worker && allows("daily_plan.edit")) ? (
                 <>
-                  <WorkzoneCreateBaustelleModal companyId={company.id} iconOnly triggerClassName={canvasToolbarButtonClass} mode={mode} />
                   <Button
                     asChild
                     variant="outline"
