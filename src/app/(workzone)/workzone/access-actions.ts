@@ -7,7 +7,7 @@ import { readPlaceAccess, readWorkerAccessSummary, setPlaceAccess, setWorkerAcce
 export async function getPlaceAccessAction(place: string, scopeId?: string) {
   try { return { ok: true as const, data: await readPlaceAccess(place, scopeId) }; } catch (e) { return assetActionError(e); }
 }
-export async function setPlaceAccessAction(input: { place: string; scopeId?: string; workerId: string; level: 'view' | 'act' | null }) {
+export async function setPlaceAccessAction(input: { place: string; scopeId?: string; workerId: string; level: 'view' | 'act' | 'none' | null }) {
   try { const data = await setPlaceAccess(input); revalidatePath('/workzone', 'layout'); return { ok: true as const, data }; } catch (e) { return assetActionError(e); }
 }
 export async function getWorkerAccessAction(workerId: string) {

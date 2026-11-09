@@ -22,7 +22,7 @@ export async function loadWorkerAccess(tx: Tx, companyId: string, workerId: stri
   const grants: AccessGrantRow[] = [];
   for (const grant of worker.accessGrants) {
     const place = readPlace(grant.place);
-    if (place && (grant.level === "view" || grant.level === "act")) grants.push({ place, scopeId: grant.scopeId, level: grant.level });
+    if (place && (grant.level === "view" || grant.level === "act" || grant.level === "none")) grants.push({ place, scopeId: grant.scopeId, level: grant.level });
   }
   return {
     kind: "worker",

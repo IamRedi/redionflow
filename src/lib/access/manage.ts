@@ -40,7 +40,7 @@ function subjectOf(row: WorkerRow): Extract<AccessSubject, { kind: "worker" }> {
     crewRole: row.crewRole,
     grants: row.accessGrants.flatMap(g => {
       const place = readAccessPlace(g.place);
-      return place && (g.level === "view" || g.level === "act") ? [{ place, scopeId: g.scopeId, level: g.level as GrantLevel }] : [];
+      return place && (g.level === "view" || g.level === "act" || g.level === "none") ? [{ place, scopeId: g.scopeId, level: g.level as GrantLevel }] : [];
     }),
     legacySiteGrants: new Set(row.siteDocumentGrants.map(g => g.baustelleId)),
   };
@@ -95,7 +95,7 @@ export async function setPlaceAccess(input: { place: unknown; scopeId?: unknown;
   const place = readAccessPlace(input.place) ?? assetFail("BAD_INPUT");
   const scopeId = cleanScope(place, input.scopeId);
   const workerId = typeof input.workerId === "string" ? input.workerId : assetFail("BAD_INPUT");
-  const level = input.level === "view" || input.level === "act" ? input.level : input.level === null ? null : assetFail("BAD_INPUT");
+  const level = input.level === "view" || input.level === "act" || input.level === "none" ? input.level : input.level === null ? null : assetFail("BAD_INPUT");
   const actor = await accessAdmin();
   await withTenantContext(actor.companyId, async tx => {
     await checkScope(tx, actor.companyId, place, scopeId);

@@ -1,6 +1,6 @@
 'use client';
 
-import { KeyRound, Loader2, X } from 'lucide-react';
+import { KeyRound, Loader2, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -53,7 +53,7 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
   if (!snapshot) return <p role="status" className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" />{c.loading}</p>;
   if (!snapshot.ok) return <div className="space-y-3 py-4"><p className="text-sm text-red-700 dark:text-red-300">{snapshot.message || c.failed}</p><button type="button" className={chip} onClick={() => void reload()}>{c.failed}</button></div>;
   const { people, admins } = snapshot.data;
-  async function change(workerId: string, level: 'view' | 'act' | null) {
+  async function change(workerId: string, level: 'view' | 'act' | 'none' | null) {
     setBusy(workerId); setMessage(null);
     try {
       const r = await setPlaceAccessAction({ place, scopeId, workerId, level }) as Result;
@@ -62,29 +62,30 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
   }
   const acting = people.filter(p => p.acts !== 'none');
   const seeing = people.filter(p => p.acts === 'none' && p.sees);
-  const others = people.filter(p => p.grantScope !== 'here');
+  const removed = people.filter(p => !p.sees && p.grant === 'none');
+  const others = people.filter(p => p.grantScope !== 'here' && !p.sees && p.grant !== 'none');
+  const state = (p: PlacePerson) => p.acts !== 'none' ? 'act' : p.sees ? 'view' : 'none';
   const tag = (p: PlacePerson) => {
     if (p.grantScope === 'all') return c.wholePlace;
-    if (p.grant) return null;
+    if (p.grantScope === 'here') return null;
     if (p.acts === 'some') return `${c.partly}, ${c.fromRole}`;
     if (p.acts === 'all') return c.fromRole;
     return c.full;
   };
-  const row = (p: PlacePerson) => <li key={p.id} className="flex min-h-12 items-center gap-2 rounded-xl border bg-card px-3 py-1.5">
-    <span className="min-w-0 flex-1"><span className="block break-words text-sm font-medium">{p.name}</span>{tag(p) ? <span className="block text-xs text-muted-foreground">{tag(p)}</span> : null}</span>
-    {p.grantScope === 'here' ? <>
-      <span role="group" aria-label={p.name} className="inline-flex shrink-0 overflow-hidden rounded-lg border text-xs font-semibold">
-        {(['view', 'act'] as const).map(level => <button key={level} type="button" aria-pressed={p.grant === level} disabled={busy !== null || p.grant === level} onClick={() => void change(p.id, level)}
-          className={`min-h-10 px-2.5 disabled:cursor-default ${p.grant === level ? 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950' : 'hover:bg-muted'}`}>{level === 'act' ? c.acts : c.sees}</button>)}
-      </span>
-      <button type="button" disabled={busy !== null} onClick={() => void change(p.id, null)} aria-label={`${c.remove}: ${p.name}`} className="grid size-10 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">{busy === p.id ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}</button>
-    </> : null}
+  const row = (p: PlacePerson) => <li key={p.id} className="flex min-h-12 flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-1.5">
+    <span className="min-w-0 basis-full sm:basis-auto sm:flex-1"><span className="block break-words text-sm font-medium">{p.name}</span>{tag(p) ? <span className="block text-xs text-muted-foreground">{tag(p)}</span> : null}</span>
+    <span role="group" aria-label={p.name} className="inline-flex shrink-0 overflow-hidden rounded-lg border text-xs font-semibold">
+      {(['act', 'view', 'none'] as const).map(level => <button key={level} type="button" aria-pressed={state(p) === level} disabled={busy !== null || state(p) === level} onClick={() => void change(p.id, level)} data-testid={`access-set-${level}`}
+        className={`min-h-10 px-2 sm:px-2.5 disabled:cursor-default ${state(p) === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>{level === 'act' ? c.acts : level === 'view' ? c.sees : c.remove}</button>)}
+    </span>
+    {p.grantScope === 'here' ? <button type="button" disabled={busy !== null} onClick={() => void change(p.id, null)} aria-label={`${c.reset}: ${p.name}`} title={c.reset} className="grid size-10 shrink-0 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">{busy === p.id ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}</button> : null}
   </li>;
   return <div className="space-y-5 pb-2" data-testid="access-sheet">
     <p className="rounded-xl bg-muted px-3 py-2 text-sm">{c.admins}: <span className="font-medium">{admins.join(', ')}</span></p>
     {message ? <p role="alert" className="text-sm text-red-700 dark:text-red-300">{message}</p> : null}
     <section><h3 className="mb-2 text-sm font-semibold">{c.acts} · {acting.length}</h3>{acting.length ? <ul className="space-y-2">{acting.map(row)}</ul> : <p className="text-sm text-muted-foreground">{c.nobody}</p>}</section>
     <section><h3 className="mb-2 text-sm font-semibold">{c.sees} · {seeing.length}</h3>{seeing.length ? <ul className="space-y-2">{seeing.map(row)}</ul> : <p className="text-sm text-muted-foreground">{c.nobody}</p>}</section>
+    {removed.length ? <section><h3 className="mb-2 text-sm font-semibold">{c.removed} · {removed.length}</h3><ul className="space-y-2">{removed.map(row)}</ul></section> : null}
     <section className="space-y-2 border-t pt-4">
       <label className="block text-sm font-semibold" htmlFor={`access-add-${place}`}>{c.add}</label>
       <select id={`access-add-${place}`} value={pick} onChange={e => setPick(e.target.value)} className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm">

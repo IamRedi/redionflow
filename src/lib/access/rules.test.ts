@@ -97,3 +97,23 @@ describe("access rules", () => {
     expect(can(worker("OFFICE", { accessLevel: "FULL_VIEW", grants: [{ place: "costs", scopeId: "", level: "act" }] }), "costs.manage")).toBe(true);
   });
 });
+
+describe("taking access away (Hiq)", () => {
+  it("none at a place removes what the level gives", () => {
+    const person = worker(null, { accessLevel: "FULL_VIEW", grants: [{ place: "factory", scopeId: "", level: "none" }] });
+    expect(can(person, "factory.view")).toBe(false);
+    expect(can(person, "warehouse.view")).toBe(true);
+  });
+  it("a site choice beats the whole-place grant", () => {
+    const person = worker(null, { accessLevel: "BASE", grants: [{ place: "site", scopeId: "", level: "act" }, { place: "site", scopeId: "s2", level: "none" }, { place: "site", scopeId: "s3", level: "view" }] });
+    expect(can(person, "site.field_steps", "s1")).toBe(true);
+    expect(can(person, "site.view", "s2")).toBe(false);
+    expect(can(person, "site.view", "s3")).toBe(true);
+    expect(can(person, "site.field_steps", "s3")).toBe(false);
+  });
+  it("view at a place removes acting but keeps seeing", () => {
+    const person = worker(null, { accessLevel: "FULL_VIEW", grants: [{ place: "warehouse", scopeId: "", level: "view" }] });
+    expect(can(person, "warehouse.manage")).toBe(false);
+    expect(can(person, "warehouse.view")).toBe(true);
+  });
+});
