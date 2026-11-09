@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { dateKey, dayRange } from "@/lib/workzone/date-utils";
 import { DailyPlanBoard } from "../daily-plan-board";
+import { AccessKeyButton } from "@/components/access/access-key-button";
 
 function planDay(value: string) {
   const range = dayRange(value);
@@ -196,7 +197,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
     <div className="w-full min-w-0 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold">{t("workzone.createDailyPlan", currentLang)}</h1>
+          <h1 className="flex items-center gap-2 text-xl font-semibold">{t("workzone.createDailyPlan", currentLang)}<AccessKeyButton place="daily_plan" compact /></h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <Button asChild variant="outline" size="sm">
               <Link href={`/workzone/plan?date=${encodeURIComponent(prevDate)}`}>{t("workzone.previousDay", currentLang)}</Link>

@@ -10,6 +10,7 @@ import { AssetOperationalStatusBadge } from './shared';
 import { assetCopy } from './copy';
 import { useLanguage } from '@/components/i18n/language-provider';
 import type { AssetOperationalStatus } from '@/lib/company-assets/types';
+import { AccessKeyButton } from '@/components/access/access-key-button';
 
 function searchable(value: string) {
   return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -46,11 +47,12 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
   }, [open, focusMachineId]);
   return <AssetWorkspaceDialog open={open} onOpenChange={onOpenChange} title={title}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="fleet-picker">
-      <div className="shrink-0 px-3 pb-3 sm:px-5">
-        <label className="relative block w-full">
+      <div className="flex shrink-0 items-center gap-2 px-3 pb-3 sm:px-5">
+        <label className="relative block w-full min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" />
           <input ref={search} data-testid="fleet-search" type="search" value={query} onChange={event => { setQuery(event.target.value); scrollTop.current = 0; }} aria-label={searchLabel} placeholder={searchLabel} className="h-11 w-full min-w-0 rounded-xl border bg-card pl-10 pr-3 text-base outline-none focus:border-orange-500 focus-visible:ring-1 focus-visible:ring-orange-500" />
         </label>
+        <AccessKeyButton place="fleet_gps" />
       </div>
       <div ref={grid} onScroll={event => { scrollTop.current = event.currentTarget.scrollTop; }} className="no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-5">
         <div className="grid min-w-0 grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 xl:grid-cols-7" data-testid="fleet-card-grid">
