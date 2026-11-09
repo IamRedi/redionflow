@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { PrintButton } from "@/components/print/PrintButton";
+import { MonthlyTimesheet } from "@/components/reports/monthly-timesheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCompanyMode } from "@/lib/db/company";
@@ -32,7 +33,6 @@ export default async function MonthlyReportPage({ params }: { params: Promise<{ 
   if (!report.worker) redirect("/workzone/login");
 
   const rows = monthlySessionRows(report, month, currentLang);
-  const total = rows.reduce((sum, row) => sum + row.totalHours, 0);
   const noteMessages = parseReportMessages(report.note?.note, currentLang);
   const adminTimeRows = noteMessages
     .filter((message) => message.authorRole === "Admin" && message.text.startsWith("KOHE|"))
@@ -63,65 +63,7 @@ export default async function MonthlyReportPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <Card className="border shadow-sm print:rounded-none print:border print:border-black print:bg-white print:shadow-none">
-        <CardHeader className="border-b print:border-black print:px-4 print:py-3">
-          <div className="hidden text-center text-sm font-semibold print:block">{t("report.brandName")}</div>
-          <CardTitle>
-            {t("report.monthly")} {month}
-          </CardTitle>
-          <div className="grid gap-1 text-sm text-muted-foreground print:grid-cols-2 print:text-black">
-            <p>
-              {t("report.name")}: {report.worker.firstName} {report.worker.lastName}
-            </p>
-            <p>
-              {t("report.month")}: {month}
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 text-sm print:space-y-3 print:px-4 print:py-3">
-          <div className="overflow-x-auto print:overflow-visible">
-            <table className="stundenzettel-table w-full min-w-[760px] border-collapse border text-left text-sm print:min-w-0 print:border-black">
-              <thead>
-                <tr className="print:bg-zinc-100">
-                  <th className="border px-3 py-2 font-semibold print:border-black">{t("report.number")}</th>
-                  <th className="border px-3 py-2 font-semibold print:border-black">{t("report.day")}</th>
-                  <th className="border px-3 py-2 font-semibold print:border-black">{t("report.start")}</th>
-                  <th className="border px-3 py-2 font-semibold print:border-black">{t("report.end")}</th>
-                  <th className="border px-3 py-2 font-semibold print:border-black">{t("report.break")}</th>
-                  <th className="border px-3 py-2 font-semibold print:border-black">{t("report.siteLocation")}</th>
-                  <th className="border px-3 py-2 text-right font-semibold print:border-black">{t("report.hours")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.date}>
-                    <td className="border px-3 py-2 print:border-black">{row.dayOfMonth}</td>
-                    <td className="border px-3 py-2 print:border-black">{row.dayName}</td>
-                    <td className="border px-3 py-2 print:border-black">{formatReportTime(row.startTime, currentLang)}</td>
-                    <td className="border px-3 py-2 print:border-black">{formatReportTime(row.endTime, currentLang)}</td>
-                    <td className="border px-3 py-2 print:border-black">{row.hasWork ? `${row.breakMinutes} min` : "-"}</td>
-                    <td className="border px-3 py-2 print:border-black">{row.locations}</td>
-                    <td className="border px-3 py-2 text-right print:border-black">{row.hasWork ? row.totalHours.toFixed(2) : "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="print:bg-zinc-100">
-                  <td className="border px-3 py-2 font-semibold print:border-black" colSpan={6}>
-                    {t("report.total")}
-                  </td>
-                  <td className="border px-3 py-2 text-right font-semibold print:border-black">{total.toFixed(2)} {t("report.hourShort")}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <section className="grid gap-12 pt-8 print:grid-cols-2">
-            <div className="border-t border-black pt-2 text-sm">{t("report.employerCompany")}</div>
-            <div className="border-t border-black pt-2 text-sm">{t("report.employeeCompany")}</div>
-          </section>
-        </CardContent>
-      </Card>
+      <MonthlyTimesheet rows={rows} worker={report.worker} month={month} lang={currentLang} />
 
       <div className="print:hidden">
         <ReportNoteForm workerId={current.id} type="MONTHLY" periodKey={month} initialNote={report.note?.note ?? ""} companyProfileId={current.companyProfileId} />

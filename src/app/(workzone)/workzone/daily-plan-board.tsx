@@ -158,13 +158,13 @@ export function DailyPlanBoard({
   return (
     <div className="space-y-4" data-testid="daily-plan-editor">
       {/* Status and the two actions. */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3 shadow-sm max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:flex-nowrap max-lg:rounded-b-none max-lg:rounded-t-3xl max-lg:border-x-0 max-lg:border-b-0 max-lg:bg-card/95 max-lg:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-lg:shadow-[0_-8px_24px_rgb(0_0_0/0.08)] max-lg:backdrop-blur" data-testid="plan-actions">
         <span className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${neverSaved ? "bg-muted text-muted-foreground" : dirty ? "bg-amber-500/15 text-amber-800 dark:text-amber-200" : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"}`} data-testid="plan-status">
           {neverSaved ? c.notSaved : dirty ? c.unsaved : <><Check className="size-3.5" />{c.saved}</>}
         </span>
         {isPending ? <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden /> : null}
-        {message ? <span role="status" className="text-xs text-red-700 dark:text-red-300">{message}</span> : null}
-        <div className="ml-auto flex gap-2">
+        {message ? <span role="status" className="min-w-0 truncate text-xs text-red-700 dark:text-red-300">{message}</span> : null}
+        <div className="ml-auto flex shrink-0 gap-2">
           <button type="button" onClick={() => setAskClear(true)} disabled={isPending} className={`${chip} bg-card hover:bg-muted`}>{c.clear}</button>
           <button
             type="button"

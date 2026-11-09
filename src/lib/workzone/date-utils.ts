@@ -96,7 +96,7 @@ export function monthRange(key: string) {
 }
 
 export function formatReportTime(date: Date | null, lang?: string) {
-  return date ? date.toLocaleTimeString(reportLocale(lang), { timeZone: REPORT_TIME_ZONE, hour: "2-digit", minute: "2-digit" }) : "-";
+  return date ? date.toLocaleTimeString(reportLocale(lang), { timeZone: REPORT_TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : "-";
 }
 
 export function formatReportDateTime(date: Date | null, lang?: string) {
@@ -107,6 +107,7 @@ export function formatReportDateTime(date: Date | null, lang?: string) {
         month: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        hourCycle: "h23",
       })
     : "-";
 }

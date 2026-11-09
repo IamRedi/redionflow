@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { companyOrLogin } from "@/lib/workzone/company-or-login";
@@ -29,27 +29,31 @@ function addDaysToKey(value: string, days: number) {
 function PlanHeader({ date, lang, canEdit }: { date: string; lang: string; canEdit: boolean }) {
   const c = planCopy(lang);
   const today = dateKey(new Date());
-  const nav = "grid size-11 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition hover:bg-muted";
+  const nav = "grid size-10 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition hover:bg-muted sm:size-11";
   return (
-    <section className="rounded-3xl border bg-card p-4 shadow-sm sm:p-5">
-      <Link href="/workzone" className="text-xs text-muted-foreground hover:text-foreground">← Workzone</Link>
-      <div className="mt-1 flex flex-wrap items-center gap-2">
-        <CalendarDays className="size-6 text-orange-600 dark:text-orange-400" aria-hidden />
-        <h1 className="text-2xl font-bold tracking-tight">{c.title}</h1>
+    <section className="rounded-3xl border bg-card p-3 shadow-sm max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-3 max-lg:rounded-none max-lg:border-x-0 max-lg:border-t-0 max-lg:bg-background/95 max-lg:pt-[max(0.75rem,env(safe-area-inset-top))] max-lg:backdrop-blur sm:p-5" data-testid="plan-header">
+      <Link href="/workzone" className="hidden text-xs text-muted-foreground hover:text-foreground lg:inline">← Workzone</Link>
+      <div className="flex items-center gap-2 lg:mt-1">
+        <Link href="/workzone" className="grid size-10 shrink-0 place-items-center rounded-full border bg-card shadow-sm hover:bg-muted lg:hidden" aria-label="Workzone" data-testid="plan-close"><ArrowLeft className="size-5" aria-hidden /></Link>
+        <CalendarDays className="hidden size-6 text-orange-600 dark:text-orange-400 lg:block" aria-hidden />
+        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{c.title}</h1>
         {canEdit ? <AccessKeyButton place="daily_plan" compact /> : null}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-2.5 flex items-center gap-2 sm:mt-3">
         <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, -1))}`} className={nav} aria-label={c.previous} title={c.previous}><ChevronLeft className="size-5" /></Link>
-        <span className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-semibold capitalize" data-testid="plan-day">
-          {planDayLabel(date, lang)}
-          {date === today ? <span className="rounded-full bg-orange-600 px-2 py-0.5 text-[11px] font-semibold normal-case text-white dark:bg-orange-500 dark:text-slate-950">{c.today}</span> : null}
+        <span className="inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border bg-background px-3 text-sm font-semibold capitalize sm:min-h-11 sm:flex-none" data-testid="plan-day">
+          <span className="truncate">{planDayLabel(date, lang)}</span>
+          {date === today ? <span className="shrink-0 rounded-full bg-orange-600 px-2 py-0.5 text-[11px] font-semibold normal-case text-white dark:bg-orange-500 dark:text-slate-950">{c.today}</span> : null}
         </span>
         <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, 1))}`} className={nav} aria-label={c.next} title={c.next}><ChevronRight className="size-5" /></Link>
-        {date !== today ? <Link href={`/workzone/plan?date=${encodeURIComponent(today)}`} className="inline-flex min-h-11 items-center rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm hover:bg-muted">{c.today}</Link> : null}
+        {date !== today ? <Link href={`/workzone/plan?date=${encodeURIComponent(today)}`} className="inline-flex min-h-10 shrink-0 items-center rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm hover:bg-muted sm:min-h-11">{c.today}</Link> : null}
       </div>
     </section>
   );
 }
+
+/** On phones the plan is its own full screen (no Workzone bars); on desktop it stays in the page. */
+const FULL_SCREEN = "max-lg:fixed max-lg:inset-0 max-lg:z-[60] max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:bg-background max-lg:px-3";
 
 export default async function DailyPlanPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const currentLang = await resolveRequestLanguage();
@@ -71,7 +75,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
       select: { savedRows: { orderBy: { sortOrder: "asc" } } },
     }));
     return (
-      <div className="mx-auto w-full min-w-0 max-w-5xl space-y-4" data-testid="daily-plan-view">
+      <div className={`mx-auto w-full min-w-0 max-w-5xl space-y-4 max-lg:pb-8 ${FULL_SCREEN}`} data-testid="daily-plan-view" data-phone-fullscreen>
         <PlanHeader date={selectedDate} lang={currentLang} canEdit={false} />
         <SavedPlanList rows={saved?.savedRows ?? []} c={c} me={actor.name} />
       </div>
@@ -215,7 +219,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
   });
 
   return (
-    <div className="w-full min-w-0 space-y-4">
+    <div className={`w-full min-w-0 space-y-4 max-lg:pb-28 ${FULL_SCREEN}`} data-testid="daily-plan-page" data-phone-fullscreen>
       <PlanHeader date={selectedDate} lang={currentLang} canEdit />
 
       {plan ? (

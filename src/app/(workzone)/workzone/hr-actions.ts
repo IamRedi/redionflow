@@ -1,4 +1,5 @@
 "use server";
+import { plannedSiteId } from "@/lib/workzone/plan-site";
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
 import { confirmLegacyAssetAssignment } from '@/lib/company-assets/legacy';
@@ -481,9 +482,12 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
     return { ok: true, message: tr("workAlreadyActive") };
   }
 
+  // The worker's site for the day comes from the daily plan.
+  const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime).catch(() => null);
   await prisma.workSession.create({
     data: {
       workerId,
+      baustelleId,
       startTime: selectedStartTime,
       breakMinutes: 30,
       isLive: true,
