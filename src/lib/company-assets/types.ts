@@ -54,6 +54,7 @@ export type AssetCommand =
   | { type: 'repair-location'; repairId: string; revision: number; location: RepairLocation; provider?: string; note: string }
   | { type: 'repair-note'; repairId: string; revision: number; note: string }
   | { type: 'restore'; asset: AssetRef; revision: number; note: string }
+  | { type: 'make-available'; asset: AssetRef; revision: number; note?: string }
   | { type: 'register'; name: string; category: Exclude<AssetCategory, 'vehicle'>; code?: string; barcode?: string; factoryCode?: string; size?: string; note?: string; quantity?: number }
   | { type: 'code-add'; asset: AssetRef; value: string }
   | { type: 'code-generate'; asset: AssetRef }

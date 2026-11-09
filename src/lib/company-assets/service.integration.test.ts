@@ -136,6 +136,19 @@ it('enforces workshop transitions, external-only-in-repairing and tested evidenc
  await mutate({type:'repair-phase',repairId:result.repairId,revision:4,phase:'ready',tested:true,repairNote:'Fictional connector replaced and tested'});
  expect((await readAssetDetail(machine)).asset.availability).toBe('available');expect((await readAssetSnapshot()).repairs.some(r=>r.id===result.repairId&&r.phase==='ready')).toBe(true);
 });
+it('lets the boss make a vehicle available in one step from the workshop or a block, but not a worker',async()=>{
+ as(workerA);const result=await mutate({type:'report',asset:machine,kind:'defect',note:'Fictional stuck in service'}) as {repairId:string};
+ await mutate({type:'repair-phase',repairId:result.repairId,revision:1,phase:'received'}).catch(()=>undefined);
+ const before=(await readAssetDetail(machine)).asset;
+ await expect(mutate({type:'make-available',asset:machine,revision:before.revision})).rejects.toMatchObject({code:'DENIED'});
+ as(boss);const current=(await readAssetDetail(machine)).asset;expect(['reported','workshop']).toContain(current.availability);
+ await mutate({type:'make-available',asset:machine,revision:current.revision});
+ expect((await readAssetDetail(machine)).asset.availability).toBe('available');
+ await prisma.machine.update({where:{id:machine.id},data:{isActive:false}});
+ const blocked=(await readAssetDetail(machine)).asset;expect(blocked.availability).toBe('inactive');
+ await mutate({type:'make-available',asset:machine,revision:blocked.revision});
+ expect((await readAssetDetail(machine)).asset.availability).toBe('available');
+});
 it('projects exact open repair phases through reception and repair while keeping pending loss primary and tenant reads exact',async()=>{
  const report=await mutate({type:'report',asset:machine,kind:'defect',note:'Fictional current-phase probe'}) as {repairId:string};
  const read=()=>withTenantContext(boss.companyId,tx=>readCanonicalAssetStatuses(tx,boss,[machine,other]));

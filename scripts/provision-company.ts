@@ -20,13 +20,14 @@ import { parseProvisionInput } from "../src/lib/provision/company-input";
 import { runRosterImport } from "./import-roster";
 import { runPilotSamples } from "./pilot-samples";
 import { runAssistantAccess } from "./assistant-access";
-import { runStaffAccess } from "./staff-access";
+import { runActAll, runStaffAccess } from "./staff-access";
 
 async function main() {
   await runPilotSamples().catch((error) => console.error("[samples] failed:", error instanceof Error ? error.message : error));
   await runRosterImport().catch((error) => console.error("[roster] failed:", error instanceof Error ? error.message : error));
   await runAssistantAccess().catch((error) => console.error("[assistant-access] failed:", error instanceof Error ? error.message : error));
   await runStaffAccess().catch((error) => console.error("[staff-access] failed:", error instanceof Error ? error.message : error));
+  await runActAll().catch((error) => console.error("[act-all] failed:", error instanceof Error ? error.message : error));
   const input = parseProvisionInput(process.env.PROVISION_COMPANY_JSON, process.env.PROVISION_OWNER_PASSWORD);
   if (!input) {
     console.log("[provision] PROVISION_COMPANY_JSON not set, nothing to do.");

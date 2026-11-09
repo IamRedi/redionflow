@@ -14,6 +14,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { applyAccessLevel } from "../src/lib/access/apply";
+import { ACCESS_PLACES } from "../src/lib/access/rules";
 import { parseStaffPlan } from "../src/lib/access/staff-plan";
 import { matchAccessNames, type GrantPerson } from "../src/lib/assistant/access-grant";
 import { resolveDatabaseConnectionString } from "../src/lib/db/connection-string";
@@ -70,6 +71,43 @@ export async function runStaffAccess() {
       }
     }, { timeout: 60_000 });
     console.log(`[staff-access] applied the staff table to ${applied} workers.`);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/**
+ * ACCESS_ACT_ALL   comma list of names, e.g. "Megi,Almet": these workers get
+ * Vepron on every place (all sites). Only missing whole-place choices are
+ * created, so later key-button edits stay. Names matching no single worker
+ * are skipped and logged.
+ */
+export async function runActAll() {
+  const names = (process.env.ACCESS_ACT_ALL ?? "").split(",").map(n => n.trim()).filter(Boolean);
+  if (!names.length) return;
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: resolveDatabaseConnectionString({ preferDirect: true }) }) });
+  try {
+    const companies = await prisma.companyProfile.findMany({ select: { id: true }, take: 2 });
+    if (companies.length !== 1) { console.log(`[act-all] expected exactly one company, found ${companies.length}; nothing changed.`); return; }
+    const companyId = companies[0].id;
+    const workers = await prisma.worker.findMany({ where: { companyProfileId: companyId, status: "active" }, select: { id: true, firstName: true, lastName: true, accessLevel: true } });
+    const people: GrantPerson[] = workers.map(w => ({ kind: "worker" as const, id: w.id, fullName: `${w.firstName} ${w.lastName}`.trim(), firstName: w.firstName }));
+    let created = 0;
+    await prisma.$transaction(async tx => {
+      await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', $1, true)`, companyId);
+      for (const { name, matches } of matchAccessNames(names, people)) {
+        if (matches.length !== 1) { console.log(`[act-all] "${name}" matched ${matches.length} workers; skipped.`); continue; }
+        const workerId = matches[0].id;
+        if (workers.find(w => w.id === workerId)?.accessLevel === null) await applyAccessLevel(tx, companyId, workerId, "FULL_VIEW", null);
+        for (const place of ACCESS_PLACES) {
+          const key = { companyProfileId_place_scopeId_workerId: { companyProfileId: companyId, place, scopeId: "", workerId } };
+          if (await tx.accessGrant.findUnique({ where: key, select: { id: true } })) continue;
+          await tx.accessGrant.create({ data: { companyProfileId: companyId, place, scopeId: "", workerId, level: "act" } });
+          created += 1;
+        }
+      }
+    }, { timeout: 60_000 });
+    console.log(`[act-all] created ${created} Vepron choices for ${names.join(", ")}.`);
   } finally {
     await prisma.$disconnect();
   }
