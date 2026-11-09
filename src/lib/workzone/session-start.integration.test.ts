@@ -2,7 +2,7 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 const request=vi.hoisted(()=>({values:new Map<string,string>()}));
 vi.mock('next/headers',()=>({cookies:async()=>({get:(key:string)=>request.values.has(key)?{value:request.values.get(key)}:undefined}),headers:async()=>new Headers({'accept-language':'en'})}));
 vi.mock('next/cache',()=>({revalidatePath:()=>undefined}));
-vi.mock('@/lib/notifications/sendNotification',()=>({sendNotificationToAdmins:vi.fn(),sendNotificationToWorker:vi.fn()}));
+vi.mock('@/lib/notifications/sendNotification',()=>({sendNotificationToAdmins:vi.fn(),sendWorkEventNotification:vi.fn(),sendNotificationToWorker:vi.fn()}));
 import { prisma } from '@/lib/db/prisma';
 import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '../../../tests/security/fixtures';
 import { beginWorkerSession } from './session-start';

@@ -38,7 +38,6 @@ import { logoutWorkerAction } from "../hr-actions";
 import { updateWorkerContactDetailsFormAction } from "../hr-actions";
 import { ChangeCodeForm } from "./change-code-form";
 import { updateWorkerClothingSizesFormAction } from "../hr-actions";
-import { updateNotificationSettingsFormAction } from "../hr-actions";
 import { updateWorkerLanguagePreferencesFormAction } from "../hr-actions";
 import { setWorkerAssistantAccessAction } from "../assistant-access-actions";
 import { AssistantAccessToggle } from "@/components/assistant/assistant-access-toggle";
@@ -47,7 +46,7 @@ import { approveVacationRequestAction, rejectVacationRequestAction, requestVacat
 import { VacationRequestForm } from "./vacation-request-form";
 import { ReportPeriodPicker } from "./report-period-picker";
 import { WorkSessionControls } from "./work-session-controls";
-import { NotificationEnableButton } from "./notification-enable-button";
+import { NotificationPrefsButton } from "@/components/notifications/notification-prefs-button";
 import { WorkerAssets } from "./worker-assets";
 import { WorkerInventory } from "./worker-inventory";
 
@@ -258,8 +257,8 @@ export async function WorkerProfileView({
   const whatsappUrl = whatsappHref(worker.phone);
   const notificationSettings = worker.notificationSettings ?? {
     tagesplan: true,
-    workStart: true,
-    workEnd: true,
+    workStart: false,
+    workEnd: false,
     adminMessages: true,
   };
 
@@ -312,6 +311,7 @@ export async function WorkerProfileView({
             </div>
           </div>
           <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1 self-start">
+            <NotificationPrefsButton userId={worker.id} initial={notificationSettings} canEnableWork={mode === "admin"} self={mode === "worker"} />
             {worker.phone ? (
               <a href={`tel:${worker.phone}`} title={worker.phone} aria-label={t("common.phone", currentLang)} className="grid size-9 place-items-center rounded-full text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
                 <Phone className="size-4" />
@@ -634,39 +634,6 @@ export async function WorkerProfileView({
                       <option value="PL">{t("language.pl", currentLang)}</option>
                       <option value="RO">{t("language.ro", currentLang)}</option>
                     </select>
-                  </label>
-                </div>
-                <div className="flex justify-end">
-                  <Button type="submit" variant="outline" size="sm">
-                    {t("common.save", currentLang)}
-                  </Button>
-                </div>
-              </form>
-              <form action={updateNotificationSettingsFormAction} className="mt-3 grid gap-3 rounded-md border p-3">
-                <input type="hidden" name="userId" value={worker.id} />
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <div className="text-xs font-semibold">{t("workzone.pushNotifications", currentLang)}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">{t("workzone.pushNotificationsDescription", currentLang)}</div>
-                  </div>
-                  <NotificationEnableButton />
-                </div>
-                <div className="grid gap-2 text-sm sm:grid-cols-2">
-                  <label className="inline-flex items-center gap-2">
-                    <input type="checkbox" name="tagesplan" defaultChecked={notificationSettings.tagesplan} className="size-4 accent-brand-green" />
-                    {t("workzone.dailyPlanUpdates", currentLang)}
-                  </label>
-                  <label className="inline-flex items-center gap-2">
-                    <input type="checkbox" name="workStart" defaultChecked={notificationSettings.workStart} className="size-4 accent-brand-green" />
-                    {t("workzone.workStartNotifications", currentLang)}
-                  </label>
-                  <label className="inline-flex items-center gap-2">
-                    <input type="checkbox" name="workEnd" defaultChecked={notificationSettings.workEnd} className="size-4 accent-brand-green" />
-                    {t("workzone.workEndNotifications", currentLang)}
-                  </label>
-                  <label className="inline-flex items-center gap-2">
-                    <input type="checkbox" name="adminMessages" defaultChecked={notificationSettings.adminMessages} className="size-4 accent-brand-green" />
-                    {t("workzone.adminMessages", currentLang)}
                   </label>
                 </div>
                 <div className="flex justify-end">

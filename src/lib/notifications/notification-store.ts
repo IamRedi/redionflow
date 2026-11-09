@@ -11,10 +11,13 @@ export type NotificationSettingsRow = {
 
 export type NotificationPreference = keyof NotificationSettingsRow;
 
+/** Work start/end notices are opt-in: only people who switch them on get them. */
+export const OPT_IN_NOTIFICATION_PREFERENCES: readonly NotificationPreference[] = ["workStart", "workEnd"];
+
 export const defaultNotificationSettings: NotificationSettingsRow = {
   tagesplan: true,
-  workStart: true,
-  workEnd: true,
+  workStart: false,
+  workEnd: false,
   adminMessages: true,
 };
 
@@ -82,12 +85,13 @@ export async function registerNotificationSubscription(userId: string, fcmToken:
 
 export async function getAllowedNotificationUserIds(userIds: string[], preference?: NotificationPreference) {
   if (!preference || userIds.length === 0) return userIds;
+  const optIn = OPT_IN_NOTIFICATION_PREFERENCES.includes(preference);
 
   const rows = await prisma.$queryRaw<Array<{ userId: string }>>`
     SELECT input."userId"
     FROM (SELECT UNNEST(${userIds}::text[]) AS "userId") input
     LEFT JOIN "NotificationSettings" settings ON settings."userId" = input."userId"
-    WHERE settings."userId" IS NULL OR settings.${Prisma.raw(`"${preference}"`)} = true
+    WHERE ${optIn ? Prisma.sql`settings.${Prisma.raw(`"${preference}"`)} = true` : Prisma.sql`(settings."userId" IS NULL OR settings.${Prisma.raw(`"${preference}"`)} = true)`}
   `;
 
   return rows.map((row) => row.userId);
