@@ -49,9 +49,9 @@ export function mergeConversations(existing: ConversationSummary[], incoming: Co
 }
 
 const text = {
-  en: { history: 'Conversations', newChat: 'New chat', more: 'More conversations', older: 'Older messages', newer: 'Newer messages', latest: 'Latest messages', retry: 'Retry', loading: 'Loading history…', historyError: 'History could not be loaded. Retry before sending.', unconfirmed: 'I could not confirm this answer in the saved history. Refresh the conversation.', cancelled: 'Stopped. Any received text is kept.', failed: 'The answer could not be completed.', pending: 'Still processing or saving.', interrupted: 'Incomplete answer', archive: 'Saved history', latestHint: 'Return to the latest messages to continue.', refresh: 'Refresh history' },
-  sq: { history: 'Bisedat', newChat: 'Bisedë e re', more: 'Biseda të tjera', older: 'Mesazhe më të vjetra', newer: 'Mesazhe më të reja', latest: 'Mesazhet e fundit', retry: 'Provo sërish', loading: 'Po ngarkohet historiku…', historyError: 'Historiku nuk u ngarkua. Provo sërish para dërgimit.', unconfirmed: 'Nuk arrita ta konfirmoj përgjigjen në historikun e ruajtur. Rifresko bisedën.', cancelled: 'U ndal. Teksti i marrë ruhet në pamje.', failed: 'Përgjigjja nuk u përfundua.', pending: 'Ende po përpunohet ose ruhet.', interrupted: 'Përgjigje e paplotë', archive: 'Historiku i ruajtur', latestHint: 'Kthehu te mesazhet e fundit për të vazhduar.', refresh: 'Rifresko historikun' },
-  de: { history: 'Gespräche', newChat: 'Neuer Chat', more: 'Weitere Gespräche', older: 'Ältere Nachrichten', newer: 'Neuere Nachrichten', latest: 'Neueste Nachrichten', retry: 'Erneut versuchen', loading: 'Verlauf wird geladen…', historyError: 'Verlauf konnte nicht geladen werden. Vor dem Senden erneut versuchen.', unconfirmed: 'Die Antwort konnte im gespeicherten Verlauf nicht bestätigt werden. Gespräch aktualisieren.', cancelled: 'Gestoppt. Empfangener Text bleibt sichtbar.', failed: 'Die Antwort konnte nicht abgeschlossen werden.', pending: 'Wird noch verarbeitet oder gespeichert.', interrupted: 'Unvollständige Antwort', archive: 'Gespeicherter Verlauf', latestHint: 'Zum Fortsetzen zu den neuesten Nachrichten wechseln.', refresh: 'Verlauf aktualisieren' },
+  en: { history: 'Conversations', newChat: 'New chat', more: 'More conversations', older: 'Older messages', newer: 'Newer messages', latest: 'Latest messages', retry: 'Retry', loading: 'Loading history…', historyError: 'History could not be loaded. Retry before sending.', unconfirmed: 'I could not confirm this answer in the saved history. Refresh the conversation.', cancelled: 'Stopped. Any received text is kept.', failed: 'The answer could not be completed.', pending: 'Still processing or saving.', interrupted: 'Incomplete answer', archive: 'Saved history', latestHint: 'Return to the latest messages to continue.', refresh: 'Refresh history', remove: 'Delete conversation', removeAsk: 'Delete this conversation for good?', removeFailed: 'The conversation could not be deleted.' },
+  sq: { history: 'Bisedat', newChat: 'Bisedë e re', more: 'Biseda të tjera', older: 'Mesazhe më të vjetra', newer: 'Mesazhe më të reja', latest: 'Mesazhet e fundit', retry: 'Provo sërish', loading: 'Po ngarkohet historiku…', historyError: 'Historiku nuk u ngarkua. Provo sërish para dërgimit.', unconfirmed: 'Nuk arrita ta konfirmoj përgjigjen në historikun e ruajtur. Rifresko bisedën.', cancelled: 'U ndal. Teksti i marrë ruhet në pamje.', failed: 'Përgjigjja nuk u përfundua.', pending: 'Ende po përpunohet ose ruhet.', interrupted: 'Përgjigje e paplotë', archive: 'Historiku i ruajtur', latestHint: 'Kthehu te mesazhet e fundit për të vazhduar.', refresh: 'Rifresko historikun', remove: 'Fshi bisedën', removeAsk: 'Ta fshij përfundimisht këtë bisedë?', removeFailed: 'Biseda nuk u fshi.' },
+  de: { history: 'Gespräche', newChat: 'Neuer Chat', more: 'Weitere Gespräche', older: 'Ältere Nachrichten', newer: 'Neuere Nachrichten', latest: 'Neueste Nachrichten', retry: 'Erneut versuchen', loading: 'Verlauf wird geladen…', historyError: 'Verlauf konnte nicht geladen werden. Vor dem Senden erneut versuchen.', unconfirmed: 'Die Antwort konnte im gespeicherten Verlauf nicht bestätigt werden. Gespräch aktualisieren.', cancelled: 'Gestoppt. Empfangener Text bleibt sichtbar.', failed: 'Die Antwort konnte nicht abgeschlossen werden.', pending: 'Wird noch verarbeitet oder gespeichert.', interrupted: 'Unvollständige Antwort', archive: 'Gespeicherter Verlauf', latestHint: 'Zum Fortsetzen zu den neuesten Nachrichten wechseln.', refresh: 'Verlauf aktualisieren', remove: 'Gespräch löschen', removeAsk: 'Dieses Gespräch endgültig löschen?', removeFailed: 'Das Gespräch konnte nicht gelöscht werden.' },
 } as const;
 export const conversationCopy = (language: string) => text[language as keyof typeof text] ?? text.en;
 export function conversationStatus(status: string | undefined, copy: ReturnType<typeof conversationCopy>) {
@@ -200,8 +200,22 @@ export function useAdminConversations(input: { enabled: boolean; language: strin
     setMessages(prev => [...prev, { id: item.userId, role: 'user', content: question }, { id: item.answerId, role: 'assistant', content: '', status: 'running' }]);
     void perform(item);
   }, [busy, pageIndex, perform, ready, setInput, setMessages]);
+  const remove = useCallback(async () => {
+    const id = current.current;
+    if (!id || busy || requestAbort.current) return false;
+    setBusy(true); setNotice('');
+    try {
+      const response = await fetch(`/api/assistant/conversations/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { accept: 'application/json' } });
+      if (!response.ok && response.status !== 404) throw new Error('delete failed');
+      drafts.current.delete(id);
+      setConversations(prev => prev.filter(item => item.id !== id));
+      newChat();
+      return true;
+    } catch { setNotice(copy.removeFailed); return false; }
+    finally { setBusy(false); }
+  }, [busy, copy.removeFailed, newChat]);
   return { copy, conversations, conversationId, ready, busy, notice, nextList, nextRuns, pageIndex, canRetry,
-    rememberDraft, newChat, initialize, select, moreConversations,
+    rememberDraft, newChat, initialize, select, moreConversations, remove,
     older: () => current.current && nextRuns ? select(current.current, nextRuns, pageIndex + 1) : undefined,
     newer: () => current.current && pageIndex > 0 ? select(current.current, pages.current[pageIndex - 1], pageIndex - 1) : undefined,
     latest: () => current.current ? select(current.current) : initialize(),
