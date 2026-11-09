@@ -229,7 +229,7 @@ export async function FlowTopBar({
           <WorkerIconStrip
             insetClassName={contained ? "" : "pl-[124px]"}
             comfortable={contained}
-            trailing={contained ? adminProfiles.map(profile => <Link key={profile.id} href={`/workzone/admin-profile/${profile.id}`} title={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} aria-label={`${t('admin.profile', currentLang)}: ${profile.name ?? profile.email}`} className="inline-flex size-[44px] shrink-0 items-center justify-center rounded-full border bg-transparent text-xs font-semibold text-foreground/80 transition hover:bg-muted hover:text-foreground">{adminInitial(profile.name ?? profile.email)}</Link>) : undefined}
+            // Production: the admin's own profile lives in the control panel (icon next to language and theme).
             admin={Boolean(admin)}
             workers={workersSorted.map((worker) => ({
               id: worker.id,

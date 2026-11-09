@@ -57,20 +57,20 @@ export function LanguageDropdown() {
         type="button"
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "flex h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground transition hover:bg-foreground/[0.05] hover:text-foreground",
+          "flex h-9 w-full min-w-0 items-center justify-between gap-1.5 rounded-lg px-2 text-[13px] font-medium text-muted-foreground transition hover:bg-foreground/[0.05] hover:text-foreground",
           open && "bg-foreground/[0.05]",
         )}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2">
-          <Languages className="size-3.5 text-muted-foreground" />
+        <span className="flex min-w-0 items-center gap-2">
+          <Languages className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="text-base leading-none">{active.flag}</span>
           <span className="truncate">{active.label}</span>
         </span>
         <ChevronDown
           className={cn(
-            "size-3.5 text-muted-foreground transition-transform",
+            "size-3.5 shrink-0 text-muted-foreground transition-transform",
             open && "rotate-180",
           )}
         />
@@ -79,7 +79,7 @@ export function LanguageDropdown() {
       {open ? (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-xl border bg-popover shadow-lg"
+          className="absolute bottom-full left-0 z-50 mb-1 min-w-[11rem] overflow-hidden rounded-xl border bg-popover shadow-lg"
         >
           {OPTIONS.map((option) => {
             const isActive = option.code === active.code;

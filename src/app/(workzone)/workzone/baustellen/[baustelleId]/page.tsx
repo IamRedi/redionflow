@@ -365,16 +365,7 @@ export default async function BaustelleDetailPage({
           </div>
         </div>
 
-        <WorkingControls
-          baustelleId={baustelle.id}
-          currentWorker={currentWorker ? currentActorView : null}
-          activeWorkerIds={activeWorkerIds}
-          activeSession={
-            currentWorkerLiveSession
-              ? { startTime: currentWorkerLiveSession.startTime.toISOString(), baustelleId: currentWorkerLiveSession.baustelleId }
-              : null
-          }
-        />
+        {/* Steel firms: the site of the day comes from the daily plan; work starts on the profile. */}
 
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />

@@ -430,6 +430,18 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
         });
       }
 
+    // Today's plan is where people work: anyone already working follows the saved plan.
+    if (input.date === dateKey(new Date())) {
+      for (const column of plan.columns) {
+        if (!column.baustelleId) continue;
+        const workerIds = column.assignments.filter((a) => a.kind === "WORKER" && a.workerId).map((a) => a.workerId!);
+        if (workerIds.length) await tx.workSession.updateMany({
+          where: { workerId: { in: workerIds }, isLive: true, endTime: null, OR: [{ baustelleId: null }, { baustelleId: { not: column.baustelleId } }] },
+          data: { baustelleId: column.baustelleId },
+        });
+      }
+    }
+
     if (!rowsAreEqual(previousRows, rows)) notification = { key: `plan:${plan.id}:${randomUUID()}`, kind: 'plan', action: 'daily_plan.view', title: msg(input.lang, 'dailyPlanSaved'), body: input.date, url: `/workzone/plan?date=${encodeURIComponent(input.date)}`, preference: 'tagesplan' };
     return { ok: true, message: msg(input.lang, "dailyPlanSaved") };
   });

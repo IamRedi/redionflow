@@ -4,8 +4,9 @@
   --credit-red: #ac2020;
   --credit-yellow: #755300;
   --credit-green: #10622e;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* Only the author's credit, centred at the very end of the page. */
+  display: flex;
+  justify-content: center;
   align-items: center;
   min-width: 0;
   padding: 0 12px;
@@ -21,9 +22,6 @@
   --credit-green: #22c55e;
 }
 
-.product { min-width: 0; justify-self: start; font-size: 10px; }
-.product a { display: inline-flex; align-items: center; min-height: 44px; border-radius: 4px; }
-.product a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .credit { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 6px; gap: 5px; white-space: nowrap; font-size: 11px; font-weight: 400; line-height: 1.6; color: var(--credit-by); text-decoration: none; border-radius: 4px; }
 .credit:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .name { font-size: 13px; font-weight: 700; letter-spacing: -.35px; color: var(--credit-green); }
