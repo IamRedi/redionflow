@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { assertAssistantTestDatabase } from '../../../tests/fixtures/assistant-database';
 import { seedSecurityTenants, removeSecurityTenants } from '../../../tests/security/fixtures';
 import type { RequesterContext } from './requester';
-import { appendTrace, checkpointRun, finishRun, getConversation, listConversations, listRunTraces, startRun } from './history';
+import { appendTrace, checkpointRun, deleteConversation, finishRun, getConversation, listConversations, listRunTraces, startRun } from './history';
 let tenants: Awaited<ReturnType<typeof seedSecurityTenants>>;
 const role = 'assistant_history_probe';
 function admin(index = 0): RequesterContext { const t = tenants[index]; return { kind: 'admin', companyId: t.company.id, adminId: t.admin.id, displayName: 'Synthetic', preferredLanguage: 'SQ' }; }
@@ -114,4 +114,16 @@ it('enforces tenant AND admin RLS even without the application where filter', as
     await tx.$executeRaw`SELECT set_config('app.assistant_admin_id', ${peer.id}, true)`;
     await tx.assistantRun.create({ data: { companyProfileId: tenants[0].company.id, adminId: peer.id, conversationId: a.conversationId, question: 'Forged parent' } });
   })).rejects.toThrow();
+});
+
+it('lets only the owner delete a finished conversation, with its runs and traces', async () => {
+  const started = await startRun(admin(), { question: 'To delete', clientMessageId: 'delete-me' });
+  await expect(deleteConversation(admin(), started.conversationId)).rejects.toMatchObject({ status: 409, code: 'HISTORY_BUSY' });
+  await appendTrace(admin(), { runId: started.runId, toolCallId: 'call-1', toolName: 'adminGetSteelProductionSummary', input: {}, result: { ok: true }, evidence: {}, status: 'ok' });
+  await finishRun(admin(), { runId: started.runId, answer: 'Done', status: 'completed' });
+  await expect(deleteConversation(admin(1), started.conversationId)).rejects.toMatchObject({ code: 'HISTORY_NOT_FOUND' });
+  expect(await deleteConversation(admin(), started.conversationId)).toEqual({ deleted: true });
+  expect(await prisma.assistantConversation.count({ where: { id: started.conversationId } })).toBe(0);
+  expect(await prisma.assistantRun.count({ where: { conversationId: started.conversationId } })).toBe(0);
+  expect(await prisma.assistantToolTrace.count({ where: { runId: started.runId } })).toBe(0);
 });

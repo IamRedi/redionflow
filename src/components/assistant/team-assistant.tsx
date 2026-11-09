@@ -236,6 +236,12 @@ function AssistantChat({
           </select>
           {archive.nextList && <button type="button" onClick={() => void archive.moreConversations()} disabled={archive.busy || isLoading} title={archive.copy.more} aria-label={archive.copy.more} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40"><ChevronDown className="size-4" /></button>}
           <button type="button" onClick={() => void archive.latest()} disabled={archive.busy || isLoading} title={archive.copy.refresh} aria-label={archive.copy.refresh} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40"><RefreshCw className={`size-4 ${archive.busy ? 'animate-spin' : ''}`} /></button>
+          {archive.conversationId ? (
+            <button type="button" data-testid="assistant-delete-chat"
+              onClick={() => { if (window.confirm(archive.copy.removeAsk)) void archive.remove(); }}
+              disabled={archive.busy || isLoading} title={archive.copy.remove} aria-label={archive.copy.remove}
+              className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600 disabled:opacity-40"><Trash2 className="size-4" /></button>
+          ) : null}
           <button type="button" onClick={archive.newChat} disabled={!archive.ready} title={archive.copy.newChat} aria-label={archive.copy.newChat} className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted disabled:opacity-40"><Plus className="size-5" /></button>
         </div>
         {(archive.nextRuns || archive.pageIndex > 0) && <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground">

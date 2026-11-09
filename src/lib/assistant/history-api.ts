@@ -19,6 +19,6 @@ export async function assistantHistoryRead(read: (requester: Admin) => Promise<u
     return Response.json(await read(requester), { headers });
   } catch (error) {
     const status = error instanceof AssistantHistoryError ? error.status : 503;
-    return Response.json({ error: status === 404 ? 'Conversation not found.' : 'Conversation history unavailable.' }, { status, headers });
+    return Response.json({ error: status === 404 ? 'Conversation not found.' : status === 409 ? 'An answer is still being written.' : 'Conversation history unavailable.' }, { status, headers });
   }
 }

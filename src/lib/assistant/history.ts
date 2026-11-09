@@ -233,6 +233,19 @@ export async function getConversation(requester: RequesterContext, conversationI
     return { conversation: found, runs: page.map(row => row.status === 'running' && row.startedAt.getTime() <= Date.now() - STALE_RUN_MS ? { ...row, status: 'partial', errorCode: 'INTERRUPTED', recordedStatus: 'running', interrupted: true } : { ...row, interrupted: false }), hasMore, nextCursor: hasMore ? page.at(-1)!.id : null, order: 'newest-first' as const };
   });
 }
+/** The owner deletes one of their own conversations (runs and traces cascade). Not while an answer is still being written. */
+export async function deleteConversation(requester: RequesterContext, conversationId: string) {
+  const conversation = id(conversationId, true)!;
+  return historyTx(requester, async (tx, scope) => {
+    await lock(tx, `assistant-conversation:${scope.companyProfileId}:${scope.adminId}:${conversation}`);
+    const found = await tx.assistantConversation.findFirst({ where: { ...scope, id: conversation }, select: { id: true } });
+    if (!found) throw new AssistantHistoryError(404, 'HISTORY_NOT_FOUND');
+    const running = await tx.assistantRun.findFirst({ where: { ...scope, conversationId: conversation, status: 'running', startedAt: { gt: new Date(Date.now() - STALE_RUN_MS) } }, select: { id: true } });
+    if (running) throw new AssistantHistoryError(409, 'HISTORY_BUSY');
+    await tx.assistantConversation.deleteMany({ where: { ...scope, id: conversation } });
+    return { deleted: true };
+  });
+}
 export async function listRunTraces(requester: RequesterContext, runId: string, input: { cursor?: string; limit?: number } = {}) {
   const run = id(runId, true)!, cursor = id(input.cursor), limit = pageSize(input.limit);
   return historyTx(requester, async (tx, scope) => {
