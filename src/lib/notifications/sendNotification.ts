@@ -4,6 +4,7 @@ import { getMessaging } from "firebase-admin/messaging";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { isSaasMode } from "@/lib/saas-config";
+import { decodeBrowserSubscription, deliverBrowserPush, isBrowserSubscription } from './web-push';
 import {
   deleteNotificationSubscriptions,
   getAllowedNotificationUserIds,
@@ -17,6 +18,8 @@ type SendNotificationInput = {
   body: string;
   url?: string;
   preference?: NotificationPreference;
+  tag?: string;
+  onlyToken?: string;
 };
 
 function adminApp() {
@@ -40,7 +43,7 @@ function adminApp() {
   return null;
 }
 
-export async function sendNotification({ userIds, title, body, url = "/workzone", preference }: SendNotificationInput) {
+export async function sendNotification({ userIds, title, body, url = "/workzone", preference, tag, onlyToken }: SendNotificationInput) {
   let uniqueUserIds = [...new Set(userIds.filter(Boolean))];
   if (uniqueUserIds.length === 0) return { sent: 0, failed: 0 };
 
@@ -58,15 +61,34 @@ export async function sendNotification({ userIds, title, body, url = "/workzone"
   const allowedUserIds = await getAllowedNotificationUserIds(uniqueUserIds, preference);
   if (allowedUserIds.length === 0) return { sent: 0, failed: 0 };
 
-  const subscriptions = await getNotificationSubscriptions(allowedUserIds);
+  const subscriptions = (await getNotificationSubscriptions(allowedUserIds)).filter(row => !onlyToken || row.fcmToken === onlyToken);
   if (subscriptions.length === 0) return { sent: 0, failed: 0 };
 
+  // Native Web Push works without a Firebase project. Keep existing FCM devices.
+  let sent = 0, failed = 0;
+  const expired: string[] = [];
+  const native = subscriptions.filter(item => isBrowserSubscription(item.fcmToken));
+  for (let i = 0; i < native.length; i += 50) {
+    await Promise.all(native.slice(i, i + 50).map(async item => {
+      const subscription = decodeBrowserSubscription(item.fcmToken);
+      if (!subscription) { failed++; return; }
+      const result = await deliverBrowserPush(subscription, { title, body, url, tag });
+      if (result.ok) sent++; else failed++;
+      if (result.expired) expired.push(item.id);
+    }));
+  }
+  if (expired.length) await deleteNotificationSubscriptions(expired);
+  const legacy = subscriptions.filter(item => !isBrowserSubscription(item.fcmToken));
+  if (!legacy.length) return { sent, failed };
   const app = adminApp();
-  if (!app) return { sent: 0, failed: subscriptions.length };
+  if (!app) return { sent, failed: failed + legacy.length };
 
   const messaging = getMessaging(app);
+  for (let i = 0; i < legacy.length; i += 500) {
+  const batch = legacy.slice(i, i + 500);
+  try {
   const response = await messaging.sendEachForMulticast({
-    tokens: subscriptions.map((item) => item.fcmToken),
+    tokens: batch.map((item) => item.fcmToken),
     data: { title, body, url },
     webpush: {
       fcmOptions: { link: url },
@@ -79,7 +101,7 @@ export async function sendNotification({ userIds, title, body, url = "/workzone"
   });
 
   const invalidTokenIds = response.responses
-    .map((item, index) => ({ item, subscription: subscriptions[index] }))
+    .map((item, index) => ({ item, subscription: batch[index] }))
     .filter(({ item }) => {
       const code = item.error?.code ?? "";
       return code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token";
@@ -91,7 +113,10 @@ export async function sendNotification({ userIds, title, body, url = "/workzone"
     await deleteNotificationSubscriptions(invalidTokenIds);
   }
 
-  return { sent: response.successCount, failed: response.failureCount };
+  sent += response.successCount; failed += response.failureCount;
+  } catch { failed += batch.length; }
+  }
+  return { sent, failed };
 }
 
 export async function sendNotificationToAdmins(input: Omit<SendNotificationInput, "userIds">) {

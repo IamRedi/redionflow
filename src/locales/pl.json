@@ -67,6 +67,18 @@
     "signupInviteInvalid": "Kod zaproszenia jest nieprawidłowy."
   },
   "workzone": {
+    "notificationTitle": "Powiadomienia",
+    "notificationHint": "Plany i zakończenia, do których masz dostęp.",
+    "notificationTestSelf": "Testuj to urządzenie",
+    "notificationTestTeam": "Testuj zespół",
+    "notificationIphone": "Na iPhonie otwórz aplikację z ekranu początkowego, włącz powiadomienia i wybierz Pozwól. Wymagany iOS 16.4 lub nowszy.",
+    "notificationNotConfigured": "Powiadomienia push nie są jeszcze skonfigurowane.",
+    "notificationEnableFirst": "Najpierw włącz powiadomienia na tym urządzeniu.",
+    "notificationTestSent": "Test wysłany. Sprawdź powiadomienie na urządzeniu.",
+    "notificationTestFailed": "Test nie został wysłany. Sprawdź aktywację i spróbuj ponownie.",
+    "notificationWait": "Odczekaj 30 sekund przed kolejnym testem.",
+    "notificationTestTitle": "Powiadomienie testowe",
+    "notificationTestBody": "Powiadomienia Workzone działają na tym urządzeniu.",
     "workSessionOverlap": "Początek nakłada się na zapisaną pracę. Wybierz rzeczywistą godzinę po ostatnim zakończeniu.",
     "startWork": "Rozpocznij prace",
     "stopWork": "Zakoncz prace",

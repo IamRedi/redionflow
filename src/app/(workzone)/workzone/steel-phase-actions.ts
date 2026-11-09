@@ -11,6 +11,7 @@ import { ensureSteelWorkCatalog, setSteelTaskSelection } from '@/lib/steel-work/
 import { canManageSteelCatalog } from '@/lib/steel-work/types';
 import { applySteelPhaseCommand, readSteelPhaseMeta, type SteelPhaseCommand } from '@/lib/workzone/steel-phases';
 import { saveSteelWorkDefinitionAction } from './steel-catalog-actions';
+import { dispatchCompletions, siteCompletionSnapshot, type CompletionSnapshot } from '@/lib/notifications/events';
 
 const schema = z.object({ phaseItemId: z.string().min(1).max(64), command: z.enum(['done', 'reopen', 'note', 'missing', 'materialArrived']), text: z.string().max(500).optional().default('') }).strict();
 function refresh(siteId: string) {
@@ -25,12 +26,14 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
   if (!companyId || !actor) return { ok: false, message: tr('notSignedIn') };
   const allowedAt = (site: string) => { const can = actor.at(site); return parsed.data.command === 'missing' ? can.reportMissing : can.siteSteps; };
   let denied = false;
+  let before: CompletionSnapshot | null = null, after: CompletionSnapshot | null = null, transitionKey = '';
   const siteId = await withTenantContext(companyId, async tx => {
     await ensureSteelWorkCatalog(companyId, tx);
     const assignment = await tx.steelSiteTask.findFirst({ where: { companyProfileId: companyId, treeItemId: parsed.data.phaseItemId }, include: { definition: true, treeItem: true } });
     if (!assignment || !assignment.enabled || assignment.definition.archivedAt || assignment.definition.kind !== 'site') return null;
     if (!allowedAt(assignment.baustelleId)) { denied = true; return null; }
     if (assignment.definition.linkedProcessKey && ['done', 'reopen'].includes(parsed.data.command)) return null;
+    if (parsed.data.command === 'done') before = await siteCompletionSnapshot(tx, companyId, assignment.baustelleId);
     const item = assignment.treeItem, text = parsed.data.text.trim();
     let command: SteelPhaseCommand;
     switch (parsed.data.command) {
@@ -47,11 +50,13 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
       ...(finished && item.status !== 'done' ? { completedAt: new Date(), completedBy: actor.userId, completedByWorkerId: actor.workerId } : {}),
       ...(!finished ? { completedAt: null, completedBy: null, completedByWorkerId: null } : {}),
     } });
-    await tx.auditLog.create({ data: { companyProfileId: companyId, actorType: actor.workerId ? 'WORKER' : 'ADMIN', actorId: (actor.workerId ?? actor.userId)!, action: 'steel.task_updated', payload: { definitionId: assignment.definitionId, phaseItemId: item.id, command: parsed.data.command } } });
+    const audit = await tx.auditLog.create({ data: { companyProfileId: companyId, actorType: actor.workerId ? 'WORKER' : 'ADMIN', actorId: (actor.workerId ?? actor.userId)!, action: 'steel.task_updated', payload: { definitionId: assignment.definitionId, phaseItemId: item.id, command: parsed.data.command } } });
+    if (before) { after = await siteCompletionSnapshot(tx, companyId, assignment.baustelleId); transitionKey = audit.id; }
     return assignment.baustelleId;
   });
   if (denied) return { ok: false, message: tr('accessDenied') };
   if (!siteId) return { ok: false, message: tr('invalidInput') };
+  await dispatchCompletions(companyId, before, after, transitionKey);
   refresh(siteId); return { ok: true, message: 'OK' };
 }
 /** Compatibility entry point: create/reuse a shared definition, selecting this site only. */

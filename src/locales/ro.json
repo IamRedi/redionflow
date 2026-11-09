@@ -68,6 +68,18 @@
     "signupInviteInvalid": "Codul de invitație nu este valid."
   },
   "workzone": {
+    "notificationTitle": "Notificări",
+    "notificationHint": "Planuri și finalizări la care ai acces.",
+    "notificationTestSelf": "Testează acest dispozitiv",
+    "notificationTestTeam": "Testează echipa",
+    "notificationIphone": "Pe iPhone deschide aplicația din ecranul principal, activează notificările și alege Permite. Necesită iOS 16.4 sau mai nou.",
+    "notificationNotConfigured": "Notificările push nu sunt încă configurate.",
+    "notificationEnableFirst": "Activează întâi notificările pe acest dispozitiv.",
+    "notificationTestSent": "Test trimis. Verifică notificarea pe dispozitiv.",
+    "notificationTestFailed": "Testul nu a fost trimis. Verifică activarea și încearcă din nou.",
+    "notificationWait": "Așteaptă 30 de secunde înainte de alt test.",
+    "notificationTestTitle": "Notificare de test",
+    "notificationTestBody": "Notificările Workzone funcționează pe acest dispozitiv.",
     "workSessionOverlap": "Acest început se suprapune peste munca înregistrată. Alege ora reală după ultima oprire.",
     "startWork": "Incepe munca",
     "stopWork": "Opreste munca",

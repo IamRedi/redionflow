@@ -27,3 +27,8 @@ it('never auto-completes an empty source and keeps manual tasks independent', ()
   expect(projectSteelTasks([task], [])[0]).toMatchObject({ status: 'todo', percent: null });
   expect(projectSteelTasks([manual], [element()])[0]).toMatchObject({ status: 'done', automatic: false, percent: 100 });
 });
+it('counts the same selected phases as the steel board, without an imported generic row', () => {
+  const rows = [{ id: 'selected', treeId: 'steel-task-demo', status: 'done' }, { id: 'legacy-import', treeId: '1', status: 'todo' }];
+  expect(steelTaskTotals(projectSteelTasks(rows, []))).toMatchObject({ total: 1, done: 1, pct: 100 });
+  expect(rows[1]).toMatchObject({ treeId: '1', status: 'todo' });
+});

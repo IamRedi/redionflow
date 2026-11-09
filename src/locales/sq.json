@@ -76,6 +76,18 @@
     "signupInviteInvalid": "Kodi i ftesës nuk është i saktë."
   },
   "workzone": {
+    "notificationTitle": "Njoftimet",
+    "notificationHint": "Planet dhe përfundimet që ke akses t’i shohësh.",
+    "notificationTestSelf": "Provo në këtë pajisje",
+    "notificationTestTeam": "Provo për ekipin",
+    "notificationIphone": "Në iPhone hape nga ikona në Home Screen. Pastaj aktivizo njoftimet dhe zgjidh Lejo. Kërkohet iOS 16.4 ose më i ri.",
+    "notificationNotConfigured": "Njoftimet push nuk janë konfiguruar ende.",
+    "notificationEnableFirst": "Aktivizo njoftimet në këtë pajisje fillimisht.",
+    "notificationTestSent": "Prova u dërgua. Kontrollo njoftimin në pajisje.",
+    "notificationTestFailed": "Prova nuk u dërgua. Kontrollo aktivizimin dhe provo përsëri.",
+    "notificationWait": "Prit 30 sekonda për provën tjetër.",
+    "notificationTestTitle": "Njoftim prove",
+    "notificationTestBody": "Njoftimet e Workzone funksionojnë në këtë pajisje.",
     "startWork": "Fillo punen",
     "stopWork": "Ndalo punen",
     "status": "Statusi",

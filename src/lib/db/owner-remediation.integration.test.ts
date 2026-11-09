@@ -126,9 +126,13 @@ it.each([
   request.values.set("bk_admin_id", await createTestSession("admin", tenants[0].admin.id));
   for (const zone of ["UTC", "Europe/Berlin"]) {
     vi.stubEnv("TZ", zone); request.notify.mockClear();
+    // A changed explicit publication notifies all current viewers; an unchanged
+    // Save stays quiet. Preserve the UTC/Berlin and DST regression coverage.
+    await prisma.dailyWorkPlanColumn.update({where:{id:tenants[0].column.id},data:{note:`Synthetic ${zone}`}});
     expect((await saveDailyPlanAction({ date, lang: "en" })).ok).toBe(true);
     expect(request.notify).toHaveBeenCalledTimes(1);
-    expect(request.notify).toHaveBeenCalledWith(expect.objectContaining({ userIds: [tenants[0].worker.id], url: "/workzone/plan", preference: "tagesplan" }));
+    expect(request.notify).toHaveBeenCalledWith(expect.objectContaining({ userIds: expect.arrayContaining([tenants[0].admin.id,tenants[0].worker.id]), url: `/workzone/plan?date=${date}`, preference: "tagesplan" }));
+    request.notify.mockClear();expect((await saveDailyPlanAction({date,lang:'en'})).ok).toBe(true);expect(request.notify).not.toHaveBeenCalled();
   }
 });
 

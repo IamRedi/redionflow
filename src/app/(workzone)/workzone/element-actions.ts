@@ -19,6 +19,7 @@ import { siteEngineerIds, writeSiteEngineerGrants } from '@/lib/site-phase-docum
 import { AssetOperationError } from '@/lib/company-assets/access';
 import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime } from "@/lib/site-files/validate";
 import type { ActionResult } from "@/lib/validation/action-result";
+import { dispatchCompletions, siteCompletionSnapshot, type CompletionSnapshot } from '@/lib/notifications/events';
 
 function revalidateSite(baustelleId: string) {
   revalidatePath(`/workzone/baustellen/${baustelleId}`);
@@ -159,6 +160,7 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
   const side = sideOfStage(stage);
   if (!side) return { ok: false, message: tr("invalidInput") };
   const workerIds = [...new Set(parsed.data.workerIds)];
+  let before: CompletionSnapshot | null = null, after: CompletionSnapshot | null = null;
 
   const result = await withTenantContext(companyId, async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
@@ -185,6 +187,7 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
     });
     if (workers.length !== workerIds.length) return null;
     const names = workerIds.map((id) => workers.find((w) => w.id === id)).map((w) => `${w?.firstName ?? ""} ${w?.lastName ?? ""}`.trim()).join(", ");
+    before = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
     const created = await tx.siteElementWork.create({
       data: {
         companyProfileId: companyId,
@@ -200,12 +203,14 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
       },
       select: { id: true },
     });
+    after = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
     return { siteId: element.baustelleId, workId: created.id, count };
   });
   if (!result) return { ok: false, message: tr("invalidInput") };
   if (result === "denied") return { ok: false, message: tr("elementCheckOnlyEngineer") };
   if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   if (result === "full") return { ok: false, message: tr("elementStepFull") };
+  await dispatchCompletions(companyId, before, after, result.workId);
   revalidateSite(result.siteId);
   return { ok: true, message: "OK", checkedByName: actor.name, workId: result.workId, pieces: result.count };
 }
@@ -270,8 +275,10 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   const actor = await currentCompanyActor(companyId);
   if (!actor) return { ok: false, message: tr("notSignedIn") };
   const { elementId, side, done } = parsed.data;
+  let before: CompletionSnapshot | null = null, after: CompletionSnapshot | null = null, transitionKey = '';
 
   const result = await withTenantContext(companyId, async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
     await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: elementSelect });
     if (!element) return null;
@@ -282,10 +289,13 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
     if (done && (routeStages(state, side).length === 0 || doneQty(state, side) === 0 && readProcessRoutes(element.processRoutes)?.[side] != null)) return "noSteps" as const;
     const stamp = done ? { at: new Date(), by: actor.name } : { at: null, by: null };
     if (side === "factory" && !done && takesBackFromSite({ ...element, factoryDoneAt: null })) return "onSite" as const;
+    before = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
     await tx.siteElement.update({
       where: { id: element.id },
       data: side === "factory" ? { factoryDoneAt: stamp.at, factoryDoneBy: stamp.by } : { fieldDoneAt: stamp.at, fieldDoneBy: stamp.by },
     });
+    after = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
+    transitionKey = `finish:${element.id}:${stamp.at?.toISOString() ?? 'reopen'}`;
     return element.baustelleId;
   });
   if (!result) return { ok: false, message: tr("invalidInput") };
@@ -293,6 +303,7 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   if (result === "noSteps") return { ok: false, message: tr("elementNeedsStep") };
   if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };
+  await dispatchCompletions(companyId, before, after, transitionKey);
   revalidateSite(result);
   return { ok: true, message: "OK", doneByName: actor.name };
 }

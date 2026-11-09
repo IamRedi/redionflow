@@ -1,12 +1,11 @@
 import Link from 'next/link';
-import { Bell, Home, LayoutDashboard } from 'lucide-react';
+import { Home, LayoutDashboard } from 'lucide-react';
 
 import {
   TeamAssistantLogoTrigger,
   WorkerAssistantTrigger,
 } from '@/components/assistant/team-assistant';
 import { AppBrand } from '@/components/branding/AppBrand';
-import { Button } from '@/components/ui/button';
 import { hasAssistantAccess } from '@/lib/assistant/access';
 import { getCurrentAdmin } from '@/lib/auth/admin-session';
 import { getCompanyMode } from '@/lib/db/company';
@@ -17,7 +16,7 @@ import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { getCurrentWorker } from '@/lib/workzone/worker-session';
 import { safeCompanyLogo } from '@/lib/company-logo';
 import { WorkerIconStrip } from '@/app/(workzone)/workzone/worker-icon-strip';
-import { notifyTeamAction } from '@/app/(workzone)/workzone/announcement-actions';
+import { NotificationBell } from './NotificationBell';
 import { TopbarAnnouncementButton } from '@/app/(workzone)/workzone/topbar-announcement-button';
 import { WorkspaceHeaderOffset } from './WorkspaceHeaderOffset';
 
@@ -208,18 +207,7 @@ export async function FlowTopBar({
               {admin ? (
                 <>
                   <TopbarAnnouncementButton message={announcementMessage} />
-                  <form action={notifyTeamAction}>
-                    <Button
-                      type="submit"
-                      variant="outline"
-                      size="icon"
-                      className="size-9 rounded-full bg-background/85 text-foreground/80 shadow-sm hover:bg-muted hover:text-foreground"
-                      title={t('workzone.notifyTeam', currentLang)}
-                      aria-label={t('workzone.notifyTeam', currentLang)}
-                    >
-                      <Bell className="size-4" />
-                    </Button>
-                  </form>
+                  <NotificationBell admin={Boolean(admin)} className="size-9" />
                 </>
               ) : null}
               {mobileAdminProfiles.map((profile) => (
@@ -282,18 +270,7 @@ export async function FlowTopBar({
           {admin ? (
             <>
               <TopbarAnnouncementButton message={announcementMessage} />
-              <form action={notifyTeamAction}>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="icon"
-                  className="size-9 rounded-full bg-background/85 text-foreground/80 shadow-sm hover:bg-muted hover:text-foreground"
-                  title={t('workzone.notifyTeam', currentLang)}
-                  aria-label={t('workzone.notifyTeam', currentLang)}
-                >
-                  <Bell className="size-4" />
-                </Button>
-              </form>
+              <NotificationBell admin={Boolean(admin)} className="size-9" />
             </>
           ) : null}
           {adminProfiles.map((profile) => (

@@ -5,18 +5,19 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "Baumdienst Flow", body: event.data.text() };
+    data = { title: "Workzone", body: event.data.text() };
   }
 
-  const payload = data.notification ?? data.data ?? data;
-  const title = payload.title ?? "Baumdienst Flow";
+  const payload = { ...(data.data ?? data), ...(data.notification ?? {}) };
+  const title = payload.title ?? "Workzone";
   const url = payload.url ?? payload.click_action ?? "/workzone";
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.body ?? "",
-      icon: payload.icon ?? "/branding/logo-192.png",
-      badge: payload.badge ?? "/branding/logo-192.png",
+      icon: payload.icon ?? "/app-icon/192",
+      badge: payload.badge ?? "/app-icon/192",
+      tag: payload.tag,
       data: { url },
     }),
   );
@@ -24,7 +25,8 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url ?? "/workzone", self.location.origin).href;
+  let targetUrl = new URL('/workzone', self.location.origin).href;
+  try { const target = new URL(event.notification.data?.url ?? '/workzone', self.location.origin); if (target.origin === self.location.origin) targetUrl = target.href; } catch { /* Keep the authenticated Workzone destination. */ }
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {

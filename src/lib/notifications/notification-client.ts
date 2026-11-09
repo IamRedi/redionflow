@@ -4,6 +4,7 @@ import { getApps, initializeApp, type FirebaseOptions } from "firebase/app";
 import { getMessaging, getToken, isSupported } from "firebase/messaging";
 
 import { LANGUAGE_COOKIE, normalizeLanguage } from "@/lib/i18n/language";
+import { t } from '@/lib/i18n';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim(),
@@ -94,7 +95,7 @@ function notificationMessages() {
   return messages[lang];
 }
 
-export async function enableNotifications() {
+async function enableFirebaseNotifications() {
   const m = notificationMessages();
   if (!("Notification" in window)) {
     return { ok: false, message: m.browserUnsupported };
@@ -143,4 +144,45 @@ export async function enableNotifications() {
   }
 
   return { ok: true, message: m.enabled };
+}
+
+export function iphoneNeedsInstall() {
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  return ios && !window.matchMedia('(display-mode: standalone)').matches && !(navigator as Navigator & { standalone?: boolean }).standalone;
+}
+export async function enableNotifications() {
+  const m = notificationMessages();
+  if (iphoneNeedsInstall()) return { ok: false, message: t('workzone.notificationIphone', notificationLanguage()) };
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return { ok: false, message: m.deviceUnsupported };
+  // Must run directly in the user's click on iPhone, before any network await.
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return { ok: false, message: m.permissionDenied };
+  try {
+    const response = await fetch('/api/notifications/register', { cache: 'no-store' });
+    const config = await response.json();
+    if (!response.ok) return { ok: false, message: m.tokenSaveFailed };
+    if (!config.enabled || !config.publicKey) return hasFirebaseConfig() ? enableFirebaseNotifications() : { ok: false, message: t('workzone.notificationNotConfigured', notificationLanguage()) };
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    const bytes = Uint8Array.from(atob(config.publicKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    let existing = await registration.pushManager.getSubscription();
+    if (existing?.options.applicationServerKey && !bytes.every((byte, i) => byte === new Uint8Array(existing!.options.applicationServerKey!)[i])) {
+      await existing.unsubscribe(); existing = null;
+    }
+    const subscription = existing ?? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: bytes });
+    const saved = await fetch('/api/notifications/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: subscription.toJSON() }) });
+    return saved.ok ? { ok: true, message: m.enabled } : { ok: false, message: m.tokenSaveFailed };
+  } catch { return { ok: false, message: m.tokenCreateFailed }; }
+}
+
+export async function testBrowserNotification(team = false) {
+  const lang = notificationLanguage();
+  try {
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!team && !subscription) return { ok: false, message: t('workzone.notificationEnableFirst', lang) };
+    const response = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(team ? { team: true } : { subscription: subscription!.toJSON() }) });
+    const result = await response.json();
+    return { ok: Boolean(result.ok), message: t(result.ok ? 'workzone.notificationTestSent' : response.status === 429 ? 'workzone.notificationWait' : 'workzone.notificationTestFailed', lang) };
+  } catch { return { ok: false, message: t('workzone.notificationTestFailed', lang) }; }
 }

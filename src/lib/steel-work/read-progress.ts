@@ -8,7 +8,7 @@ export async function loadSteelTaskProgress(companyId: string, siteIds: string[]
     where: { id: { in: siteIds }, companyProfileId: companyId, type: { in: ['STEEL_WORKSHOP', 'STEEL_ASSEMBLY'] } },
     select: {
       id: true,
-      treeItems: { select: { id: true, status: true, notes: true, steelTask: { select: { enabled: true, definition: { select: { id: true, archivedAt: true, linkedProcessKey: true, linkedList: true, linkedKind: true } } } } } },
+      treeItems: { select: { id: true, treeId: true, status: true, notes: true, steelTask: { select: { enabled: true, definition: { select: { id: true, archivedAt: true, linkedProcessKey: true, linkedList: true, linkedKind: true } } } } } },
       siteElements: { where: { companyProfileId: companyId }, select: { list: true, kind: true, quantity: true, factoryDoneAt: true, fieldDoneAt: true, processRoutes: true, work: { where: { companyProfileId: companyId }, select: { stage: true, pieces: true } } } },
     },
   }));
