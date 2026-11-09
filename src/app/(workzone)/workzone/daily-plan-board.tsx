@@ -18,9 +18,10 @@ import {
 } from "./daily-plan-actions";
 import { planCopy } from "./plan/plan-copy";
 import { SavedPlanList, type SavedPlanRow } from "./plan/saved-plan";
+import { planMachineLabel, planMachineName } from '@/lib/workzone/plan-machine-label';
 
 type DraggableWorker = { id: string; name: string; licenses: string | null; availability: string; hasApprovedVacation: boolean };
-type DraggableMachine = { id: string; name: string; requiredLicense: string | null; isActive: boolean };
+type DraggableMachine = { id: string; name: string; targe?: string | null; requiredLicense: string | null; isActive: boolean };
 type Assignment = { id: string; kind: "WORKER" | "MACHINE"; labelSnapshot: string; workerId: string | null; machineId: string | null };
 type Column = {
   id: string;
@@ -111,6 +112,7 @@ export function DailyPlanBoard({
 
   const siteOfWorker = useMemo(() => new Map(columns.flatMap((column) => column.assignments.filter((a) => a.workerId).map((a) => [a.workerId as string, column.title] as const))), [columns]);
   const siteOfMachine = useMemo(() => new Map(columns.flatMap((column) => column.assignments.filter((a) => a.machineId).map((a) => [a.machineId as string, column.title] as const))), [columns]);
+  const machineById = useMemo(() => new Map(machines.map(machine => [machine.id, machine])), [machines]);
   const freeWorkers = workers.filter((worker) => !siteOfWorker.has(worker.id)).length;
   const freeMachines = machines.filter((machine) => !siteOfMachine.has(machine.id)).length;
 
@@ -118,7 +120,7 @@ export function DailyPlanBoard({
   const boardRows = columns.map((column) => ({
     baustelleName: column.title,
     workerNames: column.assignments.filter((a) => a.kind === "WORKER").map((a) => a.labelSnapshot).join(", "),
-    machineNames: column.assignments.filter((a) => a.kind === "MACHINE").map((a) => a.labelSnapshot).join(", "),
+    machineNames: column.assignments.filter((a) => a.kind === "MACHINE").map((a) => a.machineId && machineById.has(a.machineId) ? planMachineLabel(machineById.get(a.machineId)!) : a.labelSnapshot).join(", "),
     note: column.note,
   })).filter(hasContent).map(rowKey).sort();
   const savedKeys = savedRows.filter(hasContent).map(rowKey).sort();
@@ -129,7 +131,7 @@ export function DailyPlanBoard({
   // Free ones first, then the ones already placed today.
   const placed = tab === "WORKER" ? siteOfWorker : siteOfMachine;
   const list = (tab === "WORKER" ? workers : machines)
-    .filter((entry) => !needle || entry.name.toLocaleLowerCase().includes(needle))
+    .filter((entry) => !needle || `${entry.name} ${'targe' in entry ? entry.targe ?? '' : ''}`.toLocaleLowerCase().includes(needle))
     .sort((a, b) => Number(placed.has(a.id)) - Number(placed.has(b.id)));
 
   function assign(columnId: string, item: Picked, force = false) {
@@ -214,8 +216,8 @@ export function DailyPlanBoard({
                   <button
                     type="button"
                     draggable
-                    onDragStart={() => setPicked({ kind: tab, id: entry.id, name: entry.name })}
-                    onClick={() => setPicked(active ? null : { kind: tab, id: entry.id, name: entry.name })}
+                    onDragStart={() => setPicked({ kind: tab, id: entry.id, name: machine ? planMachineLabel(machine) : entry.name })}
+                    onClick={() => setPicked(active ? null : { kind: tab, id: entry.id, name: machine ? planMachineLabel(machine) : entry.name })}
                     aria-pressed={active}
                     className={`flex min-h-12 w-full flex-col justify-center gap-1 rounded-xl border px-2.5 py-1.5 text-left text-sm shadow-sm transition active:scale-[0.98] ${
                       active ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950"
@@ -226,7 +228,8 @@ export function DailyPlanBoard({
                     <span className="flex w-full min-w-0 flex-col items-start gap-1 lg:flex-row lg:items-center lg:gap-1.5">
                       <span className="flex w-full min-w-0 items-center gap-1.5 lg:w-auto lg:flex-1">
                         {needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}
-                        <span className="min-w-0 truncate font-medium">{entry.name}</span>
+                        <span className="min-w-0 truncate font-medium" title={entry.name}>{machine ? planMachineName(machine) : entry.name}</span>
+                        {machine?.targe ? <span className={`ml-auto shrink-0 font-mono text-[10px] tracking-tight ${active ? 'text-current' : 'text-muted-foreground'}`}>{machine.targe}</span> : null}
                       </span>
                       {site ? (
                         <span className={`inline-flex max-w-full shrink-0 items-center gap-0.5 rounded-full lg:max-w-[45%] px-1.5 py-0.5 text-[11px] font-semibold ${active ? "bg-white/20" : "bg-orange-500/15 text-orange-800 dark:text-orange-200"}`} title={site} data-testid="plan-pick-site">
@@ -280,7 +283,8 @@ export function DailyPlanBoard({
                     {column.assignments.map((item) => (
                       <li key={item.id} className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-lg border bg-background pl-2 text-sm">
                         {item.kind === "WORKER" ? <HardHat className="size-3.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /> : <Truck className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />}
-                        <span className="min-w-0 truncate">{item.labelSnapshot}</span>
+                        <span className="min-w-0 truncate" title={item.labelSnapshot}>{item.kind === 'MACHINE' && item.machineId && machineById.has(item.machineId) ? planMachineName(machineById.get(item.machineId)!) : item.labelSnapshot}</span>
+                        {item.kind === 'MACHINE' && item.machineId && machineById.get(item.machineId)?.targe ? <span className="shrink-0 font-mono text-[10px] tracking-tight text-muted-foreground">{machineById.get(item.machineId)!.targe}</span> : null}
                         {item.kind === "MACHINE" && item.machineId && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact /> : null}
                         <button type="button" onClick={(event) => { event.stopPropagation(); remove(item.id); }} disabled={isPending}
                           className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-red-600" aria-label={`${c.remove}: ${item.labelSnapshot}`} title={c.remove}>

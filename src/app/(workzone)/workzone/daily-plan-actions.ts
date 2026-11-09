@@ -1,4 +1,5 @@
 "use server";
+import { planMachineLabel } from '@/lib/workzone/plan-machine-label';
 
 import { revalidatePath } from "next/cache";
 
@@ -235,9 +236,9 @@ export async function moveDailyPlanItemAction(input: {
         });
       }
     } else {
-      const machine = await tx.machine.findUnique({ where: { id: input.itemId }, select: { id: true, name: true, nickname: true, isActive: true } });
+      const machine = await tx.machine.findUnique({ where: { id: input.itemId }, select: { id: true, name: true, nickname: true, targe: true, isActive: true } });
       if (!machine) return { ok: false, message: msg(input.lang, "machineNotFound") };
-      const machineName = machine.nickname ?? machine.name;
+      const machineName = planMachineLabel(machine);
       if (!machine.isActive && !input.force) {
         const warningMessage = msg(input.lang, "planMachineBlockedWarning", { name: machineName });
         return { ok: false, message: warningMessage, requiresConfirmation: true, warningMessage };
@@ -350,7 +351,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
         columns: {
           orderBy: { sortOrder: "asc" },
           include: {
-            assignments: { orderBy: { sortOrder: "asc" } },
+            assignments: { orderBy: { sortOrder: "asc" }, include: { machine: { select: { name: true, nickname: true, targe: true, companyProfileId: true } } } },
             baustelle: { select: { name: true } },
           },
         },
@@ -371,7 +372,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
 
     const rows: PlanRowSnapshot[] = plan.columns.map((column, idx) => {
       const workerNames = column.assignments.filter((a) => a.kind === "WORKER").map((a) => a.labelSnapshot).join(", ");
-      const machineNames = column.assignments.filter((a) => a.kind === "MACHINE").map((a) => a.labelSnapshot).join(", ");
+      const machineNames = column.assignments.filter((a) => a.kind === "MACHINE").map((a) => a.machine?.companyProfileId === currentCompanyId ? planMachineLabel(a.machine) : a.labelSnapshot).join(", ");
       return {
         workerNames,
         machineNames,

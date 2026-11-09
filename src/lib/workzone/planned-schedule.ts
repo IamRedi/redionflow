@@ -1,3 +1,5 @@
+import { dateKey } from './date-utils';
+
 /** Planned shifts for steel workspaces, independent from recorded sessions and
  * access permissions. Unknown roles stay unspecified rather than guessing. */
 export type PlannedSchedule = { start: string; end: string; weekdays: readonly number[] };
@@ -11,7 +13,7 @@ export function plannedSteelSchedule(role: string | null | undefined, enabled: b
 
 /** Match the existing datetime-local form without changing session parsing. */
 export function plannedStartToday(schedule: PlannedSchedule, now = new Date()) {
-  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${schedule.start}`;
+  return `${dateKey(now)}T${schedule.start}`;
 }
 const copy: Record<string, { planned: string; days: string }> = {
   sq: { planned: 'Orari i planifikuar', days: 'Hën–Sht' },

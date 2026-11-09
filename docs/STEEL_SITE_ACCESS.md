@@ -29,6 +29,45 @@ actual time. These plans neither create attendance nor overwrite recorded hours,
 breaks, leave allowances, approvals or historical sessions. Mechanic/unclassified
 roles have no inferred shift. Role/access administration is unchanged.
 
+Attendance inputs and previews use the existing report/business timezone, also
+when the browser or server runs in another timezone. A same-day restart after a
+closed session suggests the current time, rather than the planned shift again.
+Profile, site and offline starts share a tenant-scoped worker lock: simultaneous
+starts reuse one live session and a backdated restart overlapping closed work is
+rejected. Only the first successful stop records the final total and admin time
+entry. Forgotten-session closure retains its existing 16:00/30-minute policy,
+using that same business clock and preserving a concurrent manual stop.
+
+The owner's 9 November test-day records are retained unchanged. Any later reset
+requires a separate, bounded operation after everyone is offline; this fix does
+not exclude, delete or rewrite attendance history.
+
+Daily-plan machine cards and newly saved plan rows use the short machine name
+and plate, without enlarging the picker controls. Existing saved snapshots stay
+unchanged until an explicit plan save. The daily archive fits narrow screens
+without a horizontal table scroll. Claude's plan layout and report calendar
+changes remain in place.
+
+Verification on host REDI, 9 November 2026, based on production revision
+`ab55f80e232ed6b7be4e410795f43ba290a251fe`: local typecheck/lint, 1,131 unit
+and 459 PostgreSQL integration checks passed. After the final conditional
+auto-close change, the 37 affected tenant/session integration checks and
+typecheck/lint passed again. The production-build browser scenario passed:
+1440/360 CSS px, light/dark before/after, picker plates, explicit plan save,
+archive overflow, local-clock start, overlap refusal and restart. Only synthetic
+fixtures were written locally; the production attendance audit was read-only.
+Local evidence is under the task's `outputs/steel-plan-hours-20261109` folder,
+outside Git. Its private audit is not a public artifact. No migration is added;
+the restricted disposable test-role column grant adds only `Machine.targe`.
+
+Presentation assessment: NO_CONTENT_CHANGE for this bounded correction. The
+native steel description, current public README and portfolio BauFlow card
+retain the same capabilities, access boundary, links and product status; these
+fixes do not introduce a new workflow or change readiness. Existing fictional
+captures remain dated examples, not captures of this candidate. This assessment
+does not certify unrelated copy changes introduced by other work. Publication
+and real-device owner acceptance remain separate from local verification.
+
 The ordinary worker can record their own time and acknowledgements, upload their
 own profile photo, handle their own assigned-asset handovers/reports and upload
 their own fuel receipts; production confirmation remains an engineer/admin task.

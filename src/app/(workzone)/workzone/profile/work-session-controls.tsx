@@ -10,26 +10,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { t } from "@/lib/i18n";
 import { plannedStartToday, type PlannedSchedule } from '@/lib/workzone/planned-schedule';
+import { dateKey, parseWorkDateTime, workDateTimeInput } from '@/lib/workzone/date-utils';
 import { startWorkerSessionAction, startWorkSessionPauseAction, stopWorkerSessionAction, stopWorkSessionPauseAction } from "../hr-actions";
 
 function toDatetimeLocal(date: Date) {
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
+  return workDateTimeInput(date);
 }
 
 function hoursPreview(startIso: string, endLocal: string, breakMinutes: number) {
   const start = new Date(startIso);
-  const end = new Date(endLocal);
-  if (Number.isNaN(end.getTime())) return "0.00";
+  const end = parseWorkDateTime(endLocal);
+  if (!end) return "0.00";
   const raw = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
   return Math.max(0, raw - breakMinutes / 60).toFixed(2);
 }
 
 function defaultBreakMinutes(startIso: string, endLocal: string) {
   const start = new Date(startIso);
-  const end = new Date(endLocal);
-  if (Number.isNaN(end.getTime())) return 0;
+  const end = parseWorkDateTime(endLocal);
+  if (!end) return 0;
   const rawHours = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
   return rawHours > 4 ? 30 : 0;
 }
@@ -58,10 +57,12 @@ export function WorkSessionControls({
   workerPhoneGpsEnabled,
   activeSession,
   plannedSchedule = null,
+  lastSessionEnd = null,
 }: {
   workerId: string;
   workerPhoneGpsEnabled: boolean;
   plannedSchedule?: PlannedSchedule | null;
+  lastSessionEnd?: string | null;
   activeSession: {
     id: string;
     startTime: string;
@@ -90,10 +91,10 @@ export function WorkSessionControls({
   );
 
   function sevenToday() {
+    if (lastSessionEnd && dateKey(new Date(lastSessionEnd)) === dateKey(new Date())) return toDatetimeLocal(new Date());
     if (plannedSchedule) return plannedStartToday(plannedSchedule);
     const date = new Date();
-    date.setHours(7, 0, 0, 0);
-    return toDatetimeLocal(date);
+    return `${dateKey(date)}T07:00`;
   }
 
   function openStart() {

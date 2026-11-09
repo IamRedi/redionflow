@@ -67,6 +67,7 @@
     "signupInviteInvalid": "Kod zaproszenia jest nieprawidłowy."
   },
   "workzone": {
+    "workSessionOverlap": "Początek nakłada się na zapisaną pracę. Wybierz rzeczywistą godzinę po ostatnim zakończeniu.",
     "startWork": "Rozpocznij prace",
     "stopWork": "Zakoncz prace",
     "today": "Dzis",
@@ -255,7 +256,7 @@
     "externalShort": "zewn.",
     "workHere": "Pracuj tutaj",
     "whenDidWorkStart": "Kiedy rozpoczalas/es prace?",
-    "selectedTime": "07:00 / wybrana godzina",
+    "selectedTime": "Wybrana godzina",
     "externalWorkerPermission": "Tylko zalogowany pracownik lub admin moze dodac zewnetrznego pomocnika.",
     "addExternalWorker": "Dodaj zewnetrznego pracownika",
     "shareDocumentSuccess": "Dokument udostepniony.",

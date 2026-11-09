@@ -12,6 +12,7 @@ import { SavedPlanList } from "./saved-plan";
 import { dateKey, dayRange } from "@/lib/workzone/date-utils";
 import { DailyPlanBoard } from "../daily-plan-board";
 import { AccessKeyButton } from "@/components/access/access-key-button";
+const WORKZONE_LABEL = 'Workzone';
 
 function planDay(value: string) {
   const range = dayRange(value);
@@ -32,7 +33,7 @@ function PlanHeader({ date, lang, canEdit }: { date: string; lang: string; canEd
   const nav = "grid size-10 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition hover:bg-muted sm:size-11";
   return (
     <section className="rounded-3xl border bg-card p-3 shadow-sm max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-3 max-lg:rounded-none max-lg:border-x-0 max-lg:border-t-0 max-lg:bg-background/95 max-lg:pt-[max(0.75rem,env(safe-area-inset-top))] max-lg:backdrop-blur sm:p-5" data-testid="plan-header">
-      <Link href="/workzone" className="hidden text-xs text-muted-foreground hover:text-foreground lg:inline">← Workzone</Link>
+      <Link href="/workzone" className="hidden text-xs text-muted-foreground hover:text-foreground lg:inline">← {WORKZONE_LABEL}</Link>
       <div className="flex items-center gap-2 lg:mt-1">
         <Link href="/workzone" className="grid size-10 shrink-0 place-items-center rounded-full border bg-card shadow-sm hover:bg-muted lg:hidden" aria-label="Workzone" data-testid="plan-close"><ArrowLeft className="size-5" aria-hidden /></Link>
         <CalendarDays className="hidden size-6 text-orange-600 dark:text-orange-400 lg:block" aria-hidden />
@@ -205,7 +206,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
       tx.machine.findMany({
         where: { companyProfileId: company.id },
         orderBy: [{ isActive: "desc" }, { nickname: "asc" }, { name: "asc" }],
-        select: { id: true, name: true, nickname: true, patentaEnevojshme: true, isActive: true },
+        select: { id: true, name: true, nickname: true, targe: true, patentaEnevojshme: true, isActive: true },
       }),
       tx.baustelle.findMany({
         // Only open sites; one that already has people today stays visible.
@@ -248,7 +249,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
             availability: worker.availability,
             hasApprovedVacation: worker.vacationRequests.length > 0,
           }))}
-          machines={machines.map((machine) => ({ id: machine.id, name: machine.nickname ?? machine.name, requiredLicense: machine.patentaEnevojshme, isActive: machine.isActive }))}
+          machines={machines.map((machine) => ({ id: machine.id, name: machine.nickname?.trim() || machine.name, targe: machine.targe, requiredLicense: machine.patentaEnevojshme, isActive: machine.isActive }))}
           baustellen={baustellen}
           savedRows={plan.savedRows.map((row) => ({
             id: row.id,

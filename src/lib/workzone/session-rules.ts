@@ -2,6 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { isSaasMode } from "@/lib/saas-config";
+import { dateKey, dayRange, parseWorkDateTime, workDateTimeInput } from './date-utils';
 
 export const STANDARD_START_HOUR = 7;
 export const STANDARD_END_HOUR = 16;
@@ -59,20 +60,15 @@ export function isReportableSession(session: { startTime: Date; endTime: Date | 
 }
 
 function atLocalTime(base: Date, hour: number, minute = 0) {
-  const date = new Date(base);
-  date.setHours(hour, minute, 0, 0);
-  return date;
+  return parseWorkDateTime(`${dateKey(base)}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`)!;
 }
 
 function nextDayNoon(base: Date) {
-  const date = new Date(base);
-  date.setDate(date.getDate() + 1);
-  date.setHours(12, 0, 0, 0);
-  return date;
+  return atLocalTime(dayRange(dateKey(base)).end, 12);
 }
 
 function isForgottenDaySession(start: Date, now: Date) {
-  const hour = start.getHours();
+  const hour = Number(workDateTimeInput(start).slice(11, 13));
   if (hour < 5 || hour > 12) return false;
   return now.getTime() >= nextDayNoon(start).getTime();
 }
@@ -101,8 +97,8 @@ export async function autoCloseForgottenDaySessions(now = new Date()) {
       .map((session) => {
         const endTime = atLocalTime(session.startTime, STANDARD_END_HOUR, 0);
         if (endTime.getTime() <= session.startTime.getTime()) return null;
-        return prisma.workSession.update({
-          where: { id: session.id },
+        return prisma.workSession.updateMany({
+          where: { id: session.id, isLive: true, endTime: null },
           data: {
             endTime,
             breakMinutes: STANDARD_BREAK_MINUTES,
@@ -116,8 +112,8 @@ export async function autoCloseForgottenDaySessions(now = new Date()) {
       .filter((update) => update !== null);
 
     if (updates.length === 0) return 0;
-    await prisma.$transaction(updates);
-    return updates.length;
+    const results = await prisma.$transaction(updates);
+    return results.reduce((sum, result) => sum + result.count, 0);
   } catch (error) {
     if (isWorkSessionSchemaDriftError(error)) return 0;
     throw error;

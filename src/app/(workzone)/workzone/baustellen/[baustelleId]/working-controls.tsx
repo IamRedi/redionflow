@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { t } from "@/lib/i18n";
+import { workDateTimeInput, parseWorkDateTime } from '@/lib/workzone/date-utils';
 import { startWorkOffline, stopWorkOffline } from "@/lib/workzone/offline/offline-actions";
 
 type CurrentWorker = {
@@ -19,20 +20,13 @@ type CurrentWorker = {
 } | null;
 
 function toDatetimeLocal(date: Date) {
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
-function dateAt(hour: number, minute = 0) {
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-  return toDatetimeLocal(date);
+  return workDateTimeInput(date);
 }
 
 function defaultBreakMinutes(startIso: string, endLocal: string) {
   const start = new Date(startIso);
-  const end = new Date(endLocal);
+  const end = parseWorkDateTime(endLocal);
+  if (!end) return 0;
   const rawHours = (end.getTime() - start.getTime()) / 3_600_000;
   return rawHours > 4 ? 30 : 0;
 }
@@ -54,7 +48,7 @@ export function WorkingControls({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const [startOpen, setStartOpen] = useState(false);
-  const [startTime, setStartTime] = useState(dateAt(7, 0));
+  const [startTime, setStartTime] = useState(toDatetimeLocal(new Date()));
   const isActiveOnThisBaustelle = useMemo(
     () => (currentWorker ? activeWorkerIds.includes(currentWorker.id) || activeSession?.baustelleId === baustelleId : false),
     [activeSession?.baustelleId, activeWorkerIds, baustelleId, currentWorker],
@@ -115,7 +109,7 @@ export function WorkingControls({
       void startAt(toDatetimeLocal(new Date()));
       return;
     }
-    setStartTime(dateAt(7, 0));
+    setStartTime(toDatetimeLocal(new Date()));
     setStartOpen(true);
   }
 

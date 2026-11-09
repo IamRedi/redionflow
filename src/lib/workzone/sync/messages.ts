@@ -9,6 +9,7 @@ export function syncMessages(lang: string) {
   const selected = normalizeSyncLang(lang);
   const messages = {
     de: {
+      startConflict: "Der Arbeitsbeginn ist ungültig oder überschneidet sich mit erfasster Arbeit.",
       steelTaskOnline: 'Diesen Arbeitsschritt bitte online in der Prozessansicht bearbeiten.',
       unauthorized: "Anmeldung erforderlich.",
       invalidJsonBody: "JSON-Inhalt ist ungueltig.",
@@ -41,6 +42,7 @@ export function syncMessages(lang: string) {
       legacyNoteAuthor: "Notiz",
     },
     en: {
+      startConflict: "The start time is invalid or overlaps recorded work.",
       steelTaskOnline: 'Manage this work item online in the process view.',
       unauthorized: "Sign-in required.",
       invalidJsonBody: "Invalid JSON body.",
@@ -73,6 +75,7 @@ export function syncMessages(lang: string) {
       legacyNoteAuthor: "Note",
     },
     it: {
+      startConflict: "L’inizio non è valido o si sovrappone al lavoro registrato.",
       steelTaskOnline: 'Gestisci questa attività online nella vista dei processi.',
       unauthorized: "Accesso richiesto.",
       invalidJsonBody: "Corpo JSON non valido.",
@@ -105,6 +108,7 @@ export function syncMessages(lang: string) {
       legacyNoteAuthor: "Nota",
     },
     sq: {
+      startConflict: "Ora e fillimit është e pavlefshme ose mbivendoset me punë të regjistruar.",
       steelTaskOnline: 'Këtë detyrë menaxhoje online te pamja e proceseve.',
       unauthorized: "Duhet te hysh.",
       invalidJsonBody: "JSON i pavlefshem.",

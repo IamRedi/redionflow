@@ -127,9 +127,11 @@ it("cannot delete an unattached foreign document using an owned site", async () 
 
 it("tenant request cannot auto-close foreign sessions; unauthenticated request does nothing", async () => {
   const { autoCloseForgottenDaySessions } = await import("@/lib/workzone/session-rules");
-  const rows = await Promise.all(tenants.map(t => prisma.workSession.create({data:{workerId:t.worker.id,baustelleId:t.site.id,startTime:new Date("2026-09-28T07:00:00"),isLive:true}})));
+  const { parseWorkDateTime } = await import("@/lib/workzone/date-utils");
+  const rows = await Promise.all(tenants.map(t => prisma.workSession.create({data:{workerId:t.worker.id,baustelleId:t.site.id,startTime:parseWorkDateTime("2026-09-28T07:00")!,isLive:true}})));
   request.values.clear(); expect(await autoCloseForgottenDaySessions(new Date("2026-10-01T14:00:00"))).toBe(0);
   await asAdmin(0); expect(await autoCloseForgottenDaySessions(new Date("2026-10-01T14:00:00"))).toBe(1);
+  expect(await prisma.workSession.findUniqueOrThrow({where:{id:rows[0].id}})).toMatchObject({endTime:new Date("2026-09-28T14:00:00Z"),totalHours:8.5,isLive:false});
   expect((await prisma.workSession.findUniqueOrThrow({where:{id:rows[1].id}})).isLive).toBe(true);
 });
 

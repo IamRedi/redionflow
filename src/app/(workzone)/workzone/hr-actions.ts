@@ -1,5 +1,7 @@
 "use server";
 import { plannedSiteId } from "@/lib/workzone/plan-site";
+import { beginWorkerSession, SessionStartError } from '@/lib/workzone/session-start';
+import { parseWorkDateTime } from '@/lib/workzone/date-utils';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
 import { confirmLegacyAssetAssignment } from '@/lib/company-assets/legacy';
@@ -47,8 +49,8 @@ function normalizeName(value: string) {
 
 function parseActionDate(value: string | undefined, fallback: Date) {
   if (!value) return fallback;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? fallback : date;
+  const date = parseWorkDateTime(value) ?? new Date(NaN);
+  return date;
 }
 
 function monthKeyForDate(value: Date) {
@@ -472,27 +474,16 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   // Admin can intentionally start a worker session even when availability is not AVAILABLE.
   if (!admin && worker.availability !== "AVAILABLE") return { ok: false, message: tr("workerUnavailableToday") };
   const selectedStartTime = parseActionDate(startTime, new Date());
-
-  const existing = await prisma.workSession.findFirst({
-    where: { workerId, isLive: true, endTime: null },
-    orderBy: { startTime: "desc" },
-  });
-
-  if (existing) {
-    return { ok: true, message: tr("workAlreadyActive") };
-  }
-
+  if (!Number.isFinite(selectedStartTime.getTime())) return { ok: false, message: tr('checkStartTime') };
   // The worker's site for the day comes from the daily plan.
   const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime).catch(() => null);
-  await prisma.workSession.create({
-    data: {
-      workerId,
-      baustelleId,
-      startTime: selectedStartTime,
-      breakMinutes: 30,
-      isLive: true,
-    },
-  });
+  try {
+    const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId });
+    if (result.kind === 'existing') return { ok: true, message: tr('workAlreadyActive') };
+  } catch (error) {
+    if (error instanceof SessionStartError) return { ok: false, message: tr(error.message === 'OVERLAP' ? 'workSessionOverlap' : 'checkStartTime') };
+    throw error;
+  }
 
   await sendNotificationToAdmins({
     title: tr("workerStartedNotificationTitle"),
@@ -595,13 +586,13 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
   }
   if (!session.isLive) return { ok: false, message: tr("sessionAlreadyEnded") };
 
-  const endTime = new Date(parsed.data.endTime);
-  if (Number.isNaN(endTime.getTime()) || endTime < session.startTime) {
+  const endTime = parseWorkDateTime(parsed.data.endTime);
+  if (!endTime || endTime < session.startTime || endTime.getTime() > Date.now() + 60_000) {
     return { ok: false, message: tr("invalidEndTime") };
   }
 
   if (isTrivialSession(session.startTime, endTime)) {
-    await prisma.workSession.delete({ where: { id: session.id } });
+    await prisma.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null } });
     revalidateWorkerProfile(session.workerId);
     revalidatePath(`/workzone/baustellen`);
     notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
@@ -616,8 +607,8 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
   const breakMinutes = stopBreakMinutes(parsed.data.breakMinutes, intervals, endTime);
 
   await Promise.all(openPauseUpdates);
-  await prisma.workSession.update({
-    where: { id: session.id },
+  const stopped = await prisma.workSession.updateMany({
+    where: { id: session.id, isLive: true, endTime: null },
     data: {
       endTime,
       breakMinutes,
@@ -627,6 +618,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
       systemNote: null,
     },
   });
+  if (!stopped.count) return { ok: false, message: tr('sessionAlreadyEnded') };
 
   const worker = await prisma.worker.findUnique({
     where: { id: session.workerId },
