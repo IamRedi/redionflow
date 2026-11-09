@@ -144,7 +144,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 </div>
                 {admin ? (
                   <Link
-                    href={`/workzone/admin-profile/${admin.id}`}
+                    href="/app/profile"
                     title={t("admin.profile", currentLang, mode)}
                     aria-label={t("admin.profile", currentLang, mode)}
                     data-testid="admin-own-profile"
