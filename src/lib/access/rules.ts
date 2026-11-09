@@ -12,7 +12,8 @@
 export const ACCESS_PLACES = ["site", "factory", "new_project", "fleet_gps", "workshop", "warehouse", "daily_plan", "costs", "staff"] as const;
 export type AccessPlace = (typeof ACCESS_PLACES)[number];
 export type AccessLevel = "BASE" | "FULL_VIEW";
-export type GrantLevel = "view" | "act";
+/** "none" takes away what the level or the whole place would give (Hiq). */
+export type GrantLevel = "view" | "act" | "none";
 
 /**
  * Every action belongs to one place. `<place>.view` is the place's view action.
@@ -82,23 +83,25 @@ export function legacyActions(crewRole: string | null, legacySiteGrants: Readonl
   }
 }
 
-const covers = (grant: AccessGrantRow, place: AccessPlace, scopeId: string) => grant.place === place && (grant.scopeId === "" || grant.scopeId === scopeId);
-
 /**
  * The single decision. `scopeId` is the site id for site actions, "" for
- * company-wide places. Grants are additive; nothing takes away the level.
+ * company-wide places. A key-button choice (act / view / none) at the site
+ * beats one for the whole place, which beats the level.
  */
 export function can(subject: AccessSubject, action: AccessAction, scopeId = "", options: { legacy?: boolean } = {}): boolean {
   if (subject.kind === "admin") return true;
   if (!subject.active) return false;
   const place = placeOf(action);
   const view = isViewAction(action);
+  // The most specific key-button choice decides: this site, then the whole place.
+  const own = (scopeId ? subject.grants.find(g => g.place === place && g.scopeId === scopeId) : undefined)
+    ?? subject.grants.find(g => g.place === place && g.scopeId === "");
+  if (own) {
+    if (own.level === "none") return false;
+    if (view || own.level === "act") return true;
+  }
   if (view && EVERYONE_VIEWS.has(place)) return true;
   if (view && effectiveLevel(subject) === "FULL_VIEW" && FULL_VIEW_PLACES.has(place)) return true;
-  for (const grant of subject.grants) {
-    if (!covers(grant, place, scopeId)) continue;
-    if (view || grant.level === "act") return true;
-  }
   // Crew roles count only until the boss sets the level; then the role's
   // rights live on as explicit grants (see setWorkerAccessLevel).
   if (options.legacy ?? subject.accessLevel === null) {

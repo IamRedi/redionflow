@@ -38,7 +38,7 @@ export function WorkerAccessPanel({ workerId }: { workerId: string }) {
     <div>
       <p className="mb-2 text-sm font-medium">{c.where}</p>
       {d.grants.length || d.fromRole.length ? <ul className="space-y-1.5 text-sm">
-        {d.grants.map(g => <li key={`${g.place}:${g.scopeId}`} className="flex flex-wrap items-center gap-x-2 rounded-lg bg-muted/60 px-3 py-2"><span className="font-medium">{c.place(g.place)}{g.scopeName ? ` · ${g.scopeName}` : g.place === 'site' ? ` · ${c.wholePlace}` : ''}</span><span className="text-xs text-muted-foreground">{g.level === 'act' ? c.acts : c.sees}</span></li>)}
+        {d.grants.map(g => <li key={`${g.place}:${g.scopeId}`} className="flex flex-wrap items-center gap-x-2 rounded-lg bg-muted/60 px-3 py-2"><span className="font-medium">{c.place(g.place)}{g.scopeName ? ` · ${g.scopeName}` : g.place === 'site' ? ` · ${c.wholePlace}` : ''}</span><span className="text-xs text-muted-foreground">{g.level === 'act' ? c.acts : g.level === 'view' ? c.sees : c.removed}</span></li>)}
         {d.fromRole.filter(place => !d.grants.some(g => g.place === place && !g.scopeId)).map(place => <li key={`role:${place}`} className="flex flex-wrap items-center gap-x-2 rounded-lg bg-muted/60 px-3 py-2"><span className="font-medium">{c.place(place)}</span><span className="text-xs text-muted-foreground">{c.acts} · {c.fromRole}</span></li>)}
       </ul> : <p className="text-sm text-muted-foreground">{c.noGrants}</p>}
     </div>

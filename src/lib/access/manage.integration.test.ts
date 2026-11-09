@@ -59,3 +59,13 @@ it("refuses non-admins, other companies' people and sites, and bad input", async
   await expect(setPlaceAccess({ place: "factory", workerId: a.worker.id, level: "act" })).rejects.toThrow("DENIED");
   expect(await prisma.accessGrant.count({ where: { companyProfileId: { in: [a.company.id, b.company.id] } } })).toBe(0);
 });
+
+it("takes away what the level gives and resets to the category", async () => {
+  const [{ worker }] = tenants;
+  await prisma.worker.update({ where: { id: worker.id }, data: { crewRole: null, accessLevel: "FULL_VIEW" } });
+  expect((await readPlaceAccess("factory")).people.find(p => p.id === worker.id)).toMatchObject({ sees: true, grant: null });
+  const removed = await setPlaceAccess({ place: "factory", workerId: worker.id, level: "none" });
+  expect(removed.people.find(p => p.id === worker.id)).toMatchObject({ sees: false, acts: "none", grant: "none" });
+  const reset = await setPlaceAccess({ place: "factory", workerId: worker.id, level: null });
+  expect(reset.people.find(p => p.id === worker.id)).toMatchObject({ sees: true, grant: null });
+});

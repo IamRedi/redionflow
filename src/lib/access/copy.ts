@@ -7,6 +7,8 @@ const words = {
   sees: ["Shikon", "Can view", "Darf sehen", "Può vedere", "Może widzieć", "Poate vedea"],
   add: ["Shto", "Add", "Hinzufügen", "Aggiungi", "Dodaj", "Adaugă"],
   remove: ["Hiq", "Remove", "Entfernen", "Rimuovi", "Usuń", "Elimină"],
+  removed: ["Hequr", "Removed", "Entzogen", "Rimosso", "Odebrany", "Retras"],
+  reset: ["Si kategoria", "As category", "Wie Kategorie", "Come categoria", "Jak kategoria", "Ca în categorie"],
   person: ["Personi", "Person", "Person", "Persona", "Osoba", "Persoana"],
   choose: ["Zgjidh…", "Choose…", "Auswählen…", "Scegli…", "Wybierz…", "Alege…"],
   admins: ["Admin, gjithçka", "Admin, everything", "Admin, alles", "Admin, tutto", "Admin, wszystko", "Admin, tot"],
