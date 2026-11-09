@@ -26,22 +26,30 @@ export function AccessKeyButton({ place, scopeId = '', className = '', compact =
   const { currentLang } = useLanguage();
   const c = accessCopy(currentLang);
   const [open, setOpen] = useState(false);
+  // A site key can also set the choice for all sites at once.
+  const [everywhere, setEverywhere] = useState(false);
+  const scope = everywhere ? '' : scopeId;
   const [snapshot, setSnapshot] = useState<Result | null>(null);
   const load = useCallback(async () => {
-    try { setSnapshot(await getPlaceAccessAction(place, scopeId) as Result); } catch { setSnapshot({ ok: false, message: c.failed }); }
-  }, [place, scopeId, c.failed]);
+    try { setSnapshot(await getPlaceAccessAction(place, scope) as Result); } catch { setSnapshot({ ok: false, message: c.failed }); }
+  }, [place, scope, c.failed]);
   useEffect(() => { let active = true; queueMicrotask(() => { if (active) void load(); }); return () => { active = false; }; }, [load]);
   const count = snapshot?.ok ? snapshot.data.people.filter(p => p.acts !== 'none').length : null;
   if (!snapshot?.ok && !open) return null;
   const name = label ?? c.place(place);
-  const title = label ? `${c.access} · ${label}${snapshot?.ok && snapshot.data.scopeName ? ` · ${snapshot.data.scopeName}` : ''}` : `${c.access} · ${snapshot?.ok && snapshot.data.scopeName ? snapshot.data.scopeName : name}`;
+  const where = everywhere ? c.allSites : snapshot?.ok && snapshot.data.scopeName ? snapshot.data.scopeName : '';
+  const title = label ? `${c.access} · ${label}${where ? ` · ${where}` : ''}` : `${c.access} · ${where || name}`;
   return <>
     <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); setOpen(true); }} className={`${chip} ${compact ? 'min-h-9 px-2 text-xs' : ''} ${className}`} aria-label={`${c.access}: ${name}`} title={`${c.access}: ${name}`} data-testid={`access-key-${place}`}>
       <KeyRound size={compact ? 14 : 16} className="text-orange-600 dark:text-orange-400" />
       {count === null ? null : <span className="tabular-nums">{count}</span>}
     </button>
-    <AssetWorkspaceDialog open={open} onOpenChange={setOpen} title={title} scrollBody compact>
-      {open ? <AccessSheet c={c} snapshot={snapshot} reload={load} setSnapshot={setSnapshot} place={place} scopeId={scopeId} /> : null}
+    <AssetWorkspaceDialog open={open} onOpenChange={next => { setOpen(next); if (!next && everywhere) { setEverywhere(false); setSnapshot(null); } }} title={title} scrollBody compact>
+      {open && scopeId ? <div role="group" aria-label={c.access} className="mb-4 grid grid-cols-2 overflow-hidden rounded-xl border text-sm font-semibold">
+        {([false, true] as const).map(all => <button key={String(all)} type="button" aria-pressed={everywhere === all} disabled={everywhere === all} onClick={() => { setSnapshot(null); setEverywhere(all); }} data-testid={`access-scope-${all ? 'all' : 'here'}`}
+          className={`min-h-11 px-3 disabled:cursor-default ${everywhere === all ? 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950' : 'hover:bg-muted'}`}>{all ? c.allSites : c.thisSite}</button>)}
+      </div> : null}
+      {open ? <AccessSheet key={scope} c={c} snapshot={snapshot} reload={load} setSnapshot={setSnapshot} place={place} scopeId={scope} /> : null}
     </AssetWorkspaceDialog>
   </>;
 }
