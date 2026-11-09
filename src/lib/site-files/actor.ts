@@ -25,8 +25,8 @@ const ADMIN: AccessSubject = { kind: "admin" };
 /** Old permission shape from the new rules; identical for workers whose level is not set yet. */
 export function permissionsAt(subject: AccessSubject, siteId = ""): CrewPermissions {
   return {
-    siteSteps: decide(subject, "site.field_steps", siteId),
-    factorySteps: decide(subject, "factory.steps"),
+    siteSteps: decide(subject, "field.steps", siteId),
+    factorySteps: decide(subject, "factory.steps", siteId),
     office: decide(subject, "site.details", siteId),
     reportMissing: decide(subject, "site.missing_material", siteId),
   };

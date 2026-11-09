@@ -31,6 +31,7 @@ const words = {
 
 const places: Record<AccessPlace, readonly string[]> = {
   site: ["Kantieri", "Site", "Baustelle", "Cantiere", "Budowa", "Șantier"],
+  field: ["Lista e montimit", "Field list", "Baustellenliste", "Lista di montaggio", "Lista montażu", "Lista de montaj"],
   factory: ["Linja e fabrikës", "Factory line", "Fertigungslinie", "Linea di fabbrica", "Linia produkcji", "Linia de fabrică"],
   new_project: ["Projekt i ri", "New project", "Neues Projekt", "Nuovo progetto", "Nowy projekt", "Proiect nou"],
   fleet_gps: ["Flota dhe GPS", "Fleet and GPS", "Flotte und GPS", "Flotta e GPS", "Flota i GPS", "Flotă și GPS"],

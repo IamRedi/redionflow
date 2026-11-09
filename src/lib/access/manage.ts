@@ -16,10 +16,12 @@ async function accessAdmin() {
 }
 
 export const readAccessPlace = (value: unknown): AccessPlace | null => (typeof value === "string" && (ACCESS_PLACES as readonly string[]).includes(value) ? (value as AccessPlace) : null);
-const cleanScope = (place: AccessPlace, scopeId: unknown) => (place === "site" && typeof scopeId === "string" ? scopeId.trim().slice(0, 64) : "");
+/** Places that can be granted for one site as well as for all sites. */
+const SITE_SCOPED: ReadonlySet<AccessPlace> = new Set(["site", "field", "factory"]);
+const cleanScope = (place: AccessPlace, scopeId: unknown) => (SITE_SCOPED.has(place) && typeof scopeId === "string" ? scopeId.trim().slice(0, 64) : "");
 
 async function checkScope(tx: Tx, companyId: string, place: AccessPlace, scopeId: string) {
-  if (place !== "site" || !scopeId) return "";
+  if (!SITE_SCOPED.has(place) || !scopeId) return "";
   const site = await tx.baustelle.findFirst({ where: { id: scopeId, companyProfileId: companyId }, select: { name: true } });
   return site ? site.name : assetFail("NOT_FOUND");
 }
@@ -116,7 +118,7 @@ export async function readWorkerAccessSummary(workerIdInput: unknown) {
   return withTenantContext(actor.companyId, async tx => {
     const row = await tx.worker.findFirst({ where: { id: workerId, companyProfileId: actor.companyId }, select: workerSelect });
     if (!row) return assetFail("NOT_FOUND");
-    const siteIds = row.accessGrants.filter(g => g.place === "site" && g.scopeId).map(g => g.scopeId);
+    const siteIds = row.accessGrants.filter(g => SITE_SCOPED.has(g.place as AccessPlace) && g.scopeId).map(g => g.scopeId);
     const sites = siteIds.length ? await tx.baustelle.findMany({ where: { companyProfileId: actor.companyId, id: { in: siteIds } }, select: { id: true, name: true } }) : [];
     const siteName = new Map(sites.map(s => [s.id, s.name]));
     const subject = subjectOf(row);

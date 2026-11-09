@@ -12,6 +12,7 @@ import { elementImportCopy } from '@/components/steel/element-import-copy';
 import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
 import { readProcessRoutes } from '@/lib/elements/stages';
 
+import { AccessKeyButton } from '@/components/access/access-key-button';
 import { useLanguage } from "@/components/i18n/language-provider";
 import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed, routeStages, sideOfStage, stagePieces, stageProgress, stageRemaining, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
@@ -102,7 +103,7 @@ export function ElementListButtons({
   site: { id: string; name: string };
   elements: ElementView[];
   workers: ElementWorkerOption[];
-  can: { factory: boolean; field: boolean; office: boolean;upload?:boolean };
+  can: { factory: boolean; field: boolean; office: boolean;upload?:boolean; seeFactory?: boolean; seeField?: boolean };
   definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang: lang } = useLanguage();
@@ -139,15 +140,18 @@ export function ElementListButtons({
     },
   ];
 
+  const visible = buttons.filter((button) => (button.side === "factory" ? can.seeFactory : can.seeField) !== false);
+  if (visible.length === 0) return null;
+
   return (
     <>
-      <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
-        {buttons.map((button) => (
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
+        {visible.map((button) => (
+          <div key={button.side} className="flex min-w-0 items-stretch gap-1.5">
           <button
-            key={button.side}
             type="button"
             onClick={() => setOpen(button.side)}
-            className="relative flex min-h-[64px] min-w-0 items-center gap-3 overflow-hidden rounded-2xl bg-orange-600 px-3 py-2.5 text-left text-white shadow-md active:scale-[0.98]"
+            className="relative flex min-h-[64px] min-w-0 flex-1 items-center gap-3 overflow-hidden rounded-2xl bg-orange-600 px-3 py-2.5 text-left text-white shadow-md active:scale-[0.98]"
           >
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15">{button.icon}</span>
             <span className="min-w-0 flex-1">
@@ -159,6 +163,9 @@ export function ElementListButtons({
               <span className="block h-full bg-white" style={{ width: `${Math.round(button.pct)}%` }} />
             </span>
           </button>
+          {/* Who sees and who works on this list, at this site (admins only). */}
+          <AccessKeyButton place={button.side} scopeId={site.id} label={button.label} className="shrink-0 justify-center" />
+          </div>
         ))}
       </div>
       <AnimatePresence>

@@ -9,7 +9,7 @@
  * This file is pure: no database, so the whole matrix is unit tested.
  */
 
-export const ACCESS_PLACES = ["site", "factory", "new_project", "fleet_gps", "workshop", "warehouse", "daily_plan", "costs", "staff"] as const;
+export const ACCESS_PLACES = ["site", "field", "factory", "new_project", "fleet_gps", "workshop", "warehouse", "daily_plan", "costs", "staff"] as const;
 export type AccessPlace = (typeof ACCESS_PLACES)[number];
 export type AccessLevel = "BASE" | "FULL_VIEW";
 /** "none" takes away what the level or the whole place would give (Hiq). */
@@ -17,12 +17,15 @@ export type GrantLevel = "view" | "act" | "none";
 
 /**
  * Every action belongs to one place. `<place>.view` is the place's view action.
- * site.field_steps = move site phases; site.plan = plan/check elements and the
- * steel catalog; site.documents = upload documents; site.details = address,
- * invoices, office-only files; factory.steps = move material in the factory.
+ * field.steps = the field (assembly) list and site phases; site.plan =
+ * plan/check elements and the steel catalog; site.documents = upload
+ * documents; site.details = address, invoices, office-only files;
+ * factory.steps = the factory list and moving material in the factory.
+ * field and factory grants can be for one site (scopeId) or all sites ("").
  */
 export const ACCESS_ACTIONS = {
-  "site.view": "site", "site.field_steps": "site", "site.plan": "site", "site.documents": "site", "site.missing_material": "site", "site.details": "site",
+  "site.view": "site", "site.plan": "site", "site.documents": "site", "site.missing_material": "site", "site.details": "site",
+  "field.view": "field", "field.steps": "field",
   "factory.view": "factory", "factory.steps": "factory",
   "new_project.view": "new_project", "new_project.create": "new_project",
   "fleet_gps.view": "fleet_gps", "fleet_gps.manage": "fleet_gps",
@@ -38,7 +41,7 @@ export const isViewAction = (action: AccessAction) => action.endsWith(".view");
 export const placeOf = (action: AccessAction): AccessPlace => ACCESS_ACTIONS[action];
 
 /** Places a FULL_VIEW person sees without a grant. Costs and other people's data need a grant. */
-const FULL_VIEW_PLACES: ReadonlySet<AccessPlace> = new Set(["site", "factory", "new_project", "fleet_gps", "workshop", "warehouse", "daily_plan"]);
+const FULL_VIEW_PLACES: ReadonlySet<AccessPlace> = new Set(["site", "field", "factory", "new_project", "fleet_gps", "workshop", "warehouse", "daily_plan"]);
 /** Places everybody sees. */
 const EVERYONE_VIEWS: ReadonlySet<AccessPlace> = new Set(["daily_plan"]);
 
@@ -71,7 +74,7 @@ export function legacyActions(crewRole: string | null, legacySiteGrants: Readonl
   const all = (actions: AccessAction[]) => actions.map(action => ({ action, scopeId: "" }));
   switch (crewRole) {
     case "FIELD_ENGINEER":
-      return [...all(["site.field_steps", "site.plan", "site.missing_material"]), ...[...legacySiteGrants].map(scopeId => ({ action: "site.documents" as const, scopeId }))];
+      return [...all(["field.steps", "site.plan", "site.missing_material"]), ...[...legacySiteGrants].map(scopeId => ({ action: "site.documents" as const, scopeId }))];
     case "FACTORY_ENGINEER":
       return [...all(["factory.steps", "site.plan", "site.missing_material"]), ...[...legacySiteGrants].map(scopeId => ({ action: "site.documents" as const, scopeId }))];
     case "OFFICE":
