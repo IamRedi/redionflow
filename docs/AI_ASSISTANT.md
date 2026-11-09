@@ -260,3 +260,19 @@ PostgreSQL tests cover exact kg/snapshots, team credit, tenant guards, paginatio
 more than5,000 sessions and durable quotas. No paid model inference occurs in
 these tests. Local PASS, deployed revision, provider-enabled evaluation and owner
 acceptance remain separate evidence.
+
+## App guide and the platform team (2026-11-09)
+
+- Steel companies: the assistant explains how the app works from
+  `docs/assistant/STEEL_PLATFORM_GUIDE.md` (topics `## id | title`, `Who:`,
+  `Words:`). Admins get it through the `getPlatformGuide` tool (how-to
+  questions start with it); steel workers get the guide in their prompt
+  instead of the tree-care worker docs. Keep the guide true to the UI.
+- `sendToPlatformTeam`: when a user needs something the app does not have,
+  or reports a bug, the assistant asks first and then stores a
+  `PlatformSignal` (kind feature/bug). Questions the guide cannot answer
+  (kind question) and system failures (kind error) are stored without asking.
+  Repeats are counted, not duplicated.
+- Signals are forwarded to the operator's Redion Hub when `REDION_HUB_URL`
+  and `REDION_HUB_KEY` are set (`src/lib/platform-signals/record.ts`).
+  Optional `REDION_PLATFORM_NAME` overrides "BauFlow"/"BaumdienstFlow".

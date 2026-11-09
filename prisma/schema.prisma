@@ -251,6 +251,7 @@ model User {
 }
 
 model CompanyProfile {
+  platformSignals PlatformSignal[]
   siteDocumentEngineers SiteDocumentEngineer[]
   phaseDocuments SitePhaseDocument[]
   phaseReceipts SitePhaseDocumentReceipt[]
@@ -2103,4 +2104,30 @@ model SiteElementWork {
   @@index([elementId, stage])
   @@index([companyProfileId])
   @@index([companyProfileId, checkedAt, id])
+}
+
+/// What the assistant notices for the platform team: a missing feature the
+/// user asked for, a bug, a question the guide could not answer, or a system
+/// error. Forwarded to the operator's hub (REDION_HUB_URL) when configured.
+model PlatformSignal {
+  id               String         @id @default(cuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  kind             String
+  title            String
+  details          String         @default("")
+  fingerprint      String
+  count            Int            @default(1)
+  actorKind        String
+  actorId          String
+  actorName        String         @default("")
+  language         String         @default("")
+  source           String         @default("assistant")
+  createdAt        DateTime       @default(now())
+  lastSeenAt       DateTime       @default(now())
+  forwardedAt      DateTime?
+  forwardAttempts  Int            @default(0)
+
+  @@unique([companyProfileId, fingerprint])
+  @@index([companyProfileId, forwardedAt])
 }

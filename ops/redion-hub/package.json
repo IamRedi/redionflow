@@ -1,0 +1,9 @@
+{
+  "name": "redion-hub",
+  "private": true,
+  "type": "module",
+  "description": "Redion Hub: one private panel where every platform's assistant reports missing features, bugs, unanswered questions and errors.",
+  "engines": { "node": ">=22.13" },
+  "scripts": { "start": "node server.mjs", "test": "node --test" },
+  "dependencies": { "web-push": "3.6.7" }
+}

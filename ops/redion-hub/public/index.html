@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Redion Hub</title>
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#0d1526;--muted:#5b6578;--line:#e2e7f0;--accent:#0891b2;--accent-ink:#fff;--chip:#eef3f9;
+--feature:#0e7490;--bug:#c2410c;--question:#6d28d9;--error:#b91c1c;--ok:#15803d;--shadow:0 1px 2px rgba(13,21,38,.06),0 8px 24px rgba(13,21,38,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#070d18;--card:#0f1828;--ink:#e8eef8;--muted:#93a0b6;--line:#1e2a3f;--accent:#22d3ee;--accent-ink:#06202a;--chip:#16223a;
+--feature:#22d3ee;--bug:#fb923c;--question:#a78bfa;--error:#f87171;--ok:#4ade80;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:12px;padding:6px 0 14px}
+header img{width:36px;height:36px;border-radius:10px}
+header h1{font-size:19px;margin:0;letter-spacing:-.01em}header p{margin:0;color:var(--muted);font-size:13px}
+header .sp{flex:1}
+button{font:inherit;border:0;border-radius:12px;padding:10px 14px;min-height:44px;cursor:pointer;background:var(--chip);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);font-weight:600}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tabs button{white-space:nowrap;border-radius:999px;padding:8px 14px;min-height:40px}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.tabs .n{opacity:.7;margin-left:6px;font-variant-numeric:tabular-nums}
+.list{display:grid;gap:12px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow)}
+.card.new{border-left:4px solid var(--accent)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;color:var(--muted);font-size:13px}
+.kind{font-weight:700;font-size:12px;letter-spacing:.02em;text-transform:uppercase}
+.k-feature{color:var(--feature)}.k-bug{color:var(--bug)}.k-question{color:var(--question)}.k-error{color:var(--error)}
+.pill{background:var(--chip);border-radius:999px;padding:2px 9px;color:var(--ink)}
+.card h2{font-size:16.5px;margin:8px 0 4px;line-height:1.35}
+.details{color:var(--muted);margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.agent{margin-top:12px;display:none;gap:8px}
+.agent.open{display:grid}
+textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;max-height:260px;overflow:auto}
+.empty{text-align:center;color:var(--muted);padding:48px 16px}
+.login{max-width:360px;margin:12vh auto 0;display:grid;gap:12px;text-align:center}
+.login input{border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--card);color:var(--ink);min-height:48px}
+.err{color:var(--error);min-height:1.2em;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.result{margin-top:8px;color:var(--ok);font-size:14px}
+@media (max-width:520px){header p{display:none}.card{padding:13px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const app = document.getElementById('app');
+const KIND = { feature: 'Kërkesë', bug: 'Gabim i raportuar', question: 'Pyetje pa përgjigje', error: 'Gabim sistemi' };
+const TABS = [['open', 'Të hapura'], ['agent', 'Te agjenti'], ['done', 'Të kryera'], ['dismissed', 'Të hequra']];
+let tab = 'open', data = { signals: [], counts: {} };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const when = iso => { try { return new Date(iso).toLocaleString('sq-AL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }); } catch { return iso; } };
+function toast(text) { const t = document.getElementById('toast'); t.textContent = text; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+async function api(url, body) {
+  const res = await fetch(url, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {});
+  if (res.status === 401) { renderLogin(); throw new Error('login'); }
+  return res.json();
+}
+function renderLogin(message = '') {
+  app.innerHTML = `<form class="login" id="login"><img src="/icon.svg" alt="" width="64" height="64" style="margin:0 auto;border-radius:16px">
+  <h1 style="margin:0">Redion Hub</h1><p style="margin:0;color:var(--muted)">Kërkesat dhe gabimet nga të gjitha platformat.</p>
+  <input type="password" name="password" autocomplete="current-password" placeholder="Fjalëkalimi" aria-label="Fjalëkalimi" required>
+  <button class="primary" type="submit">Hyr</button><div class="err" id="err">${esc(message)}</div></form>`;
+  document.getElementById('login').onsubmit = async e => {
+    e.preventDefault();
+    const res = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: e.target.password.value }) });
+    if (res.ok) load(); else document.getElementById('err').textContent = (await res.json()).error ?? 'Gabim';
+  };
+}
+async function load() { data = await api(`/api/panel/signals?status=${tab}`); render(); }
+function render() {
+  const c = data.counts ?? {};
+  const count = id => id === 'open' ? (c.new ?? 0) + (c.seen ?? 0) : c[id] ?? 0;
+  const pushable = 'serviceWorker' in navigator && 'PushManager' in window && Notification.permission !== 'granted';
+  app.innerHTML = `<header><img src="/icon.svg" alt=""><div><h1>Redion Hub</h1><p>Çfarë u mungon klientëve dhe çfarë sheh asistenti si gabim</p></div><span class="sp"></span>
+  ${pushable ? '<button id="push" class="primary">Njoftimet</button>' : ''}</header>
+  <nav class="tabs" aria-label="Filtri">${TABS.map(([id, label]) => `<button data-tab="${id}" aria-pressed="${tab === id}">${label}<span class="n">${count(id)}</span></button>`).join('')}</nav>
+  <section class="list">${data.signals.length ? data.signals.map(card).join('') : `<div class="empty">${tab === 'open' ? 'Asgjë e re. Kur një asistent sheh diçka, del këtu dhe të vjen njoftim.' : 'Bosh.'}</div>`}</section>`;
+  app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; load(); });
+  app.querySelectorAll('[data-act]').forEach(b => b.onclick = () => act(Number(b.dataset.id), b.dataset.act));
+  const push = document.getElementById('push'); if (push) push.onclick = enablePush;
+  if (location.hash.startsWith('#s')) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' });
+}
+function card(s) {
+  const open = s.status === 'new' || s.status === 'seen';
+  return `<article class="card ${s.status === 'new' ? 'new' : ''}" id="s${s.id}">
+  <div class="meta"><span class="kind k-${s.kind}">${KIND[s.kind] ?? s.kind}</span><span class="pill">${esc(s.platform)}</span>${s.company_name ? `<span>${esc(s.company_name)}</span>` : ''}
+  ${s.count > 1 ? `<span class="pill">${s.count}×</span>` : ''}<span>${when(s.last_seen)}</span>${s.actor_kind ? `<span>${s.actor_kind === 'admin' ? 'admin' : 'punëtor'}${s.actor_name ? ` · ${esc(s.actor_name)}` : ''}</span>` : ''}</div>
+  <h2>${esc(s.title)}</h2>${s.details ? `<p class="details">${esc(s.details)}</p>` : ''}
+  <div class="actions">${open ? `<button class="primary" data-act="agent-open" data-id="${s.id}">Dërgoje te agjenti</button>${s.status === 'new' ? `<button data-act="seen" data-id="${s.id}">E pashë</button>` : ''}<button data-act="done" data-id="${s.id}">U krye</button><button data-act="dismissed" data-id="${s.id}">Hiqe</button>`
+    : s.status === 'agent' ? `<button class="primary" data-act="copy" data-id="${s.id}">Kopjo detyrën</button><button data-act="done" data-id="${s.id}">U krye</button><button data-act="new" data-id="${s.id}">Ktheje mbrapsht</button>`
+    : `<button data-act="new" data-id="${s.id}">Rihape</button>`}</div>
+  ${s.result ? `<div class="result">Agjenti: ${esc(s.result)}</div>` : ''}
+  <div class="agent" id="agent${s.id}"><label for="note${s.id}">Udhëzimi yt për agjentin (opsional)</label>
+  <textarea id="note${s.id}" placeholder="p.sh. Bëje vetëm për AL-Steel, me buton te faqja e kantierit">${esc(s.note)}</textarea>
+  <div class="actions"><button class="primary" data-act="agent" data-id="${s.id}">Dërgo dhe kopjo detyrën</button><button data-act="agent-close" data-id="${s.id}">Anulo</button></div></div></article>`;
+}
+async function act(id, action) {
+  const s = data.signals.find(x => x.id === id);
+  if (action === 'agent-open') { document.getElementById(`agent${id}`).classList.add('open'); document.getElementById(`note${id}`).focus(); return; }
+  if (action === 'agent-close') { document.getElementById(`agent${id}`).classList.remove('open'); return; }
+  if (action === 'copy') { await copy(s.prompt); return; }
+  const body = { status: action };
+  if (action === 'agent') body.note = document.getElementById(`note${id}`).value;
+  const res = await api(`/api/panel/signals/${id}`, body);
+  if (action === 'agent' && res.signal) await copy(res.signal.prompt);
+  else toast({ seen: 'U shënua', done: 'U krye', dismissed: 'U hoq', new: 'U rihap' }[action] ?? 'U ruajt');
+  load();
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast('Detyra u kopjua. Ngjite te agjenti.'); }
+  catch { prompt('Kopjo detyrën:', text); }
+}
+async function enablePush() {
+  try {
+    const perm = await Notification.requestPermission(); if (perm !== 'granted') return toast('Njoftimet u refuzuan');
+    const reg = await navigator.serviceWorker.ready;
+    const key = Uint8Array.from(atob(data.pushKey.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - data.pushKey.length % 4) % 4)), c => c.charCodeAt(0));
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+    await api('/api/panel/push', sub.toJSON()); toast('Njoftimet janë aktive'); render();
+  } catch { toast('Njoftimet nuk u aktivizuan'); }
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+load().catch(() => {});
+setInterval(() => { if (!document.hidden && document.getElementById('login') === null) load().catch(() => {}); }, 60000);
+</script>
+</body>
+</html>

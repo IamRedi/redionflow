@@ -22,6 +22,7 @@ export function assistantInitialTool(question: string, steel: boolean) {
   if (!steel) return undefined;
   const text = question.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
   if (text.length > 160) return undefined;
+  if (assistantHowToQuestion(text)) return 'getPlatformGuide';
   const asset = /\b(vegl\w*|vegel\w*|pajis\w*|pais\w*|makin\w*|mjet\w*|trapan\w*|vidator\w*|tools?|equipment|vehicles?|drills?|maschinen?|fahrzeug\w*|werkzeug\w*|attrezz\w*|utensil\w*|veicol\w*)\b/u.test(text);
   const workshop = /\b(oficin\w*|officin\w*|ripar\w*|defekt\w*|repair\w*|workshops?|werkstatt\w*|reparatur\w*)\b/u.test(text);
   if (/^(?:si\b|how (?:do|can) i\b|where (?:do|can) i\b|wie kann ich\b|come posso\b)/u.test(text)) return undefined;
@@ -38,6 +39,12 @@ export function assistantInitialTool(question: string, steel: boolean) {
   if (site && /\b(sa|cil\w*|how many|which|wie viele|welche)\b/u.test(text)
       && !/\b(punetor\w*|ore|kg|material\w*|prer\w*|asambl\w*|mont\w*|worker\w*|hours?|cut\w*)\b/u.test(text)) return 'adminSearchSteelProjects';
   return undefined;
+}
+
+/** "How do I / where do I ..." about using the app (accents already folded). */
+export function assistantHowToQuestion(text: string) {
+  const verbs = '(?:bej|shtoj|ngarkoj|hap|gjej|ndryshoj|konfirmoj|krijoj|fshij|kerkoj|regjistroj|printoj|dergoj|nis|filloj|ndaloj|hyj|vendos|caktoj|aprovoj|skanoj|raportoj|perdor|shoh|marr|kthej|jap)';
+  return new RegExp(`^(?:si (?:mund )?(?:te |ta |t'i |ti )?${verbs}\\b|ku (?:e |i )?(?:gjej|shtyp|klikoj|shoh)\\b|how (?:do|can|should) i\\b|where (?:do|can) i\\b|wie (?:kann|muss) ich\\b|wo (?:finde|kann) ich\\b|come (?:posso|faccio|si fa)\\b|dove (?:trovo|posso)\\b)`, 'u').test(text);
 }
 
 export function assistantMetaQuestion(text: string) {
