@@ -34,6 +34,7 @@ import {
   readFuelLog,
   readFuelReceipt,
   readOlderFuelReceipts,
+  deleteFuelReceipt,
 } from './service';
 import { localClock, parseFuelClock } from './time';
 import {
@@ -195,6 +196,33 @@ it('does not duplicate an upload or rerun OCR on a retried request', async () =>
   await expect(confirmFuelReceipt(a.id, '', '', null, null)).rejects.toThrow(
     'CLOCK',
   );
+});
+it('lets the uploader remove a mistaken confirmed receipt, removes its file and totals, and keeps an audit', async () => {
+  const row = await upload();
+  await confirmFuelReceipt(row.id, clock(), '', 12, 100);
+  expect((await readFuelLog()).receipts[0].canDelete).toBe(true);
+  await deleteFuelReceipt(row.id);
+  expect((await readFuelLog()).receipts).toHaveLength(0);
+  expect(await readFuelFile(row.id)).toBeNull();
+  expect(await prisma.fuelReceipt.count({ where: { id: row.id } })).toBe(0);
+  const audit = await prisma.auditLog.findFirstOrThrow({ where: { companyProfileId: tenants[0].company.id, action: 'fleet.fuel_deleted' } });
+  expect(audit).toMatchObject({ actorType: 'WORKER', actorId: tenants[0].worker.id, payload: { receiptId: row.id, wasConfirmed: true } });
+  await expect(deleteFuelReceipt(row.id)).rejects.toThrow('NOT_FOUND');
+});
+it('denies another tenant and a fueler who did not upload; the office can delete company receipts', async () => {
+  const row = await upload();
+  await as('admin', 1);
+  await expect(deleteFuelReceipt(row.id)).rejects.toThrow('NOT_FOUND');
+  await as('admin');
+  const other = await prisma.worker.create({ data: { companyProfileId: tenants[0].company.id, firstName: 'Synthetic', lastName: 'Fueler', crewRole: 'FIELD_WORKER' } });
+  await confirmFuelReceipt(row.id, clock(), '', 10, 100, null, other.id);
+  request.values.clear(); request.values.set('bk_worker_id', await createTestSession('worker', other.id));
+  expect((await readFuelLog()).receipts[0].canDelete).toBe(false);
+  await expect(deleteFuelReceipt(row.id)).rejects.toThrow('NOT_FOUND');
+  await prisma.worker.update({ where: { id: other.id }, data: { crewRole: 'OFFICE' } });
+  expect((await readFuelLog()).receipts[0].canDelete).toBe(true);
+  await deleteFuelReceipt(row.id);
+  expect(await prisma.fuelReceipt.count({ where: { id: row.id } })).toBe(0);
 });
 it('pages the complete private receipt history without duplicates or tenant crossover', async () => {
   const draft = await upload();

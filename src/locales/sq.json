@@ -711,6 +711,7 @@
     "changeCodeSave": "Ruaj kodin",
     "nationalIdLabel": "Numri personal (ID)",
     "elementListUnreadable": "Skedari {file} nuk është listë elementesh (assemblaggi ose pjesë).",
+    "elementImportQuantityConflict": "Sasia e markës {mark} është më e vogël se puna e konfirmuar. Kontrollo listën; ngarkimi nuk u ruajt.",
     "elementListImported": "Listat u ngarkuan: {added} të reja, {updated} të përditësuara.",
     "elementCheckOnlyEngineer": "Këtë stad e konfirmon vetëm inxhinieri përkatës ose zyra.",
     "elementNotFromFactory": "Ky element ende nuk ka dalë nga fabrika.",

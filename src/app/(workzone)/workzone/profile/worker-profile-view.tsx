@@ -1,6 +1,7 @@
 import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { plannedSteelSchedule, plannedScheduleLabel } from '@/lib/workzone/planned-schedule';
 import { AssetPhoto } from '@/components/asset-photo';
 import Link from "next/link";
 import {
@@ -61,6 +62,7 @@ type WorkerDocument = {
 type WorkerProfile = {
   id: string;
   assistantAccess?: boolean;
+  crewRole?: string | null;
   firstName: string;
   lastName: string;
   phone: string | null;
@@ -235,6 +237,7 @@ export async function WorkerProfileView({
   const [currentLang, companyCountry] = await Promise.all([resolveRequestLanguage(), getCompanyCountry()]);
   const companyId = await getCurrentCompanyId();
   const assetOperations = Boolean(companyId && await isSteelCompany(companyId));
+  const plannedSchedule = plannedSteelSchedule(worker.crewRole, assetOperations && companyCountry === 'AL');
   const showAssistantAccess = mode === "admin" && Boolean(companyId && await companyLimitsAssistant(companyId));
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
   const activePauseIntervals = activeSession?.pauseIntervals ?? [];
@@ -337,9 +340,11 @@ export async function WorkerProfileView({
             ) : null}
           </div>
         </div>
+        {plannedSchedule ? <p data-testid="planned-work-schedule" className="relative px-3 pb-2 text-xs text-muted-foreground sm:px-4">{plannedScheduleLabel(plannedSchedule, currentLang)}</p> : null}
         <div className="relative flex flex-wrap items-start justify-between gap-2 px-3 pb-3 sm:px-4">
           <WorkSessionControls
             workerId={worker.id}
+            plannedSchedule={plannedSchedule}
             workerPhoneGpsEnabled={mode === "worker" && (worker.companyProfile?.workerPhoneGpsEnabled ?? false)}
             activeSession={
               activeSession

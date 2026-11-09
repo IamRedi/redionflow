@@ -1,5 +1,17 @@
 # Workzone fleet map, fuel receipts and asset photos — 4 November 2026
 
+## Mistaken fuel uploads — 9 November 2026
+
+Each receipt has a compact **Delete receipt** control for its uploader and for
+office/admin roles. A recorded fueler who did not upload it has read access,
+not deletion authority. The same tenant/identity check runs on the server.
+Deletion asks for confirmation identifying the vehicle and upload time, removes
+the receipt and its photo from the history/assistant totals, and atomically
+keeps a `fleet.fuel_deleted` audit event with the actual actor, receipt/machine
+IDs, file checksum and whether the receipt was confirmed. No receipt content is
+copied into the audit. Cancelling the dialog makes no change. This adds no
+schema migration and never deletes any existing record during deployment.
+
 Prepared over pilot `ea71fde`. On 4 November the owner explicitly authorized
 publication after adding camera/upload covers, without repeating the previous
 full test suites. Runtime deployment/readback is recorded in the canonical

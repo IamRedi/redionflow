@@ -6,7 +6,7 @@ import { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { importElementList, type ElementImportResult } from "@/lib/elements/import";
+import { ElementImportConflict, importElementList, type ElementImportResult } from "@/lib/elements/import";
 import { canCheck, doneQty, isCustomStage, onFieldList, pieces, readProcessRoutes, routeStages, sideOfStage, stagePieces, stageRemaining, stagesFor, type ElementList } from "@/lib/elements/stages";
 import { describeWorkbook, ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
 import { logger } from "@/lib/observability/logger";
@@ -38,6 +38,8 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
   const actor = await currentCompanyActor(companyId);
   if (!actor) return { ok: false, message: tr("accessDenied") };
   const baustelleId = String(formData.get("baustelleId") ?? "");
+  const importMode = z.enum(['merge', 'snapshot']).safeParse(formData.get('importMode') ?? 'merge');
+  if (!importMode.success) return { ok: false, message: tr('invalidInput') };
   const files = formData.getAll("file").filter((entry): entry is File => entry instanceof File && entry.size > 0).slice(0, 4);
   if (!baustelleId || files.length === 0) return { ok: false, message: tr("invalidInput") };
   const identity={companyId,userId:actor.userId,workerId:actor.workerId};
@@ -58,15 +60,19 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
     }
   }
 
-  const results = await withTenantContext(
+  if (importMode.data === 'snapshot' && new Set(parsed.map(item => item.list.list)).size !== parsed.length)
+    return { ok: false, message: tr('invalidInput') };
+  let results: ElementImportResult[] | null;
+  try { results = await withTenantContext(
     companyId,
     async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
       const site = await tx.baustelle.findFirst({ where: { id: baustelleId, companyProfileId: companyId }, select: { id: true, type: true } });
       if (!site || site.type === "STEEL_WORKSHOP") return null;
       if(!await mayUploadSiteDocuments(tx,identity,baustelleId))return null;
       const done: ElementImportResult[] = [];
       for (const item of parsed) {
-        done.push(await importElementList(tx, { companyId, baustelleId, parsed: item.list, fileName: item.fileName }));
+        done.push(await importElementList(tx, { companyId, baustelleId, parsed: item.list, fileName: item.fileName, mode: importMode.data }));
         await tx.siteFile.create({
           data: {
             companyProfileId: companyId,
@@ -87,7 +93,10 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
       return done;
     },
     { timeout: 30_000, maxWait: 10_000 },
-  );
+  ); } catch (error) {
+    if (error instanceof ElementImportConflict) return { ok: false, message: tr('elementImportQuantityConflict', { mark: error.message }) };
+    throw error;
+  }
   if (!results) return { ok: false, message: tr("siteNotFound") };
   revalidateSite(baustelleId);
   const added = results.reduce((sum, r) => sum + r.added, 0);
@@ -406,6 +415,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
   try{siteId = await withTenantContext(
     companyId,
     async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
       const existing = await tx.baustelle.findFirst({ where: { companyProfileId: companyId, name: { equals: name, mode: "insensitive" } }, select: { id: true, type: true, address: true, description: true } });
       if (existing?.type === "STEEL_WORKSHOP") return null;
       const description = projectNumber ? tr("projectDescription", { number: projectNumber }) : null;
@@ -459,7 +469,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
       return site.id;
     },
     { timeout: 30_000, maxWait: 10_000 },
-  );}catch(error){if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
+  );}catch(error){if(error instanceof ElementImportConflict)return {ok:false,message:tr('elementImportQuantityConflict',{mark:error.message})};if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
   if (!siteId) return { ok: false, message: tr("invalidInput") };
   revalidatePath("/workzone");
   revalidateSite(siteId);

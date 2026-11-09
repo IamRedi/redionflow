@@ -19,6 +19,25 @@ credentials and documents are not rewritten by this migration.
 
 ## Site controls
 
+### Planned AL steel hours — 9 November 2026
+
+An Albanian steel workspace shows the planned shift on each explicitly classified
+worker's profile: OFFICE 08:00–16:00, FIELD_ENGINEER/FIELD_WORKER 07:00–17:00,
+FACTORY_ENGINEER/FACTORY_WORKER 07:00–16:00, Monday through Saturday. The start
+form suggests that sector's start time; the user still selects/confirms the
+actual time. These plans neither create attendance nor overwrite recorded hours,
+breaks, leave allowances, approvals or historical sessions. Mechanic/unclassified
+roles have no inferred shift. Role/access administration is unchanged.
+
+The ordinary worker can record their own time and acknowledgements, upload their
+own profile photo, handle their own assigned-asset handovers/reports and upload
+their own fuel receipts; production confirmation remains an engineer/admin task.
+OFFICE handles asset management and workshop phases. MECHANIC handles workshop
+phases and service evidence, without office finance/site-upload privileges.
+AI access is independently restricted by the company's existing assistant-access
+switch; the owner always retains it, and a worker helper never becomes the admin
+assistant merely because a worker has assistant access.
+
 The new-project document form can select engineers while creating the project.
 The **Access** action on a site can change that selection later. Empty grants
 mean office/administrators upload; engineers keep their appropriate process

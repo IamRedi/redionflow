@@ -737,6 +737,7 @@
     "changeCodeSave": "Code speichern",
     "nationalIdLabel": "Ausweisnummer",
     "elementListUnreadable": "Die Datei {file} ist keine Elementliste (Baugruppen oder Einzelteile).",
+    "elementImportQuantityConflict": "Die Menge für {mark} ist kleiner als die bestätigte Arbeit. Liste prüfen; der Import wurde nicht gespeichert.",
     "elementListImported": "Listen hochgeladen: {added} neu, {updated} aktualisiert.",
     "elementCheckOnlyEngineer": "Diesen Schritt bestätigt nur der zuständige Ingenieur oder das Büro.",
     "elementNotFromFactory": "Dieses Element hat das Werk noch nicht verlassen.",

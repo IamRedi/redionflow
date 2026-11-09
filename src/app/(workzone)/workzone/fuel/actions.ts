@@ -7,6 +7,7 @@ import {
   readFuelReceipt,
   readOlderFuelReceipts,
   FuelError,
+  deleteFuelReceipt,
 } from '@/lib/fleet/fuel/service';
 import { captureFuelGps } from '@/lib/fleet/wanway/service';
 
@@ -38,6 +39,16 @@ export async function uploadFuelAction(form: FormData) {
     );
     revalidatePath('/workzone/fuel');
     return { ok: true as const, row };
+  } catch (error) {
+    return { ok: false as const, code: code(error) };
+  }
+}
+export async function deleteFuelAction(id: string) {
+  try {
+    await deleteFuelReceipt(id);
+    revalidatePath('/workzone/fuel');
+    revalidatePath('/app/machines/fuel');
+    return { ok: true as const };
   } catch (error) {
     return { ok: false as const, code: code(error) };
   }
