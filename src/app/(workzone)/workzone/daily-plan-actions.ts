@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getPilotAdmin as getCurrentAdmin, getPilotCompanyId as getCurrentCompanyId } from "@/lib/auth/pilot-session";
+import { getPilotCompanyId as getCurrentCompanyId } from "@/lib/auth/pilot-session";
+import { currentCompanyActor } from "@/lib/site-files/actor";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { t } from "@/lib/i18n";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
@@ -17,16 +18,24 @@ import { assetActionError } from '@/lib/company-assets/action-errors';
 
 async function withSteelPlanningContext<T extends ActionResult>(companyId: string, checkMachines: boolean, work: (tx: Prisma.TransactionClient, actor: { companyId: string } | null) => Promise<T>): Promise<T | ActionResult> {
   try {
-    // The outer action and pilot boundary authenticate the administrator. Resolve
+    // The outer action authorizes the plan editor (planEditor). Resolve
     // the company mode on this same connection, never through a privileged fallback.
     return await withPilotDbContext(companyId, async tx => {
       const steel = checkMachines && await tx.baustelle.findFirst({ where: { companyProfileId: companyId, type: { in: [...STEEL_TYPES] } }, select: { id: true } });
       return work(tx, steel ? { companyId } : null);
-    }, 'admin');
+    });
   } catch (error) {
     if (error instanceof AssetOperationError) return assetActionError(error);
     throw error;
   }
+}
+
+/** Admins and people with "Vepron" on the daily plan (key button) edit the plan. */
+async function planEditor() {
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return null;
+  const actor = await currentCompanyActor(companyId);
+  return actor?.allows("daily_plan.edit") ? { userId: actor.userId, companyId } : null;
 }
 
 function planDay(value: string) {
@@ -77,7 +86,7 @@ function rowsAreEqual(previous: PlanRowSnapshot[], next: PlanRowSnapshot[]) {
 }
 
 export async function ensureDailyPlanAction(input: { date: string; skipRevalidate?: boolean; lang?: string }): Promise<ActionResult & { planId?: string }> {
-  const admin = await getCurrentAdmin();
+  const admin = await planEditor();
   if (!admin) return { ok: false, message: msg(input.lang, "dailyPlanAdminCreateOnly") };
   const day = planDay(input.date);
   if (!day) return { ok: false, message: msg(input.lang, "invalidDate") };
@@ -93,7 +102,7 @@ export async function ensureDailyPlanAction(input: { date: string; skipRevalidat
       create: {
         companyProfileId: company.id,
         planDate: day,
-        createdByAdminId: admin.id,
+        createdByAdminId: admin.userId,
         columns: {
           create: [{ title: msg(input.lang, "newSite"), sortOrder: 0 }],
         },
@@ -103,7 +112,7 @@ export async function ensureDailyPlanAction(input: { date: string; skipRevalidat
     });
 
     return { ok: true, message: msg(input.lang, "dailyPlanPrepared"), planId: plan.id };
-  }, "admin");
+  });
   if (!result.ok) return result;
 
   if (!input.skipRevalidate) {
@@ -127,7 +136,7 @@ export async function moveDailyPlanItemAction(input: {
   force?: boolean;
   lang?: string;
 }): Promise<MoveDailyPlanItemResult> {
-  const admin = await getCurrentAdmin();
+  const admin = await planEditor();
   if (!admin) return { ok: false, message: msg(input.lang, "dailyPlanAdminAssignOnly") };
   const day = planDay(input.date);
   if (!day) return { ok: false, message: msg(input.lang, "invalidDate") };
@@ -150,7 +159,7 @@ export async function moveDailyPlanItemAction(input: {
     if (!company || company.id !== currentCompanyId) return { ok: false, message: msg(input.lang, "companyNotFound") };
     const plan = await tx.dailyWorkPlan.upsert({
       where: { companyProfileId_planDate: { companyProfileId: company.id, planDate: day } },
-      create: { companyProfileId: company.id, planDate: day, createdByAdminId: admin.id },
+      create: { companyProfileId: company.id, planDate: day, createdByAdminId: admin.userId },
       update: {},
       select: {
         id: true,
@@ -262,7 +271,7 @@ export async function moveDailyPlanItemAction(input: {
 }
 
 export async function removeDailyPlanItemAction(input: { date: string; assignmentId: string; lang?: string }): Promise<ActionResult> {
-  const admin = await getCurrentAdmin();
+  const admin = await planEditor();
   if (!admin) return { ok: false, message: msg(input.lang, "dailyPlanAdminRemoveOnly") };
   if (!input.assignmentId) return { ok: false, message: msg(input.lang, "assignmentNotFound") };
 
@@ -278,7 +287,7 @@ export async function removeDailyPlanItemAction(input: { date: string; assignmen
     await tx.dailyWorkPlanAssignment.delete({ where: { id: assignment.id } });
 
     return { ok: true, message: msg(input.lang, "assignmentRemoved") };
-  }, "admin");
+  });
   if (!result.ok) return result;
 
   revalidatePath("/workzone");
@@ -288,7 +297,7 @@ export async function removeDailyPlanItemAction(input: { date: string; assignmen
 }
 
 export async function clearDailyPlanAction(input: { date: string; lang?: string }): Promise<ActionResult> {
-  const admin = await getCurrentAdmin();
+  const admin = await planEditor();
   if (!admin) return { ok: false, message: msg(input.lang, "dailyPlanAdminClearOnly") };
   const day = planDay(input.date);
   if (!day) return { ok: false, message: msg(input.lang, "invalidDate") };
@@ -314,7 +323,7 @@ export async function clearDailyPlanAction(input: { date: string; lang?: string 
       });
 
     return { ok: true, message: msg(input.lang, "dailyPlanCleared") };
-  }, "admin");
+  });
   if (!result.ok) return result;
 
   revalidatePath("/workzone");
@@ -324,7 +333,7 @@ export async function clearDailyPlanAction(input: { date: string; lang?: string 
 }
 
 export async function saveDailyPlanAction(input: { date: string; lang?: string }): Promise<ActionResult> {
-  const admin = await getCurrentAdmin();
+  const admin = await planEditor();
   if (!admin) return { ok: false, message: msg(input.lang, "dailyPlanAdminSaveOnly") };
   const day = planDay(input.date);
   if (!day) return { ok: false, message: msg(input.lang, "invalidDate") };
@@ -388,7 +397,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
           data: {
             planId: plan.id,
             versionNumber: nextVersion,
-            createdByAdminId: admin.id,
+            createdByAdminId: admin.userId,
           },
           select: { id: true },
         });
@@ -449,7 +458,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
 }
 
 export async function updateDailyPlanColumnNoteAction(input: { date: string; columnId: string; note: string; lang?: string }): Promise<ActionResult> {
-  const admin = await getCurrentAdmin();
+  const admin = await planEditor();
   if (!admin) return { ok: false, message: msg(input.lang, "dailyPlanAdminNotesOnly") };
 
   const day = planDay(input.date);
@@ -468,7 +477,7 @@ export async function updateDailyPlanColumnNoteAction(input: { date: string; col
 
     const plan = await tx.dailyWorkPlan.upsert({
       where: { companyProfileId_planDate: { companyProfileId: company.id, planDate: day } },
-      create: { companyProfileId: company.id, planDate: day, createdByAdminId: admin.id },
+      create: { companyProfileId: company.id, planDate: day, createdByAdminId: admin.userId },
       update: {},
       select: {
         id: true,
@@ -502,7 +511,7 @@ export async function updateDailyPlanColumnNoteAction(input: { date: string; col
     }
 
     return { ok: true, message: msg(input.lang, "noteSaved") };
-  }, "admin");
+  });
   if (!result.ok) return result;
 
   revalidatePath("/workzone");

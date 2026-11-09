@@ -1448,8 +1448,9 @@ model DailyWorkPlan {
   companyProfileId String
   companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
   planDate         DateTime
-  createdByAdminId String
-  createdByAdmin   User           @relation("DailyPlanCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Cascade)
+  /// Null when a worker with "Vepron" on the daily plan created it.
+  createdByAdminId String?
+  createdByAdmin   User?          @relation("DailyPlanCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Cascade)
 
   columns   DailyWorkPlanColumn[]
   savedRows DailyWorkPlanSavedRow[]
@@ -1525,8 +1526,8 @@ model DailyWorkPlanSnapshot {
   planId           String
   plan             DailyWorkPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
   versionNumber    Int
-  createdByAdminId String
-  createdByAdmin   User          @relation("DailyPlanSnapshotCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Cascade)
+  createdByAdminId String?
+  createdByAdmin   User?         @relation("DailyPlanSnapshotCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Cascade)
 
   rows DailyWorkPlanSnapshotRow[]
 

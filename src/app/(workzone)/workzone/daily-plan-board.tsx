@@ -1,13 +1,12 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Check, HardHat, Loader2, MapPin, Pencil, Search, Truck, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
 import { assetCopy } from '@/components/company-assets/copy';
 import { useMapOperationalStatuses } from './workzone-map-fleet';
-import { Button } from "@/components/ui/button";
 import { SimpleDialog } from "@/components/ui/simple-dialog";
 import { t } from "@/lib/i18n";
 import {
@@ -17,26 +16,21 @@ import {
   saveDailyPlanAction,
   updateDailyPlanColumnNoteAction,
 } from "./daily-plan-actions";
+import { planCopy } from "./plan/plan-copy";
+import { SavedPlanList, type SavedPlanRow } from "./plan/saved-plan";
 
 type DraggableWorker = { id: string; name: string; licenses: string | null; availability: string; hasApprovedVacation: boolean };
 type DraggableMachine = { id: string; name: string; requiredLicense: string | null; isActive: boolean };
+type Assignment = { id: string; kind: "WORKER" | "MACHINE"; labelSnapshot: string; workerId: string | null; machineId: string | null };
 type Column = {
   id: string;
   title: string;
   note: string | null;
   baustelleId: string | null;
-  assignments: Array<{ id: string; kind: "WORKER" | "MACHINE"; labelSnapshot: string; workerId: string | null; machineId: string | null }>;
+  assignments: Assignment[];
 };
-type SavedRow = { id: string; workerNames: string; machineNames: string; baustelleName: string; note: string | null };
-type PendingPlanConfirmation = {
-  columnId: string;
-  item: { kind: "WORKER" | "MACHINE"; id: string };
-  message: string;
-};
-type PendingNoteEdit = {
-  columnId: string;
-  title: string;
-};
+type Picked = { kind: "WORKER" | "MACHINE"; id: string; name: string };
+type PendingPlanConfirmation = { columnId: string; item: Picked; message: string };
 
 function licenseTokens(value: string | null) {
   return new Set(
@@ -74,340 +68,284 @@ function columnLicenseWarnings(column: Column, workers: DraggableWorker[], machi
   return warnings;
 }
 
+const rowKey = (row: { workerNames: string; machineNames: string; baustelleName: string; note: string | null }) =>
+  [row.baustelleName.trim(), row.workerNames.trim(), row.machineNames.trim(), row.note?.trim() ?? ""].join("|");
+const hasContent = (row: { workerNames: string; machineNames: string; note: string | null }) => Boolean(row.workerNames.trim() || row.machineNames.trim() || row.note?.trim());
+
+/**
+ * The daily plan editor (admins and people with "Vepron" on the daily plan).
+ * Pick a worker or a machine on the left, then tap the site it works at
+ * today. Save publishes the plan: that saved version is what workers see.
+ */
 export function DailyPlanBoard({
   date,
   columns,
   workers,
   machines,
-  baustellen,
   savedRows,
-  showCurrentVersionHint,
 }: {
   date: string;
   columns: Column[];
   workers: DraggableWorker[];
   machines: DraggableMachine[];
-  baustellen: Array<{ id: string; name: string }>;
-  savedRows: SavedRow[];
+  baustellen?: Array<{ id: string; name: string }>;
+  savedRows: SavedPlanRow[];
   showCurrentVersionHint?: boolean;
 }) {
   const { currentLang } = useLanguage();
+  const c = planCopy(currentLang);
   const operational = useMapOperationalStatuses();
   const assets = assetCopy(currentLang);
   const [message, setMessage] = useState<string>();
-  const [activeItem, setActiveItem] = useState<{ kind: "WORKER" | "MACHINE"; id: string } | null>(null);
+  const [picked, setPicked] = useState<Picked | null>(null);
+  const [tab, setTab] = useState<"WORKER" | "MACHINE">("WORKER");
+  const [query, setQuery] = useState("");
   const [pendingConfirmation, setPendingConfirmation] = useState<PendingPlanConfirmation | null>(null);
-  const [pendingNoteEdit, setPendingNoteEdit] = useState<PendingNoteEdit | null>(null);
+  const [noteFor, setNoteFor] = useState<Column | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [askClear, setAskClear] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [columnNotes, setColumnNotes] = useState<Record<string, string>>(
-    Object.fromEntries(columns.map((col) => [col.id, col.note ?? ""])),
-  );
 
-  const assignedWorkerIds = new Set(columns.flatMap((column) => column.assignments.map((item) => item.workerId).filter(Boolean)));
-  const assignedMachineIds = new Set(columns.flatMap((column) => column.assignments.map((item) => item.machineId).filter(Boolean)));
-  const workersByUsage = useMemo(() => workers, [workers]);
-  const machinesByUsage = useMemo(() => machines, [machines]);
+  const siteOfWorker = useMemo(() => new Map(columns.flatMap((column) => column.assignments.filter((a) => a.workerId).map((a) => [a.workerId as string, column.title] as const))), [columns]);
+  const siteOfMachine = useMemo(() => new Map(columns.flatMap((column) => column.assignments.filter((a) => a.machineId).map((a) => [a.machineId as string, column.title] as const))), [columns]);
+  const freeWorkers = workers.filter((worker) => !siteOfWorker.has(worker.id)).length;
+  const freeMachines = machines.filter((machine) => !siteOfMachine.has(machine.id)).length;
 
-  function assignToColumn(columnId: string) {
-    if (!activeItem) return;
-    const itemToAssign = activeItem;
+  // Saved = what workers see. Compare it with the board to show unsaved changes.
+  const boardRows = columns.map((column) => ({
+    baustelleName: column.title,
+    workerNames: column.assignments.filter((a) => a.kind === "WORKER").map((a) => a.labelSnapshot).join(", "),
+    machineNames: column.assignments.filter((a) => a.kind === "MACHINE").map((a) => a.labelSnapshot).join(", "),
+    note: column.note,
+  })).filter(hasContent).map(rowKey).sort();
+  const savedKeys = savedRows.filter(hasContent).map(rowKey).sort();
+  const dirty = boardRows.join("\n") !== savedKeys.join("\n");
+  const neverSaved = savedRows.length === 0;
+
+  const needle = query.trim().toLocaleLowerCase();
+  // Free ones first, then the ones already placed today.
+  const placed = tab === "WORKER" ? siteOfWorker : siteOfMachine;
+  const list = (tab === "WORKER" ? workers : machines)
+    .filter((entry) => !needle || entry.name.toLocaleLowerCase().includes(needle))
+    .sort((a, b) => Number(placed.has(a.id)) - Number(placed.has(b.id)));
+
+  function assign(columnId: string, item: Picked, force = false) {
     startTransition(async () => {
-      const result = await moveDailyPlanItemAction({
-        date,
-        columnId,
-        kind: itemToAssign.kind,
-        itemId: itemToAssign.id,
-        lang: currentLang,
-      });
+      const result = await moveDailyPlanItemAction({ date, columnId, kind: item.kind, itemId: item.id, force, lang: currentLang });
       if (result.requiresConfirmation && result.warningMessage) {
-        setPendingConfirmation({ columnId, item: itemToAssign, message: result.warningMessage });
-        setActiveItem(null);
-        return;
+        setPendingConfirmation({ columnId, item, message: result.warningMessage });
+      } else if (!result.ok) {
+        setMessage(result.message);
+      } else {
+        setMessage(undefined);
       }
-      setMessage(result.message);
-      setActiveItem(null);
+      setPicked(null);
     });
   }
 
-  function confirmPendingAssignment() {
-    if (!pendingConfirmation) return;
-    const confirmation = pendingConfirmation;
-    setPendingConfirmation(null);
+  function remove(assignmentId: string) {
     startTransition(async () => {
-      const confirmedResult = await moveDailyPlanItemAction({
-        date,
-        columnId: confirmation.columnId,
-        kind: confirmation.item.kind,
-        itemId: confirmation.item.id,
-        force: true,
-        lang: currentLang,
-      });
-      setMessage(confirmedResult.message);
+      const result = await removeDailyPlanItemAction({ date, assignmentId, lang: currentLang });
+      setMessage(result.ok ? undefined : result.message);
     });
   }
 
-  function openNoteEdit(column: Column) {
-    setNoteDraft(columnNotes[column.id] ?? "");
-    setPendingNoteEdit({ columnId: column.id, title: column.title });
-  }
-
-  function savePendingNoteEdit() {
-    if (!pendingNoteEdit) return;
-    const note = noteDraft;
-    const columnId = pendingNoteEdit.columnId;
-
-    setPendingNoteEdit(null);
-    setColumnNotes((prev) => ({ ...prev, [columnId]: note }));
-    startTransition(async () => {
-      await updateDailyPlanColumnNoteAction({ date, columnId, note, lang: currentLang });
-    });
-  }
+  const chip = "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-4 text-sm font-semibold shadow-sm transition disabled:opacity-50";
 
   return (
-    <div className="space-y-4">
-      {showCurrentVersionHint ? (
-        <div className="px-1 text-xs font-medium text-orange-600 dark:text-orange-300">
-          {t("workzone.currentVersionHint", currentLang)}
-        </div>
-      ) : null}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          onClick={() => {
-            startTransition(async () => {
-              const result = await saveDailyPlanAction({ date, lang: currentLang });
-              setMessage(result.message);
-            });
-          }}
-          disabled={isPending}
-        >
-          {t("workzone.saveDay", currentLang)}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            startTransition(async () => {
-              const result = await clearDailyPlanAction({ date, lang: currentLang });
-              setMessage(result.message);
-            });
-          }}
-          disabled={isPending}
-        >
-          {t("workzone.clearDayPlan", currentLang)}
-        </Button>
-        {activeItem ? (
+    <div className="space-y-4" data-testid="daily-plan-editor">
+      {/* Status and the two actions. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3 shadow-sm">
+        <span className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${neverSaved ? "bg-muted text-muted-foreground" : dirty ? "bg-amber-500/15 text-amber-800 dark:text-amber-200" : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"}`} data-testid="plan-status">
+          {neverSaved ? c.notSaved : dirty ? c.unsaved : <><Check className="size-3.5" />{c.saved}</>}
+        </span>
+        {isPending ? <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden /> : null}
+        {message ? <span role="status" className="text-xs text-red-700 dark:text-red-300">{message}</span> : null}
+        <div className="ml-auto flex gap-2">
+          <button type="button" onClick={() => setAskClear(true)} disabled={isPending} className={`${chip} bg-card hover:bg-muted`}>{c.clear}</button>
           <button
             type="button"
-            onClick={() => setActiveItem(null)}
-            className="rounded-full border bg-card px-3 py-1 text-xs font-medium text-foreground/80 shadow-sm transition hover:bg-muted dark:border-white/10 dark:bg-white/[0.04] dark:text-foreground"
+            onClick={() => startTransition(async () => {
+              const result = await saveDailyPlanAction({ date, lang: currentLang });
+              setMessage(result.ok ? undefined : result.message);
+            })}
+            disabled={isPending}
+            className={`${chip} border-orange-700 bg-orange-600 text-white hover:bg-orange-700 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950`}
+            data-testid="plan-save"
           >
-            {t("workzone.activeSelectionClear", currentLang).replace(
-              "{type}",
-              activeItem.kind === "WORKER" ? t("workzone.workerDrag", currentLang) : t("workzone.machineDrag", currentLang),
-            )}
+            {c.save}
           </button>
-        ) : null}
-        {message ? <span className="text-xs text-muted-foreground">{message}</span> : null}
+        </div>
       </div>
 
-      <div className="grid items-stretch gap-3 lg:grid-cols-[260px_minmax(0,1fr)_260px]">
-        <div className="lg:relative lg:min-h-0">
-          <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20 lg:absolute lg:inset-0">
-            <h3 className="text-sm font-semibold">{t("workzone.workers", currentLang)}</h3>
-            <div className="mt-2 grid max-h-[calc(100vh-18rem)] min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
-              {workersByUsage.map((worker) => {
-                const needsConfirmation = worker.availability !== "AVAILABLE" || worker.hasApprovedVacation;
-                return (
+      <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+        {/* People and machines to place. */}
+        <section className="rounded-2xl border bg-card p-3 shadow-sm lg:sticky lg:top-4">
+          <div role="tablist" className="grid grid-cols-2 overflow-hidden rounded-xl border text-sm font-semibold">
+            {(["WORKER", "MACHINE"] as const).map((kind) => (
+              <button key={kind} type="button" role="tab" aria-selected={tab === kind} onClick={() => { setTab(kind); setQuery(""); }}
+                className={`min-h-11 px-2 ${tab === kind ? "bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950" : "hover:bg-muted"}`}>
+                {kind === "WORKER" ? c.workers : c.machines}
+                <span className="ml-1 text-xs font-medium opacity-80">· {kind === "WORKER" ? freeWorkers : freeMachines} {c.free}</span>
+              </button>
+            ))}
+          </div>
+          <label className="relative mt-3 block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <input type="text" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={c.search} aria-label={c.search}
+              className="min-h-11 w-full rounded-xl border bg-background pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-orange-500" />
+          </label>
+          <p className="mt-3 text-xs text-muted-foreground">{c.step}</p>
+          <ul className="mt-2 grid max-h-72 grid-cols-2 gap-1.5 overflow-y-auto pr-0.5 sm:grid-cols-3 lg:max-h-[calc(100vh-17rem)] lg:grid-cols-1" data-testid="plan-pick-list">
+            {list.length === 0 ? <li className="col-span-full py-3 text-sm text-muted-foreground">{c.noMatch}</li> : null}
+            {list.map((entry) => {
+              const isWorker = tab === "WORKER";
+              const worker = isWorker ? (entry as DraggableWorker) : null;
+              const machine = isWorker ? null : (entry as DraggableMachine);
+              const site = isWorker ? siteOfWorker.get(entry.id) : siteOfMachine.get(entry.id);
+              const needsOk = worker ? worker.availability !== "AVAILABLE" || worker.hasApprovedVacation : machine ? !operational?.enabled && !machine.isActive : false;
+              const active = picked?.kind === tab && picked.id === entry.id;
+              const sub = worker?.licenses ?? machine?.requiredLicense ?? null;
+              return (
+                <li key={entry.id}>
                   <button
-                    key={worker.id}
                     type="button"
                     draggable
-                    disabled={assignedWorkerIds.has(worker.id)}
-                    title={needsConfirmation ? t("workzone.planRequiresConfirmation", currentLang).replace("{name}", worker.name) : worker.name}
-                    onDragStart={() => setActiveItem({ kind: "WORKER", id: worker.id })}
-                    onDragEnd={() => setActiveItem(null)}
-                    onClick={() => setActiveItem((current) => (current?.kind === "WORKER" && current.id === worker.id ? null : { kind: "WORKER", id: worker.id }))}
-                    className={`min-h-12 w-full rounded-md border px-1.5 py-1 text-left text-[11px] leading-tight hover:bg-muted disabled:cursor-not-allowed sm:px-2 sm:text-xs lg:min-h-0 lg:px-2 lg:py-1 lg:text-sm ${
-                      assignedWorkerIds.has(worker.id)
-                        ? "border-red-200 bg-red-50 text-red-800 opacity-90 dark:border-red-500/30 dark:bg-red-500/12 dark:text-red-100"
-                        : needsConfirmation
-                          ? "border-sky-400/70 bg-sky-500/15 text-sky-900 shadow-[inset_0_0_0_1px_rgba(56,189,248,0.22)] dark:border-sky-400/50 dark:bg-sky-500/18 dark:text-sky-100"
-                          : "dark:border-white/10 dark:bg-white/[0.03]"
-                    } ${
-                      activeItem?.kind === "WORKER" && activeItem.id === worker.id ? "border-emerald-500 bg-emerald-500/10 dark:border-emerald-400 dark:bg-emerald-500/15" : ""
+                    onDragStart={() => setPicked({ kind: tab, id: entry.id, name: entry.name })}
+                    onClick={() => setPicked(active ? null : { kind: tab, id: entry.id, name: entry.name })}
+                    aria-pressed={active}
+                    className={`flex min-h-11 w-full flex-col items-start justify-center rounded-xl border px-2.5 py-1.5 text-left text-sm transition ${
+                      active ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950"
+                        : site ? "bg-muted/50 text-muted-foreground hover:bg-muted"
+                          : "bg-background hover:border-orange-400 hover:bg-orange-500/5"
                     }`}
                   >
-                    <span className="line-clamp-2">{worker.name}</span>
-                    {worker.licenses ? <span className="mt-0.5 hidden text-[10px] text-muted-foreground sm:inline lg:ml-2 lg:mt-0">({worker.licenses})</span> : null}
+                    <span className="flex w-full items-center gap-1.5">
+                      {needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}
+                      <span className="min-w-0 truncate font-medium">{entry.name}</span>
+                    </span>
+                    {site ? <span className={`flex max-w-full items-center gap-1 truncate text-[11px] ${active ? "" : "text-orange-700 dark:text-orange-300"}`}><MapPin className="size-3 shrink-0" />{site}</span>
+                      : sub ? <span className={`max-w-full truncate text-[11px] ${active ? "" : "text-muted-foreground"}`}>{sub}</span> : null}
+                    {machine && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(machine.id)} c={assets} compact className="mt-1" /> : null}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
-        <div className="min-w-0 space-y-3">
-          <div className="grid grid-cols-3 gap-2 md:grid-cols-3 xl:grid-cols-3">
+        {/* Sites of the day. */}
+        <section className="min-w-0 space-y-3">
+          {picked ? (
+            <div className="flex items-center gap-2 rounded-2xl border border-orange-500/50 bg-orange-500/10 px-3 py-2 text-sm" role="status" data-testid="plan-picked">
+              <span className="min-w-0 flex-1"><strong>{picked.name}</strong>: {c.picked}</span>
+              <button type="button" onClick={() => setPicked(null)} className="min-h-9 shrink-0 rounded-lg border bg-card px-3 text-xs font-semibold hover:bg-muted">{c.cancel}</button>
+            </div>
+          ) : null}
+          <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
             {columns.map((column) => {
               const warnings = columnLicenseWarnings(column, workers, machines, currentLang);
+              const people = column.assignments.filter((a) => a.kind === "WORKER");
+              const things = column.assignments.filter((a) => a.kind === "MACHINE");
               return (
-              <div
-                key={column.id}
-                className={`min-w-0 rounded-xl border border-emerald-200/70 bg-emerald-50/70 p-2.5 shadow-sm transition sm:p-3 dark:border-emerald-500/20 dark:bg-emerald-500/[0.08] dark:shadow-black/20 ${
-                  warnings.length > 0 ? "border-amber-500/60 dark:border-amber-500/50 dark:bg-amber-500/[0.08]" : ""
-                } ${
-                  activeItem ? "cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/[0.04] dark:hover:border-emerald-400/50 dark:hover:bg-emerald-500/[0.14]" : ""
-                }`}
-                onDragOver={(event) => event.preventDefault()}
-                onClick={() => assignToColumn(column.id)}
-                onDrop={() => {
-                  if (!activeItem) return;
-                  assignToColumn(column.id);
-                }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="line-clamp-2 text-[12px] font-semibold leading-4 sm:text-[13px] xl:text-sm">{column.title}</h4>
-                  <button
-                    type="button"
-                    className="shrink-0 rounded p-1 text-muted-foreground transition hover:bg-black/5 hover:text-foreground dark:text-emerald-100/80 dark:hover:bg-white/10"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openNoteEdit(column);
-                    }}
-                    aria-label={t("common.note", currentLang)}
-                    title={columnNotes[column.id]?.trim() ? `${t("common.note", currentLang)}: ${columnNotes[column.id]}` : t("common.note", currentLang)}
-                  >
-                    <Pencil className="size-3.5" aria-hidden="true" />
-                  </button>
-                </div>
-                {warnings.length > 0 ? (
-                  <div className="mt-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-800 dark:border-amber-500/50 dark:bg-amber-500/14 dark:text-amber-100 sm:text-xs">
-                    {warnings.map((warning) => (
-                      <div key={warning}>{warning}</div>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="mt-2 space-y-1 text-[11px] sm:min-h-16 sm:text-xs">
-                  {column.assignments.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`${operational?.enabled ? 'min-w-0' : 'truncate'} rounded-md border px-2 py-1 dark:border-white/10 dark:bg-black/10`}
-                      title={t("workzone.doubleClickRemove", currentLang)}
-                      onDoubleClick={() => {
-                        startTransition(async () => {
-                          const result = await removeDailyPlanItemAction({ date, assignmentId: item.id, lang: currentLang });
-                          setMessage(result.message);
-                        });
-                      }}
-                    >
-                      {item.kind === "WORKER" ? "👷" : "🚚"} {item.labelSnapshot}
-                      {item.kind === 'MACHINE' && item.machineId && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact className="mt-1" /> : null}
+                <article
+                  key={column.id}
+                  data-testid="plan-site"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => { if (picked) assign(column.id, picked); }}
+                  onClick={() => { if (picked) assign(column.id, picked); }}
+                  className={`min-w-0 rounded-2xl border bg-card p-3 shadow-sm transition ${picked ? "cursor-pointer border-dashed border-orange-500 hover:bg-orange-500/5" : ""} ${warnings.length ? "border-amber-500/60" : ""}`}
+                >
+                  <header className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words text-base font-semibold leading-tight">{column.title}</h3>
+                      <p className="mt-1 flex items-center gap-3 text-xs tabular-nums text-muted-foreground"><span className="inline-flex items-center gap-1" title={c.workers}><HardHat className="size-3.5" aria-label={c.workers} />{people.length}</span><span className="inline-flex items-center gap-1" title={c.machines}><Truck className="size-3.5" aria-label={c.machines} />{things.length}</span></p>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); setNoteDraft(column.note ?? ""); setNoteFor(column); }}
+                      className="grid size-10 shrink-0 place-items-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground" aria-label={`${c.note}: ${column.title}`} title={c.note}>
+                      <Pencil className="size-4" aria-hidden />
+                    </button>
+                  </header>
+                  {column.note?.trim() ? <p className="mt-2 rounded-lg bg-muted px-2.5 py-1.5 text-xs">{column.note}</p> : null}
+                  {warnings.length ? <div className="mt-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-900 dark:text-amber-100">{warnings.map((w) => <div key={w}>{w}</div>)}</div> : null}
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                    {column.assignments.map((item) => (
+                      <li key={item.id} className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-lg border bg-background pl-2 text-sm">
+                        {item.kind === "WORKER" ? <HardHat className="size-3.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /> : <Truck className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />}
+                        <span className="min-w-0 truncate">{item.labelSnapshot}</span>
+                        {item.kind === "MACHINE" && item.machineId && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact /> : null}
+                        <button type="button" onClick={(event) => { event.stopPropagation(); remove(item.id); }} disabled={isPending}
+                          className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-red-600" aria-label={`${c.remove}: ${item.labelSnapshot}`} title={c.remove}>
+                          <X className="size-4" aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                    {column.assignments.length === 0 && !picked ? <li className="text-sm text-muted-foreground">{c.nobody}</li> : null}
+                  </ul>
+                  {picked ? (
+                    <button type="button" onClick={(event) => { event.stopPropagation(); assign(column.id, picked); }} disabled={isPending}
+                      className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-orange-600 px-3 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950">
+                      + {picked.name} · {c.dropHere}
+                    </button>
+                  ) : null}
+                </article>
               );
             })}
           </div>
-        </div>
-
-        <div className="lg:relative lg:min-h-0">
-          <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-sky-200/80 bg-sky-50/70 p-3 shadow-sm dark:border-sky-500/20 dark:bg-sky-500/[0.08] dark:shadow-black/20 lg:absolute lg:inset-0">
-            <h3 className="text-sm font-semibold">{t("workzone.machines", currentLang)}</h3>
-            <div className="mt-2 grid max-h-[calc(100vh-18rem)] min-h-0 flex-1 grid-cols-3 content-start gap-2 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
-              {machinesByUsage.map((machine) => (
-                <button
-                  key={machine.id}
-                  type="button"
-                  draggable
-                  disabled={assignedMachineIds.has(machine.id)}
-                  onDragStart={() => setActiveItem({ kind: "MACHINE", id: machine.id })}
-                  onDragEnd={() => setActiveItem(null)}
-                  onClick={() => setActiveItem((current) => (current?.kind === "MACHINE" && current.id === machine.id ? null : { kind: "MACHINE", id: machine.id }))}
-                  className={`min-h-12 w-full rounded-md border px-1.5 py-1 text-left text-[11px] leading-tight hover:bg-muted disabled:cursor-not-allowed sm:px-2 sm:text-xs lg:min-h-9 lg:px-2 lg:py-1 lg:text-xs ${
-                    assignedMachineIds.has(machine.id)
-                      ? "border-red-200 bg-red-50 text-red-800 opacity-90 dark:border-red-500/30 dark:bg-red-500/12 dark:text-red-100"
-                      : operational?.enabled ? operational.statusFor(machine.id)?.usable === false ? 'border-amber-500/40 bg-amber-500/5' : 'dark:border-white/10 dark:bg-white/[0.03]' : !machine.isActive
-                        ? "border-sky-400/70 bg-sky-500/15 text-sky-900 shadow-[inset_0_0_0_1px_rgba(56,189,248,0.22)] dark:border-sky-400/50 dark:bg-sky-500/18 dark:text-sky-100"
-                        : "dark:border-white/10 dark:bg-white/[0.03]"
-                  } ${
-                    activeItem?.kind === "MACHINE" && activeItem.id === machine.id ? "border-emerald-500 bg-emerald-500/10 dark:border-emerald-400 dark:bg-emerald-500/15" : ""
-                  }`}
-                  title={!operational?.enabled && !machine.isActive ? t("workzone.planRequiresConfirmation", currentLang).replace("{name}", machine.name) : machine.name}
-                >
-                  <span className="line-clamp-1">{machine.name}</span>
-                  {machine.requiredLicense ? (
-                    <span className="mt-0.5 block truncate text-[10px] text-muted-foreground lg:mt-0">({machine.requiredLicense})</span>
-                  ) : null}
-                  {operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(machine.id)} c={assets} compact className="mt-1" /> : null}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
 
-      <div className="rounded-xl border bg-card p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20">
-        <h3 className="text-sm font-semibold">{t("workzone.dailyTable", currentLang)}</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse border text-sm dark:border-white/10">
-            <thead>
-              <tr className="bg-muted/30 dark:bg-white/[0.05]">
-                <th className="border px-2 py-1 text-left dark:border-white/10">{t("common.group", currentLang)}</th>
-                <th className="border px-2 py-1 text-left dark:border-white/10">{t("workzone.machines", currentLang)}</th>
-                <th className="border px-2 py-1 text-left dark:border-white/10">{t("workzone.newSite", currentLang)}</th>
-                <th className="border px-2 py-1 text-left dark:border-white/10">{t("common.note", currentLang)}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {savedRows.map((row) => (
-                <tr key={row.id}>
-                  <td className="border px-2 py-1 dark:border-white/10">{row.workerNames || "-"}</td>
-                  <td className="border px-2 py-1 dark:border-white/10">{row.machineNames || "-"}</td>
-                  <td className="border px-2 py-1 dark:border-white/10">{row.baustelleName}</td>
-                  <td className="border px-2 py-1 dark:border-white/10">{row.note ?? "-"}</td>
-                </tr>
-              ))}
-              {savedRows.length === 0 ? (
-                <tr>
-                  <td className="border px-2 py-2 text-muted-foreground dark:border-white/10" colSpan={4}>
-                    {t("workzone.dayNotSaved", currentLang)}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <SavedPlanList rows={savedRows} c={c} title={c.savedPlan} hint={c.savedHint} />
+
       <SimpleDialog
         open={Boolean(pendingConfirmation)}
         title={t("workzone.planWarningTitle", currentLang)}
         description={pendingConfirmation?.message ?? null}
         confirmLabel={t("workzone.assignAnyway", currentLang)}
-        cancelLabel={t("common.cancel", currentLang)}
+        cancelLabel={c.cancel}
         confirmVariant="secondary"
         confirmDisabled={isPending}
-        onConfirm={confirmPendingAssignment}
-        onCancel={() => {
+        onConfirm={() => {
+          const pending = pendingConfirmation;
           setPendingConfirmation(null);
-          setMessage(t("workzone.assignmentCancelled", currentLang));
+          if (pending) assign(pending.columnId, pending.item, true);
         }}
+        onCancel={() => setPendingConfirmation(null)}
       />
       <SimpleDialog
-        open={Boolean(pendingNoteEdit)}
-        title={pendingNoteEdit ? `${t("common.note", currentLang)}: ${pendingNoteEdit.title}` : t("common.note", currentLang)}
-        confirmLabel={t("common.save", currentLang)}
-        cancelLabel={t("common.cancel", currentLang)}
+        open={askClear}
+        title={c.clear}
+        description={c.clearAsk}
+        confirmLabel={c.clear}
+        cancelLabel={c.cancel}
+        confirmVariant="secondary"
         confirmDisabled={isPending}
-        onConfirm={savePendingNoteEdit}
-        onCancel={() => setPendingNoteEdit(null)}
+        onConfirm={() => {
+          setAskClear(false);
+          startTransition(async () => {
+            const result = await clearDailyPlanAction({ date, lang: currentLang });
+            setMessage(result.ok ? undefined : result.message);
+          });
+        }}
+        onCancel={() => setAskClear(false)}
+      />
+      <SimpleDialog
+        open={Boolean(noteFor)}
+        title={noteFor ? `${c.note}: ${noteFor.title}` : c.note}
+        confirmLabel={t("common.save", currentLang)}
+        cancelLabel={c.cancel}
+        confirmDisabled={isPending}
+        onConfirm={() => {
+          const column = noteFor;
+          setNoteFor(null);
+          if (column) startTransition(async () => { await updateDailyPlanColumnNoteAction({ date, columnId: column.id, note: noteDraft, lang: currentLang }); });
+        }}
+        onCancel={() => setNoteFor(null)}
       >
         <textarea
           value={noteDraft}
           onChange={(event) => setNoteDraft(event.target.value)}
-          className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-white/10"
+          className="min-h-24 w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
           placeholder={t("workzone.adminNotePlaceholder", currentLang)}
         />
       </SimpleDialog>
