@@ -99,10 +99,8 @@ export function can(subject: AccessSubject, action: AccessAction, scopeId = "", 
   // The most specific key-button choice decides: this site, then the whole place.
   const own = (scopeId ? subject.grants.find(g => g.place === place && g.scopeId === scopeId) : undefined)
     ?? subject.grants.find(g => g.place === place && g.scopeId === "");
-  if (own) {
-    if (own.level === "none") return false;
-    if (view || own.level === "act") return true;
-  }
+  // A key-button choice is final: "view" also stops acting that a crew role gave.
+  if (own) return own.level === "act" || (own.level === "view" && view);
   if (view && EVERYONE_VIEWS.has(place)) return true;
   if (view && effectiveLevel(subject) === "FULL_VIEW" && FULL_VIEW_PLACES.has(place)) return true;
   // Crew roles count only until the boss sets the level; then the role's

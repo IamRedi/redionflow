@@ -133,3 +133,12 @@ describe("factory list and field list per site", () => {
     expect(can(person, "factory.view", "s3")).toBe(false);
   });
 });
+
+describe("a key-button choice is final", () => {
+  it("Shikon stops acting that the crew role gave", () => {
+    const person = worker("FIELD_ENGINEER", { grants: [{ place: "field", scopeId: "", level: "view" }] });
+    expect(can(person, "field.view", "s1")).toBe(true);
+    expect(can(person, "field.steps", "s1")).toBe(false);
+    expect(can(person, "site.plan", "s1")).toBe(true);
+  });
+});
