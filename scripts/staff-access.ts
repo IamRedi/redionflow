@@ -78,9 +78,9 @@ export async function runStaffAccess() {
 
 /**
  * ACCESS_ACT_ALL   comma list of names, e.g. "Megi,Almet": these workers get
- * Vepron on every place (all sites). Only missing whole-place choices are
- * created, so later key-button edits stay. Names matching no single worker
- * are skipped and logged.
+ * Vepron on every place (all sites), also where an earlier choice said
+ * Shikon or Hiq. Remove the variable after one boot so later key-button edits
+ * stay. Names matching no single worker are skipped and logged.
  */
 export async function runActAll() {
   const names = (process.env.ACCESS_ACT_ALL ?? "").split(",").map(n => n.trim()).filter(Boolean);
@@ -101,13 +101,14 @@ export async function runActAll() {
         if (workers.find(w => w.id === workerId)?.accessLevel === null) await applyAccessLevel(tx, companyId, workerId, "FULL_VIEW", null);
         for (const place of ACCESS_PLACES) {
           const key = { companyProfileId_place_scopeId_workerId: { companyProfileId: companyId, place, scopeId: "", workerId } };
-          if (await tx.accessGrant.findUnique({ where: key, select: { id: true } })) continue;
-          await tx.accessGrant.create({ data: { companyProfileId: companyId, place, scopeId: "", workerId, level: "act" } });
+          const existing = await tx.accessGrant.findUnique({ where: key, select: { level: true } });
+          if (existing?.level === "act") continue;
+          await tx.accessGrant.upsert({ where: key, create: { companyProfileId: companyId, place, scopeId: "", workerId, level: "act" }, update: { level: "act" } });
           created += 1;
         }
       }
     }, { timeout: 60_000 });
-    console.log(`[act-all] created ${created} Vepron choices for ${names.join(", ")}.`);
+    console.log(`[act-all] set ${created} Vepron choices for ${names.join(", ")}.`);
   } finally {
     await prisma.$disconnect();
   }
