@@ -345,6 +345,7 @@ export async function WorkerProfileView({
         <div className="relative flex flex-wrap items-start justify-between gap-2 px-3 pb-3 sm:px-4">
           <WorkSessionControls
             workerId={worker.id}
+            lastSessionEnd={worker.sessions.filter(session => session.endTime).sort((a, b) => b.endTime!.getTime()-a.endTime!.getTime())[0]?.endTime?.toISOString() ?? null}
             plannedSchedule={plannedSchedule}
             workerPhoneGpsEnabled={mode === "worker" && (worker.companyProfile?.workerPhoneGpsEnabled ?? false)}
             activeSession={

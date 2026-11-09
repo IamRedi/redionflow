@@ -68,6 +68,7 @@
     "signupInviteInvalid": "Codul de invitație nu este valid."
   },
   "workzone": {
+    "workSessionOverlap": "Acest început se suprapune peste munca înregistrată. Alege ora reală după ultima oprire.",
     "startWork": "Incepe munca",
     "stopWork": "Opreste munca",
     "today": "Astazi",
@@ -256,7 +257,7 @@
     "externalShort": "ext.",
     "workHere": "Lucreaza aici",
     "whenDidWorkStart": "Cand ai inceput munca?",
-    "selectedTime": "07:00 / ora aleasa",
+    "selectedTime": "Ora selectată",
     "externalWorkerPermission": "Doar un lucrator sau admin autentificat poate adauga ajutor extern.",
     "addExternalWorker": "Adauga lucrator extern",
     "shareDocumentSuccess": "Document partajat.",

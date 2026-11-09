@@ -21,7 +21,7 @@ export async function provisionLocalPilotRole(databaseUrl: string): Promise<stri
     await db.query(`GRANT SELECT ON "CompanyProfile", "OverheadSettings", "TreeItem", "ManualTask", "Subscription", "Plan" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT (id,"companyProfileId",name,email) ON "User" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT (id,"companyProfileId","firstName","lastName",licenses,availability,status,"isTemporary",level) ON "Worker" TO bk_saas_pilot_runtime`);
-    await db.query(`GRANT SELECT (id,"companyProfileId",name,nickname,"isActive","patentaEnevojshme") ON "Machine" TO bk_saas_pilot_runtime`);
+    await db.query(`GRANT SELECT (id,"companyProfileId",name,nickname,targe,"isActive","patentaEnevojshme") ON "Machine" TO bk_saas_pilot_runtime`);
     // Read-only availability gates: no custody, notes, attachments or asset writes.
     await db.query(`GRANT SELECT (id,"companyProfileId","machineId",disposition) ON "CompanyOperationalAsset" TO bk_saas_pilot_runtime`);
     await db.query(`GRANT SELECT ("companyProfileId","assetId",status) ON "CompanyAssetIncident", "CompanyAssetHandover" TO bk_saas_pilot_runtime`);

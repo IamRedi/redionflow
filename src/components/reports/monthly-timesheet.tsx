@@ -9,6 +9,7 @@ type Worker = { firstName: string; lastName: string; position: string | null; co
 
 const LANGS = ["sq", "en", "de", "it", "pl", "ro"] as const;
 const words = {
+  minutes: ['min', 'min', 'Min.', 'min', 'min', 'min'],
   title: ["Fletë orësh mujore", "Monthly timesheet", "Monatlicher Stundenzettel", "Foglio ore mensile", "Miesięczna karta czasu pracy", "Foaie de pontaj lunară"],
   total: ["Orë gjithsej", "Hours", "Stunden", "Ore", "Godziny", "Ore"],
   days: ["Ditë pune", "Work days", "Arbeitstage", "Giorni lavorati", "Dni pracy", "Zile lucrate"],
@@ -115,7 +116,7 @@ export async function MonthlyTimesheet({ rows, worker, month, lang }: { rows: Ro
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold tabular-nums">
                         {formatReportTime(row.startTime, lang)} – {row.hasLive && !row.endTime ? <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400"><Radio className="size-3.5" aria-hidden />{c.live}</span> : formatReportTime(row.endTime, lang)}
-                        {row.breakMinutes ? <span className="ml-2 text-xs font-normal text-muted-foreground">{row.breakMinutes} min {c.breakShort}</span> : null}
+                        {row.breakMinutes ? <span className="ml-2 text-xs font-normal text-muted-foreground">{row.breakMinutes} {c.minutes} {c.breakShort}</span> : null}
                       </p>
                       {row.locations !== "-" ? (
                         <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /><span className="truncate">{row.locations}</span></p>

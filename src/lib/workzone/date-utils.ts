@@ -55,6 +55,26 @@ function zonedDateTimeToUtc(year: number, month: number, day: number, hour = 0, 
   return utc;
 }
 
+/** The datetime-local forms use the same business clock as the timesheet,
+ * never the UTC clock of the production server or the phone's travel timezone. */
+export function workDateTimeInput(date: Date) {
+  const p = zonedParts(date);
+  return `${dateKey(date)}T${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
+}
+export function parseWorkDateTime(value: string): Date | null {
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/i.test(value)) {
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) ? date : null;
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+  const [year, month, day, hour, minute] = match.slice(1).map(Number);
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) return null;
+  const result = zonedDateTimeToUtc(year, month, day, hour, minute);
+  // Reject invalid calendar dates and missing clocks during the DST jump.
+  return workDateTimeInput(result) === value ? result : null;
+}
+
 function parseDateKey(key: string) {
   const [year, month, day] = key.split("-").map((part) => Number(part));
   if (!year || !month || !day) return null;

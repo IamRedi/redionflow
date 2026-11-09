@@ -23,6 +23,10 @@ const icons = { worker: HardHat, office: UserCog, fleet: Truck } as const;
  * chosen group shows; the magnifier filters names live while typing.
  * Server-rendered items carry data-staff-cat and data-staff-name.
  */
+const STAFF_VISIBILITY_CSS = `[data-staff-view] [data-staff-cat][hidden]{display:none}
+[data-staff-view="worker"] [data-staff-cat]:not([data-staff-cat="worker"]),[data-staff-view="office"] [data-staff-cat]:not([data-staff-cat="office"]),
+[data-staff-view="fleet"] [data-staff-block="people"],[data-staff-view="worker"] [data-staff-block="fleet"],[data-staff-view="office"] [data-staff-block="fleet"]{display:none}`;
+
 export function StaffDirectory({ counts, children }: { counts: Record<StaffCategory, number>; children: ReactNode }) {
   const { currentLang } = useLanguage();
   const i = Math.max(0, LANGS.indexOf(currentLang));
@@ -55,9 +59,7 @@ export function StaffDirectory({ counts, children }: { counts: Record<StaffCateg
 
   return <section className="space-y-3" ref={root} data-testid="staff-directory" data-staff-view={category}>
     {/* Groups switch with CSS so the server render already shows only the first group. */}
-    <style>{`[data-staff-view] [data-staff-cat][hidden]{display:none}
-[data-staff-view="worker"] [data-staff-cat]:not([data-staff-cat="worker"]),[data-staff-view="office"] [data-staff-cat]:not([data-staff-cat="office"]),
-[data-staff-view="fleet"] [data-staff-block="people"],[data-staff-view="worker"] [data-staff-block="fleet"],[data-staff-view="office"] [data-staff-block="fleet"]{display:none}`}</style>
+    <style>{STAFF_VISIBILITY_CSS}</style>
     <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-2xl border bg-background/95 p-2 shadow-sm backdrop-blur">
       <div role="tablist" className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 sm:flex sm:flex-wrap">
         {(['worker', 'office', 'fleet'] as const).map(key => {

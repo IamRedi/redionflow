@@ -1,3 +1,5 @@
+import { beginWorkerSession, SessionStartError } from "@/lib/workzone/session-start";
+import { parseWorkDateTime } from "@/lib/workzone/date-utils";
 
 
 import { prisma } from "@/lib/db/prisma";
@@ -29,7 +31,7 @@ export async function processStartWork(
   }
 
   const { baustelleId, workerId } = payload.data;
-  const startTime = payload.data.startTime ? new Date(payload.data.startTime) : new Date();
+  const startTime = payload.data.startTime ? parseWorkDateTime(payload.data.startTime) : new Date();
 
   if (auth.kind === "WORKER" && auth.id !== workerId) {
     await recordOutcome(action.id, auth, action, "rejected", m.workerMismatch);
@@ -57,24 +59,18 @@ export async function processStartWork(
     return { id: action.id, outcome: "conflict", message: msg };
   }
 
-  const existing = await prisma.workSession.findFirst({
-    where: { workerId, isLive: true, endTime: null },
-    orderBy: { startTime: "desc" },
-  });
-
-  if (existing) {
-    if (existing.baustelleId === baustelleId) {
-      await recordOutcome(action.id, auth, action, "noop", m.sessionAlreadyActiveOnSite);
-      return { id: action.id, outcome: "noop", message: m.sessionAlreadyActiveOnSite };
+  try {
+    if (!startTime) throw new SessionStartError('CLOCK');
+    const result = await beginWorkerSession({ companyId: auth.companyProfileId, workerId, start: startTime, siteId: baustelleId, moveExisting: true });
+    if (result.kind === 'existing') {
+      await recordOutcome(action.id, auth, action, 'noop', m.sessionAlreadyActiveOnSite);
+      return { id: action.id, outcome: 'noop', message: m.sessionAlreadyActiveOnSite };
     }
-    await prisma.workSession.update({
-      where: { id: existing.id },
-      data: { baustelleId, startTime: existing.startTime, endTime: null, isLive: true, closedBySystem: false, systemNote: null },
-    });
-  } else {
-    await prisma.workSession.create({
-      data: { workerId, baustelleId, startTime, endTime: null, breakMinutes: 30, isLive: true },
-    });
+  } catch (error) {
+    if (!(error instanceof SessionStartError)) throw error;
+    const message = m.startConflict;
+    await recordOutcome(action.id, auth, action, 'conflict', message);
+    return { id: action.id, outcome: 'conflict', message };
   }
 
   await recordOutcome(action.id, auth, action, "synced");
@@ -94,7 +90,7 @@ export async function processStopWork(
   }
 
   const { baustelleId, workerId } = payload.data;
-  const endTime = payload.data.endTime ? new Date(payload.data.endTime) : new Date();
+  const endTime = payload.data.endTime ? parseWorkDateTime(payload.data.endTime) : new Date();
   const breakMinutes = payload.data.breakMinutes ?? 30;
 
   if (auth.kind === "WORKER" && auth.id !== workerId) {
@@ -123,7 +119,7 @@ export async function processStopWork(
     return { id: action.id, outcome: "noop", message: m.sessionAlreadyClosed };
   }
 
-  if (endTime <= existing.startTime) {
+  if (!endTime || endTime <= existing.startTime) {
     const msg = m.endBeforeStart;
     await recordOutcome(action.id, auth, action, "conflict", msg);
     return { id: action.id, outcome: "conflict", message: msg };

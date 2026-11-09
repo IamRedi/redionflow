@@ -1,4 +1,6 @@
 "use server";
+import { beginWorkerSession, SessionStartError } from "@/lib/workzone/session-start";
+import { parseWorkDateTime } from "@/lib/workzone/date-utils";
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
@@ -484,33 +486,15 @@ export async function startWorkingAction(input: unknown): Promise<ActionResult> 
   if (!isOwnedByCurrentCompany(worker, currentCompanyId)) return { ok: false, message: tr("accessDenied") };
   if (!baustelle || !isOwnedByCurrentCompany(baustelle, currentCompanyId)) return { ok: false, message: tr("siteNotFound") };
   if (worker.availability !== "AVAILABLE") return { ok: false, message: tr("workerUnavailable") };
-  const selectedStartTime = startTime ? new Date(startTime) : new Date();
-  if (Number.isNaN(selectedStartTime.getTime())) return { ok: false, message: tr("invalidStartTime") };
+  const selectedStartTime = startTime ? parseWorkDateTime(startTime) : new Date();
+  if (!selectedStartTime || Number.isNaN(selectedStartTime.getTime())) return { ok: false, message: tr("invalidStartTime") };
 
-  const existing = await prisma.workSession.findFirst({
-    where: { workerId, isLive: true, endTime: null },
-    orderBy: { startTime: "desc" },
-  });
-
-  if (existing) {
-    if (existing.baustelleId === baustelleId && existing.isLive && !existing.endTime) {
-      return { ok: true, message: tr("workingAlreadyActiveHere") };
-    }
-    await prisma.workSession.update({
-      where: { id: existing.id },
-      data: {
-        baustelleId,
-        startTime: existing.startTime ?? selectedStartTime,
-        endTime: null,
-        isLive: true,
-        closedBySystem: false,
-        systemNote: null,
-      },
-    });
-  } else {
-    await prisma.workSession.create({
-      data: { workerId, baustelleId, startTime: selectedStartTime, endTime: null, breakMinutes: 30, isLive: true },
-    });
+  try {
+    const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId, moveExisting: true });
+    if (result.kind === 'existing') return { ok: true, message: tr('workingAlreadyActiveHere') };
+  } catch (error) {
+    if (error instanceof SessionStartError) return { ok: false, message: tr(error.message === 'OVERLAP' ? 'workSessionOverlap' : 'invalidStartTime') };
+    throw error;
   }
 
   revalidatePath("/workzone");

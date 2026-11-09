@@ -1,3 +1,4 @@
+import { reportLocale } from '@/lib/workzone/date-utils';
 const LANGS = ["sq", "en", "de", "it", "pl", "ro"] as const;
 
 const words = {
@@ -40,14 +41,13 @@ export function planCopy(lang: string | null | undefined): PlanCopy {
   return Object.fromEntries(Object.entries(words).map(([key, values]) => [key, values[index] ?? values[1]])) as PlanCopy;
 }
 
-const LOCALES: Record<string, string> = { sq: "sq-AL", en: "en-GB", de: "de-DE", it: "it-IT", pl: "pl-PL", ro: "ro-RO" };
 
 /** "e hënë, 9 nëntor" style label for a yyyy-mm-dd key. */
 export function planDayLabel(dateKey: string, lang: string | null | undefined) {
   const [y, m, d] = dateKey.split("-").map(Number);
   if (!y || !m || !d) return dateKey;
   try {
-    return new Intl.DateTimeFormat(LOCALES[lang ?? "sq"] ?? "en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+    return new Intl.DateTimeFormat(reportLocale(lang ?? 'sq'), { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
   } catch {
     return dateKey;
   }

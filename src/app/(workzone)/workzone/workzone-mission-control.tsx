@@ -628,23 +628,23 @@ export function WorkzoneMissionControl({
         </div>
       )}
 
-      <div className="rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]">
+      <div className="min-w-0 rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]" data-testid="daily-archive">
         <h3 className="text-sm font-semibold">{t("workzone.dailyArchive", currentLang)}</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="w-full min-w-[480px] border-collapse border text-xs">
+        <div className="mt-2 min-w-0">
+          <table className="w-full table-fixed border-collapse border text-xs">
             <thead>
               <tr className="bg-muted/30">
-                <th className="border px-2 py-1 text-left">{t("workzone.newSite", currentLang)}</th>
-                <th className="border px-2 py-1 text-left">{t("common.progress", currentLang)}</th>
-                <th className="border px-2 py-1 text-left">{t("common.type", currentLang)}</th>
+                <th className="w-[42%] break-words border px-2 py-1 text-left">{t("workzone.newSite", currentLang)}</th>
+                <th className="w-[26%] break-words border px-2 py-1 text-left">{t("common.progress", currentLang)}</th>
+                <th className="w-[32%] break-words border px-2 py-1 text-left">{t("common.type", currentLang)}</th>
               </tr>
             </thead>
             <tbody>
               {archive.map((item) => (
                 <tr key={item.id}>
-                  <td className="border px-2 py-1">{item.name}</td>
-                  <td className="border px-2 py-1">{`${item.done}/${item.total} (100%)`}</td>
-                  <td className="border px-2 py-1">{typeLabel(item.type, currentLang)}</td>
+                  <td className="break-words border px-2 py-1 [overflow-wrap:anywhere]">{item.name}</td>
+                  <td className="break-words border px-2 py-1 tabular-nums">{`${item.done}/${item.total} (100%)`}</td>
+                  <td className="break-words border px-2 py-1 [overflow-wrap:anywhere]">{typeLabel(item.type, currentLang)}</td>
                 </tr>
               ))}
               {archive.length === 0 ? (
