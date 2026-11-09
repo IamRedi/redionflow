@@ -55,14 +55,14 @@ describe("access rules", () => {
     expect(can(person, "costs.view")).toBe(true);
     expect(can(person, "costs.manage")).toBe(false);
     expect(can(person, "site.view", "any")).toBe(true);
-    expect(can(person, "site.field_steps", "any")).toBe(false);
+    expect(can(person, "site.plan", "any")).toBe(false);
   });
 
   it("legacy roles keep exactly today's rights", () => {
     for (const role of CREW_ROLES) {
       const old = crewPermissions({ isAdmin: false, crewRole: role });
       const person = worker(role);
-      expect(can(person, "site.field_steps", "s1"), role).toBe(old.siteSteps);
+      expect(can(person, "field.steps", "s1"), role).toBe(old.siteSteps);
       expect(can(person, "factory.steps"), role).toBe(old.factorySteps);
       expect(can(person, "site.details", "s1"), role).toBe(old.office);
       expect(can(person, "new_project.create"), role).toBe(old.office);
@@ -106,14 +106,30 @@ describe("taking access away (Hiq)", () => {
   });
   it("a site choice beats the whole-place grant", () => {
     const person = worker(null, { accessLevel: "BASE", grants: [{ place: "site", scopeId: "", level: "act" }, { place: "site", scopeId: "s2", level: "none" }, { place: "site", scopeId: "s3", level: "view" }] });
-    expect(can(person, "site.field_steps", "s1")).toBe(true);
+    expect(can(person, "site.plan", "s1")).toBe(true);
     expect(can(person, "site.view", "s2")).toBe(false);
     expect(can(person, "site.view", "s3")).toBe(true);
-    expect(can(person, "site.field_steps", "s3")).toBe(false);
+    expect(can(person, "site.plan", "s3")).toBe(false);
   });
   it("view at a place removes acting but keeps seeing", () => {
     const person = worker(null, { accessLevel: "FULL_VIEW", grants: [{ place: "warehouse", scopeId: "", level: "view" }] });
     expect(can(person, "warehouse.manage")).toBe(false);
     expect(can(person, "warehouse.view")).toBe(true);
+  });
+});
+
+describe("factory list and field list per site", () => {
+  it("acts on the factory list, only sees the field list (Silvi)", () => {
+    const person = worker(null, { accessLevel: "BASE", grants: [{ place: "site", scopeId: "", level: "view" }, { place: "factory", scopeId: "", level: "act" }, { place: "field", scopeId: "", level: "view" }] });
+    expect(can(person, "factory.steps", "s1")).toBe(true);
+    expect(can(person, "field.view", "s1")).toBe(true);
+    expect(can(person, "field.steps", "s1")).toBe(false);
+  });
+  it("one site's list can differ from the others", () => {
+    const person = worker(null, { accessLevel: "FULL_VIEW", grants: [{ place: "field", scopeId: "s2", level: "act" }, { place: "factory", scopeId: "s3", level: "none" }] });
+    expect(can(person, "field.steps", "s1")).toBe(false);
+    expect(can(person, "field.steps", "s2")).toBe(true);
+    expect(can(person, "factory.view", "s1")).toBe(true);
+    expect(can(person, "factory.view", "s3")).toBe(false);
   });
 });

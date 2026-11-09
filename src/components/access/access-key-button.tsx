@@ -22,7 +22,7 @@ const chip = 'inline-flex min-h-11 items-center gap-1.5 rounded-xl border bg-car
  * admin add or remove people. It stays hidden for everyone else: the server
  * answers only to admins of a steel company.
  */
-export function AccessKeyButton({ place, scopeId = '', className = '', compact = false }: { place: AccessPlace; scopeId?: string; className?: string; compact?: boolean }) {
+export function AccessKeyButton({ place, scopeId = '', className = '', compact = false, label }: { place: AccessPlace; scopeId?: string; className?: string; compact?: boolean; label?: string }) {
   const { currentLang } = useLanguage();
   const c = accessCopy(currentLang);
   const [open, setOpen] = useState(false);
@@ -33,9 +33,10 @@ export function AccessKeyButton({ place, scopeId = '', className = '', compact =
   useEffect(() => { let active = true; queueMicrotask(() => { if (active) void load(); }); return () => { active = false; }; }, [load]);
   const count = snapshot?.ok ? snapshot.data.people.filter(p => p.acts !== 'none').length : null;
   if (!snapshot?.ok && !open) return null;
-  const title = `${c.access} · ${snapshot?.ok && snapshot.data.scopeName ? snapshot.data.scopeName : c.place(place)}`;
+  const name = label ?? c.place(place);
+  const title = label ? `${c.access} · ${label}${snapshot?.ok && snapshot.data.scopeName ? ` · ${snapshot.data.scopeName}` : ''}` : `${c.access} · ${snapshot?.ok && snapshot.data.scopeName ? snapshot.data.scopeName : name}`;
   return <>
-    <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); setOpen(true); }} className={`${chip} ${compact ? 'min-h-9 px-2 text-xs' : ''} ${className}`} aria-label={`${c.access}: ${c.place(place)}`} title={`${c.access}: ${c.place(place)}`} data-testid={`access-key-${place}`}>
+    <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); setOpen(true); }} className={`${chip} ${compact ? 'min-h-9 px-2 text-xs' : ''} ${className}`} aria-label={`${c.access}: ${name}`} title={`${c.access}: ${name}`} data-testid={`access-key-${place}`}>
       <KeyRound size={compact ? 14 : 16} className="text-orange-600 dark:text-orange-400" />
       {count === null ? null : <span className="tabular-nums">{count}</span>}
     </button>

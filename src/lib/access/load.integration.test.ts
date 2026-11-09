@@ -13,13 +13,13 @@ it("loads level and key-button grants of a worker; a grant gives exactly its pla
   const [{ company, worker }] = tenants;
   await withTenantContext(company.id, async tx => {
     await tx.worker.update({ where: { id: worker.id }, data: { crewRole: null, accessLevel: "BASE" } });
-    await tx.accessGrant.create({ data: { companyProfileId: company.id, place: "site", scopeId: "site-a", workerId: worker.id, level: "act" } });
+    await tx.accessGrant.create({ data: { companyProfileId: company.id, place: "field", scopeId: "site-a", workerId: worker.id, level: "act" } });
     await tx.accessGrant.create({ data: { companyProfileId: company.id, place: "costs", workerId: worker.id, level: "view" } });
   });
   const subject = await withTenantContext(company.id, tx => loadWorkerAccess(tx, company.id, worker.id));
   expect(subject).toMatchObject({ kind: "worker", active: true, accessLevel: "BASE" });
-  expect(can(subject!, "site.field_steps", "site-a")).toBe(true);
-  expect(can(subject!, "site.field_steps", "site-b")).toBe(false);
+  expect(can(subject!, "field.steps", "site-a")).toBe(true);
+  expect(can(subject!, "field.steps", "site-b")).toBe(false);
   expect(can(subject!, "costs.view")).toBe(true);
   expect(can(subject!, "costs.manage")).toBe(false);
   expect(can(subject!, "factory.view")).toBe(false);

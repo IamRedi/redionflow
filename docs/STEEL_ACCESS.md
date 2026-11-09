@@ -16,11 +16,16 @@ any crew role other than FIELD_WORKER / FACTORY_WORKER means `FULL_VIEW`.
 
 ## Places and the key button
 
-Places: `site` (per site), `factory`, `new_project`, `fleet_gps`, `workshop`,
+Places: `site` (per site: plan, documents, details), `field` (the field /
+assembly list and site phases, per site), `factory` (the factory list per
+site, and the factory line), `new_project`, `fleet_gps`, `workshop`,
 `warehouse`, `daily_plan`, `costs`, `staff`. Each place gets a small key
-button (admin only) listing who has **Shikon** (`view`) and **Vepron** (`act`).
-A grant is a row in `AccessGrant` (`scopeId` = site id, or `""` for the whole
-place). `act` allows every action of that place; grants only add rights.
+button (admin only) with **Vepron** (`act`), **Shikon** (`view`) and **Hiq**
+(`none`) for every person. The site page has three keys: the site, the
+factory list and the field list. A grant is a row in `AccessGrant`
+(`scopeId` = site id, or `""` for the whole place). `act` allows every action
+of that place. The most specific choice decides: this site, then the whole
+place, then the level; `none` takes away what the level gives.
 
 ## Migration from crew roles
 

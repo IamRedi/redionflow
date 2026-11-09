@@ -158,7 +158,6 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
   const { elementId, stage } = parsed.data;
   const side = sideOfStage(stage);
   if (!side) return { ok: false, message: tr("invalidInput") };
-  if (!canCheck(actor.can, side)) return { ok: false, message: tr("elementCheckOnlyEngineer") };
   const workerIds = [...new Set(parsed.data.workerIds)];
 
   const result = await withTenantContext(companyId, async (tx) => {
@@ -168,6 +167,8 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
     await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: elementSelect });
     if (!element || !stagesFor(side, element.list as ElementList, element.processRoutes).includes(stage)) return null;
+    // Factory list and field list are granted per site.
+    if (!canCheck(actor.at(element.baustelleId), side)) return "denied" as const;
     if (isCustomStage(stage)) {
       const definition = await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: companyId, kind: side, key: stage }, select: { id: true, archivedAt: true } });
       if (!definition || definition.archivedAt && !readProcessRoutes(element.processRoutes)?.[side]?.includes(stage)) return null;
@@ -202,6 +203,7 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
     return { siteId: element.baustelleId, workId: created.id, count };
   });
   if (!result) return { ok: false, message: tr("invalidInput") };
+  if (result === "denied") return { ok: false, message: tr("elementCheckOnlyEngineer") };
   if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   if (result === "full") return { ok: false, message: tr("elementStepFull") };
   revalidateSite(result.siteId);
@@ -227,9 +229,9 @@ export async function removeElementWorkAction(input: unknown): Promise<ActionRes
     if (!await tx.siteElementWork.findFirst({ where: { id: entry.id, companyProfileId: companyId }, select: { id: true } })) return null;
     const side = sideOfStage(entry.stage);
     if (!side) return null;
-    if (!canCheck(actor.can, side)) return "denied" as const;
     const element = await tx.siteElement.findFirst({ where: { id: entry.elementId, companyProfileId: companyId }, select: elementSelect });
     if (!element) return null;
+    if (!canCheck(actor.at(element.baustelleId), side)) return "denied" as const;
     if (side === "factory" && piecesOnSite(element) > 0) {
       // The step stays on the route: fewer pieces through it means fewer out.
       const after = asState({ ...element, work: element.work.filter((work) => work.id !== entry.id) });
@@ -268,12 +270,12 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   const actor = await currentCompanyActor(companyId);
   if (!actor) return { ok: false, message: tr("notSignedIn") };
   const { elementId, side, done } = parsed.data;
-  if (!canCheck(actor.can, side)) return { ok: false, message: tr("elementCheckOnlyEngineer") };
 
   const result = await withTenantContext(companyId, async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const element = await tx.siteElement.findFirst({ where: { id: elementId, companyProfileId: companyId }, select: elementSelect });
     if (!element) return null;
+    if (!canCheck(actor.at(element.baustelleId), side)) return "denied" as const;
     const state = asState(element);
     if (side === "field" && !onFieldList(state)) return "notReady" as const;
     // Finishing needs at least one step done: that is the route.
@@ -287,6 +289,7 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
     return element.baustelleId;
   });
   if (!result) return { ok: false, message: tr("invalidInput") };
+  if (result === "denied") return { ok: false, message: tr("elementCheckOnlyEngineer") };
   if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   if (result === "noSteps") return { ok: false, message: tr("elementNeedsStep") };
   if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };

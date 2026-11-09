@@ -37,7 +37,6 @@ import { factoryOutput } from "@/lib/elements/factory-output";
 import type { FactoryBatchView } from "../../production/production-ui";
 import { SiteFilesButton, type SiteFileView } from "./site-files-sheet";
 import { PhaseDocumentsButton } from '@/components/steel/phase-documents';
-import { SiteDocumentAccessButton } from '@/components/steel/site-document-access';
 import { siteDocumentAccess } from '@/lib/site-phase-documents/site-access';
 import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
 import { compareMarks } from "@/lib/elements/tekla-list";
@@ -351,7 +350,6 @@ export default async function BaustelleDetailPage({
                 canUpload={documentAccess.upload}
               />
               <PhaseDocumentsButton siteId={baustelle.id}/>
-              {documentAccess.manage?<SiteDocumentAccessButton siteId={baustelle.id}/>:null}
               <AccessKeyButton place="site" scopeId={baustelle.id} />
               <WorkingBadge workers={activeWorkerNames} />
             </div>
@@ -360,7 +358,7 @@ export default async function BaustelleDetailPage({
                 site={{ id: baustelle.id, name: baustelle.name }}
                 elements={elements}
                 workers={elementWorkers}
-                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload }}
+                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload, seeFactory: isAdmin || Boolean(actor?.allows("factory.view", baustelle.id)), seeField: isAdmin || Boolean(actor?.allows("field.view", baustelle.id)) }}
                 definitions={definitions}
               />
             ) : null}
