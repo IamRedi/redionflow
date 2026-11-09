@@ -4,15 +4,14 @@ import { SessionKeepAlive } from '@/components/auth/SessionKeepAlive';
 import { installationBrand } from '@/lib/installation-brand';
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Bell, Home, LayoutDashboard } from "lucide-react";
+import { Home, LayoutDashboard } from "lucide-react";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
-import { Button } from "@/components/ui/button";
 import { ProductionHeaderTools } from "@/components/shell/ProductionHeaderTools";
 import { ProductionHeaderActionsProvider } from '@/components/shell/ProductionHeaderActions';
 import { TopbarAnnouncementButton } from "@/app/(workzone)/workzone/topbar-announcement-button";
-import { notifyTeamAction } from "@/app/(workzone)/workzone/announcement-actions";
+import { NotificationBell } from "@/components/shell/NotificationBell";
 import { isSteelCompany } from "@/lib/dashboard/steel-access";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentAdmin } from "@/lib/auth/admin-session";
@@ -106,9 +105,9 @@ export default async function RootLayout({
               <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
               {admin && <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>}
             </>}
-            alerts={admin ? <>
-              <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px] bg-transparent shadow-none" />
-              <form action={notifyTeamAction}><Button type="submit" variant="outline" size="icon" className="size-[44px] rounded-full bg-transparent text-foreground/80 shadow-none hover:bg-muted hover:text-foreground" title={t("workzone.notifyTeam", initialLang)} aria-label={t("workzone.notifyTeam", initialLang)}><Bell className="size-4" /></Button></form>
+            alerts={admin || worker ? <>
+              {admin ? <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px] bg-transparent shadow-none" /> : null}
+              <NotificationBell admin={Boolean(admin)} />
             </> : null}
             book={kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} iconOnly /> : null}
           /> : <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">

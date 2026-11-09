@@ -9,7 +9,7 @@ import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
-import { sendNotificationToWorkers } from "@/lib/notifications/sendNotification";
+import { dispatchWorkNotification, testNotificationKey } from '@/lib/notifications/events';
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 
 export async function updateWorkzoneAnnouncementAction(formData: FormData) {
@@ -49,11 +49,13 @@ export async function notifyTeamAction() {
   const admin = await getCurrentAdmin();
   if (!admin) return;
   const currentLang = await resolveRequestLanguage();
-
-  await sendNotificationToWorkers({
-    title: t("workzone.newInfo", currentLang),
-    body: t("workzone.dailyPlanTomorrowNotificationBody", currentLang),
-    url: "/workzone",
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return;
+  await dispatchWorkNotification(companyId, {
+    key: testNotificationKey(), kind: 'test', action: 'daily_plan.view',
+    title: t('workzone.notificationTestTitle', currentLang),
+    body: t('workzone.notificationTestBody', currentLang),
+    url: "/workzone/plan",
     preference: "adminMessages",
   });
 }

@@ -75,6 +75,18 @@
     "signupInviteInvalid": "Il codice di invito non è valido."
   },
   "workzone": {
+    "notificationTitle": "Notifiche",
+    "notificationHint": "Piani e completamenti che puoi visualizzare.",
+    "notificationTestSelf": "Prova questo dispositivo",
+    "notificationTestTeam": "Prova il team",
+    "notificationIphone": "Su iPhone apri l’app dalla schermata Home, attiva le notifiche e scegli Consenti. Richiede iOS 16.4 o successivo.",
+    "notificationNotConfigured": "Le notifiche push non sono ancora configurate.",
+    "notificationEnableFirst": "Attiva prima le notifiche su questo dispositivo.",
+    "notificationTestSent": "Prova inviata. Controlla la notifica sul dispositivo.",
+    "notificationTestFailed": "Prova non inviata. Controlla l’attivazione e riprova.",
+    "notificationWait": "Attendi 30 secondi prima di riprovare.",
+    "notificationTestTitle": "Notifica di prova",
+    "notificationTestBody": "Le notifiche Workzone funzionano su questo dispositivo.",
     "startWork": "Inizia lavoro",
     "stopWork": "Ferma lavoro",
     "status": "Stato",

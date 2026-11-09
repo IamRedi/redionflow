@@ -75,6 +75,18 @@
     "signupInviteInvalid": "The invite code is not valid."
   },
   "workzone": {
+    "notificationTitle": "Notifications",
+    "notificationHint": "Plans and completions you have access to view.",
+    "notificationTestSelf": "Test this device",
+    "notificationTestTeam": "Test the team",
+    "notificationIphone": "On iPhone open the Home Screen app, enable notifications and choose Allow. Requires iOS 16.4 or later.",
+    "notificationNotConfigured": "Push notifications are not configured yet.",
+    "notificationEnableFirst": "Enable notifications on this device first.",
+    "notificationTestSent": "Test sent. Check the notification on the device.",
+    "notificationTestFailed": "Test was not sent. Check activation and try again.",
+    "notificationWait": "Wait 30 seconds before another test.",
+    "notificationTestTitle": "Test notification",
+    "notificationTestBody": "Workzone notifications work on this device.",
     "startWork": "Start work",
     "stopWork": "Stop work",
     "today": "Today",

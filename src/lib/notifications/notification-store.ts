@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { browserSubscriptionPrefix, decodeBrowserSubscription } from './web-push';
 
 export type NotificationSettingsRow = {
   tagesplan: boolean;
@@ -49,6 +50,16 @@ export async function updateNotificationSettings(userId: string, settings: Notif
 
 export async function registerNotificationSubscription(userId: string, fcmToken: string) {
   return prisma.$transaction(async tx=>{
+    const native = decodeBrowserSubscription(fcmToken);
+    if (native) {
+      const prefix = browserSubscriptionPrefix(native.endpoint);
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`push-endpoint:${native.endpoint}`}))`;
+      const existing = await tx.$queryRaw<Array<{userId:string}>>`SELECT "userId" FROM "NotificationSubscription" WHERE starts_with("fcmToken", ${prefix})`;
+      if (existing.some(row => row.userId !== userId)) return false;
+      // Same owner may refresh encryption keys; another account cannot claim
+      // the same endpoint by changing key order or key bytes.
+      await tx.$executeRaw`DELETE FROM "NotificationSubscription" WHERE "userId"=${userId} AND starts_with("fcmToken", ${prefix}) AND "fcmToken"<>${fcmToken}`;
+    }
     // Atomic conflict check: possession of a client-supplied token must not
     // delete or reassign another identity's subscription, even in a race.
     const rows = await tx.$queryRaw<Array<{id:string}>>`

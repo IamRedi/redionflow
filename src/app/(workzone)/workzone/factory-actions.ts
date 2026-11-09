@@ -18,6 +18,9 @@ import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import type { ActionResult } from "@/lib/validation/action-result";
 import { currentCompanyActor } from "@/lib/site-files/actor";
+import { dispatchWorkNotification, type WorkNotification } from '@/lib/notifications/events';
+import { resolveRequestLanguage } from '@/lib/i18n/server';
+import { steelWorkLabel } from '@/components/steel/work-catalog-label';
 
 const currentActor = currentCompanyActor;
 
@@ -99,11 +102,14 @@ export async function updateProductionStepAction(input: unknown): Promise<Action
 
   const { batchId, stepIndex, command: kind, text } = parsed.data;
   const command: StepCommand = kind === "block" || kind === "note" ? { kind, text } : { kind };
+  const lang = await resolveRequestLanguage();
+  let notification: WorkNotification | null = null;
 
   const result = await withTenantContext(companyId, async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "ProductionBatch" WHERE "id"=${batchId} AND "companyProfileId"=${companyId} FOR UPDATE`;
     const batch = await tx.productionBatch.findFirst({
       where: { id: batchId, companyProfileId: companyId },
-      select: { id: true, baustelleId: true, steps: true, readyAt: true },
+      select: { id: true, title: true, baustelleId: true, steps: true, readyAt: true, baustelle: { select: { name: true } } },
     });
     if (!batch) return { error: tr("accessDenied") ?? "Access denied" } as const;
     let change;
@@ -118,7 +124,7 @@ export async function updateProductionStepAction(input: unknown): Promise<Action
       where: { id: batch.id },
       data: { steps: change.steps, readyAt: ready ? (batch.readyAt ?? new Date()) : null },
     });
-    await tx.productionEvent.create({
+    const event = await tx.productionEvent.create({
       data: {
         companyProfileId: companyId,
         batchId: batch.id,
@@ -132,9 +138,11 @@ export async function updateProductionStepAction(input: unknown): Promise<Action
         actorWorkerId: actor.workerId,
       },
     });
+    if (change.event.toStatus === 'done' && change.event.fromStatus !== 'done') notification = { key: `batch:${event.id}`, kind: 'process', action: 'factory.view', siteId: batch.baustelleId, title: batch.baustelle.name, body: `✓ ${steelWorkLabel({ kind: 'factory', key: change.event.stepKey, label: '' }, lang)} · ${batch.title}`, url: `/workzone/baustellen/${batch.baustelleId}`, preference: 'workEnd' };
     return { baustelleId: batch.baustelleId } as const;
   });
   if ("error" in result) return { ok: false, message: String(result.error) };
+  if (notification) await dispatchWorkNotification(companyId, notification);
   revalidateFactory(result.baustelleId);
   return { ok: true, message: "OK" };
 }

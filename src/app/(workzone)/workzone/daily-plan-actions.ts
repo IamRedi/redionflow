@@ -1,5 +1,6 @@
 "use server";
 import { planMachineLabel } from '@/lib/workzone/plan-machine-label';
+import { randomUUID } from 'node:crypto';
 
 import { revalidatePath } from "next/cache";
 
@@ -8,9 +9,9 @@ import { currentCompanyActor } from "@/lib/site-files/actor";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { t } from "@/lib/i18n";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
-import { sendNotification } from "@/lib/notifications/sendNotification";
+import { dispatchWorkNotification, type WorkNotification } from '@/lib/notifications/events';
 import type { ActionResult } from "@/lib/validation/action-result";
-import { dateKey, dayRange, isTomorrow } from "@/lib/workzone/date-utils";
+import { dateKey, dayRange } from "@/lib/workzone/date-utils";
 import type { Prisma } from '@/generated/prisma/client';
 import { STEEL_TYPES } from '@/lib/dashboard/steel-metrics';
 import { AssetOperationError } from '@/lib/company-assets/access';
@@ -341,8 +342,9 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
 
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return { ok: false, message: msg(input.lang, "notSignedIn") };
-  let notificationWorkerIds: string[] = [];
+  let notification: WorkNotification | null = null;
   const result = await withSteelPlanningContext<ActionResult>(currentCompanyId, true, async (tx, assetActor) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`plan-save:${currentCompanyId}:${input.date}`}))`;
     const company = await tx.companyProfile.findUnique({ where: { id: currentCompanyId }, select: { id: true } });
     if (!company || company.id !== currentCompanyId) return { ok: false, message: msg(input.lang, "companyNotFound") };
     const plan = await tx.dailyWorkPlan.findUnique({
@@ -428,29 +430,12 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
         });
       }
 
-    if (isTomorrow(day)) {
-      notificationWorkerIds = [
-        ...new Set(
-          plan.columns
-            .flatMap((column) => column.assignments)
-            .filter((assignment) => assignment.kind === "WORKER" && assignment.workerId)
-            .map((assignment) => assignment.workerId as string),
-        ),
-      ];
-    }
+    if (!rowsAreEqual(previousRows, rows)) notification = { key: `plan:${plan.id}:${randomUUID()}`, kind: 'plan', action: 'daily_plan.view', title: msg(input.lang, 'dailyPlanSaved'), body: input.date, url: `/workzone/plan?date=${encodeURIComponent(input.date)}`, preference: 'tagesplan' };
     return { ok: true, message: msg(input.lang, "dailyPlanSaved") };
   });
   if (!result.ok) return result;
 
-  if (isTomorrow(day)) {
-    await sendNotification({
-      userIds: notificationWorkerIds,
-      title: msg(input.lang, "dailyPlanTomorrowNotificationTitle"),
-      body: msg(input.lang, "dailyPlanTomorrowNotificationBody"),
-      url: "/workzone/plan",
-      preference: "tagesplan",
-    });
-  }
+  if (notification) await dispatchWorkNotification(currentCompanyId, notification);
 
   revalidatePath("/workzone");
   revalidatePath(`/workzone/plan?date=${input.date}`);

@@ -84,6 +84,18 @@
     "signupInviteInvalid": "Der Einladungscode stimmt nicht."
   },
   "workzone": {
+    "notificationTitle": "Benachrichtigungen",
+    "notificationHint": "Pläne und Abschlüsse, die du sehen darfst.",
+    "notificationTestSelf": "Dieses Gerät testen",
+    "notificationTestTeam": "Team testen",
+    "notificationIphone": "Auf dem iPhone die App vom Home-Bildschirm öffnen, Benachrichtigungen aktivieren und Erlauben wählen. Ab iOS 16.4.",
+    "notificationNotConfigured": "Push-Benachrichtigungen sind noch nicht eingerichtet.",
+    "notificationEnableFirst": "Zuerst Benachrichtigungen auf diesem Gerät aktivieren.",
+    "notificationTestSent": "Test gesendet. Benachrichtigung am Gerät prüfen.",
+    "notificationTestFailed": "Test nicht gesendet. Aktivierung prüfen und erneut versuchen.",
+    "notificationWait": "Vor dem nächsten Test 30 Sekunden warten.",
+    "notificationTestTitle": "Testbenachrichtigung",
+    "notificationTestBody": "Workzone-Benachrichtigungen funktionieren auf diesem Gerät.",
     "startWork": "Arbeit starten",
     "stopWork": "Arbeit stoppen",
     "status": "Status",
