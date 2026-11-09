@@ -4,6 +4,8 @@ import { ASSISTANT_MAX_INPUT_BYTES, ASSISTANT_MAX_OUTPUT_TOKENS, ASSISTANT_TIMEO
 import { AssistantGenerationError, categorizeAssistantFailure, type AssistantFailure } from './diagnostics';
 
 export type AssistantGenerationHooks = {
+  /** Steps for this request when it differs from the kind's default (e.g. one tool call + answer). */
+  steps?: number;
   onProviderCall?: (event: { step: number; inputBytes: number }) => void | Promise<void>;
   onFailure?: (failure: AssistantFailure) => void | Promise<void>;
 };
@@ -13,7 +15,7 @@ function notify<T>(hook: ((event: T) => void | Promise<void>) | undefined, event
 }
 
 export function assistantGeneration(request: Request, kind: "admin" | "worker", settle: (tokens?: number) => Promise<void>, hooks: AssistantGenerationHooks = {}) {
-  const maxSteps = assistantSteps(kind);
+  const maxSteps = hooks.steps ?? assistantSteps(kind);
   const abortSignal = AbortSignal.any([request.signal, AbortSignal.timeout(ASSISTANT_TIMEOUT_MS)]);
   let calls = 0;
   const middleware: LanguageModelMiddleware = {

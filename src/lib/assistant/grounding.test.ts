@@ -78,9 +78,9 @@ it('leaves worker-specific asset discovery open instead of forcing an invented w
   expect(assistantInitialTool('Cilat vegla i janë dorëzuar Arditit?', true)).toBeUndefined();
   expect(assistantInitialTool('Sa mjete ka në kantierin Agroni?', true)).toBeUndefined();
   expect(assistantInitialTool('Sa materiale janë dorëzuar në projektin Agroni?', true)).toBeUndefined();
-  expect(assistantInitialTool('Si mund të raportoj një defekt?', true)).toBeUndefined();
-  expect(assistantInitialTool('Si hap oficinën?', true)).toBeUndefined();
-  expect(assistantInitialTool('Where do I report a defect?', true)).toBeUndefined();
+  expect(assistantInitialTool('Si mund të raportoj një defekt?', true)).toBe('getPlatformGuide'); // how-to goes to the app guide, never to workshop data
+  expect(assistantInitialTool('Si hap oficinën?', true)).toBe('getPlatformGuide'); // how-to goes to the app guide, never to workshop data
+  expect(assistantInitialTool('Where do I report a defect?', true)).toBe('getPlatformGuide'); // how-to goes to the app guide, never to workshop data
   expect(assistantInitialTool('Ku ndodhen veglat e punëtorit Ardit?', true)).toBeUndefined();
 });
 it('preserves optional Zod arguments instead of letting Responses normalize them to required null', () => {

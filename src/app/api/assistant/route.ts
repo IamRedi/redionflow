@@ -5,6 +5,7 @@ import { ensureLoginAllowed, getClientIp, registerFailedLogin } from '@/lib/auth
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { getRequesterContext } from '@/lib/assistant/requester';
+import { platformAssistantTools, reportAssistantFailure } from "@/lib/assistant/platform-tools";
 import { assistantNoAccessResponse, hasAssistantAccess } from '@/lib/assistant/access';
 import { readAssistantBody } from '@/lib/assistant/request-body';
 import { reserveAssistantQuota, assistantQuotaResponse } from '@/lib/assistant/quota';
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
     const productionIntent = steel && !metaQuestion ? resolveCanonicalProductionIntent(parsed.data.messages) : null;
     const assetIntent = steel && !metaQuestion && !productionIntent ? resolveCanonicalAssetIntent(question) : null;
     const documents = createDocumentResolution();
-    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel, assetIntent), ...(steel ? steelAssistantTools(requester, turn, documents) : {}) };
+    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel, assetIntent), ...(steel ? steelAssistantTools(requester, turn, documents) : {}), ...platformAssistantTools(requester, { guide: steel }) };
     if (!metaQuestion) delete registry.getAssistantCapabilities;
     else for (const name of Object.keys(registry)) if (name !== 'getAssistantCapabilities') delete registry[name];
     const diagnostics = createAssistantRunDiagnostics();
@@ -157,6 +158,8 @@ export async function POST(req: Request) {
       onCheckpoint: async answer => { if (!await checkpointRun(requester, { runId, answer })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE'); },
       onComplete: async final => {
         if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: { ...final.diagnostics, weightQualification: weightQualifier.snapshot(), canonicalProduction: productionAnswer.snapshot(), canonicalAsset: assetAnswer.snapshot() }, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+        const fault = final.diagnostics.failure ?? (final.diagnostics.lastToolFailure?.code === 'db' ? final.diagnostics.lastToolFailure : undefined);
+        void reportAssistantFailure(requester, fault ?? undefined).catch(() => {});
         logger.info({ event: 'assistant.run', runId, status: final.status, failure: final.diagnostics.failure, lastToolFailure: final.diagnostics.lastToolFailure, steps: final.diagnostics.steps, providerCalls: final.diagnostics.providerCalls, failedToolResults: final.diagnostics.failedToolResults }, 'Assistant request completed');
       },
     });
@@ -168,6 +171,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: text, code: error.code }, { status: error.status, headers: headers() });
     }
     const failure = categorizeAssistantFailure(error);
+    if (actor) void reportAssistantFailure(actor, failure).catch(() => {});
     const response = NextResponse.json({ error: failureMessage(errorLanguage, failure.code) }, { status: 503, headers: headers() });
     try { return await savedResponse(response, 'error', failure.code.toUpperCase()); } catch { return NextResponse.json({ error: storageMessage(errorLanguage) }, { status: 503, headers: headers() }); }
   }
