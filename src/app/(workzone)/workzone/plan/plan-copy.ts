@@ -11,6 +11,7 @@ const words = {
   search: ["Kërko emrin…", "Search name…", "Name suchen…", "Cerca nome…", "Szukaj nazwy…", "Caută nume…"],
   step: ["Zgjidh një punëtor ose mjet, pastaj shtyp kantierin.", "Pick a worker or machine, then tap the site.", "Mitarbeiter oder Maschine wählen, dann die Baustelle antippen.", "Scegli un operaio o un mezzo, poi tocca il cantiere.", "Wybierz pracownika lub maszynę, potem dotknij budowy.", "Alege un muncitor sau utilaj, apoi atinge șantierul."],
   picked: ["shtyp kantierin ku punon sot.", "tap the site for today.", "Baustelle für heute antippen.", "tocca il cantiere di oggi.", "dotknij budowy na dziś.", "atinge șantierul de azi."],
+  chooseSite: ["Ku punon sot? Zgjidh kantierin.", "Where today? Pick the site.", "Wo heute? Baustelle wählen.", "Dove oggi? Scegli il cantiere.", "Gdzie dziś? Wybierz budowę.", "Unde azi? Alege șantierul."],
   cancel: ["Anulo", "Cancel", "Abbrechen", "Annulla", "Anuluj", "Anulează"],
   nobody: ["Askush ende", "Nobody yet", "Noch niemand", "Ancora nessuno", "Jeszcze nikt", "Încă nimeni"],
   dropHere: ["Shtyp këtu", "Tap here", "Hier antippen", "Tocca qui", "Dotknij tutaj", "Atinge aici"],
