@@ -131,6 +131,17 @@ export async function readWorkerAccessSummary(workerIdInput: unknown) {
       grants: row.accessGrants
         .flatMap(g => { const place = readAccessPlace(g.place); return place ? [{ place, scopeId: g.scopeId, scopeName: g.scopeId ? siteName.get(g.scopeId) ?? null : null, level: g.level as GrantLevel }] : []; })
         .sort((a, b) => ACCESS_PLACES.indexOf(a.place) - ACCESS_PLACES.indexOf(b.place)),
+      // Every place for all sites: what the person can do there now and the key choice behind it.
+      places: ACCESS_PLACES.map(place => {
+        const allowed = actActions(place).filter(action => can(subject, action, ""));
+        const grant = row.accessGrants.find(g => g.place === place && g.scopeId === "");
+        return {
+          place,
+          sees: can(subject, `${place}.view` as AccessAction, ""),
+          acts: allowed.length === 0 ? "none" as const : allowed.length === actActions(place).length ? "all" as const : "some" as const,
+          grant: grant ? (grant.level as GrantLevel) : null,
+        };
+      }),
     };
   });
 }

@@ -17,6 +17,7 @@ const words = {
   wholePlace: ["për të gjithë kantieret", "for all sites", "für alle Baustellen", "per tutti i cantieri", "dla wszystkich budów", "pentru toate șantierele"],
   thisSite: ["Ky kantier", "This site", "Diese Baustelle", "Questo cantiere", "Ta budowa", "Acest șantier"],
   allSites: ["Të gjithë kantieret", "All sites", "Alle Baustellen", "Tutti i cantieri", "Wszystkie budowy", "Toate șantierele"],
+  fromLevel: ["nga kategoria", "from category", "durch Stufe", "dalla categoria", "z poziomu", "din categorie"],
   nobody: ["Askush ende.", "Nobody yet.", "Noch niemand.", "Ancora nessuno.", "Jeszcze nikt.", "Încă nimeni."],
   base: ["Bazë", "Basic", "Basis", "Base", "Podstawowy", "De bază"],
   full: ["Shikim i plotë", "Full view", "Volle Ansicht", "Vista completa", "Pełny podgląd", "Vizualizare completă"],

@@ -360,7 +360,10 @@ export async function WorkerProfileView({
                 : null
             }
           />
-          <WorkerAssets workerId={worker.id} documents={documents} currentLang={currentLang} />
+          <div className="flex flex-wrap items-start gap-2">
+            {mode === "admin" && assetOperations ? <WorkerAccessPanel workerId={worker.id} /> : null}
+            <WorkerAssets workerId={worker.id} documents={documents} currentLang={currentLang} />
+          </div>
         </div>
         <div className="relative grid grid-cols-3 divide-x border-t" data-testid="worker-profile-metrics">
           <Link href={dayHref} className={metricLink}>
@@ -388,8 +391,6 @@ export async function WorkerProfileView({
           </a>
         </div>
       </section>
-
-      {mode === "admin" && assetOperations ? <WorkerAccessPanel workerId={worker.id} /> : null}
 
       {showAssistantAccess ? (
         <AssistantAccessToggle action={setWorkerAssistantAccessAction} idName="workerId" id={worker.id} enabled={Boolean(worker.assistantAccess)} language={currentLang} />
