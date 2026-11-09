@@ -257,6 +257,20 @@ export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
       requireManage(actor);const a=await lockOwnedAsset(tx,actor,c.asset);expectRevision(a.revision,c.revision);if(a.disposition==='active')return assetFail('INVALID_TRANSITION');
       if(await tx.companyAssetIncident.findFirst({where:{...owned(actor),assetId:a.id,status:'pending'},select:{id:true}}))return assetFail('ASSET_UNAVAILABLE');
       await setBaseActive(tx,actor,a,a.wasActive??false);await bump(tx,actor,a,{disposition:'active',wasActive:null});await event(tx,actor,a.id,'restored',c.note);
+    } else if(c.type==='make-available') {
+      // One step for the boss: open repairs become ready, pending defect reports are confirmed, a blocked machine is active again.
+      requireManage(actor);const a=await lockOwnedAsset(tx,actor,c.asset);expectRevision(a.revision,c.revision);
+      if(a.disposition!=='active')return assetFail('INVALID_TRANSITION');
+      if(await tx.companyAssetIncident.findFirst({where:{...owned(actor),assetId:a.id,status:'pending',kind:{in:['lost','retire']}},select:{id:true}}))return assetFail('ASSET_UNAVAILABLE');
+      const note=c.note?.trim()||'';
+      const open=await tx.companyAssetRepair.findMany({where:{...owned(actor),assetId:a.id,phase:{in:activeRepairs}},select:{id:true,repairNote:true}});
+      for(const r of open){
+        await tx.companyAssetRepair.update({where:{id:r.id},data:{phase:'ready',tested:true,repairNote:[r.repairNote,note].filter(Boolean).join('\n').slice(-12000),revision:{increment:1}}});
+        await event(tx,actor,a.id,'repair.ready',note,r.id);
+      }
+      await tx.companyAssetIncident.updateMany({where:{...owned(actor),assetId:a.id,kind:'defect',status:'pending'},data:{status:'confirmed',decidedByName:actor.name,decidedAt:new Date(),decisionNote:note,revision:{increment:1}}});
+      if(!a.isActive){await setBaseActive(tx,actor,a,true);await event(tx,actor,a.id,'machine.activated',note);}
+      await bump(tx,actor,a);
     } else if(c.type==='edit') {
       requireManage(actor);const a=await lockOwnedAsset(tx,actor,c.asset);expectRevision(a.revision,c.revision);
       if(a.machineId)await tx.machine.update({where:{id:a.machineId,companyProfileId:actor.companyId},data:{name:c.name}});

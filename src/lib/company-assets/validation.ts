@@ -13,6 +13,8 @@ export const assetMutationSchema = z.object({ requestId: z.uuid(), command: z.di
   z.object({ type:z.literal('repair-location'),repairId:id,revision,location:z.enum(['internal','external']),provider:z.string().trim().max(200).optional(),note }).strict(),
   z.object({ type:z.literal('repair-note'),repairId:id,revision,note }).strict(),
   z.object({ type:z.literal('restore'),asset:assetRefSchema,revision,note }).strict(),
+  // Boss shortcut: close open repairs/defects and make the asset available in one step.
+  z.object({ type:z.literal('make-available'),asset:assetRefSchema,revision,note:optionalNote }).strict(),
   z.object({ type:z.literal('register'),name:z.string().trim().min(1).max(120),category:z.enum(['tool','clothing','equipment']),code:z.string().trim().max(80).optional(),barcode:z.string().trim().max(128).optional(),factoryCode:scanCode.optional(),size:z.string().trim().max(80).optional(),note:optionalNote,quantity:z.number().int().min(1).max(100).optional() }).strict(),
   z.object({ type:z.literal('code-add'),asset:assetRefSchema,value:scanCode }).strict(),
   z.object({ type:z.literal('code-generate'),asset:assetRefSchema }).strict(),

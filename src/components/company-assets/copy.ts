@@ -108,6 +108,7 @@ const words = {
   lost: ['Humbur', 'Lost', 'Verloren', 'Smarrito', 'Zagubione', 'Pierdut'],
   retired: ['Jashtë përdorimit', 'Retired', 'Ausgemustert', 'Dismesso', 'Wycofane', 'Scos din uz'],
   inactive: ['Joaktiv', 'Inactive', 'Inaktiv', 'Inattivo', 'Nieaktywne', 'Inactiv'],
+  makeAvailable: ['Bëje të disponueshme', 'Make available', 'Verfügbar machen', 'Rendi disponibile', 'Udostępnij', 'Fă disponibil'],
   restore: ['Rikthe në përdorim', 'Restore to service', 'Wieder in Betrieb nehmen', 'Rimetti in servizio', 'Przywróć do użytku', 'Repune în uz'],
   showInactive: ['Përfshi të humburat / jashtë përdorimit', 'Include lost / retired items', 'Verlorene / ausgemusterte einschließen', 'Includi smarriti / dismessi', 'Uwzględnij zagubione / wycofane', 'Include pierdute / scoase din uz'],
   previous: ['Mbrapa', 'Previous', 'Zurück', 'Indietro', 'Wstecz', 'Înapoi'],
