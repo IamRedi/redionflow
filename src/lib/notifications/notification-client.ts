@@ -183,6 +183,14 @@ export async function testBrowserNotification(team = false) {
     if (!team && !subscription) return { ok: false, message: t('workzone.notificationEnableFirst', lang) };
     const response = await fetch('/api/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(team ? { team: true } : { subscription: subscription!.toJSON() }) });
     const result = await response.json();
+    if (team && result.ok) return { ok: true, message: t('workzone.notificationTeamSent', lang).replace('{count}', String(result.sent ?? 0)) };
     return { ok: Boolean(result.ok), message: t(result.ok ? 'workzone.notificationTestSent' : response.status === 429 ? 'workzone.notificationWait' : 'workzone.notificationTestFailed', lang) };
   } catch { return { ok: false, message: t('workzone.notificationTestFailed', lang) }; }
+}
+
+/** One tap for everyone: activate this device (permission first, inside the tap) and send it a test. */
+export async function enableAndTestNotifications() {
+  const enabled = await enableNotifications();
+  if (!enabled.ok) return enabled;
+  return testBrowserNotification(false);
 }

@@ -42,15 +42,16 @@ test('steel card counts the visible task and the existing bell enables/tests a d
    const sub={toJSON:()=>s,options:{},unsubscribe:async()=>true};const registration={pushManager:{getSubscription:async()=>sub,subscribe:async()=>sub}};
    Object.defineProperty(navigator,'serviceWorker',{value:{register:async()=>registration,ready:Promise.resolve(registration),getRegistration:async()=>registration},configurable:true});
   },subscription);
-  await page.goto('/workzone');await page.getByTestId('notification-bell').click();
-  await page.getByRole('button',{name:'Aktivizo njoftimet',exact:true}).click();
-  await expect(page.getByTestId('notification-dialog').getByRole('status')).toContainText('Njoftimet jane aktive');
-  expect(await prisma.notificationSubscription.count({where:{userId:admin.id}})).toBe(1);
   await page.route('**/api/notifications/test',route=>route.fulfill({json:{ok:true,sent:1,failed:0}}));
-  await page.getByRole('button',{name:'Provo në këtë pajisje',exact:true}).click();await expect(page.getByTestId('notification-dialog').getByRole('status')).toContainText('Prova u dërgua');
+  await page.goto('/workzone');await page.getByTestId('notification-bell').click();
+  // One tap activates this device and sends it a test.
+  await page.getByRole('button',{name:'Aktivizo dhe provo pajisjen time',exact:true}).click();
+  await expect(page.getByTestId('notification-dialog').getByRole('status')).toContainText('Prova u dërgua');
+  expect(await prisma.notificationSubscription.count({where:{userId:admin.id}})).toBe(1);
+  await page.getByRole('button',{name:'Provo te të gjithë',exact:true}).click();await expect(page.getByTestId('notification-dialog').getByRole('status')).toContainText('1 pajisje');
   await page.keyboard.press('Escape');
   await context.clearCookies();await context.addCookies([{name:'bk_lang',value:'sq',url:origin}]);
   await page.goto('/workzone/login');await page.locator('input[name=name]').fill(`${seed.worker.firstName} ${seed.worker.lastName}`);await page.locator('input[name=loginCode]').fill(seed.workerCode);await page.locator('button[type=submit]').click();await expect(page).toHaveURL(/\/workzone\/profile$/);
-  await page.goto('/workzone');await page.getByTestId('notification-bell').click();await expect(page.getByRole('button',{name:'Provo për ekipin',exact:true})).toHaveCount(0);
+  await page.goto('/workzone');await page.getByTestId('notification-bell').click();await expect(page.getByRole('button',{name:'Provo te të gjithë',exact:true})).toHaveCount(0);await expect(page.getByTestId('notification-enable-test')).toHaveCount(1);
  }finally{if(companyId){const ids=[...(await prisma.user.findMany({where:{companyProfileId:companyId},select:{id:true}})),...(await prisma.worker.findMany({where:{companyProfileId:companyId},select:{id:true}}))].map(r=>r.id);await prisma.notificationSubscription.deleteMany({where:{userId:{in:ids}}});await prisma.notificationSettings.deleteMany({where:{userId:{in:ids}}});await cleanupSteelAssetsWorkshop(companyId);}}
 });

@@ -5,7 +5,7 @@ import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { currentCompanyActor } from '@/lib/site-files/actor';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { sendNotification } from '@/lib/notifications/sendNotification';
-import { dispatchWorkNotification, testNotificationKey } from '@/lib/notifications/events';
+import { testNotificationKey } from '@/lib/notifications/events';
 import { encodeBrowserSubscription, validBrowserSubscription, webPushConfig } from '@/lib/notifications/web-push';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { t } from '@/lib/i18n';
@@ -31,7 +31,12 @@ export async function POST(request: Request) {
   const lang = await resolveRequestLanguage();
   const title = t('workzone.notificationTestTitle', lang), body = t('workzone.notificationTestBody', lang);
   if (parsed.data.team) {
-    const result = await dispatchWorkNotification(companyId, { key: testNotificationKey(), kind: 'test', action: 'daily_plan.view', title, body, url: '/workzone/plan', preference: 'adminMessages' });
+    // Team test (admin): every active person of the company on every device they activated.
+    const people = await withTenantContext(companyId, async tx => [
+      ...(await tx.user.findMany({ where: { companyProfileId: companyId, role: 'ADMIN', isActive: true }, select: { id: true } })),
+      ...(await tx.worker.findMany({ where: { companyProfileId: companyId, status: 'active' }, select: { id: true } })),
+    ]);
+    const result = await sendNotification({ userIds: people.map(person => person.id), title, body, url: '/workzone', tag: testNotificationKey() });
     return NextResponse.json({ ok: result.sent > 0, ...result });
   }
   if (!validBrowserSubscription(parsed.data.subscription)) return NextResponse.json({ ok: false }, { status: 400 });

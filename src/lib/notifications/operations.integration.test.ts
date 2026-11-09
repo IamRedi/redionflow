@@ -79,3 +79,13 @@ it('registration and self-test require a single authenticated owner; same endpoi
  request.cookies.set('bk_admin_id',await createTestSession('admin',a.admin.id));expect((await config()).status).toBe(401);
  request.cookies.clear();expect((await config()).status).toBe(401);
 });
+it('admin team test reaches every active person of the company on their devices, never another company',async()=>{
+ const a=tenants[0],b=tenants[1];
+ expect(await registerNotificationSubscription(a.worker.id,encodeBrowserSubscription(sub('team-worker')))).toBe(true);
+ expect(await registerNotificationSubscription(b.worker.id,encodeBrowserSubscription(sub('team-foreign')))).toBe(true);
+ await prisma.notificationSettings.create({data:{userId:a.worker.id,adminMessages:false,tagesplan:false}}).catch(()=>undefined);
+ const response=await testPush(req('test',{team:true}));expect(response.status).toBe(200);
+ expect(await response.json()).toMatchObject({ok:true,sent:1});
+ const endpoints=provider.send.mock.calls.map(call=>(call as unknown as [{endpoint:string}])[0].endpoint);
+ expect(endpoints).toEqual(['https://web.push.apple.com/synthetic-team-worker']);
+});
