@@ -251,6 +251,7 @@ model User {
 }
 
 model CompanyProfile {
+  accessGrants AccessGrant[]
   platformSignals PlatformSignal[]
   siteDocumentEngineers SiteDocumentEngineer[]
   phaseDocuments SitePhaseDocument[]
@@ -860,6 +861,7 @@ model MachineConeMovement {
 
 model Worker {
   siteDocumentGrants SiteDocumentEngineer[]
+  accessGrants AccessGrant[]
   phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentWorker")
   phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptWorker")
   operationalAssets CompanyOperationalAsset[] @relation("AssetHolder")
@@ -901,6 +903,8 @@ model Worker {
   level                 WorkerLevel        @default(JUNIOR)
   /// Metal construction role (see src/lib/workzone/crew-roles.ts); null = plain worker.
   crewRole              String?
+  /// Access level (src/lib/access/rules.ts): BASE or FULL_VIEW; null = derived from crewRole.
+  accessLevel           String?
   /// AI assistant access when the company limits it to selected people.
   assistantAccess       Boolean              @default(false)
   preferredLanguage     AssistantLanguage  @default(DE)
@@ -1886,6 +1890,24 @@ model CompanyAssetCode {
 }
 
 /// Explicit, tenant-scoped permission for an engineer to upload to one site.
+/// Per-place access given with the key button: "view" (Shikon) or "act" (Vepron).
+/// scopeId is the site id for site grants, "" for a whole place.
+model AccessGrant {
+  id String @id @default(cuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade)
+  place String
+  scopeId String @default("")
+  workerId String
+  worker Worker @relation(fields:[companyProfileId,workerId],references:[companyProfileId,id],onDelete:Cascade)
+  level String
+  grantedByUserId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([companyProfileId,place,scopeId,workerId])
+  @@index([companyProfileId,workerId])
+}
+
 model SiteDocumentEngineer {
   id String @id @default(cuid())
   companyProfileId String
