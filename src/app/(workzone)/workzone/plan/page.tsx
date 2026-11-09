@@ -1,12 +1,14 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
-import { getPilotAdmin as getCurrentAdmin } from "@/lib/auth/pilot-session";
 import { companyOrLogin } from "@/lib/workzone/company-or-login";
-import { t } from "@/lib/i18n";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { currentCompanyActor } from "@/lib/site-files/actor";
+import { NoAccessHere } from "@/components/access/no-access";
+import { planCopy, planDayLabel } from "./plan-copy";
+import { SavedPlanList } from "./saved-plan";
 import { dateKey, dayRange } from "@/lib/workzone/date-utils";
 import { DailyPlanBoard } from "../daily-plan-board";
 import { AccessKeyButton } from "@/components/access/access-key-button";
@@ -24,36 +26,58 @@ function addDaysToKey(value: string, days: number) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 }
 
+function PlanHeader({ date, lang, canEdit }: { date: string; lang: string; canEdit: boolean }) {
+  const c = planCopy(lang);
+  const today = dateKey(new Date());
+  const nav = "grid size-11 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition hover:bg-muted";
+  return (
+    <section className="rounded-3xl border bg-card p-4 shadow-sm sm:p-5">
+      <Link href="/workzone" className="text-xs text-muted-foreground hover:text-foreground">← Workzone</Link>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <CalendarDays className="size-6 text-orange-600 dark:text-orange-400" aria-hidden />
+        <h1 className="text-2xl font-bold tracking-tight">{c.title}</h1>
+        {canEdit ? <AccessKeyButton place="daily_plan" compact /> : null}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, -1))}`} className={nav} aria-label={c.previous} title={c.previous}><ChevronLeft className="size-5" /></Link>
+        <span className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-semibold capitalize" data-testid="plan-day">
+          {planDayLabel(date, lang)}
+          {date === today ? <span className="rounded-full bg-orange-600 px-2 py-0.5 text-[11px] font-semibold normal-case text-white dark:bg-orange-500 dark:text-slate-950">{c.today}</span> : null}
+        </span>
+        <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, 1))}`} className={nav} aria-label={c.next} title={c.next}><ChevronRight className="size-5" /></Link>
+        {date !== today ? <Link href={`/workzone/plan?date=${encodeURIComponent(today)}`} className="inline-flex min-h-11 items-center rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm hover:bg-muted">{c.today}</Link> : null}
+      </div>
+    </section>
+  );
+}
+
 export default async function DailyPlanPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const currentLang = await resolveRequestLanguage();
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("workzone.createDailyPlan", currentLang)}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">{t("workzone.dailyPlanAdminOnly", currentLang)}</CardContent>
-      </Card>
-    );
-  }
-
+  const c = planCopy(currentLang);
   const params = await searchParams;
-  const selectedDate = params.date ?? dateKey(new Date());
-  const planDate = planDay(selectedDate);
-  if (!planDate) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("workzone.createDailyPlan", currentLang)}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">{t("workzone.invalidDate", currentLang)}</CardContent>
-      </Card>
-    );
-  }
+  const selectedDate = params.date && planDay(params.date) ? params.date : dateKey(new Date());
+  const planDate = planDay(selectedDate)!;
 
   const company = await companyOrLogin();
   if (!company) return null;
+  const actor = await currentCompanyActor(company.id);
+  // Everybody sees the saved plan; the key button gives "Vepron" (create and save).
+  if (!actor?.allows("daily_plan.view")) return <NoAccessHere backHref="/workzone" />;
+  const canEdit = actor.allows("daily_plan.edit");
+
+  if (!canEdit) {
+    const saved = await withPilotDbContext(company.id, tx => tx.dailyWorkPlan.findUnique({
+      where: { companyProfileId_planDate: { companyProfileId: company.id, planDate } },
+      select: { savedRows: { orderBy: { sortOrder: "asc" } } },
+    }));
+    return (
+      <div className="mx-auto w-full min-w-0 max-w-5xl space-y-4" data-testid="daily-plan-view">
+        <PlanHeader date={selectedDate} lang={currentLang} canEdit={false} />
+        <SavedPlanList rows={saved?.savedRows ?? []} c={c} me={actor.name} />
+      </div>
+    );
+  }
+  const editorId = actor.userId;
 
   const { plan, workers, machines, baustellen } = await withPilotDbContext(company.id, async tx => {
     const planSeed = await tx.dailyWorkPlan.upsert({
@@ -61,7 +85,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
       create: {
         companyProfileId: company.id,
         planDate,
-        createdByAdminId: admin.id,
+        createdByAdminId: editorId,
       },
       update: {},
       select: { id: true },
@@ -180,46 +204,23 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
         select: { id: true, name: true, nickname: true, patentaEnevojshme: true, isActive: true },
       }),
       tx.baustelle.findMany({
-        where: { companyProfileId: company.id },
+        // Only open sites; one that already has people today stays visible.
+        where: { companyProfileId: company.id, OR: [{ status: "active" }, { dailyPlanColumns: { some: { planId: planSeed.id } } }] },
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),
     ]);
 
     return { plan, workers, machines, baustellen };
-  }, "admin");
-
-  const prevDate = addDaysToKey(selectedDate, -1);
-  const nextDate = addDaysToKey(selectedDate, 1);
-  const todayDate = dateKey(new Date());
+  });
 
   return (
     <div className="w-full min-w-0 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="space-y-1">
-          <h1 className="flex items-center gap-2 text-xl font-semibold">{t("workzone.createDailyPlan", currentLang)}<AccessKeyButton place="daily_plan" compact /></h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/workzone/plan?date=${encodeURIComponent(prevDate)}`}>{t("workzone.previousDay", currentLang)}</Link>
-            </Button>
-            <span className="rounded-md border bg-card px-3 py-1 font-medium text-foreground">{selectedDate}</span>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/workzone/plan?date=${encodeURIComponent(todayDate)}`}>{t("common.today", currentLang)}</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/workzone/plan?date=${encodeURIComponent(nextDate)}`}>{t("workzone.nextDay", currentLang)}</Link>
-            </Button>
-          </div>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/workzone">{t("workzone.backToWorkzone", currentLang)}</Link>
-        </Button>
-      </div>
+      <PlanHeader date={selectedDate} lang={currentLang} canEdit />
 
       {plan ? (
         <DailyPlanBoard
           date={selectedDate}
-          showCurrentVersionHint
           columns={baustellen.map((baustelle) => {
             const column = plan.columns.find((item) => item.baustelleId === baustelle.id);
             return {
