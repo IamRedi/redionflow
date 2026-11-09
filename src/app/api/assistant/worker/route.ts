@@ -7,6 +7,7 @@ import { assistantGeneration } from "@/lib/assistant/generation";
 
 import { assistantLanguagePromptLabel, type AssistantLanguageCode, languageForTurn } from "@/lib/assistant/language";
 import { getRequesterContext } from "@/lib/assistant/requester";
+import { assistantNoAccessResponse, hasAssistantAccess } from "@/lib/assistant/access";
 import { getWorkerAssistantContext } from "@/lib/assistant/worker-context";
 import { ensureLoginAllowed, getClientIp, registerFailedLogin } from "@/lib/auth/login-guard";
 
@@ -51,6 +52,8 @@ export async function POST(req: Request) {
       { status: 403 },
     );
   }
+  // Not enabled by the boss: a plain message, no quota or provider call.
+  if (!(await hasAssistantAccess(requester))) return assistantNoAccessResponse(fallbackLanguage);
 
   // BDF-P8-007: same rate-limit ceiling as the admin assistant so a
   // compromised worker session cannot run up OpenAI cost either.

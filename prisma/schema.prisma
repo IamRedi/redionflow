@@ -208,6 +208,8 @@ model User {
   /// owner may add, edit or deactivate other admins, and the owner itself
   /// cannot be edited or removed by them.
   isOwner           Boolean           @default(false)
+  /// AI assistant access when the company limits it to selected people.
+  assistantAccess   Boolean           @default(false)
   preferredLanguage AssistantLanguage @default(DE)
   motherTongue      AssistantLanguage @default(DE)
   aiPersonalityNote String?
@@ -286,6 +288,8 @@ model CompanyProfile {
   /// Created automatically on first open; the key signs the short sign-in links and is never shown.
   kidrahtWorkspaceId    String?
   kidrahtApiKey         String?
+  /// true = only the owner and people with assistantAccess may use the AI assistant.
+  assistantAccessSelected Boolean            @default(false)
 
   street String?
   zip    String?
@@ -896,6 +900,8 @@ model Worker {
   level                 WorkerLevel        @default(JUNIOR)
   /// Metal construction role (see src/lib/workzone/crew-roles.ts); null = plain worker.
   crewRole              String?
+  /// AI assistant access when the company limits it to selected people.
+  assistantAccess       Boolean              @default(false)
   preferredLanguage     AssistantLanguage  @default(DE)
   motherTongue          AssistantLanguage  @default(DE)
   aiPersonalityNote     String?

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { AssistantAccessToggle } from "@/components/assistant/assistant-access-toggle";
+import { companyLimitsAssistant } from "@/lib/assistant/access";
+import { setAdminAssistantAccessAction } from "../../assistant-access-actions";
 import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +54,7 @@ export default async function WorkzoneAdminProfilePage({
       aiPersonalityNote: true,
       isActive: true,
       isOwner: true,
+      assistantAccess: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -60,6 +64,7 @@ export default async function WorkzoneAdminProfilePage({
 
   const isOwnProfile = currentAdmin.id === profile.id;
   const canEditThisAdmin = isOwnerAdmin(currentAdmin) && !isOwnerAdmin(profile);
+  const showAssistantAccess = canEditThisAdmin && await companyLimitsAssistant(companyProfileId);
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -150,6 +155,10 @@ export default async function WorkzoneAdminProfilePage({
           </CardContent>
         </Card>
       </div>
+
+      {showAssistantAccess ? (
+        <AssistantAccessToggle action={setAdminAssistantAccessAction} idName="adminId" id={profile.id} enabled={profile.assistantAccess} language={currentLang} />
+      ) : null}
 
       {canEditThisAdmin ? (
         <Card>

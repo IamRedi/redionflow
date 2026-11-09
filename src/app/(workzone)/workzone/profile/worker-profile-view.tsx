@@ -38,6 +38,9 @@ import { ChangeCodeForm } from "./change-code-form";
 import { updateWorkerClothingSizesFormAction } from "../hr-actions";
 import { updateNotificationSettingsFormAction } from "../hr-actions";
 import { updateWorkerLanguagePreferencesFormAction } from "../hr-actions";
+import { setWorkerAssistantAccessAction } from "../assistant-access-actions";
+import { AssistantAccessToggle } from "@/components/assistant/assistant-access-toggle";
+import { companyLimitsAssistant } from "@/lib/assistant/access";
 import { approveVacationRequestAction, rejectVacationRequestAction, requestVacationAction } from "../vacation-actions";
 import { VacationRequestForm } from "./vacation-request-form";
 import { ReportPeriodPicker } from "./report-period-picker";
@@ -57,6 +60,7 @@ type WorkerDocument = {
 
 type WorkerProfile = {
   id: string;
+  assistantAccess?: boolean;
   firstName: string;
   lastName: string;
   phone: string | null;
@@ -231,6 +235,7 @@ export async function WorkerProfileView({
   const [currentLang, companyCountry] = await Promise.all([resolveRequestLanguage(), getCompanyCountry()]);
   const companyId = await getCurrentCompanyId();
   const assetOperations = Boolean(companyId && await isSteelCompany(companyId));
+  const showAssistantAccess = mode === "admin" && Boolean(companyId && await companyLimitsAssistant(companyId));
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
   const activePauseIntervals = activeSession?.pauseIntervals ?? [];
   const history = worker.sessions.filter((session) => (!session.isLive || session.endTime) && isReportableSession(session)).slice(0, 15);
@@ -377,6 +382,10 @@ export async function WorkerProfileView({
           </a>
         </div>
       </section>
+
+      {showAssistantAccess ? (
+        <AssistantAccessToggle action={setWorkerAssistantAccessAction} idName="workerId" id={worker.id} enabled={Boolean(worker.assistantAccess)} language={currentLang} />
+      ) : null}
 
       <section className={section}>
         <div className="flex flex-wrap items-center justify-between gap-2">
