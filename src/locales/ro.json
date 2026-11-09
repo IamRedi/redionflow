@@ -432,6 +432,8 @@
     "workzoneDescription": "Vizualizare live doar în citire a șantierelor, echipelor, flotei și stării curente.",
     "kidrahtTitle": "Cunoștințe firmă · KiDraht",
     "kidrahtDescription": "Reguli și instructaj pentru acest șantier, aprobate de șef. Angajații se conectează cu PIN.",
-    "kidrahtOpen": "Deschide instructajul"
+    "kidrahtOpen": "Deschide instructajul",
+    "kidrahtClose": "Închide",
+    "kidrahtNewTab": "Deschide într-o filă nouă"
   }
 }

@@ -1579,6 +1579,8 @@
     "workzoneDescription": "Schreibgeschützte Live-Ansicht von Baustellen, Teams, Fuhrpark und aktuellem Stand.",
     "kidrahtTitle": "Firmenwissen · KiDraht",
     "kidrahtDescription": "Regeln und Unterweisung für diese Baustelle, freigegeben vom Chef. Mitarbeiter melden sich mit PIN an.",
-    "kidrahtOpen": "Unterweisung öffnen"
+    "kidrahtOpen": "Unterweisung öffnen",
+    "kidrahtClose": "Schließen",
+    "kidrahtNewTab": "In neuem Tab öffnen"
   }
 }
