@@ -165,6 +165,7 @@ export function MachineSidebar({
   machines,
   isAdmin,
   canEditPhotos = isAdmin,
+  canSeeWorkshop = true,
   showCones = true,
   country = "DE",
   embedded = false,
@@ -172,6 +173,8 @@ export function MachineSidebar({
 }: {
   machines: MachineSideItem[];
   isAdmin: boolean;
+  /** Bazë workers use Fleet (fuel, defects) but not the workshop queue. */
+  canSeeWorkshop?: boolean;
   canEditPhotos?: boolean;
   showCones?: boolean;
   country?: string;
@@ -308,7 +311,7 @@ export function MachineSidebar({
 
   return (
     <aside data-testid="fleet-rail" className={enhancedOperations ? 'contents print:hidden' : embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
-      {enhancedOperations ? <ProductionHeaderActions><FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={() => openWorkshop()} /></ProductionHeaderActions> : <>
+      {enhancedOperations ? <ProductionHeaderActions><FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={canSeeWorkshop ? () => openWorkshop() : undefined} /></ProductionHeaderActions> : <>
       <button
         type="button"
         title={t("workzone.fleet", lang)}

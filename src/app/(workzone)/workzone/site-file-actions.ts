@@ -46,7 +46,7 @@ export async function uploadSiteFileAction(formData: FormData): Promise<ActionRe
   const kind = uploadKinds.safeParse(formData.get("kind"));
   const baustelleId = String(formData.get("baustelleId") ?? "");
   if (!kind.success || !baustelleId) return { ok: false, message: tr("invalidInput") };
-  if (kind.data === "invoice" && !actor.can.office) return { ok: false, message: tr("accessDenied") };
+  if (kind.data === "invoice" && !actor.at(baustelleId).office) return { ok: false, message: tr("accessDenied") };
   const identity={companyId,userId:actor.userId,workerId:actor.workerId};
   if(!await withTenantContext(companyId,tx=>mayUploadSiteDocuments(tx,identity,baustelleId)))return {ok:false,message:tr('accessDenied')};
 

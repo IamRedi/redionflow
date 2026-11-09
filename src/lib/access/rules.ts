@@ -99,7 +99,9 @@ export function can(subject: AccessSubject, action: AccessAction, scopeId = "", 
     if (!covers(grant, place, scopeId)) continue;
     if (view || grant.level === "act") return true;
   }
-  if (options.legacy !== false) {
+  // Crew roles count only until the boss sets the level; then the role's
+  // rights live on as explicit grants (see setWorkerAccessLevel).
+  if (options.legacy ?? subject.accessLevel === null) {
     for (const legacy of legacyActions(subject.crewRole, subject.legacySiteGrants)) {
       if (placeOf(legacy.action) !== place || (legacy.scopeId !== "" && legacy.scopeId !== scopeId)) continue;
       if (view || legacy.action === action) return true;
@@ -107,3 +109,19 @@ export function can(subject: AccessSubject, action: AccessAction, scopeId = "", 
   }
   return false;
 }
+
+/**
+ * The grants that keep a crew role's rights when the boss first sets the
+ * level: one "act" per place the role works in (document-engineer sites
+ * become site grants). Visible and editable with the key button afterwards.
+ */
+export function legacyGrantRows(crewRole: string | null, legacySiteGrants: ReadonlySet<string> = new Set()): AccessGrantRow[] {
+  const rows = new Map<string, AccessGrantRow>();
+  for (const { action, scopeId } of legacyActions(crewRole, legacySiteGrants)) {
+    const place = placeOf(action);
+    rows.set(`${place}:${scopeId}`, { place, scopeId, level: "act" });
+  }
+  // A whole-place grant already covers single sites.
+  return [...rows.values()].filter(row => !row.scopeId || !rows.has(`${row.place}:`));
+}
+

@@ -315,8 +315,9 @@ export async function setElementProcessesAction(input: unknown): Promise<Element
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, code: "ACCESS_DENIED", message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
-  if (!actor || !(actor.can.office || actor.can.siteSteps || actor.can.factorySteps)) return { ok: false, code: "ACCESS_DENIED", message: tr("elementCheckOnlyEngineer") };
   const { siteId, side, expectedRevisions } = parsed.data;
+  const here = actor?.at(siteId);
+  if (!actor || !here || !(here.office || here.siteSteps || here.factorySteps)) return { ok: false, code: "ACCESS_DENIED", message: tr("elementCheckOnlyEngineer") };
   const ids = [...new Set(parsed.data.elementIds)].sort(), stages = [...new Set(parsed.data.stages)];
   if (stages.some(stage => sideOfStage(stage) !== side)
     || expectedRevisions && (ids.some(id => !Object.hasOwn(expectedRevisions, id)) || Object.keys(expectedRevisions).some(id => !ids.includes(id))))
@@ -377,7 +378,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
   const companyId = await getCurrentCompanyId();
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentCompanyActor(companyId);
-  if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
+  if (!actor?.allows("new_project.create")) return { ok: false, message: tr("accessDenied") };
   let documentEngineerIds:string[]=[];
   try{documentEngineerIds=siteEngineerIds(formData.getAll('documentEngineerId'));}catch{return {ok:false,message:tr('invalidInput')};}
   if(documentEngineerIds.length&&!actor.isAdmin)return {ok:false,message:tr('accessDenied')};

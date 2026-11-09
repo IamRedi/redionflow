@@ -91,4 +91,9 @@ describe("access rules", () => {
       expect(can(worker(role), action, "s1", { legacy: false }), `${role} ${action}`).toBe(false);
     }
   });
+
+  it("once the level is set, the crew role alone gives no actions", () => {
+    expect(can(worker("OFFICE", { accessLevel: "FULL_VIEW" }), "costs.manage")).toBe(false);
+    expect(can(worker("OFFICE", { accessLevel: "FULL_VIEW", grants: [{ place: "costs", scopeId: "", level: "act" }] }), "costs.manage")).toBe(true);
+  });
 });

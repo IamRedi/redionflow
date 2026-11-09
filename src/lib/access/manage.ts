@@ -3,6 +3,7 @@ import { assetActor, assetFail } from "@/lib/company-assets/access";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { logger } from "@/lib/observability/logger";
 
+import { applyAccessLevel } from "./apply";
 import { ACCESS_ACTIONS, ACCESS_PLACES, can, effectiveLevel, legacyActions, placeOf, type AccessAction, type AccessLevel, type AccessPlace, type AccessSubject, type GrantLevel } from "./rules";
 
 type Tx = Prisma.TransactionClient;
@@ -124,7 +125,7 @@ export async function readWorkerAccessSummary(workerIdInput: unknown) {
       level: effectiveLevel(subject),
       levelSet: row.accessLevel === "BASE" || row.accessLevel === "FULL_VIEW",
       crewRole: row.crewRole,
-      fromRole: [...new Set(legacyActions(row.crewRole).map(a => placeOf(a.action)))],
+      fromRole: subject.accessLevel ? [] : [...new Set(legacyActions(row.crewRole).map(a => placeOf(a.action)))],
       grants: row.accessGrants
         .flatMap(g => { const place = readAccessPlace(g.place); return place ? [{ place, scopeId: g.scopeId, scopeName: g.scopeId ? siteName.get(g.scopeId) ?? null : null, level: g.level as GrantLevel }] : []; })
         .sort((a, b) => ACCESS_PLACES.indexOf(a.place) - ACCESS_PLACES.indexOf(b.place)),
@@ -136,8 +137,8 @@ export async function setWorkerAccessLevel(input: { workerId: unknown; level: un
   const workerId = typeof input.workerId === "string" ? input.workerId : assetFail("BAD_INPUT");
   const level = input.level === "BASE" || input.level === "FULL_VIEW" ? input.level : assetFail("BAD_INPUT");
   const actor = await accessAdmin();
-  const updated = await withTenantContext(actor.companyId, tx => tx.worker.updateMany({ where: { id: workerId, companyProfileId: actor.companyId }, data: { accessLevel: level } }));
-  if (!updated.count) return assetFail("NOT_FOUND");
+  const done = await withTenantContext(actor.companyId, tx => applyAccessLevel(tx, actor.companyId, workerId, level, actor.userId));
+  if (!done) return assetFail("NOT_FOUND");
   logger.info({ event: "access.level_changed", level }, "Access level changed");
   return readWorkerAccessSummary(workerId);
 }

@@ -56,11 +56,14 @@ export function SiteFilesButton({
   site,
   files,
   isAdmin,
+  canSeeCosts = isAdmin,
   canUpload,
 }: {
   site: { id: string; name: string; address: string; description: string };
   files: SiteFileView[];
   isAdmin: boolean;
+  /** Office, or a key-button grant on costs. */
+  canSeeCosts?: boolean;
   canUpload: boolean;
 }) {
   const { currentLang: lang } = useLanguage();
@@ -129,7 +132,7 @@ export function SiteFilesButton({
   const tabs: Array<{ key: Tab; label: string; count: number }> = [
     { key: "docs", label: t("siteFiles.docs", lang), count: docs.length },
     { key: "photos", label: t("siteFiles.photos", lang), count: photos.length },
-    ...(isAdmin ? [{ key: "costs" as const, label: t("siteFiles.costs", lang), count: costs.length }] : []),
+    ...(canSeeCosts ? [{ key: "costs" as const, label: t("siteFiles.costs", lang), count: costs.length }] : []),
   ];
 
   const fileRow = (file: SiteFileView, icon: React.ReactNode) => (
@@ -268,7 +271,7 @@ export function SiteFilesButton({
               </div>
             ) : null}
 
-            {tab === "costs" && isAdmin ? (
+            {tab === "costs" && canSeeCosts ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-2xl border-2 border-orange-500/40 bg-orange-500/[0.06] p-4">
                   <div>

@@ -34,6 +34,8 @@ import { getSteelWorkCatalogAction } from "./steel-catalog-actions";
 import { readFleetLocations } from "@/lib/fleet/location";
 import { wanwayEnabled } from "@/lib/fleet/wanway/service";
 import { isDocumentEngineer } from '@/lib/site-phase-documents/site-access';
+import { currentCompanyActor } from "@/lib/site-files/actor";
+import type { AccessAction } from "@/lib/access/rules";
 
 function baustelleStatusLabel(status: string, currentLang: string): string {
   if (status === "active") return t("workzone.baustelleStatusActive", currentLang);
@@ -65,7 +67,15 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
     getCompanyMode(),
   ]);
   const currentLang = await resolveRequestLanguage();
-  const fleetLocations = admin || worker ? await readFleetLocations() : [];
+  // One access rule source; for Bazë workers sites have no "Open" and vehicle GPS stays hidden.
+  const accessActor = worker || admin ? await currentCompanyActor(company.id) : null;
+  const allows = (action: AccessAction, scopeId = "") => !worker || Boolean(accessActor?.allows(action, scopeId));
+  const fleetLocations = (admin || worker) && allows("fleet_gps.view") ? await readFleetLocations() : [];
+  const liveSession = worker ? await withTenantContext(company.id, tx => tx.workSession.findFirst({ where: { workerId: worker.id, isLive: true, endTime: null }, select: { startTime: true, baustelleId: true } })) : null;
+  const cardWork = worker ? {
+    worker: { id: worker.id, firstName: worker.firstName, lastName: worker.lastName, isTemporary: worker.isTemporary, level: worker.level, companyProfileId: worker.companyProfileId },
+    activeSession: liveSession ? { startTime: liveSession.startTime.toISOString(), baustelleId: liveSession.baustelleId } : null,
+  } : null;
 
   const today = dateKey(new Date());
   const todayDate = dayRange(today).start;
@@ -313,6 +323,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       name: b.name,
       photoUrl: assetPhotoUrl('site',b.id,b.coverPhotoAt),
       canEditPhoto:canEditSitePhoto(b.id,b.type),
+      canOpen: allows("site.view", b.id),
       status: b.status,
       type: b.type,
       pct,
@@ -350,6 +361,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         defaultAddress={defaultAddress}
         mode={mode}
         canEditPhotos={photoPermissions.office||photoPermissions.siteSteps}
+        cardWork={cardWork}
         toolbar={
           canOpenCalendar ? (
             <>
@@ -412,7 +424,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         }
       />
 
-      {factorySite ? (
+      {factorySite && allows("factory.view") ? (
         <FactoryPanel
           factoryName={factorySite.name}
           factoryId={factorySite.id}
@@ -421,7 +433,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
           factoryAddress={(factorySite.address ?? "").trim()}
           siteOutput={siteOutput}
           processDefinitions={factoryDefinitions}
-          canManage={crewPermissions(worker ? { isAdmin: false, crewRole: worker.crewRole, level: worker.level } : admin ? { isAdmin: true } : null).office}
+          canManage={Boolean(admin && !worker) || Boolean(worker && accessActor?.allows("new_project.create"))}
         />
       ) : null}
 
@@ -472,9 +484,9 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
             return (
               <Link
                 key={b.id}
-                href={isLocked ? "#" : `/workzone/baustellen/${b.id}`}
-                aria-disabled={isLocked}
-                className={`group block min-w-0 ${isLocked ? "pointer-events-none opacity-70" : ""}`}
+                href={isLocked || !allows("site.view", b.id) ? "#" : `/workzone/baustellen/${b.id}`}
+                aria-disabled={isLocked || !allows("site.view", b.id)}
+                className={`group block min-w-0 ${isLocked ? "pointer-events-none opacity-70" : !allows("site.view", b.id) ? "pointer-events-none" : ""}`}
               >
                 <article
                   className={`relative overflow-hidden rounded-3xl border-2 bg-card shadow-sm transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg ${

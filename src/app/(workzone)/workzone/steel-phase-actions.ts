@@ -23,11 +23,13 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
   if (!parsed.success) return { ok: false, message: tr('invalidInput') };
   const companyId = await getCurrentCompanyId(), actor = companyId ? await currentCompanyActor(companyId) : null;
   if (!companyId || !actor) return { ok: false, message: tr('notSignedIn') };
-  if (parsed.data.command === 'missing' ? !actor.can.reportMissing : !actor.can.siteSteps) return { ok: false, message: tr('accessDenied') };
+  const allowedAt = (site: string) => { const can = actor.at(site); return parsed.data.command === 'missing' ? can.reportMissing : can.siteSteps; };
+  let denied = false;
   const siteId = await withTenantContext(companyId, async tx => {
     await ensureSteelWorkCatalog(companyId, tx);
     const assignment = await tx.steelSiteTask.findFirst({ where: { companyProfileId: companyId, treeItemId: parsed.data.phaseItemId }, include: { definition: true, treeItem: true } });
     if (!assignment || !assignment.enabled || assignment.definition.archivedAt || assignment.definition.kind !== 'site') return null;
+    if (!allowedAt(assignment.baustelleId)) { denied = true; return null; }
     if (assignment.definition.linkedProcessKey && ['done', 'reopen'].includes(parsed.data.command)) return null;
     const item = assignment.treeItem, text = parsed.data.text.trim();
     let command: SteelPhaseCommand;
@@ -48,6 +50,7 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
     await tx.auditLog.create({ data: { companyProfileId: companyId, actorType: actor.workerId ? 'WORKER' : 'ADMIN', actorId: (actor.workerId ?? actor.userId)!, action: 'steel.task_updated', payload: { definitionId: assignment.definitionId, phaseItemId: item.id, command: parsed.data.command } } });
     return assignment.baustelleId;
   });
+  if (denied) return { ok: false, message: tr('accessDenied') };
   if (!siteId) return { ok: false, message: tr('invalidInput') };
   refresh(siteId); return { ok: true, message: 'OK' };
 }

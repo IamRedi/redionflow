@@ -45,6 +45,8 @@ import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
 import { canManageSteelCatalog } from "@/lib/steel-work/types";
 import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
 import { AccessKeyButton } from '@/components/access/access-key-button';
+import { NoAccessHere } from '@/components/access/no-access';
+import { currentCompanyActor } from '@/lib/site-files/actor';
 
 export default async function BaustelleDetailPage({
   params,
@@ -222,14 +224,12 @@ export default async function BaustelleDetailPage({
 
   const isSteel = isSteelSiteType(baustelle.type);
   if (isSteel) {
-    const can = crewPermissions(
-      currentAdmin && !currentWorker
-        ? { isAdmin: true }
-        : currentWorker
-          ? { isAdmin: false, crewRole: currentWorker.crewRole, level: currentWorker.level }
-          : null,
-    );
+    const actor = await currentCompanyActor(currentCompanyId);
+    // Bazë workers see the site on the board but cannot open it, unless the boss gave access here.
+    if (currentWorker && !actor?.allows("site.view", baustelle.id)) return <NoAccessHere backHref="/workzone" />;
+    const can = actor ? actor.at(baustelle.id) : crewPermissions(null);
     const isAdmin = can.office;
+    const canSeeCosts = isAdmin || Boolean(actor?.allows("costs.view"));
     const canAdvance = can.factorySteps;
     const documentAccess=await withTenantContext(currentCompanyId,tx=>siteDocumentAccess(tx,{companyId:currentCompanyId,userId:currentAdmin&&!currentWorker?currentAdmin.id:null,workerId:currentWorker?.id??null},baustelle.id));
     const [batchRows, fileRows, elementRows, workerRows] = await withTenantContext(currentCompanyId, (tx) =>
@@ -249,7 +249,7 @@ export default async function BaustelleDetailPage({
         }),
         tx.siteFile.findMany({
           // Prices and invoices never leave the server for non-office users.
-          where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id, ...(isAdmin ? {} : { officeOnly: false }) },
+          where: { companyProfileId: currentCompanyId, baustelleId: baustelle.id, ...(canSeeCosts ? {} : { officeOnly: false }) },
           orderBy: { createdAt: "desc" },
           select: { id: true, kind: true, fileName: true, mime: true, size: true, amount: true, currency: true, supplier: true, reference: true, uploadedByName: true, createdAt: true },
         }),
@@ -347,6 +347,7 @@ export default async function BaustelleDetailPage({
                 site={{ id: baustelle.id, name: baustelle.name, address: baustelle.address ?? "", description: baustelle.description ?? "" }}
                 files={files}
                 isAdmin={isAdmin}
+                canSeeCosts={canSeeCosts}
                 canUpload={documentAccess.upload}
               />
               <PhaseDocumentsButton siteId={baustelle.id}/>

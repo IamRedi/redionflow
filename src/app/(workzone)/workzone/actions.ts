@@ -36,7 +36,8 @@ async function canChangeSteelManualTask(companyId:string,siteId:string,claimedAc
   const site=await prisma.baustelle.findFirst({where:{id:siteId,companyProfileId:companyId},select:{type:true}});
   if(!site)return false;if(!['STEEL_ASSEMBLY','STEEL_WORKSHOP'].includes(site.type))return true;
   const actor=await currentCompanyActor(companyId);
-  return Boolean(actor&&(actor.workerId??actor.userId)===claimedActorId&&(actor.can.office||actor.can.siteSteps||actor.can.factorySteps));
+  const can=actor?.at(siteId);
+  return Boolean(actor&&can&&(actor.workerId??actor.userId)===claimedActorId&&(can.office||can.siteSteps||can.factorySteps));
 }
 
 function workerName(worker: { firstName: string; lastName: string }) {
@@ -669,7 +670,7 @@ export async function deleteBaustelleDocumentAction(formData: FormData): Promise
     return { ok: false, message: tr("siteAccessDenied") };
   }
 
-  if(baustelle.type==='STEEL_ASSEMBLY'&&!(await currentCompanyActor(currentCompanyId))?.can.office)return {ok:false,message:tr('accessDenied')};
+  if(baustelle.type==='STEEL_ASSEMBLY'&&!(await currentCompanyActor(currentCompanyId))?.at(baustelleId).office)return {ok:false,message:tr('accessDenied')};
   if (!(baustelle.documents ?? []).includes(documentRef)) {
     return { ok: false, message: tr("documentNotFound") };
   }

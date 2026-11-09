@@ -29,3 +29,18 @@ current rights (crewPermissions, site document grants, asset rules), and
 `shadowAccess()` logs `access.shadow_diff` when the new rules would decide
 differently. Phases: 1 foundation (this), 2 key button UI, 3 switch-on,
 4 apply the company's staff table (with the owner's yes).
+
+## Switch-on (phase 3, 2026-11-09)
+
+- `currentCompanyActor()` builds its rights from `can()`; `actor.at(siteId)` adds
+  site grants, `actor.allows(action)` checks one action.
+- Workers without `site.view` see site cards without "Open" and get start/stop
+  on the card; opening a site URL shows "Nuk ke akses këtu. Aksesin ta jep shefi.".
+- Factory panel, vehicle GPS, warehouse and workshop pages need their `view`.
+  Fleet (fuel receipts, defect reports) stays open to everyone.
+- Site documents upload follows `site.documents`; cost files follow
+  `site.details` (office) or `costs.view`.
+- Setting a worker's level the first time turns the crew role's rights into
+  visible grants; from then on only level + grants count.
+- Still admin-only: editing the daily plan, staff/vacation management and
+  uploading invoices (a `costs` grant gives viewing).

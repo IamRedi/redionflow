@@ -1,5 +1,7 @@
 import type { Prisma } from '@/generated/prisma/client';
 import { assetFail, AssetOperationError } from '@/lib/company-assets/access';
+import { loadWorkerAccess } from '@/lib/access/load';
+import { can } from '@/lib/access/rules';
 
 type Tx=Prisma.TransactionClient;
 export type SiteDocumentIdentity={companyId:string;userId:string|null;workerId:string|null};
@@ -20,11 +22,11 @@ export async function siteDocumentAccess(tx:Tx,actor:SiteDocumentIdentity,siteId
   return {read:true,upload:true,office:true,manage:true,revision:site.documentAccessRevision};
  }
  if(write)await tx.$queryRaw`SELECT id FROM "Worker" WHERE id=${actor.workerId!} AND "companyProfileId"=${actor.companyId} FOR SHARE`;
- const person=await tx.worker.findFirst({where:{id:actor.workerId!,companyProfileId:actor.companyId,status:'active'},select:{crewRole:true}});
- if(!person)return assetFail('DENIED');
- const office=person.crewRole==='OFFICE';
- const grant=isDocumentEngineer(person.crewRole)?await tx.siteDocumentEngineer.findUnique({where:{companyProfileId_baustelleId_workerId:{companyProfileId:actor.companyId,baustelleId:siteId,workerId:actor.workerId!}},select:{id:true}}):null;
- return {read:true,upload:office||Boolean(grant),office,manage:false,revision:site.documentAccessRevision};
+ // One rule source: crew role (until the level is set) and key-button grants.
+ const subject=await loadWorkerAccess(tx,actor.companyId,actor.workerId!);
+ if(!subject||subject.kind!=='worker'||!subject.active)return assetFail('DENIED');
+ const office=can(subject,'site.details',siteId);
+ return {read:true,upload:can(subject,'site.documents',siteId),office,manage:false,revision:site.documentAccessRevision};
 }
 export async function requireSiteDocumentUpload(tx:Tx,actor:SiteDocumentIdentity,siteId:string){
  const access=await siteDocumentAccess(tx,actor,siteId,true);
