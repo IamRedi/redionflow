@@ -138,3 +138,20 @@ export async function sendNotificationToWorkers(input: Omit<SendNotificationInpu
   });
   return sendNotification({ ...input, userIds: workers.map((worker) => worker.id) });
 }
+
+/**
+ * "X started/finished work": only people who switched it on in their profile
+ * (admins or workers, e.g. the site managers), never the person themselves.
+ */
+export async function sendWorkEventNotification(input: Omit<SendNotificationInput, "userIds" | "preference"> & { preference: "workStart" | "workEnd"; actorWorkerId?: string }) {
+  const companyProfileId = isSaasMode ? await getCurrentCompanyId() : null;
+  if (isSaasMode && !companyProfileId) return {sent:0,failed:0};
+  const scope = companyProfileId ? {companyProfileId} : {};
+  const [admins, workers] = await Promise.all([
+    prisma.user.findMany({ where: { role: "ADMIN", isActive: true, ...scope }, select: { id: true } }),
+    prisma.worker.findMany({ where: { status: "active", ...scope }, select: { id: true } }),
+  ]);
+  const { actorWorkerId, ...rest } = input;
+  const userIds = [...admins, ...workers].map((row) => row.id).filter((id) => id !== actorWorkerId);
+  return sendNotification({ ...rest, userIds });
+}

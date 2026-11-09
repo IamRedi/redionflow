@@ -12,6 +12,8 @@ import { updateAdminProfileFormAction, upsertTestAdminFormAction } from "./actio
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { siteAccessCopy } from '@/lib/site-phase-documents/access-copy';
 import { OwnerPinForm } from '@/components/steel/owner-pin-form';
+import { NotificationPrefsButton } from '@/components/notifications/notification-prefs-button';
+import { ensureNotificationSettings } from '@/lib/notifications/notification-store';
 
 export default async function AdminProfilePage() {
   const admin = await getCurrentAdmin();
@@ -38,11 +40,16 @@ export default async function AdminProfilePage() {
   const accessCopy=siteAccessCopy(currentLang);
   const pendingOwners=canManageAdmins&&steel?await prisma.user.findMany({where:{companyProfileId:admin.companyProfileId,role:'ADMIN',isOwner:true,isActive:false,passwordHash:null,loginPinHash:null},select:{name:true,email:true},take:10,orderBy:{createdAt:'asc'}}):[];
 
+  const notificationSettings = await ensureNotificationSettings(user.id);
+
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold">{t("admin.adminProfileHeading", currentLang)}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("admin.adminProfileSubtitle", currentLang)}</p>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-semibold">{t("admin.adminProfileHeading", currentLang)}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("admin.adminProfileSubtitle", currentLang)}</p>
+        </div>
+        <NotificationPrefsButton userId={user.id} initial={notificationSettings} canEnableWork className="size-10 border bg-card" />
       </div>
 
       <Card>

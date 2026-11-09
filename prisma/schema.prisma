@@ -1113,8 +1113,8 @@ model NotificationSettings {
   id            String  @id @default(cuid())
   userId        String  @unique
   tagesplan     Boolean @default(true)
-  workStart     Boolean @default(true)
-  workEnd       Boolean @default(true)
+  workStart     Boolean @default(false)
+  workEnd       Boolean @default(false)
   adminMessages Boolean @default(true)
 
   createdAt DateTime @default(now())

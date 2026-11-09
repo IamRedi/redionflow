@@ -24,8 +24,8 @@ import { logger } from "@/lib/observability/logger";
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
-import { updateNotificationSettings } from "@/lib/notifications/notification-store";
-import { sendNotificationToAdmins } from "@/lib/notifications/sendNotification";
+import { ensureNotificationSettings, OPT_IN_NOTIFICATION_PREFERENCES, updateNotificationSettings, type NotificationPreference, type NotificationSettingsRow } from "@/lib/notifications/notification-store";
+import { sendWorkEventNotification } from "@/lib/notifications/sendNotification";
 import { scanFileContent } from "@/lib/storage/content-scan";
 import { isRecord } from "@/lib/workzone/site-json";
 import { validateFileAgainstAllowedCategories } from "@/lib/storage/file-validation";
@@ -303,10 +303,12 @@ export async function updateNotificationSettingsAction(formData: FormData): Prom
 
 
   try {
+    // A worker cannot switch work start/end notices on for themselves.
+    const current = actor.role === "ADMIN" ? null : await ensureNotificationSettings(userId);
     await updateNotificationSettings(userId, {
       tagesplan: formData.get("tagesplan") === "on",
-      workStart: formData.get("workStart") === "on",
-      workEnd: formData.get("workEnd") === "on",
+      workStart: formData.get("workStart") === "on" && (current?.workStart ?? true),
+      workEnd: formData.get("workEnd") === "on" && (current?.workEnd ?? true),
       adminMessages: formData.get("adminMessages") === "on",
     });
   } catch (error) {
@@ -316,6 +318,40 @@ export async function updateNotificationSettingsAction(formData: FormData): Prom
 
   revalidateWorkerProfile(userId);
   return { ok: true, message: tr("notificationsSaved") };
+}
+
+/**
+ * One switch in the profile notification card. Anyone may change their own
+ * daily plan / office messages; work start/end notices can be switched on only
+ * by an admin (for themselves or a worker); a worker may only switch them off.
+ */
+export async function saveNotificationPreferenceAction(input: { userId: string; key: NotificationPreference; value: boolean }): Promise<{ ok: boolean; settings?: NotificationSettingsRow }> {
+  const keys: NotificationPreference[] = ["tagesplan", "workStart", "workEnd", "adminMessages"];
+  if (!input?.userId || !keys.includes(input.key) || typeof input.value !== "boolean") return { ok: false };
+  const actor = await getProfileActor();
+  if (!actor) return { ok: false };
+  const admin = actor.role === "ADMIN" ? await getCurrentAdmin() : null;
+  const self = actor.workerId === input.userId || admin?.id === input.userId;
+  if (!admin && !self) return { ok: false };
+  const companyProfileId = await getCurrentCompanyId();
+  if (!companyProfileId) return { ok: false };
+  const [targetWorker, targetUser] = await Promise.all([
+    prisma.worker.findFirst({ where: { id: input.userId, companyProfileId }, select: { id: true } }),
+    prisma.user.findFirst({ where: { id: input.userId, companyProfileId }, select: { id: true } }),
+  ]);
+  if (!targetWorker && !targetUser) return { ok: false };
+  if (!admin && input.value && OPT_IN_NOTIFICATION_PREFERENCES.includes(input.key)) return { ok: false };
+  try {
+    const current = await ensureNotificationSettings(input.userId);
+    const settings = { ...current, [input.key]: input.value };
+    await updateNotificationSettings(input.userId, settings);
+    revalidateWorkerProfile(input.userId);
+    revalidatePath("/app/profile");
+    return { ok: true, settings };
+  } catch (error) {
+    logger.error({ event: "notifications.update_failed", userId: input.userId }, "update settings failed", error);
+    return { ok: false };
+  }
 }
 
 export async function updateNotificationSettingsFormAction(formData: FormData): Promise<void> {
@@ -485,11 +521,12 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
     throw error;
   }
 
-  await sendNotificationToAdmins({
+  await sendWorkEventNotification({
     title: tr("workerStartedNotificationTitle"),
     body: tr("workerStartedNotificationBody", { name: `${worker.firstName} ${worker.lastName}`.trim() }),
     url: "/workzone",
     preference: "workStart",
+    actorWorkerId: workerId,
   });
 
   revalidateWorkerProfile(workerId);
@@ -624,11 +661,12 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     where: { id: session.workerId },
     select: { firstName: true, lastName: true },
   });
-  await sendNotificationToAdmins({
+  await sendWorkEventNotification({
     title: tr("workerFinishedNotificationTitle"),
     body: tr("workerFinishedNotificationBody", { name: `${worker?.firstName ?? ""} ${worker?.lastName ?? ""}`.trim() }),
     url: "/workzone",
     preference: "workEnd",
+    actorWorkerId: session.workerId,
   });
 
   if (admin) {

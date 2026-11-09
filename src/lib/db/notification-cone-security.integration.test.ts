@@ -9,7 +9,7 @@ import {prisma} from "./prisma";
 import {createTestSession as createSessionCookie} from "../../../tests/security/fixtures";
 import {seedSecurityTenants,removeSecurityTenants} from "../../../tests/security/fixtures";
 import {getMachineConeHistoryAction} from "@/app/(workzone)/workzone/cone-actions";
-import {sendNotification,sendNotificationToAdmins,sendNotificationToWorkers} from "@/lib/notifications/sendNotification";
+import {sendNotification,sendNotificationToAdmins,sendNotificationToWorkers,sendWorkEventNotification} from "@/lib/notifications/sendNotification";
 import {POST as register} from "@/app/api/notifications/register/route";
 import {registerNotificationSubscription} from "@/lib/notifications/notification-store";
 let tenants:Awaited<ReturnType<typeof seedSecurityTenants>>;
@@ -66,4 +66,20 @@ it("concurrent registration assigns a new device token once and the loser cannot
   expect(await registerNotificationSubscription(loser,device)).toBe(false);
   expect(await prisma.notificationSubscription.findUniqueOrThrow({where:{fcmToken:device}})).toEqual(before);
   expect(await registerNotificationSubscription(before.userId,device)).toBe(true);
+});
+
+it("work start notices go only to people who switched them on, never to the worker themselves",async()=>{
+  await as("admin",0);const a=tenants[0];const sent=()=>provider.send.mock.calls.flatMap(call=>call[0].tokens);
+  await sendWorkEventNotification({title:"Started",body:"x",preference:"workStart",actorWorkerId:a.worker.id});
+  expect(sent()).toEqual([]);
+  await prisma.notificationSettings.create({data:{userId:a.admin.id}});
+  await sendWorkEventNotification({title:"Started",body:"x",preference:"workStart",actorWorkerId:a.worker.id});
+  expect(sent()).toEqual([]);
+  await prisma.notificationSettings.update({where:{userId:a.admin.id},data:{workStart:true}});
+  await prisma.notificationSettings.create({data:{userId:a.worker.id,workStart:true}});
+  await sendWorkEventNotification({title:"Started",body:"x",preference:"workStart",actorWorkerId:a.worker.id});
+  expect(sent()).toEqual([token(a.admin.id)]);
+  provider.send.mockClear();
+  await sendWorkEventNotification({title:"Started",body:"x",preference:"workStart"});
+  expect(sent().sort()).toEqual([token(a.admin.id),token(a.worker.id)].sort());
 });
