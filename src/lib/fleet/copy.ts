@@ -1,4 +1,7 @@
 const en = {
+  deleteReceipt: 'Delete receipt',
+  deleteReceiptHint: 'Delete this mistaken upload and its photo? It will leave the fuel log and totals. An audit of who deleted it is kept.',
+  deleted: 'Receipt deleted',
   older: 'Older receipts',
   minute: 'min',
   second: 'sec',
@@ -101,6 +104,9 @@ const en = {
 };
 type Copy = typeof en;
 const sq: Copy = {
+  deleteReceipt: 'Fshi faturën',
+  deleteReceiptHint: 'Ta fshijmë këtë faturë të ngarkuar gabim dhe foton e saj? Hiqet nga karburanti dhe totalet. Ruhet gjurma se kush e fshiu.',
+  deleted: 'Fatura u fshi',
   older: 'Faturat më të vjetra',
   minute: 'min',
   second: 'sek',
@@ -203,6 +209,9 @@ const sq: Copy = {
 };
 const de: Copy = {
   ...en,
+  deleteReceipt: 'Beleg löschen',
+  deleteReceiptHint: 'Diesen irrtümlich hochgeladenen Beleg samt Foto löschen? Er entfällt aus Tankbuch und Summen. Wer ihn gelöscht hat, bleibt protokolliert.',
+  deleted: 'Beleg gelöscht',
   older: 'Ältere Belege',
   minute: 'Min.',
   second: 'Sek.',
@@ -299,6 +308,9 @@ const de: Copy = {
 };
 const it: Copy = {
   ...en,
+  deleteReceipt: 'Elimina scontrino',
+  deleteReceiptHint: 'Eliminare questo caricamento errato e la foto? Sarà rimosso dal registro e dai totali. Rimane traccia di chi lo ha eliminato.',
+  deleted: 'Scontrino eliminato',
   older: 'Ricevute precedenti',
   minute: 'min',
   second: 'sec',

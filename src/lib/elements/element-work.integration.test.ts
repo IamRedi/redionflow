@@ -10,7 +10,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { addElementWorkAction, removeElementWorkAction, setElementDoneAction, setElementProcessesAction } from "@/app/(workzone)/workzone/element-actions";
 import { seedSecurityTenants, removeSecurityTenants, createTestSession } from "../../../tests/security/fixtures";
-import { importElementList } from "./import";
+import { importElementList, type ElementImportMode } from "./import";
 import type { ParsedElementList } from "./tekla-list";
 import { doneQty, type ElementList } from "./stages";
 
@@ -34,9 +34,9 @@ const list = (marks: string[]): ParsedElementList => ({
   totalKg: marks.length * 340,
 });
 
-async function importFor(tenant: (typeof tenants)[number], marks: string[]) {
+async function importFor(tenant: (typeof tenants)[number], marks: string[], mode: ElementImportMode = 'merge') {
   return withTenantContext(tenant.company.id, (tx) =>
-    importElementList(tx, { companyId: tenant.company.id, baustelleId: tenant.site.id, parsed: list(marks), fileName: "list.xls" }),
+    importElementList(tx, { companyId: tenant.company.id, baustelleId: tenant.site.id, parsed: list(marks), fileName: "list.xls", mode }),
   );
 }
 
@@ -49,10 +49,39 @@ it("re-import updates in place, keeps checked elements and drops unchecked ones"
   await prisma.siteElementWork.create({
     data: { companyProfileId: a.company.id, elementId: checked.id, stage: "welding", workerIds: [a.worker.id], workerNames: "x", checkedByName: "x" },
   });
-  expect(await importFor(a, ["B/2", "B/3"])).toMatchObject({ added: 1, updated: 1, removed: 1, kept: 1 });
+  expect(await importFor(a, ["B/2", "B/3"], 'snapshot')).toMatchObject({ added: 1, updated: 1, removed: 1, kept: 1 });
   const after = await prisma.siteElement.findMany({ where: { baustelleId: a.site.id }, select: { mark: true, _count: { select: { work: true } } } });
   expect(after.map((row) => row.mark).sort()).toEqual(["B/10", "B/2", "B/3"]);
   expect(after.find((row) => row.mark === "B/10")?._count.work).toBe(1);
+});
+it('merges partial lists by default, retains unchecked marks and routes, and retries without doubling quantities', async () => {
+  const [a] = tenants;
+  await importFor(a, ['B/2', 'B/10']);
+  const old = await prisma.siteElement.findMany({ where: { baustelleId: a.site.id } });
+  const first = await importFor(a, ['C/1']);
+  expect(first).toMatchObject({ added: 1, updated: 0, removed: 0, kept: 2 });
+  expect(first.addedIds).toHaveLength(1);
+  expect(await importFor(a, ['C/1'])).toMatchObject({ added: 0, updated: 1, removed: 0, kept: 2, addedIds: [] });
+  expect(await prisma.siteElement.findMany({ where: { id: { in: old.map(row => row.id) } }, orderBy: { sortIndex: 'asc' } })).toMatchObject(old.sort((a,b) => a.sortIndex-b.sortIndex));
+  expect(await prisma.siteElement.count({ where: { baustelleId: a.site.id } })).toBe(3);
+  expect((await prisma.siteElement.aggregate({ where: { baustelleId: a.site.id }, _sum: { quantity: true } }))._sum.quantity).toBe(6);
+});
+it('rejects an upload that reduces quantities below confirmed pieces, atomically preserving all rows and work', async () => {
+  const [a] = tenants;
+  await importFor(a, ['B/2']);
+  const row = await prisma.siteElement.findFirstOrThrow({ where: { baustelleId: a.site.id } });
+  await prisma.siteElementWork.create({ data: { companyProfileId: a.company.id, elementId: row.id, stage: 'cutting', pieces: 2, workerNames: 'Synthetic', workerIds: [], checkedByName: 'Synthetic' } });
+  const parsed = list(['A/1', 'B/2']); parsed.elements[1].quantity = 1;
+  await expect(withTenantContext(a.company.id, tx => importElementList(tx, { companyId: a.company.id, baustelleId: a.site.id, parsed, fileName: 'partial.xls' }))).rejects.toThrow('B/2');
+  expect(await prisma.siteElement.count({ where: { baustelleId: a.site.id } })).toBe(1);
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: row.id } })).toMatchObject(row);
+  expect(await prisma.siteElementWork.count({ where: { elementId: row.id } })).toBe(1);
+});
+it('serializes concurrent initial partial uploads so shared marks have one identity', async () => {
+  const [a] = tenants;
+  const result = await Promise.all([importFor(a, ['A/1', 'B/2']), importFor(a, ['B/2', 'C/3'])]);
+  expect(result.reduce((sum, row) => sum+row.added, 0)).toBe(3);
+  expect(await prisma.siteElement.count({ where: { baustelleId: a.site.id } })).toBe(3);
 });
 
 it("admin records who did how many pieces of a step, and finished pieces go to the site", async () => {
@@ -167,7 +196,7 @@ it("preserves configured absent marks and route versions during reimport without
   const [a, b] = await prepareRoutes(["DEMO/1", "DEMO/2"]);
   expect(await setElementProcessesAction({ siteId: tenants[0].site.id, elementIds: [a.id], side: "factory", stages: ["cutting"], expectedRevisions: { [a.id]: 0 } })).toMatchObject({ ok: true });
   expect(await setElementProcessesAction({ siteId: tenants[0].site.id, elementIds: [a.id], side: "factory", stages: [], expectedRevisions: { [a.id]: 1 } })).toMatchObject({ ok: true });
-  expect(await importFor(tenants[0], ["DEMO/3"])).toMatchObject({ added: 1, removed: 1, kept: 1 });
+  expect(await importFor(tenants[0], ["DEMO/3"], 'snapshot')).toMatchObject({ added: 1, removed: 1, kept: 1 });
   expect(await prisma.siteElement.findUnique({ where: { id: b.id } })).toBeNull();
   const kept = await prisma.siteElement.findUniqueOrThrow({ where: { id: a.id }, include: { work: true } });
   expect(kept).toMatchObject({ processRevision: 2, processRoutes: { v: 1, factory: [], field: [] }, work: [] });

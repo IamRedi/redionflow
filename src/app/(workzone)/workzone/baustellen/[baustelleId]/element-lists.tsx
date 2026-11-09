@@ -7,6 +7,8 @@ import { useRef, useState, useTransition, type ReactNode } from "react";
 import Image from 'next/image';
 import { SlidersHorizontal } from 'lucide-react';
 import { ElementProcessEditor } from '@/components/steel/element-process-editor';
+import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
+import { elementImportCopy } from '@/components/steel/element-import-copy';
 import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
 import { readProcessRoutes } from '@/lib/elements/stages';
 
@@ -340,7 +342,10 @@ function ListView({
   const router = useRouter();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [importing, startImport] = useTransition();
-  const [configureAfterImport, setConfigureAfterImport] = useState(false);
+  const [configureAfterImport, setConfigureAfterImport] = useState<string[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importMode, setImportMode] = useState<'merge' | 'snapshot'>('merge');
+  const importCopy = elementImportCopy(lang);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const lists: ElementList[] = side === "factory" ? ["assembly", "part"] : ["assembly"];
@@ -376,11 +381,13 @@ function ListView({
     setMessage(null);
     const form = new FormData();
     form.set("baustelleId", site.id);
+    form.set('importMode', importMode);
     for (const file of Array.from(selectedFiles).slice(0, 4)) form.append("file", file);
     startImport(async () => {
       const result = await importElementListsAction(form);
       setMessage({ ok: result.ok, text: result.message });
-      if (result.ok) { router.refresh(); setConfigureAfterImport(true); }
+      setImportOpen(false);
+      if (result.ok) { router.refresh(); setConfigureAfterImport(result.results?.flatMap(row => row.addedIds) ?? []); }
     });
   }
 
@@ -421,9 +428,9 @@ function ListView({
               <button
                 type="button"
                 disabled={importing}
-                onClick={() => fileInput.current?.click()}
+                onClick={() => { setImportMode('merge'); setImportOpen(true); }}
                 title={items.length > 0 ? t("elements.reimport", lang) : t("elements.import", lang)}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold active:scale-95 disabled:opacity-50"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold active:scale-95 disabled:opacity-50"
               >
                 {importing ? <Loader2 className="size-4 animate-spin text-orange-600" /> : <UploadCloud className="size-4 text-orange-600" />}
                 <span className="hidden sm:inline">{t("elements.upload", lang)}</span>
@@ -466,8 +473,17 @@ function ListView({
         ) : null}
         {stillInFactory > 0 ? <p className="mt-2 text-xs text-muted-foreground">{fill(t("elements.stillInFactory", lang), { n: stillInFactory })}</p> : null}
       </div>
+      <AssetWorkspaceDialog open={importOpen} onOpenChange={setImportOpen} title={importCopy.title} compact scrollBody>
+        <label className="grid gap-2 text-sm font-medium">{importCopy.mode}
+          <select value={importMode} onChange={event => setImportMode(event.target.value as 'merge' | 'snapshot')} className="min-h-11 w-full min-w-0 rounded-xl border bg-background px-3 text-sm">
+            <option value="merge">{importCopy.merge}</option><option value="snapshot">{importCopy.snapshot}</option>
+          </select>
+        </label>
+        <p className="mt-3 text-sm text-muted-foreground">{importMode === 'merge' ? importCopy.hint : importCopy.snapshotHint}</p>
+        <button type="button" disabled={importing} onClick={() => fileInput.current?.click()} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold disabled:opacity-50"><UploadCloud className="size-4 text-orange-600" />{importCopy.choose}</button>
+      </AssetWorkspaceDialog>
       {message ? <p className={`text-sm font-medium ${message.ok ? "text-green-700 dark:text-green-400" : "text-red-600"}`}>{message.text}</p> : null}
-      {configureAfterImport && canPlan ? <button type="button" onClick={() => { onProcesses(ofList); setConfigureAfterImport(false); }} className="min-h-11 rounded-xl border border-orange-500/50 bg-orange-500/10 px-4 text-sm font-semibold">{processButton(lang)} · {ofList.length} {t('elements.marks', lang)}</button> : null}
+      {configureAfterImport.length > 0 && canPlan ? <button type="button" onClick={() => { onProcesses(items.filter(row => configureAfterImport.includes(row.id))); setConfigureAfterImport([]); }} className="min-h-11 rounded-xl border border-orange-500/50 bg-orange-500/10 px-4 text-sm font-semibold">{processButton(lang)} · {configureAfterImport.length} {t('elements.marks', lang)}</button> : null}
 
       {items.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{canImport ? t("elements.emptyOffice", lang) : t("elements.empty", lang)}</p>

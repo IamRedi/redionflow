@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { t } from "@/lib/i18n";
+import { plannedStartToday, type PlannedSchedule } from '@/lib/workzone/planned-schedule';
 import { startWorkerSessionAction, startWorkSessionPauseAction, stopWorkerSessionAction, stopWorkSessionPauseAction } from "../hr-actions";
 
 function toDatetimeLocal(date: Date) {
@@ -56,9 +57,11 @@ export function WorkSessionControls({
   workerId,
   workerPhoneGpsEnabled,
   activeSession,
+  plannedSchedule = null,
 }: {
   workerId: string;
   workerPhoneGpsEnabled: boolean;
+  plannedSchedule?: PlannedSchedule | null;
   activeSession: {
     id: string;
     startTime: string;
@@ -87,6 +90,7 @@ export function WorkSessionControls({
   );
 
   function sevenToday() {
+    if (plannedSchedule) return plannedStartToday(plannedSchedule);
     const date = new Date();
     date.setHours(7, 0, 0, 0);
     return toDatetimeLocal(date);

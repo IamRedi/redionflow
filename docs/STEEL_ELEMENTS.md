@@ -32,9 +32,19 @@ A project arrives as documents from the drawing office (Tekla Structures):
    A factory (`STEEL_WORKSHOP`) is never overwritten.
 5. Type `STEEL_ASSEMBLY`. The address is geocoded (below).
 
-Re-uploading a newer list ("Ngarko" in the list sheet, `importElementListsAction`)
-updates elements in place by mark. Checks stay. An element missing from the new
-export is deleted unless work was recorded on it; then it is kept.
+**Ngarko → Partial list** is the default. Upload the project in portions; marks
+absent from the next file remain, including untouched material. A matching mark
+updates its existing row without doubling quantity: the file quantity is that
+mark's total, not an additional shipment. Existing process routes, confirmations
+and finish attribution remain. The post-upload process shortcut selects only
+new marks, so it does not replace earlier materials' process plans.
+
+**Complete list** is an explicit alternative for a full replacement export.
+Only absent, untouched marks with no saved process plan or confirmations may be
+removed. At most one complete file per list kind is accepted in the same upload.
+Both modes reject quantities below already confirmed pieces and roll back the
+whole upload, including its documents, on a conflict. Imports serialize with
+process configuration and confirmations, including simultaneous first uploads.
 
 ## 2. Address → map
 

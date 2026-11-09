@@ -390,6 +390,7 @@
     "changeCodeSave": "Zapisz kod",
     "nationalIdLabel": "Numer dowodu",
     "elementListUnreadable": "Plik {file} nie jest listą elementów (zespoły lub części).",
+    "elementImportQuantityConflict": "Ilość dla {mark} jest mniejsza niż potwierdzona praca. Sprawdź listę; import nie został zapisany.",
     "elementListImported": "Listy wgrane: {added} nowych, {updated} zaktualizowanych.",
     "elementCheckOnlyEngineer": "Ten etap potwierdza tylko odpowiedzialny inżynier lub biuro.",
     "elementNotFromFactory": "Ten element nie opuścił jeszcze zakładu.",

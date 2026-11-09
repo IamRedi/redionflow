@@ -708,6 +708,7 @@
     "changeCodeSave": "Salva codice",
     "nationalIdLabel": "Numero documento",
     "elementListUnreadable": "Il file {file} non è una lista elementi (assemblaggi o parti).",
+    "elementImportQuantityConflict": "La quantità di {mark} è inferiore al lavoro confermato. Controlla la lista; il caricamento non è stato salvato.",
     "elementListImported": "Liste caricate: {added} nuovi, {updated} aggiornati.",
     "elementCheckOnlyEngineer": "Questa fase la conferma solo l'ingegnere responsabile o l'ufficio.",
     "elementNotFromFactory": "Questo elemento non è ancora uscito dall'officina.",

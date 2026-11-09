@@ -27,6 +27,8 @@ const select = {
   machineId: true,
   machine: { select: { name: true, nickname: true, targe: true } },
   uploadedByName: true,
+  uploadedByUserId: true,
+  uploadedByWorkerId: true,
   uploadedAt: true,
   confirmedAt: true,
   fueledAt: true,
@@ -50,8 +52,8 @@ const select = {
   gpsEvidence: true,
 } as const;
 
-function dto(row: Prisma.FuelReceiptGetPayload<{ select: typeof select }>) {
-  const { gpsEvidence, ...rest } = row;
+function dto(row: Prisma.FuelReceiptGetPayload<{ select: typeof select }>, actor: Actor) {
+  const { gpsEvidence, uploadedByUserId, uploadedByWorkerId, ...rest } = row;
   const times = Array.isArray(gpsEvidence)
     ? gpsEvidence.flatMap((p) =>
         p &&
@@ -72,6 +74,7 @@ function dto(row: Prisma.FuelReceiptGetPayload<{ select: typeof select }>) {
       : null;
   return {
     ...rest,
+    canDelete: actor.can.office || Boolean(actor.userId && uploadedByUserId === actor.userId || actor.workerId && uploadedByWorkerId === actor.workerId),
     gpsIntervalSeconds: gap && gap > 0 ? gap : null,
     uploadedAt: row.uploadedAt.toISOString(),
     confirmedAt: row.confirmedAt?.toISOString() ?? null,
@@ -111,7 +114,7 @@ export async function readFuelLog(machineId?: string) {
     ]);
     return {
       machines,
-      receipts: receipts.slice(0, 60).map(dto),
+      receipts: receipts.slice(0, 60).map(row => dto(row, a)),
       hasMore: receipts.length > 60,
       isOffice: a.can.office,
       workers: workers.map((w) => ({
@@ -156,7 +159,7 @@ export async function readOlderFuelReceipts(
       take: 61,
     }),
   );
-  return { receipts: rows.slice(0, 60).map(dto), hasMore: rows.length > 60 };
+  return { receipts: rows.slice(0, 60).map(row => dto(row, a)), hasMore: rows.length > 60 };
 }
 
 /** Upload first; the server's immutable upload time survives OCR and manual entry. */
@@ -262,10 +265,10 @@ export async function prepareFuelReceipt(
           select,
         }),
       );
-      return dto(row);
+      return dto(row, a);
     }
   }
-  return dto(created.row);
+  return dto(created.row, a);
 }
 
 export async function confirmFuelReceipt(
@@ -358,7 +361,29 @@ export async function readFuelReceipt(id: string) {
     tx.fuelReceipt.findFirst({ where: { id, ...ownerWhere(a) }, select }),
   );
   if (!row) throw new FuelError('NOT_FOUND');
-  return dto(row);
+  return dto(row, a);
+}
+
+/** Remove a mistaken upload, with a separate immutable audit event. Reading a
+ * receipt as the fueler does not grant the right to delete another uploader's file. */
+export async function deleteFuelReceipt(id: string) {
+  const a = await fleetActor();
+  if (!idCheck.test(id)) throw new FuelError('INVALID');
+  return withTenantContext(a.companyId, async tx => {
+    const where = {
+      id, companyProfileId: a.companyId,
+      ...(!a.can.office ? a.workerId ? { uploadedByWorkerId: a.workerId } : { uploadedByUserId: a.userId! } : {}),
+    };
+    await tx.$queryRaw`SELECT id FROM "FuelReceipt" WHERE id=${id} AND "companyProfileId"=${a.companyId} FOR UPDATE`;
+    const row = await tx.fuelReceipt.findFirst({ where, select: { machineId: true, sha256: true, confirmedAt: true } });
+    if (!row) throw new FuelError('NOT_FOUND');
+    await tx.fuelReceipt.delete({ where: { id } });
+    await tx.auditLog.create({ data: {
+      companyProfileId: a.companyId, actorType: a.workerId ? 'WORKER' : 'ADMIN',
+      actorId: (a.workerId ?? a.userId)!, action: 'fleet.fuel_deleted',
+      payload: { receiptId: id, machineId: row.machineId, sha256: row.sha256, wasConfirmed: Boolean(row.confirmedAt) },
+    } });
+  });
 }
 
 export async function readFuelFile(id: string) {

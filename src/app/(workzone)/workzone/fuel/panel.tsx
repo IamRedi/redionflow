@@ -8,7 +8,9 @@ import {
   Fuel,
   MapPin,
   ReceiptText,
+  Trash2,
 } from 'lucide-react';
+import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
 import type { readFuelLog, FuelReceiptView } from '@/lib/fleet/fuel/service';
 import { fleetCopy } from '@/lib/fleet/copy';
 import { mapsLink } from '@/lib/fleet/location-link';
@@ -18,6 +20,7 @@ import {
   confirmFuelAction,
   retryFuelGpsAction,
   olderFuelAction,
+  deleteFuelAction,
 } from './actions';
 
 export function FuelPanel({
@@ -37,6 +40,7 @@ export function FuelPanel({
   const [hasMore, setHasMore] = useState(data.hasMore);
   const [cursor, setCursor] = useState(data.receipts.at(-1));
   const [draft, setDraft] = useState<FuelReceiptView | null>(null);
+  const [deleting, setDeleting] = useState<FuelReceiptView | null>(null);
   const [clock, setClock] = useState('');
   const [offset, setOffset] = useState('');
   const [requestId, setRequestId] = useState('');
@@ -124,7 +128,7 @@ export function FuelPanel({
   }
   return (
     <div className="space-y-7">
-      {logOnly && message && <p role="status" className="text-sm text-destructive">{message}</p>}
+      {logOnly && message ? <p role="status" aria-live="polite" className={`text-sm ${error ? 'text-destructive' : 'text-emerald-700 dark:text-emerald-300'}`}>{message}</p> : null}
       {!logOnly && <section className="rounded-2xl border bg-card p-4 sm:p-6">
         {!draft ? (
           <form
@@ -416,6 +420,8 @@ export function FuelPanel({
                     {date(row.uploadedAt)}
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                {row.canDelete ? <button type="button" disabled={pending} onClick={() => setDeleting(row)} title={c.deleteReceipt} aria-label={c.deleteReceipt} className="grid size-11 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"><Trash2 className="size-4" /></button> : null}
                 <span
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${verified ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-200' : 'bg-amber-500/10 text-amber-800 dark:text-amber-200'}`}
                 >
@@ -426,6 +432,7 @@ export function FuelPanel({
                   )}
                   {row.confirmedAt ? gpsMessage : c.draft}
                 </span>
+                </div>
               </div>
               <details open={index === 0} className="border-t px-4 py-3">
                 <summary className="cursor-pointer text-sm font-medium">
@@ -553,6 +560,26 @@ export function FuelPanel({
           </button>
         )}
       </section>
+      <AssetWorkspaceDialog open={Boolean(deleting)} onOpenChange={open => { if (!pending && !open) setDeleting(null); }} title={c.deleteReceipt} compact scrollBody>
+        <p className="text-sm text-muted-foreground">{c.deleteReceiptHint}</p>
+        {deleting ? <p className="mt-3 text-sm font-semibold">{[deleting.machine.targe, deleting.machine.nickname || deleting.machine.name].filter(Boolean).join(' · ')} · {date(deleting.uploadedAt)}</p> : null}
+        <div className="mt-4 flex justify-end gap-2">
+          <button type="button" disabled={pending} onClick={() => setDeleting(null)} className="min-h-11 rounded-xl border px-3 text-sm disabled:opacity-50">{c.cancel}</button>
+          <button type="button" disabled={pending} className="min-h-11 rounded-xl bg-destructive px-3 text-sm font-semibold text-destructive-foreground disabled:opacity-50" onClick={() => {
+            if (!deleting) return;
+            const id = deleting.id;
+            start(async () => {
+              try {
+                const res = await deleteFuelAction(id);
+                if (!res.ok) { setError(true); setMessage(errorMessage(res.code)); setDeleting(null); return; }
+                setRows(previous => previous.filter(row => row.id !== id));
+                if (draft?.id === id) { setDraft(null); setFile(null); setRequestId(''); }
+                setDeleting(null); setError(false); setMessage(c.deleted);
+              } catch { setError(true); setMessage(c.error); setDeleting(null); }
+            });
+          }}>{pending ? c.busy : c.deleteReceipt}</button>
+        </div>
+      </AssetWorkspaceDialog>
     </div>
   );
 }
