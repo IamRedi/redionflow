@@ -3,7 +3,8 @@ import { assetActor, assetFail } from "@/lib/company-assets/access";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { logger } from "@/lib/observability/logger";
 
-import { ACCESS_ACTIONS, ACCESS_PLACES, can, effectiveLevel, legacyActions, legacyGrantRows, placeOf, type AccessAction, type AccessLevel, type AccessPlace, type AccessSubject, type GrantLevel } from "./rules";
+import { applyAccessLevel } from "./apply";
+import { ACCESS_ACTIONS, ACCESS_PLACES, can, effectiveLevel, legacyActions, placeOf, type AccessAction, type AccessLevel, type AccessPlace, type AccessSubject, type GrantLevel } from "./rules";
 
 type Tx = Prisma.TransactionClient;
 
@@ -136,21 +137,8 @@ export async function setWorkerAccessLevel(input: { workerId: unknown; level: un
   const workerId = typeof input.workerId === "string" ? input.workerId : assetFail("BAD_INPUT");
   const level = input.level === "BASE" || input.level === "FULL_VIEW" ? input.level : assetFail("BAD_INPUT");
   const actor = await accessAdmin();
-  await withTenantContext(actor.companyId, async tx => {
-    const row = await tx.worker.findFirst({ where: { id: workerId, companyProfileId: actor.companyId }, select: { accessLevel: true, crewRole: true, siteDocumentGrants: { select: { baustelleId: true } } } });
-    if (!row) return assetFail("NOT_FOUND");
-    if (row.accessLevel === null) {
-      // First time: what the crew role allowed today stays allowed, now as visible grants.
-      for (const grant of legacyGrantRows(row.crewRole, new Set(row.siteDocumentGrants.map(g => g.baustelleId)))) {
-        await tx.accessGrant.upsert({
-          where: { companyProfileId_place_scopeId_workerId: { companyProfileId: actor.companyId, place: grant.place, scopeId: grant.scopeId, workerId } },
-          create: { companyProfileId: actor.companyId, place: grant.place, scopeId: grant.scopeId, workerId, level: "act", grantedByUserId: actor.userId },
-          update: {},
-        });
-      }
-    }
-    await tx.worker.update({ where: { id: workerId }, data: { accessLevel: level } });
-  });
+  const done = await withTenantContext(actor.companyId, tx => applyAccessLevel(tx, actor.companyId, workerId, level, actor.userId));
+  if (!done) return assetFail("NOT_FOUND");
   logger.info({ event: "access.level_changed", level }, "Access level changed");
   return readWorkerAccessSummary(workerId);
 }
