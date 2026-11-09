@@ -68,6 +68,9 @@ function columnLicenseWarnings(column: Column, workers: DraggableWorker[], machi
   return warnings;
 }
 
+/** "Kantieri Demo Durrës" → "Kantieri": enough to recognise the site on a small card. */
+const firstWord = (name: string) => name.trim().split(/[\s,–-]+/).find(Boolean) ?? name;
+
 const rowKey = (row: { workerNames: string; machineNames: string; baustelleName: string; note: string | null }) =>
   [row.baustelleName.trim(), row.workerNames.trim(), row.machineNames.trim(), row.note?.trim() ?? ""].join("|");
 const hasContent = (row: { workerNames: string; machineNames: string; note: string | null }) => Boolean(row.workerNames.trim() || row.machineNames.trim() || row.note?.trim());
@@ -196,7 +199,7 @@ export function DailyPlanBoard({
               className="min-h-11 w-full rounded-xl border bg-background pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-orange-500" />
           </label>
           <p className="mt-3 text-xs text-muted-foreground">{c.step}</p>
-          <ul className="mt-2 grid max-h-72 grid-cols-2 gap-1.5 overflow-y-auto pr-0.5 sm:grid-cols-3 lg:max-h-[calc(100vh-17rem)] lg:grid-cols-1" data-testid="plan-pick-list">
+          <ul className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:max-h-[calc(100vh-17rem)] lg:grid-cols-1 lg:overflow-y-auto lg:pr-0.5" data-testid="plan-pick-list">
             {list.length === 0 ? <li className="col-span-full py-3 text-sm text-muted-foreground">{c.noMatch}</li> : null}
             {list.map((entry) => {
               const isWorker = tab === "WORKER";
@@ -214,19 +217,24 @@ export function DailyPlanBoard({
                     onDragStart={() => setPicked({ kind: tab, id: entry.id, name: entry.name })}
                     onClick={() => setPicked(active ? null : { kind: tab, id: entry.id, name: entry.name })}
                     aria-pressed={active}
-                    className={`flex min-h-11 w-full flex-col items-start justify-center rounded-xl border px-2.5 py-1.5 text-left text-sm transition ${
+                    className={`flex min-h-12 w-full flex-col justify-center gap-1 rounded-xl border px-2.5 py-1.5 text-left text-sm shadow-sm transition active:scale-[0.98] ${
                       active ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950"
-                        : site ? "bg-muted/50 text-muted-foreground hover:bg-muted"
-                          : "bg-background hover:border-orange-400 hover:bg-orange-500/5"
+                        : site ? "border-orange-500/25 bg-orange-500/[0.06] hover:bg-orange-500/10"
+                          : "bg-card hover:border-orange-400 hover:bg-orange-500/5"
                     }`}
                   >
-                    <span className="flex w-full items-center gap-1.5">
-                      {needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}
-                      <span className="min-w-0 truncate font-medium">{entry.name}</span>
+                    <span className="flex w-full min-w-0 flex-col items-start gap-1 lg:flex-row lg:items-center lg:gap-1.5">
+                      <span className="flex w-full min-w-0 items-center gap-1.5 lg:w-auto lg:flex-1">
+                        {needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}
+                        <span className="min-w-0 truncate font-medium">{entry.name}</span>
+                      </span>
+                      {site ? (
+                        <span className={`inline-flex max-w-full shrink-0 items-center gap-0.5 rounded-full lg:max-w-[45%] px-1.5 py-0.5 text-[11px] font-semibold ${active ? "bg-white/20" : "bg-orange-500/15 text-orange-800 dark:text-orange-200"}`} title={site} data-testid="plan-pick-site">
+                          <MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{firstWord(site)}</span>
+                        </span>
+                      ) : sub ? <span className={`shrink-0 rounded-md border px-1 text-[10px] font-semibold leading-4 ${active ? "border-white/40" : "text-muted-foreground"}`} title={sub}>{sub}</span> : null}
                     </span>
-                    {site ? <span className={`flex max-w-full items-center gap-1 truncate text-[11px] ${active ? "" : "text-orange-700 dark:text-orange-300"}`}><MapPin className="size-3 shrink-0" />{site}</span>
-                      : sub ? <span className={`max-w-full truncate text-[11px] ${active ? "" : "text-muted-foreground"}`}>{sub}</span> : null}
-                    {machine && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(machine.id)} c={assets} compact className="mt-1" /> : null}
+                    {machine && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(machine.id)} c={assets} compact /> : null}
                   </button>
                 </li>
               );
@@ -237,7 +245,7 @@ export function DailyPlanBoard({
         {/* Sites of the day. */}
         <section className="min-w-0 space-y-3">
           {picked ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-orange-500/50 bg-orange-500/10 px-3 py-2 text-sm" role="status" data-testid="plan-picked">
+            <div className="hidden items-center gap-2 rounded-2xl border border-orange-500/50 bg-orange-500/10 px-3 py-2 text-sm lg:flex" role="status" data-testid="plan-picked">
               <span className="min-w-0 flex-1"><strong>{picked.name}</strong>: {c.picked}</span>
               <button type="button" onClick={() => setPicked(null)} className="min-h-9 shrink-0 rounded-lg border bg-card px-3 text-xs font-semibold hover:bg-muted">{c.cancel}</button>
             </div>
@@ -284,7 +292,7 @@ export function DailyPlanBoard({
                   </ul>
                   {picked ? (
                     <button type="button" onClick={(event) => { event.stopPropagation(); assign(column.id, picked); }} disabled={isPending}
-                      className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-orange-600 px-3 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950">
+                      className="mt-3 hidden min-h-11 w-full items-center justify-center rounded-xl bg-orange-600 lg:inline-flex px-3 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950">
                       + {picked.name} · {c.dropHere}
                     </button>
                   ) : null}
@@ -294,6 +302,49 @@ export function DailyPlanBoard({
           </div>
         </section>
       </div>
+
+      {/* Phone and tablet: after picking someone, choose the site in a sheet; the list stays where it was. */}
+      {picked ? (
+        <div className="fixed inset-0 z-50 flex items-end lg:hidden" role="dialog" aria-modal="true" aria-label={picked.name} data-testid="plan-site-sheet">
+          <button type="button" className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-label={c.cancel} onClick={() => setPicked(null)} />
+          <div className="relative max-h-[78vh] w-full overflow-y-auto rounded-t-3xl border-t bg-card px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl">
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-muted-foreground/30" aria-hidden />
+            <div className="mb-3 flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-500/15 text-orange-700 dark:text-orange-300">
+                {picked.kind === "WORKER" ? <HardHat className="size-5" aria-hidden /> : <Truck className="size-5" aria-hidden />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold">{picked.name}</p>
+                <p className="text-xs text-muted-foreground">{c.chooseSite}</p>
+              </div>
+              <button type="button" onClick={() => setPicked(null)} className="grid size-10 shrink-0 place-items-center rounded-full border hover:bg-muted" aria-label={c.cancel}><X className="size-5" aria-hidden /></button>
+            </div>
+            <ul className="space-y-2">
+              {columns.map((column) => {
+                const people = column.assignments.filter((a) => a.kind === "WORKER").length;
+                const things = column.assignments.filter((a) => a.kind === "MACHINE").length;
+                const here = column.assignments.some((a) => (picked.kind === "WORKER" ? a.workerId : a.machineId) === picked.id);
+                return (
+                  <li key={column.id}>
+                    <button type="button" disabled={isPending || here} onClick={() => assign(column.id, picked)} data-testid="plan-sheet-site"
+                      className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 py-2 text-left transition active:scale-[0.99] ${here ? "border-orange-500 bg-orange-500/10" : "bg-background hover:border-orange-400 hover:bg-orange-500/5"}`}>
+                      <MapPin className="size-5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{column.title}</span>
+                        <span className="mt-0.5 flex items-center gap-3 text-xs tabular-nums text-muted-foreground">
+                          <span className="inline-flex items-center gap-1"><HardHat className="size-3.5" aria-label={c.workers} />{people}</span>
+                          <span className="inline-flex items-center gap-1"><Truck className="size-3.5" aria-label={c.machines} />{things}</span>
+                        </span>
+                      </span>
+                      {here ? <Check className="size-5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /> : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      ) : null}
 
       <SavedPlanList rows={savedRows} c={c} title={c.savedPlan} hint={c.savedHint} />
 
