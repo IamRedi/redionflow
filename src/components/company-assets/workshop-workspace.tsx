@@ -9,6 +9,7 @@ import { AssetDetailDialog } from './asset-detail-panel';
 import { AssetLookup } from './asset-lookup';
 import { WorkshopBayArt } from './workshop-bay-art';
 import { AssetFeedback, AssetLoading, AssetPicture, AssetSearch, assetButton, assetIdentity, assetTime, useAssetSnapshot } from './shared';
+import { AccessKeyButton } from '@/components/access/access-key-button';
 
 const phases: Exclude<RepairPhase, 'cancelled'>[] = ['reported', 'received', 'repairing', 'ready'];
 
@@ -32,6 +33,7 @@ export function WorkshopWorkspace({ initialAsset, embedded = false }: { initialA
       <div className="min-w-[min(100%,12rem)] flex-1"><AssetSearch value={query} onChange={value => { setQuery(value); setPhase(null); }} label={c.search} /></div>
       <button type="button" className={`${assetButton} shrink-0 px-0`} onClick={() => void data.reload()} disabled={data.loading} aria-label={c.refresh}><RefreshCw size={18} className={data.loading ? 'animate-spin' : ''} /></button>
       <AssetLookup c={c} onSelect={asset => setSelected({asset})} compact />
+      <AccessKeyButton place="workshop" />
     </div>
     <div aria-label={c.workshop} className="grid grid-cols-2 gap-2 pb-3 sm:grid-cols-4 xl:hidden">
       {phases.map(key => <button type="button" key={key} aria-pressed={visiblePhase === key} aria-controls={`workshop-phase-${key}`} onClick={() => setPhase(key)} className={`${assetButton} justify-between text-left ${visiblePhase === key ? 'border-orange-500 bg-orange-500/10 text-orange-800 dark:text-orange-300' : ''}`}>

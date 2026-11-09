@@ -11,6 +11,7 @@ import { t } from "@/lib/i18n";
 
 import { deleteSiteFileAction, updateSiteInfoAction, uploadSiteFileAction } from "../../site-file-actions";
 import { Sheet } from "../../production/production-ui";
+import { AccessKeyButton } from "@/components/access/access-key-button";
 
 export type SiteFileView = {
   id: string;
@@ -274,6 +275,7 @@ export function SiteFilesButton({
                     <div className="text-sm font-semibold">{t("siteFiles.costTotal", lang)}</div>
                     <div className="text-xs text-muted-foreground">{t("siteFiles.costHint", lang)}</div>
                   </div>
+                  <AccessKeyButton place="costs" compact />
                   <div className="text-2xl font-bold tabular-nums">{money(costTotal, costs[0]?.currency ?? "ALL")}</div>
                 </div>
                 <div className="flex gap-2">

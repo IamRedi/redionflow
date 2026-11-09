@@ -38,6 +38,9 @@ import { dateKey, monthKey } from "@/lib/workzone/reporting";
 import { WorkerAvailability, WorkerLevel } from "@/generated/prisma/enums";
 import { parseEnumInput } from "@/lib/validation/enum-input";
 import { CREW_ROLES, readCrewRole } from "@/lib/workzone/crew-roles";
+import { AccessKeyButton } from "@/components/access/access-key-button";
+import { StaffDirectory } from "./staff-directory";
+import { effectiveLevel } from "@/lib/access/rules";
 
 function cleanText(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -348,13 +351,20 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
   const unavailableWorkers = workers.filter((worker) => worker.availability !== "AVAILABLE").length;
   const inactiveWorkers = workers.length - activeWorkers;
   const activeMachines = machines.filter((machine) => machine.isActive).length;
+  const staffCategory = (worker: { crewRole: string | null; accessLevel: string | null; status: string }) =>
+    effectiveLevel({ kind: "worker", active: worker.status === "active", accessLevel: worker.accessLevel === "BASE" || worker.accessLevel === "FULL_VIEW" ? worker.accessLevel : null, crewRole: worker.crewRole, grants: [] }) === "FULL_VIEW" ? "office" : "worker";
+  const staffCounts = {
+    worker: workers.filter((worker) => staffCategory(worker) === "worker").length,
+    office: workers.filter((worker) => staffCategory(worker) === "office").length,
+    fleet: machines.length,
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">{t("admin.operations", currentLang, mode)}</div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("admin.navPersonalFleet", currentLang, mode)}</h1>
+          <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">{t("admin.navPersonalFleet", currentLang, mode)}<AccessKeyButton place="staff" compact /></h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{t("admin.hrSubtitle", currentLang, mode)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -397,7 +407,8 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
         ))}
       </div>
 
-      <section className="space-y-3">
+      <StaffDirectory counts={staffCounts}>
+      <div data-staff-block="people">
       <Card id="workers" className="scroll-mt-28">
         <CardHeader className="py-4">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -534,8 +545,8 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
                       ? t("admin.availabilityVacation", currentLang, mode)
                       : t("admin.availabilityUnavailable", currentLang, mode);
               return (
+                <div key={worker.id} data-staff-cat={staffCategory(worker)} data-staff-name={`${workerName} ${worker.position ?? ""}`}>
                 <AdminWorkerCard
-                  key={worker.id}
                   worker={{
                     id: worker.id,
                     firstName: worker.firstName,
@@ -564,6 +575,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
                   reportTodayKey={reportTodayKey}
                   reportMonthKey={reportMonthKey}
                 />
+                </div>
               );
             })}
           </div>
@@ -716,11 +728,9 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
           </div>
         </CardContent>
       </Card>
+      </div>
 
-      </section>
-
-      <section className="space-y-3">
-
+      <div data-staff-block="fleet">
       <Card id="machines" className="scroll-mt-28">
         <CardHeader className="py-4">
           <CardTitle className="flex flex-wrap items-center gap-2 text-base">
@@ -806,7 +816,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
             </TableHeader>
             <TableBody>
               {machines.map((machine) => (
-                <TableRow key={machine.id} className="h-11">
+                <TableRow key={machine.id} className="h-11" data-staff-cat="fleet" data-staff-name={`${machine.name} ${machine.nickname ?? ""}`}>
                   <TableCell className="py-1.5">
                     <div className="flex items-center gap-3">
                       <span className="h-10 w-14 shrink-0 overflow-hidden rounded-lg border bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
@@ -850,7 +860,8 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
           </Table>
         </CardContent>
       </Card>
-      </section>
+      </div>
+      </StaffDirectory>
     </div>
   );
 }

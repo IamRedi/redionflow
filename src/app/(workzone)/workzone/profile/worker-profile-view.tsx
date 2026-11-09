@@ -1,4 +1,5 @@
 import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
+import { WorkerAccessPanel } from "@/components/access/worker-access-panel";
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { plannedSteelSchedule, plannedScheduleLabel } from '@/lib/workzone/planned-schedule';
@@ -387,6 +388,8 @@ export async function WorkerProfileView({
           </a>
         </div>
       </section>
+
+      {mode === "admin" && assetOperations ? <WorkerAccessPanel workerId={worker.id} /> : null}
 
       {showAssistantAccess ? (
         <AssistantAccessToggle action={setWorkerAssistantAccessAction} idName="workerId" id={worker.id} enabled={Boolean(worker.assistantAccess)} language={currentLang} />

@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import { NewProjectButton } from "./new-project";
 import { AllSitesFactoryView } from "./production/factory-output-view";
 import { AssetPhoto } from "@/components/asset-photo";
+import { AccessKeyButton } from "@/components/access/access-key-button";
 
 export type { FactoryBatchView } from "./production/production-ui";
 
@@ -62,8 +63,10 @@ export function FactoryPanel({
             <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-green-700 dark:text-green-300">
               {t("elements.produced", lang)}: {formatAmount(total.donePieces)} {pcs}
             </span>
+            <AccessKeyButton place="factory" compact />
             {canManage ? (
-              <span className="ml-auto">
+              <span className="ml-auto flex items-center gap-2">
+                <AccessKeyButton place="new_project" compact />
                 <NewProjectButton />
               </span>
             ) : null}

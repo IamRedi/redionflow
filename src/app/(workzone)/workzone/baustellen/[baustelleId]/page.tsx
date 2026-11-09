@@ -44,6 +44,7 @@ import { compareMarks } from "@/lib/elements/tekla-list";
 import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
 import { canManageSteelCatalog } from "@/lib/steel-work/types";
 import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
+import { AccessKeyButton } from '@/components/access/access-key-button';
 
 export default async function BaustelleDetailPage({
   params,
@@ -350,6 +351,7 @@ export default async function BaustelleDetailPage({
               />
               <PhaseDocumentsButton siteId={baustelle.id}/>
               {documentAccess.manage?<SiteDocumentAccessButton siteId={baustelle.id}/>:null}
+              <AccessKeyButton place="site" scopeId={baustelle.id} />
               <WorkingBadge workers={activeWorkerNames} />
             </div>
             {baustelle.type !== "STEEL_WORKSHOP" ? (
