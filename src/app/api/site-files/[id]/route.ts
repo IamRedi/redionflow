@@ -20,10 +20,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const file = await withTenantContext(companyId, (tx) =>
     tx.siteFile.findFirst({
       where: { id, companyProfileId: companyId },
-      select: { data: true, mime: true, fileName: true, officeOnly: true },
+      select: { data: true, mime: true, fileName: true, officeOnly: true, baustelleId: true },
     }),
   );
-  if (!file || (file.officeOnly && !actor.can.office)) return notFound();
+  if (!file || (file.officeOnly && !actor.at(file.baustelleId).office && !actor.allows("costs.view"))) return notFound();
 
   const download = new URL(request.url).searchParams.has("download");
   const inline = !download && (file.mime.startsWith("image/") || file.mime === "application/pdf");

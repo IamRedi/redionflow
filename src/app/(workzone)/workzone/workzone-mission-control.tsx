@@ -18,6 +18,7 @@ import { WorkzoneMapIndex, type MissionMapFocus } from "./workzone-map-index";
 import mapStyles from "./workzone-map-index.module.css";
 import { useMapFleet, useSetWorkzoneMapMode } from "./workzone-map-fleet";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
+import { WorkingControls } from "./baustellen/[baustelleId]/working-controls";
 
 type MissionItem = {
   id: string;
@@ -43,6 +44,13 @@ type MissionItem = {
   canEditPhoto?:boolean;
   material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
+  /** False for Bazë workers without access here: no "Open", start/stop on the card instead. */
+  canOpen?: boolean;
+};
+
+type CardWork = {
+  worker: { id: string; firstName: string; lastName: string; isTemporary: boolean; level: string; companyProfileId: string };
+  activeSession: { startTime: string; baustelleId: string | null } | null;
 };
 
 type CanvasViewport = "desktop" | "mobile";
@@ -270,7 +278,9 @@ export function WorkzoneMissionControl({
   gpsSyncAvailable = false,
   initialMap = false,
   canEditPhotos = false,
+  cardWork = null,
 }: {
+  cardWork?: CardWork | null;
   items: MissionItem[];
   archive: MissionItem[];
   defaultAddress: string;
@@ -595,8 +605,13 @@ export function WorkzoneMissionControl({
                     {t("common.note", currentLang)}: {item.pendingSiteTask}
                   </p>
                 ) : null}
+                {item.canOpen === false && cardWork ? (
+                  <div className="mt-2">
+                    <WorkingControls compact baustelleId={item.id} currentWorker={cardWork.worker} activeWorkerIds={[]} activeSession={cardWork.activeSession} />
+                  </div>
+                ) : null}
                 <div className="mt-2 flex items-center gap-1">
-                  {allowDetailNavigation ? (
+                  {allowDetailNavigation && item.canOpen !== false ? (
                     <Button asChild size="sm" variant="outline" className={`text-[11px] ${isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
                       <Link href={`${detailHrefBase}/${item.id}`}>{t("common.open", currentLang)}</Link>
                     </Button>

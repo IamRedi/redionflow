@@ -41,7 +41,10 @@ it("sets the level and shows role rights as partial", async () => {
   const site = await readPlaceAccess("site", tenants[0].site.id);
   expect(site.people.find(p => p.id === worker.id)).toMatchObject({ level: "FULL_VIEW", acts: "some", grant: null });
   const based = await setWorkerAccessLevel({ workerId: worker.id, level: "BASE" });
-  expect(based).toMatchObject({ level: "BASE", levelSet: true, fromRole: ["site"] });
+  // The role's rights become visible grants the first time the level is set.
+  expect(based).toMatchObject({ level: "BASE", levelSet: true, fromRole: [], grants: [{ place: "site", scopeId: "", level: "act" }] });
+  const again = await setWorkerAccessLevel({ workerId: worker.id, level: "FULL_VIEW" });
+  expect(again.grants).toHaveLength(1);
 });
 
 it("refuses non-admins, other companies' people and sites, and bad input", async () => {

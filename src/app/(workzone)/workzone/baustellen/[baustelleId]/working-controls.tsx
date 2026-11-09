@@ -42,7 +42,9 @@ export function WorkingControls({
   currentWorker,
   activeWorkerIds,
   activeSession,
+  compact = false,
 }: {
+  compact?: boolean;
   baustelleId: string;
   currentWorker: CurrentWorker;
   activeWorkerIds: string[];
@@ -121,6 +123,29 @@ export function WorkingControls({
     if (!activeSession) return;
     const now = toDatetimeLocal(new Date());
     void stopAt(now, defaultBreakMinutes(activeSession.startTime, now));
+  }
+
+  if (compact) {
+    // On a site card: start/stop only, for people who do not open the site.
+    return (
+      <div className="space-y-2" data-testid="card-work-controls" onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+        <div className="grid gap-1.5">
+          <Button type="button" size="sm" className="h-auto min-h-9 whitespace-normal py-1.5 leading-tight" disabled={busy || isActiveOnThisBaustelle} onClick={prepareStart}>{t("workzone.workHere", currentLang)}</Button>
+          <Button type="button" size="sm" variant="secondary" className="h-auto min-h-9 whitespace-normal py-1.5 leading-tight" disabled={busy || !isActiveOnThisBaustelle} onClick={prepareStop}>{t("workzone.stopWork", currentLang)}</Button>
+        </div>
+        {message ? <div className="text-[11px] text-muted-foreground">{message}</div> : null}
+        {startOpen ? (
+          <div className="space-y-1.5 rounded-md border bg-background p-2 text-xs shadow-sm">
+            <div className="font-semibold">{t("workzone.whenDidWorkStart", currentLang)}</div>
+            <Input aria-label={t("common.time", currentLang)} type="datetime-local" value={startTime} onChange={(event) => setStartTime(event.currentTarget.value)} className="h-9" />
+            <div className="grid gap-1.5">
+              <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => startAt(toDatetimeLocal(new Date()))}>{t("common.now", currentLang)}</Button>
+              <Button type="button" size="sm" disabled={busy} onClick={() => startAt(startTime)}>{t("workzone.selectedTime", currentLang)}</Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   return (
