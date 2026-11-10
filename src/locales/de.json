@@ -1708,6 +1708,7 @@
     "siteInfo": "Baustellenbeschreibung",
     "task": "Aufgabe",
     "taskHint": "Vom Büro für diese Baustelle hinzugefügt",
+    "addedBy": "Hinzugefügt von {name}",
     "addTask": "Aufgabe hinzufügen",
     "taskPlaceholder": "z. B. Treppenmontage",
     "removeTask": "Aufgabe entfernen",

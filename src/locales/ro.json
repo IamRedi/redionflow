@@ -560,6 +560,7 @@
     "siteInfo": "Descrierea șantierului",
     "task": "Task",
     "taskHint": "Added by the office for this site",
+    "addedBy": "Adăugat de {name}",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
     "removeTask": "Remove task",

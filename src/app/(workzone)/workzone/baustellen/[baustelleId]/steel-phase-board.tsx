@@ -28,6 +28,8 @@ export type SteelPhaseView = {
   status: SteelPhaseStatus;
   meta: SteelPhaseMeta;
   definitionId?: string;
+  /** Who put this phase on the site. */
+  addedBy?: string;
   automatic?: boolean;
   percent?: number | null;
   completedPieces?: number;
@@ -73,6 +75,7 @@ function phasePercent(item: SteelPhaseView) {
 }
 
 function phaseHint(item: SteelPhaseView, lang: string) {
+  if (item.key === "task" && item.addedBy) return fill(t("steel.addedBy", lang), { name: item.addedBy });
   return t(item.key === "task" ? "steel.taskHint" : `steel.${item.key}Hint`, lang);
 }
 
@@ -339,6 +342,7 @@ export function SteelPhaseBoard({
                     </span>
                   </div>
                   <p className="mt-1 text-base text-muted-foreground">{phaseHint(open, currentLang)}</p>
+                  {open.key !== "task" && open.addedBy ? <p className="mt-0.5 text-sm text-muted-foreground">{fill(t("steel.addedBy", currentLang), { name: open.addedBy })}</p> : null}
                   {open.automatic ? <p className="mt-2 text-sm font-semibold tabular-nums text-muted-foreground">{c.fromMaterials} · {(open.requiredPieces ?? 0) > 0 ? `${open.completedPieces ?? 0}/${open.requiredPieces} ${c.pieces}` : c.noMaterials}</p> : null}
                   <div className="mt-3 space-y-2 text-sm">
                     {open.status === "done" && open.meta.doneBy && open.meta.doneBy !== "…" ? (

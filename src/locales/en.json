@@ -1586,6 +1586,7 @@
     "siteInfo": "Site description",
     "task": "Task",
     "taskHint": "Added by the office for this site",
+    "addedBy": "Added by {name}",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
     "removeTask": "Remove task",

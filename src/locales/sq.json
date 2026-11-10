@@ -1642,6 +1642,7 @@
     "siteInfo": "Përshkrimi i kantierit",
     "task": "Detyrë",
     "taskHint": "Detyrë e shtuar nga zyra për këtë kantier",
+    "addedBy": "Shtuar nga {name}",
     "addTask": "Shto detyrë",
     "taskPlaceholder": "p.sh. Montim shkallësh",
     "removeTask": "Hiq detyrën",

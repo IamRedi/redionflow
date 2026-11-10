@@ -559,6 +559,7 @@
     "siteInfo": "Opis budowy",
     "task": "Task",
     "taskHint": "Added by the office for this site",
+    "addedBy": "Dodane przez {name}",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
     "removeTask": "Remove task",

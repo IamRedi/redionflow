@@ -78,7 +78,7 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
       definition = await tx.steelWorkDefinition.create({ data: { ...data, companyProfileId: companyId, kind: input.kind, key: `${prefix}${randomBytes(12).toString('hex')}`, sortOrder: (last._max.sortOrder ?? 99) + 1 } });
     }
     if (input.siteId && input.kind === 'site' && !input.id) await selectTask(tx, companyId, input.siteId, definition.id, true);
-    await audit(tx, companyId, actor, existing ? 'steel.catalog_updated' : 'steel.catalog_created', { definitionId: definition.id, revision: definition.revision });
+    await audit(tx, companyId, actor, existing ? 'steel.catalog_updated' : 'steel.catalog_created', { definitionId: definition.id, revision: definition.revision, ...(input.siteId && input.kind === 'site' && !input.id ? { siteId: input.siteId } : {}) });
     const changedArt = !!input.id && !!existing && (existing.label !== definition.label || existing.description !== definition.description || existing.linkedProcessKey !== definition.linkedProcessKey || existing.linkedList !== definition.linkedList || existing.linkedKind !== definition.linkedKind);
     return { definitionId: definition.id, revision: definition.revision, key: definition.key, artNeeded: definition.visualStatus !== 'photo' && (changedArt || !definition.visualUpdatedAt) };
   });
@@ -127,5 +127,36 @@ export async function archiveSteelWorkDefinition(companyId: string, actor: Compa
     if (changed.count !== 1) fail('CONFLICT');
     await tx.steelWorkDefinition.updateMany({ where: { id: input.definitionId, companyProfileId: companyId, visualStatus: 'pending' }, data: { visualStatus: 'fallback' } });
     await audit(tx, companyId, actor, 'steel.catalog_archived', { definitionId: input.definitionId, archived: input.archived });
+  });
+}
+
+/** Who put each phase on this site, from the audit trail: the last time it was chosen there, else whoever created it. */
+export async function steelPhaseAddedBy(companyId: string, siteId: string, definitionIds: string[]): Promise<Record<string, string>> {
+  if (!definitionIds.length) return {};
+  return withTenantContext(companyId, async tx => {
+    const rows = await tx.auditLog.findMany({
+      where: { companyProfileId: companyId, OR: [
+        { action: 'steel.task_selected', payload: { path: ['siteId'], equals: siteId } },
+        { action: 'steel.catalog_created', OR: definitionIds.map(id => ({ payload: { path: ['definitionId'], equals: id } })) },
+      ] },
+      orderBy: { createdAt: 'desc' }, select: { action: true, actorType: true, actorId: true, payload: true },
+    });
+    const picked = new Map<string, { actorType: string; actorId: string }>();
+    const read = (payload: unknown) => (payload && typeof payload === 'object' ? payload as Record<string, unknown> : {});
+    // Choosing on this site wins over creating the definition (which may have happened elsewhere).
+    for (const pass of ['steel.task_selected', 'steel.catalog_created']) for (const row of rows) {
+      const payload = read(row.payload), id = String(payload.definitionId ?? '');
+      if (row.action !== pass || !row.actorId || !definitionIds.includes(id) || picked.has(id)) continue;
+      if (pass === 'steel.task_selected' && payload.enabled !== true) continue;
+      if (pass === 'steel.catalog_created' && payload.siteId && payload.siteId !== siteId) continue;
+      picked.set(id, { actorType: row.actorType, actorId: row.actorId });
+    }
+    const ids = [...picked.values()];
+    const [workers, users] = await Promise.all([
+      tx.worker.findMany({ where: { companyProfileId: companyId, id: { in: ids.filter(a => a.actorType === 'WORKER').map(a => a.actorId) } }, select: { id: true, firstName: true, lastName: true } }),
+      tx.user.findMany({ where: { companyProfileId: companyId, id: { in: ids.filter(a => a.actorType !== 'WORKER').map(a => a.actorId) } }, select: { id: true, name: true, email: true } }),
+    ]);
+    const names = new Map<string, string>([...workers.map(w => [w.id, `${w.firstName} ${w.lastName}`.trim()] as const), ...users.map(u => [u.id, (u.name ?? '').trim() || u.email] as const)]);
+    return Object.fromEntries([...picked].flatMap(([id, actor]) => names.get(actor.actorId) ? [[id, names.get(actor.actorId)!]] : []));
   });
 }
