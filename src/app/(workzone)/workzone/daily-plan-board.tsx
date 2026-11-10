@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, HardHat, Loader2, MapPin, Pencil, Search, Truck, X } from "lucide-react";
+import { Check, HardHat, Loader2, MapPin, Pencil, Plus, Search, Truck, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
@@ -19,6 +19,7 @@ import {
 import { planCopy } from "./plan/plan-copy";
 import { SavedPlanList, type SavedPlanRow } from "./plan/saved-plan";
 import { planMachineLabel, planMachineName } from '@/lib/workzone/plan-machine-label';
+import { Initials, shortName } from "./plan/initials";
 
 type DraggableWorker = { id: string; name: string; licenses: string | null; availability: string; hasApprovedVacation: boolean };
 type DraggableMachine = { id: string; name: string; targe?: string | null; requiredLicense: string | null; isActive: boolean };
@@ -31,7 +32,7 @@ type Column = {
   assignments: Assignment[];
 };
 type Picked = { kind: "WORKER" | "MACHINE"; id: string; name: string };
-type PendingPlanConfirmation = { columnId: string; item: Picked; message: string };
+type PendingPlanConfirmation = { columnId: string; item: Picked; message: string; rest: Picked[] };
 
 function licenseTokens(value: string | null) {
   return new Set(
@@ -109,6 +110,11 @@ export function DailyPlanBoard({
   const [noteDraft, setNoteDraft] = useState("");
   const [askClear, setAskClear] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // "+ Shto" on a site: pick several free people/machines at once.
+  const [addTo, setAddTo] = useState<Column | null>(null);
+  const [addTab, setAddTab] = useState<"WORKER" | "MACHINE">("WORKER");
+  const [addQuery, setAddQuery] = useState("");
+  const [addSel, setAddSel] = useState<Picked[]>([]);
 
   const siteOfWorker = useMemo(() => new Map(columns.flatMap((column) => column.assignments.filter((a) => a.workerId).map((a) => [a.workerId as string, column.title] as const))), [columns]);
   const siteOfMachine = useMemo(() => new Map(columns.flatMap((column) => column.assignments.filter((a) => a.machineId).map((a) => [a.machineId as string, column.title] as const))), [columns]);
@@ -138,7 +144,7 @@ export function DailyPlanBoard({
     startTransition(async () => {
       const result = await moveDailyPlanItemAction({ date, columnId, kind: item.kind, itemId: item.id, force, lang: currentLang });
       if (result.requiresConfirmation && result.warningMessage) {
-        setPendingConfirmation({ columnId, item, message: result.warningMessage });
+        setPendingConfirmation({ columnId, item, message: result.warningMessage, rest: [] });
       } else if (!result.ok) {
         setMessage(result.message);
       } else {
@@ -147,6 +153,25 @@ export function DailyPlanBoard({
       setPicked(null);
     });
   }
+
+  /** Places several items on one site in order; stops at a warning and continues after the answer. */
+  function assignMany(columnId: string, items: Picked[], firstForce = false) {
+    startTransition(async () => {
+      for (const [index, item] of items.entries()) {
+        const result = await moveDailyPlanItemAction({ date, columnId, kind: item.kind, itemId: item.id, force: firstForce && index === 0, lang: currentLang });
+        if (result.requiresConfirmation && result.warningMessage) {
+          setPendingConfirmation({ columnId, item, message: result.warningMessage, rest: items.slice(index + 1) });
+          return;
+        }
+        if (!result.ok) { setMessage(result.message); return; }
+      }
+      setMessage(undefined);
+      setPicked(null);
+    });
+  }
+
+  function openAdd(column: Column) { setAddTo(column); setAddTab("WORKER"); setAddQuery(""); setAddSel([]); }
+  const assignmentOf = (item: Picked) => columns.flatMap((column) => column.assignments).find((a) => (item.kind === "WORKER" ? a.workerId : a.machineId) === item.id);
 
   function remove(assignmentId: string) {
     startTransition(async () => {
@@ -185,7 +210,7 @@ export function DailyPlanBoard({
 
       <div className="grid items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         {/* People and machines to place. */}
-        <section className="rounded-2xl border bg-card p-3 shadow-sm lg:sticky lg:top-4">
+        <section className="rounded-2xl border bg-card p-3 shadow-sm max-lg:hidden lg:sticky lg:top-4">
           <div role="tablist" className="grid grid-cols-2 overflow-hidden rounded-xl border text-sm font-semibold">
             {(["WORKER", "MACHINE"] as const).map((kind) => (
               <button key={kind} type="button" role="tab" aria-selected={tab === kind} onClick={() => { setTab(kind); setQuery(""); }}
@@ -247,6 +272,32 @@ export function DailyPlanBoard({
 
         {/* Sites of the day. */}
         <section className="min-w-0 space-y-3">
+          {/* Phone/tablet: who is still free, as one swipeable strip instead of a long list. */}
+          <div className="rounded-2xl border bg-card p-3 shadow-sm lg:hidden" data-testid="plan-free-strip">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <span className="inline-flex size-2 rounded-full bg-emerald-500" aria-hidden />
+              {c.freeNow}
+              <span className="ml-auto inline-flex items-center gap-3 text-xs font-medium tabular-nums text-muted-foreground">
+                <span className="inline-flex items-center gap-1"><HardHat className="size-3.5" aria-label={c.workers} />{freeWorkers}</span>
+                <span className="inline-flex items-center gap-1"><Truck className="size-3.5" aria-label={c.machines} />{freeMachines}</span>
+              </span>
+            </div>
+            {freeWorkers + freeMachines === 0 ? <p className="mt-2 text-xs text-muted-foreground">{c.allPlaced}</p> : (
+              <ul className="-mx-3 mt-2 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {[...workers.filter((w) => !siteOfWorker.has(w.id)).map((w) => ({ kind: "WORKER" as const, id: w.id, name: w.name, needsOk: w.availability !== "AVAILABLE" || w.hasApprovedVacation })),
+                  ...machines.filter((m) => !siteOfMachine.has(m.id)).map((m) => ({ kind: "MACHINE" as const, id: m.id, name: planMachineLabel(m), needsOk: !operational?.enabled && !m.isActive }))].map((entry) => (
+                  <li key={`${entry.kind}:${entry.id}`} className="shrink-0">
+                    <button type="button" onClick={() => setPicked({ kind: entry.kind, id: entry.id, name: entry.name })} data-testid="plan-free-item"
+                      className="flex min-h-12 items-center gap-2 rounded-full border bg-background py-1 pl-1 pr-3.5 text-sm font-medium shadow-sm transition active:scale-[0.97] hover:border-orange-400">
+                      <Initials name={entry.name} machine={entry.kind === "MACHINE"} />
+                      <span className="max-w-[9rem] truncate">{entry.kind === "WORKER" ? entry.name.split(" ")[0] : entry.name}</span>
+                      {entry.needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           {picked ? (
             <div className="hidden items-center gap-2 rounded-2xl border border-orange-500/50 bg-orange-500/10 px-3 py-2 text-sm lg:flex" role="status" data-testid="plan-picked">
               <span className="min-w-0 flex-1"><strong>{picked.name}</strong>: {c.picked}</span>
@@ -258,6 +309,7 @@ export function DailyPlanBoard({
               const warnings = columnLicenseWarnings(column, workers, machines, currentLang);
               const people = column.assignments.filter((a) => a.kind === "WORKER");
               const things = column.assignments.filter((a) => a.kind === "MACHINE");
+              const filled = column.assignments.length > 0;
               return (
                 <article
                   key={column.id}
@@ -265,38 +317,53 @@ export function DailyPlanBoard({
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={() => { if (picked) assign(column.id, picked); }}
                   onClick={() => { if (picked) assign(column.id, picked); }}
-                  className={`min-w-0 rounded-2xl border bg-card p-3 shadow-sm transition ${picked ? "cursor-pointer border-dashed border-orange-500 hover:bg-orange-500/5" : ""} ${warnings.length ? "border-amber-500/60" : ""}`}
+                  className={`relative min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm transition ${picked ? "cursor-pointer border-dashed border-orange-500 hover:bg-orange-500/5" : ""} ${warnings.length ? "border-amber-500/60" : ""}`}
                 >
-                  <header className="flex items-start gap-2">
+                  <span className={`absolute inset-y-0 left-0 w-1 ${filled ? "bg-orange-500" : "bg-muted-foreground/20"}`} aria-hidden />
+                  <header className="flex items-center gap-2 py-3 pl-4 pr-3">
+                    <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${filled ? "bg-orange-500/15 text-orange-700 dark:text-orange-300" : "bg-muted text-muted-foreground"}`}><MapPin className="size-5" aria-hidden /></span>
                     <div className="min-w-0 flex-1">
-                      <h3 className="break-words text-base font-semibold leading-tight">{column.title}</h3>
-                      <p className="mt-1 flex items-center gap-3 text-xs tabular-nums text-muted-foreground"><span className="inline-flex items-center gap-1" title={c.workers}><HardHat className="size-3.5" aria-label={c.workers} />{people.length}</span><span className="inline-flex items-center gap-1" title={c.machines}><Truck className="size-3.5" aria-label={c.machines} />{things.length}</span></p>
+                      <h3 className="truncate text-base font-semibold leading-tight" title={column.title}>{column.title}</h3>
+                      <p className="mt-0.5 flex items-center gap-3 text-xs tabular-nums text-muted-foreground"><span className="inline-flex items-center gap-1" title={c.workers}><HardHat className="size-3.5" aria-label={c.workers} />{people.length}</span><span className="inline-flex items-center gap-1" title={c.machines}><Truck className="size-3.5" aria-label={c.machines} />{things.length}</span></p>
                     </div>
                     <button type="button" onClick={(event) => { event.stopPropagation(); setNoteDraft(column.note ?? ""); setNoteFor(column); }}
-                      className="grid size-10 shrink-0 place-items-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground" aria-label={`${c.note}: ${column.title}`} title={c.note}>
+                      className="grid size-10 shrink-0 place-items-center rounded-xl border text-muted-foreground hover:bg-muted hover:text-foreground" aria-label={`${c.note}: ${column.title}`} title={c.note}>
                       <Pencil className="size-4" aria-hidden />
                     </button>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); openAdd(column); }} disabled={isPending} data-testid="plan-site-add"
+                      aria-label={`${c.addTo} ${column.title}`} title={`${c.addTo} ${column.title}`}
+                      className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-600 text-white shadow-sm hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950">
+                      <Plus className="size-5" aria-hidden />
+                    </button>
                   </header>
-                  {column.note?.trim() ? <p className="mt-2 rounded-lg bg-muted px-2.5 py-1.5 text-xs">{column.note}</p> : null}
-                  {warnings.length ? <div className="mt-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-900 dark:text-amber-100">{warnings.map((w) => <div key={w}>{w}</div>)}</div> : null}
-                  <ul className="mt-2 flex flex-wrap gap-1.5">
-                    {column.assignments.map((item) => (
-                      <li key={item.id} className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-lg border bg-background pl-2 text-sm">
-                        {item.kind === "WORKER" ? <HardHat className="size-3.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /> : <Truck className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />}
-                        <span className="min-w-0 truncate" title={item.labelSnapshot}>{item.kind === 'MACHINE' && item.machineId && machineById.has(item.machineId) ? planMachineName(machineById.get(item.machineId)!) : item.labelSnapshot}</span>
-                        {item.kind === 'MACHINE' && item.machineId && machineById.get(item.machineId)?.targe ? <span className="shrink-0 font-mono text-[10px] tracking-tight text-muted-foreground">{machineById.get(item.machineId)!.targe}</span> : null}
-                        {item.kind === "MACHINE" && item.machineId && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact /> : null}
-                        <button type="button" onClick={(event) => { event.stopPropagation(); remove(item.id); }} disabled={isPending}
-                          className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-red-600" aria-label={`${c.remove}: ${item.labelSnapshot}`} title={c.remove}>
-                          <X className="size-4" aria-hidden />
-                        </button>
-                      </li>
-                    ))}
-                    {column.assignments.length === 0 && !picked ? <li className="text-sm text-muted-foreground">{c.nobody}</li> : null}
-                  </ul>
+                  {column.note?.trim() ? <p className="mx-3 mb-2 ml-4 rounded-lg bg-muted px-2.5 py-1.5 text-xs">{column.note}</p> : null}
+                  {warnings.length ? <div className="mx-3 mb-2 ml-4 rounded-lg border border-amber-500/50 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-900 dark:text-amber-100">{warnings.map((w) => <div key={w}>{w}</div>)}</div> : null}
+                  {filled ? (
+                    <ul className="grid grid-cols-2 gap-1.5 px-3 pb-3 pl-4">
+                      {column.assignments.map((item) => {
+                        const machine = item.kind === "MACHINE" && item.machineId ? machineById.get(item.machineId) : undefined;
+                        const label = machine ? planMachineName(machine) : item.kind === "WORKER" ? shortName(item.labelSnapshot) : item.labelSnapshot;
+                        const pick: Picked = { kind: item.kind, id: (item.kind === "WORKER" ? item.workerId : item.machineId) ?? item.id, name: machine ? planMachineLabel(machine) : item.labelSnapshot };
+                        return (
+                          <li key={item.id} className="flex min-h-11 min-w-0 items-center gap-1.5 rounded-xl border bg-background py-1 pl-1 pr-0.5 text-sm">
+                            <button type="button" onClick={(event) => { event.stopPropagation(); setPicked(pick); }} className="flex min-w-0 flex-1 items-center gap-2 text-left" title={`${c.move}: ${item.labelSnapshot}`}>
+                              <Initials name={item.labelSnapshot} machine={item.kind === "MACHINE"} />
+                              <span className="min-w-0 truncate font-medium">{label}</span>
+                              {machine?.targe ? <span className="hidden shrink-0 font-mono text-[10px] tracking-tight text-muted-foreground sm:inline">{machine.targe}</span> : null}
+                            </button>
+                            {item.kind === "MACHINE" && item.machineId && operational?.enabled ? <span className="hidden shrink-0 sm:inline-flex"><AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact /></span> : null}
+                            <button type="button" onClick={(event) => { event.stopPropagation(); remove(item.id); }} disabled={isPending}
+                              className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-red-600" aria-label={`${c.remove}: ${item.labelSnapshot}`} title={c.remove}>
+                              <X className="size-4" aria-hidden />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : !picked ? <p className="px-4 pb-3 text-sm text-muted-foreground">{c.nobody}</p> : null}
                   {picked ? (
                     <button type="button" onClick={(event) => { event.stopPropagation(); assign(column.id, picked); }} disabled={isPending}
-                      className="mt-3 hidden min-h-11 w-full items-center justify-center rounded-xl bg-orange-600 lg:inline-flex px-3 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950">
+                      className="mx-3 mb-3 hidden min-h-11 w-[calc(100%-1.5rem)] items-center justify-center rounded-xl bg-orange-600 lg:inline-flex px-3 text-sm font-semibold text-white hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950">
                       + {picked.name} · {c.dropHere}
                     </button>
                   ) : null}
@@ -346,11 +413,86 @@ export function DailyPlanBoard({
                 );
               })}
             </ul>
+            {(() => { const placedHere = assignmentOf(picked); return placedHere ? (
+              <button type="button" disabled={isPending} onClick={() => { remove(placedHere.id); setPicked(null); }} data-testid="plan-sheet-remove"
+                className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-red-500/40 text-sm font-semibold text-red-700 hover:bg-red-500/10 dark:text-red-300">
+                <X className="size-4" aria-hidden />{c.remove}
+              </button>
+            ) : null; })()}
           </div>
         </div>
       ) : null}
 
-      <SavedPlanList rows={savedRows} c={c} title={c.savedPlan} hint={c.savedHint} />
+      {/* "+ Shto" on a site: choose several at once. */}
+      {addTo ? (() => {
+        const needleAdd = addQuery.trim().toLocaleLowerCase();
+        const placedMap = addTab === "WORKER" ? siteOfWorker : siteOfMachine;
+        const entries = (addTab === "WORKER"
+          ? workers.map((w) => ({ id: w.id, name: w.name, label: w.name, sub: w.licenses, needsOk: w.availability !== "AVAILABLE" || w.hasApprovedVacation }))
+          : machines.map((m) => ({ id: m.id, name: planMachineLabel(m), label: planMachineName(m), sub: m.targe ?? null, needsOk: !operational?.enabled && !m.isActive })))
+          .filter((entry) => placedMap.get(entry.id) !== addTo.title)
+          .filter((entry) => !needleAdd || `${entry.name} ${entry.sub ?? ""}`.toLocaleLowerCase().includes(needleAdd))
+          .sort((a, b) => Number(placedMap.has(a.id)) - Number(placedMap.has(b.id)));
+        const isSel = (id: string) => addSel.some((item) => item.kind === addTab && item.id === id);
+        return (
+          <div className="fixed inset-0 z-[70] flex items-end justify-center lg:items-center" role="dialog" aria-modal="true" aria-label={`${c.addTo} ${addTo.title}`} data-testid="plan-add-sheet">
+            <button type="button" className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-label={c.cancel} onClick={() => setAddTo(null)} />
+            <div className="relative flex max-h-[88dvh] w-full flex-col rounded-t-3xl border-t bg-card shadow-2xl lg:max-w-lg lg:rounded-3xl lg:border">
+              <div className="px-4 pt-2">
+                <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-muted-foreground/30 lg:hidden" aria-hidden />
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-500/15 text-orange-700 dark:text-orange-300"><MapPin className="size-5" aria-hidden /></span>
+                  <div className="min-w-0 flex-1"><p className="text-xs text-muted-foreground">{c.addTo}</p><p className="truncate text-base font-semibold">{addTo.title}</p></div>
+                  <button type="button" onClick={() => setAddTo(null)} className="grid size-10 shrink-0 place-items-center rounded-full border hover:bg-muted" aria-label={c.cancel}><X className="size-5" aria-hidden /></button>
+                </div>
+                <div role="tablist" className="mt-3 grid grid-cols-2 overflow-hidden rounded-xl border text-sm font-semibold">
+                  {(["WORKER", "MACHINE"] as const).map((kind) => (
+                    <button key={kind} type="button" role="tab" aria-selected={addTab === kind} onClick={() => { setAddTab(kind); setAddQuery(""); }}
+                      className={`min-h-11 px-2 ${addTab === kind ? "bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950" : "hover:bg-muted"}`}>
+                      {kind === "WORKER" ? c.workers : c.machines}<span className="ml-1 text-xs font-medium opacity-80">· {kind === "WORKER" ? freeWorkers : freeMachines} {c.free}</span>
+                    </button>
+                  ))}
+                </div>
+                <label className="relative mt-3 block">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                  <input type="text" value={addQuery} onChange={(event) => setAddQuery(event.target.value)} placeholder={c.search} aria-label={c.search}
+                    className="min-h-11 w-full rounded-xl border bg-background pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-orange-500" />
+                </label>
+              </div>
+              <ul className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto px-4 pb-3 [scrollbar-width:thin]">
+                {entries.length === 0 ? <li className="py-4 text-center text-sm text-muted-foreground">{c.noMatch}</li> : null}
+                {entries.map((entry) => {
+                  const selected = isSel(entry.id), elsewhere = placedMap.get(entry.id);
+                  return (
+                    <li key={entry.id}>
+                      <button type="button" aria-pressed={selected} data-testid="plan-add-option"
+                        onClick={() => setAddSel((current) => selected ? current.filter((item) => !(item.kind === addTab && item.id === entry.id)) : [...current, { kind: addTab, id: entry.id, name: entry.name }])}
+                        className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border px-2.5 py-1.5 text-left transition active:scale-[0.99] ${selected ? "border-orange-500 bg-orange-500/10" : "bg-background hover:border-orange-400"}`}>
+                        <Initials name={entry.name} machine={addTab === "MACHINE"} />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5"><span className="truncate text-sm font-semibold">{entry.label}</span>{entry.needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}</span>
+                          {elsewhere ? <span className="mt-0.5 inline-flex max-w-full items-center gap-0.5 text-xs text-orange-700 dark:text-orange-300"><MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{elsewhere}</span></span>
+                            : entry.sub ? <span className="mt-0.5 block truncate text-xs text-muted-foreground">{entry.sub}</span> : null}
+                        </span>
+                        <span className={`grid size-7 shrink-0 place-items-center rounded-full border-2 ${selected ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950" : "border-muted-foreground/30"}`}>{selected ? <Check className="size-4" aria-hidden /> : null}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="border-t px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+                <button type="button" disabled={isPending || addSel.length === 0} data-testid="plan-add-confirm"
+                  onClick={() => { const column = addTo, items = addSel; setAddTo(null); assignMany(column.id, items); }}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-orange-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-50 dark:bg-orange-500 dark:text-slate-950">
+                  <Plus className="size-4" aria-hidden />{c.add}{addSel.length ? ` (${addSel.length})` : ""}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })() : null}
+
+      <div className="max-lg:hidden"><SavedPlanList rows={savedRows} c={c} title={c.savedPlan} hint={c.savedHint} /></div>
 
       <SimpleDialog
         open={Boolean(pendingConfirmation)}
@@ -363,7 +505,7 @@ export function DailyPlanBoard({
         onConfirm={() => {
           const pending = pendingConfirmation;
           setPendingConfirmation(null);
-          if (pending) assign(pending.columnId, pending.item, true);
+          if (pending) assignMany(pending.columnId, [pending.item, ...pending.rest], true);
         }}
         onCancel={() => setPendingConfirmation(null)}
       />

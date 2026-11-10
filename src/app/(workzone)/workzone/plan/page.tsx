@@ -54,7 +54,7 @@ function PlanHeader({ date, lang, canEdit }: { date: string; lang: string; canEd
 }
 
 /** On phones the plan is its own full screen (no Workzone bars); on desktop it stays in the page. */
-const FULL_SCREEN = "max-lg:fixed max-lg:inset-0 max-lg:z-[60] max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:bg-background max-lg:px-3";
+const FULL_SCREEN = "max-lg:fixed max-lg:inset-0 max-lg:z-[60] max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:bg-background max-lg:px-3 max-lg:[scrollbar-width:none] max-lg:[&::-webkit-scrollbar]:hidden";
 
 export default async function DailyPlanPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const currentLang = await resolveRequestLanguage();
