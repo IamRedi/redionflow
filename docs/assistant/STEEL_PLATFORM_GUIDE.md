@@ -47,12 +47,14 @@ Words: njoftim, lajmërim, mesazh për ekipin, announcement, ankündigung, avvis
 
 ## start-stop-work | Starting and stopping work (hours)
 Who: everyone with a worker profile
-Words: fillo punën, nis, ndalo, stop, orët, pauza, check in, arbeit starten, stempeln, ore lavoro
+Words: fillo punën, nis, ndalo, stop, orët, pauza, check in, puno këtu, gabim, arbeit starten, stempeln, ore lavoro
 
-- Open the site where you work, press "Fillo punën" (start). Choose "Tani" (now) or set the real start time.
-- Pause: "Nis pauzën". End of day: open the same site and press "Ndalo punën" (stop). The hours are saved only after stop.
+- Open your profile (your photo is always first in the team strip) and press "Start". The site for the day comes from the daily plan.
+- Pause: "Pauzë"; end of day: "Stop". The hours are saved only after stop.
+- Engineers (field/factory) also have a small "▶ Puno këtu" button on a site page to work on that site; it becomes "■ Ndalo" while they work there.
+- A wrong tap undone within 5 seconds is not recorded (start then stop, stop then start again, or a pause ended right away), and the boss gets no notice for it.
 - If you forgot to stop, tell the office; they correct the day on your profile.
-- Hours history and the monthly report are in your profile ("Historia e orëve", "Raport mujor orësh").
+- Hours history and the monthly report are in your profile. The "Pushime të marra" box shows the holiday days already taken.
 
 ## profile | Own profile
 Who: everyone
@@ -110,6 +112,7 @@ Words: proceset, katalogu i punëve, detyrat e kantierit, detyrë e re, proces i
 - After importing materials, the process editor sets which processes one element (or a whole list) needs. New imports start unconfigured.
 - A task can be completed automatically from confirmed pieces of a linked process ("Nga materialet") or manually.
 - Each task can have a photo or an illustration (the AI drawing button makes one image; limited per day).
+- The site board shows the tasks in the order they were chosen (numbered 1, 2, 3 …); a task chosen again goes to the end. Each task shows who added it ("Shtuar nga …").
 
 ## missing-material | Reporting missing material
 Who: everyone on the site
@@ -125,6 +128,8 @@ Words: dokumentet, foto, fatura, kosto, ngarko dokument, shkrep foto, dokumente,
 - Site → "Dokumentet": tabs "Dokumentet", "Foto", "Kosto & fatura", "Detajet e kantierit".
 - "Ngarko dokument", "Shkrep foto" / "Ngarko foto". Invoices and orders ("Ngarko faturë", amount in lek) are seen only by the office.
 - Change the address or name: "Detajet e kantierit" → "Ndrysho".
+- Deleting a document asks for confirmation and also deletes what was read from it: an Excel element list takes its elements (and their confirmations) with it, an order PDF its production groups. Phase documents ("Fazat") can be deleted too, with their versions and receipts.
+- In the element lists the materials are grouped by the document they came from; the trash button on a group deletes that document's elements.
 
 ## phase-documents | Documents by phase ("Fazat") and confirming receipt ("E mora")
 Who: everyone reads and confirms; admin, office and the site's authorised engineers upload
