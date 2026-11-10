@@ -2100,6 +2100,8 @@ model SteelSiteTask {
   treeItemId String @unique
   treeItem TreeItem @relation(fields:[baustelleId,treeItemId],references:[baustelleId,id],onDelete:Cascade)
   enabled Boolean @default(true)
+  /// Order on the site board: the order the phases were chosen (1, 2, 3 …).
+  position Int?
   revision Int @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt

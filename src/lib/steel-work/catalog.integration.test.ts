@@ -150,3 +150,20 @@ it('serializes duplicate creation and rejects cross-tenant owned foreign keys', 
   const definitionId = results[0].definitionId!;
   await expect(withTenantContext(tenants[1].company.id, tx => tx.steelSiteTask.create({ data: { companyProfileId: tenants[1].company.id, baustelleId: tenants[1].site.id, definitionId, treeItemId: tenants[1].tree.id } }))).rejects.toThrow();
 });
+
+it('numbers site phases in the order they are chosen; choosing one again moves it to the end', async () => {
+  const siteId = tenants[0].site.id;
+  const catalog = await getSteelWorkCatalogAction({ siteId });
+  const painting = catalog.definitions!.find(item => item.key === 'steel-painting')!;
+  const columns = catalog.definitions!.find(item => item.key === 'steel-columns')!;
+  expect((await setSteelTaskSelectionAction({ siteId, definitionId: painting.id, enabled: true })).ok).toBe(true);
+  const custom = await create('Example bolts');
+  expect((await setSteelTaskSelectionAction({ siteId, definitionId: columns.id, enabled: true })).ok).toBe(true);
+  const order = async () => Object.fromEntries((await getSteelWorkCatalogAction({ siteId })).definitions!.filter(item => item.enabled).map(item => [item.key, item.selectionPosition]));
+  expect(await order()).toEqual({ 'steel-painting': 1, [custom.key!]: 2, 'steel-columns': 3 });
+  const current = (await getSteelWorkCatalogAction({ siteId })).definitions!.find(item => item.id === painting.id)!;
+  expect((await setSteelTaskSelectionAction({ siteId, definitionId: painting.id, enabled: false, revision: current.selectionRevision })).ok).toBe(true);
+  const off = (await getSteelWorkCatalogAction({ siteId })).definitions!.find(item => item.id === painting.id)!;
+  expect((await setSteelTaskSelectionAction({ siteId, definitionId: painting.id, enabled: true, revision: off.selectionRevision })).ok).toBe(true);
+  expect((await order())['steel-painting']).toBe(4);
+});

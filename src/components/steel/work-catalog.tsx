@@ -192,6 +192,10 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
     });
   }
 
+  // Chosen phases are numbered in the order they appear on the site board.
+
+  const order = new Map([...items].filter((item) => item.kind === "site" && item.enabled && !item.archivedAt).sort((a, b) => (a.selectionPosition ?? 10_000 + a.sortOrder) - (b.selectionPosition ?? 10_000 + b.sortOrder)).map((item, index) => [item.id, index + 1]));
+
   const rows = items.filter((item) => item.kind === kind && Boolean(item.archivedAt) === showArchived && `${steelWorkLabel(item, lang)} ${item.description}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const availableProcesses = items.filter((definition) => definition.kind !== "site" && (!definition.archivedAt || definition.key === editor?.linkedProcessKey));
   const availableStages = [...new Set([...availableProcesses.map((definition) => definition.key), ...(editor?.linkedProcessKey ? [editor.linkedProcessKey] : [])])];
@@ -238,7 +242,7 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
               {rows.map((definition) => <li key={definition.id} className="flex min-w-0 items-center gap-2 p-2 sm:gap-3 sm:p-3">
                 {kind === "site" && siteId && !showArchived ? <label className="grid min-h-[44px] min-w-[44px] shrink-0 cursor-pointer place-items-center"><input type="checkbox" checked={Boolean(definition.enabled)} disabled={pending || !loaded || !canManage} onChange={(event) => select(definition, event.target.checked)} aria-label={`${c.select}: ${steelWorkLabel(definition, lang)}`} className="size-5 accent-orange-600" /></label> : null}
                 <div className="h-[56px] w-[74px] shrink-0 overflow-hidden rounded-lg bg-muted"><SteelWorkVisual definition={definition} /></div>
-                <div className="min-w-0 flex-1"><div className="break-words text-sm font-semibold">{steelWorkLabel(definition, lang)}</div>{definition.description ? <p className="line-clamp-2 text-xs text-muted-foreground">{definition.description}</p> : null}{definition.linkedProcessKey ? <p className="mt-0.5 text-xs text-muted-foreground">{c.fromMaterials} · {linkedProcessLabel(definition.linkedProcessKey)}</p> : null}{definition.visualStatus === "pending" ? <p className="text-xs text-muted-foreground">{c.imagePending}</p> : null}</div>
+                <div className="min-w-0 flex-1"><div className="flex items-center gap-2 break-words text-sm font-semibold">{kind === "site" && siteId && definition.enabled && order.has(definition.id) ? <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange-600 text-xs font-bold tabular-nums text-white" title={c.select}>{order.get(definition.id)}</span> : null}<span className="min-w-0">{steelWorkLabel(definition, lang)}</span></div>{definition.description ? <p className="line-clamp-2 text-xs text-muted-foreground">{definition.description}</p> : null}{definition.linkedProcessKey ? <p className="mt-0.5 text-xs text-muted-foreground">{c.fromMaterials} · {linkedProcessLabel(definition.linkedProcessKey)}</p> : null}{definition.visualStatus === "pending" ? <p className="text-xs text-muted-foreground">{c.imagePending}</p> : null}</div>
                 {canManage ? <button type="button" disabled={pending || !loaded} onClick={() => edit(definition)} className={iconControl} aria-label={`${c.edit}: ${steelWorkLabel(definition, lang)}`} title={c.edit}><PenLine className="size-4" /></button> : null}
               </li>)}
               {!rows.length ? <li className="p-6 text-center text-sm text-muted-foreground">{query ? c.noResults : c.empty}</li> : null}
