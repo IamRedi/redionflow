@@ -499,3 +499,30 @@ function spreadsheetMime(fileName: string) {
   if (lower.endsWith(".xls")) return "application/vnd.ms-excel";
   return null;
 }
+
+/**
+ * Delete every element that came from one drawing-office file on a site (with
+ * its checked work), and the file itself from the site documents. Same right
+ * as importing the list.
+ */
+export async function deleteElementSourceAction(input: unknown): Promise<ActionResult & { deleted?: number }> {
+  const tr = await getActionTranslator();
+  const parsed = z.object({ siteId: z.string().min(1).max(64), sourceFile: z.string().max(260).nullable() }).strict().safeParse(input);
+  if (!parsed.success) return { ok: false, message: tr("invalidInput") };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: tr("notSignedIn") };
+  const actor = await currentCompanyActor(companyId);
+  if (!actor) return { ok: false, message: tr("accessDenied") };
+  const { siteId, sourceFile } = parsed.data;
+  const identity = { companyId, userId: actor.userId, workerId: actor.workerId };
+  const deleted = await withTenantContext(companyId, async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
+    if (!await mayUploadSiteDocuments(tx, identity, siteId)) return null;
+    const removed = await tx.siteElement.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile } });
+    if (sourceFile) await tx.siteFile.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, kind: "document", fileName: sourceFile } });
+    return removed.count;
+  }, { timeout: 30_000 });
+  if (deleted === null) return { ok: false, message: tr("accessDenied") };
+  revalidateSite(siteId);
+  return { ok: true, message: "OK", deleted };
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
-import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, FileSpreadsheet, HardHat, Loader2, Lock, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, FileSpreadsheet, HardHat, Loader2, Lock, Minus, RotateCcw, Search, Trash2, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import Image from 'next/image';
@@ -18,7 +18,7 @@ import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
-import { addElementWorkAction, importElementListsAction, removeElementWorkAction, setElementDoneAction } from "../../element-actions";
+import { addElementWorkAction, deleteElementSourceAction, importElementListsAction, removeElementWorkAction, setElementDoneAction } from "../../element-actions";
 import { Sheet } from "../../production/production-ui";
 
 export type ElementWorkView = {
@@ -259,6 +259,7 @@ function ElementListSheet({
               side={side}
               site={site}
               items={items}
+              setItems={setItems}
               list={list}
               setList={setList}
               filter={filter}
@@ -320,6 +321,7 @@ function ListView({
   side,
   site,
   items,
+  setItems,
   list,
   setList,
   filter,
@@ -335,6 +337,7 @@ function ListView({
   side: ElementSide;
   site: { id: string; name: string };
   items: ElementView[];
+  setItems: React.Dispatch<React.SetStateAction<ElementView[]>>;
   list: ElementList;
   setList: (list: ElementList) => void;
   filter: Filter;
@@ -355,6 +358,17 @@ function ListView({
   const [importOpen, setImportOpen] = useState(false);
   const [importMode, setImportMode] = useState<'merge' | 'snapshot'>('merge');
   const importCopy = elementImportCopy(lang);
+  function removeSource(sourceFile: string | null, label: string, count: number) {
+    if (!window.confirm(importCopy.removeAsk.replace("{count}", String(count)).replace("{file}", label))) return;
+    setMessage(null);
+    startImport(async () => {
+      const result = await deleteElementSourceAction({ siteId: site.id, sourceFile });
+      if (!result.ok) { setMessage({ ok: false, text: result.message || importCopy.removeFailed }); return; }
+      setItems((all) => all.filter((element) => (element.sourceFile ?? null) !== sourceFile));
+      setMessage({ ok: true, text: importCopy.removed.replace("{count}", String(result.deleted ?? 0)) });
+      router.refresh();
+    });
+  }
   const fileInput = useRef<HTMLInputElement>(null);
 
   const lists: ElementList[] = side === "factory" ? ["assembly", "part"] : ["assembly"];
@@ -554,6 +568,11 @@ function ListView({
                   <FileSpreadsheet className="size-4 shrink-0 text-orange-600 dark:text-orange-400" />
                   <span className="min-w-0 flex-1 truncate">{group.label}</span>
                   <span className="shrink-0 rounded-full bg-card px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{group.items.length}</span>
+                  {canImport ? (
+                    <button type="button" disabled={importing} onClick={() => removeSource(group.source || null, group.label ?? "", items.filter((element) => (element.sourceFile ?? "") === group.source).length)} data-testid="element-source-delete" title={importCopy.removeGroup} aria-label={importCopy.removeGroup} className="grid size-8 shrink-0 place-items-center rounded-lg text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400">
+                      <Trash2 className="size-4" />
+                    </button>
+                  ) : null}
                 </h3>
               ) : null}
               <ul className="space-y-1.5">
