@@ -11,7 +11,7 @@ import { SteelProgressRing } from "@/components/steel/steel-art";
 import { SteelWorkCatalog, SteelWorkVisual } from "@/components/steel/work-catalog";
 import { workCatalogCopy } from "@/components/steel/work-catalog-copy";
 import { t } from "@/lib/i18n";
-import type { SteelWorkDefinitionView } from "@/lib/steel-work/types";
+import { STEEL_PHASE_GROUPS, type SteelPhaseGroup, type SteelWorkDefinitionView } from "@/lib/steel-work/types";
 import {
   applySteelPhaseCommand,
   type SteelPhaseCommand,
@@ -30,6 +30,8 @@ export type SteelPhaseView = {
   definitionId?: string;
   /** Who put this phase on the site. */
   addedBy?: string;
+  /** Which of the three site windows (Punime b/a, Prodhimi, Montimi) it belongs to. */
+  group?: SteelPhaseGroup;
   automatic?: boolean;
   percent?: number | null;
   completedPieces?: number;
@@ -120,9 +122,19 @@ export function SteelPhaseBoard({
     setItems(phases);
   }
 
-  const open = openIndex === null ? null : items[openIndex] ?? null;
-  const doneCount = items.filter((item) => item.status === "done").length;
-  const pct = items.length > 0 ? Math.round(items.reduce((sum, item) => sum + phasePercent(item), 0) / items.length) : 0;
+  // The site opens with three windows; the phases live inside their window.
+  const [group, setGroup] = useState<SteelPhaseGroup | null>(null);
+  const groupOf = (item: SteelPhaseView) => item.group ?? "assembly";
+  const visible = group ? items.filter((item) => groupOf(item) === group) : [];
+  const open = openIndex === null ? null : visible[openIndex] ?? null;
+  const doneCount = visible.filter((item) => item.status === "done").length;
+  const pct = visible.length > 0 ? Math.round(visible.reduce((sum, item) => sum + phasePercent(item), 0) / visible.length) : 0;
+  const groupStats = (key: SteelPhaseGroup) => {
+    const list = items.filter((item) => groupOf(item) === key);
+    return { total: list.length, done: list.filter((item) => item.status === "done").length, blocked: list.some((item) => item.status === "blocked"), pct: list.length ? Math.round(list.reduce((sum, item) => sum + phasePercent(item), 0) / list.length) : 0 };
+  };
+  const groupName = (key: SteelPhaseGroup) => t(key === "concrete" ? "steel.groupConcrete" : key === "production" ? "steel.groupProduction" : "steel.groupAssembly", currentLang);
+  const GROUP_ART: Record<SteelPhaseGroup, string> = { concrete: "foundation", production: "welding", assembly: "columns" };
 
   useEffect(() => {
     if (openIndex === null) return;
@@ -151,7 +163,7 @@ export function SteelPhaseBoard({
   function move(step: number) {
     setEditor(null);
     setError(null);
-    setOpenIndex((index) => (index === null ? index : (index + step + items.length) % items.length));
+    setOpenIndex((index) => (index === null || visible.length === 0 ? index : (index + step + visible.length) % visible.length));
   }
 
   function openEditor(kind: Exclude<Editor, null>) {
@@ -190,6 +202,35 @@ export function SteelPhaseBoard({
 
   return (
     <div className="space-y-4">
+      {group === null ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-semibold">{t("steel.phasesTitle", currentLang)}</h2>
+            {canManage ? <button ref={catalogTrigger} type="button" onClick={() => { setCatalogInitialId(null); setCatalogOpen(true); }} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Plus className="size-4" />{t("steel.addTask", currentLang)}</button> : null}
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            {STEEL_PHASE_GROUPS.map((key) => {
+              const stats = groupStats(key);
+              return (
+                <button key={key} type="button" data-testid={`phase-group-${key}`} onClick={() => { setGroup(key); setOpenIndex(null); }}
+                  className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 bg-card p-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/40 sm:flex-col sm:items-stretch sm:p-0 ${stats.total > 0 && stats.done === stats.total ? "border-green-500/60" : stats.blocked ? "border-amber-500/70" : "border-border"}`}>
+                  <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 sm:w-full sm:rounded-none">
+                    <SteelWorkVisual fallback={GROUP_ART[key]} animate={stats.total > stats.done} className="absolute inset-0 h-full w-full" />
+                  </div>
+                  <div className="flex min-w-0 flex-1 items-center justify-between gap-2 sm:p-3">
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold uppercase tracking-wide">{groupName(key)}</div>
+                      <div className="text-sm tabular-nums text-muted-foreground">{stats.done}/{stats.total}</div>
+                    </div>
+                    <div className="text-orange-600 dark:text-orange-400"><SteelProgressRing pct={stats.pct} size={48} label={`${groupName(key)} ${stats.pct}%`} /></div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Process track: the phases in work order, like a line in the hall. */}
       <div className="flex items-center gap-4 rounded-2xl border bg-gradient-to-r from-orange-500/[0.07] via-transparent to-transparent p-3 sm:p-4">
         <div className="text-orange-600 dark:text-orange-400">
@@ -197,20 +238,25 @@ export function SteelPhaseBoard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-semibold">{t("steel.phasesTitle", currentLang)}</h2>
-            <div className="flex items-center gap-2"><span className="text-sm tabular-nums text-muted-foreground">{doneCount}/{items.length}</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <button type="button" onClick={() => { setGroup(null); setOpenIndex(null); }} className="inline-flex min-h-9 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+                <ChevronLeft className="size-4" />{t("steel.groupsBack", currentLang)}
+              </button>
+              <h2 className="truncate text-base font-semibold">{group ? groupName(group) : t("steel.phasesTitle", currentLang)}</h2>
+            </div>
+            <div className="flex items-center gap-2"><span className="text-sm tabular-nums text-muted-foreground">{doneCount}/{visible.length}</span>
               {canManage ? <button ref={catalogTrigger} type="button" onClick={() => { setCatalogInitialId(null); setCatalogOpen(true); }} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Plus className="size-4" />{t("steel.addTask", currentLang)}</button> : null}
             </div>
           </div>
           <ol className="mt-2 flex flex-wrap items-center gap-y-2">
-            {items.map((item, index) => (
+            {visible.map((item, index) => (
               <li key={item.id} className="flex min-w-9 max-w-14 flex-1 items-center last:flex-none">
                 <span
                   className={`grid size-7 shrink-0 place-items-center rounded-full border-2 text-[11px] font-bold transition-colors ${STATUS_STYLE[item.status].dot}`}
                 >
                   {item.status === "done" ? <Check className="size-3.5" strokeWidth={3} /> : item.status === "blocked" ? "!" : index + 1}
                 </span>
-                {index < items.length - 1 ? (
+                {index < visible.length - 1 ? (
                   <span className="mx-1 h-1 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                     <span
                       className="block h-full rounded-full bg-green-500 transition-[width] duration-700"
@@ -225,8 +271,9 @@ export function SteelPhaseBoard({
         </div>
       </div>
 
+      {visible.length === 0 ? <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t("steel.groupEmpty", currentLang)}</p> : null}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {items.map((item, index) => {
+        {visible.map((item, index) => {
           const style = STATUS_STYLE[item.status];
           return (
             <button
@@ -272,7 +319,10 @@ export function SteelPhaseBoard({
 
       </div>
 
-      <SteelWorkCatalog open={catalogOpen} onOpenChange={setCatalogOpen} kind="site" siteId={baustelleId} definitions={definitions} canManage={canManage} initialDefinitionId={catalogInitialId} onChanged={() => router.refresh()} returnFocusRef={catalogTrigger} />
+      </>
+      )}
+
+      <SteelWorkCatalog open={catalogOpen} onOpenChange={setCatalogOpen} kind="site" group={group} siteId={baustelleId} definitions={definitions} canManage={canManage} initialDefinitionId={catalogInitialId} onChanged={() => router.refresh()} returnFocusRef={catalogTrigger} />
 
       {typeof document !== "undefined"
         ? createPortal(
@@ -299,7 +349,7 @@ export function SteelPhaseBoard({
                 <X className="size-6" />
               </button>
               <div className="min-w-0 flex-1 text-center text-sm font-medium text-muted-foreground">
-                {fill(t("steel.step", currentLang), { n: openIndex + 1, total: items.length })}
+                {fill(t("steel.step", currentLang), { n: openIndex + 1, total: visible.length })}
               </div>
               <button
                 type="button"

@@ -41,7 +41,7 @@ import { siteDocumentAccess } from '@/lib/site-phase-documents/site-access';
 import { ElementListButtons, type ElementView, type ElementWorkerOption } from "./element-lists";
 import { compareMarks } from "@/lib/elements/tekla-list";
 import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
-import { canManageSteelCatalog } from "@/lib/steel-work/types";
+import { canManageSteelCatalog, steelPhaseGroup } from "@/lib/steel-work/types";
 import { steelPhaseAddedBy } from "@/lib/steel-work/catalog";
 import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
 import { AccessKeyButton } from '@/components/access/access-key-button';
@@ -308,7 +308,7 @@ export default async function BaustelleDetailPage({
       const meta = readSteelPhaseMeta(item.notes), definition = item.steelTask?.definition;
       if (definition?.label) meta.label = definition.label;
       return [{ id: item.id, key, status: item.status as 'todo' | 'done' | 'blocked', meta,
-        definitionId: definition?.id, addedBy: definition ? addedBy[definition.id] : undefined, automatic: item.automatic, percent: item.percent,
+        definitionId: definition?.id, group: steelPhaseGroup(definition?.phaseGroup), addedBy: definition ? addedBy[definition.id] : undefined, automatic: item.automatic, percent: item.percent,
         completedPieces: item.completedPieces, requiredPieces: item.requiredPieces,
         // The order the phases were chosen; older choices without one follow the catalog.
         order: item.steelTask?.position ?? 10_000 + (definition?.sortOrder ?? (phaseOrder.indexOf(item.treeId) < 0 ? 99 : phaseOrder.indexOf(item.treeId))) }];

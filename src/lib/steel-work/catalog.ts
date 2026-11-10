@@ -5,7 +5,7 @@ import type { CompanyActor } from '@/lib/site-files/actor';
 import { FACTORY_STEP_KEYS } from '@/lib/factory/production';
 import { FIELD_STAGES } from '@/lib/elements/stages';
 import { readSteelPhaseMeta, steelPhasesFor } from '@/lib/workzone/steel-phases';
-import { canManageSteelCatalog, type SteelWorkDefinitionView, type SteelWorkKind } from './types';
+import { canManageSteelCatalog, steelPhaseGroup, type SteelWorkDefinitionView, type SteelWorkKind } from './types';
 
 type Tx = Prisma.TransactionClient;
 const stableId = (value: string) => createHash('md5').update(value).digest('hex');
@@ -45,7 +45,7 @@ export async function readSteelWorkCatalog(companyId: string, siteId?: string): 
   });
 }
 
-export type SaveSteelWorkInput = { id?: string; siteId?: string; kind: SteelWorkKind; label: string; description?: string; linkedProcessKey?: string | null; linkedList?: 'assembly' | 'part' | null; linkedKind?: string | null; revision?: number };
+export type SaveSteelWorkInput = { id?: string; siteId?: string; kind: SteelWorkKind; label: string; description?: string; linkedProcessKey?: string | null; linkedList?: 'assembly' | 'part' | null; linkedKind?: string | null; phaseGroup?: string | null; revision?: number };
 export async function saveSteelWorkDefinition(companyId: string, actor: CompanyActor, input: SaveSteelWorkInput) {
   if (!canManageSteelCatalog(actor.can)) fail('DENIED');
   return withTenantContext(companyId, async tx => {
@@ -62,7 +62,8 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
       const unchangedLink = !!input.id && existing?.linkedProcessKey === linkedProcessKey && existing.linkedList === linkedList && existing.linkedKind === linkedKind;
       if (!process || process.archivedAt && !unchangedLink || linkedList === 'part' && process.kind === 'field') fail('INVALID_LINK');
     }
-    const data = { label: input.label, description: input.description ?? '', linkedProcessKey, linkedList, linkedKind };
+    const phaseGroup = input.kind === 'site' ? (input.phaseGroup === undefined ? existing?.phaseGroup ?? null : input.phaseGroup ? steelPhaseGroup(input.phaseGroup) : null) : null;
+    const data = { label: input.label, description: input.description ?? '', linkedProcessKey, linkedList, linkedKind, phaseGroup };
     let definition;
     // Reusing the same kind/label is idempotent; never overwrite a shared definition through a create form.
     if (existing && !input.id) definition = existing;
