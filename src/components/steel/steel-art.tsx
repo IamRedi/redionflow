@@ -78,13 +78,8 @@ function Foundation({ animate }: { animate: boolean }) {
       {[0, 1, 2, 3, 4].map((i) => (
         <rect key={i} x={44 + i * 17} y="84" width="9" height="3" rx="1" fill={C.ground} opacity="0.25" />
       ))}
-      <rect x="58" y="62" width="44" height="10" rx="1.5" fill="none" stroke={C.orange} strokeWidth="1.6" className={cls(animate, "sa-dash")} />
-      {[64, 72, 88, 96].map((x) => (
-        <g key={x}>
-          <line x1={x} y1="54" x2={x} y2="74" stroke={C.steelDark} strokeWidth="2.4" />
-          <rect x={x - 3} y="60" width="6" height="3.5" rx="0.8" fill={C.steel} />
-        </g>
-      ))}
+      {/* Concrete only: anchor bolts are a separate process. Formwork edge being poured. */}
+      <rect x="40" y="68" width="80" height="3" rx="1" fill="none" stroke={C.orange} strokeWidth="1.6" className={cls(animate, "sa-dash")} />
       <circle cx="132" cy="40" r="4" fill={C.orange} className={cls(animate, "sa-blink")} />
     </g>
   );

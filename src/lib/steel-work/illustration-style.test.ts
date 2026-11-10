@@ -73,3 +73,13 @@ it('bounds every optional linked field without introducing missing values as fac
 it('rejects an unexpected runtime domain value instead of forwarding record data', () => {
   expect(() => buildSteelIllustrationPrompt({ ...task, kind: 'private-unexpected-value' as SteelIllustrationBriefInput['kind'] })).toThrow('ILLUSTRATION_KIND');
 });
+
+it('explains the company words for anchor bolts and the concrete foundation as separate processes', () => {
+  const anchors = buildSteelIllustrationPrompt({ key: 'steel-task-x', label: 'Vendosje prizhioneresh', kind: 'site' });
+  expect(anchors).toContain('ANCHOR BOLTS');
+  expect(anchors).toContain('no crane');
+  const base = buildSteelIllustrationPrompt({ key: 'steel-task-y', label: 'Bazamenti', kind: 'site' });
+  expect(base).toContain('CONCRETE FOUNDATION only');
+  expect(base).not.toContain('ANCHOR BOLTS:');
+  expect(buildSteelIllustrationPrompt({ key: 'steel-task-z', label: 'Montim kolonash', kind: 'site' })).not.toContain('OWNER-CONFIRMED TERM');
+});
