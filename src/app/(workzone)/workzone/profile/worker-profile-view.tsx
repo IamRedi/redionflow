@@ -44,6 +44,7 @@ import { AssistantAccessToggle } from "@/components/assistant/assistant-access-t
 import { companyLimitsAssistant } from "@/lib/assistant/access";
 import { approveVacationRequestAction, rejectVacationRequestAction, requestVacationAction } from "../vacation-actions";
 import { VacationRequestForm } from "./vacation-request-form";
+import { countVacationWorkdays } from "@/lib/workzone/vacation";
 import { ReportPeriodPicker } from "./report-period-picker";
 import { WorkSessionControls } from "./work-session-controls";
 import { NotificationPrefsButton } from "@/components/notifications/notification-prefs-button";
@@ -253,6 +254,13 @@ export async function WorkerProfileView({
     .filter((request) => request.status === "PENDING")
     .reduce((sum, request) => sum + request.requestedDays, 0);
   const remainingVacationDays = Math.max(0, worker.vacationAllowanceDays - approvedVacationDays);
+  // Holiday days actually taken up to today (approved leave that has already started).
+  const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+  const takenVacationDays = vacationRequests
+    .filter((request) => request.status === "APPROVED" && request.startDate.getTime() <= endOfToday.getTime())
+    .reduce((sum, request) => sum + (request.endDate.getTime() <= endOfToday.getTime()
+      ? request.requestedDays
+      : Math.min(request.requestedDays, countVacationWorkdays(request.startDate, endOfToday, companyCountry))), 0);
   const initials = `${worker.firstName[0] ?? ""}${worker.lastName[0] ?? ""}`.toUpperCase();
   const whatsappUrl = whatsappHref(worker.phone);
   const notificationSettings = worker.notificationSettings ?? {
@@ -387,7 +395,7 @@ export async function WorkerProfileView({
               <span className="truncate">{t("workzone.tileVacation", currentLang)}</span>
             </span>
             <span className="text-base font-semibold leading-tight tabular-nums">
-              {remainingVacationDays}<span className="text-xs font-normal text-muted-foreground">/{worker.vacationAllowanceDays}</span>
+              {takenVacationDays} <span className="text-xs font-normal text-muted-foreground">{t("workzone.daysLabel", currentLang)}</span>
             </span>
           </a>
         </div>
