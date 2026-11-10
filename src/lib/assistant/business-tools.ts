@@ -10,13 +10,14 @@ import { applyCanonicalAssetFilters, type CanonicalAssetIntent } from './asset-a
 import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts, phaseDocumentListInput, phaseDocumentReceiptInput } from './document-tools';
 import type { createDocumentResolution } from './document-resolution';
 
-const text = z.string().trim().min(1).max(180);
+// An empty search string means "no filter" (models sometimes send query: "").
+const text = z.string().trim().max(180);
 const id = z.string().trim().min(1).max(120);
 const date = z.string().refine(isAssistantDateKey, 'Use a valid YYYY-MM-DD calendar date.');
 const month = z.string().regex(/^20\d{2}-(0[1-9]|1[0-2])$/);
 const page = { cursor: id.optional(), limit: z.number().int().min(1).max(30).optional() };
 const project = { projectId: id.optional(), projectName: text.optional() };
-const companyText = z.string().trim().min(1).max(100);
+const companyText = z.string().trim().max(100);
 const companyPage = { cursor: z.string().trim().min(1).max(80).optional(), limit: page.limit };
 const assetPage = { cursor: z.string().regex(/^(machine|inventory):[a-z0-9_-]{1,120}$/i).optional(), limit: z.number().int().min(1).max(20).optional() };
 const assetFilters = {
