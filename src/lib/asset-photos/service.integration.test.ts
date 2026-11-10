@@ -254,3 +254,15 @@ it('keeps worker photo ownership enforced by the database target and tenant cons
   await expect(prisma.assetPhoto.create({ data: { companyProfileId: tenants[0].company.id, workerId: tenants[1].worker.id, data: new Uint8Array([1]) } })).rejects.toThrow();
   await expect(prisma.assetPhoto.create({ data: { companyProfileId: tenants[0].company.id, workerId: tenants[0].worker.id, machineId: tenants[0].machine.id, data: new Uint8Array([1]) } })).rejects.toThrow();
 });
+
+it('lets a worker with "Vepron" on Flota dhe GPS change vehicle photos only', async () => {
+  await prisma.worker.update({ where: { id: tenants[0].worker.id }, data: { crewRole: 'FIELD_WORKER' } });
+  await as('worker');
+  await expect(saveAssetPhoto('machine', tenants[0].machine.id, await file())).rejects.toThrow('PHOTO_DENIED');
+  await prisma.accessGrant.create({ data: { companyProfileId: tenants[0].company.id, workerId: tenants[0].worker.id, place: 'fleet_gps', scopeId: '', level: 'act' } });
+  await saveAssetPhoto('machine', tenants[0].machine.id, await file('#225588'));
+  expect(await readAssetPhoto('machine', tenants[0].machine.id)).not.toBeNull();
+  await expect(saveAssetPhoto('site', tenants[0].site.id, await file())).rejects.toThrow('PHOTO_DENIED');
+  await prisma.accessGrant.updateMany({ where: { workerId: tenants[0].worker.id, place: 'fleet_gps' }, data: { level: 'view' } });
+  await expect(saveAssetPhoto('machine', tenants[0].machine.id, await file())).rejects.toThrow('PHOTO_DENIED');
+});
