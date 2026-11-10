@@ -37,8 +37,11 @@ export function WorkingControls({
   activeWorkerIds,
   activeSession,
   compact = false,
+  pill = false,
 }: {
   compact?: boolean;
+  /** One small start/stop toggle for the site header (engineers). */
+  pill?: boolean;
   baustelleId: string;
   currentWorker: CurrentWorker;
   activeWorkerIds: string[];
@@ -53,6 +56,28 @@ export function WorkingControls({
     () => (currentWorker ? activeWorkerIds.includes(currentWorker.id) || activeSession?.baustelleId === baustelleId : false),
     [activeSession?.baustelleId, activeWorkerIds, baustelleId, currentWorker],
   );
+
+  if (pill) {
+    if (!currentWorker) return null;
+    return (
+      <span className="inline-flex items-center gap-1.5" data-testid="site-work-pill">
+        <Button
+          type="button"
+          size="sm"
+          variant={isActiveOnThisBaustelle ? "secondary" : "default"}
+          className="h-8 rounded-full px-3 text-xs"
+          disabled={busy}
+          onClick={() => {
+            if (isActiveOnThisBaustelle) prepareStop();
+            else void startAt(toDatetimeLocal(new Date()));
+          }}
+        >
+          {isActiveOnThisBaustelle ? `■ ${t("workzone.stopWork", currentLang)}` : `▶ ${t("workzone.workHere", currentLang)}`}
+        </Button>
+        {message ? <span className="max-w-[12rem] truncate text-[11px] text-muted-foreground" title={message}>{message}</span> : null}
+      </span>
+    );
+  }
 
   if (!currentWorker) {
     return (

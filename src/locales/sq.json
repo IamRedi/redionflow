@@ -294,6 +294,7 @@
     "sessionAlreadyEnded": "Sesioni eshte tashme i mbyllur.",
     "invalidEndTime": "Ora e mbarimit eshte e pavlefshme.",
     "shortClickDiscarded": "Klikimi i shkurter u hodh poshte dhe nuk u ruajt si kohe pune.",
+    "workResumed": "Puna vazhdon pa ndërprerje.",
     "workerFinishedNotificationTitle": "Punetori mbaroi",
     "workerFinishedNotificationBody": "{name} mbaroi punen",
     "workEnded": "Puna mbaroi.",

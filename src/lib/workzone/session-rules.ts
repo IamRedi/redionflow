@@ -10,6 +10,12 @@ export const LATE_STOP_SUGGESTION_HOUR = 16;
 export const LATE_STOP_SUGGESTION_MINUTE = 30;
 export const STANDARD_BREAK_MINUTES = 30;
 export const MIN_RECORDABLE_SESSION_MS = 60_000;
+/** A start, stop or pause that is reversed within this window is treated as a mis-tap and leaves no record. */
+export const QUICK_UNDO_MS = 30_000;
+
+export function isQuickUndo(since: Date, now = new Date()) {
+  return now.getTime() - since.getTime() < QUICK_UNDO_MS;
+}
 
 export function totalWorkHours(start: Date, end: Date, breakMinutes: number) {
   return Math.max(0, Math.round(((end.getTime() - start.getTime()) / 3_600_000 - breakMinutes / 60) * 100) / 100);

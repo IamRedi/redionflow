@@ -34,9 +34,9 @@ import { saveAssetPhoto } from '@/lib/asset-photos/service';
 import { photoCopy } from '@/lib/asset-photos/shared';
 import type { ActionResult } from "@/lib/validation/action-result";
 import { reportNoteSchema, startWorkSessionSchema, stopWorkSessionSchema, workerLoginSchema } from "@/lib/validation/schemas";
-import { closePauseInterval, createPauseInterval, findPauseIntervalsForSession } from "@/lib/workzone/pause-interval-store";
+import { closePauseInterval, createPauseInterval, deletePauseInterval, findPauseIntervalsForSession, reopenPauseInterval } from "@/lib/workzone/pause-interval-store";
 import { monthKey, parseReportMessages, serializeReportMessages, type ReportMessage } from "@/lib/workzone/reporting";
-import { hasOpenPause, isTrivialSession, stopBreakMinutes, totalPauseMinutes, totalWorkHours } from "@/lib/workzone/session-rules";
+import { hasOpenPause, isQuickUndo, isTrivialSession, stopBreakMinutes, totalPauseMinutes, totalWorkHours } from "@/lib/workzone/session-rules";
 import { getCurrentWorker, WORKER_COOKIE } from "@/lib/workzone/worker-session";
 import { isLoginCodeTaken, isValidLoginCode } from "@/lib/auth/login-code";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -516,6 +516,12 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   try {
     const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId });
     if (result.kind === 'existing') return { ok: true, message: tr('workAlreadyActive') };
+    if (result.kind === 'resumed') {
+      revalidateWorkerProfile(workerId);
+      revalidatePath(`/workzone/baustellen`);
+      notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
+      return { ok: true, message: tr("workResumed") };
+    }
   } catch (error) {
     if (error instanceof SessionStartError) return { ok: false, message: tr(error.message === 'OVERLAP' ? 'workSessionOverlap' : 'checkStartTime') };
     throw error;
@@ -555,6 +561,14 @@ export async function startWorkSessionPauseAction(input: unknown): Promise<Actio
   if (!session.isLive || session.endTime) return { ok: false, message: tr("sessionNotActive") };
   const pauseIntervals = await findPauseIntervalsForSession(session.id);
   if (hasOpenPause(pauseIntervals)) return { ok: true, message: tr("pauseAlreadyRunning") };
+  // A pause ended less than 30 seconds ago simply continues.
+  const lastPause = [...pauseIntervals].sort((a, b) => (b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0))[0];
+  if (lastPause?.endedAt && isQuickUndo(lastPause.endedAt)) {
+    await reopenPauseInterval(lastPause.id);
+    revalidateWorkerProfile(session.workerId);
+    notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
+    return { ok: true, message: tr("pauseStarted") };
+  }
 
   const created = await createPauseInterval({
     workSessionId: session.id,
@@ -588,6 +602,13 @@ export async function stopWorkSessionPauseAction(input: unknown): Promise<Action
   if (!openPause) return { ok: true, message: tr("noOpenPause") };
 
   const endedAt = new Date();
+  // A pause ended within 30 seconds of its start was a mis-tap: drop it, the break stays as before.
+  if (isQuickUndo(openPause.startedAt, endedAt)) {
+    await deletePauseInterval(openPause.id);
+    revalidateWorkerProfile(session.workerId);
+    notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
+    return { ok: true, message: tr("pauseEnded") };
+  }
   const intervals = pauseIntervals.map((interval) =>
     interval.id === openPause.id ? { ...interval, endedAt } : interval,
   );
@@ -628,7 +649,8 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     return { ok: false, message: tr("invalidEndTime") };
   }
 
-  if (isTrivialSession(session.startTime, endTime)) {
+  // Stopping within 30 seconds of pressing start (or a session under a minute) leaves no record.
+  if (isTrivialSession(session.startTime, endTime) || isQuickUndo(session.createdAt)) {
     await prisma.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null } });
     revalidateWorkerProfile(session.workerId);
     revalidatePath(`/workzone/baustellen`);
