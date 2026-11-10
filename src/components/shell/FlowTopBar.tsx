@@ -131,6 +131,10 @@ export async function FlowTopBar({
       };
     })
     .sort((a, b) => {
+      // The logged-in worker always comes first: one tap to their own profile.
+      const aSelf = a.id === currentWorkerId ? 1 : 0;
+      const bSelf = b.id === currentWorkerId ? 1 : 0;
+      if (bSelf !== aSelf) return bSelf - aSelf;
       const aLive = a.liveSession ? 1 : 0;
       const bLive = b.liveSession ? 1 : 0;
       if (bLive !== aLive) return bLive - aLive;
