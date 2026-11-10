@@ -12,7 +12,11 @@ import { addElementWorkAction, removeElementWorkAction, setElementDoneAction, se
 import { seedSecurityTenants, removeSecurityTenants, createTestSession } from "../../../tests/security/fixtures";
 import { importElementList, type ElementImportMode } from "./import";
 import type { ParsedElementList } from "./tekla-list";
-import { doneQty, type ElementList } from "./stages";
+import { doneQty, FIELD_STAGES, type ElementList } from "./stages";
+import { FACTORY_STEP_KEYS } from "../factory/production";
+import { fillDefaultElementRoutes } from "./default-routes";
+
+const DEFAULT_ASSEMBLY = { v: 1, factory: [...FACTORY_STEP_KEYS], field: [...FIELD_STAGES] };
 
 let tenants: Awaited<ReturnType<typeof seedSecurityTenants>>;
 beforeEach(async () => {
@@ -145,7 +149,7 @@ it("configures only owned elements atomically and rejects stale revisions before
   const input = { siteId: tenants[0].site.id, elementIds: rows.map(row => row.id), side: "factory", stages: ["cutting"] };
   expect(await setElementProcessesAction({ ...input, expectedRevisions: { [a.id]: 0, [b.id]: 1 } })).toMatchObject({ ok: false, code: "REVISION_CONFLICT" });
   for (const row of await prisma.siteElement.findMany({ where: { baustelleId: tenants[0].site.id } }))
-    expect(row).toMatchObject({ processRevision: 0, processRoutes: { v: 1, factory: [], field: [] } });
+    expect(row).toMatchObject({ processRevision: 0, processRoutes: DEFAULT_ASSEMBLY });
   expect(await setElementProcessesAction({ ...input, expectedRevisions: { [a.id]: 0 } })).toMatchObject({ ok: false, code: "INVALID_INPUT" });
   expect(await setElementProcessesAction({ ...input, expectedRevisions: { [a.id]: 0, [b.id]: 0 } })).toMatchObject({ ok: true, revisions: { [a.id]: 1, [b.id]: 1 } });
   expect(await setElementProcessesAction({ ...input, expectedRevisions: { [a.id]: 1, [b.id]: 1 } })).toMatchObject({ ok: true, revisions: { [a.id]: 1, [b.id]: 1 } });
@@ -199,20 +203,35 @@ it("preserves configured absent marks and route versions during reimport without
   expect(await importFor(tenants[0], ["DEMO/3"], 'snapshot')).toMatchObject({ added: 1, removed: 1, kept: 1 });
   expect(await prisma.siteElement.findUnique({ where: { id: b.id } })).toBeNull();
   const kept = await prisma.siteElement.findUniqueOrThrow({ where: { id: a.id }, include: { work: true } });
-  expect(kept).toMatchObject({ processRevision: 2, processRoutes: { v: 1, factory: [], field: [] }, work: [] });
+  expect(kept).toMatchObject({ processRevision: 2, processRoutes: { v: 1, factory: [], field: [...FIELD_STAGES] }, work: [] });
   expect(doneQty({ ...kept, list: kept.list as ElementList }, "factory")).toBe(0);
   await importFor(tenants[0], ["DEMO/1"]);
-  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: a.id } })).toMatchObject({ processRevision: 2, processRoutes: { v: 1, factory: [], field: [] } });
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: a.id } })).toMatchObject({ processRevision: 2, processRoutes: { v: 1, factory: [], field: [...FIELD_STAGES] } });
 });
 
-it("starts new imported material unconfigured and preserves legacy null routes on reimport", async () => {
+it("starts new assemblies with every factory and site process and preserves legacy null routes on reimport", async () => {
   const [row] = await prepareRoutes();
-  expect(row).toMatchObject({ processRevision: 0, processRoutes: { v: 1, factory: [], field: [] } });
-  expect((await addElementWorkAction({ elementId: row.id, stage: "cutting", workerIds: [tenants[0].worker.id], pieces: 1 })).ok).toBe(false);
-  expect((await setElementDoneAction({ elementId: row.id, side: "factory", done: true })).ok).toBe(false);
+  expect(row).toMatchObject({ processRevision: 0, processRoutes: DEFAULT_ASSEMBLY });
   await prisma.siteElement.update({ where: { id: row.id }, data: { processRoutes: Prisma.DbNull } });
   await importFor(tenants[0], [row.mark]);
   expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: row.id } })).toMatchObject({ processRoutes: null, processRevision: 0 });
+});
+
+it("gives untouched empty-route material its defaults and leaves saved or worked elements alone", async () => {
+  const [a, b, c] = await prepareRoutes(["DEMO/1", "DEMO/2", "DEMO/3"]);
+  const empty = { v: 1, factory: [], field: [] };
+  await prisma.siteElement.updateMany({ where: { id: { in: [a.id, b.id, c.id] } }, data: { processRoutes: empty } });
+  await prisma.siteElement.update({ where: { id: b.id }, data: { processRevision: 1 } });
+  await prisma.siteElementWork.create({ data: { companyProfileId: tenants[0].company.id, elementId: c.id, stage: "cutting", pieces: 1, workerNames: "Synthetic", workerIds: [], checkedByName: "Synthetic" } });
+  await prisma.steelWorkDefinition.create({ data: { companyProfileId: tenants[0].company.id, kind: "factory", key: "cutting", label: "", sortOrder: 0 } });
+  await prisma.steelWorkDefinition.create({ data: { companyProfileId: tenants[0].company.id, kind: "factory", key: "welding", label: "", sortOrder: 1 } });
+  await prisma.steelWorkDefinition.create({ data: { companyProfileId: tenants[0].company.id, kind: "factory", key: "coating", label: "", sortOrder: 2, archivedAt: new Date() } });
+  await prisma.steelWorkDefinition.create({ data: { companyProfileId: tenants[0].company.id, kind: "field", key: "mounted", label: "", sortOrder: 0 } });
+  expect(await withTenantContext(tenants[0].company.id, tx => fillDefaultElementRoutes(tx, tenants[0].company.id))).toBe(1);
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: a.id } })).toMatchObject({ processRevision: 0, processRoutes: { v: 1, factory: ["cutting", "welding"], field: ["mounted"] } });
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: b.id } })).toMatchObject({ processRoutes: empty });
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: c.id } })).toMatchObject({ processRoutes: empty });
+  expect(await withTenantContext(tenants[0].company.id, tx => fillDefaultElementRoutes(tx, tenants[0].company.id))).toBe(0);
 });
 
 it("uses registered same-company custom processes, rejects foreign/new archived selections and lets an existing archived route finish", async () => {
