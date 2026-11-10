@@ -45,7 +45,7 @@ export async function readSteelWorkCatalog(companyId: string, siteId?: string): 
   });
 }
 
-export type SaveSteelWorkInput = { id?: string; siteId?: string; kind: SteelWorkKind; label: string; description?: string; linkedProcessKey?: string | null; linkedList?: 'assembly' | 'part' | null; linkedKind?: string | null; phaseGroup?: string | null; revision?: number };
+export type SaveSteelWorkInput = { id?: string; siteId?: string; kind: SteelWorkKind; label: string; description?: string; linkedProcessKey?: string | null; linkedList?: 'assembly' | 'part' | 'all' | null; linkedKind?: string | null; phaseGroup?: string | null; revision?: number };
 export async function saveSteelWorkDefinition(companyId: string, actor: CompanyActor, input: SaveSteelWorkInput) {
   if (!canManageSteelCatalog(actor.can)) fail('DENIED');
   return withTenantContext(companyId, async tx => {
@@ -55,7 +55,8 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     if (input.id && (!existing || existing.revision !== input.revision || existing.kind !== input.kind)) fail('CONFLICT');
     if (existing?.archivedAt) fail('ARCHIVED');
     const linkedProcessKey = input.kind === 'site' ? input.linkedProcessKey || null : null;
-    const linkedList = linkedProcessKey ? input.linkedList ?? 'assembly' : null;
+    // 'all' = both material lists (assemblies and parts); stored as null.
+    const linkedList = linkedProcessKey && input.linkedList !== 'all' ? input.linkedList ?? 'assembly' : null;
     const linkedKind = linkedProcessKey ? input.linkedKind || null : null;
     if (linkedProcessKey) {
       const process = await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: companyId, key: linkedProcessKey, kind: { in: ['factory', 'field'] } }, select: { kind: true, archivedAt: true } });

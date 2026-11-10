@@ -22,8 +22,8 @@ it('requires the current authenticated company and actor, not caller-supplied id
 });
 
 it.each([
-  ['company', 'image-burst', 2, 'rate'], ['worker:worker-fixture', 'image-burst', 1, 'rate'],
-  ['company', 'image-day', 20, 'budget'], ['worker:worker-fixture', 'image-day', 20, 'budget'],
+  ['company', 'image-burst', 20, 'rate'], ['worker:worker-fixture', 'image-burst', 10, 'rate'],
+  ['company', 'image-day', 100, 'budget'], ['worker:worker-fixture', 'image-day', 100, 'budget'],
 ])('enforces the fixed %s %s ceiling without partially charging other scopes', async (key, window, requests, reason) => {
   vi.stubEnv('ASSISTANT_COMPANY_DAILY_REQUESTS', '100000');
   mocks.tx.assistantQuotaBucket.findUnique.mockImplementation(async ({ where }) => {

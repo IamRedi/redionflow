@@ -3,7 +3,8 @@ import { withTenantContext } from '@/lib/db/tenant-context';
 import { getRequesterContext, type RequesterContext } from '@/lib/assistant/requester';
 
 const BURST_MS = 600_000, DAY_MS = 86_400_000;
-const DAILY_IMAGE_LIMIT = 20;
+/** Redi 10.11.2026: 100 AI illustrations a day (per person and per company), up to 10 per person / 20 per company in 10 minutes. */
+export const DAILY_IMAGE_LIMIT = 100, COMPANY_BURST_LIMIT = 20, ACTOR_BURST_LIMIT = 10;
 type Denied = { ok: false; status: 403 | 429 | 503; reason: 'rate' | 'budget' | 'unavailable'; retryAfterSeconds: number };
 export type SteelImageQuota = { ok: true } | Denied;
 class ImageQuotaDenied extends Error {
@@ -20,8 +21,8 @@ export async function reserveSteelImageQuota(requester: RequesterContext, now = 
     if (!Number.isFinite(now.getTime())) throw new Error('Invalid quota time');
     const burstStart = new Date(Math.floor(now.getTime() / BURST_MS) * BURST_MS), dayStart = new Date(Math.floor(now.getTime() / DAY_MS) * DAY_MS);
     const buckets = [
-      { actorKey: 'company', window: 'image-burst', windowStart: burstStart, limit: 2, duration: BURST_MS },
-      { actorKey: actor, window: 'image-burst', windowStart: burstStart, limit: 1, duration: BURST_MS },
+      { actorKey: 'company', window: 'image-burst', windowStart: burstStart, limit: COMPANY_BURST_LIMIT, duration: BURST_MS },
+      { actorKey: actor, window: 'image-burst', windowStart: burstStart, limit: ACTOR_BURST_LIMIT, duration: BURST_MS },
       { actorKey: 'company', window: 'image-day', windowStart: dayStart, limit: DAILY_IMAGE_LIMIT, duration: DAY_MS },
       { actorKey: actor, window: 'image-day', windowStart: dayStart, limit: DAILY_IMAGE_LIMIT, duration: DAY_MS },
     ];

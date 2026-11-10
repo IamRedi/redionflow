@@ -18,20 +18,23 @@ function authenticate(actor = identity()) { auth.companyId = actor.companyId; au
 beforeEach(async () => { assertAssistantTestDatabase(); tenants = await seedSecurityTenants(); authenticate(); });
 afterEach(async () => { if (tenants) await removeSecurityTenants(tenants.map(tenant => tenant.company.id)); });
 
-it('serializes concurrent requests and charges only one actor reservation, never text tokens', async () => {
+it('serializes concurrent requests and stops at the per-person burst of ten, never text tokens', async () => {
   await prisma.assistantQuotaBucket.create({ data: { companyProfileId: auth.companyId, actorKey: 'company', window: 'day', windowStart: new Date('2026-11-05T00:00:00Z'), requests: 7, tokens: 123 } });
   const results = await Promise.all(Array.from({ length: 12 }, () => reserveSteelImageQuota(identity(), now)));
-  expect(results.filter(result => result.ok)).toHaveLength(1);
+  expect(results.filter(result => result.ok)).toHaveLength(10);
   expect(results.filter(result => !result.ok).every(result => !result.ok && result.reason === 'rate')).toBe(true);
   const images = await prisma.assistantQuotaBucket.findMany({ where: { companyProfileId: auth.companyId, window: { startsWith: 'image-' } } });
   expect(images).toHaveLength(4);
-  expect(images.every(row => row.requests === 1 && row.tokens === 0)).toBe(true);
+  expect(images.every(row => row.requests === 10 && row.tokens === 0)).toBe(true);
   expect(await prisma.assistantQuotaBucket.findFirst({ where: { companyProfileId: auth.companyId, window: 'day' } })).toMatchObject({ requests: 7, tokens: 123 });
 });
 
 it('shares company burst capacity across actors while another tenant stays independent', async () => {
-  expect(await reserveSteelImageQuota(authenticate(identity()), now)).toEqual({ ok: true });
-  expect(await reserveSteelImageQuota(authenticate(identity(0, 'admin')), now)).toEqual({ ok: true });
+  for (let index = 0; index < 10; index += 1) {
+    expect(await reserveSteelImageQuota(authenticate(identity()), now)).toEqual({ ok: true });
+    expect(await reserveSteelImageQuota(authenticate(identity(0, 'admin')), now)).toEqual({ ok: true });
+  }
+  expect(await reserveSteelImageQuota(authenticate(identity()), now)).toMatchObject({ ok: false, reason: 'rate' });
   const extra = await prisma.worker.create({ data: { companyProfileId: tenants[0].company.id, firstName: 'Fictional', lastName: 'Additional', loginCodeHash: 'synthetic-unused-image-test-hash' } });
   const actor = { ...identity(), kind: 'worker' as const, workerId: extra.id };
   expect(await reserveSteelImageQuota(authenticate(actor), now)).toMatchObject({ ok: false, reason: 'rate' });
@@ -39,27 +42,27 @@ it('shares company burst capacity across actors while another tenant stays indep
   expect(await reserveSteelImageQuota(authenticate(identity(1)), now)).toEqual({ ok: true });
 });
 
-it('keeps failed-call reservations consumed, stops at twenty actor requests and resets at UTC midnight', async () => {
-  for (let index = 0; index < 20; index += 1) expect(await reserveSteelImageQuota(identity(), new Date(now.getTime() + index * 600_000))).toEqual({ ok: true });
-  const twentyFirst = new Date(now.getTime() + 20 * 600_000);
+it('keeps failed-call reservations consumed, stops at a hundred actor requests and resets at UTC midnight', async () => {
+  for (let index = 0; index < 100; index += 1) expect(await reserveSteelImageQuota(identity(), new Date(now.getTime() + Math.floor(index / 10) * 600_000))).toEqual({ ok: true });
+  const twentyFirst = new Date(now.getTime() + 10 * 600_000);
   expect(await reserveSteelImageQuota(identity(), twentyFirst)).toMatchObject({ ok: false, reason: 'budget' });
   expect(await prisma.assistantQuotaBucket.count({ where: { companyProfileId: auth.companyId, window: 'image-burst', windowStart: twentyFirst } })).toBe(0);
-  expect(await prisma.assistantQuotaBucket.findFirst({ where: { companyProfileId: auth.companyId, actorKey: 'company', window: 'image-day' } })).toMatchObject({ requests: 20, tokens: 0 });
+  expect(await prisma.assistantQuotaBucket.findFirst({ where: { companyProfileId: auth.companyId, actorKey: 'company', window: 'image-day' } })).toMatchObject({ requests: 100, tokens: 0 });
   expect(await reserveSteelImageQuota(identity(), new Date('2026-11-06T00:00:00Z'))).toEqual({ ok: true });
 });
 
-it('stops the whole company at twenty image calls without charging a fresh actor or burst window', async () => {
-  for (let index = 0; index < 10; index += 1) {
-    const at = new Date(now.getTime() + index * 600_000);
+it('stops the whole company at a hundred image calls without charging a fresh actor or burst window', async () => {
+  for (let index = 0; index < 50; index += 1) {
+    const at = new Date(now.getTime() + Math.floor(index / 10) * 600_000);
     expect(await reserveSteelImageQuota(authenticate(identity()), at)).toEqual({ ok: true });
     expect(await reserveSteelImageQuota(authenticate(identity(0, 'admin')), at)).toEqual({ ok: true });
   }
   const extra = await prisma.worker.create({ data: { companyProfileId: tenants[0].company.id, firstName: 'Fictional', lastName: 'Fresh', loginCodeHash: 'synthetic-unused-image-test-hash' } });
   const actor = { ...identity(), kind: 'worker' as const, workerId: extra.id };
-  const at = new Date(now.getTime() + 10 * 600_000);
+  const at = new Date(now.getTime() + 5 * 600_000);
   expect(await reserveSteelImageQuota(authenticate(actor), at)).toMatchObject({ ok: false, reason: 'budget' });
   expect(await prisma.assistantQuotaBucket.count({ where: { companyProfileId: auth.companyId, window: 'image-burst', windowStart: at } })).toBe(0);
-  expect(await prisma.assistantQuotaBucket.findFirst({ where: { companyProfileId: auth.companyId, actorKey: 'company', window: 'image-day' } })).toMatchObject({ requests: 20, tokens: 0 });
+  expect(await prisma.assistantQuotaBucket.findFirst({ where: { companyProfileId: auth.companyId, actorKey: 'company', window: 'image-day' } })).toMatchObject({ requests: 100, tokens: 0 });
 });
 
 it('rejects forged actor or company context before creating any durable bucket', async () => {
