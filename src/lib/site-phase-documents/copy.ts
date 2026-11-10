@@ -28,6 +28,10 @@ const words={
   archive:['Arkivo','Archive','Archivieren','Archivia','Archiwizuj','Arhivează'],
   archived:['Në historik','Archived','Archiviert','Archiviato','Zarchiwizowano','Arhivat'],
   confirmArchive:['Konfirmo arkivimin','Confirm archive','Archivierung bestätigen','Conferma archiviazione','Potwierdź archiwizację','Confirmă arhivarea'],
+  remove:['Fshij','Delete','Löschen','Elimina','Usuń','Șterge'],
+  confirmRemove:['Fshije përgjithmonë','Delete for good','Endgültig löschen','Elimina definitivamente','Usuń na zawsze','Șterge definitiv'],
+  removeHint:['Fshihet dokumenti me të gjitha versionet dhe konfirmimet.','The document is deleted with all versions and receipts.','Das Dokument wird mit allen Versionen und Bestätigungen gelöscht.','Il documento viene eliminato con tutte le versioni e conferme.','Dokument zostanie usunięty ze wszystkimi wersjami i potwierdzeniami.','Documentul se șterge cu toate versiunile și confirmările.'],
+  removed:['Dokumenti u fshi.','Document deleted.','Dokument gelöscht.','Documento eliminato.','Dokument usunięty.','Document șters.'],
   empty:['Nuk ka dokumente në këtë fazë.','No documents in this phase.','Keine Dokumente in dieser Phase.','Nessun documento in questa fase.','Brak dokumentów na tym etapie.','Niciun document în această etapă.'],
   shareError:['Dërgimi nuk u krye. Mund ta shkarkosh dokumentin.','Sharing did not complete. You can download the document.','Senden nicht abgeschlossen. Das Dokument kann heruntergeladen werden.','Invio non completato. Puoi scaricare il documento.','Nie wysłano. Możesz pobrać dokument.','Trimiterea nu s-a finalizat. Poți descărca documentul.'],
 } as const;

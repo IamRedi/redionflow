@@ -1,11 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Download, ExternalLink, FolderCheck, Plus, RotateCw, Send, Upload } from 'lucide-react';
+import { Check, Download, ExternalLink, FolderCheck, Plus, RotateCw, Send, Trash2, Upload } from 'lucide-react';
 import { useLanguage } from '@/components/i18n/language-provider';
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
 import { assetCopy } from '@/components/company-assets/copy';
 import { AssetFeedback, AssetField, AssetLoading, assetButton, assetInput, assetPrimary } from '@/components/company-assets/shared';
-import { getPhaseDocumentsAction, phaseDocumentAction, uploadPhaseDocumentAction } from '@/app/(workzone)/workzone/phase-document-actions';
+import { deletePhaseDocumentAction, getPhaseDocumentsAction, phaseDocumentAction, uploadPhaseDocumentAction } from '@/app/(workzone)/workzone/phase-document-actions';
 import { DOCUMENT_PHASES, type DocumentPhase, type PhaseDocumentSnapshot, type PhaseDocumentView } from '@/lib/site-phase-documents/types';
 import { phaseDocumentCopy } from '@/lib/site-phase-documents/copy';
 import { siteAccessCopy } from '@/lib/site-phase-documents/access-copy';
@@ -17,7 +17,7 @@ export function PhaseDocumentsButton({siteId}:{siteId:string}){
 function PhaseDocuments({siteId}:{siteId:string}){
   const {currentLang}=useLanguage(),c=phaseDocumentCopy(currentLang),a=assetCopy(currentLang);
   const [phase,setPhase]=useState<DocumentPhase>('piketim'),[data,setData]=useState<PhaseDocumentSnapshot|null>(null),[history,setHistory]=useState(false),[upload,setUpload]=useState(false),[previous,setPrevious]=useState<PhaseDocumentView|null>(null);
-  const [title,setTitle]=useState(''),[note,setNote]=useState(''),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState<string|null>(null),[failed,setFailed]=useState(false),[archive,setArchive]=useState<string|null>(null);
+  const [title,setTitle]=useState(''),[note,setNote]=useState(''),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[message,setMessage]=useState<string|null>(null),[failed,setFailed]=useState(false),[archive,setArchive]=useState<string|null>(null),[remove,setRemove]=useState<string|null>(null);
   const epoch=useRef(0),guard=useRef(false),requestId=useRef<string|null>(null),file=useRef<HTMLInputElement>(null);
   const invalidate=useCallback(()=>{epoch.current++;},[]);
   const load=useCallback(async()=>{
@@ -30,7 +30,7 @@ function PhaseDocuments({siteId}:{siteId:string}){
     try{const result=await action();if(!result.ok){setMessage(result.message||a.saveError);setFailed(true);return;}done?.();await load();}catch{setMessage(a.saveError);setFailed(true);}finally{guard.current=false;setBusy(false);}
   }
   function startUpload(doc?:PhaseDocumentView){setPrevious(doc??null);setTitle(doc?.title??'');setNote(doc?.note??'');setUpload(true);requestId.current=null;if(file.current)file.current.value='';}
-  function selectPhase(key:DocumentPhase){setPhase(key);setUpload(false);setPrevious(null);setArchive(null);}
+  function selectPhase(key:DocumentPhase){setPhase(key);setUpload(false);setPrevious(null);setArchive(null);setRemove(null);}
   const stamp=(iso:string)=>new Date(iso).toLocaleString(currentLang==='sq'?'sq-AL':currentLang,{dateStyle:'medium',timeStyle:'short',timeZone:'Europe/Tirane'});
   async function share(doc:PhaseDocumentView){
     if(guard.current)return;guard.current=true;setBusy(true);setMessage(null);
@@ -60,7 +60,8 @@ function PhaseDocuments({siteId}:{siteId:string}){
       {data&&!docs.length?<p className="py-5 text-sm text-muted-foreground">{c.empty}</p>:null}
       {docs.map(doc=>{const received=doc.receipts.some(r=>r.mine),url=`/api/site-phase-documents/${doc.id}`;return <article key={doc.id} data-testid="phase-document" className={`min-w-0 rounded-xl border bg-card p-3 sm:p-4 ${doc.archivedAt?'opacity-75':''}`}>
         <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1 basis-56"><h3 className="break-words font-semibold">{doc.title}</h3><p className="mt-1 break-all text-xs text-muted-foreground">{doc.fileName} · {(doc.size/1000).toLocaleString(currentLang,{maximumFractionDigits:0})} {c.kilobytes}</p><p className="mt-1 break-words text-xs text-muted-foreground">{doc.uploadedBy} · {stamp(doc.uploadedAt)}</p>{doc.note?<p className="mt-2 whitespace-pre-wrap break-words text-sm">{doc.note}</p>:null}</div>{doc.archivedAt?<span className="text-xs text-muted-foreground">{c.archived}</span>:<button type="button" disabled={busy||received} onClick={()=>void perform(()=>phaseDocumentAction({documentId:doc.id,action:'receive'}))} className={`${assetButton} ${received?'border-green-600/40 text-green-800 dark:text-green-300':''}`}><Check size={18}/>{received?c.received:c.receive}</button>}</div>
-        <div className="mt-3 flex flex-wrap gap-2"><a className={assetButton} href={url} target="_blank" rel="noopener"><ExternalLink size={16}/>{c.open}</a><a className={assetButton} href={`${url}?download`} download={doc.fileName}><Download size={16}/>{c.download}</a><button type="button" className={assetButton} disabled={busy} onClick={()=>void share(doc)}><Send size={16}/>{c.send}</button>{doc.canEdit&&!doc.archivedAt?<><button type="button" className={assetButton} disabled={busy} onClick={()=>startUpload(doc)}>{c.version}</button><button type="button" className={`${assetButton} text-muted-foreground`} disabled={busy} onClick={()=>archive===doc.id?void perform(()=>phaseDocumentAction({documentId:doc.id,action:'archive'}),()=>setArchive(null)):setArchive(doc.id)}>{archive===doc.id?c.confirmArchive:c.archive}</button></>:null}</div>
+        <div className="mt-3 flex flex-wrap gap-2"><a className={assetButton} href={url} target="_blank" rel="noopener"><ExternalLink size={16}/>{c.open}</a><a className={assetButton} href={`${url}?download`} download={doc.fileName}><Download size={16}/>{c.download}</a><button type="button" className={assetButton} disabled={busy} onClick={()=>void share(doc)}><Send size={16}/>{c.send}</button>{doc.canEdit&&!doc.archivedAt?<><button type="button" className={assetButton} disabled={busy} onClick={()=>startUpload(doc)}>{c.version}</button><button type="button" className={`${assetButton} text-muted-foreground`} disabled={busy} onClick={()=>archive===doc.id?void perform(()=>phaseDocumentAction({documentId:doc.id,action:'archive'}),()=>setArchive(null)):setArchive(doc.id)}>{archive===doc.id?c.confirmArchive:c.archive}</button></>:null}{doc.canEdit?<button type="button" data-testid="phase-document-delete" className={`${assetButton} ${remove===doc.id?'border-red-600 bg-red-600 text-white hover:bg-red-700':'text-red-600 dark:text-red-400'}`} disabled={busy} onClick={()=>remove===doc.id?void perform(()=>deletePhaseDocumentAction({documentId:doc.id}),()=>{setRemove(null);setMessage(c.removed);}):setRemove(doc.id)}><Trash2 size={16}/>{remove===doc.id?c.confirmRemove:c.remove}</button>:null}{remove===doc.id?<button type="button" className={assetButton} disabled={busy} onClick={()=>setRemove(null)}>{a.cancel}</button>:null}</div>
+        {remove===doc.id?<p className="mt-2 text-xs text-red-700 dark:text-red-300">{c.removeHint}</p>:null}
         <div className="mt-3 border-t pt-2">{doc.receipts.length?<ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs">{doc.receipts.map((r,i)=><li key={i} className="flex min-w-0 items-center gap-1.5"><Check size={14} className="shrink-0 text-green-700 dark:text-green-300"/><span className="break-words">{r.name} · {stamp(r.at)}</span></li>)}</ul>:<p className="text-xs text-muted-foreground">{c.noReceipts}</p>}</div>
       </article>;})}
     </section>
