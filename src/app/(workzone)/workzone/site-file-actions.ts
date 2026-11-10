@@ -12,6 +12,7 @@ import { initialFactorySteps, PRODUCTION_UNITS } from "@/lib/factory/production"
 import { getActionTranslator } from "@/lib/i18n/action-messages";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { currentCompanyActor } from "@/lib/site-files/actor";
+import { removeSiteFileData } from "@/lib/site-files/remove-data";
 import { mayUploadSiteDocuments, siteDocumentAccess } from '@/lib/site-phase-documents/site-access';
 import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime, type SiteFileKind } from "@/lib/site-files/validate";
 import type { ActionResult } from "@/lib/validation/action-result";
@@ -84,7 +85,7 @@ export async function uploadSiteFileAction(formData: FormData): Promise<ActionRe
   return { ok: true, message: tr("documentUploaded") };
 }
 
-/** Office only. */
+/** Office only. Deletes the file and everything that was read from it. */
 export async function deleteSiteFileAction(input: unknown): Promise<ActionResult> {
   const tr = await getActionTranslator();
   const parsed = z.object({ id: z.string().min(1).max(64) }).safeParse(input);
@@ -94,11 +95,12 @@ export async function deleteSiteFileAction(input: unknown): Promise<ActionResult
   const actor = await currentCompanyActor(companyId);
   if (!actor?.can.office) return { ok: false, message: tr("accessDenied") };
   const removed = await withTenantContext(companyId, async (tx) => {
-    const file = await tx.siteFile.findFirst({ where: { id: parsed.data.id, companyProfileId: companyId }, select: { id: true, baustelleId: true } });
+    const file = await tx.siteFile.findFirst({ where: { id: parsed.data.id, companyProfileId: companyId }, select: { id: true, baustelleId: true, kind: true, fileName: true, reference: true } });
     if (!file) return null;
+    await removeSiteFileData(tx, companyId, file);
     await tx.siteFile.delete({ where: { id: file.id } });
     return file.baustelleId;
-  });
+  }, { timeout: 30_000 });
   if (!removed) return { ok: false, message: tr("documentNotFound") };
   revalidateSite(removed);
   return { ok: true, message: "OK" };
@@ -263,6 +265,25 @@ export async function importOrderAction(formData: FormData): Promise<ActionResul
       });
     }
 
+    const orderFile = await tx.siteFile.create({
+      data: {
+        companyProfileId: companyId,
+        baustelleId: site.id,
+        kind: "order",
+        officeOnly: true,
+        fileName: upload.fileName,
+        mime: upload.mime,
+        size: upload.size,
+        data: upload.bytes,
+        amount: order.total,
+        currency: order.currency || "ALL",
+        supplier: order.supplier || null,
+        reference: order.reference || null,
+        uploadedByName: actor.name,
+      },
+      select: { id: true },
+    });
+
     for (const line of order.lines) {
       const batch = await tx.productionBatch.create({
         data: {
@@ -274,6 +295,7 @@ export async function importOrderAction(formData: FormData): Promise<ActionResul
           steps: initialFactorySteps(),
           createdByName: actor.name,
           orderRef: order.reference || null,
+          siteFileId: orderFile.id,
         },
         select: { id: true },
       });
@@ -291,23 +313,6 @@ export async function importOrderAction(formData: FormData): Promise<ActionResul
       });
     }
 
-    await tx.siteFile.create({
-      data: {
-        companyProfileId: companyId,
-        baustelleId: site.id,
-        kind: "order",
-        officeOnly: true,
-        fileName: upload.fileName,
-        mime: upload.mime,
-        size: upload.size,
-        data: upload.bytes,
-        amount: order.total,
-        currency: order.currency || "ALL",
-        supplier: order.supplier || null,
-        reference: order.reference || null,
-        uploadedByName: actor.name,
-      },
-    });
     return site.id;
   });
 

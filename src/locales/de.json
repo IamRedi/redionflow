@@ -1832,7 +1832,8 @@
     "addInvoice": "Rechnung hochladen",
     "noCosts": "Noch keine Bestellungen oder Rechnungen.",
     "delete": "Löschen",
-    "error": "Nicht gespeichert. Bitte erneut versuchen."
+    "error": "Nicht gespeichert. Bitte erneut versuchen.",
+    "deleteConfirm": "Dieses Dokument und alles daraus Gelesene löschen (Elemente in Werk- und Montageliste, Bestellmaterial)?"
   },
   "machineSheet": {
     "statusOk": "Einsatzbereit",

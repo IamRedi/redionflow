@@ -1710,7 +1710,8 @@
     "addInvoice": "Upload invoice",
     "noCosts": "No orders or invoices yet.",
     "delete": "Delete",
-    "error": "Not saved. Please try again."
+    "error": "Not saved. Please try again.",
+    "deleteConfirm": "Delete this document and everything read from it (elements on the factory and field lists, order material)?"
   },
   "machineSheet": {
     "statusOk": "Ready to work",

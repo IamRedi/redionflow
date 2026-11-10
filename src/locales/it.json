@@ -1750,7 +1750,8 @@
     "addInvoice": "Upload invoice",
     "noCosts": "No orders or invoices yet.",
     "delete": "Delete",
-    "error": "Not saved. Please try again."
+    "error": "Not saved. Please try again.",
+    "deleteConfirm": "Eliminare questo documento e tutto ciò che è stato letto da esso (elementi nelle liste officina e montaggio, materiale dell’ordine)?"
   },
   "machineSheet": {
     "statusOk": "Ready to work",

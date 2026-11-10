@@ -684,7 +684,8 @@
     "addInvoice": "Upload invoice",
     "noCosts": "No orders or invoices yet.",
     "delete": "Delete",
-    "error": "Not saved. Please try again."
+    "error": "Not saved. Please try again.",
+    "deleteConfirm": "Usunąć ten dokument i wszystko, co z niego odczytano (elementy na listach zakładu i montażu, materiał zamówienia)?"
   },
   "machineSheet": {
     "statusOk": "Ready to work",

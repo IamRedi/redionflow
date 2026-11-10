@@ -1766,7 +1766,8 @@
     "addInvoice": "Ngarko faturë",
     "noCosts": "Ende pa porosi apo fatura.",
     "delete": "Fshi",
-    "error": "Nuk u ruajt. Provo përsëri."
+    "error": "Nuk u ruajt. Provo përsëri.",
+    "deleteConfirm": "Fshi këtë dokument dhe gjithçka që u lexua prej tij (elementet në listat e fabrikës dhe montimit, materiali i porosisë)?"
   },
   "machineSheet": {
     "statusOk": "Gati për punë",

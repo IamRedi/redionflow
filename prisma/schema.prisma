@@ -1842,12 +1842,16 @@ model ProductionBatch {
   createdByName    String         @default("")
   /// Supplier order this material came from (order number), if any.
   orderRef         String?
+  /// The order document (SiteFile) this material was imported from; deleting
+  /// the document deletes these batches.
+  siteFileId       String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   events           ProductionEvent[]
 
   @@index([companyProfileId])
   @@index([baustelleId])
+  @@index([siteFileId])
 }
 
 /// Append-only history of every change on a production batch.
