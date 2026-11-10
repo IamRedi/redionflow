@@ -503,7 +503,7 @@ function spreadsheetMime(fileName: string) {
 /**
  * Delete every element that came from one drawing-office file on a site (with
  * its checked work), and the file itself from the site documents. Same right
- * as importing the list.
+ * as importing the list, or acting on the site's factory list.
  */
 export async function deleteElementSourceAction(input: unknown): Promise<ActionResult & { deleted?: number }> {
   const tr = await getActionTranslator();
@@ -517,7 +517,8 @@ export async function deleteElementSourceAction(input: unknown): Promise<ActionR
   const identity = { companyId, userId: actor.userId, workerId: actor.workerId };
   const deleted = await withTenantContext(companyId, async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
-    if (!await mayUploadSiteDocuments(tx, identity, siteId)) return null;
+    // Who may import the lists, or who acts on this site's factory list (Redi 10.11: Megi + Silvi).
+    if (!actor.at(siteId)?.factorySteps && !await mayUploadSiteDocuments(tx, identity, siteId)) return null;
     const removed = await tx.siteElement.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile } });
     if (sourceFile) await tx.siteFile.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, kind: "document", fileName: sourceFile } });
     return removed.count;
