@@ -141,6 +141,23 @@ export function WorkerIconStrip({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // A mouse wheel only scrolls up/down: turn it sideways over the strip so the
+  // whole team can be reached on a computer without a touchpad.
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    function handleWheel(event: WheelEvent) {
+      if (!wrap || wrap.scrollWidth <= wrap.clientWidth || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      const max = wrap.scrollWidth - wrap.clientWidth;
+      const next = Math.min(max, Math.max(0, wrap.scrollLeft + event.deltaY));
+      if (next === wrap.scrollLeft) return;
+      event.preventDefault();
+      wrap.scrollLeft = next;
+    }
+    wrap.addEventListener("wheel", handleWheel, { passive: false });
+    return () => wrap.removeEventListener("wheel", handleWheel);
+  }, []);
+
   useEffect(() => {
     if (!openMenu) return;
     function handleResizeOrScroll() {
