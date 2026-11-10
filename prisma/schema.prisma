@@ -2065,6 +2065,8 @@ model SteelWorkDefinition {
   linkedProcessKey String?
   linkedList String?
   linkedKind String?
+  /// Site tasks only: which of the three site windows it belongs to (concrete | production | assembly). Null = assembly.
+  phaseGroup String?
   visualUpdatedAt DateTime?
   visualStatus String @default("fallback")
   createdAt DateTime @default(now())

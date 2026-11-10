@@ -253,7 +253,6 @@ export async function WorkerProfileView({
   const pendingVacationDays = vacationRequests
     .filter((request) => request.status === "PENDING")
     .reduce((sum, request) => sum + request.requestedDays, 0);
-  const remainingVacationDays = Math.max(0, worker.vacationAllowanceDays - approvedVacationDays);
   // Holiday days actually taken up to today (approved leave that has already started).
   const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
   const takenVacationDays = vacationRequests
@@ -276,7 +275,6 @@ export async function WorkerProfileView({
   const monthHours = worker.sessions
     .filter((session) => monthKey(session.startTime) === currentMonthKey && isReportableSession(session))
     .reduce((sum, session) => sum + session.totalHours, 0);
-  const vacationPct = worker.vacationAllowanceDays > 0 ? Math.round((remainingVacationDays / worker.vacationAllowanceDays) * 100) : 0;
   const dayHref = mode === "admin" ? `/app/admin/workers/${worker.id}/day/${todayKey}` : `/workzone/profile/day/${todayKey}`;
   const monthHref = mode === "admin" ? `/app/admin/workers/${worker.id}/month/${currentMonthKey}` : `/workzone/profile/month/${currentMonthKey}`;
   const available = worker.availability === "AVAILABLE";
@@ -435,12 +433,10 @@ export async function WorkerProfileView({
           <div className={sectionTitle}>
             <Palmtree className="size-4 text-primary" strokeWidth={1.8} /> {t("workzone.vacationTitle", currentLang)}
           </div>
-          <span className="text-xs text-muted-foreground" title={`${t("workzone.approvedStatus", currentLang)} ${approvedVacationDays} · ${t("workzone.pendingStatus", currentLang)} ${pendingVacationDays}`}>
-            {t("workzone.remainingLabel", currentLang)} <b className="text-foreground">{remainingVacationDays}</b> / {worker.vacationAllowanceDays} {t("workzone.daysLabel", currentLang)}
+          {/* Only what was taken: the yearly total is not shown anywhere on the profile. */}
+          <span className="text-xs text-muted-foreground">
+            {t("workzone.tileVacation", currentLang)} <b className="text-foreground">{takenVacationDays}</b> {t("workzone.daysLabel", currentLang)}
           </span>
-        </div>
-        <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${vacationPct}%` }} />
         </div>
         {vacationRequests.length > 0 ? (
           <ul className="mt-3 space-y-1.5">

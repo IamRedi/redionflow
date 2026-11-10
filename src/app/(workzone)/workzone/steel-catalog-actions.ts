@@ -11,7 +11,7 @@ import { canManageSteelCatalog, type SteelWorkDefinitionView } from '@/lib/steel
 import { readSteelWorkCatalog, saveSteelWorkDefinition, setSteelTaskSelection, archiveSteelWorkDefinition } from '@/lib/steel-work/catalog';
 
 const id = z.string().min(1).max(64), revision = z.number().int().min(1);
-const save = z.object({ id: id.optional(), siteId: id.optional(), kind: z.enum(['site', 'factory', 'field']), label: z.string().trim().max(80), description: z.string().trim().max(500).optional(), linkedProcessKey: z.string().max(32).nullable().optional(), linkedList: z.enum(['assembly', 'part']).nullable().optional(), linkedKind: z.string().trim().max(80).nullable().optional(), revision: revision.optional() }).strict();
+const save = z.object({ id: id.optional(), siteId: id.optional(), kind: z.enum(['site', 'factory', 'field']), label: z.string().trim().max(80), description: z.string().trim().max(500).optional(), linkedProcessKey: z.string().max(32).nullable().optional(), linkedList: z.enum(['assembly', 'part']).nullable().optional(), linkedKind: z.string().trim().max(80).nullable().optional(), phaseGroup: z.enum(['concrete', 'production', 'assembly']).nullable().optional(), revision: revision.optional() }).strict();
 async function actor(manage: boolean) {
   const companyId = await getCurrentCompanyId();
   const person = companyId ? await currentCompanyActor(companyId) : null;
