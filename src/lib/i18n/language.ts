@@ -32,6 +32,11 @@ export function mapProfileLanguage(value: string | null | undefined): SupportedL
   return null;
 }
 
+/** The app language from a profile: the mother tongue, else the preferred (AI answer) language. */
+export function profileUiLanguage(preferred: string | null | undefined, motherTongue: string | null | undefined): SupportedLanguage {
+  return mapProfileLanguage(motherTongue) ?? mapProfileLanguage(preferred) ?? "de";
+}
+
 export function resolveDefaultLanguageForUser(profileLanguage: string | null | undefined): SupportedLanguage {
   const normalized = mapProfileLanguage(profileLanguage);
   if (!normalized) return "de";

@@ -1,4 +1,5 @@
 "use server";
+import { rememberProfileLanguage } from "@/lib/i18n/server";
 import { plannedSiteId } from "@/lib/workzone/plan-site";
 import { beginWorkerSession, SessionStartError } from '@/lib/workzone/session-start';
 import { parseWorkDateTime } from '@/lib/workzone/date-utils';
@@ -243,13 +244,13 @@ export async function updateWorkerLanguagePreferencesAction(formData: FormData):
   const _access = await assertWorkerAccess(actor, workerId);
   if (!_access.ok) return _access;
 
-  await prisma.worker.update({
-    where: { id: workerId },
-    data: {
-      motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
-      preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
-    },
-  });
+  const languages = {
+    motherTongue: normalizeAssistantLanguage(formData.get("motherTongue")),
+    preferredLanguage: normalizeAssistantLanguage(formData.get("preferredLanguage")),
+  };
+  await prisma.worker.update({ where: { id: workerId }, data: languages });
+  // Own profile: the app switches to the saved language at once.
+  if (actor.role === "WORKER" && actor.workerId === workerId) await rememberProfileLanguage(languages.preferredLanguage, languages.motherTongue);
 
   revalidateWorkerProfile(workerId);
   return { ok: true, message: tr("languageSaved") };

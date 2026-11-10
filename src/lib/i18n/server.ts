@@ -1,8 +1,9 @@
 import { cookies, headers } from "next/headers";
 
 import { prisma } from "@/lib/db/prisma";
+import { getCurrentAdmin } from "@/lib/auth/admin-session";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
-import { LANGUAGE_COOKIE, normalizeLanguage, pickLanguageFromAcceptHeader, resolveDefaultLanguageForUser, type SupportedLanguage } from "./language";
+import { LANGUAGE_COOKIE, normalizeLanguage, pickLanguageFromAcceptHeader, profileUiLanguage, type SupportedLanguage } from "./language";
 
 export async function resolveRequestLanguage(): Promise<SupportedLanguage> {
   const jar = await cookies();
@@ -17,9 +18,20 @@ export async function resolveRequestLanguage(): Promise<SupportedLanguage> {
         where: { id: workerId },
         select: { motherTongue: true, preferredLanguage: true },
       });
-      if (worker) return resolveDefaultLanguageForUser(String(worker.motherTongue ?? worker.preferredLanguage ?? ""));
+      if (worker) return profileUiLanguage(worker.preferredLanguage, worker.motherTongue);
     } catch (error) {
       console.error("[i18n] resolveRequestLanguage failed", error);
+    }
+  }
+
+  // An office admin's profile language beats the phone's language (Megi 10.11.2026).
+  const currentAdmin = workerId ? null : await getCurrentAdmin();
+  if (currentAdmin) {
+    try {
+      const admin = await prisma.user.findUnique({ where: { id: currentAdmin.id }, select: { motherTongue: true, preferredLanguage: true } });
+      if (admin) return profileUiLanguage(admin.preferredLanguage, admin.motherTongue);
+    } catch (error) {
+      console.error("[i18n] admin language failed", error);
     }
   }
 
@@ -32,4 +44,9 @@ export async function resolveRequestLanguage(): Promise<SupportedLanguage> {
   }
 
   return "de";
+}
+
+/** After someone saves their own profile language, use it right away (also over an older choice on this phone). */
+export async function rememberProfileLanguage(preferred: string | null | undefined, motherTongue: string | null | undefined) {
+  (await cookies()).set(LANGUAGE_COOKIE, profileUiLanguage(preferred, motherTongue), { path: "/", maxAge: 31_536_000, sameSite: "lax" });
 }

@@ -22,10 +22,18 @@ import { planMachineLabel, planMachineName } from '@/lib/workzone/plan-machine-l
 
 type DraggableWorker = { id: string; name: string; licenses: string | null; availability: string; hasApprovedVacation: boolean; crewRole?: string | null };
 /** Small group switch above the worker list (Redi 10.11): terren, fabrika, administrata... so nobody scrolls a 40-name list. */
+/** Small vehicle photo for the plan (the one from Flota); a truck icon when there is none. */
+function MachineThumb({ src, className }: { src?: string | null; className: string }) {
+  return src
+    // eslint-disable-next-line @next/next/no-img-element
+    ? <img src={src} alt="" loading="lazy" className={`${className} shrink-0 rounded-lg border bg-muted object-cover`} />
+    : <span className={`${className} grid shrink-0 place-items-center rounded-lg border bg-muted text-sky-600 dark:text-sky-400`} aria-hidden><Truck className="size-4" /></span>;
+}
+
 type WorkerGroup = "all" | "field" | "factory" | "office" | "workshop" | "other";
 const groupOf = (role: string | null | undefined): Exclude<WorkerGroup, "all"> =>
   role === "FIELD_WORKER" || role === "FIELD_ENGINEER" ? "field" : role === "FACTORY_WORKER" || role === "FACTORY_ENGINEER" ? "factory" : role === "OFFICE" ? "office" : role === "MECHANIC" ? "workshop" : "other";
-type DraggableMachine = { id: string; name: string; targe?: string | null; requiredLicense: string | null; isActive: boolean };
+type DraggableMachine = { id: string; name: string; targe?: string | null; requiredLicense: string | null; isActive: boolean; photoUrl?: string | null };
 type Assignment = { id: string; kind: "WORKER" | "MACHINE"; labelSnapshot: string; workerId: string | null; machineId: string | null };
 type Column = {
   id: string;
@@ -243,7 +251,9 @@ export function DailyPlanBoard({
                           : "bg-card hover:border-orange-400 hover:bg-orange-500/5"
                     }`}
                   >
-                    <span className="flex w-full min-w-0 flex-col items-start gap-1 lg:flex-row lg:items-center lg:gap-1.5">
+                    <span className="flex w-full min-w-0 items-center gap-2">
+                    {machine ? <MachineThumb src={machine.photoUrl} className="size-11" /> : null}
+                    <span className="flex min-w-0 flex-1 flex-col items-start gap-1 lg:flex-row lg:items-center lg:gap-1.5">
                       <span className="flex w-full min-w-0 items-center gap-1.5 lg:w-auto lg:flex-1">
                         {needsOk ? <span className="size-2 shrink-0 rounded-full bg-sky-500" title={c.needsOk} aria-label={c.needsOk} /> : null}
                         <span className="min-w-0 truncate font-medium" title={entry.name}>{machine ? planMachineName(machine) : entry.name}</span>
@@ -254,6 +264,7 @@ export function DailyPlanBoard({
                           <MapPin className="size-3 shrink-0" aria-hidden /><span className="truncate">{firstWord(site)}</span>
                         </span>
                       ) : sub ? <span className={`shrink-0 rounded-md border px-1 text-[10px] font-semibold leading-4 ${active ? "border-white/40" : "text-muted-foreground"}`} title={sub}>{sub}</span> : null}
+                    </span>
                     </span>
                     {machine && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(machine.id)} c={assets} compact /> : null}
                   </button>
@@ -300,7 +311,7 @@ export function DailyPlanBoard({
                   <ul className="mt-2 flex flex-wrap gap-1.5">
                     {column.assignments.map((item) => (
                       <li key={item.id} className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-lg border bg-background pl-2 text-sm">
-                        {item.kind === "WORKER" ? <HardHat className="size-3.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /> : <Truck className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />}
+                        {item.kind === "WORKER" ? <HardHat className="size-3.5 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden /> : item.machineId && machineById.get(item.machineId)?.photoUrl ? <MachineThumb src={machineById.get(item.machineId)!.photoUrl} className="-ml-1 size-7" /> : <Truck className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />}
                         <span className="min-w-0 truncate" title={item.labelSnapshot}>{item.kind === 'MACHINE' && item.machineId && machineById.has(item.machineId) ? planMachineName(machineById.get(item.machineId)!) : item.labelSnapshot}</span>
                         {item.kind === 'MACHINE' && item.machineId && machineById.get(item.machineId)?.targe ? <span className="shrink-0 font-mono text-[10px] tracking-tight text-muted-foreground">{machineById.get(item.machineId)!.targe}</span> : null}
                         {item.kind === "MACHINE" && item.machineId && operational?.enabled ? <AssetOperationalStatusBadge status={operational.statusFor(item.machineId)} c={assets} compact /> : null}

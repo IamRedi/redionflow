@@ -1,4 +1,5 @@
 "use server";
+import { rememberProfileLanguage } from "@/lib/i18n/server";
 
 import { revalidatePath } from "next/cache";
 
@@ -41,6 +42,7 @@ export async function updateAdminProfileFormAction(formData: FormData): Promise<
       aiPersonalityNote,
     },
   });
+  await rememberProfileLanguage(preferredLanguage, motherTongue);
 
   revalidatePath("/app/profile");
   revalidatePath("/app/admin");
