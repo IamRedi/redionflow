@@ -1,3 +1,4 @@
+import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 import Link from "next/link";
 
 import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
@@ -207,7 +208,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
       tx.machine.findMany({
         where: { companyProfileId: company.id },
         orderBy: [{ isActive: "desc" }, { nickname: "asc" }, { name: "asc" }],
-        select: { id: true, name: true, nickname: true, targe: true, patentaEnevojshme: true, isActive: true },
+        select: { id: true, name: true, nickname: true, targe: true, patentaEnevojshme: true, isActive: true, coverPhotoAt: true, imageUrl: true },
       }),
       tx.baustelle.findMany({
         // Only open sites; one that already has people today stays visible.
@@ -251,7 +252,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
             hasApprovedVacation: worker.vacationRequests.length > 0,
             crewRole: worker.crewRole,
           }))}
-          machines={machines.map((machine) => ({ id: machine.id, name: machine.nickname?.trim() || machine.name, targe: machine.targe, requiredLicense: machine.patentaEnevojshme, isActive: machine.isActive }))}
+          machines={machines.map((machine) => ({ id: machine.id, name: machine.nickname?.trim() || machine.name, targe: machine.targe, requiredLicense: machine.patentaEnevojshme, isActive: machine.isActive, photoUrl: assetPhotoUrl('machine', machine.id, machine.coverPhotoAt) ?? machine.imageUrl }))}
           baustellen={baustellen}
           savedRows={plan.savedRows.map((row) => ({
             id: row.id,
