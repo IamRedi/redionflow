@@ -83,8 +83,11 @@ it('refreshes generated art when its linked work context changes, while keeping 
   expect(filtered).toMatchObject({ ok: true, artNeeded: true });
   const parts = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: filtered.revision, linkedProcessKey: process.key, linkedList: 'part', linkedKind: 'COLUMN' });
   expect(parts).toMatchObject({ ok: true, artNeeded: true });
+  const allLists = await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: parts.revision, linkedProcessKey: process.key, linkedList: 'all', linkedKind: 'COLUMN' });
+  expect(allLists).toMatchObject({ ok: true });
+  expect(await prisma.steelWorkDefinition.findUnique({ where: { id: task.definitionId }, select: { linkedProcessKey: true, linkedList: true } })).toEqual({ linkedProcessKey: process.key, linkedList: null });
   await prisma.steelWorkDefinition.update({ where: { id: task.definitionId }, data: { visualStatus: 'photo' } });
-  expect(await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: parts.revision })).toMatchObject({ ok: true, artNeeded: false });
+  expect(await saveSteelWorkDefinitionAction({ id: task.definitionId, kind: 'site', label: 'Fixture flashing', revision: allLists.revision })).toMatchObject({ ok: true, artNeeded: false });
 });
 
 it('cancels an invalidated pending badge on any edit while retaining the previous image', async () => {
