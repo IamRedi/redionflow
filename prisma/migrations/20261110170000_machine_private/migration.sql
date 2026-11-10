@@ -1,0 +1,1 @@
+ALTER TABLE "Machine" ADD COLUMN "isPrivate" BOOLEAN NOT NULL DEFAULT false;

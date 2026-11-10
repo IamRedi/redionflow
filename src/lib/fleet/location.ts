@@ -1,3 +1,4 @@
+import { visibleVehiclesWhere } from "@/lib/fleet/private-vehicles";
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { freshness } from './wanway/adapter';
 import { wanwayEnabled } from './wanway/service';
@@ -18,9 +19,10 @@ export type FleetLocation = {
 /** Confirmed machine locations only; no provider identifiers, keys or route data. */
 export async function readFleetLocations(): Promise<FleetLocation[]> {
   const a = await fleetActor();
+  const hidePrivate = await visibleVehiclesWhere();
   return withTenantContext(a.companyId, async (tx) => {
     const machines = await tx.machine.findMany({
-      where: { companyProfileId: a.companyId, isActive: true },
+      where: { companyProfileId: a.companyId, isActive: true, ...hidePrivate },
       select: {
         id: true,
         name: true,

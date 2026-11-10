@@ -13,7 +13,7 @@ import { fleetCopy } from "@/lib/fleet/copy";
 import { fleetTime } from "@/lib/fleet/format";
 import { AssetPhoto } from "@/components/asset-photo";
 import { createPortal } from "react-dom";
-import { AlertTriangle, Ban, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, PenLine, Wrench, X } from "lucide-react";
+import { AlertTriangle, Ban, Lock, LockOpen, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, PenLine, Wrench, X } from "lucide-react";
 import { FleetDock } from '@/components/company-assets/fleet-dock';
 import { ProductionHeaderActions } from '@/components/shell/ProductionHeaderActions';
 import { FleetPicker } from '@/components/company-assets/fleet-picker';
@@ -34,7 +34,7 @@ import { t } from "@/lib/i18n";
 import { cn } from "@/lib/ui/cn";
 import { machineDeadlines } from "@/lib/workzone/machine-deadlines";
 import { getActiveMachineDefect, getVisibleMachineNotes, parseMachineNotes, type MachineDefect } from "@/lib/workzone/machine-notes";
-import { addMachineDefectAction, blockMachineAction, resolveMachineDefectAction } from "./machine-actions";
+import { addMachineDefectAction, blockMachineAction, resolveMachineDefectAction, setMachinePrivateAction } from "./machine-actions";
 import { getMachineConeHistoryAction, setMachineConeTotalAction, transferConesAction } from "./cone-actions";
 
 export type MachineSideItem = {
@@ -63,12 +63,37 @@ export type MachineSideItem = {
   imageUrl: string | null;
   notes: string | null;
   isActive: boolean;
+  isPrivate?: boolean;
   operationalStatus?: AssetOperationalStatus | null;
   coneTotal?: number;
   coneAvailable?: number;
   category?: string | null;
   gps?: FleetLocation | null;
 };
+
+const PRIVATE_COPY: Record<string, [string, string]> = {
+  sq: ["Personale", "Vetëm personat e zgjedhur e shohin këtë mjet"],
+  en: ["Private", "Only selected people see this vehicle"],
+  de: ["Privat", "Nur ausgewählte Personen sehen dieses Fahrzeug"],
+  it: ["Personale", "Solo persone scelte vedono questo mezzo"],
+  pl: ["Prywatny", "Ten pojazd widzą tylko wybrane osoby"],
+  ro: ["Personal", "Doar persoanele alese văd acest vehicul"],
+};
+
+/** Toggle a vehicle private: then only PRIVATE_VEHICLES_ONLY people see it in Flota and GPS. */
+function PrivateVehicleButton({ machineId, initial, lang }: { machineId: string; initial: boolean; lang: string }) {
+  const [on, setOn] = useState(initial);
+  const [pending, start] = useTransition();
+  const [label, hint] = PRIVATE_COPY[lang] ?? PRIVATE_COPY.sq;
+  return (
+    <button type="button" data-testid="fleet-machine-private" aria-pressed={on} title={hint} disabled={pending}
+      onClick={() => start(async () => { const next = !on; setOn(next); const result = await setMachinePrivateAction(machineId, next); if (!result.ok) setOn(!next); })}
+      className={cn("inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 disabled:opacity-60",
+        on ? "border-orange-600 bg-orange-600 text-white dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950" : "bg-card")}>
+      {on ? <Lock className="size-4" /> : <LockOpen className="size-4" />}{label}
+    </button>
+  );
+}
 
 function machineLabel(machine: MachineSideItem) {
   return machine.nickname ?? machine.name;
@@ -165,6 +190,7 @@ export function MachineSidebar({
   machines,
   isAdmin,
   canEditPhotos = isAdmin,
+  canSetPrivate = false,
   canSeeWorkshop = true,
   showCones = true,
   country = "DE",
@@ -176,6 +202,8 @@ export function MachineSidebar({
   /** Bazë workers use Fleet (fuel, defects) but not the workshop queue. */
   canSeeWorkshop?: boolean;
   canEditPhotos?: boolean;
+  /** Megi + Almet (PRIVATE_VEHICLES_ONLY): "Personale" button on each vehicle. */
+  canSetPrivate?: boolean;
   showCones?: boolean;
   country?: string;
   embedded?: boolean;
@@ -387,7 +415,7 @@ export function MachineSidebar({
                   <X className="size-6" />
                 </button>
                 <div className="min-w-0 flex-1 truncate text-center text-sm font-medium text-muted-foreground">{t("workzone.fleet", lang)}</div>
-                {enhancedOperations ? <>{canEditPhotos ? <button type="button" data-testid="fleet-machine-edit" onClick={() => setEditMachine(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><PenLine className="size-4"/>{assets.edit}</button> : null}</> : <span
+                {enhancedOperations ? <>{canSetPrivate ? <PrivateVehicleButton key={selected.id} machineId={selected.id} initial={Boolean(selected.isPrivate)} lang={lang} /> : null}{canEditPhotos ? <button type="button" data-testid="fleet-machine-edit" onClick={() => setEditMachine(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><PenLine className="size-4"/>{assets.edit}</button> : null}</> : <span
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-bold",
                     !selected.isActive

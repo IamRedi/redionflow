@@ -1,3 +1,4 @@
+import { visibleVehiclesWhere } from "@/lib/fleet/private-vehicles";
 import { prisma } from '@/lib/db/prisma';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { readFleetLocations } from '@/lib/fleet/location';
@@ -116,9 +117,10 @@ export async function getMachineSidebarData() {
   const locations = companyId ? await readFleetLocations() : [];
   const [machinesRaw, coneMovements] = await Promise.all([
     prisma.machine.findMany({
-      where: companyId ? { companyProfileId: companyId } : {},
+      where: companyId ? { companyProfileId: companyId, ...(await visibleVehiclesWhere()) } : {},
       select: {
         id: true,
+        isPrivate: true,
         name: true,
         category: true,
         nickname: true,

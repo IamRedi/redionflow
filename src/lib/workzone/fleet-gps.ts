@@ -1,3 +1,4 @@
+import { visibleVehiclesWhere } from "@/lib/fleet/private-vehicles";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { DEFAULT_BAUSTELLE_GEOFENCE_METERS, isInsideGeofence, presenceDurationMinutes, type GeoPoint } from "./gps-rules";
@@ -146,16 +147,17 @@ function withGpsDefaults(machine: {
 }
 
 export async function findFleetGpsMachines(companyProfileId: string): Promise<FleetGpsMachine[]> {
+  const hidePrivate = await visibleVehiclesWhere();
   try {
     return await prisma.machine.findMany({
-      where: { companyProfileId, isActive: true },
+      where: { companyProfileId, isActive: true, ...hidePrivate },
       orderBy: [{ gpsEnabled: "desc" }, { lastGpsAt: "desc" }, { name: "asc" }],
       select: fleetGpsMachineSelect,
     });
   } catch (error) {
     if (!isFleetGpsSchemaUnavailable(error)) throw error;
     const machines = await prisma.machine.findMany({
-      where: { companyProfileId, isActive: true },
+      where: { companyProfileId, isActive: true, ...hidePrivate },
       orderBy: [{ name: "asc" }],
       select: fallbackMachineSelect,
     });

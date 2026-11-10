@@ -1,3 +1,4 @@
+import { visibleVehiclesWhere } from "@/lib/fleet/private-vehicles";
 import { requireAdminTenant } from "@/lib/auth/authorization";
 import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
 import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
@@ -324,7 +325,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
       orderBy: [{ status: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
     }),
     prisma.machine.findMany({
-      where: { companyProfileId: company.id },
+      where: { companyProfileId: company.id, ...(await visibleVehiclesWhere()) },
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
       select: {
         id: true,

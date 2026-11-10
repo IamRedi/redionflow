@@ -1,3 +1,4 @@
+import { visibleVehiclesWhere } from "@/lib/fleet/private-vehicles";
 import { requireAdminTenant } from "@/lib/auth/authorization";
 import { loadMachineOperationalStatusMap } from '@/lib/company-assets/status-data';
 import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
@@ -71,7 +72,7 @@ export default async function MachinesPage() {
   const t = getTranslator(currentLang);
   const presets = mode === "bau" ? BAU_MACHINE_PRESETS : MACHINE_PRESETS;
   const machines = await prisma.machine.findMany({
-    where: { companyProfileId: company.id },
+    where: { companyProfileId: company.id, ...(await visibleVehiclesWhere()) },
     orderBy: [{ isActive: "desc" }, { name: "asc" }],
   });
   const operationalStatuses = await loadMachineOperationalStatusMap(company.id, machines.map(machine => machine.id));
