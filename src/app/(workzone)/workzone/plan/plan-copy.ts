@@ -31,6 +31,11 @@ const words = {
   notIn: ["Nuk je në planin e kësaj dite.", "You are not in this day's plan.", "Du bist heute nicht eingeplant.", "Non sei nel piano di oggi.", "Nie ma cię w planie tego dnia.", "Nu ești în planul acestei zile."],
   needsOk: ["Kërkon konfirmim", "Needs confirmation", "Bestätigung nötig", "Serve conferma", "Wymaga potwierdzenia", "Necesită confirmare"],
   inPlan: ["në plan", "planned", "eingeplant", "pianificato", "w planie", "planificat"],
+  add: ["Shto", "Add", "Hinzufügen", "Aggiungi", "Dodaj", "Adaugă"],
+  addTo: ["Shto te", "Add to", "Hinzufügen zu", "Aggiungi a", "Dodaj do", "Adaugă la"],
+  freeNow: ["Të lirë", "Free", "Frei", "Liberi", "Wolni", "Liberi"],
+  allPlaced: ["Të gjithë janë në plan.", "Everyone is in the plan.", "Alle sind eingeplant.", "Tutti sono nel piano.", "Wszyscy są w planie.", "Toți sunt în plan."],
+  move: ["Zhvendos ose hiq", "Move or remove", "Verschieben oder entfernen", "Sposta o rimuovi", "Przenieś lub usuń", "Mută sau elimină"],
   noMatch: ["Asnjë emër i tillë.", "No such name.", "Kein Treffer.", "Nessun risultato.", "Brak wyników.", "Niciun rezultat."],
 } as const;
 
