@@ -1,7 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 
 import { compareMarks, type ParsedElementList } from "./tekla-list";
-import { readProcessRoutes } from "./stages";
+import { defaultElementRoutes } from "./default-routes";
 
 export type ElementImportResult = { list: ParsedElementList["list"]; added: number; updated: number; removed: number; kept: number; addedIds: string[] };
 export type ElementImportMode = 'merge' | 'snapshot';
@@ -38,6 +38,7 @@ export async function importElementList(
     for (const work of row.work) byStage.set(work.stage, (byStage.get(work.stage) ?? 0) + (work.pieces > 0 ? work.pieces : row.quantity));
     if (element.quantity < Math.max(0, ...byStage.values())) throw new ElementImportConflict(element.mark);
   }
+  const routes = (await defaultElementRoutes(tx, companyId))[parsed.list];
   let nextSortIndex = Math.max(-1, ...existing.map(row => row.sortIndex)) + 1;
   let updated = 0;
   const fresh: Prisma.SiteElementCreateManyInput[] = [];
@@ -59,19 +60,16 @@ export async function importElementList(
       byMark.delete(element.mark);
       updated += 1;
     } else {
-      fresh.push({ companyProfileId: companyId, baustelleId, list: parsed.list, mark: element.mark, ...data, processRoutes: { v: 1, factory: [], field: [] } });
+      fresh.push({ companyProfileId: companyId, baustelleId, list: parsed.list, mark: element.mark, ...data, processRoutes: routes });
     }
   }
   if (fresh.length > 0) await tx.siteElement.createMany({ data: fresh });
   const newRows = fresh.length ? await tx.siteElement.findMany({ where: { companyProfileId: companyId, baustelleId, list: parsed.list, mark: { in: fresh.map(row => row.mark) } }, select: { id: true } }) : [];
   const added = fresh.length;
   const gone = [...byMark.values()];
-  const removable = (input.mode === 'snapshot' ? gone : []).filter((row) => {
-    const routes = readProcessRoutes(row.processRoutes);
-    // An untouched new import has two empty selections. An engineer's saved
-    // route (including an intentionally empty one) is planning data to retain.
-    return row._count.work === 0 && row.processRevision === 0 && !routes?.factory?.length && !routes?.field?.length;
-  }).map((row) => row.id);
+  // An untouched import keeps its default processes (revision 0). An engineer's
+  // saved route (including an intentionally empty one) is planning data to retain.
+  const removable = (input.mode === 'snapshot' ? gone : []).filter((row) => row._count.work === 0 && row.processRevision === 0).map((row) => row.id);
   if (removable.length > 0) await tx.siteElement.deleteMany({ where: { id: { in: removable }, companyProfileId: companyId } });
   return { list: parsed.list, added, updated, removed: removable.length, kept: gone.length - removable.length, addedIds: newRows.map(row => row.id) };
 }
