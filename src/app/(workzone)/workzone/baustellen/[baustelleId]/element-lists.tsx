@@ -181,6 +181,7 @@ export function ElementListButtons({
             workers={workers}
             canEdit={open === "factory" ? can.factory : can.field}
             canImport={can.upload??can.office}
+            canDeleteSource={Boolean(can.upload ?? can.office) || can.factory}
             canPlan={can.office || can.factory || can.field}
             definitions={definitions}
             onClose={() => setOpen(null)}
@@ -215,6 +216,7 @@ function ElementListSheet({
   workers,
   canEdit,
   canImport,
+  canDeleteSource,
   canPlan,
   definitions,
   onClose,
@@ -226,6 +228,8 @@ function ElementListSheet({
   workers: ElementWorkerOption[];
   canEdit: boolean;
   canImport: boolean;
+  /** Trash per list file: who may import, or who acts on the factory list (Megi, Silvi). */
+  canDeleteSource: boolean;
   canPlan: boolean;
   definitions: SteelWorkDefinitionView[];
   onClose: () => void;
@@ -267,6 +271,7 @@ function ElementListSheet({
               query={query}
               setQuery={setQuery}
               canImport={canImport}
+              canDeleteSource={canDeleteSource}
               canPlan={canPlan}
               definitions={definitions}
               onProcesses={(elements) => setProcessTarget(elements)}
@@ -329,6 +334,7 @@ function ListView({
   query,
   setQuery,
   canImport,
+  canDeleteSource,
   canPlan,
   definitions,
   onProcesses,
@@ -345,6 +351,7 @@ function ListView({
   query: string;
   setQuery: (query: string) => void;
   canImport: boolean;
+  canDeleteSource: boolean;
   canPlan: boolean;
   definitions: SteelWorkDefinitionView[];
   onProcesses: (elements: ElementView[]) => void;
@@ -568,7 +575,7 @@ function ListView({
                   <FileSpreadsheet className="size-4 shrink-0 text-orange-600 dark:text-orange-400" />
                   <span className="min-w-0 flex-1 truncate">{group.label}</span>
                   <span className="shrink-0 rounded-full bg-card px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{group.items.length}</span>
-                  {canImport ? (
+                  {canDeleteSource ? (
                     <button type="button" disabled={importing} onClick={() => removeSource(group.source || null, group.label ?? "", items.filter((element) => (element.sourceFile ?? "") === group.source).length)} data-testid="element-source-delete" title={importCopy.removeGroup} aria-label={importCopy.removeGroup} className="grid size-8 shrink-0 place-items-center rounded-lg text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400">
                       <Trash2 className="size-4" />
                     </button>

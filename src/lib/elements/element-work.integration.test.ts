@@ -8,7 +8,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { addElementWorkAction, removeElementWorkAction, setElementDoneAction, setElementProcessesAction } from "@/app/(workzone)/workzone/element-actions";
+import { addElementWorkAction, deleteElementSourceAction, removeElementWorkAction, setElementDoneAction, setElementProcessesAction } from "@/app/(workzone)/workzone/element-actions";
 import { seedSecurityTenants, removeSecurityTenants, createTestSession } from "../../../tests/security/fixtures";
 import { importElementList, type ElementImportMode } from "./import";
 import type { ParsedElementList } from "./tekla-list";
@@ -232,6 +232,19 @@ it("gives untouched empty-route material its defaults and leaves saved or worked
   expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: b.id } })).toMatchObject({ processRoutes: empty });
   expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: c.id } })).toMatchObject({ processRoutes: empty });
   expect(await withTenantContext(tenants[0].company.id, tx => fillDefaultElementRoutes(tx, tenants[0].company.id))).toBe(0);
+});
+
+it("lets a worker who acts on the factory list delete a list file, and nobody without that or upload", async () => {
+  const [a] = tenants;
+  await prisma.baustelle.update({ where: { id: a.site.id }, data: { type: "STEEL_ASSEMBLY" } });
+  await importFor(a, ["DEMO/1", "DEMO/2"]);
+  const worker = await prisma.worker.update({ where: { id: a.worker.id }, data: { crewRole: "FACTORY_WORKER", accessLevel: "BASE" } });
+  request.values.clear(); request.values.set("bk_worker_id", await createTestSession("worker", worker.id));
+  expect((await deleteElementSourceAction({ siteId: a.site.id, sourceFile: "list.xls" })).ok).toBe(false);
+  expect(await prisma.siteElement.count({ where: { baustelleId: a.site.id } })).toBe(2);
+  await prisma.accessGrant.create({ data: { companyProfileId: a.company.id, place: "factory", scopeId: a.site.id, workerId: worker.id, level: "act" } });
+  expect((await deleteElementSourceAction({ siteId: a.site.id, sourceFile: "list.xls" })).ok).toBe(true);
+  expect(await prisma.siteElement.count({ where: { baustelleId: a.site.id } })).toBe(0);
 });
 
 it("uses registered same-company custom processes, rejects foreign/new archived selections and lets an existing archived route finish", async () => {
