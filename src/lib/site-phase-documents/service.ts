@@ -110,10 +110,13 @@ export async function deletePhaseDocument(input:unknown){
   });
 }
 
-export async function readPhaseDocumentFile(documentId:string){
+/** Reading or downloading a current document counts as "E mora" for that person (Redi 10.11.2026). Sharing does not. */
+export async function readPhaseDocumentFile(documentId:string,options:{receipt?:boolean}={}){
   z.uuid().parse(documentId);const actor=await documentActor();
   return withTenantContext(actor.companyId,async tx=>{
-    const doc=await tx.sitePhaseDocument.findFirst({where:{id:documentId,companyProfileId:actor.companyId},select:{baustelleId:true,fileName:true,mime:true,dataBytes:true,size:true}});
-    if(!doc)return assetFail('NOT_FOUND');await assertDocumentSite(tx,actor,doc.baustelleId);return doc;
+    const doc=await tx.sitePhaseDocument.findFirst({where:{id:documentId,companyProfileId:actor.companyId},select:{baustelleId:true,fileName:true,mime:true,dataBytes:true,size:true,archivedAt:true}});
+    if(!doc)return assetFail('NOT_FOUND');await assertDocumentSite(tx,actor,doc.baustelleId);
+    if(options.receipt&&!doc.archivedAt)await tx.sitePhaseDocumentReceipt.upsert({where:{companyProfileId_documentId_actorKey:{companyProfileId:actor.companyId,documentId,actorKey:actor.key}},update:{},create:{companyProfileId:actor.companyId,documentId,actorKey:actor.key,actorName:actor.name,userId:actor.userId,workerId:actor.workerId}});
+    return doc;
   });
 }
