@@ -29,16 +29,9 @@ test('compact plan plates, a fixed-width archive and a timezone-safe restart', a
     for(const width of [1440,360]) for(const theme of ['light','dark']) {
       await page.setViewportSize({width,height:900}); await page.emulateMedia({colorScheme:theme as 'light'|'dark'});
       await context.addCookies([{name:'bk_theme',value:theme,url:origin}]);
-      await page.goto('/workzone/plan');
-      if(width>=1024){
-        await page.getByRole('tab',{name:/Mjete/}).click();
-        await expect(page.getByTestId('plan-pick-list')).toBeVisible();
-        if(!baseline) { await expect(page.getByTestId('plan-pick-list')).toContainText('ZZ 101 DM'); await expect(page.getByTestId('plan-pick-list')).toContainText('ZZ 202 DM'); }
-      } else {
-        // Phones: sites as cards with "+", the free ones in a strip; the long picker list is desktop only.
-        await expect(page.getByTestId('plan-free-strip')).toBeVisible();
-        if(!baseline) await expect(page.getByTestId('plan-site').first()).toContainText('Excavator');
-      }
+      await page.goto('/workzone/plan'); await page.getByRole('tab',{name:/Mjete/}).click();
+      await expect(page.getByTestId('plan-pick-list')).toBeVisible();
+      if(!baseline) { await expect(page.getByTestId('plan-pick-list')).toContainText('ZZ 101 DM'); await expect(page.getByTestId('plan-pick-list')).toContainText('ZZ 202 DM'); }
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       await page.screenshot({path:evidence(`${baseline?'before':'after'}-plan-${theme}-${width}.png`)});
       await page.goto('/workzone');
@@ -48,7 +41,6 @@ test('compact plan plates, a fixed-width archive and a timezone-safe restart', a
       await page.screenshot({path:evidence(`${baseline?'before':'after'}-archive-${theme}-${width}.png`)});
     }
     if(baseline)return;
-    await page.setViewportSize({width:1440,height:900});
     await page.goto('/workzone/plan'); await page.getByTestId('plan-save').click();
     await expect(page.getByTestId('saved-plan')).toContainText('Excavator · ZZ 101 DM');
     await expect(page.getByTestId('saved-plan')).toContainText('Excavator · ZZ 202 DM');

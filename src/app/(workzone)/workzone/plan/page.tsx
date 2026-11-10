@@ -191,6 +191,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
           firstName: true,
           lastName: true,
           licenses: true,
+          crewRole: true,
           availability: true,
           vacationRequests: {
             where: {
@@ -248,6 +249,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
             licenses: worker.licenses,
             availability: worker.availability,
             hasApprovedVacation: worker.vacationRequests.length > 0,
+            crewRole: worker.crewRole,
           }))}
           machines={machines.map((machine) => ({ id: machine.id, name: machine.nickname?.trim() || machine.name, targe: machine.targe, requiredLicense: machine.patentaEnevojshme, isActive: machine.isActive }))}
           baustellen={baustellen}
