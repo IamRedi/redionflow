@@ -1,6 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { actOnPhaseDocument, readPhaseDocuments, uploadPhaseDocument } from '@/lib/site-phase-documents/service';
+import { actOnPhaseDocument, deletePhaseDocument, readPhaseDocuments, uploadPhaseDocument } from '@/lib/site-phase-documents/service';
 import { assetActionError } from '@/lib/company-assets/action-errors';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { phaseDocumentCopy } from '@/lib/site-phase-documents/copy';
@@ -21,4 +21,7 @@ export async function uploadPhaseDocumentAction(form:FormData){
 }
 export async function phaseDocumentAction(input:{documentId:string;action:'receive'|'archive'}){
   try{const data=await actOnPhaseDocument(input);revalidatePath('/workzone','layout');return {ok:true as const,data};}catch(error){return assetActionError(error);}
+}
+export async function deletePhaseDocumentAction(input:{documentId:string}){
+  try{const data=await deletePhaseDocument(input);revalidatePath('/workzone','layout');return {ok:true as const,data};}catch(error){return assetActionError(error);}
 }

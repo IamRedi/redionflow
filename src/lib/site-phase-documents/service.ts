@@ -84,6 +84,32 @@ export async function actOnPhaseDocument(input:unknown){
   });
 }
 
+/**
+ * Delete a document for good, with every version of it (older and newer) and
+ * all receipts. Same right as archiving: office with upload, or the uploader.
+ */
+export async function deletePhaseDocument(input:unknown){
+  const {documentId}=z.object({documentId:z.uuid()}).strict().parse(input),actor=await documentActor();
+  return withTenantContext(actor.companyId,async tx=>{
+    const head=await tx.sitePhaseDocument.findFirst({where:{id:documentId,companyProfileId:actor.companyId},select:{baustelleId:true}});if(!head)return assetFail('NOT_FOUND');
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`phase-docs:${actor.companyId}:${head.baustelleId}`}))`;
+    const access=await assertDocumentSite(tx,actor,head.baustelleId,true);
+    const doc=await tx.sitePhaseDocument.findFirstOrThrow({where:{id:documentId,companyProfileId:actor.companyId},select:{createdByKey:true}});
+    if(!access.upload||!access.office&&doc.createdByKey!==actor.key)return assetFail('DENIED');
+    const rows=await tx.sitePhaseDocument.findMany({where:{companyProfileId:actor.companyId,baustelleId:head.baustelleId},select:{id:true,supersedesId:true}});
+    const chain=new Set([documentId]);
+    for(let grew=true;grew;){grew=false;for(const row of rows){
+      if(chain.has(row.id)&&row.supersedesId&&!chain.has(row.supersedesId)){chain.add(row.supersedesId);grew=true;}
+      if(row.supersedesId&&chain.has(row.supersedesId)&&!chain.has(row.id)){chain.add(row.id);grew=true;}
+    }}
+    const ids=[...chain];
+    await tx.sitePhaseDocumentReceipt.deleteMany({where:{companyProfileId:actor.companyId,documentId:{in:ids}}});
+    await tx.sitePhaseDocument.updateMany({where:{companyProfileId:actor.companyId,id:{in:ids}},data:{supersedesId:null}});
+    await tx.sitePhaseDocument.deleteMany({where:{companyProfileId:actor.companyId,id:{in:ids}}});
+    return {siteId:head.baustelleId,deleted:ids.length};
+  });
+}
+
 export async function readPhaseDocumentFile(documentId:string){
   z.uuid().parse(documentId);const actor=await documentActor();
   return withTenantContext(actor.companyId,async tx=>{

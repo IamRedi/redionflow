@@ -8,7 +8,7 @@ vi.mock('@/lib/db/tenant',()=>({getCurrentCompanyId:auth.company}));
 import {prisma} from '@/lib/db/prisma';
 import {assertAssistantTestDatabase} from '../../../tests/fixtures/assistant-database';
 import {documentActor} from './access';
-import {actOnPhaseDocument,readPhaseDocumentFile,readPhaseDocuments,uploadPhaseDocument} from './service';
+import {actOnPhaseDocument,deletePhaseDocument,readPhaseDocumentFile,readPhaseDocuments,uploadPhaseDocument} from './service';
 assertAssistantTestDatabase();
 const probeRole='phase_document_rls_probe';
 beforeAll(async()=>{await prisma.$executeRawUnsafe(`CREATE ROLE ${probeRole} NOLOGIN NOSUPERUSER NOBYPASSRLS`);await prisma.$executeRawUnsafe(`GRANT USAGE ON SCHEMA public TO ${probeRole}`);await prisma.$executeRawUnsafe(`GRANT SELECT ON "SitePhaseDocument","SitePhaseDocumentReceipt","CompanyAssetCode" TO ${probeRole}`);});
@@ -89,4 +89,13 @@ it('sniffs actual bytes and stores bounded WebP without metadata while preservin
  const meta=await sharp(saved.dataBytes).metadata();expect(meta.exif).toBeUndefined();expect(meta.format).toBe('webp');
  const plain=await uploadPhaseDocument(form());const doc=await readPhaseDocumentFile(plain.id);
  expect(createHash('sha256').update(doc.dataBytes).digest('hex')).toBe(createHash('sha256').update(new Uint8Array(await pdf().arrayBuffer())).digest('hex'));
+});
+it('deletes a document with all its versions and receipts, only for the uploader or office',async()=>{
+ const first=await uploadPhaseDocument(form());asWorker(1);await actOnPhaseDocument({documentId:first.id,action:'receive'});
+ await expect(deletePhaseDocument({documentId:first.id})).rejects.toMatchObject({code:'DENIED'});
+ asBoss();const next=await uploadPhaseDocument(form({previous:first.id}));const other=await uploadPhaseDocument(form());
+ expect(await deletePhaseDocument({documentId:first.id})).toMatchObject({deleted:2});
+ expect((await readPhaseDocuments(siteId)).documents.map(d=>d.id)).toEqual([other.id]);
+ expect(await prisma.sitePhaseDocumentReceipt.count({where:{documentId:{in:[first.id,next.id]}}})).toBe(0);
+ await expect(deletePhaseDocument({documentId:next.id})).rejects.toMatchObject({code:'NOT_FOUND'});
 });
