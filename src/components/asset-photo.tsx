@@ -61,6 +61,9 @@ export function AssetPhoto({
     upload = useRef<HTMLInputElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState({ top: 0, left: 0 });
+  // Inside a modal dialog (e.g. the fleet card) the menu must live in the dialog,
+  // otherwise the dialog blocks clicks outside itself.
+  const [host, setHost] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false),
     [saved, setSaved] = useState<string | null>(null),
     [message, setMessage] = useState('');
@@ -132,6 +135,7 @@ export function AssetPhoto({
                   Math.min(window.innerWidth - 232, r.right - 224),
                 ),
               });
+              setHost(e.currentTarget.closest<HTMLElement>('[role="dialog"]'));
               setOpen(!open);
             }}
             className="grid size-8 place-items-center rounded-full border border-white/70 bg-white/90 text-slate-800 shadow-sm hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600 disabled:opacity-60"
@@ -199,7 +203,7 @@ export function AssetPhoto({
                   )}
                 </div>
               </>,
-              document.body,
+              host ?? document.body,
             )}
           <input
             ref={camera}
