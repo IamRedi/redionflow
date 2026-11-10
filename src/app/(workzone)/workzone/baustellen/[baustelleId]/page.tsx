@@ -1,4 +1,6 @@
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
+import { plannedSiteNotes } from "@/lib/workzone/plan-site";
+import { PlanNoteButton } from "../../plan/plan-note-button";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -335,6 +337,7 @@ export default async function BaustelleDetailPage({
         [{ id: baustelle.id, name: baustelle.name }],
       )[0] ?? null;
     const shape = steelSiteShape(baustelle.name, baustelle.description);
+    const planNote = (await plannedSiteNotes(currentCompanyId)).get(baustelle.id) ?? null;
 
     return (
       <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
@@ -356,6 +359,7 @@ export default async function BaustelleDetailPage({
                 canUpload={documentAccess.upload}
               />
               <PhaseDocumentsButton siteId={baustelle.id}/>
+              <PlanNoteButton note={planNote} siteName={baustelle.name} className="size-9" />
               <AccessKeyButton place="site" scopeId={baustelle.id} />
               <WorkingBadge workers={activeWorkerNames} />
               {currentWorker && isDocumentEngineer(currentWorker.crewRole) ? (
