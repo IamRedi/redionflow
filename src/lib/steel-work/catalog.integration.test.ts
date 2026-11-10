@@ -8,7 +8,7 @@ import { assertAssistantTestDatabase } from '../../../tests/fixtures/assistant-d
 import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '../../../tests/security/fixtures';
 import { getSteelWorkCatalogAction, saveSteelWorkDefinitionAction, setSteelTaskSelectionAction, archiveSteelWorkDefinitionAction } from '@/app/(workzone)/workzone/steel-catalog-actions';
 import { removeSteelTaskAction, updateSteelPhaseAction } from '@/app/(workzone)/workzone/steel-phase-actions';
-import { ensureSteelWorkCatalog } from './catalog';
+import { ensureSteelWorkCatalog, steelPhaseAddedBy } from './catalog';
 
 let tenants: Awaited<ReturnType<typeof seedSecurityTenants>>;
 async function login(index = 0, worker = false) {
@@ -166,4 +166,21 @@ it('numbers site phases in the order they are chosen; choosing one again moves i
   const off = (await getSteelWorkCatalogAction({ siteId })).definitions!.find(item => item.id === painting.id)!;
   expect((await setSteelTaskSelectionAction({ siteId, definitionId: painting.id, enabled: true, revision: off.selectionRevision })).ok).toBe(true);
   expect((await order())['steel-painting']).toBe(4);
+});
+
+it('names who put each phase on the site', async () => {
+  const tenant = tenants[0];
+  const created = await create('Example added task');
+  const catalog = await getSteelWorkCatalogAction({ siteId: tenant.site.id });
+  const builtin = catalog.definitions!.find(definition => definition.kind === 'site' && !definition.label)!;
+  await login(0, true);
+  await prisma.worker.update({ where: { id: tenant.worker.id }, data: { crewRole: 'FIELD_ENGINEER' } });
+  const selected = await setSteelTaskSelectionAction({ siteId: tenant.site.id, definitionId: builtin.id, enabled: true });
+  const admin = await prisma.user.findUniqueOrThrow({ where: { id: tenant.admin.id } });
+  const worker = await prisma.worker.findUniqueOrThrow({ where: { id: tenant.worker.id } });
+  const names = await steelPhaseAddedBy(tenant.company.id, tenant.site.id, [created.definitionId!, builtin.id]);
+  expect(names[created.definitionId!]).toBe((admin.name ?? '').trim() || admin.email);
+  expect(selected.ok).toBe(true);
+  expect(names[builtin.id]).toBe(`${worker.firstName} ${worker.lastName}`.trim());
+  expect(await steelPhaseAddedBy(tenants[1].company.id, tenant.site.id, [created.definitionId!])).toEqual({});
 });

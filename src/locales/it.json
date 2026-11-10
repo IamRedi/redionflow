@@ -1626,6 +1626,7 @@
     "siteInfo": "Descrizione del cantiere",
     "task": "Task",
     "taskHint": "Added by the office for this site",
+    "addedBy": "Aggiunto da {name}",
     "addTask": "Add task",
     "taskPlaceholder": "e.g. Stair assembly",
     "removeTask": "Remove task",

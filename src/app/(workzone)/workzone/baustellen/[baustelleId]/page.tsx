@@ -42,6 +42,7 @@ import { ElementListButtons, type ElementView, type ElementWorkerOption } from "
 import { compareMarks } from "@/lib/elements/tekla-list";
 import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
 import { canManageSteelCatalog } from "@/lib/steel-work/types";
+import { steelPhaseAddedBy } from "@/lib/steel-work/catalog";
 import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
 import { AccessKeyButton } from '@/components/access/access-key-button';
 import { NoAccessHere } from '@/components/access/no-access';
@@ -300,13 +301,14 @@ export default async function BaustelleDetailPage({
     const steelItems = await withTenantContext(currentCompanyId, tx => tx.treeItem.findMany({ where: { baustelleId: baustelle.id, baustelle: { companyProfileId: currentCompanyId } }, include: { steelTask: { include: { definition: true } } } }));
     const projected = projectSteelTasks(steelItems, elementRows.map(element => ({ ...element, list: element.list === 'part' ? 'part' as const : 'assembly' as const })));
     const phaseOrder = steelPhasesFor(baustelle.type).map(phase => phase.treeId);
+    const addedBy = await steelPhaseAddedBy(currentCompanyId, baustelle.id, projected.flatMap(item => item.steelTask?.definition?.id ? [item.steelTask.definition.id] : [])).catch(() => ({} as Record<string, string>));
     const steelPhases = projected.flatMap(item => {
       const key = steelPhaseKeyFromTreeId(item.treeId);
       if (!key) return [];
       const meta = readSteelPhaseMeta(item.notes), definition = item.steelTask?.definition;
       if (definition?.label) meta.label = definition.label;
       return [{ id: item.id, key, status: item.status as 'todo' | 'done' | 'blocked', meta,
-        definitionId: definition?.id, automatic: item.automatic, percent: item.percent,
+        definitionId: definition?.id, addedBy: definition ? addedBy[definition.id] : undefined, automatic: item.automatic, percent: item.percent,
         completedPieces: item.completedPieces, requiredPieces: item.requiredPieces,
         // The order the phases were chosen; older choices without one follow the catalog.
         order: item.steelTask?.position ?? 10_000 + (definition?.sortOrder ?? (phaseOrder.indexOf(item.treeId) < 0 ? 99 : phaseOrder.indexOf(item.treeId))) }];
