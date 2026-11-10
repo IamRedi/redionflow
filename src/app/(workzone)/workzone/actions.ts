@@ -525,7 +525,7 @@ export async function stopWorkingAction(input: unknown): Promise<ActionResult> {
 
   if (!existing) return { ok: false, message: tr("noLiveSessionForSite") };
 
-  // Started here less than 30 seconds ago: a mis-tap, nothing is recorded.
+  // Started here less than 5 seconds ago: a mis-tap, nothing is recorded.
   if (isQuickUndo(existing.createdAt)) {
     await prisma.workSession.deleteMany({ where: { id: existing.id, isLive: true, endTime: null } });
     revalidatePath("/workzone");

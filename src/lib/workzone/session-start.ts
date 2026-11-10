@@ -20,7 +20,7 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
       }
       return { kind: 'existing' as const, id: existing.id };
     }
-    // A stop reversed within 30 seconds reopens the same session, as if it never stopped.
+    // A stop reversed within the undo window reopens the same session, as if it never stopped.
     // The end time comes from a minute-precision field, so it may sit up to a minute before the click.
     const justStopped = await tx.workSession.findFirst({ where: { workerId: worker.id, isLive: false, closedBySystem: false, endTime: { gte: new Date(now.getTime() - QUICK_UNDO_MS - 60_000) }, updatedAt: { gte: new Date(now.getTime() - QUICK_UNDO_MS) } }, orderBy: { updatedAt: 'desc' } });
     if (justStopped?.endTime) {
