@@ -41,7 +41,7 @@ export async function readSteelWorkCatalog(companyId: string, siteId?: string): 
     await ensureSteelWorkCatalog(companyId, tx);
     if (siteId && !await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: { in: ['STEEL_ASSEMBLY', 'STEEL_WORKSHOP'] } }, select: { id: true } })) fail('NOT_FOUND');
     const rows = await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId }, orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }, { id: 'asc' }], include: { siteTasks: { where: { companyProfileId: companyId, ...(siteId ? { baustelleId: siteId } : { baustelleId: '__none__' }) }, take: 1 } } });
-    return rows.map(({ siteTasks, ...row }) => ({ ...row, kind: row.kind as SteelWorkKind, linkedList: row.linkedList as 'assembly' | 'part' | null, archivedAt: row.archivedAt?.toISOString() ?? null, visualUpdatedAt: row.visualUpdatedAt?.toISOString() ?? null, ...(siteId ? { enabled: siteTasks[0]?.enabled ?? false, phaseItemId: siteTasks[0]?.treeItemId ?? null, ...(siteTasks[0] ? { selectionRevision: siteTasks[0].revision } : {}) } : {}) }));
+    return rows.map(({ siteTasks, ...row }) => ({ ...row, kind: row.kind as SteelWorkKind, linkedList: row.linkedList as 'assembly' | 'part' | null, archivedAt: row.archivedAt?.toISOString() ?? null, visualUpdatedAt: row.visualUpdatedAt?.toISOString() ?? null, ...(siteId ? { enabled: siteTasks[0]?.enabled ?? false, selectionPosition: siteTasks[0]?.enabled ? siteTasks[0].position : null, phaseItemId: siteTasks[0]?.treeItemId ?? null, ...(siteTasks[0] ? { selectionRevision: siteTasks[0].revision } : {}) } : {}) }));
   });
 }
 
@@ -84,6 +84,15 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
   });
 }
 
+/** Next place on the board. Phases chosen before positions existed get theirs first, in catalog order. */
+async function nextPosition(tx: Tx, companyId: string, siteId: string) {
+  const enabled = await tx.steelSiteTask.findMany({ where: { companyProfileId: companyId, baustelleId: siteId, enabled: true }, select: { id: true, position: true, definition: { select: { sortOrder: true } } } });
+  let last = Math.max(0, ...enabled.map(task => task.position ?? 0));
+  const unplaced = enabled.filter(task => task.position === null).sort((a, b) => a.definition.sortOrder - b.definition.sortOrder || a.id.localeCompare(b.id));
+  for (const task of unplaced) await tx.steelSiteTask.update({ where: { id: task.id }, data: { position: ++last } });
+  return last + 1;
+}
+
 async function selectTask(tx: Tx, companyId: string, siteId: string, definitionId: string, enabled: boolean, revision?: number, requireRevision = false) {
   const site = await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: { in: ['STEEL_ASSEMBLY', 'STEEL_WORKSHOP'] } }, select: { id: true } });
   const definition = await tx.steelWorkDefinition.findFirst({ where: { id: definitionId, companyProfileId: companyId, kind: 'site' } });
@@ -92,13 +101,14 @@ async function selectTask(tx: Tx, companyId: string, siteId: string, definitionI
   if (existing) {
     if (requireRevision && revision === undefined) fail('CONFLICT');
     if (revision !== undefined && existing.revision !== revision) fail('CONFLICT');
-    if (existing.enabled !== enabled) await tx.steelSiteTask.update({ where: { id: existing.id }, data: { enabled, revision: { increment: 1 } } });
+    // A phase chosen (again) goes to the end: the board follows the order of choosing.
+    if (existing.enabled !== enabled) await tx.steelSiteTask.update({ where: { id: existing.id }, data: { enabled, revision: { increment: 1 }, ...(enabled ? { position: await nextPosition(tx, companyId, siteId) } : {}) } });
     return;
   }
   if (revision !== undefined) fail('CONFLICT');
   if (!enabled) return;
   const tree = await tx.treeItem.create({ data: { baustelleId: siteId, treeId: definition!.key, species: definition!.key.startsWith('steel-task-') ? 'task' : definition!.key.slice(6), diameter: 0, status: 'todo', notes: JSON.stringify({ label: definition!.label }) } });
-  await tx.steelSiteTask.create({ data: { companyProfileId: companyId, baustelleId: siteId, definitionId, treeItemId: tree.id } });
+  await tx.steelSiteTask.create({ data: { companyProfileId: companyId, baustelleId: siteId, definitionId, treeItemId: tree.id, position: await nextPosition(tx, companyId, siteId) } });
 }
 
 export async function setSteelTaskSelection(companyId: string, actor: CompanyActor, input: { siteId: string; definitionId: string; enabled: boolean; revision?: number }) {

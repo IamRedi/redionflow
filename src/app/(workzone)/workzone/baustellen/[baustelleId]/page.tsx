@@ -307,8 +307,9 @@ export default async function BaustelleDetailPage({
       return [{ id: item.id, key, status: item.status as 'todo' | 'done' | 'blocked', meta,
         definitionId: definition?.id, automatic: item.automatic, percent: item.percent,
         completedPieces: item.completedPieces, requiredPieces: item.requiredPieces,
-        order: definition?.sortOrder ?? phaseOrder.indexOf(item.treeId) }];
-    }).sort((a, b) => (a.order < 0 ? 99 : a.order) - (b.order < 0 ? 99 : b.order)).map(({ order: _order, ...phase }) => phase);
+        // The order the phases were chosen; older choices without one follow the catalog.
+        order: item.steelTask?.position ?? 10_000 + (definition?.sortOrder ?? (phaseOrder.indexOf(item.treeId) < 0 ? 99 : phaseOrder.indexOf(item.treeId))) }];
+    }).sort((a, b) => a.order - b.order).map(({ order: _order, ...phase }) => phase);
     const steelPct = steelTaskTotals(steelPhases).pct;
     const elements: ElementView[] = elementRows
       .map((element) => ({
