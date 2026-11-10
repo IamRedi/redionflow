@@ -25,6 +25,7 @@ import { runWorkNotifyOnly } from "./work-notify";
 import { runOrphanSiteData } from "./orphan-site-data";
 import { runAssistantOps } from "./assistant-ops";
 import { runElementRoutes } from "./element-routes";
+import { runPlanVersionsDelete } from "./plan-versions";
 import { runActAll, runStaffAccess } from "./staff-access";
 
 async function main() {
@@ -38,6 +39,7 @@ async function main() {
   await runOrphanSiteData().catch((error) => console.error("[orphan-data] failed:", error instanceof Error ? error.message : error));
   await runAssistantOps().catch((error) => console.error("[assistant-ops] failed:", error instanceof Error ? error.message : error));
   await runElementRoutes().catch((error) => console.error("[element-routes] failed:", error instanceof Error ? error.message : error));
+  await runPlanVersionsDelete().catch((error) => console.error("[plan-versions] failed:", error instanceof Error ? error.message : error));
   const input = parseProvisionInput(process.env.PROVISION_COMPANY_JSON, process.env.PROVISION_OWNER_PASSWORD);
   if (!input) {
     console.log("[provision] PROVISION_COMPANY_JSON not set, nothing to do.");

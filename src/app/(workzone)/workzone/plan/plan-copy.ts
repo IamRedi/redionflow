@@ -36,6 +36,13 @@ const words = {
   freeNow: ["Të lirë", "Free", "Frei", "Liberi", "Wolni", "Liberi"],
   allPlaced: ["Të gjithë janë në plan.", "Everyone is in the plan.", "Alle sind eingeplant.", "Tutti sono nel piano.", "Wszyscy są w planie.", "Toți sunt în plan."],
   move: ["Zhvendos ose hiq", "Move or remove", "Verschieben oder entfernen", "Sposta o rimuovi", "Przenieś lub usuń", "Mută sau elimină"],
+  groupLabel: ["Grupi", "Group", "Gruppe", "Gruppo", "Grupa", "Grupa"],
+  group_all: ["Të gjithë", "All", "Alle", "Tutti", "Wszyscy", "Toți"],
+  group_field: ["Terren", "Site", "Baustelle", "Cantiere", "Budowa", "Șantier"],
+  group_factory: ["Fabrika", "Factory", "Werk", "Fabbrica", "Zakład", "Fabrică"],
+  group_office: ["Administrata", "Office", "Büro", "Ufficio", "Biuro", "Birou"],
+  group_workshop: ["Punishtja", "Workshop", "Werkstatt", "Officina", "Warsztat", "Atelier"],
+  group_other: ["Të tjerë", "Others", "Andere", "Altri", "Inni", "Alții"],
   noMatch: ["Asnjë emër i tillë.", "No such name.", "Kein Treffer.", "Nessun risultato.", "Brak wyników.", "Niciun rezultat."],
 } as const;
 

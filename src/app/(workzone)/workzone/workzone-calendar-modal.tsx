@@ -1,12 +1,14 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { t } from "@/lib/i18n";
+import { planCopy } from "./plan/plan-copy";
+import { SavedPlanList } from "./plan/saved-plan";
 
 type PlanRow = {
   id: string;
@@ -72,22 +74,21 @@ export function WorkzoneCalendarModal({
         {iconOnly ? <CalendarDays className="size-3.5" /> : t("workzone.calendar", currentLang)}
       </Button>
 
-      {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-4xl rounded-lg border bg-background shadow-2xl">
-            <div className="flex items-center justify-between border-b px-4 py-3">
+      {/* Portal: the toolbar has a backdrop filter, which would trap a fixed overlay inside it. */}
+      {isOpen ? createPortal(
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/45 sm:p-4">
+          {/* Phone: the whole screen, scrolling only up and down; desktop: a dialog. */}
+          <div className="h-full w-full overflow-y-auto overscroll-contain bg-background shadow-2xl [scrollbar-width:none] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-2xl sm:border [&::-webkit-scrollbar]:hidden">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
               <h2 className="text-sm font-semibold">{t("workzone.calendarPlanning", currentLang)}</h2>
               <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setIsOpen(false)}>
                 {t("common.close", currentLang)}
               </Button>
             </div>
 
-            <div className="space-y-4 p-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{t("workzone.selectDay", currentLang)}</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="space-y-4 p-3 sm:p-4">
+              <label className="flex items-center justify-between gap-3 rounded-xl border bg-card px-3 py-2">
+                  <span className="text-sm font-semibold">{t("workzone.selectDay", currentLang)}</span>
                   <input
                     type="date"
                     value={selectedDate}
@@ -95,16 +96,11 @@ export function WorkzoneCalendarModal({
                       setSelectedDate(event.currentTarget.value);
                       setSelectedVersion("current");
                     }}
-                    className="h-9 rounded-md border bg-background px-3 text-sm"
+                    className="h-9 rounded-md border bg-background px-3 text-sm dark:[color-scheme:dark]"
                   />
-                </CardContent>
-              </Card>
+              </label>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{t("workzone.planForDate", currentLang)} {selectedDate}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 overflow-x-auto">
+              <section className="space-y-3">
                   {entries.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {entries.map((entry) => (
@@ -123,38 +119,12 @@ export function WorkzoneCalendarModal({
                       ))}
                     </div>
                   ) : null}
-                  <table className="w-full min-w-[640px] border-collapse border text-sm">
-                    <thead>
-                      <tr className="bg-muted/30">
-                        <th className="border px-2 py-1 text-left">{t("common.group", currentLang)}</th>
-                        <th className="border px-2 py-1 text-left">{t("workzone.machines", currentLang)}</th>
-                        <th className="border px-2 py-1 text-left">{t("workzone.newSite", currentLang)}</th>
-                        <th className="border px-2 py-1 text-left">{t("common.note", currentLang)}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row) => (
-                        <tr key={row.id}>
-                          <td className="border px-2 py-1">{row.workerNames || "-"}</td>
-                          <td className="border px-2 py-1">{row.machineNames || "-"}</td>
-                          <td className="border px-2 py-1">{row.baustelleName || "-"}</td>
-                          <td className="border px-2 py-1">{row.note ?? "-"}</td>
-                        </tr>
-                      ))}
-                      {rows.length === 0 ? (
-                        <tr>
-                          <td className="border px-2 py-2 text-muted-foreground" colSpan={4}>
-                            {t("workzone.noSavedPlan", currentLang)}
-                          </td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
-                </CardContent>
-              </Card>
+                  <SavedPlanList rows={rows} c={planCopy(currentLang)} />
+              </section>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );
