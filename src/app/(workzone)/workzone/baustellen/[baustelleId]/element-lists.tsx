@@ -105,7 +105,7 @@ export function ElementListButtons({
   site: { id: string; name: string };
   elements: ElementView[];
   workers: ElementWorkerOption[];
-  can: { factory: boolean; field: boolean; office: boolean;upload?:boolean; seeFactory?: boolean; seeField?: boolean };
+  can: { factory: boolean; field: boolean; office: boolean;upload?:boolean; deleteSource?: boolean; seeFactory?: boolean; seeField?: boolean };
   definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang: lang } = useLanguage();
@@ -181,7 +181,7 @@ export function ElementListButtons({
             workers={workers}
             canEdit={open === "factory" ? can.factory : can.field}
             canImport={can.upload??can.office}
-            canDeleteSource={Boolean(can.upload ?? can.office) || can.factory}
+            canDeleteSource={can.deleteSource ?? (Boolean(can.upload ?? can.office) || can.factory)}
             canPlan={can.office || can.factory || can.field}
             definitions={definitions}
             onClose={() => setOpen(null)}
@@ -228,7 +228,7 @@ function ElementListSheet({
   workers: ElementWorkerOption[];
   canEdit: boolean;
   canImport: boolean;
-  /** Trash per list file: who may import, or who acts on the factory list (Megi, Silvi). */
+  /** Trash per list file: decided on the server (LIST_DELETE_ONLY or import/factory-list rights). */
   canDeleteSource: boolean;
   canPlan: boolean;
   definitions: SteelWorkDefinitionView[];

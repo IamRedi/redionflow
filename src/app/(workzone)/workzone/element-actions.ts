@@ -7,6 +7,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
 import { ElementImportConflict, importElementList, type ElementImportResult } from "@/lib/elements/import";
+import { mayDeleteElementList } from "@/lib/elements/list-delete";
 import { canCheck, doneQty, isCustomStage, onFieldList, pieces, readProcessRoutes, routeStages, sideOfStage, stagePieces, stageRemaining, stagesFor, type ElementList } from "@/lib/elements/stages";
 import { describeWorkbook, ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
 import { logger } from "@/lib/observability/logger";
@@ -517,8 +518,9 @@ export async function deleteElementSourceAction(input: unknown): Promise<ActionR
   const identity = { companyId, userId: actor.userId, workerId: actor.workerId };
   const deleted = await withTenantContext(companyId, async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
-    // Who may import the lists, or who acts on this site's factory list (Redi 10.11: Megi + Silvi).
-    if (!actor.at(siteId)?.factorySteps && !await mayUploadSiteDocuments(tx, identity, siteId)) return null;
+    // Default: who may import the lists or acts on this site's factory list. LIST_DELETE_ONLY narrows it to named people.
+    const byDefault = Boolean(actor.at(siteId)?.factorySteps) || await mayUploadSiteDocuments(tx, identity, siteId);
+    if (!mayDeleteElementList(actor.name, byDefault)) return null;
     const removed = await tx.siteElement.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile } });
     if (sourceFile) await tx.siteFile.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, kind: "document", fileName: sourceFile } });
     return removed.count;

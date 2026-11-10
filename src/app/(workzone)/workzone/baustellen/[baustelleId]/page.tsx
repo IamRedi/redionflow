@@ -42,6 +42,7 @@ import { ElementListButtons, type ElementView, type ElementWorkerOption } from "
 import { compareMarks } from "@/lib/elements/tekla-list";
 import { getSteelWorkCatalogAction } from "../../steel-catalog-actions";
 import { canManageSteelCatalog, steelPhaseGroup } from "@/lib/steel-work/types";
+import { mayDeleteElementList } from "@/lib/elements/list-delete";
 import { steelPhaseAddedBy } from "@/lib/steel-work/catalog";
 import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
 import { AccessKeyButton } from '@/components/access/access-key-button';
@@ -372,7 +373,7 @@ export default async function BaustelleDetailPage({
                 site={{ id: baustelle.id, name: baustelle.name }}
                 elements={elements}
                 workers={elementWorkers}
-                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload, seeFactory: isAdmin || Boolean(actor?.allows("factory.view", baustelle.id)), seeField: isAdmin || Boolean(actor?.allows("field.view", baustelle.id)) }}
+                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload, deleteSource: mayDeleteElementList(actor?.name, Boolean(documentAccess.upload) || can.factorySteps), seeFactory: isAdmin || Boolean(actor?.allows("factory.view", baustelle.id)), seeField: isAdmin || Boolean(actor?.allows("field.view", baustelle.id)) }}
                 definitions={definitions}
               />
             ) : null}
