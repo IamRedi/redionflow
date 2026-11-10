@@ -11,20 +11,23 @@ import { reportLocale } from '@/lib/workzone/date-utils';
 import { productionDate, productionNumber } from '@/lib/dashboard/steel-format';
 import { sideOfStage } from '@/lib/elements/stages';
 import styles from './steel-dashboard.module.css';
-const kgUnit = 'kg';
 
 const colors: Record<Series, string> = { cutParts: 'var(--cut-parts)', cutAssemblies: 'var(--cut-assemblies)', assembled: 'var(--assembled)' };
 export function SteelDashboard({ data: d, lang }: {
     data: SteelDashboardData;
     lang: string;
 }) {
-    const c = steelCopy(lang), locale = reportLocale(lang), router = useRouter(), path = usePathname();
+    // Without weight rights the data counts pieces (each piece = 1), so labels say pieces, never kg.
+    const base = steelCopy(lang);
+    const c = d.piecesOnly ? Object.fromEntries(Object.entries(base).map(([key, value]) => [key, typeof value === 'string' ? value.replace(/\b(kg|kilogram\w*)\b/gi, base.pieces) : value])) as typeof base : base;
+    const kgUnit = d.piecesOnly ? base.pieces : 'kg';
+    const locale = reportLocale(lang), router = useRouter(), path = usePathname();
     const [pending, start] = useTransition(), [copied, setCopied] = useState(false), [notice, setNotice] = useState('');
     const [visible, setVisible] = useState<Series[]>([...SERIES]);
     const graphId = useId();
     const n = (value: number, digits = 2) => productionNumber(value, lang, digits);
     const calendarN = (value: number) => value >= 10000 ? `${n(value / 1000, 1)}k` : n(value, value < 10 ? 1 : 0);
-    const metricText = (m: Metric) => m.pieces > 0 && m.missingPieces === m.pieces ? '—' : `${m.legacyPieces ? '≈ ' : ''}${n(m.kg)}`;
+    const metricText = (m: Metric) => d.piecesOnly ? n(m.pieces, 0) : m.pieces > 0 && m.missingPieces === m.pieces ? '—' : `${m.legacyPieces ? '≈ ' : ''}${n(m.kg)}`;
     const date = (key: string, opts?: Intl.DateTimeFormatOptions) => productionDate(key, lang, opts);
     const clock = (iso: string) => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZone: d.zone }).format(new Date(iso));
     function href(overrides: Record<string, string | null> = {}, monitor = false) {
@@ -60,7 +63,7 @@ export function SteelDashboard({ data: d, lang }: {
     const readyPct = d.totalProgress.totalPieces ? Math.round(100 * d.totalProgress.readyPieces / d.totalProgress.totalPieces) : 0;
     const stageName = (stage: string) => d.processDefinitions?.find(definition => definition.key === stage)?.label || t(`${sideOfStage(stage) === 'field' ? 'elements.fieldStages' : 'factory.steps'}.${stage}`, lang);
     const stageKeys = (progress: typeof d.totalProgress, side: 'factory' | 'field') => Object.keys(progress.stages).filter(key => sideOfStage(key) === side && progress.stages[key].eligiblePieces > 0);
-    const badge = (m: Metric) => <span className={styles.micro}>{n(m.pieces, 0)} {c.pieces}{m.missingPieces > 0 ? ` · ${n(m.missingPieces, 0)} ${c.missing}` : ''}</span>;
+    const badge = (m: Metric) => d.piecesOnly ? null : <span className={styles.micro}>{n(m.pieces, 0)} {c.pieces}{m.missingPieces > 0 ? ` · ${n(m.missingPieces, 0)} ${c.missing}` : ''}</span>;
     const trendDays = d.days.filter(day => day.key <= d.today), max = Math.max(1, ...trendDays.flatMap(day => visible.map(s => day.metrics[s].kg)));
     const x = (i: number) => 50 + i / Math.max(1, trendDays.length - 1) * 650;
     const y = (value: number) => 205 - value / max * 165;
@@ -68,7 +71,7 @@ export function SteelDashboard({ data: d, lang }: {
         <div className={styles.projectGrid}>{d.projectRows.map(p => {
             const pct = p.progress.totalPieces ? Math.round(100 * p.progress.readyPieces / p.progress.totalPieces) : 0;
             return <article key={p.id} className={styles.projectCard} data-testid={`production-project-${p.id}`}>
-            <div className={styles.projectTop}><div><span className={styles.projectOverline}>{c.project}</span><h3>{p.name}</h3><span className={styles.micro}>{n(p.progress.kg)} {kgUnit} · {n(p.progress.totalPieces, 0)} {c.pieces} · {c.planned}</span></div><div className={styles.ring} role="img" aria-label={`${pct}% ${c.percentHint}`} style={{ background: `conic-gradient(var(--green) ${pct}%, var(--track) 0)` }}><span>{pct}<small>%</small></span></div></div>
+            <div className={styles.projectTop}><div><span className={styles.projectOverline}>{c.project}</span><h3>{p.name}</h3><span className={styles.micro}>{d.piecesOnly ? null : <>{n(p.progress.kg)} {kgUnit} · </>}{n(p.progress.totalPieces, 0)} {c.pieces} · {c.planned}</span></div><div className={styles.ring} role="img" aria-label={`${pct}% ${c.percentHint}`} style={{ background: `conic-gradient(var(--green) ${pct}%, var(--track) 0)` }}><span>{pct}<small>%</small></span></div></div>
             <div className={styles.projectSummary}><span>{c.completed}<strong>{n(p.progress.readyKg)} {kgUnit}</strong></span><span>{c.mounted}<strong>{n(p.progress.mountedKg)} {kgUnit}</strong></span></div>
             {(['factory', 'field'] as const).map(side => stageKeys(p.progress, side).length > 0 && <div key={side} className={styles.stageGroup} data-side={side}><span>{side === 'factory' ? c.factory : c.field}</span><div>{stageKeys(p.progress, side).map(key => <div key={key} className={styles.stage}><span>{stageName(key)}</span><strong>{n(p.progress.stages[key].kg)}<small>{` ${kgUnit}`}</small></strong><div><i style={{ width: `${p.progress.stages[key].eligiblePieces ? p.progress.stages[key].pieces / p.progress.stages[key].eligiblePieces * 100 : 0}%` }}/></div><small>{n(p.progress.stages[key].pieces, 0)} / {n(p.progress.stages[key].eligiblePieces, 0)} {c.pieces}</small></div>)}</div></div>)}
             {p.progress.missingPieces > 0 && <p className={styles.qualityInline}>{n(p.progress.missingPieces, 0)} {c.missing}</p>}
@@ -130,7 +133,7 @@ export function SteelDashboard({ data: d, lang }: {
           <div className={styles.kpiNumber} data-testid={`metric-${s}`}><span>{metricText(d.totals[s])}</span><small>{kgUnit}</small></div>
           {badge(d.totals[s])}<div className={styles.spark} aria-hidden="true">{d.days.map(day => <i key={day.key} style={{ height: `${Math.max(3, day.metrics[s].kg / Math.max(1, ...d.days.map(x => x.metrics[s].kg)) * 30)}px` }}/>)}</div>
         </article>)}
-        <article className={`${styles.kpi} ${styles.readyKpi}`}><div className={styles.kpiTop}><span>{c.ready}</span><Factory size={17}/></div><div className={styles.kpiNumber}><span>{n(d.totalProgress.readyKg)}</span><small>{kgUnit}</small></div><span className={styles.micro}>{n(d.totalProgress.readyPieces, 0)} / {n(d.totalProgress.totalPieces, 0)} {c.pieces} · {c.knowledge}</span><div className={styles.progressTrack}><span style={{ width: `${readyPct}%` }}/></div><div className={styles.readyFoot}>{readyPct}% · {c.percentHint}</div></article>
+        <article className={`${styles.kpi} ${styles.readyKpi}`}><div className={styles.kpiTop}><span>{c.ready}</span><Factory size={17}/></div><div className={styles.kpiNumber}><span>{n(d.totalProgress.readyKg)}</span><small>{kgUnit}</small></div><span className={styles.micro}>{n(d.totalProgress.readyPieces, 0)} / {n(d.totalProgress.totalPieces, 0)} {c.pieces}{d.piecesOnly ? null : <> · {c.knowledge}</>}</span><div className={styles.progressTrack}><span style={{ width: `${readyPct}%` }}/></div><div className={styles.readyFoot}>{readyPct}% · {c.percentHint}</div></article>
       </section>
 
       <div className={styles.mainGrid}>
@@ -178,7 +181,7 @@ export function SteelDashboard({ data: d, lang }: {
 
       {!d.readOnly && <section className={styles.panel} aria-labelledby="production-evidence-title"><div className={styles.panelHead}><div><span className={styles.sectionIndex}>{c.checks}</span><h2 id="production-evidence-title">{c.evidence}</h2><p>{c.evidenceHint} · {date(d.day)} · {d.zone}</p></div><ClipboardCheck size={23} className={styles.panelIcon}/></div>
         <details className={styles.evidenceDisclosure}><summary data-testid="production-evidence-toggle"><ClipboardCheck size={16}/><span>{d.dayChecks} {c.checks}</span><ChevronRight size={16}/></summary>
-        <div className={styles.evidenceList}>{d.evidence.map(e => <article key={e.id} className={styles.evidenceRow}><div className={styles.mark}><span>{e.mark}</span><small>{e.list === 'part' ? 'Lista parti' : 'Lista assemblaggi'}</small></div><div className={styles.evidenceMain}><strong>{d.projects.find(p => p.id === e.projectId)?.name}</strong><span>{stageName(e.stage)} · {n(e.pieces, 0)} {c.pieces} × {e.unitWeightKg === null ? '—' : n(e.unitWeightKg)} {kgUnit}</span><small>{c.workers}: {e.workerNames || '—'}</small><small>{c.confirmedBy}: {e.checkedByName} · <time dateTime={e.checkedAt}>{clock(e.checkedAt)}</time></small></div><div className={styles.evidenceWeight}><strong>{e.kg === null ? '—' : `${e.legacy ? '≈ ' : ''}${n(e.kg)}`}<small>{` ${kgUnit}`}</small></strong><span className={e.legacy ? styles.legacyTag : styles.originalTag}>{e.kg === null ? c.noWeight : e.legacy ? c.legacy : c.original}</span></div></article>)}</div>
+        <div className={styles.evidenceList}>{d.evidence.map(e => <article key={e.id} className={styles.evidenceRow}><div className={styles.mark}><span>{e.mark}</span><small>{e.list === 'part' ? 'Lista parti' : 'Lista assemblaggi'}</small></div><div className={styles.evidenceMain}><strong>{d.projects.find(p => p.id === e.projectId)?.name}</strong><span>{stageName(e.stage)} · {n(e.pieces, 0)} {c.pieces}{d.piecesOnly ? null : <> × {e.unitWeightKg === null ? '—' : n(e.unitWeightKg)} {kgUnit}</>}</span><small>{c.workers}: {e.workerNames || '—'}</small><small>{c.confirmedBy}: {e.checkedByName} · <time dateTime={e.checkedAt}>{clock(e.checkedAt)}</time></small></div><div className={styles.evidenceWeight}><strong>{e.kg === null ? '—' : `${e.legacy ? '≈ ' : ''}${n(e.kg)}`}<small>{` ${kgUnit}`}</small></strong><span className={e.legacy ? styles.legacyTag : styles.originalTag}>{e.kg === null ? c.noWeight : e.legacy ? c.legacy : c.original}</span></div></article>)}</div>
         {d.evidence.length === 0 && <p className={styles.empty}>{c.noActivity}</p>}
         <div className={styles.evidencePagination}>{d.nextCursor && <Link href={href({ cursor: d.nextCursor })}>{c.more}<ChevronRight size={14}/></Link>}{d.evidence.length > 0 && <Link href={href({ cursor: null })}>{c.first}</Link>}</div>
         </details>

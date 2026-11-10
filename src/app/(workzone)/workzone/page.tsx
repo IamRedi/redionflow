@@ -1,3 +1,4 @@
+import { batchQuantity, currentMaySeeWeights, withoutWeights } from "@/lib/steel-work/weight-visibility";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { plannedSiteNotes } from "@/lib/workzone/plan-site";
 import Link from "next/link";
@@ -175,6 +176,8 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   const selectedTaskProgress = await loadSteelTaskProgress(company.id, allSites.filter(site => isSteelSiteType(site.type)).map(site => site.id));
   const workCatalog = allSites.some(site => isSteelSiteType(site.type)) ? await getSteelWorkCatalogAction({}) : null;
   const factoryDefinitions = workCatalog?.ok ? (workCatalog.definitions ?? []).filter(definition => definition.kind === 'factory') : [];
+  // Weights (kg, t) only for the people in WEIGHT_VIEW_ONLY; the rest see pieces.
+  const showWeights = await currentMaySeeWeights();
   const factoryBatches: FactoryBatchView[] = factorySite
     ? (
         await withTenantContext(company.id, (tx) =>
@@ -197,7 +200,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       ).map((batch) => ({
         id: batch.id,
         title: batch.title,
-        quantity: batch.quantity,
+        quantity: batchQuantity(batch.quantity, batch.unit, showWeights),
         unit: batch.unit,
         siteId: batch.baustelle.id,
         siteName: batch.baustelle.name,
@@ -210,12 +213,12 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   // What the factory produced per site and per process, from the element lists.
   const siteOutput: SiteFactoryOutput[] = factorySite
     ? factoryOutput(
-        await withTenantContext(company.id, (tx) =>
+        withoutWeights(await withTenantContext(company.id, (tx) =>
           tx.siteElement.findMany({
             where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
             select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, processRoutes: true, work: { select: { stage: true, pieces: true } } },
           }),
-        ),
+        ), showWeights),
         baustellen,
       )
     : [];

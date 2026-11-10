@@ -1,3 +1,4 @@
+import { batchQuantity, currentMaySeeWeights, withoutWeights } from "@/lib/steel-work/weight-visibility";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { plannedSiteNotes } from "@/lib/workzone/plan-site";
 import { PlanNoteButton } from "../../plan/plan-note-button";
@@ -287,10 +288,12 @@ export default async function BaustelleDetailPage({
         }),
       ]),
     );
+    // Weights (kg, t) only for the people in WEIGHT_VIEW_ONLY; the rest see pieces.
+    const showWeights = await currentMaySeeWeights();
     const batches: FactoryBatchView[] = batchRows.map((batch) => ({
       id: batch.id,
       title: batch.title,
-      quantity: batch.quantity,
+      quantity: batchQuantity(batch.quantity, batch.unit, showWeights),
       unit: batch.unit,
       siteId: baustelle.id,
       siteName: baustelle.name,
@@ -317,7 +320,7 @@ export default async function BaustelleDetailPage({
         order: item.steelTask?.position ?? 10_000 + (definition?.sortOrder ?? (phaseOrder.indexOf(item.treeId) < 0 ? 99 : phaseOrder.indexOf(item.treeId))) }];
     }).sort((a, b) => a.order - b.order).map(({ order: _order, ...phase }) => phase);
     const steelPct = steelTaskTotals(steelPhases).pct;
-    const elements: ElementView[] = elementRows
+    const elements: ElementView[] = withoutWeights(elementRows, showWeights)
       .map((element) => ({
         ...element,
         list: element.list === "part" ? ("part" as const) : ("assembly" as const),
@@ -333,7 +336,7 @@ export default async function BaustelleDetailPage({
     }));
     const factoryView =
       factoryOutput(
-        elementRows.filter((element) => element.list === "assembly").map((element) => ({ ...element, baustelleId: baustelle.id })),
+        withoutWeights(elementRows, showWeights).filter((element) => element.list === "assembly").map((element) => ({ ...element, baustelleId: baustelle.id })),
         [{ id: baustelle.id, name: baustelle.name }],
       )[0] ?? null;
     const shape = steelSiteShape(baustelle.name, baustelle.description);
