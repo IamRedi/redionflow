@@ -40,6 +40,10 @@ it("limits a company to the owner and the people the boss enabled", async () => 
 
   await prisma.user.update({ where: { id: t.admin.id }, data: { isOwner: true } });
   expect(await hasAssistantAccess({ kind: "admin", adminId: t.admin.id, companyId: t.company.id })).toBe(true);
+
+  // A fixed name list leaves the owner no automatic pass.
+  vi.stubEnv("ASSISTANT_ACCESS_ONLY", "Someone Else");
+  expect(await hasAssistantAccess({ kind: "admin", adminId: t.admin.id, companyId: t.company.id })).toBe(false);
 });
 
 it("answers a person without access with the boss message, without calling the provider", async () => {
