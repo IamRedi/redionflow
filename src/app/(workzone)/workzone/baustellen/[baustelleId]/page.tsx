@@ -271,6 +271,7 @@ export default async function BaustelleDetailPage({
             fieldDoneBy: true,
             processRoutes: true,
             processRevision: true,
+            sourceFile: true,
             work: { orderBy: { checkedAt: "asc" }, select: { id: true, stage: true, pieces: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } },
           },
         }),
