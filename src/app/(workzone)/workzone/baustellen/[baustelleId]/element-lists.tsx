@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
-import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, HardHat, Loader2, Lock, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, FileSpreadsheet, HardHat, Loader2, Lock, Minus, RotateCcw, Search, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import Image from 'next/image';
@@ -48,6 +48,8 @@ export type ElementView = {
   fieldDoneBy: string | null;
   processRoutes?: unknown;
   processRevision?: number;
+  /** The drawing-office file this element came from. */
+  sourceFile?: string | null;
   work: ElementWorkView[];
 };
 
@@ -545,18 +547,47 @@ function ListView({
             </div>
           </div>
 
-          <ul className="space-y-1.5">
-            {visible.map((element) => (
-              <li key={element.id}>
-                <ElementRow element={element} stages={stagesFor(side, element.list, element.processRoutes)} definitions={definitions} side={side} locked={side === "field" && !onFieldList(element)} canPlan={canPlan} onOpen={() => onOpen(element.id)} />
-              </li>
-            ))}
-          </ul>
+          {bySource(visible).map((group) => (
+            <section key={group.source} className="space-y-1.5" data-testid="element-source-group">
+              {group.label ? (
+                <h3 className="sticky top-0 z-[1] flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/[0.07] px-3 py-2 text-sm font-semibold backdrop-blur" title={group.source}>
+                  <FileSpreadsheet className="size-4 shrink-0 text-orange-600 dark:text-orange-400" />
+                  <span className="min-w-0 flex-1 truncate">{group.label}</span>
+                  <span className="shrink-0 rounded-full bg-card px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{group.items.length}</span>
+                </h3>
+              ) : null}
+              <ul className="space-y-1.5">
+                {group.items.map((element) => (
+                  <li key={element.id}>
+                    <ElementRow element={element} stages={stagesFor(side, element.list, element.processRoutes)} definitions={definitions} side={side} locked={side === "field" && !onFieldList(element)} canPlan={canPlan} onOpen={() => onOpen(element.id)} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
           {visible.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">{t("elements.noMatch", lang)}</p> : null}
         </>
       )}
     </>
   );
+}
+
+/**
+ * Elements grouped by the document they came from, in list order; each group
+ * shows its file name so everyone sees which document the material belongs to.
+ */
+function bySource(items: ElementView[]) {
+  const groups = new Map<string, ElementView[]>();
+  for (const element of items) {
+    const key = element.sourceFile ?? "";
+    groups.set(key, [...(groups.get(key) ?? []), element]);
+  }
+  const many = groups.size > 1;
+  return [...groups].map(([source, list]) => ({
+    source,
+    label: source ? source.replace(/\.(xlsx?|csv)$/i, "") : many ? "—" : null,
+    items: list,
+  }));
 }
 
 /** Segment per step: full green when every piece passed it, half when some did. */
