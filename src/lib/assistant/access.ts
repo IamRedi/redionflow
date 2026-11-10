@@ -9,7 +9,8 @@ export { assistantNoAccessText };
  *
  * By default every signed-in admin and worker may (unchanged behaviour). A
  * company can switch on `assistantAccessSelected`; then only the owner and the
- * people the boss enabled (`assistantAccess`) may. Everyone else sees a short
+ * people the boss enabled (`assistantAccess`) may. When ASSISTANT_ACCESS_ONLY
+ * is set, the owner has no automatic pass. Everyone else sees a short
  * "ask your boss" message instead of the chat; nothing is sent to the provider.
  */
 export type AssistantActor =
@@ -28,7 +29,10 @@ export async function hasAssistantAccess(actor: AssistantActor): Promise<boolean
       where: { id: actor.adminId, companyProfileId: actor.companyId, isActive: true },
       select: { isOwner: true, assistantAccess: true },
     });
-    return Boolean(user && (user.isOwner || user.assistantAccess));
+    // With ASSISTANT_ACCESS_ONLY set, the named list is the whole truth: the
+    // owner needs their own switch like everyone else.
+    const ownerBypass = !process.env.ASSISTANT_ACCESS_ONLY?.trim();
+    return Boolean(user && ((ownerBypass && user.isOwner) || user.assistantAccess));
   }
   const worker = await prisma.worker.findFirst({
     where: { id: actor.workerId, companyProfileId: actor.companyId, status: "active" },
