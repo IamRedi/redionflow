@@ -61,6 +61,15 @@ it('records only the current person, idempotently, and keeps new-version receipt
  expect((await readPhaseDocumentFile(first.id)).dataBytes).toEqual((await readPhaseDocumentFile(next.id)).dataBytes);
  asWorker(2);await actOnPhaseDocument({documentId:next.id,action:'receive'});expect((await readPhaseDocuments(siteId)).documents.find(d=>d.id===next.id)?.receipts[0].name).toBe('Synthetic-2 Person');
 });
+it('counts opening or downloading a current document as received, never sharing or an archived version',async()=>{
+ const doc=await uploadPhaseDocument(form());
+ asWorker(1);await readPhaseDocumentFile(doc.id);expect((await readPhaseDocuments(siteId)).documents[0].receipts).toEqual([]);
+ await readPhaseDocumentFile(doc.id,{receipt:true});await readPhaseDocumentFile(doc.id,{receipt:true});
+ expect((await readPhaseDocuments(siteId)).documents[0].receipts).toEqual([expect.objectContaining({name:'Synthetic-1 Person',mine:true})]);
+ asBoss();await actOnPhaseDocument({documentId:doc.id,action:'archive'});
+ asWorker(2);await readPhaseDocumentFile(doc.id,{receipt:true});
+ expect((await readPhaseDocuments(siteId)).documents.find(d=>d.id===doc.id)?.receipts).toHaveLength(1);
+});
 it('rejects UUID replay with different content, serializes competing replacements and keeps old general documents intact',async()=>{
  const original=await uploadPhaseDocument(form());const requestId=randomUUID();await uploadPhaseDocument(form({requestId,phase:'rilevim'}));
  await expect(uploadPhaseDocument(form({requestId,phase:'porosi'}))).rejects.toMatchObject({code:'CONFLICT'});
