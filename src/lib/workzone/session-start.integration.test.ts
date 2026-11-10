@@ -4,6 +4,7 @@ vi.mock('next/headers',()=>({cookies:async()=>({get:(key:string)=>request.values
 vi.mock('next/cache',()=>({revalidatePath:()=>undefined}));
 vi.mock('@/lib/notifications/sendNotification',()=>({sendNotificationToAdmins:vi.fn(),sendWorkEventNotification:vi.fn(),sendNotificationToWorker:vi.fn()}));
 import { prisma } from '@/lib/db/prisma';
+import { sendWorkEventNotification } from '@/lib/notifications/sendNotification';
 import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '../../../tests/security/fixtures';
 import { beginWorkerSession } from './session-start';
 import { startWorkerSessionAction, startWorkSessionPauseAction, stopWorkerSessionAction, stopWorkSessionPauseAction } from '@/app/(workzone)/workzone/hr-actions';
@@ -45,7 +46,7 @@ it('rejects foreign targets and future starts without a row or a tenant change',
  expect(await prisma.workSession.count({where:{workerId:input.workerId}})).toBe(0);
 });
 
-it('a start undone within 30 seconds leaves no record, a stop undone within 30 seconds keeps the same session',async()=>{
+it('a start undone within 5 seconds leaves no record, a stop undone within 5 seconds keeps the same session',async()=>{
  const workerId=tenants[0].worker.id;
  request.values.clear();request.values.set('bk_worker_id',await createTestSession('worker',workerId));
  const now=()=>workDateTimeInput(new Date());
@@ -62,7 +63,7 @@ it('a start undone within 30 seconds leaves no record, a stop undone within 30 s
  expect(await prisma.workSessionPauseInterval.count({where:{workSessionId:live.id}})).toBe(0);
  expect((await prisma.workSession.findUniqueOrThrow({where:{id:live.id}})).breakMinutes).toBe(live.breakMinutes);
 
- const pauseStart=new Date(Date.now()-20*60000),pauseEnd=new Date(Date.now()-5000);
+ const pauseStart=new Date(Date.now()-20*60000),pauseEnd=new Date(Date.now()-1000);
  const pause=await prisma.workSessionPauseInterval.create({data:{workSessionId:live.id,workerId,startedAt:pauseStart,endedAt:pauseEnd}});
  expect((await startWorkSessionPauseAction({sessionId:live.id})).ok).toBe(true);
  expect(await prisma.workSessionPauseInterval.findMany({where:{workSessionId:live.id}})).toMatchObject([{id:pause.id,endedAt:null}]);
@@ -75,10 +76,23 @@ it('a start undone within 30 seconds leaves no record, a stop undone within 30 s
  expect(await prisma.workSession.findUniqueOrThrow({where:{id:live.id}})).toMatchObject({isLive:true,endTime:null,totalHours:0,startTime:live.startTime});
  expect((await prisma.workSessionPauseInterval.findUniqueOrThrow({where:{id:pause.id}})).endedAt).toBeNull();
 });
-it('a site start undone within 30 seconds is discarded',async()=>{
+it('a site start undone within 5 seconds is discarded',async()=>{
  const workerId=tenants[0].worker.id;
  expect((await startWorkingAction({workerId,baustelleId:tenants[0].site.id})).ok).toBe(true);
  const { stopWorkingAction }=await import('@/app/(workzone)/workzone/actions');
  expect((await stopWorkingAction({workerId,baustelleId:tenants[0].site.id})).ok).toBe(true);
  expect(await prisma.workSession.count({where:{workerId}})).toBe(0);
 });
+
+it('the boss is told only about a start that was not undone within 5 seconds',async()=>{
+ const workerId=tenants[0].worker.id;
+ request.values.clear();request.values.set('bk_worker_id',await createTestSession('worker',workerId));
+ vi.mocked(sendWorkEventNotification).mockClear();
+ const start=()=>startWorkerSessionAction({workerId,startTime:new Date(Date.now()-3600000).toISOString()});
+ expect((await start()).ok).toBe(true);
+ const first=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ expect((await stopWorkerSessionAction({sessionId:first.id,endTime:workDateTimeInput(new Date()),breakMinutes:0})).ok).toBe(true);
+ expect((await start()).ok).toBe(true);
+ await new Promise(resolve=>setTimeout(resolve,6500));
+ expect(vi.mocked(sendWorkEventNotification).mock.calls.map(([input])=>input.preference)).toEqual(['workStart']);
+},15000);

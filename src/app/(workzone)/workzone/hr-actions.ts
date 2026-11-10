@@ -26,6 +26,7 @@ import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { notifyRealtimeUpdate } from "@/lib/realtime/event-hub";
 import { ensureNotificationSettings, OPT_IN_NOTIFICATION_PREFERENCES, updateNotificationSettings, type NotificationPreference, type NotificationSettingsRow } from "@/lib/notifications/notification-store";
 import { sendWorkEventNotification } from "@/lib/notifications/sendNotification";
+import { notifyUnlessUndone } from "@/lib/workzone/quick-undo-notify";
 import { scanFileContent } from "@/lib/storage/content-scan";
 import { isRecord } from "@/lib/workzone/site-json";
 import { validateFileAgainstAllowedCategories } from "@/lib/storage/file-validation";
@@ -513,8 +514,10 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   if (!Number.isFinite(selectedStartTime.getTime())) return { ok: false, message: tr('checkStartTime') };
   // The worker's site for the day comes from the daily plan.
   const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime).catch(() => null);
+  let sessionId: string;
   try {
     const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId });
+    sessionId = result.id;
     if (result.kind === 'existing') return { ok: true, message: tr('workAlreadyActive') };
     if (result.kind === 'resumed') {
       revalidateWorkerProfile(workerId);
@@ -527,13 +530,16 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
     throw error;
   }
 
-  await sendWorkEventNotification({
-    title: tr("workerStartedNotificationTitle"),
-    body: tr("workerStartedNotificationBody", { name: `${worker.firstName} ${worker.lastName}`.trim() }),
-    url: "/workzone",
-    preference: "workStart",
-    actorWorkerId: workerId,
-  });
+  notifyUnlessUndone(
+    async () => Boolean(await prisma.workSession.findFirst({ where: { id: sessionId, isLive: true }, select: { id: true } })),
+    () => sendWorkEventNotification({
+      title: tr("workerStartedNotificationTitle"),
+      body: tr("workerStartedNotificationBody", { name: `${worker.firstName} ${worker.lastName}`.trim() }),
+      url: "/workzone",
+      preference: "workStart",
+      actorWorkerId: workerId,
+    }),
+  );
 
   revalidateWorkerProfile(workerId);
   revalidatePath(`/workzone/baustellen`);
@@ -561,7 +567,7 @@ export async function startWorkSessionPauseAction(input: unknown): Promise<Actio
   if (!session.isLive || session.endTime) return { ok: false, message: tr("sessionNotActive") };
   const pauseIntervals = await findPauseIntervalsForSession(session.id);
   if (hasOpenPause(pauseIntervals)) return { ok: true, message: tr("pauseAlreadyRunning") };
-  // A pause ended less than 30 seconds ago simply continues.
+  // A pause ended within the undo window (5 s) simply continues.
   const lastPause = [...pauseIntervals].sort((a, b) => (b.endedAt?.getTime() ?? 0) - (a.endedAt?.getTime() ?? 0))[0];
   if (lastPause?.endedAt && isQuickUndo(lastPause.endedAt)) {
     await reopenPauseInterval(lastPause.id);
@@ -602,7 +608,7 @@ export async function stopWorkSessionPauseAction(input: unknown): Promise<Action
   if (!openPause) return { ok: true, message: tr("noOpenPause") };
 
   const endedAt = new Date();
-  // A pause ended within 30 seconds of its start was a mis-tap: drop it, the break stays as before.
+  // A pause ended within 5 seconds of its start was a mis-tap: drop it, the break stays as before.
   if (isQuickUndo(openPause.startedAt, endedAt)) {
     await deletePauseInterval(openPause.id);
     revalidateWorkerProfile(session.workerId);
@@ -649,7 +655,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     return { ok: false, message: tr("invalidEndTime") };
   }
 
-  // Stopping within 30 seconds of pressing start (or a session under a minute) leaves no record.
+  // Stopping within 5 seconds of pressing start (or a session under a minute) leaves no record.
   if (isTrivialSession(session.startTime, endTime) || isQuickUndo(session.createdAt)) {
     await prisma.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null } });
     revalidateWorkerProfile(session.workerId);
@@ -683,13 +689,16 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     where: { id: session.workerId },
     select: { firstName: true, lastName: true },
   });
-  await sendWorkEventNotification({
-    title: tr("workerFinishedNotificationTitle"),
-    body: tr("workerFinishedNotificationBody", { name: `${worker?.firstName ?? ""} ${worker?.lastName ?? ""}`.trim() }),
-    url: "/workzone",
-    preference: "workEnd",
-    actorWorkerId: session.workerId,
-  });
+  notifyUnlessUndone(
+    async () => Boolean(await prisma.workSession.findFirst({ where: { id: session.id, isLive: false }, select: { id: true } })),
+    () => sendWorkEventNotification({
+      title: tr("workerFinishedNotificationTitle"),
+      body: tr("workerFinishedNotificationBody", { name: `${worker?.firstName ?? ""} ${worker?.lastName ?? ""}`.trim() }),
+      url: "/workzone",
+      preference: "workEnd",
+      actorWorkerId: session.workerId,
+    }),
+  );
 
   if (admin) {
     await appendAdminTimeEntry(session.workerId, session.startTime, endTime);
