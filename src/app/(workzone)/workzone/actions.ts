@@ -1,5 +1,6 @@
 "use server";
 import { beginWorkerSession, SessionStartError } from "@/lib/workzone/session-start";
+import { isQuickUndo } from "@/lib/workzone/session-rules";
 import { parseWorkDateTime } from "@/lib/workzone/date-utils";
 
 import { revalidatePath } from "next/cache";
@@ -489,9 +490,11 @@ export async function startWorkingAction(input: unknown): Promise<ActionResult> 
   const selectedStartTime = startTime ? parseWorkDateTime(startTime) : new Date();
   if (!selectedStartTime || Number.isNaN(selectedStartTime.getTime())) return { ok: false, message: tr("invalidStartTime") };
 
+  let resumed = false;
   try {
     const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId, moveExisting: true });
     if (result.kind === 'existing') return { ok: true, message: tr('workingAlreadyActiveHere') };
+    resumed = result.kind === 'resumed';
   } catch (error) {
     if (error instanceof SessionStartError) return { ok: false, message: tr(error.message === 'OVERLAP' ? 'workSessionOverlap' : 'invalidStartTime') };
     throw error;
@@ -500,7 +503,7 @@ export async function startWorkingAction(input: unknown): Promise<ActionResult> 
   revalidatePath("/workzone");
   revalidatePath(`/workzone/baustellen/${baustelleId}`);
   notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
-  return { ok: true, message: tr("workingStarted") };
+  return { ok: true, message: tr(resumed ? "workResumed" : "workingStarted") };
 }
 
 export async function stopWorkingAction(input: unknown): Promise<ActionResult> {
@@ -521,6 +524,15 @@ export async function stopWorkingAction(input: unknown): Promise<ActionResult> {
   });
 
   if (!existing) return { ok: false, message: tr("noLiveSessionForSite") };
+
+  // Started here less than 30 seconds ago: a mis-tap, nothing is recorded.
+  if (isQuickUndo(existing.createdAt)) {
+    await prisma.workSession.deleteMany({ where: { id: existing.id, isLive: true, endTime: null } });
+    revalidatePath("/workzone");
+    revalidatePath(`/workzone/baustellen/${baustelleId}`);
+    notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
+    return { ok: true, message: tr("shortClickDiscarded") };
+  }
 
   // "Stop work on this Baustelle" should only detach the active daily session
   // from the Baustelle, not close the worker's daily session.

@@ -6,9 +6,10 @@ vi.mock('@/lib/notifications/sendNotification',()=>({sendNotificationToAdmins:vi
 import { prisma } from '@/lib/db/prisma';
 import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '../../../tests/security/fixtures';
 import { beginWorkerSession } from './session-start';
-import { startWorkerSessionAction, stopWorkerSessionAction } from '@/app/(workzone)/workzone/hr-actions';
+import { startWorkerSessionAction, startWorkSessionPauseAction, stopWorkerSessionAction, stopWorkSessionPauseAction } from '@/app/(workzone)/workzone/hr-actions';
 import { startWorkingAction } from '@/app/(workzone)/workzone/actions';
 import { workDateTimeInput, parseWorkDateTime, monthKey } from './date-utils';
+const pressedLongAgo=(id:string)=>prisma.$executeRaw`UPDATE "WorkSession" SET "createdAt"=now()-interval '10 minutes' WHERE id=${id}`;
 let tenants:Awaited<ReturnType<typeof seedSecurityTenants>>;
 beforeEach(async()=>{vi.stubEnv('SESSION_SIGNING_SECRET','synthetic-plan-hours-local-secret-only');tenants=await seedSecurityTenants();request.values.clear();request.values.set('bk_admin_id',await createTestSession('admin',tenants[0].admin.id));});
 afterEach(async()=>{await removeSecurityTenants(tenants.map(t=>t.company.id));vi.unstubAllEnvs();});
@@ -16,6 +17,7 @@ it('uses one business clock for manual start/stop and refuses a restart inside c
  const workerId=tenants[0].worker.id, start=workDateTimeInput(new Date(Date.now()-3*3600000)),end=workDateTimeInput(new Date(Date.now()-2*3600000));
  expect((await startWorkerSessionAction({workerId,startTime:start})).ok).toBe(true);
  const live=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ await pressedLongAgo(live.id);
  expect(live.startTime.toISOString()).toBe(parseWorkDateTime(start)!.toISOString());
  expect((await stopWorkerSessionAction({sessionId:live.id,endTime:end,breakMinutes:0})).ok).toBe(true);
  const closed=await prisma.workSession.findUniqueOrThrow({where:{id:live.id}});
@@ -29,6 +31,7 @@ it('serializes simultaneous profile/site starts and double stop emits one saved 
  const replies=await Promise.all([startWorkerSessionAction({workerId,startTime:start}),startWorkingAction({workerId,baustelleId:tenants[0].site.id,startTime:start})]);
  expect(replies.every(r=>r.ok)).toBe(true);expect(await prisma.workSession.count({where:{workerId,isLive:true}})).toBe(1);
  const live=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ await pressedLongAgo(live.id);
  const stops=await Promise.all([stopWorkerSessionAction({sessionId:live.id,endTime:end,breakMinutes:0}),stopWorkerSessionAction({sessionId:live.id,endTime:end,breakMinutes:0})]);
  expect(stops.filter(r=>r.ok)).toHaveLength(1);
  const note=await prisma.workReportNote.findUniqueOrThrow({where:{workerId_type_periodKey:{workerId,type:'MONTHLY',periodKey:monthKey(live.startTime)}}});
@@ -40,4 +43,42 @@ it('rejects foreign targets and future starts without a row or a tenant change',
  await expect(beginWorkerSession({...input,workerId:tenants[1].worker.id})).rejects.toThrow('WORKER');
  await expect(beginWorkerSession({...input,start:new Date(Date.now()+3600000)})).rejects.toThrow('CLOCK');
  expect(await prisma.workSession.count({where:{workerId:input.workerId}})).toBe(0);
+});
+
+it('a start undone within 30 seconds leaves no record, a stop undone within 30 seconds keeps the same session',async()=>{
+ const workerId=tenants[0].worker.id;
+ request.values.clear();request.values.set('bk_worker_id',await createTestSession('worker',workerId));
+ const now=()=>workDateTimeInput(new Date());
+ expect((await startWorkerSessionAction({workerId,startTime:new Date(Date.now()-2*3600000).toISOString()})).ok).toBe(true);
+ const first=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ expect((await stopWorkerSessionAction({sessionId:first.id,endTime:now(),breakMinutes:0})).ok).toBe(true);
+ expect(await prisma.workSession.count({where:{workerId}})).toBe(0);
+
+ expect((await startWorkerSessionAction({workerId,startTime:new Date(Date.now()-2*3600000).toISOString()})).ok).toBe(true);
+ const live=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ await pressedLongAgo(live.id);
+ expect((await startWorkSessionPauseAction({sessionId:live.id})).ok).toBe(true);
+ expect((await stopWorkSessionPauseAction({sessionId:live.id})).ok).toBe(true);
+ expect(await prisma.workSessionPauseInterval.count({where:{workSessionId:live.id}})).toBe(0);
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:live.id}})).breakMinutes).toBe(live.breakMinutes);
+
+ const pauseStart=new Date(Date.now()-20*60000),pauseEnd=new Date(Date.now()-5000);
+ const pause=await prisma.workSessionPauseInterval.create({data:{workSessionId:live.id,workerId,startedAt:pauseStart,endedAt:pauseEnd}});
+ expect((await startWorkSessionPauseAction({sessionId:live.id})).ok).toBe(true);
+ expect(await prisma.workSessionPauseInterval.findMany({where:{workSessionId:live.id}})).toMatchObject([{id:pause.id,endedAt:null}]);
+
+ expect((await stopWorkerSessionAction({sessionId:live.id,endTime:now(),breakMinutes:0})).ok).toBe(true);
+ expect(await prisma.workSession.findUniqueOrThrow({where:{id:live.id}})).toMatchObject({isLive:false});
+ const resumed=await startWorkerSessionAction({workerId,startTime:new Date().toISOString()});
+ expect(resumed.ok).toBe(true);
+ expect(await prisma.workSession.count({where:{workerId}})).toBe(1);
+ expect(await prisma.workSession.findUniqueOrThrow({where:{id:live.id}})).toMatchObject({isLive:true,endTime:null,totalHours:0,startTime:live.startTime});
+ expect((await prisma.workSessionPauseInterval.findUniqueOrThrow({where:{id:pause.id}})).endedAt).toBeNull();
+});
+it('a site start undone within 30 seconds is discarded',async()=>{
+ const workerId=tenants[0].worker.id;
+ expect((await startWorkingAction({workerId,baustelleId:tenants[0].site.id})).ok).toBe(true);
+ const { stopWorkingAction }=await import('@/app/(workzone)/workzone/actions');
+ expect((await stopWorkingAction({workerId,baustelleId:tenants[0].site.id})).ok).toBe(true);
+ expect(await prisma.workSession.count({where:{workerId}})).toBe(0);
 });

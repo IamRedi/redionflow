@@ -17,6 +17,7 @@ type PrismaWithOptionalPause = typeof prisma & {
     findMany: typeof prisma.workSessionPauseInterval.findMany;
     create: typeof prisma.workSessionPauseInterval.create;
     update: typeof prisma.workSessionPauseInterval.update;
+    delete: typeof prisma.workSessionPauseInterval.delete;
   };
 };
 
@@ -79,4 +80,16 @@ export async function closePauseInterval(id: string, endedAt: Date) {
   const delegate = pauseDelegate();
   if (!delegate) return null;
   return delegate.update({ where: { id }, data: { endedAt } });
+}
+
+export async function reopenPauseInterval(id: string) {
+  const delegate = pauseDelegate();
+  if (!delegate) return null;
+  return delegate.update({ where: { id }, data: { endedAt: null } });
+}
+
+export async function deletePauseInterval(id: string) {
+  const delegate = pauseDelegate();
+  if (!delegate) return null;
+  return delegate.delete({ where: { id } });
 }

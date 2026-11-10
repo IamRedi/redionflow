@@ -290,6 +290,7 @@
     "sessionAlreadyEnded": "Session is already ended.",
     "invalidEndTime": "End time is invalid.",
     "shortClickDiscarded": "Short click was discarded and not saved as work time.",
+    "workResumed": "Work continues without a break.",
     "workerFinishedNotificationTitle": "Worker finished",
     "workerFinishedNotificationBody": "{name} ended work",
     "workEnded": "Work ended.",

@@ -310,6 +310,7 @@
     "sessionAlreadyEnded": "Session ist bereits beendet.",
     "invalidEndTime": "Endzeit ist ungültig.",
     "shortClickDiscarded": "Kurz-Klick wurde verworfen und nicht als Arbeitszeit gespeichert.",
+    "workResumed": "Arbeit läuft ohne Unterbrechung weiter.",
     "workerFinishedNotificationTitle": "Worker fertig",
     "workerFinishedNotificationBody": "{name} hat Arbeit beendet",
     "workEnded": "Arbeit beendet.",

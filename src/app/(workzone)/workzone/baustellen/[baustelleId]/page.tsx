@@ -46,6 +46,7 @@ import { projectSteelTasks, steelTaskTotals } from "@/lib/steel-work/progress";
 import { AccessKeyButton } from '@/components/access/access-key-button';
 import { NoAccessHere } from '@/components/access/no-access';
 import { currentCompanyActor } from '@/lib/site-files/actor';
+import { isDocumentEngineer } from '@/lib/site-phase-documents/site-access';
 
 export default async function BaustelleDetailPage({
   params,
@@ -354,6 +355,15 @@ export default async function BaustelleDetailPage({
               <PhaseDocumentsButton siteId={baustelle.id}/>
               <AccessKeyButton place="site" scopeId={baustelle.id} />
               <WorkingBadge workers={activeWorkerNames} />
+              {currentWorker && isDocumentEngineer(currentWorker.crewRole) ? (
+                <WorkingControls
+                  pill
+                  baustelleId={baustelle.id}
+                  currentWorker={currentActorView}
+                  activeWorkerIds={activeWorkerIds}
+                  activeSession={currentWorkerLiveSession ? { startTime: currentWorkerLiveSession.startTime.toISOString(), baustelleId: currentWorkerLiveSession.baustelleId } : null}
+                />
+              ) : null}
             </div>
             {baustelle.type !== "STEEL_WORKSHOP" ? (
               <ElementListButtons
@@ -367,7 +377,8 @@ export default async function BaustelleDetailPage({
           </div>
         </div>
 
-        {/* Steel firms: the site of the day comes from the daily plan; work starts on the profile. */}
+        {/* Steel firms: the site of the day comes from the daily plan; work starts on the profile.
+            Engineers who move between sites get the small start/stop toggle in the header. */}
 
         <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
           <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />

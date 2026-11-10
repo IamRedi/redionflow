@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
+import { QUICK_UNDO_MS } from './session-rules';
 
 export class SessionStartError extends Error {}
 /** Both profile and site starts take the same worker lock. A second click
@@ -18,6 +19,14 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
         return { kind: 'moved' as const, id: existing.id };
       }
       return { kind: 'existing' as const, id: existing.id };
+    }
+    // A stop reversed within 30 seconds reopens the same session, as if it never stopped.
+    // The end time comes from a minute-precision field, so it may sit up to a minute before the click.
+    const justStopped = await tx.workSession.findFirst({ where: { workerId: worker.id, isLive: false, closedBySystem: false, endTime: { gte: new Date(now.getTime() - QUICK_UNDO_MS - 60_000) }, updatedAt: { gte: new Date(now.getTime() - QUICK_UNDO_MS) } }, orderBy: { updatedAt: 'desc' } });
+    if (justStopped?.endTime) {
+      await tx.workSessionPauseInterval.updateMany({ where: { workSessionId: justStopped.id, endedAt: justStopped.endTime }, data: { endedAt: null } });
+      await tx.workSession.update({ where: { id: justStopped.id }, data: { endTime: null, totalHours: 0, isLive: true, ...(input.moveExisting ? { baustelleId: input.siteId } : {}) } });
+      return { kind: 'resumed' as const, id: justStopped.id };
     }
     const overlap = await tx.workSession.findFirst({ where: { workerId: worker.id, endTime: { gt: input.start }, startTime: { lt: now } }, select: { id: true } });
     if (overlap) throw new SessionStartError('OVERLAP');

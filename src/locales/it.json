@@ -295,6 +295,7 @@
     "sessionAlreadyEnded": "La sessione è già terminata.",
     "invalidEndTime": "Ora di fine non valida.",
     "shortClickDiscarded": "Click breve scartato e non salvato come orario di lavoro.",
+    "workResumed": "Il lavoro continua senza interruzione.",
     "workerFinishedNotificationTitle": "Worker terminato",
     "workerFinishedNotificationBody": "{name} ha terminato il lavoro",
     "workEnded": "Lavoro terminato.",
