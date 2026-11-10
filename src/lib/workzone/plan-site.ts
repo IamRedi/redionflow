@@ -25,3 +25,20 @@ export async function plannedSiteNames(companyId: string, workerId: string, mont
   }));
   return new Map(rows.map((row) => [dateKey(row.column.plan.planDate), row.column.baustelle?.name ?? row.column.title]));
 }
+
+/** Site id → today's note from the saved daily plan (what the engineer wrote on the site card). */
+export async function plannedSiteNotes(companyId: string, at: Date = new Date()): Promise<Map<string, string>> {
+  const planDate = dayRange(dateKey(at)).start;
+  const plan = await withPilotDbContext(companyId, (tx) => tx.dailyWorkPlan.findUnique({
+    where: { companyProfileId_planDate: { companyProfileId: companyId, planDate } },
+    select: { savedRows: { select: { baustelleName: true, note: true } }, columns: { select: { title: true, baustelleId: true } } },
+  }));
+  const notes = new Map<string, string>();
+  for (const row of plan?.savedRows ?? []) {
+    const note = row.note?.trim();
+    if (!note) continue;
+    const column = plan?.columns.find((entry) => entry.baustelleId && entry.title.trim() === row.baustelleName.trim());
+    if (column?.baustelleId) notes.set(column.baustelleId, note);
+  }
+  return notes;
+}

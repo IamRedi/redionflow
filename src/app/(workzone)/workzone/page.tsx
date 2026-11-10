@@ -1,4 +1,5 @@
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
+import { plannedSiteNotes } from "@/lib/workzone/plan-site";
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 
@@ -92,6 +93,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       },
     },
   }));
+  const planNotes = await plannedSiteNotes(company.id);
   const plansForCalendar = await withPilotDbContext(company.id, tx => tx.dailyWorkPlan.findMany({
     where: { companyProfileId: company.id },
     orderBy: { planDate: "desc" },
@@ -343,6 +345,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       material: materialBySite.get(b.id),
       pendingCollection,
       pendingSiteTask,
+      planNote: planNotes.get(b.id) ?? null,
       equipmentIndicators,
     };
   });

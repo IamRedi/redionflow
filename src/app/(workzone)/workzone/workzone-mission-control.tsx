@@ -1,5 +1,6 @@
 "use client";
 
+import { PlanNoteButton } from "./plan/plan-note-button";
 import { motion } from "framer-motion";
 import { LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -44,6 +45,8 @@ type MissionItem = {
   canEditPhoto?:boolean;
   material?: { ready: number; total: number };
   pendingSiteTask?: string | null;
+  /** Today's note from the saved daily plan. */
+  planNote?: string | null;
   /** False for Bazë workers without access here: no "Open", start/stop on the card instead. */
   canOpen?: boolean;
 };
@@ -617,6 +620,7 @@ export function WorkzoneMissionControl({
                       {t("common.open", currentLang)}
                     </Link>
                   ) : null}
+                  <PlanNoteButton note={item.planNote} siteName={item.name} className={isCompactCanvas ? "size-7" : "size-8"} />
                   <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer" title={t("common.location", currentLang)} aria-label={t("common.location", currentLang)}
                     className={`grid shrink-0 place-items-center rounded-lg border bg-card text-muted-foreground transition hover:border-orange-400 hover:text-orange-600 ${isCompactCanvas ? "size-7" : "size-8"} ${allowDetailNavigation && item.canOpen !== false ? "" : "ml-auto"}`}>
                     <MapPin className="size-3.5" aria-hidden />
