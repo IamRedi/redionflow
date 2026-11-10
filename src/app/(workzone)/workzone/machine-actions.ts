@@ -145,3 +145,17 @@ export async function blockMachineAction(formData: FormData): Promise<ActionResu
   revalidateMachine(machineId);
   return { ok: true, message: tr("machineBlockedSaved") };
 }
+
+/** Mark a vehicle private (only PRIVATE_VEHICLES_ONLY people see it in Flota and GPS) or public again. */
+export async function setMachinePrivateAction(machineId: string, isPrivate: boolean): Promise<{ ok: boolean }> {
+  const { currentMaySeePrivateVehicles } = await import("@/lib/fleet/private-vehicles");
+  const companyId = await getCurrentCompanyId();
+  if (!companyId || typeof machineId !== "string" || !(await currentMaySeePrivateVehicles())) return { ok: false };
+  const { withTenantContext } = await import("@/lib/db/tenant-context");
+  const changed = await withTenantContext(companyId, tx => tx.machine.updateMany({ where: { id: machineId, companyProfileId: companyId }, data: { isPrivate: Boolean(isPrivate) } }));
+  if (!changed.count) return { ok: false };
+  revalidateMachine(machineId);
+  revalidatePath("/app/fleet-gps");
+  revalidatePath("/app/machines");
+  return { ok: true };
+}

@@ -1,3 +1,4 @@
+import { currentMaySeePrivateVehicles } from "@/lib/fleet/private-vehicles";
 import type { ReactNode } from "react";
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
 import { FlowTopBar } from "@/components/shell/FlowTopBar";
@@ -35,6 +36,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
   const company = await getOrCreateDefaultCompany();
   const companyActor = worker ? await currentCompanyActor(company.id) : null;
   const canSeeWorkshop = !worker || Boolean(companyActor?.allows("workshop.view"));
+  const canSetPrivateVehicles = await currentMaySeePrivateVehicles();
   // Vehicle photos: office, or "Vepron" on Flota dhe GPS (key button).
   const canEditMachinePhotos = !worker ? Boolean(admin) : Boolean(companyActor && (companyActor.can.office || companyActor.allows("fleet_gps.manage")));
   const [machines, announcement, mode, showCones, country] = await Promise.all([
@@ -75,7 +77,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
       <LiveRefreshListener enabled />
       <div className={production ? `${workspace.body} ${workspace.workzone}` : 'mx-auto w-full max-w-6xl lg:pr-20'}>
         <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
-        {production && features.machines ? <MachineSidebar embedded enhancedOperations canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
+        {production && features.machines ? <MachineSidebar embedded enhancedOperations canSetPrivate={canSetPrivateVehicles} canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
         {!production && <RediOnFooter />}
       </div>
     </div>

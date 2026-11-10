@@ -713,6 +713,8 @@ model Machine {
 
   notes       String?
   isActive    Boolean   @default(true)
+  /// Private vehicle: only the people named in PRIVATE_VEHICLES_ONLY see it in Flota and GPS.
+  isPrivate   Boolean   @default(false)
   gpsEnabled  Boolean   @default(false)
   gpsDeviceId String?   @unique
   lastGpsLat  Decimal?  @db.Decimal(10, 7)
