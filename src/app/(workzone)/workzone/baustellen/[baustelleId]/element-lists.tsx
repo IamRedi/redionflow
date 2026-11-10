@@ -447,7 +447,7 @@ function ListView({
             <div className="truncate text-base font-bold leading-tight">{side === "factory" ? t("elements.factoryList", lang) : t("elements.fieldList", lang)}</div>
             <div className="truncate text-xs tabular-nums text-muted-foreground">
               {shown.length > 0
-                ? `${shown.length} ${t("elements.marks", lang).toLowerCase()} · ${formatAmount(pieces)} ${t("elements.pieces", lang).toLowerCase()} · ${formatAmount(totalKg)} kg`
+                ? `${shown.length} ${t("elements.marks", lang).toLowerCase()} · ${formatAmount(pieces)} ${t("elements.pieces", lang).toLowerCase()}${totalKg > 0 ? ` · ${formatAmount(totalKg)} kg` : ""}`
                 : side === "factory"
                   ? t("elements.factoryHint", lang)
                   : t("elements.fieldHint", lang)}

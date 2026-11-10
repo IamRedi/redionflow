@@ -1,3 +1,4 @@
+import { currentMaySeeWeights } from "@/lib/steel-work/weight-visibility";
 import Link from "next/link";
 import { BriefcaseBusiness, ChevronLeft, ChevronRight, HardHat, MapPinned, Wrench } from "lucide-react";
 
@@ -292,7 +293,7 @@ export default async function DisplayDashboardPage({ searchParams }: { searchPar
   if (!audience && (isSaasMode || !await getCurrentDisplayUser())) redirect('/display-login');
   if (audience && audience.company.mode === 'bau' && await isSteelCompany(audience.company.id)) {
     const lang = await resolveRequestLanguage();
-    const data = await steelDashboardData(audience.company, params, true).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
+    const data = await steelDashboardData(audience.company, params, true, undefined, { piecesOnly: !(await currentMaySeeWeights()) }).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
     return <SteelDashboard data={data} lang={lang} />;
   }
   const rawWeek = Number(params.week ?? "0");

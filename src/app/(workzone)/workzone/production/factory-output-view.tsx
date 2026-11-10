@@ -44,14 +44,14 @@ function Totals({ output }: { output: Omit<SiteFactoryOutput, "siteId" | "siteNa
           {amount(output.donePieces)}
           <span className="text-xs font-semibold text-muted-foreground">/{amount(output.pieces)} {pcs}</span>
         </div>
-        <div className="truncate text-muted-foreground">{amount(output.doneKg)} {t("factory.units.kg", lang)}</div>
+        {output.kg > 0 ? <div className="truncate text-muted-foreground">{amount(output.doneKg)} {t("factory.units.kg", lang)}</div> : null}
       </div>
       <div className="min-w-0 rounded-xl bg-muted/70 px-2.5 py-2">
         <div className="truncate font-semibold">{t("elements.inFactory", lang)}</div>
         <div className="text-base font-bold leading-tight">
           {amount(waitingPieces)} <span className="text-xs font-semibold text-muted-foreground">{pcs}</span>
         </div>
-        <div className="truncate text-muted-foreground">{amount(output.kg - output.doneKg)} {t("factory.units.kg", lang)}</div>
+        {output.kg > 0 ? <div className="truncate text-muted-foreground">{amount(output.kg - output.doneKg)} {t("factory.units.kg", lang)}</div> : null}
       </div>
       <div className="min-w-0 rounded-xl bg-muted/70 px-2.5 py-2">
         <div className="truncate font-semibold">{t("elements.finishedOnSite", lang)}</div>
@@ -153,7 +153,7 @@ export function AllSitesFactoryView({ sites, processDefinitions = [] }: { sites:
                 </div>
                 <Bar value={site.donePieces} total={site.pieces} />
                 <div className="text-[11px] tabular-nums text-muted-foreground">
-                  {fill(t("elements.siteOutputLine", lang), {
+                  {fill(site.kg > 0 ? t("elements.siteOutputLine", lang) : t("elements.siteOutputLine", lang).replace(/\s*\(\{kg\}[^)]*\)/, ""), {
                     done: amount(site.donePieces),
                     total: amount(site.pieces),
                     kg: amount(site.doneKg),

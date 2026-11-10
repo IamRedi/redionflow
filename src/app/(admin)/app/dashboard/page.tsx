@@ -1,3 +1,4 @@
+import { currentMaySeeWeights } from "@/lib/steel-work/weight-visibility";
 import { fleetShowsCones } from "@/lib/workzone/machine-sidebar-data";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -342,7 +343,7 @@ export default async function DashboardPage({
   if (mode === 'bau' && await isSteelCompany(company.id)) {
     const audience = await productionAudience();
     if (!audience) redirect('/login');
-    const data = await steelDashboardData(audience.company, params, false).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
+    const data = await steelDashboardData(audience.company, params, false, undefined, { piecesOnly: !(await currentMaySeeWeights()) }).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
     return <SteelDashboard data={data} lang={currentLang} />;
   }
   const snapshot = await getDashboardSnapshotForWeek(company.id, weekOffset, currentLang);

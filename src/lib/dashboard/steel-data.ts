@@ -12,7 +12,7 @@ export async function steelDashboardData(company: {
     id: string;
     country: string;
     displayName: string;
-}, params: SteelParams, readOnly: boolean, now = new Date()) {
+}, params: SteelParams, readOnly: boolean, now = new Date(), options: { piecesOnly?: boolean } = {}) {
     const zone = fuelTimeZone(company.country), today = dayKey(now, zone), month = monthKey(params.month, today);
     const day = monthDays(month).includes(params.day ?? '') ? params.day! : today.startsWith(month) ? today : `${month}-01`;
     const projects = await withTenantContext(company.id, tx => tx.baustelle.findMany({
@@ -47,6 +47,14 @@ export async function steelDashboardData(company: {
             select: { id: true, elementId: true, stage: true, pieces: true, checkedAt: true, productionSnapshot: true, workerNames: true, checkedByName: true },
             orderBy: [{ checkedAt: 'desc' }, { id: 'desc' }], take: 51,
         });
+        if (options.piecesOnly) {
+            // Someone who may not see weights: every piece counts 1, so no kg reaches the page.
+            const oneKg = <T extends { productionSnapshot: unknown }>(row: T): T => {
+                const snap = row.productionSnapshot;
+                return snap && typeof snap === 'object' && !Array.isArray(snap) ? { ...row, productionSnapshot: { ...(snap as Record<string, unknown>), unitWeightKg: 1 } } : row;
+            };
+            return { elements: elements.map(e => ({ ...e, weightKg: 1 })), work: work.map(oneKg), evidence: evidence.map(oneKg), processDefinitions };
+        }
         return { elements, work, evidence, processDefinitions };
     }, { timeout: 20000 });
     const rollup = calendarMetrics(month, zone, result.elements, result.work);
@@ -69,7 +77,7 @@ export async function steelDashboardData(company: {
         addMetric(metric, m); operations.set(row.stage, metric); otherOperations.set(e.baustelleId, operations);
     }
     return {
-        companyName: company.displayName, zone, today, month, day, selectedProject, readOnly, generatedAt: now.toISOString(),
+        piecesOnly: Boolean(options.piecesOnly), companyName: company.displayName, zone, today, month, day, selectedProject, readOnly, generatedAt: now.toISOString(),
         projects, projectRows, totalProgress, processDefinitions: result.processDefinitions, days: rollup.days, totals: rollup.totals,
         dayProjects: projectRows.map(p => ({ id: p.id, name: p.name, metrics: selectedByProject.get(p.id) ?? emptyMetrics(), checks: selectedWork.filter(w => byElement.get(w.elementId)?.baustelleId === p.id).length,
             operations: [...(otherOperations.get(p.id) ?? [])].map(([stage, metric]) => ({ stage, metric })),
