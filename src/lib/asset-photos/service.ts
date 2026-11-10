@@ -29,6 +29,8 @@ export async function saveAssetPhoto(kind: PhotoKind, id: string, file: File) {
   let allowed = kind === 'worker'
     ? a.isAdmin || a.workerId === id
     : a.can.office ||
+    // Vehicle photos also with "Vepron" on Flota dhe GPS.
+    (kind === 'machine' && a.allows('fleet_gps.manage')) ||
     (kind === 'site' &&
       ('type' in owned && owned.type === 'STEEL_WORKSHOP'
         ? a.can.factorySteps

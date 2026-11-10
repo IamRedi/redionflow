@@ -11,7 +11,6 @@ import { fleetShowsCones, getMachineSidebarData } from "@/lib/workzone/machine-s
 import { autoCloseForgottenDaySessions } from "@/lib/workzone/session-rules";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
 import { MachineSidebar } from "./machine-sidebar";
-import { crewPermissions } from "@/lib/workzone/crew-roles";
 import { OfflineStatusBar } from "./offline-status-bar";
 import { WorkzoneAnnouncementBar } from "./workzone-announcement-bar";
 import { WorkzoneSyncRunner } from "./workzone-sync-runner";
@@ -34,7 +33,10 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
     );
   }
   const company = await getOrCreateDefaultCompany();
-  const canSeeWorkshop = !worker || Boolean((await currentCompanyActor(company.id))?.allows("workshop.view"));
+  const companyActor = worker ? await currentCompanyActor(company.id) : null;
+  const canSeeWorkshop = !worker || Boolean(companyActor?.allows("workshop.view"));
+  // Vehicle photos: office, or "Vepron" on Flota dhe GPS (key button).
+  const canEditMachinePhotos = !worker ? Boolean(admin) : Boolean(companyActor && (companyActor.can.office || companyActor.allows("fleet_gps.manage")));
   const [machines, announcement, mode, showCones, country] = await Promise.all([
     getMachineSidebarData(),
     prisma.workzoneAnnouncement.findFirst({
@@ -68,12 +70,12 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
           </div>
         </div>
       </header>
-      {!production && features.machines ? <MachineSidebar machines={machines} isAdmin={Boolean(admin)} canEditPhotos={crewPermissions(admin?{isAdmin:true}:worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:null).office} showCones={showCones} country={country} /> : null}
+      {!production && features.machines ? <MachineSidebar machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
       <WorkzoneSyncRunner />
       <LiveRefreshListener enabled />
       <div className={production ? `${workspace.body} ${workspace.workzone}` : 'mx-auto w-full max-w-6xl lg:pr-20'}>
         <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
-        {production && features.machines ? <MachineSidebar embedded enhancedOperations canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={crewPermissions(admin?{isAdmin:true}:worker?{isAdmin:false,crewRole:worker.crewRole,level:worker.level}:null).office} showCones={showCones} country={country} /> : null}
+        {production && features.machines ? <MachineSidebar embedded enhancedOperations canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
         {!production && <RediOnFooter />}
       </div>
     </div>
