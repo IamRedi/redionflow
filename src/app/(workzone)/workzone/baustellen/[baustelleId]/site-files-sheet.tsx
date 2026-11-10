@@ -110,7 +110,7 @@ export function SiteFilesButton({
   }
 
   function remove(id: string) {
-    if (!window.confirm(`${t("siteFiles.delete", lang)}?`)) return;
+    if (!window.confirm(t("siteFiles.deleteConfirm", lang))) return;
     startTransition(async () => {
       const result = await deleteSiteFileAction({ id });
       if (!result.ok) setMessage(result.message || t("siteFiles.error", lang));
