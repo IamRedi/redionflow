@@ -30,8 +30,8 @@ export async function reserveAssistantQuota(requester: Identity, now = new Date(
     const buckets = [
       { actorKey, window: "burst", windowStart: burstStart, requests: setting("ASSISTANT_USER_BURST_REQUESTS", 6, 100), tokens: null },
       { actorKey: "company", window: "burst", windowStart: burstStart, requests: setting("ASSISTANT_COMPANY_BURST_REQUESTS", 30, 1_000), tokens: null },
-      { actorKey, window: "day", windowStart: dayStart, requests: setting("ASSISTANT_USER_DAILY_REQUESTS", 50, 10_000), tokens: setting("ASSISTANT_USER_DAILY_TOKENS", 500_000, 50_000_000) },
-      { actorKey: "company", window: "day", windowStart: dayStart, requests: setting("ASSISTANT_COMPANY_DAILY_REQUESTS", 200, 100_000), tokens: setting("ASSISTANT_COMPANY_DAILY_TOKENS", 1_000_000, 100_000_000) },
+      { actorKey, window: "day", windowStart: dayStart, requests: setting("ASSISTANT_USER_DAILY_REQUESTS", 200, 10_000), tokens: setting("ASSISTANT_USER_DAILY_TOKENS", 3_000_000, 50_000_000) },
+      { actorKey: "company", window: "day", windowStart: dayStart, requests: setting("ASSISTANT_COMPANY_DAILY_REQUESTS", 800, 100_000), tokens: setting("ASSISTANT_COMPANY_DAILY_TOKENS", 10_000_000, 100_000_000) },
     ];
     const access = await withTenantContext(companyId, async tx => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`assistant:${companyId}`}))`;
