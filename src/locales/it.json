@@ -1497,6 +1497,7 @@
     "workzoneDescription": "Vista live in sola lettura di cantieri, squadre, flotta e stato attuale.",
     "kidrahtTitle": "Sapere aziendale · KiDraht",
     "kidrahtDescription": "Regole e istruzione per questo cantiere, approvate dal titolare. I collaboratori accedono con un PIN.",
-    "kidrahtOpen": "Apri istruzione"
+    "kidrahtOpen": "Apri istruzione",
+    "kidrahtNewTab": "Apri in una nuova scheda"
   }
 }
