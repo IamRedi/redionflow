@@ -192,6 +192,7 @@ export const bau = {
   key: 'bau',
   reference: {
     name: 'AL-Steel Construction',
+    photoAlt: l('Montim konstruksioni metalik, foto nga faqja zyrtare e AL-Steel', 'Steel structure assembly, photo from AL-Steel’s official website', 'Montage einer Stahlkonstruktion, Foto von der offiziellen AL-Steel-Website', 'Montaggio di una struttura metallica, foto dal sito ufficiale di AL-Steel'),
     href: 'https://alsteel.al/',
     label: l('Në përdorim real', 'Used in real operations', 'Im betrieblichen Einsatz', 'In uso operativo'),
     location: l('Qerekë, Krujë · Shqipëri', 'Qerekë, Krujë · Albania', 'Qerekë, Krujë · Albanien', 'Qerekë, Krujë · Albania'),
