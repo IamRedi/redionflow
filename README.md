@@ -22,6 +22,10 @@ Die getrennten Produktvorstellungen von [BaumdienstFlow](https://www.baumdienstf
 
 Der P2-Quellstand und sein Veröffentlichungs-/Online-Readback werden separat im [Präsentationsreview](websites/products/P2_REVIEW.md) geführt. Historische App-Testzahlen und Revisionen bleiben unverändert. Änderungen an statischen Websites autorisieren keinen Merge des Railway-Piloten. Nach einem wesentlichen Produktfortschritt werden Vorstellung, Portfolio und betroffene README/About-Texte gemeinsam abgeglichen.
 
+## BauFlow im realen Einsatz
+
+[AL-Steel Construction](https://alsteel.al/) in Qerekë, Krujë (Albanien) nutzt BauFlow im täglichen Betrieb für Büro, Werkstatt und Baustelle. Das Unternehmen plant, fertigt und montiert Stahlkonstruktionen für Industriegebäude und Logistikanlagen. Die öffentlichen Screenshots zeigen weiterhin ausschließlich fiktive Musterdaten.
+
 ## Websites und Live-Demos
 
 | Produkt | Website | Demo | Fiktive Firma |
