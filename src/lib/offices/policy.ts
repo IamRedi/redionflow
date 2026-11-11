@@ -4,7 +4,7 @@ import { z } from 'zod';
 // An absent/invalid configuration keeps this first release completely closed.
 const member = z.object({ adminId: z.string().min(1), workerId: z.string().min(1).optional() }).strict();
 const config = z.object({ companyId: z.string().min(1), megi: member, almet: member }).strict();
-export type OfficeSeat = 'megi' | 'almet';
+export type OfficeSeat = 'megi' | 'almet' | 'staff';
 export type OfficeIdentity = { kind: 'admin' | 'worker'; id: string; companyId: string };
 
 export function officeSeat(raw: string | undefined, actor: OfficeIdentity | null): OfficeSeat | null {

@@ -1,3 +1,4 @@
+import { OfficeReturnBar } from '@/components/offices/OfficeReturnBar';
 import { currentMaySeePrivateVehicles } from "@/lib/fleet/private-vehicles";
 import type { ReactNode } from "react";
 import { notFound } from 'next/navigation';
@@ -79,7 +80,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
       <WorkzoneSyncRunner />
       <LiveRefreshListener enabled />
       <div className={production ? `${workspace.body} ${workspace.workzone}` : 'mx-auto w-full max-w-6xl lg:pr-20'}>
-        <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
+        <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}><OfficeReturnBar/>{children}</div><RediOnFooter /></> : children}</main>
         {production && features.machines ? <MachineSidebar embedded enhancedOperations canSetPrivate={canSetPrivateVehicles} canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
         {!production && <RediOnFooter />}
       </div>

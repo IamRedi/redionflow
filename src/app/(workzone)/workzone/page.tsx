@@ -362,7 +362,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
 
   return (
     <div className="space-y-4">
-      <OfficeEntry lang={currentLang} />
+      <OfficeEntry lang={currentLang} compact />
       <WorkzoneMissionControl
         fleetLocations={fleetLocations}
         initialMap={initialMap}

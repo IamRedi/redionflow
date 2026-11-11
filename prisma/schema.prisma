@@ -192,11 +192,7 @@ enum AssistantLanguage {
 }
 
 model User {
-  officeOwnedTasks OfficeTask[] @relation("OfficeTaskOwner")
-  officeCreatedTasks OfficeTask[] @relation("OfficeTaskCreator")
-  officeSentThreads OfficeThread[] @relation("OfficeThreadSender")
-  officeReceivedThreads OfficeThread[] @relation("OfficeThreadRecipient")
-  officeMessages OfficeMessage[] @relation("OfficeMessageSender")
+  officeMembership OfficeMember[]
   siteDocumentGrants SiteDocumentEngineer[] @relation("SiteDocumentGrantedBy")
   phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentUser")
   phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptUser")
@@ -256,6 +252,8 @@ model User {
 }
 
 model CompanyProfile {
+  officeAssistantTurns OfficeAssistantTurn[]
+  officeMembers OfficeMember[]
   officeCategories OfficeCategory[]
   officeTasks OfficeTask[]
   officeThreads OfficeThread[]
@@ -352,6 +350,49 @@ model CompanyProfile {
 
 // Office records are separate from operational tasks/documents. Identity is the
 // canonical configured admin account, shared by that person's admin/PIN logins.
+model OfficeMember {
+  workProfile String @default("GENERAL")
+  assistantEnabled Boolean @default(false)
+  assistantTurns OfficeAssistantTurn[]
+  workbooksEnabled Boolean @default(false)
+  id String @id @default(uuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade,onUpdate:NoAction)
+  userId String?
+  user User? @relation(fields:[companyProfileId,userId],references:[companyProfileId,id],onDelete:Restrict,onUpdate:NoAction)
+  workerId String?
+  worker Worker? @relation(fields:[companyProfileId,workerId],references:[companyProfileId,id],onDelete:Restrict,onUpdate:NoAction)
+  title String @default("")
+  enabled Boolean @default(false)
+  version Int @default(1)
+  officeOwnedTasks OfficeTask[] @relation("OfficeTaskOwner")
+  officeCreatedTasks OfficeTask[] @relation("OfficeTaskCreator")
+  officeSentThreads OfficeThread[] @relation("OfficeThreadSender")
+  officeReceivedThreads OfficeThread[] @relation("OfficeThreadRecipient")
+  officeMessages OfficeMessage[] @relation("OfficeMessageSender")
+  @@unique([companyProfileId,id])
+  @@unique([companyProfileId,userId])
+  @@unique([companyProfileId,workerId])
+}
+
+model OfficeAssistantTurn {
+  id String @id
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade,onUpdate:NoAction)
+  memberId String
+  member OfficeMember @relation(fields:[companyProfileId,memberId],references:[companyProfileId,id],onDelete:Restrict,onUpdate:NoAction)
+  conversationId String
+  requestHash String
+  question String
+  answer String @default("")
+  status String @default("pending")
+  sources Json?
+  diagnostics Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  @@index([companyProfileId,memberId,conversationId,createdAt],map:"OfficeAssistantTurn_owner_conversation_idx")
+}
+
 model OfficeCategory {
   id String @id @default(uuid())
   companyProfileId String
@@ -369,8 +410,8 @@ model OfficeTask {
   companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
   ownerId String
   createdById String
-  owner User @relation("OfficeTaskOwner", fields:[companyProfileId,ownerId], references:[companyProfileId,id], onDelete:Restrict)
-  createdBy User @relation("OfficeTaskCreator", fields:[companyProfileId,createdById], references:[companyProfileId,id], onDelete:Restrict)
+  owner OfficeMember @relation("OfficeTaskOwner", fields:[companyProfileId,ownerId], references:[companyProfileId,id], onDelete:Restrict)
+  createdBy OfficeMember @relation("OfficeTaskCreator", fields:[companyProfileId,createdById], references:[companyProfileId,id], onDelete:Restrict)
   kind String
   title String
   body String @default("")
@@ -393,8 +434,8 @@ model OfficeThread {
   companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
   senderId String
   recipientId String
-  sender User @relation("OfficeThreadSender", fields:[companyProfileId,senderId], references:[companyProfileId,id], onDelete:Restrict)
-  recipient User @relation("OfficeThreadRecipient", fields:[companyProfileId,recipientId], references:[companyProfileId,id], onDelete:Restrict)
+  sender OfficeMember @relation("OfficeThreadSender", fields:[companyProfileId,senderId], references:[companyProfileId,id], onDelete:Restrict)
+  recipient OfficeMember @relation("OfficeThreadRecipient", fields:[companyProfileId,recipientId], references:[companyProfileId,id], onDelete:Restrict)
   subject String
   senderReadAt DateTime?
   recipientReadAt DateTime?
@@ -413,7 +454,7 @@ model OfficeMessage {
   threadId String
   thread OfficeThread @relation(fields:[companyProfileId,threadId], references:[companyProfileId,id], onDelete:Cascade)
   senderId String
-  sender User @relation("OfficeMessageSender", fields:[companyProfileId,senderId], references:[companyProfileId,id], onDelete:Restrict)
+  sender OfficeMember @relation("OfficeMessageSender", fields:[companyProfileId,senderId], references:[companyProfileId,id], onDelete:Restrict)
   body String
   createdAt DateTime @default(now())
   attachments OfficeAttachment[]
@@ -957,6 +998,7 @@ model MachineConeMovement {
 }
 
 model Worker {
+  officeMembership OfficeMember[]
   siteDocumentGrants SiteDocumentEngineer[]
   accessGrants AccessGrant[]
   phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentWorker")

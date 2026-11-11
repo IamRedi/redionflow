@@ -1,6 +1,8 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID,createHash } from 'node:crypto';
 import { afterAll,beforeAll,beforeEach,expect,it,vi } from 'vitest';
 const auth=vi.hoisted(()=>({admin:vi.fn(),worker:vi.fn(),company:vi.fn()}));
+const provider=vi.hoisted(()=>({stream:vi.fn()}));
+vi.mock('ai',async original=>({...await original<typeof import('ai')>(),streamText:provider.stream}));
 vi.mock('@/lib/auth/admin-session',()=>({getCurrentAdmin:auth.admin}));
 vi.mock('@/lib/workzone/worker-session',()=>({getCurrentWorker:auth.worker}));
 vi.mock('@/lib/db/tenant',()=>({getCurrentCompanyId:auth.company}));
@@ -23,11 +25,90 @@ beforeAll(async()=>{
   vi.stubEnv('VIRTUAL_OFFICE_WORK_ENABLED','true');
   await prisma.$executeRawUnsafe(`CREATE ROLE ${role} NOLOGIN NOSUPERUSER NOBYPASSRLS`);
   await prisma.$executeRawUnsafe(`GRANT USAGE ON SCHEMA public TO ${role}`);
-  await prisma.$executeRawUnsafe(`GRANT SELECT ON "OfficeTask","OfficeThread","OfficeMessage","OfficeAttachment","OfficeCategory" TO ${role}`);
+  await prisma.$executeRawUnsafe(`GRANT SELECT ON "OfficeTask","OfficeThread","OfficeMessage","OfficeAttachment","OfficeCategory","OfficeAssistantTurn" TO ${role}`);
 });
 beforeEach(()=>as(megi));
+it('isolates personal office AI history, document evidence, idempotency and explicit activation',async()=>{
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');vi.stubEnv('VIRTUAL_OFFICE_AI_ENABLED','true');
+ const {saveOfficeMember}=await import('./team-service');
+ const {officeAssistantActor,beginOfficeAssistantTurn,finishOfficeAssistantTurn,officeAssistantHistory,officeAssistantEvidence,officeAssistantInput}=await import('./assistant-service');
+ const buyer=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Buyer',lastName:'Demo',crewRole:'OFFICE',accessLevel:'BASE'}});
+ const peer=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Peer',lastName:'Demo',crewRole:'OFFICE',accessLevel:'BASE'}});
+ const a=await saveOfficeMember({workerId:buyer.id,title:'Purchasing',enabled:true,assistantEnabled:true,workProfile:'PURCHASING',version:0});
+ const b=await saveOfficeMember({workerId:peer.id,title:'Other office',enabled:true,assistantEnabled:true,version:0});
+ const site=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Purchasing project',documents:[],type:'STEEL_ASSEMBLY'}});
+ await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:buyer.id,place:'site',scopeId:site.id,level:'view'}});
+ const csv=Buffer.from('Material,Quantity,Price\nSteel,10,25\n');
+ const file=await prisma.siteFile.create({data:{companyProfileId:companyId,baustelleId:site.id,kind:'document',fileName:'Offer-DEMO.csv',mime:'text/csv',size:csv.length,data:csv}});
+ const secret=await prisma.siteFile.create({data:{companyProfileId:companyId,baustelleId:site.id,kind:'invoice',officeOnly:true,fileName:'Restricted.pdf',mime:'application/pdf',size:1,data:Buffer.from('x')}});
+ const phase=await prisma.sitePhaseDocument.create({data:{companyProfileId:companyId,baustelleId:site.id,phase:'porosi',title:'Offer in purchase phase',fileName:'Phase-offer-DEMO.csv',mime:'text/csv',size:csv.length,dataBytes:csv,sha256:createHash('sha256').update(csv).digest('hex'),createdByWorkerId:buyer.id,createdByKey:`worker:${buyer.id}`,createdByName:'Buyer Demo'}});
+ await saveOfficeTask({...draft(),id:randomUUID(),title:'DIRECTOR-HIDDEN-NOTE'});
+ auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:peer.id,companyProfileId:companyId});await saveOfficeTask({...draft(),id:randomUUID(),ownerId:b.id,title:'PEER-HIDDEN-NOTE'});as(megi);
+ try{
+  await expect(officeAssistantActor()).rejects.toThrow('DENIED');
+  auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:buyer.id,companyProfileId:companyId});
+  await saveOfficeTask({...draft(),id:randomUUID(),ownerId:a.id,title:'OWN-PURCHASE-NEED'});
+  expect((await officeAssistantActor()).workProfile).toBe('PURCHASING');
+  const input=officeAssistantInput.parse({requestId:randomUUID(),conversationId:randomUUID(),message:'Compare this offer',siteId:site.id,fileIds:[file.id]});
+  const begun=await beginOfficeAssistantTurn(input);expect(begun.replay).toBe(false);expect((await beginOfficeAssistantTurn(input)).replay).toBe(true);
+  await expect(beginOfficeAssistantTurn({...input,message:'Different question'})).rejects.toThrow('CONFLICT');
+  await expect(beginOfficeAssistantTurn({...input,requestId:randomUUID()})).rejects.toThrow('CONFLICT');
+  const evidence=await officeAssistantEvidence(input);expect(evidence.data.documents[0].text).toContain('Steel');expect(evidence.data.selectedProject?.files.some(f=>f.id===secret.id)).toBe(false);
+  expect((await officeAssistantEvidence({...input,fileIds:[`phase:${phase.id}`]})).data.documents[0].text).toContain('Steel');expect(await prisma.sitePhaseDocumentReceipt.count({where:{documentId:phase.id}})).toBe(0);
+  await expect(officeAssistantEvidence({...input,fileIds:[secret.id]})).rejects.toThrow('DENIED');
+  await finishOfficeAssistantTurn(input.requestId,{answer:'Synthetic private answer',status:'completed',sources:evidence.refs});
+  expect((await officeAssistantHistory(input.conversationId)).turns[0].answer).toBe('Synthetic private answer');
+  expect((await beginOfficeAssistantTurn(input)).turn.answer).toBe('Synthetic private answer');
+  vi.stubEnv('OPENAI_API_KEY','not-a-real-key');
+  provider.stream.mockReturnValue({fullStream:(async function*(){yield {type:'text-delta',text:'Offer-DEMO.csv lists Steel; missing VAT basis.'};})(),finishReason:Promise.resolve('stop'),totalUsage:Promise.resolve({totalTokens:42})});
+  const {POST}=await import('@/app/api/offices/assistant/route');
+  const request={...input,requestId:randomUUID(),message:'Which terms are missing?'};
+  const send=()=>POST(new Request('http://127.0.0.1:3230/api/offices/assistant',{method:'POST',headers:{Origin:'http://127.0.0.1:3230','Content-Type':'application/json'},body:JSON.stringify(request)}));
+  const reply=await send();expect(reply.status).toBe(200);expect((await reply.json()).status).toBe('completed');expect(provider.stream).toHaveBeenCalledTimes(1);
+  expect(JSON.stringify(provider.stream.mock.calls[0][0].messages)).toContain('Steel');expect(JSON.stringify(provider.stream.mock.calls[0][0].messages)).toContain('OWN-PURCHASE-NEED');expect(JSON.stringify(provider.stream.mock.calls[0][0].messages)).not.toMatch(/DIRECTOR-HIDDEN|PEER-HIDDEN/);
+  expect((await send()).status).toBe(200);expect(provider.stream).toHaveBeenCalledTimes(1);
+  expect((await POST(new Request('http://127.0.0.1:3230/api/offices/assistant',{method:'POST',headers:{Origin:'https://foreign.invalid'},body:'{}'}))).status).toBe(403);
+  auth.worker.mockResolvedValue({id:peer.id,companyProfileId:companyId});expect((await officeAssistantHistory(input.conversationId)).turns).toEqual([]);
+  await expect(officeAssistantEvidence(input)).rejects.toThrow('DENIED');
+  await prisma.$transaction(async tx=>{await tx.$executeRawUnsafe(`SET LOCAL ROLE ${role}`);await tx.$executeRaw`SELECT set_config('app.current_tenant_id',${companyId},true)`;await tx.$executeRaw`SELECT set_config('app.current_office_member_id',${b.id},true)`;expect(await tx.officeAssistantTurn.count({where:{id:input.requestId}})).toBe(0);});
+  auth.worker.mockResolvedValue({id:buyer.id,companyProfileId:companyId});
+  await prisma.officeMember.update({where:{id:a.id},data:{assistantEnabled:false}});await expect(officeAssistantHistory()).rejects.toThrow('DENIED');
+  expect(await prisma.assistantConversation.count({where:{companyProfileId:companyId}})).toBe(0);
+ }finally{await prisma.sitePhaseDocument.delete({where:{id:phase.id}});await prisma.officeAssistantTurn.deleteMany({where:{companyProfileId:companyId}});vi.stubEnv('OPENAI_API_KEY','');vi.stubEnv('VIRTUAL_OFFICE_AI_ENABLED','false');vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');as(megi);}
+});
+it('previews employee work using the employee keys without impersonation or private work',async()=>{
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+ await initializeOfficeCategories();
+ const {saveOfficeMember,officeDirectory}=await import('./team-service');
+ const {officePreviewTarget,officePreviewTasks,officePreviewPlan}=await import('./preview');
+ const {officeResources,officeSiteFiles,officeWorkbooks}=await import('./resources');
+ const person=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Preview',lastName:'Demo',crewRole:'OFFICE',accessLevel:'BASE'}});
+ const allowed=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Preview allowed',documents:[]}});
+ const denied=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Preview denied',documents:[]}});
+ const member=await saveOfficeMember({workerId:person.id,title:'Office',enabled:true,workbooksEnabled:false,version:0});
+ await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:person.id,place:'site',scopeId:allowed.id,level:'view'}});
+ const work={...draft(),id:randomUUID(),ownerId:member.id,kind:'COMPANY',categoryId:'OTHER',title:'Visible company assignment'};await saveOfficeTask(work);
+ auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:person.id,companyProfileId:companyId});
+ await saveOfficeTask({...draft(),id:randomUUID(),ownerId:member.id,title:'Employee confidential note'});
+ const employeeSites=(await officeResources()).sites;
+ await expect(officeResources(member.id)).rejects.toThrow('DENIED');
+ as(megi);
+ expect((await officeResources(member.id)).sites).toEqual(employeeSites);
+ expect((await officePreviewTasks(member.id)).map(t=>t.title)).toEqual(['Visible company assignment']);
+ await expect(officeSiteFiles(denied.id,member.id)).rejects.toThrow('DENIED');
+ await expect(officeWorkbooks('2026-11',undefined,member.id)).rejects.toThrow('DENIED');
+ await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:person.id,place:'daily_plan',scopeId:'',level:'none'}});
+ await expect(officePreviewPlan(member.id,'2026-11-11')).rejects.toThrow('DENIED');
+ expect((await officeWorkSnapshot()).self).toBe(megi);
+ await prisma.officeMember.update({where:{id:member.id},data:{enabled:false}});
+ expect((await officeDirectory()).people.some(p=>p.id===member.id&&!p.enabled)).toBe(true);
+ expect((await officePreviewTarget(member.id)).member.enabled).toBe(false);
+ await prisma.worker.update({where:{id:person.id},data:{status:'inactive'}});
+ await expect(officePreviewTarget(member.id)).rejects.toThrow('NOT_FOUND');
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');
+});
 afterAll(async()=>{
-  if(companyId){const where={companyProfileId:companyId};await prisma.officeAttachment.deleteMany({where});await prisma.officeMessage.deleteMany({where});await prisma.officeThread.deleteMany({where});await prisma.officeTask.deleteMany({where});await prisma.officeCategory.deleteMany({where});await prisma.worker.deleteMany({where});await prisma.user.deleteMany({where:{companyProfileId:{in:[companyId,otherCompanyId]}}});await prisma.companyProfile.deleteMany({where:{id:{in:[companyId,otherCompanyId]}}});}
+  if(companyId){const where={companyProfileId:companyId};await prisma.officeAttachment.deleteMany({where});await prisma.officeMessage.deleteMany({where});await prisma.officeThread.deleteMany({where});await prisma.officeTask.deleteMany({where});await prisma.officeCategory.deleteMany({where});await prisma.officeMember.deleteMany({where});await prisma.worker.deleteMany({where});await prisma.user.deleteMany({where:{companyProfileId:{in:[companyId,otherCompanyId]}}});await prisma.companyProfile.deleteMany({where:{id:{in:[companyId,otherCompanyId]}}});}
   await prisma.$executeRawUnsafe(`DROP OWNED BY ${role}`);await prisma.$executeRawUnsafe(`DROP ROLE ${role}`);vi.unstubAllEnvs();
 });
 it('keeps personal work private, including from the other owner, and prevents lost updates',async()=>{
@@ -41,7 +122,7 @@ it('keeps personal work private, including from the other owner, and prevents lo
 });
 it('shares office tasks deliberately, reuses editable categories and preserves operational records',async()=>{
   const sessions=await prisma.workSession.count(),processes=await prisma.steelSiteTask.count(),documents=await prisma.sitePhaseDocument.count();
-  await initializeOfficeCategories();await initializeOfficeCategories();const cats=(await officeWorkSnapshot()).categories;expect(cats).toHaveLength(5);
+  await initializeOfficeCategories();await initializeOfficeCategories();const cats=(await officeWorkSnapshot()).categories;expect(cats).toHaveLength(6);
   const d=draft();await saveOfficeTask({...d,kind:'NOTE'});await saveOfficeTask({...d,version:1,kind:'COMPANY',categoryId:cats[0].id,ownerId:almet});
   as(almet);expect((await officeWorkSnapshot()).tasks.find(t=>t.id===d.id)?.kind).toBe('COMPANY');
   await expect(saveOfficeTask({...d,version:2,ownerId:almet})).rejects.toThrow('INVALID');
@@ -73,4 +154,62 @@ it('enforces tenant RLS and composite foreign keys below the service layer',asyn
   const d=draft();await saveOfficeTask(d);
   await prisma.$transaction(async tx=>{await tx.$executeRawUnsafe(`SET LOCAL ROLE ${role}`);await tx.$executeRaw`SELECT set_config('app.current_tenant_id',${otherCompanyId},true)`;expect(await tx.officeTask.count({where:{id:d.id}})).toBe(0);});
   await expect(prisma.officeTask.create({data:{id:randomUUID(),companyProfileId:companyId,ownerId:foreign,createdById:foreign,title:'Cross-tenant',kind:'NOTE'}})).rejects.toThrow();
+});
+it('supports employee offices, scoped tasks, manager-only setup and immediate revocation',async()=>{
+  vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+  const {saveOfficeMember,officeTeamSettings}=await import('./team-service');
+  const staff=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Engineer',lastName:'Demo'}});
+  const second=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Finance',lastName:'Demo'}});
+  const foreignWorker=await prisma.worker.create({data:{companyProfileId:otherCompanyId,firstName:'Foreign',lastName:'Demo'}});
+  try{
+    await expect(saveOfficeMember({workerId:foreignWorker.id,title:'Office',enabled:true,version:0})).rejects.toThrow('NOT_FOUND');
+    const member=await saveOfficeMember({workerId:staff.id,title:'Projektim',enabled:true,version:0});
+    const colleague=await saveOfficeMember({workerId:second.id,title:'Financë',enabled:true,version:0});
+    const sent=await sendOfficeMail(mail({to:member.id,body:'Private staff mail'}));
+    const categories=(await officeWorkSnapshot()).categories;
+    const task={...draft(),id:randomUUID(),kind:'COMPANY',ownerId:member.id,categoryId:categories[0].id};await saveOfficeTask(task);
+    await saveOfficeTask({...draft(),id:randomUUID(),kind:'COMPANY',ownerId:colleague.id,categoryId:categories[0].id,title:'Unrelated private assignment'});
+    auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});
+    expect((await readOfficeThread(sent.id)).messages[0].body).toBe('Private staff mail');await sendOfficeMail(mail({thread:sent.id,to:megi,body:'Staff reply'}));
+    const snapshot=await officeWorkSnapshot();expect(snapshot.manager).toBe(false);expect(snapshot.self).toBe(member.id);expect(snapshot.tasks.some(t=>t.id===task.id)).toBe(true);expect(snapshot.tasks.some(t=>t.title==='Unrelated private assignment')).toBe(false);
+    await expect(officeTeamSettings()).rejects.toThrow('DENIED');await expect(saveOfficeCategory({id:null,name:'Unauthorized'})).rejects.toThrow('DENIED');
+    await saveOfficeTask({...task,version:1,status:'DONE'});
+    const privateTask={...draft(),id:randomUUID(),ownerId:member.id};await saveOfficeTask(privateTask);
+    as(megi);expect((await officeWorkSnapshot()).tasks.some(t=>t.id===privateTask.id)).toBe(false);
+    await saveOfficeMember({workerId:staff.id,title:'Projektim',enabled:false,version:1});
+    auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});await expect(officeWorkSnapshot()).rejects.toThrow('DENIED');await expect(readOfficeThread(sent.id)).rejects.toThrow('DENIED');
+    as(megi);await expect(saveOfficeTask({...task,version:2})).rejects.toThrow('DENIED');
+  }finally{as(megi);vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');await prisma.worker.delete({where:{id:foreignWorker.id}});}
+});
+it('filters office resources, protects workbook access and isolates personal assistant sources',async()=>{
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+ const {saveOfficeMember,prepareOfficeTeam}=await import('./team-service');
+ const {officeResources,officeSiteFiles,officeWorkbooks}=await import('./resources');
+ const {personalOfficeContext,personalOfficeMail}=await import('./personal-context');
+ const staff=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Economist',lastName:'Demo',position:'Accounting',crewRole:'OFFICE',accessLevel:'BASE'}});
+ const permitted=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Allowed office site',documents:[],type:'STEEL_ASSEMBLY'}});
+ const denied=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Unrelated office site',documents:[],type:'STEEL_ASSEMBLY'}});
+ try{
+  vi.stubEnv('VIRTUAL_OFFICE_TEAM_SETUP_JSON',JSON.stringify({companyId:otherCompanyId,people:[{workerId:staff.id,title:'Wrong tenant'}]}));await expect(prepareOfficeTeam()).rejects.toThrow('DENIED');vi.stubEnv('VIRTUAL_OFFICE_TEAM_SETUP_JSON',JSON.stringify({companyId,people:[{workerId:staff.id,title:'Accounting',workbooksEnabled:false}]}));
+  await prepareOfficeTeam();vi.stubEnv('VIRTUAL_OFFICE_TEAM_SETUP_JSON','');let member=await prisma.officeMember.findUniqueOrThrow({where:{companyProfileId_workerId:{companyProfileId:companyId,workerId:staff.id}}});expect(member.enabled).toBe(false);expect(member.workbooksEnabled).toBe(false);
+  await saveOfficeMember({workerId:staff.id,title:'Accounting',enabled:true,version:member.version});
+  await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:staff.id,place:'site',scopeId:permitted.id,level:'view'}});
+  await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:staff.id,place:'factory',scopeId:'',level:'act'}});
+  await prisma.siteFile.create({data:{companyProfileId:companyId,baustelleId:permitted.id,kind:'invoice',officeOnly:true,fileName:'Private price.pdf',mime:'application/pdf',size:5,data:Buffer.from('dummy')}});
+  await prisma.siteFile.create({data:{companyProfileId:companyId,baustelleId:permitted.id,kind:'document',fileName:'Drawing.pdf',mime:'application/pdf',size:5,data:Buffer.from('dummy')}});
+  await prisma.workSession.create({data:{workerId:staff.id,startTime:new Date('2026-11-10T07:00:00Z'),endTime:new Date('2026-11-10T15:00:00Z'),totalHours:7.5,breakMinutes:30}});
+  const privateAdmin={...draft(),id:randomUUID(),title:'Director confidential note'};await saveOfficeTask(privateAdmin);
+  const privateMail=await sendOfficeMail(mail({body:'Director confidential mail'}));
+  auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});
+  expect((await officeResources()).sites.map(s=>s.id)).toEqual([permitted.id]);expect((await officeSiteFiles(permitted.id)).files.map(f=>f.fileName)).toEqual(['Drawing.pdf']);await expect(officeSiteFiles(denied.id)).rejects.toThrow('DENIED');
+  await expect(officeWorkbooks('2026-11')).rejects.toThrow('DENIED');await expect(personalOfficeMail(privateMail.id)).rejects.toThrow('NOT_FOUND');
+  const context=await personalOfficeContext();expect(context.namespace).toContain(member.id);expect(JSON.stringify(context)).not.toContain('Director confidential');
+  as(megi);await expect(personalOfficeContext()).rejects.toThrow('DENIED');
+  member=await prisma.officeMember.findUniqueOrThrow({where:{id:member.id}});await saveOfficeMember({workerId:staff.id,title:'Accounting',enabled:true,workbooksEnabled:true,version:member.version});
+  auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});
+  const books=await officeWorkbooks('2026-11',staff.id);expect(books.summary[0].hours).toBe(7.5);expect(books.rows.reduce((n,r)=>n+r.totalHours,0)).toBe(7.5);expect(books.summary[0]).not.toHaveProperty('nationalId');
+  await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:staff.id,place:'staff',scopeId:'',level:'none'}});await expect(officeWorkbooks('2026-11')).rejects.toThrow('DENIED');
+  as(megi);member=await prisma.officeMember.findUniqueOrThrow({where:{id:member.id}});await saveOfficeMember({workerId:staff.id,title:'Accounting',enabled:true,workbooksEnabled:false,version:member.version});
+  auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});await expect(officeWorkbooks('2026-11')).rejects.toThrow('DENIED');
+ }finally{as(megi);await prisma.siteFile.deleteMany({where:{baustelleId:permitted.id}});await prisma.baustelle.deleteMany({where:{id:{in:[permitted.id,denied.id]}}});vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');}
 });

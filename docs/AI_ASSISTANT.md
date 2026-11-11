@@ -276,3 +276,9 @@ acceptance remain separate evidence.
 - Signals are forwarded to the operator's Redion Hub when `REDION_HUB_URL`
   and `REDION_HUB_KEY` are set (`src/lib/platform-signals/record.ts`).
   Optional `REDION_PLATFORM_NAME` overrides "BauFlow"/"BaumdienstFlow".
+
+Personal office chat is a separate employee-only route and member-owned history,
+not an extension of the director tool registry or global Worker Helper grant.
+See [OFFICE_TEAM.md](OFFICE_TEAM.md#purchasing-workspace-and-personal-assistant)
+for activation, fresh source filtering, document limitations and private history.
+It reuses the existing provider/cost adapter without granting business writes.

@@ -13,7 +13,7 @@ describe('private office contract',()=>{
  it('does not grant private notes or mail to an administrator outside the participant set',()=>{
   expect(canReadOfficeTask({kind:'NOTE',ownerId:'me'},'owner-admin')).toBe(false);
   expect(canReadOfficeTask({kind:'PERSONAL',ownerId:'me'},'me')).toBe(true);
-  expect(canReadOfficeTask({kind:'COMPANY',ownerId:'me'},'other-authorized-office-person')).toBe(true);
+  expect(canReadOfficeTask({kind:'COMPANY',ownerId:'me'},'other-authorized-office-person')).toBe(false);
   expect(isThreadParticipant({senderId:'a',recipientId:'b'},'owner-admin')).toBe(false);
  });
  it('restricts return routes to the two known office destinations',()=>{
