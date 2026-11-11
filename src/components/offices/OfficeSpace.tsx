@@ -1,34 +1,43 @@
 import Link from 'next/link';
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, FolderOpen, LayoutDashboard, LockKeyhole, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, FolderOpen, LayoutDashboard, LockKeyhole, UserRound, Mail, ListTodo } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { SupportedLanguage } from '@/lib/i18n/language';
 import { officeCopy } from '@/lib/offices/copy';
+import { officeWorkCopy } from '@/lib/offices/work-copy';
 import styles from './office.module.css';
+import { OfficeMailNotice } from './OfficeMailNotice';
 
-type Props = { room: 'reception' | 'megi'; lang: SupportedLanguage; companyName: string; ownDesk: boolean; admin: boolean; assistant?: ReactNode };
+type Props = { room: 'reception' | 'megi'; lang: SupportedLanguage; companyName: string; ownDesk: boolean; admin: boolean; assistant?: ReactNode; workEnabled?:boolean; ownName?:string; unread?:number };
 
 /** Pure presentation: receives no colleague records, mail, tasks or personal data. */
-export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant }: Props) {
+export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant,workEnabled=false,ownName,unread=0 }: Props) {
   const c = officeCopy(lang);
-  const occupantName = 'Megi';
+  const w = officeWorkCopy(lang);
+  const occupantName = ownName||'Megi';
+  const roomTitle=ownName?w.desk:c.megi;
   const reception = room === 'reception';
   const tools = reception || ownDesk;
+  const origin=reception||!workEnabled?'reception':'desk';
   const links = [
-    { href: '/workzone/plan', text: c.plan, Icon: CalendarDays, visible: admin },
+    { href: '/workzone/offices/me/mail', text: `${w.mail}${unread?` · ${unread}`:''}`, Icon: Mail, visible: workEnabled },
+    { href: '/workzone/offices/me/tasks', text: w.tasks, Icon: ListTodo, visible: workEnabled },
+    { href: `/workzone/plan?office=${origin}`, text: c.plan, Icon: CalendarDays, visible: admin },
     { href: admin ? '/app/baustellen' : '/workzone', text: c.documents, Icon: FolderOpen, visible: true },
     { href: '/app/dashboard', text: c.panel, Icon: LayoutDashboard, visible: admin },
     { href: admin ? '/app/profile' : '/workzone/profile', text: c.profile, Icon: UserRound, visible: true },
-  ].filter(x => x.visible);
+  ].filter(x => x.visible).map(x=>({...x,href:x.href.startsWith('/app/')?`${x.href}?office=${origin}`:x.href}));
   return <section className={styles.office} data-testid="office-space">
     <nav className={styles.breadcrumb} aria-label={c.offices}>
-      <Link href="/workzone"><ArrowLeft size={16} />{c.back}</Link>
+      <Link href={reception?'/workzone':'/workzone/offices'}><ArrowLeft size={16} />{reception?c.back:c.reception}</Link>
       <span aria-hidden="true">/</span>
-      {reception ? <span aria-current="page">{c.reception}</span> : <><Link href="/workzone/offices">{c.reception}</Link><span aria-hidden="true">/</span><span aria-current="page">{c.megi}</span></>}
+      {reception ? <span aria-current="page">{c.reception}</span> : <span aria-current="page">{roomTitle}</span>}
+      {workEnabled&&<Link href="/workzone/offices/me">{w.desk}<ArrowUpRight size={15}/></Link>}
     </nav>
     <header className={styles.heading}>
-      <div><p className={styles.eyebrow}><Building2 size={15} />{companyName}</p><h1>{reception ? c.welcome : c.megi}</h1><p>{reception ? c.subtitle : c.administration}</p></div>
+      <div><p className={styles.eyebrow}><Building2 size={15} />{companyName}</p><h1>{reception ? c.welcome : roomTitle}</h1><p>{reception ? c.subtitle : c.administration}</p></div>
       <span className={styles.hours}>{c.hours}</span>
     </header>
+    {workEnabled&&<OfficeMailNotice initial={unread} lang={lang}/>}
     <div className={`${styles.room} ${reception ? styles.reception : styles.personal}`}>
       <div className={styles.scenery} role="img" aria-label={c.room}>
         <div className={styles.floor} /><div className={styles.sunlight} />
@@ -58,6 +67,6 @@ export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant
         {links.map(({ href, text, Icon }) => <Link key={href} href={href}><span className={styles.appIcon}><Icon size={20} /></span><span>{text}</span><ArrowUpRight size={15} /></Link>)}
       </div>
       {assistant && <details className={styles.assistant}><summary>{c.assistant}</summary>{assistant}</details>}
-    </section> : <p className={styles.privacy}><LockKeyhole size={18} /><span>{c.privacy}</span></p>}
+    </section> : <div><p className={styles.privacy}><LockKeyhole size={18} /><span>{c.privacy}</span></p>{workEnabled&&<Link href="/workzone/offices/me/mail?compose=1" className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-card px-4 text-sm"><Mail size={18}/>{w.mail}<ArrowUpRight size={15}/></Link>}</div>}
   </section>;
 }

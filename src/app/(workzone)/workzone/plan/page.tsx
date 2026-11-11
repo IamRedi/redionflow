@@ -1,3 +1,7 @@
+import { officeReturn } from '@/lib/offices/work-policy';
+import { officeWorkCopy } from '@/lib/offices/work-copy';
+import { currentOfficeAccess } from '@/lib/offices/access';
+import type { SupportedLanguage } from '@/lib/i18n/language';
 import { assetPhotoUrl } from "@/lib/asset-photos/shared";
 import Link from "next/link";
 
@@ -28,27 +32,30 @@ function addDaysToKey(value: string, days: number) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 }
 
-function PlanHeader({ date, lang, canEdit }: { date: string; lang: string; canEdit: boolean }) {
+function PlanHeader({ date, lang, canEdit, office }: { date: string; lang: SupportedLanguage; canEdit: boolean; office?:string }) {
   const c = planCopy(lang);
+  const backHref=officeReturn(office)||"/workzone";
+  const backLabel=office?officeWorkCopy(lang)[office==="reception"?"reception":"desk"]:WORKZONE_LABEL;
+  const suffix=office?`&office=${office}`:"";
   const today = dateKey(new Date());
   const nav = "grid size-10 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition hover:bg-muted sm:size-11";
   return (
     <section className="rounded-3xl border bg-card p-3 shadow-sm max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-3 max-lg:rounded-none max-lg:border-x-0 max-lg:border-t-0 max-lg:bg-background/95 max-lg:pt-[max(0.75rem,env(safe-area-inset-top))] max-lg:backdrop-blur sm:p-5" data-testid="plan-header">
-      <Link href="/workzone" className="hidden text-xs text-muted-foreground hover:text-foreground lg:inline">← {WORKZONE_LABEL}</Link>
+      <Link href={backHref} className="hidden text-xs text-muted-foreground hover:text-foreground lg:inline">← {backLabel}</Link>
       <div className="flex items-center gap-2 lg:mt-1">
-        <Link href="/workzone" className="grid size-10 shrink-0 place-items-center rounded-full border bg-card shadow-sm hover:bg-muted lg:hidden" aria-label="Workzone" data-testid="plan-close"><ArrowLeft className="size-5" aria-hidden /></Link>
+        <Link href={backHref} className="grid size-10 shrink-0 place-items-center rounded-full border bg-card shadow-sm hover:bg-muted lg:hidden" aria-label={backLabel} data-testid="plan-close"><ArrowLeft className="size-5" aria-hidden /></Link>
         <CalendarDays className="hidden size-6 text-orange-600 dark:text-orange-400 lg:block" aria-hidden />
         <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{c.title}</h1>
         {canEdit ? <AccessKeyButton place="daily_plan" compact /> : null}
       </div>
       <div className="mt-2.5 flex items-center gap-2 sm:mt-3">
-        <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, -1))}`} className={nav} aria-label={c.previous} title={c.previous}><ChevronLeft className="size-5" /></Link>
+        <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, -1))}${suffix}`} className={nav} aria-label={c.previous} title={c.previous}><ChevronLeft className="size-5" /></Link>
         <span className="inline-flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border bg-background px-3 text-sm font-semibold capitalize sm:min-h-11 sm:flex-none" data-testid="plan-day">
           <span className="truncate">{planDayLabel(date, lang)}</span>
           {date === today ? <span className="shrink-0 rounded-full bg-orange-600 px-2 py-0.5 text-[11px] font-semibold normal-case text-white dark:bg-orange-500 dark:text-slate-950">{c.today}</span> : null}
         </span>
-        <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, 1))}`} className={nav} aria-label={c.next} title={c.next}><ChevronRight className="size-5" /></Link>
-        {date !== today ? <Link href={`/workzone/plan?date=${encodeURIComponent(today)}`} className="inline-flex min-h-10 shrink-0 items-center rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm hover:bg-muted sm:min-h-11">{c.today}</Link> : null}
+        <Link href={`/workzone/plan?date=${encodeURIComponent(addDaysToKey(date, 1))}${suffix}`} className={nav} aria-label={c.next} title={c.next}><ChevronRight className="size-5" /></Link>
+        {date !== today ? <Link href={`/workzone/plan?date=${encodeURIComponent(today)}${suffix}`} className="inline-flex min-h-10 shrink-0 items-center rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm hover:bg-muted sm:min-h-11">{c.today}</Link> : null}
       </div>
     </section>
   );
@@ -57,10 +64,11 @@ function PlanHeader({ date, lang, canEdit }: { date: string; lang: string; canEd
 /** On phones the plan is its own full screen (no Workzone bars); on desktop it stays in the page. */
 const FULL_SCREEN = "max-lg:fixed max-lg:inset-0 max-lg:z-[60] max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:bg-background max-lg:px-3 max-lg:[scrollbar-width:none] max-lg:[&::-webkit-scrollbar]:hidden";
 
-export default async function DailyPlanPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+export default async function DailyPlanPage({ searchParams }: { searchParams: Promise<{ date?: string; office?:string }> }) {
   const currentLang = await resolveRequestLanguage();
   const c = planCopy(currentLang);
   const params = await searchParams;
+  const office=officeReturn(params.office)&&await currentOfficeAccess()?params.office:undefined;
   const selectedDate = params.date && planDay(params.date) ? params.date : dateKey(new Date());
   const planDate = planDay(selectedDate)!;
 
@@ -68,7 +76,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
   if (!company) return null;
   const actor = await currentCompanyActor(company.id);
   // Everybody sees the saved plan; the key button gives "Vepron" (create and save).
-  if (!actor?.allows("daily_plan.view")) return <NoAccessHere backHref="/workzone" />;
+  if (!actor?.allows("daily_plan.view")) return <NoAccessHere backHref={officeReturn(office)||"/workzone"} />;
   const canEdit = actor.allows("daily_plan.edit");
 
   if (!canEdit) {
@@ -78,7 +86,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
     }));
     return (
       <div className={`mx-auto w-full min-w-0 max-w-5xl space-y-4 max-lg:pb-8 ${FULL_SCREEN}`} data-testid="daily-plan-view" data-phone-fullscreen>
-        <PlanHeader date={selectedDate} lang={currentLang} canEdit={false} />
+        <PlanHeader office={office} date={selectedDate} lang={currentLang} canEdit={false} />
         <SavedPlanList rows={saved?.savedRows ?? []} c={c} me={actor.name} />
       </div>
     );
@@ -223,7 +231,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className={`w-full min-w-0 space-y-4 max-lg:pb-28 ${FULL_SCREEN}`} data-testid="daily-plan-page" data-phone-fullscreen>
-      <PlanHeader date={selectedDate} lang={currentLang} canEdit />
+      <PlanHeader office={office} date={selectedDate} lang={currentLang} canEdit />
 
       {plan ? (
         <DailyPlanBoard

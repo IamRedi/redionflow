@@ -2,7 +2,10 @@
 
 VO-ALSTEEL-001, first implementation slice, 11 November 2026.
 Prepared from production `61da78ccc78d2acf39c255bd3410bb1f803ebc25` (PR149).
-This is a review candidate, not a production activation.
+Phase B shipped as PR150 / merge `1dfb0ef` on 11 November 2026. Reception and
+Megi's room are enabled only for the two explicitly configured existing people.
+The next candidate (private mail and office work) is described in
+[OFFICE_WORK.md](OFFICE_WORK.md); its separate feature flag is off by default.
 
 ## Scope
 
@@ -19,7 +22,8 @@ Phone shortcuts remain ordinary readable touch controls outside the scenery.
 
 Reception offers shortcuts to the caller's existing operational workspace.
 Megi's own room shows her work shortcuts; Almet visiting it sees only the room
-and privacy explanation. No colleague profile, task, hours, document or message
+and privacy explanation. With office work enabled, visitors also get a Posta
+compose shortcut to the other authorized person. No colleague profile, task, hours, document or message
 is fetched by the office page or included in its RSC payload. Existing target
 pages retain their own authorization. Worker identities never get admin links.
 
@@ -46,8 +50,8 @@ Every page checks authorization independently; a copied deep link is not access.
 For approved release, resolve the actual existing Megi and Almet account IDs
 in AL Steel, confirm their company/active status, and configure only those IDs
 in Railway `alsteel-bauflow / app / production`. Do not create, merge or promote
-accounts to make them fit. Account mapping and activation are pending release,
-not inferred from a display name. Remove this variable to close the module;
+accounts to make them fit. The initial mapping is now active; never infer new
+access from a display name. Remove this variable to close the module;
 rolling back the app also removes the feature. No migration or data rollback.
 
 Before any production deployment, recheck the current source and the historical
@@ -88,12 +92,10 @@ translation coverage assertion. The shared Workzone layout rejects mixed admin
 and worker sessions before its company lookup, preventing an existing tenant
 error during denied office requests; no valid login changes.
 
-Native presentation/showcase/portfolio: no office availability is advertised
-while this private feature is awaiting owner review and activation. The current
-production feature set is unchanged. Public milestone copy/media remain
-PENDING_OWNER_ACCEPTANCE/PENDING_PUBLICATION; do not raise maturity or publish
-screenshots with real company/user records. Review candidate screenshots use
-the fictional Mira Steel DEMO fixture. No public presentation sync is claimed.
+Native presentation/showcase/portfolio: PR151, PR152 and portfolio PR78 were
+approved and published on 11 November 2026 for phase B. Public screenshots use
+the fictional Mira Steel DEMO fixture. The new private work/mail candidate is
+not advertised as live. Do not publish real company/user records or raise maturity.
 
 Canonical owner plan:
 https://docs.google.com/document/d/1Rlkicmu028ndhYL42XkwbWYNpTNohUAYO_zxwoHi1eE

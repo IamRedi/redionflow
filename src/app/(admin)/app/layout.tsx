@@ -1,3 +1,4 @@
+import { OfficeReturnBar } from '@/components/offices/OfficeReturnBar';
 import { LogOut, SunMoon, UserRound } from "lucide-react";
 import Link from "next/link";
 import { OfficeEntry } from '@/components/offices/OfficeEntry';
@@ -182,7 +183,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
         <div className={production ? 'contents' : 'min-w-0'}>
           <LiveRefreshListener enabled />
-          <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'print:px-0 print:py-0'}>{production ? <><div className={workspace.page}>{children}</div><RediOnFooter /></> : children}</main>
+          <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'print:px-0 print:py-0'}>{production ? <><div className={workspace.page}><OfficeReturnBar />{children}</div><RediOnFooter /></> : children}</main>
           {!production && <RediOnFooter />}
         </div>
         {production && <AdminFleet production machines={machines} isAdmin showCones={showCones} country={country} />}
