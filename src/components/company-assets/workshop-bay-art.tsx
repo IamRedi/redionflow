@@ -2,7 +2,7 @@ import type { RepairPhase } from '@/lib/company-assets/types';
 
 /** Decorative workshop bays, using the existing fleet's steel/orange SVG palette. */
 export function WorkshopBayArt({ phase }: { phase: RepairPhase }) {
-  return <svg viewBox="0 0 320 104" fill="none" aria-hidden="true" className="h-24 w-full">
+  return <svg data-studio-sketch viewBox="0 0 320 104" fill="none" aria-hidden="true" className="h-24 w-full">
     <path d="M22 36 160 8l138 28" stroke="currentColor" strokeWidth="5" className="text-slate-400 dark:text-slate-600"/>
     <path d="M32 98V36h256v62" fill="currentColor" className="text-slate-200 dark:text-slate-800"/>
     <path d="M53 98V48h214v50" fill="currentColor" className="text-slate-100 dark:text-slate-900"/>

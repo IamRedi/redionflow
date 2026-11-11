@@ -1,5 +1,50 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
+## Workzone photographic materials — owner redesign, 12 November 2026
+
+The owner extended the accepted Office Studio quality and warm artwork palette
+to steel Workzone: photorealistic industrial environments, warm limestone,
+natural steel, muted teal, copper details and restrained frosted glass. This is
+an explicitly requested visual baseline; the admin dashboard's data/metrics,
+permissions, operational workflows and office-private AI are unchanged.
+
+The authenticated steel layout sets `data-steel-studio`. Its scoped body tokens
+also reach existing dialog portals and naturally disappear outside that layout.
+Shared Button/Card components only gain neutral presentation hooks; classic
+companies retain their existing appearance and illustrations. The stationary
+header/team wrapper stays transparent and the footer remains at the true end
+of the content scroll region. Office scenes retain their accepted layout.
+
+Four static WebPs in `public/steel-studio-v1` provide a fictional construction
+site, fabrication hall, workshop and six distinct production close-ups. They
+total 652,082 bytes, with original/final hashes and prompts in provenance.json.
+Built-in generation did not expose a model identity or use any client records.
+These are decorative environments, not photographs of the company's premises,
+equipment, actual progress or engineering instructions. No runtime generation,
+provider, dependency, feature activation, migration or private-file cache is
+added. Uploaded site/factory/vehicle photos always take precedence. Missing
+vehicle/tool photos use quiet native outline placeholders rather than invented
+photographs of a specific asset. Classic SVG fallbacks are preserved outside
+the steel layout; factory close-ups use the actual process key rather than its
+legacy drawing alias (notably cleaning versus drilling).
+
+Phone site cards use a stable two-column flow with natural variable row heights;
+saved free-placement data is retained and desktop dragging remains available.
+Photo cards open the existing site, note and location actions. Primary actions
+keep 44px touch targets, with a balanced second action row when a note is present.
+The workshop has a continuous photographic background and compact frosted phase
+columns; current reports, accepted/repairing/ready states, external repair,
+history, photos and existing role checks remain intact. Process counts and
+status colors are not fabricated or merged into new totals.
+
+Acceptance covers before/after desktop, narrow and landscape in light/dark:
+site cards and daily archive, factory totals/steps, fleet search/grid, workshop
+queue/detail, map navigation, uploaded-photo preservation, header/footer flow,
+reachable non-overlapping phone controls and classic-company isolation. Exact
+revision/executed results belong in the release PR and private continuity record;
+physical PWA acceptance remains separate. Public presentations remain deferred
+under the owner's existing decision.
+
 This candidate replaces the generic dashboard for BauFlow companies with steel
 projects/workshops. Baumdienst keeps its existing dashboard. It is prepared over
 pilot d56173b; publication requires owner approval under AGENTS.md. No real data,

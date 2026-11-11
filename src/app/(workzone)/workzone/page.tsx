@@ -364,6 +364,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
     <div className="space-y-4">
       <OfficeEntry lang={currentLang} compact />
       <WorkzoneMissionControl
+        realistic={mode === "bau" && allSites.some(site => isSteelSiteType(site.type))}
         fleetLocations={fleetLocations}
         initialMap={initialMap}
         gpsSyncAvailable={wanwayEnabled() && Boolean(admin || worker)}

@@ -48,10 +48,10 @@ export function FactoryPanel({
   const pct = total.pieces > 0 ? Math.round((total.donePieces / total.pieces) * 100) : 0;
 
   return (
-    <section id="fabrika" className="scroll-mt-4 overflow-hidden rounded-3xl border bg-card shadow-sm">
-      <div className="relative overflow-hidden border-b">
+    <section data-studio-surface id="fabrika" className="scroll-mt-4 overflow-hidden rounded-3xl border bg-card shadow-sm">
+      <div data-studio-factory-hero className="relative overflow-hidden border-b">
         <div className="absolute inset-0"><AssetPhoto key={`${factoryId}:${photoUrl}`} kind="site" id={factoryId} src={photoUrl} alt={factoryName} canEdit={canEditPhoto}><SteelSiteArt type="STEEL_WORKSHOP" pct={pct} live={inFactory > 0} fit="meet" className="absolute inset-0 h-full w-full" /></AssetPhoto></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-card via-card/85 to-transparent" />
+        <div data-studio-hero-shade className="absolute inset-0 bg-gradient-to-r from-card via-card/85 to-transparent" />
         <div className="relative flex min-h-[150px] flex-col justify-end gap-2 p-4 sm:p-6">
           <span className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400">{t("factory.title", lang)}</span>
           <h2 className="text-2xl font-bold tracking-tight">{factoryName}</h2>

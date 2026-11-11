@@ -10,6 +10,7 @@ import { AssetLookup } from './asset-lookup';
 import { WorkshopBayArt } from './workshop-bay-art';
 import { AssetFeedback, AssetLoading, AssetPicture, AssetSearch, assetButton, assetIdentity, assetTime, useAssetSnapshot } from './shared';
 import { AccessKeyButton } from '@/components/access/access-key-button';
+import {SteelEnvironmentPhoto} from '@/components/steel/studio-art';
 
 const phases: Exclude<RepairPhase, 'cancelled'>[] = ['reported', 'received', 'repairing', 'ready'];
 
@@ -28,6 +29,7 @@ export function WorkshopWorkspace({ initialAsset, embedded = false }: { initialA
 
   return <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="workshop-workspace" aria-busy={data.loading}>
     <div className="no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-5" data-testid="workshop-scroll">
+    <div data-studio-workshop-scene hidden aria-hidden="true"><SteelEnvironmentPhoto kind="workshop"/></div>
     <div className="flex min-w-0 flex-wrap items-center gap-2 pb-3 sm:gap-3">
       {!embedded ? <h1 className="flex min-w-0 items-center gap-2 text-xl font-semibold"><Wrench size={21} className="text-orange-600 dark:text-orange-400" />{c.workshop}</h1> : null}
       <div className="min-w-[min(100%,12rem)] flex-1"><AssetSearch value={query} onChange={value => { setQuery(value); setPhase(null); }} label={c.search} /></div>
@@ -46,7 +48,7 @@ export function WorkshopWorkspace({ initialAsset, embedded = false }: { initialA
       {data.snapshot ? <div className="grid min-w-0 items-start gap-4 xl:grid-cols-4">
         {phases.map(key => {
           const repairs = rows.filter(repair => repair.phase === key);
-          return <section key={key} id={`workshop-phase-${key}`} aria-label={c[key]} className={`min-w-0 overflow-hidden rounded-2xl border bg-card ${visiblePhase === key ? 'block' : 'hidden xl:block'}`}>
+          return <section data-studio-workshop-phase={key} key={key} id={`workshop-phase-${key}`} aria-label={c[key]} className={`min-w-0 overflow-hidden rounded-2xl border bg-card ${visiblePhase === key ? 'block' : 'hidden xl:block'}`}>
             <WorkshopBayArt phase={key}/>
             <h2 className="mx-3 mb-3 flex min-h-11 items-center justify-between gap-2 border-b px-1 pb-2 text-sm font-semibold">
               <span className="min-w-0 break-words">{c[key]}{key === 'ready' ? <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{c.history}</span> : null}</span>

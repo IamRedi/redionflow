@@ -35,7 +35,7 @@ export function WorkzoneMapIndex({ items, vehicles, focus, onFocus }: {
       </div>
     </div>;
   }
-  return <aside className={`${styles.index} no-scrollbar`} tabIndex={0} aria-label={t('workzone.focus', lang)} data-testid="workzone-map-index">
+  return <aside data-studio-surface className={`${styles.index} no-scrollbar`} tabIndex={0} aria-label={t('workzone.focus', lang)} data-testid="workzone-map-index">
     <section aria-labelledby="map-index-sites"><h3 id="map-index-sites"><HardHat size={14} /><span>{c.sites}</span><small>{items.length}</small></h3>
       <div>{items.map(i => row('site', i.id, i.name, i.coordinates, i.standortAddress))}</div>
     </section>
