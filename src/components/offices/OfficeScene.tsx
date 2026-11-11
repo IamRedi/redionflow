@@ -2,7 +2,7 @@ import type {ReactNode} from 'react';
 import s from './office.module.css';
 
 export type OfficeDoor={id:string;name:string;title:string;href:string;enabled:boolean};
-export type OfficeObject={kind:'mail'|'tasks'|'documents'|'calendar'|'workbooks';label:string;href:string;count?:number};
+export type OfficeObject={kind:'mail'|'tasks'|'documents'|'calendar'|'workbooks'|'assistant';label:string;href:string;count?:number;shortLabel?:string};
 function Door({person,x,y,width,height}:{person:OfficeDoor;x:number;y:number;width:number;height:number}){
  const words=person.name.split(' '),first=words.shift(),last=words.join(' ');
  const dw=height*.65,dx=(width-dw)/2,font=height<100?8.5:12;
@@ -18,7 +18,7 @@ function Door({person,x,y,width,height}:{person:OfficeDoor;x:number;y:number;wid
  </g></a>;
 }
 function ObjectLink({item,x,y,children}:{item:OfficeObject;x:number;y:number;children:ReactNode}){
- return <a href={item.href} aria-label={item.label} className={s.sceneLink}><g transform={`translate(${x} ${y})`}><title>{item.label}</title><rect y="-4" width="130" height="64" fill="transparent"/>{children}</g></a>;
+ return <a href={item.href} aria-label={item.label} className={s.sceneLink}><g transform={`translate(${x} ${y})`}><title>{item.label}</title><rect y="-4" width="64" height="100" fill="transparent"/>{children}</g></a>;
 }
 /** Native SVG objects reuse the room's oak, glass, paper and steel palette. */
 export function OfficeScene({reception,company,name,title,doors,objects,doorPage=0,sq}:{reception:boolean;company:string;name:string;title:string;doors:OfficeDoor[];objects:OfficeObject[];doorPage?:number;sq:boolean}){
@@ -38,8 +38,9 @@ export function OfficeScene({reception,company,name,title,doors,objects,doorPage
     return <Door key={p.id} person={p} x={(mobile?22:45)+(i%cols)*(width+gap)} y={(mobile?210:226)+Math.floor(i/cols)*(height+(mobile?6:12))} width={width} height={height}/>;
    })}</g>}
    {!reception&&objects.map(item=>{
+    if(item.kind==='assistant')return <ObjectLink key={item.kind} item={item} x={W*.4} y={396}><rect width={W*.22} height="96" rx="5" fill="var(--frame)"/><rect x={W*.02} y="12" width={W*.18} height="66" rx="2" fill="#446c67"/><text x={W*.11} y="52" textAnchor="middle" style={{fill:'#f1f6ef',fontSize:mobile?12:18}}>{sq?'Asistenti':'Assistant'}</text></ObjectLink>;
     if(item.kind==='calendar')return <ObjectLink key={item.kind} item={item} x={mobile?202:570} y={mobile?166:164}><rect width={mobile?130:172} height="154" rx="6" fill="var(--paper)"/><path d={`M0 20H${mobile?130:172}`} stroke="#ad7049" strokeWidth="27"/><path d="M25 0V16M100 0V16" stroke="var(--frame)" strokeWidth="5"/><text x="16" y="56" className={s.objectLabel}>{item.label}</text>{[0,1,2].map(r=>[0,1,2,3].map(c=><rect key={`${r}${c}`} x={18+c*26} y={70+r*23} width="16" height="13" rx="2" fill={r===1&&c===2?'#658b77':'#919b8e'} opacity=".5"/>))}</ObjectLink>;
-    if(item.kind==='documents')return <ObjectLink key={item.kind} item={item} x={mobile?45:275} y={441}><path d="M0 12H24L30 4H115V72H0Z" fill="#c7ac76" stroke="#9b7e4b"/><path d="M0 24H119L111 79H0Z" fill="#e2ce9b" stroke="#a18b5d"/><text x="10" y="49" className={s.objectLabel}>{sq?'Dokumentet':'Documents'}</text><path d="M10 60H75" stroke="#9b7e4b" strokeWidth="2"/></ObjectLink>;
+    if(item.kind==='documents')return <ObjectLink key={item.kind} item={item} x={mobile?45:275} y={441}><path d="M0 12H24L30 4H115V72H0Z" fill="#c7ac76" stroke="#9b7e4b"/><path d="M0 24H119L111 79H0Z" fill="#e2ce9b" stroke="#a18b5d"/><text x="10" y="49" className={s.objectLabel}>{item.shortLabel??(sq?'Dokumentet':'Documents')}</text><path d="M10 60H75" stroke="#9b7e4b" strokeWidth="2"/></ObjectLink>;
     if(item.kind==='tasks')return <ObjectLink key={item.kind} item={item} x={mobile?42:340} y={mobile?187:196}><rect width="120" height="156" rx="4" fill="#bba583"/><rect x="7" y="11" width="106" height="135" rx="3" fill="var(--paper)"/><rect x="38" y="-4" width="45" height="16" rx="4" fill="var(--frame)"/><text x="16" y="41" className={s.objectLabel}>{sq?'Detyrat':'Tasks'}</text>{[66,91,116].map(y=><g key={y}><rect x="18" y={y} width="12" height="12" rx="2" fill="none" stroke="#8a948c"/><path d={`M40 ${y+5}H94`} stroke="#8a948c" strokeWidth="3"/></g>)}</ObjectLink>;
     if(item.kind==='mail')return <ObjectLink key={item.kind} item={item} x={mobile?257:835} y={mobile?422:393}><rect x="-7" y="-12" width="125" height="110" rx="3" fill="var(--oak)"/><path d="M0 9H109V78H0Z" fill="var(--paper)" stroke="#b6b2a3"/><path d="M0 9L54 48 109 9M0 78L39 43M109 78L70 43" fill="none" stroke="#b6b2a3" strokeWidth="2"/><text x="54" y="105" textAnchor="middle" className={s.sceneLabel}>{item.label}{item.count?` · ${item.count}`:''}</text></ObjectLink>;
     return <ObjectLink key={item.kind} item={item} x={mobile?249:715} y={550}><rect width="126" height="51" rx="3" fill="var(--oak-light)" stroke="var(--oak)"/><path d="M42 8H84" stroke="var(--frame)" strokeWidth="3"/><text x="63" y="34" textAnchor="middle" className={s.objectLabel}>{sq?'Fletoret':'Workbooks'}</text></ObjectLink>;

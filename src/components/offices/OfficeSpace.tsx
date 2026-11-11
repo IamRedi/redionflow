@@ -7,16 +7,17 @@ import {OfficeScene,type OfficeDoor,type OfficeObject} from './OfficeScene';
 import {RediOnFooter} from '@/components/branding/RediOnFooter';
 import s from './office.module.css';
 
-type Props={room:'reception'|'megi';lang:SupportedLanguage;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean};
-export function OfficeSpace({room,lang,companyName,ownDesk,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false}:Props){
+type Props={room:'reception'|'megi';lang:SupportedLanguage;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean};
+export function OfficeSpace({room,lang,companyName,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false}:Props){
  const c=officeCopy(lang),w=officeWorkCopy(lang),sq=lang==='sq',reception=room==='reception',name=ownName||'Megi',tools=ownDesk||!!previewBase;
  const base=previewBase||'/workzone/offices/me';
  const href=(view:string)=>previewBase?`${base}?view=${view}`:`${base}/${view==='documents'?'resources':view}`;
  const objects:OfficeObject[]=tools?[
   ...(!previewBase&&workEnabled?[{kind:'mail' as const,label:w.mail,href:href('mail'),count:unread}]:[]),
   ...(workEnabled?[{kind:'tasks' as const,label:w.tasks,href:href('tasks')}]:[]),
-  {kind:'documents',label:c.documents,href:href('documents')},
+  {kind:'documents',label:workProfile==='PURCHASING'?(sq?'Projektet & blerjet':'Projects & purchasing'):c.documents,href:href('documents'),shortLabel:workProfile==='PURCHASING'?(sq?'Projektet':'Projects'):(sq?'Dokumentet':'Documents')},
   ...(planEnabled?[{kind:'calendar' as const,label:c.plan,href:previewBase?href('plan'):'/workzone/plan?office=desk'}]:[]),
+  ...((assistantEnabled||admin&&ownDesk)?[{kind:'assistant' as const,label:admin?(sq?'Asistenti i firmës':'Company assistant'):(sq?'Asistenti personal':'Personal assistant'),href:'/workzone/offices/me/assistant'}]:[]),
   ...(workbooksEnabled?[{kind:'workbooks' as const,label:sq?'Fletoret e punëtorëve':'Staff workbooks',href:href('workbooks')}]:[]),
  ]:[];
  return <section className={`fixed ${s.nativeOffice}`} data-testid="office-space" data-office-fullscreen>

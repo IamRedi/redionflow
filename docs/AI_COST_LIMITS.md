@@ -119,4 +119,16 @@ Local release verification also repairs three pre-existing Windows test path/quo
 
 The existing admin integration test now passes the empty page-props object Next supplies. Its cross-tenant deletion assertions are unchanged.
 
+## Personal office assistant
+
+The independently authorized `/api/offices/assistant` route uses the existing
+worker-tier `assistantGeneration` and shared `reserveAssistantQuota` ledger.
+It does not introduce a model, budget override, retry loop or extra tool step.
+Request IDs deduplicate replay before another quota reservation/provider call.
+Document extraction happens after quota admission; failed attempts retain their
+reservation. At most three explicitly selected files, each at most 2 MiB, enter
+bounded extraction; only trimmed text fits the existing model input envelope.
+Private OfficeAssistantTurn records contain source references and sanitized
+diagnostics, separately from the company assistant's conversation tables.
+
 Local laptop verification, 7 November 2026: 1,087 unit tests passed, one pre-existing skip; 18 integration tests passed on the separate disposable quota/tenant fixture (20 accepted, 21st denied, UTC next-day rollover, concurrent actor/company limits and unchanged tenant-security assertions). TypeScript, production webpack build and ESLint passed. No paid provider calls, production business writes, secrets or environment changes were used. The standard Turbopack build cannot resolve the existing local dependency junction; webpack is the verified local builder. Deployment/readback evidence is separate from these checks.

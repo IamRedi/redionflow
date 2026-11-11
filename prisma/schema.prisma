@@ -252,6 +252,7 @@ model User {
 }
 
 model CompanyProfile {
+  officeAssistantTurns OfficeAssistantTurn[]
   officeMembers OfficeMember[]
   officeCategories OfficeCategory[]
   officeTasks OfficeTask[]
@@ -350,6 +351,9 @@ model CompanyProfile {
 // Office records are separate from operational tasks/documents. Identity is the
 // canonical configured admin account, shared by that person's admin/PIN logins.
 model OfficeMember {
+  workProfile String @default("GENERAL")
+  assistantEnabled Boolean @default(false)
+  assistantTurns OfficeAssistantTurn[]
   workbooksEnabled Boolean @default(false)
   id String @id @default(uuid())
   companyProfileId String
@@ -369,6 +373,24 @@ model OfficeMember {
   @@unique([companyProfileId,id])
   @@unique([companyProfileId,userId])
   @@unique([companyProfileId,workerId])
+}
+
+model OfficeAssistantTurn {
+  id String @id
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId],references:[id],onDelete:Cascade,onUpdate:NoAction)
+  memberId String
+  member OfficeMember @relation(fields:[companyProfileId,memberId],references:[companyProfileId,id],onDelete:Restrict,onUpdate:NoAction)
+  conversationId String
+  requestHash String
+  question String
+  answer String @default("")
+  status String @default("pending")
+  sources Json?
+  diagnostics Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  @@index([companyProfileId,memberId,conversationId,createdAt],map:"OfficeAssistantTurn_owner_conversation_idx")
 }
 
 model OfficeCategory {

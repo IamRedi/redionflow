@@ -64,9 +64,9 @@ desktop/phone/light/dark/landscape and overflow are checked in the browser.
 
 Owner decision: presentation/portfolio updates are deferred until the next
 agreed development milestone. No new marketing companion PRs for this task.
-Contextual AI, time-context switching, decorative personalization and optional
-external engines remain separate planned stages; this development does not
-activate them or change real attendance or official project records.
+Time-context switching, decorative personalization and optional external engines
+remain separate planned stages. Office work never rewrites real attendance or
+official project records.
 
 ## Resource drawers
 
@@ -94,7 +94,7 @@ plan is kept privately outside Git, based on the owner's staff workbook and
 fresh read-only active staff/access inventory. Personal names and account IDs
 must not enter public source, screenshots or examples.
 
-## Personal assistant boundary — sources prepared, chat not activated
+## Purchasing workspace and personal assistant
 
 `personal-context.ts` defines an employee-only namespace per tenant/member and
 rechecks office and operational permissions on each call. Its sources are the
@@ -103,10 +103,39 @@ explicitly requested site file metadata. Reading a mailbox body requires a
 specific participating thread and does not mark it read. File contents are not
 OCR-read. Director identities are rejected by this personal source interface.
 
-There is no import of director tool registries, director conversation history or
-global assistant context. Task descriptions/mail/filenames remain untrusted
-data. This stage performs no paid generation and does not activate employee AI.
-The next stage must use a dedicated employee chat endpoint and actor-owned
-conversation/history tables, a separate explicit enable switch, the existing
-cost limits, and source filtering for every tool call. Reusing the provider
-adapter is permitted; sharing a director conversation or privilege is not.
+The PURCHASING work profile changes the room's project folder and the assistant's
+work focus, never operational permissions. Project folders reuse the native
+site files and phase-document components, including their upload permissions.
+There is no duplicate material/document store. Directors preview these permitted
+company resources but cannot read the employee's personal assistant history.
+
+The separate `/api/offices/assistant` endpoint requires an active employee office,
+`VIRTUAL_OFFICE_AI_ENABLED=true` and that membership's `assistantEnabled` switch.
+It rejects directors and stores questions, answers, source references/hashes and
+sanitized diagnostics in OfficeAssistantTurn, protected by tenant AND member RLS.
+The room's monitor opens this private chat; directors retain their existing
+company assistant. No director tools, global context or director history are
+imported into the employee route.
+
+Each request reads fresh permitted projects and the employee's own tasks, with
+optional project metadata and up to three explicitly selected files. Text PDFs
+(20 pages maximum) and Excel/CSV (first worksheet, at most 500 rows) are bounded
+to 2 MiB per file and truncated with explicit limitations. Scanned documents and
+unsupported formats remain metadata-only: no OCR or invented contents. Reading
+a phase document for AI does not create an E mora receipt. Source text is
+untrusted evidence, never authority or instructions. Offer comparisons must
+identify missing specifications, units, currency, tax and delivery terms; they
+cannot place orders, approve spending, infer prices or browse suppliers.
+
+Generation reuses the existing worker-tier provider adapter and unchanged shared
+company/person quotas: one step, no provider retries, existing timeout/input/output
+ceilings. The request is archived before provider access. A UUID request ID and
+content hash deduplicate uncertain network retries; conversations are private to
+their owner and every fresh request rechecks access. Current document selection
+is rechecked after parsing. History shows up to 30 turns per selected conversation
+and 20 recent conversations; previous assistant answers are never evidence.
+
+AL Steel's reviewed private office recipe prepares existing staff only. Initial
+employee activation is limited to the purchasing office; other prepared rooms
+can be reviewed and activated by the configured directors. No account roles,
+PINs, global Helper flags or project permissions change during this activation.

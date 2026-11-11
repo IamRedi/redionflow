@@ -14,18 +14,18 @@ export async function officeResourceAccess(previewId?:string){
  return withTenantContext(actor.companyId,async tx=>{
   const subject:AccessSubject|null=preview?await loadWorkerAccess(tx,actor.companyId,preview.member.workerId!):actor.kind==='admin'?{kind:'admin'}:await loadWorkerAccess(tx,actor.companyId,actor.id);
   if(!subject)throw new OfficeError('DENIED');
-  const membership=preview?.member??await tx.officeMember.findFirst({where:{id:actor.principalId,companyProfileId:actor.companyId},select:{workbooksEnabled:true}});
+  const membership=preview?.member??await tx.officeMember.findFirst({where:{id:actor.principalId,companyProfileId:actor.companyId},select:{workbooksEnabled:true,workProfile:true,assistantEnabled:true}});
   const staffDenied=subject.kind==='worker'&&subject.grants.some(g=>g.place==='staff'&&g.scopeId===''&&g.level==='none');
-  return {actor,subject,workbooks:!preview&&actor.manager||!staffDenied&&(!!membership?.workbooksEnabled||can(subject,'staff.view'))};
+  return {actor,subject,profile:membership?.workProfile??'GENERAL',assistant:!preview&&!actor.manager&&!!membership?.assistantEnabled&&process.env.VIRTUAL_OFFICE_AI_ENABLED==='true',workbooks:!preview&&actor.manager||!staffDenied&&(!!membership?.workbooksEnabled||can(subject,'staff.view'))};
  });
 }
 /** No title/category inference: every module and site is filtered by its real key. */
 export async function officeResources(previewId?:string){
- const {actor,subject,workbooks}=await officeResourceAccess(previewId);
+ const {actor,subject,workbooks,profile,assistant}=await officeResourceAccess(previewId);
  return withTenantContext(actor.companyId,async tx=>{
   if(await tx.baustelle.count({where:{companyProfileId:actor.companyId}})>500)throw new OfficeError('LIMIT');
   const sites=await tx.baustelle.findMany({where:{companyProfileId:actor.companyId},select:{id:true,name:true,type:true},orderBy:{name:'asc'}});
-  return {workbooks,sites:sites.filter(s=>can(subject,'site.view',s.id)).map(s=>({...s,documents:can(subject,'site.documents',s.id),factory:can(subject,'factory.view',s.id),productionWrite:can(subject,'factory.steps',s.id),field:can(subject,'field.view',s.id),costs:can(subject,'costs.view',s.id),details:can(subject,'site.details',s.id)})),plan:can(subject,'daily_plan.view'),warehouse:can(subject,'warehouse.view'),workshop:can(subject,'workshop.view'),fleet:can(subject,'fleet_gps.view')};
+  return {workbooks,profile,assistant,sites:sites.filter(s=>can(subject,'site.view',s.id)).map(s=>({...s,documents:can(subject,'site.documents',s.id),factory:can(subject,'factory.view',s.id),productionWrite:can(subject,'factory.steps',s.id),field:can(subject,'field.view',s.id),costs:can(subject,'costs.view',s.id),details:can(subject,'site.details',s.id)})),plan:can(subject,'daily_plan.view'),warehouse:can(subject,'warehouse.view'),workshop:can(subject,'workshop.view'),fleet:can(subject,'fleet_gps.view')};
  });
 }
 export async function officeSiteFiles(siteId:string,previewId?:string){

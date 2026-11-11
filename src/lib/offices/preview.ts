@@ -10,7 +10,7 @@ export async function officePreviewTarget(id:string){
  if(!actor.manager||process.env.VIRTUAL_OFFICE_TEAM_ENABLED!=='true')throw new OfficeError('DENIED');
  const member=await withTenantContext(actor.companyId,tx=>tx.officeMember.findFirst({
   where:{id,companyProfileId:actor.companyId,worker:{status:'active'}},
-  select:{id:true,workerId:true,title:true,enabled:true,workbooksEnabled:true,worker:{select:{firstName:true,lastName:true}}},
+  select:{id:true,workerId:true,title:true,enabled:true,workbooksEnabled:true,workProfile:true,assistantEnabled:true,worker:{select:{firstName:true,lastName:true}}},
  }));
  if(!member?.workerId||!member.worker)throw new OfficeError('NOT_FOUND');
  return {actor,member,name:`${member.worker.firstName} ${member.worker.lastName}`};
