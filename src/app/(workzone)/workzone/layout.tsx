@@ -1,5 +1,6 @@
 import { currentMaySeePrivateVehicles } from "@/lib/fleet/private-vehicles";
 import type { ReactNode } from "react";
+import { notFound } from 'next/navigation';
 import { LiveRefreshListener } from "@/components/realtime/live-refresh-listener";
 import { FlowTopBar } from "@/components/shell/FlowTopBar";
 import { RediOnFooter } from "@/components/branding/RediOnFooter";
@@ -23,6 +24,8 @@ import { currentCompanyActor } from "@/lib/site-files/actor";
 export default async function WorkzoneLayout({ children }: { children: ReactNode }) {
   await autoCloseForgottenDaySessions();
   const [admin, worker] = await Promise.all([getCurrentAdmin(), getCurrentWorker()]);
+  // Mixed sessions have no tenant. Stop before the shared company shell lookup.
+  if (admin && worker) notFound();
   if (isSaasMode && !admin && !worker) {
     return (
       <div className="min-h-dvh overflow-x-hidden bg-background text-foreground">

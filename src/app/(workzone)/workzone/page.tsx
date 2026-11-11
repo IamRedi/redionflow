@@ -2,6 +2,7 @@ import { batchQuantity, currentMaySeeWeights, withoutWeights } from "@/lib/steel
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { plannedSiteNotes } from "@/lib/workzone/plan-site";
 import Link from "next/link";
+import { OfficeEntry } from '@/components/offices/OfficeEntry';
 import { ClipboardList } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -361,6 +362,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
 
   return (
     <div className="space-y-4">
+      <OfficeEntry lang={currentLang} />
       <WorkzoneMissionControl
         fleetLocations={fleetLocations}
         initialMap={initialMap}
