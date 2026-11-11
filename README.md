@@ -193,11 +193,13 @@ Die Fahrzeugkarte bündelt Datenbearbeitung, Foto und Dokumentfristen. Die Werks
 
 ## Empfang und Bürozugang · 11. November 2026
 
-BauFlow bietet einen Empfang und ein Verwaltungsbüro für ausdrücklich freigeschaltete Konten im realen Firmenbetrieb ([PR150](https://github.com/IamRedi/redionflow/pull/150)). Der Raum öffnet den bestehenden Tagesplan, Baustellenakten und das Dashboard am Rechner und Handy. Besucher erhalten keine privaten Kollegendaten; andere Administratoren erhalten nicht automatisch Zugang. Private Post, persönliche Aufgaben und Bürozeit-Kontext folgen später. Die öffentlichen Demos bleiben unverändert.
+BauFlow bietet einen Empfang und ein Verwaltungsbüro für ausdrücklich freigeschaltete Konten im realen Firmenbetrieb ([PR150](https://github.com/IamRedi/redionflow/pull/150)). Der Raum öffnet den bestehenden Tagesplan, Baustellenakten und das Dashboard am Rechner und Handy. Besucher erhalten keine privaten Kollegendaten; andere Administratoren erhalten nicht automatisch Zugang. [PR153](https://github.com/IamRedi/redionflow/pull/153) ergänzt interne Post mit Anhängen, private Notizen, persönliche Aufgaben und kategorisierte Firmenaufgaben für freigeschaltete Konten. Direkte Rückwege verbinden Post, Aufgaben, Büro, Empfang und Tagesplan. Bürozeit-Kontext und externe E-Mail gehören nicht zu dieser Veröffentlichung. Die öffentlichen Demos bleiben unverändert.
 
 Die Aufnahme stammt aus der lokalen fiktiven Mira Steel DEMO, nicht aus Kundendaten.
 
 ![Empfang mit fiktiven Demodaten](docs/assets/screenshots/office-reception-demo.png)
+
+![Private Büroaufgaben mit fiktiven Demodaten](docs/assets/screenshots/office-tasks-demo.png)
 
 ## Lizenz
 

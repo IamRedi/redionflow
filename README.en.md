@@ -181,11 +181,13 @@ The vehicle card brings together data editing, photo and document expiry dates. 
 
 ## Reception and office access · 11 November 2026
 
-BauFlow now has a reception and administration office for explicitly authorized accounts in the real-company deployment ([PR150](https://github.com/IamRedi/redionflow/pull/150)). The room opens the existing daily plan, site files and dashboard on desktop and phone. A visitor receives no colleague records. Other administrators do not gain access automatically. Private mail, personal tasks and office time context remain later phases; public demos are unchanged.
+BauFlow now has a reception and administration office for explicitly authorized accounts in the real-company deployment ([PR150](https://github.com/IamRedi/redionflow/pull/150)). The room opens the existing daily plan, site files and dashboard on desktop and phone. A visitor receives no colleague records. Other administrators do not gain access automatically. [PR153](https://github.com/IamRedi/redionflow/pull/153) adds internal mail with attachments, private notes, personal tasks and categorized company tasks for the designated accounts. Direct return controls connect mail, tasks, office, reception and the daily plan. Office time context and external email remain outside this release; public demos are unchanged.
 
 The screenshot is a local capture with the fictional Mira Steel DEMO fixture, not client data.
 
 ![Reception with fictional demo data](docs/assets/screenshots/office-reception-demo.png)
+
+![Private office tasks with fictional demo data](docs/assets/screenshots/office-tasks-demo.png)
 
 ## License
 
