@@ -19,9 +19,14 @@ export async function officeActor(){
       return seat?[{id:row.id,name:row.name||seat,seat}]:[];
     });
   });
-  const self=people.find(p=>p.seat===access.seat);
+  const managers=people.map(p=>({...p,title:p.seat==='megi'?'Administrata':'Drejtoria'}));
+  const members=process.env.VIRTUAL_OFFICE_TEAM_ENABLED==='true'?await withTenantContext(access.companyId,tx=>tx.officeMember.findMany({where:{companyProfileId:access.companyId,enabled:true,OR:[{worker:{status:'active'}},{user:{isActive:true}}]},include:{worker:{select:{firstName:true,lastName:true}},user:{select:{name:true}}}})):[];
+  const staff=members.filter(m=>!managers.some(p=>p.id===m.id||p.id===m.userId)).map(m=>({id:m.id,name:m.worker?`${m.worker.firstName} ${m.worker.lastName}`:m.user?.name||'',seat:'staff' as const,title:m.title}));
+  const allPeople=[...managers,...staff];
+  const staffSelf=members.find(m=>access.kind==='worker'?m.workerId===access.id:m.userId===access.id);
+  const self=access.seat==='staff'?allPeople.find(p=>p.id===staffSelf?.id):allPeople.find(p=>p.seat===access.seat);
   if(!self)throw new OfficeError('DENIED');
-  return {...access,principalId:self.id,name:self.name,people};
+  return {...access,principalId:self.id,name:self.name,people:allPeople,manager:access.seat!=='staff'};
 }
 export type OfficeActor=Awaited<ReturnType<typeof officeActor>>;
 export function personSeat(actor:OfficeActor,id:string):OfficeSeat|null{return actor.people.find(p=>p.id===id)?.seat??null;}

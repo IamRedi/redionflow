@@ -6,6 +6,10 @@ import { validateManagedUpload } from '@/lib/storage/upload-validation';
 import { officeActor, OfficeError } from './work-access';
 import { canReadOfficeTask, INITIAL_OFFICE_CATEGORIES, isThreadParticipant, MAX_MAIL_FILES, MAX_MAIL_FILE_BYTES, MAX_MAIL_TOTAL_BYTES, officeTaskInput } from './work-policy';
 
+/** Persist only existing director identities inside an explicit write transaction. */
+async function ensureOfficePrincipals(tx:Prisma.TransactionClient,actor:Awaited<ReturnType<typeof officeActor>>){
+  for(const p of actor.people.filter(p=>p.seat!=='staff'))await tx.officeMember.upsert({where:{id:p.id},update:{},create:{id:p.id,companyProfileId:actor.companyId,userId:p.id,enabled:false,title:p.title}});
+}
 const taskSelect={id:true,ownerId:true,createdById:true,kind:true,title:true,body:true,status:true,priority:true,dueDate:true,categoryId:true,version:true,archivedAt:true,updatedAt:true} satisfies Prisma.OfficeTaskSelect;
 const attachmentSelect={id:true,fileName:true,mime:true,size:true} satisfies Prisma.OfficeAttachmentSelect;
 const participant=(id:string)=>({OR:[{senderId:id},{recipientId:id}]});
@@ -16,11 +20,11 @@ export async function officeWorkSnapshot(){
   return withTenantContext(actor.companyId,async tx=>{
     const where={companyProfileId:actor.companyId,...participant(actor.principalId)};
     const [tasks,categories,threads]=await Promise.all([
-      tx.officeTask.findMany({where:{companyProfileId:actor.companyId,OR:[{ownerId:actor.principalId},{kind:'COMPANY'}]},select:taskSelect,orderBy:[{createdAt:'desc'},{id:'desc'}],take:2000}),
+      tx.officeTask.findMany({where:{companyProfileId:actor.companyId,OR:[{ownerId:actor.principalId},{kind:'COMPANY',...(actor.manager?{}:{createdById:actor.principalId})}]},select:taskSelect,orderBy:[{createdAt:'desc'},{id:'desc'}],take:2000}),
       tx.officeCategory.findMany({where:{companyProfileId:actor.companyId},select:{id:true,name:true,archivedAt:true},orderBy:{name:'asc'}}),
       tx.officeThread.findMany({where,select:{id:true,subject:true,senderId:true,recipientId:true,senderReadAt:true,recipientReadAt:true,updatedAt:true,messages:{select:{id:true,senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},orderBy:[{updatedAt:'desc'},{id:'desc'}],take:500}),
     ]);
-    return jsonDates({self:actor.principalId,seat:actor.seat,people:actor.people,tasks,categories,threads:threads.map(t=>{
+    return jsonDates({self:actor.principalId,seat:actor.seat,manager:actor.manager,people:actor.people,tasks,categories,threads:threads.map(t=>{
       const last=t.messages[0],read=t.senderId===actor.principalId?t.senderReadAt:t.recipientReadAt;
       return {id:t.id,subject:t.subject,senderId:t.senderId,recipientId:t.recipientId,updatedAt:t.updatedAt,unread:!!last&&last.senderId!==actor.principalId&&(!read||last.createdAt>read)};
     })});
@@ -42,13 +46,16 @@ export async function saveOfficeTask(raw:unknown){
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`office-work:${actor.companyId}`}))`;
     const old=await tx.officeTask.findFirst({where:{id:input.id,companyProfileId:actor.companyId},select:taskSelect});
-    if(old&&!canReadOfficeTask(old,actor.principalId))throw new OfficeError('NOT_FOUND');
+    if(old&&!canReadOfficeTask(old,actor.principalId,actor.manager))throw new OfficeError('NOT_FOUND');
     if(old&&(old.archivedAt||old.version!==input.version))throw new OfficeError('CONFLICT');
     // Sharing is a deliberate UI action. A company task can never become private
     // again (which would silently remove it from the recipient's view).
     if(old?.kind==='COMPANY'&&input.kind!=='COMPANY')throw new OfficeError('INVALID');
     if(!old&&input.version!==0)throw new OfficeError('CONFLICT');
+    if(input.categoryId==='OTHER'){const other=await tx.officeCategory.upsert({where:{companyProfileId_name:{companyProfileId:actor.companyId,name:'Tjetër'}},create:{companyProfileId:actor.companyId,name:'Tjetër'},update:{archivedAt:null}});input.categoryId=other.id;}
     if(input.categoryId&&!await tx.officeCategory.findFirst({where:{id:input.categoryId,companyProfileId:actor.companyId,...(old?.categoryId===input.categoryId?{}:{archivedAt:null})}}))throw new OfficeError('INVALID');
+    if(!actor.manager&&input.kind==='COMPANY'&&input.ownerId!==actor.principalId&&old?.createdById!==actor.principalId)throw new OfficeError('DENIED');
+    await ensureOfficePrincipals(tx,actor);
     const {id,...data}=input;
     if(old)return tx.officeTask.update({where:{id},data:{...data,version:{increment:1}},select:{id:true}});
     if(await tx.officeTask.count({where:{companyProfileId:actor.companyId}})>=2000)throw new OfficeError('LIMIT');
@@ -59,14 +66,14 @@ export async function archiveOfficeTask(raw:unknown){
   const {id,version,restore}=z.object({id:z.uuid(),version:z.number().int().positive(),restore:z.boolean()}).strict().parse(raw),actor=await officeActor();
   return withTenantContext(actor.companyId,async tx=>{
     const old=await tx.officeTask.findFirst({where:{id,companyProfileId:actor.companyId},select:taskSelect});
-    if(!old||!canReadOfficeTask(old,actor.principalId))throw new OfficeError('NOT_FOUND');
+    if(!old||!canReadOfficeTask(old,actor.principalId,actor.manager))throw new OfficeError('NOT_FOUND');
     const changed=await tx.officeTask.updateMany({where:{id,companyProfileId:actor.companyId,version},data:{archivedAt:restore?null:new Date(),version:{increment:1}}});
     if(!changed.count)throw new OfficeError('CONFLICT');
   });
 }
 export async function saveOfficeCategory(raw:unknown){
   const input=z.object({id:z.uuid().nullable(),name:z.string().trim().min(1).max(100),archive:z.boolean().default(false)}).strict().parse(raw),actor=await officeActor();
-  // The two explicitly configured directors manage work labels; no generic admin bypass.
+  if(!actor.manager)throw new OfficeError('DENIED');
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`office-work:${actor.companyId}`}))`;
     if(input.id){
@@ -80,7 +87,7 @@ export async function saveOfficeCategory(raw:unknown){
 }
 /** Explicit configuration action, never seed the company as a side effect of GET. */
 export async function initializeOfficeCategories(){
-  const actor=await officeActor();
+  const actor=await officeActor();if(!actor.manager)throw new OfficeError('DENIED');
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`office-work:${actor.companyId}`}))`;
     if(await tx.officeCategory.count({where:{companyProfileId:actor.companyId}}))return;
@@ -111,8 +118,7 @@ export async function sendOfficeMail(form:FormData){
   // public URLs, official document receipt, process update or attendance write.
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`office-mail:${actor.companyId}`}))`;
-    const live=await tx.user.count({where:{id:{in:[actor.principalId,input.recipientId]},companyProfileId:actor.companyId,isActive:true,role:'ADMIN'}});
-    if(live!==2)throw new OfficeError('DENIED');
+    await ensureOfficePrincipals(tx,actor);
     const retry=await tx.officeMessage.findFirst({where:{id:input.requestId,companyProfileId:actor.companyId},include:{attachments:{select:{sha256:true,fileName:true}},thread:{select:{senderId:true,recipientId:true,subject:true}}}});
     if(retry){
       if(retry.senderId!==actor.principalId||retry.body!==input.body||!isThreadParticipant(retry.thread,input.recipientId)||retry.thread.subject!==input.subject||retry.threadId!==(input.threadId||input.requestId)||JSON.stringify(retry.attachments.map(a=>[a.sha256,a.fileName]).sort())!==JSON.stringify(attachments.map(a=>[a.sha256,a.fileName]).sort()))throw new OfficeError('CONFLICT');

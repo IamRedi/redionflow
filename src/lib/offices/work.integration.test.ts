@@ -27,7 +27,7 @@ beforeAll(async()=>{
 });
 beforeEach(()=>as(megi));
 afterAll(async()=>{
-  if(companyId){const where={companyProfileId:companyId};await prisma.officeAttachment.deleteMany({where});await prisma.officeMessage.deleteMany({where});await prisma.officeThread.deleteMany({where});await prisma.officeTask.deleteMany({where});await prisma.officeCategory.deleteMany({where});await prisma.worker.deleteMany({where});await prisma.user.deleteMany({where:{companyProfileId:{in:[companyId,otherCompanyId]}}});await prisma.companyProfile.deleteMany({where:{id:{in:[companyId,otherCompanyId]}}});}
+  if(companyId){const where={companyProfileId:companyId};await prisma.officeAttachment.deleteMany({where});await prisma.officeMessage.deleteMany({where});await prisma.officeThread.deleteMany({where});await prisma.officeTask.deleteMany({where});await prisma.officeCategory.deleteMany({where});await prisma.officeMember.deleteMany({where});await prisma.worker.deleteMany({where});await prisma.user.deleteMany({where:{companyProfileId:{in:[companyId,otherCompanyId]}}});await prisma.companyProfile.deleteMany({where:{id:{in:[companyId,otherCompanyId]}}});}
   await prisma.$executeRawUnsafe(`DROP OWNED BY ${role}`);await prisma.$executeRawUnsafe(`DROP ROLE ${role}`);vi.unstubAllEnvs();
 });
 it('keeps personal work private, including from the other owner, and prevents lost updates',async()=>{
@@ -41,7 +41,7 @@ it('keeps personal work private, including from the other owner, and prevents lo
 });
 it('shares office tasks deliberately, reuses editable categories and preserves operational records',async()=>{
   const sessions=await prisma.workSession.count(),processes=await prisma.steelSiteTask.count(),documents=await prisma.sitePhaseDocument.count();
-  await initializeOfficeCategories();await initializeOfficeCategories();const cats=(await officeWorkSnapshot()).categories;expect(cats).toHaveLength(5);
+  await initializeOfficeCategories();await initializeOfficeCategories();const cats=(await officeWorkSnapshot()).categories;expect(cats).toHaveLength(6);
   const d=draft();await saveOfficeTask({...d,kind:'NOTE'});await saveOfficeTask({...d,version:1,kind:'COMPANY',categoryId:cats[0].id,ownerId:almet});
   as(almet);expect((await officeWorkSnapshot()).tasks.find(t=>t.id===d.id)?.kind).toBe('COMPANY');
   await expect(saveOfficeTask({...d,version:2,ownerId:almet})).rejects.toThrow('INVALID');
@@ -73,4 +73,30 @@ it('enforces tenant RLS and composite foreign keys below the service layer',asyn
   const d=draft();await saveOfficeTask(d);
   await prisma.$transaction(async tx=>{await tx.$executeRawUnsafe(`SET LOCAL ROLE ${role}`);await tx.$executeRaw`SELECT set_config('app.current_tenant_id',${otherCompanyId},true)`;expect(await tx.officeTask.count({where:{id:d.id}})).toBe(0);});
   await expect(prisma.officeTask.create({data:{id:randomUUID(),companyProfileId:companyId,ownerId:foreign,createdById:foreign,title:'Cross-tenant',kind:'NOTE'}})).rejects.toThrow();
+});
+it('supports employee offices, scoped tasks, manager-only setup and immediate revocation',async()=>{
+  vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+  const {saveOfficeMember,officeTeamSettings}=await import('./team-service');
+  const staff=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Engineer',lastName:'Demo'}});
+  const second=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Finance',lastName:'Demo'}});
+  const foreignWorker=await prisma.worker.create({data:{companyProfileId:otherCompanyId,firstName:'Foreign',lastName:'Demo'}});
+  try{
+    await expect(saveOfficeMember({workerId:foreignWorker.id,title:'Office',enabled:true,version:0})).rejects.toThrow('NOT_FOUND');
+    const member=await saveOfficeMember({workerId:staff.id,title:'Projektim',enabled:true,version:0});
+    const colleague=await saveOfficeMember({workerId:second.id,title:'Financë',enabled:true,version:0});
+    const sent=await sendOfficeMail(mail({to:member.id,body:'Private staff mail'}));
+    const categories=(await officeWorkSnapshot()).categories;
+    const task={...draft(),id:randomUUID(),kind:'COMPANY',ownerId:member.id,categoryId:categories[0].id};await saveOfficeTask(task);
+    await saveOfficeTask({...draft(),id:randomUUID(),kind:'COMPANY',ownerId:colleague.id,categoryId:categories[0].id,title:'Unrelated private assignment'});
+    auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});
+    expect((await readOfficeThread(sent.id)).messages[0].body).toBe('Private staff mail');await sendOfficeMail(mail({thread:sent.id,to:megi,body:'Staff reply'}));
+    const snapshot=await officeWorkSnapshot();expect(snapshot.manager).toBe(false);expect(snapshot.self).toBe(member.id);expect(snapshot.tasks.some(t=>t.id===task.id)).toBe(true);expect(snapshot.tasks.some(t=>t.title==='Unrelated private assignment')).toBe(false);
+    await expect(officeTeamSettings()).rejects.toThrow('DENIED');await expect(saveOfficeCategory({id:null,name:'Unauthorized'})).rejects.toThrow('DENIED');
+    await saveOfficeTask({...task,version:1,status:'DONE'});
+    const privateTask={...draft(),id:randomUUID(),ownerId:member.id};await saveOfficeTask(privateTask);
+    as(megi);expect((await officeWorkSnapshot()).tasks.some(t=>t.id===privateTask.id)).toBe(false);
+    await saveOfficeMember({workerId:staff.id,title:'Projektim',enabled:false,version:1});
+    auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});await expect(officeWorkSnapshot()).rejects.toThrow('DENIED');await expect(readOfficeThread(sent.id)).rejects.toThrow('DENIED');
+    as(megi);await expect(saveOfficeTask({...task,version:2})).rejects.toThrow('DENIED');
+  }finally{as(megi);vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');await prisma.worker.delete({where:{id:foreignWorker.id}});}
 });
