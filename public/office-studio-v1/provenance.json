@@ -1,0 +1,29 @@
+{
+  "origin": "Built-in image generation; model identity not exposed. Fictional decorative architecture, no client records. Portraits are recomposed companions of the wide originals.",
+  "files": [
+    {
+      "file": "room-wide.webp",
+      "sourceSha256": "954b241ab7477ab40ddfd80590d369354f71187a7486527433f97f5c894f5a60",
+      "sha256": "f8d32d5f5c20a31e9a33cd3e281a3a3daedd5dd35e126a692c4cba1ee9470b08",
+      "bytes": 91130
+    },
+    {
+      "file": "room-portrait.webp",
+      "sourceSha256": "ef10e9bdbab1b6a63d5f91ff4049da0d94e9bdcd9657e2317df6a9729e3748b9",
+      "sha256": "9485b2a203b143a604b713180b9cbd0f697f55cc25b71b97734d31e5462551f5",
+      "bytes": 72464
+    },
+    {
+      "file": "reception-wide.webp",
+      "sourceSha256": "93700a3c531c4351b3198e2949ef3f8614974d6ab8d4027ed3c800dd7627aaf5",
+      "sha256": "484a125d37beba2418c56e28c3fd607772c142e8d87a481ea4377574c193b58b",
+      "bytes": 130270
+    },
+    {
+      "file": "reception-portrait.webp",
+      "sourceSha256": "cec1700ce6586eb759a45cf433f6c56788e7bc0bd684f9d6eecfb3a6cf19928e",
+      "sha256": "32e71083f97aa1aaaf81e3a1087de37b965646a69e8c6b13adf4364aca580e54",
+      "bytes": 103108
+    }
+  ]
+}
