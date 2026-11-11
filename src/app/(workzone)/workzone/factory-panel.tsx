@@ -28,6 +28,7 @@ export function FactoryPanel({
   siteOutput,
   canManage,
   processDefinitions,
+  showProgress = true,
 }: {
   factoryName: string;
   factoryId: string;
@@ -37,6 +38,8 @@ export function FactoryPanel({
   siteOutput: SiteFactoryOutput[];
   canManage: boolean;
   processDefinitions?: Array<{ key: string; label: string }>;
+  /** Production progress only for admins and whoever checks factory elements. */
+  showProgress?: boolean;
 }) {
   const { currentLang: lang } = useLanguage();
   const total = totalOutput(siteOutput);
@@ -54,6 +57,7 @@ export function FactoryPanel({
           <h2 className="text-2xl font-bold tracking-tight">{factoryName}</h2>
           <p className="max-w-md text-sm text-muted-foreground">{factoryAddress || t("factory.subtitle", lang)}</p>
           <div className="flex flex-wrap items-center gap-2">
+            {showProgress ? <>
             <span className="rounded-full border border-orange-500/40 bg-orange-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-orange-700 dark:text-orange-300">
               {t("elements.inFactory", lang)}: {formatAmount(inFactory)} {pcs}
             </span>
@@ -63,6 +67,7 @@ export function FactoryPanel({
             <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-green-700 dark:text-green-300">
               {t("elements.produced", lang)}: {formatAmount(total.donePieces)} {pcs}
             </span>
+            </> : null}
             <AccessKeyButton place="factory" compact />
             {canManage ? (
               <span className="ml-auto flex items-center gap-2">
@@ -73,7 +78,7 @@ export function FactoryPanel({
           </div>
         </div>
       </div>
-      <AllSitesFactoryView sites={siteOutput} processDefinitions={processDefinitions} />
+      {showProgress ? <AllSitesFactoryView sites={siteOutput} processDefinitions={processDefinitions} /> : null}
     </section>
   );
 }

@@ -315,3 +315,12 @@ export async function setSafetyEquipmentQuantityAction(input: {
   });
   return result;
 }
+
+/** Fold the safety panel away (or back) for everyone on this site. Anyone who can open the site may. */
+export async function setSafetyPanelHiddenAction(input: { baustelleId: string; hidden: boolean }): Promise<ActionResult> {
+  const actor = await resolveActorForTarget({ baustelleId: String(input.baustelleId ?? "") });
+  if (!actor) return { ok: false, message: "Forbidden" };
+  await prisma.baustelle.update({ where: { id: actor.baustelle.id }, data: { safetyPanelHidden: Boolean(input.hidden) } });
+  revalidatePath(`/workzone/baustellen/${actor.baustelle.id}`);
+  return { ok: true };
+}

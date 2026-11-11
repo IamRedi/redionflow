@@ -4,7 +4,7 @@ import { QUICK_UNDO_MS } from './session-rules';
 export class SessionStartError extends Error {}
 /** Both profile and site starts take the same worker lock. A second click
  * reuses a live session and a backdated restart cannot count closed time twice. */
-export async function beginWorkerSession(input: { companyId: string; workerId: string; start: Date; siteId: string | null; moveExisting?: boolean; now?: Date }) {
+export async function beginWorkerSession(input: { companyId: string; workerId: string; start: Date; siteId: string | null; moveExisting?: boolean; fillMissingSite?: boolean; now?: Date }) {
   const now = input.now ?? new Date();
   if (!Number.isFinite(input.start.getTime()) || input.start.getTime() > now.getTime() + 60_000) throw new SessionStartError('CLOCK');
   return prisma.$transaction(async tx => {
@@ -18,6 +18,8 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
         await tx.workSession.update({ where: { id: existing.id }, data: { baustelleId: input.siteId, closedBySystem: false, systemNote: null } });
         return { kind: 'moved' as const, id: existing.id };
       }
+      // Already working without a site: the plan's site fills the gap.
+      if (input.fillMissingSite && input.siteId && !existing.baustelleId) await tx.workSession.update({ where: { id: existing.id }, data: { baustelleId: input.siteId } });
       return { kind: 'existing' as const, id: existing.id };
     }
     // A stop reversed within the undo window reopens the same session, as if it never stopped.
@@ -25,7 +27,7 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
     const justStopped = await tx.workSession.findFirst({ where: { workerId: worker.id, isLive: false, closedBySystem: false, endTime: { gte: new Date(now.getTime() - QUICK_UNDO_MS - 60_000) }, updatedAt: { gte: new Date(now.getTime() - QUICK_UNDO_MS) } }, orderBy: { updatedAt: 'desc' } });
     if (justStopped?.endTime) {
       await tx.workSessionPauseInterval.updateMany({ where: { workSessionId: justStopped.id, endedAt: justStopped.endTime }, data: { endedAt: null } });
-      await tx.workSession.update({ where: { id: justStopped.id }, data: { endTime: null, totalHours: 0, isLive: true, ...(input.moveExisting ? { baustelleId: input.siteId } : {}) } });
+      await tx.workSession.update({ where: { id: justStopped.id }, data: { endTime: null, totalHours: 0, isLive: true, ...(input.moveExisting || (input.fillMissingSite && input.siteId && !justStopped.baustelleId) ? { baustelleId: input.siteId } : {}) } });
       return { kind: 'resumed' as const, id: justStopped.id };
     }
     const overlap = await tx.workSession.findFirst({ where: { workerId: worker.id, endTime: { gt: input.start }, startTime: { lt: now } }, select: { id: true } });

@@ -1324,6 +1324,8 @@ model Baustelle {
   documents             String[]
   coordinates           Json?
   activeEquipmentStatus Json?
+  /// Site safety panel (signs, plates, barriers) folded away for everyone on this site.
+  safetyPanelHidden     Boolean        @default(false)
   canvasX               Int?
   canvasY               Int?
   canvasMobileX         Int?

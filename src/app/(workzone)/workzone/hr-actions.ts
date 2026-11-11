@@ -517,7 +517,7 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime).catch(() => null);
   let sessionId: string;
   try {
-    const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId });
+    const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId, fillMissingSite: true });
     sessionId = result.id;
     if (result.kind === 'existing') return { ok: true, message: tr('workAlreadyActive') };
     if (result.kind === 'resumed') {

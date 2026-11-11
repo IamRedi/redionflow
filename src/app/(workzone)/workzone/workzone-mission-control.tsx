@@ -20,6 +20,7 @@ import mapStyles from "./workzone-map-index.module.css";
 import { useMapFleet, useSetWorkzoneMapMode } from "./workzone-map-fleet";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 import { WorkingControls } from "./baustellen/[baustelleId]/working-controls";
+import { LiveWorkerNames } from "./live-worker-names";
 
 type MissionItem = {
   id: string;
@@ -579,7 +580,7 @@ export function WorkzoneMissionControl({
                   </div>
                 </div>
                 <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
-                {item.workers.length > 0 ? <p className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
+                {item.workers.length > 0 ? <LiveWorkerNames names={item.workers} max={isCompactCanvas ? 2 : 3} /> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
                 </p>

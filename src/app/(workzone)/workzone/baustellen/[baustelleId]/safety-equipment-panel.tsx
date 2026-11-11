@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,17 @@ import {
   deploySafetyEquipmentAction,
   requestSafetyEquipmentAction,
   setSafetyEquipmentQuantityAction,
+  setSafetyPanelHiddenAction,
 } from "../../safety-actions";
+
+const TOGGLE_COPY: Record<string, { show: string; hide: string }> = {
+  sq: { show: "Shfaq", hide: "Fshih" },
+  en: { show: "Show", hide: "Hide" },
+  de: { show: "Anzeigen", hide: "Ausblenden" },
+  it: { show: "Mostra", hide: "Nascondi" },
+  pl: { show: "Pokaż", hide: "Ukryj" },
+  ro: { show: "Arată", hide: "Ascunde" },
+};
 
 
 type EquipmentCategory = "SIGN" | "PLATE" | "FENCE";
@@ -37,12 +48,17 @@ export function SafetyEquipmentPanel({
   baustelleId,
   rows,
   currentWorker,
+  hidden: initiallyHidden = false,
 }: {
   baustelleId: string;
   rows: EquipmentRow[];
   currentWorker?: CurrentWorker;
+  /** Folded away for everyone on this site; anyone who opens the site can show it again. */
+  hidden?: boolean;
 }) {
   const { currentLang } = useLanguage();
+  const [hidden, setHidden] = useState(initiallyHidden);
+  const toggleCopy = TOGGLE_COPY[currentLang] ?? TOGGLE_COPY.de;
   const [message, setMessage] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const [quantityDialog, setQuantityDialog] = useState<{
@@ -87,8 +103,31 @@ export function SafetyEquipmentPanel({
   }
 
   return (
-    <div className="rounded-md border bg-card p-3">
-      <h3 className="text-sm font-semibold">{t("workzone.safetyPanelTitle", currentLang)}</h3>
+    <div className="rounded-md border bg-card p-3" data-testid="safety-panel">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="min-w-0 truncate text-sm font-semibold">{t("workzone.safetyPanelTitle", currentLang)}</h3>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 shrink-0 gap-1 px-2 text-xs text-muted-foreground"
+          disabled={isPending}
+          aria-pressed={hidden}
+          data-testid="safety-panel-toggle"
+          onClick={() => {
+            const next = !hidden;
+            setHidden(next);
+            startTransition(async () => {
+              const result = await setSafetyPanelHiddenAction({ baustelleId, hidden: next });
+              if (!result.ok) { setHidden(!next); setMessage(result.message); }
+            });
+          }}
+        >
+          {hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+          {hidden ? toggleCopy.show : toggleCopy.hide}
+        </Button>
+      </div>
+      {hidden ? null : <>
       <div className="mt-2 space-y-2">
         {rows.map((row) => {
           const icon = row.quantity > 0 ? "🟢" : row.requested ? "🔴" : "⚪";
@@ -154,6 +193,7 @@ export function SafetyEquipmentPanel({
           );
         })}
       </div>
+      </>}
       {message ? <p className="mt-2 text-xs text-muted-foreground">{message}</p> : null}
 
       <SimpleDialog
