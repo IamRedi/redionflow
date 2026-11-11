@@ -170,3 +170,33 @@ it opens the existing daily plan and never creates attendance. Drawers, private
 mail, tasks and assistants reuse their existing destinations and authorization.
 Compact-height arrangements preserve reachable controls; the room has no page
 scroll or bottom shortcut bar. About/author and management move into the header.
+
+## Personal artwork in the office
+
+The calendar and task clipboard now form a smaller side column, leaving the
+middle of the wall for a framed picture. The default is a fictional, text-free
+painting connecting construction and office through subtle digital light.
+Its prompt and original/final hashes are retained in the same asset provenance.
+The static WebP is 155,222 bytes; no provider is called when opening a room.
+
+Only the signed-in occupant can replace or reset their picture. The server
+derives the target from their canonical office identity, including both director
+login methods. Manager preview and other authorized room visitors can see the
+decoration, but cannot edit it. Decoration never enters personal AI evidence,
+mail, tasks, avatars, site documents or the operational permission model.
+
+`OfficeArtwork` is an additive tenant/member-bound table. It stores at most one
+WebP of 180,000 bytes per office. The existing bounded raster decoder handles
+JPG/PNG/WebP up to 12 MB, auto-orients and strips EXIF/GPS. Uploads respect the
+existing scanner configuration and serialized native-conversion lock. An atomic
+write and version check preserve the old picture on invalid or stale uploads.
+Reset clears image bytes while preserving the monotonic version. Authenticated
+image reads recheck current office visibility and return private, no-store bytes;
+tenant RLS and owner-only write policies provide a second boundary.
+
+The small pencil on the frame opens a native modal with photo, camera and
+restore-default actions. The whole frame is the touch target. Back/Escape
+return to the same room. Before deploying the additive migration, take the
+approved encrypted company backup and verify a full isolated restore. An app
+rollback can leave this unused table intact; never drop user pictures merely
+to roll back the layout. Public presentation work remains owner-deferred.

@@ -28,6 +28,54 @@ beforeAll(async()=>{
   await prisma.$executeRawUnsafe(`GRANT SELECT ON "OfficeTask","OfficeThread","OfficeMessage","OfficeAttachment","OfficeCategory","OfficeAssistantTurn" TO ${role}`);
 });
 beforeEach(()=>as(megi));
+it('keeps office decoration owner-editable, bounded and separate from work and avatars',async()=>{
+ const {saveOfficeArtwork,officeArtworkState,readOfficeArtwork}=await import('./artwork');
+ const sharp=(await import('sharp')).default;
+ const image=await sharp({create:{width:1800,height:1200,channels:3,background:'#547d70'}}).jpeg().toBuffer();
+ const form=(version:number,photo:File|null=null,reset=false)=>{const f=new FormData();f.set('version',String(version));if(photo)f.set('photo',photo);f.set('reset',String(reset));return f;};
+ const file=()=>new File([image],'own-office.jpg',{type:'image/jpeg'});
+ expect(await officeArtworkState()).toMatchObject({memberId:megi,version:0,custom:false,editable:true});
+ const saved=await saveOfficeArtwork(form(0,file()));expect(saved).toMatchObject({version:1,custom:true});
+ const bytes=await readOfficeArtwork(megi);expect(bytes!.length).toBeLessThanOrEqual(180000);
+ const meta=await sharp(bytes!).metadata();expect(meta.format).toBe('webp');expect(meta.width).toBeLessThanOrEqual(1024);expect(meta.exif).toBeUndefined();
+ await expect(saveOfficeArtwork(form(1,new File(['invalid'],'bad.jpg')))).rejects.toThrow('INVALID');
+ expect(Buffer.from((await readOfficeArtwork(megi))!)).toEqual(Buffer.from(bytes!));
+ await expect(saveOfficeArtwork(form(0,file()))).rejects.toThrow('CONFLICT');
+ as(almet);expect(await officeArtworkState(megi)).toMatchObject({version:1,custom:true,editable:false});expect(await readOfficeArtwork(megi)).not.toBeNull();
+ // A forged target never changes the other office; the signed-in ID wins.
+ const own=form(0,file());own.set('memberId',megi);const second=await saveOfficeArtwork(own);expect(second.memberId).toBe(almet);
+ expect((await officeArtworkState(megi)).version).toBe(1);
+ const {GET}=await import('@/app/api/offices/artwork/[memberId]/route');
+ const reply=await GET(new Request('http://localhost'),{params:Promise.resolve({memberId:megi})});expect(reply.status).toBe(200);expect(reply.headers.get('Cache-Control')).toBe('private, no-store');expect(reply.headers.get('Content-Type')).toBe('image/webp');
+ as(outsider);await expect(readOfficeArtwork(megi)).rejects.toThrow('DENIED');
+ auth.company.mockResolvedValue(otherCompanyId);auth.admin.mockResolvedValue({id:foreign,companyProfileId:otherCompanyId});
+ expect((await GET(new Request('http://localhost'),{params:Promise.resolve({memberId:megi})})).status).toBe(404);
+ as(megi);const reset=await saveOfficeArtwork(form(1,null,true));expect(reset).toMatchObject({version:2,custom:false});expect(await readOfficeArtwork(megi)).toBeNull();
+ await expect(saveOfficeArtwork(form(1,file()))).rejects.toThrow('CONFLICT');
+ expect((await prisma.worker.findUniqueOrThrow({where:{id:workerId}})).profileImageUrl).toBeNull();
+ await prisma.officeArtwork.deleteMany({where:{companyProfileId:companyId}});
+});
+it('revokes office photo writes with room access and enforces tenant/owner RLS',async()=>{
+ const {saveOfficeArtwork,readOfficeArtwork}=await import('./artwork');
+ const {saveOfficeMember}=await import('./team-service');vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+ const person=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Art',lastName:'Demo',crewRole:'OFFICE'}});
+ const member=await saveOfficeMember({workerId:person.id,title:'Design',enabled:true,version:0});
+ auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:person.id,companyProfileId:companyId});
+ const sharp=(await import('sharp')).default,b=await sharp({create:{width:100,height:80,channels:3,background:'#a9733a'}}).png().toBuffer();
+ const f=new FormData();f.set('version','0');f.set('photo',new File([b],'art.png',{type:'image/png'}));await saveOfficeArtwork(f);
+ await prisma.$executeRawUnsafe(`GRANT SELECT,UPDATE ON "OfficeArtwork" TO ${role}`);
+ await prisma.$transaction(async tx=>{
+  await tx.$executeRawUnsafe(`SET LOCAL ROLE ${role}`);await tx.$executeRaw`SELECT set_config('app.current_tenant_id',${otherCompanyId},true)`;
+  expect(await tx.officeArtwork.count({where:{memberId:member.id}})).toBe(0);
+  await tx.$executeRaw`SELECT set_config('app.current_tenant_id',${companyId},true)`;await tx.$executeRaw`SELECT set_config('app.current_office_member_id',${megi},true)`;
+  expect((await tx.officeArtwork.updateMany({where:{memberId:member.id},data:{data:null}})).count).toBe(0);
+ });
+ await prisma.officeMember.update({where:{id:member.id},data:{enabled:false}});
+ await expect(saveOfficeArtwork(f)).rejects.toThrow('DENIED');await expect(readOfficeArtwork(member.id)).rejects.toThrow('DENIED');
+ as(megi);expect(await readOfficeArtwork(member.id)).not.toBeNull(); // prepared preview, no editing as worker
+ await prisma.worker.update({where:{id:person.id},data:{status:'inactive'}});await expect(readOfficeArtwork(member.id)).rejects.toThrow('NOT_FOUND');
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');
+});
 it('isolates personal office AI history, document evidence, idempotency and explicit activation',async()=>{
  vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');vi.stubEnv('VIRTUAL_OFFICE_AI_ENABLED','true');
  const {saveOfficeMember}=await import('./team-service');
