@@ -3,6 +3,7 @@
  * forklift). Pure SVG + CSS, gentle motion that stops for reduced motion.
  */
 
+import {Truck as TruckIcon,Forklift as ForkliftIcon,Flame,ArrowUpFromLine,Construction} from 'lucide-react';
 export type MachineKind = "crane" | "lift" | "truck" | "welder" | "forklift" | "generic";
 
 export function machineKind(input: { name: string; nickname?: string | null; funksioni?: string | null; model?: string | null; category?: string | null }): MachineKind {
@@ -205,10 +206,12 @@ const SCENES: Record<MachineKind, (props: { animate: boolean }) => React.ReactEl
 
 export function MachineArt({ kind, animate = true, className }: { kind: MachineKind; animate?: boolean; className?: string }) {
   const Scene = SCENES[kind];
-  return (
-    <svg viewBox="0 0 200 120" className={className} role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+  const Icon=kind==='forklift'?ForkliftIcon:kind==='welder'?Flame:kind==='lift'?ArrowUpFromLine:kind==='crane'?Construction:TruckIcon;
+  return (<>
+    <span data-studio-machine-icon aria-hidden="true" className={className} style={{display:'none'}}><Icon/></span>
+    <svg data-studio-sketch viewBox="0 0 200 120" className={className} role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
       <style>{STYLE}</style>
       <Scene animate={animate} />
-    </svg>
+    </svg></>
   );
 }

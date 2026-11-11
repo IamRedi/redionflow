@@ -1,4 +1,5 @@
 import { OfficeReturnBar } from '@/components/offices/OfficeReturnBar';
+import '@/components/steel/steel-studio.css';
 import { currentMaySeePrivateVehicles } from "@/lib/fleet/private-vehicles";
 import type { ReactNode } from "react";
 import { notFound } from 'next/navigation';
@@ -60,7 +61,8 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
   return (
     <WorkzoneMapFleet enhancedOperations={production} statusMachines={machines.map(({ id, operationalStatus }) => ({ id, operationalStatus }))} vehicles={machines.filter(m => m.isActive).map(m => ({ id: m.id, name: m.nickname || m.name, plate: m.targe, operationalStatus: m.operationalStatus }))}>
     <div
-      className={`${production ? workspace.shell : 'min-h-dvh overflow-x-hidden'} bg-background text-foreground ${
+      data-steel-studio={production || undefined}
+      className={`${production ? `${workspace.shell} steelStudioWorkspace` : 'min-h-dvh overflow-x-hidden'} bg-background text-foreground ${
         mode === "baumdienst" ? "dark:bg-[#10211a]" : ""
       }`}
     >

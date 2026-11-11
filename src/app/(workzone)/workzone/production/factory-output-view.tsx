@@ -73,11 +73,11 @@ function StageTiles({ output, art = false, processDefinitions = [] }: { output: 
       {processKeys(output, processDefinitions).map((key) => {
         const stage = output.stages[key];
         return (
-          <div key={key} className="min-w-0 overflow-hidden rounded-xl border bg-background">
+          <div data-studio-process-card key={key} className="min-w-0 overflow-hidden rounded-xl border bg-background">
             {art ? (
-              <div className="relative h-16 bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
+              <div data-studio-process-media className="relative h-16 bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
                 {(FACTORY_STEP_KEYS as readonly string[]).includes(key)
-                  ? <SteelPhaseArt phase={artKey(key)} animate={false} className="absolute inset-0 h-full w-full p-1" />
+                  ? <SteelPhaseArt photoPhase={key} phase={artKey(key)} animate={false} className="absolute inset-0 h-full w-full p-1" />
                   : <Factory aria-hidden="true" className="absolute inset-0 m-auto size-9 text-orange-500" />}
               </div>
             ) : null}

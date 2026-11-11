@@ -5,6 +5,7 @@
  * low-contrast so the site cards stay readable on top. Pure SVG, no assets.
  */
 
+import {SteelEnvironmentPhoto} from './studio-art';
 type Palette = {
   skyTop: string;
   skyBottom: string;
@@ -139,8 +140,9 @@ function Bridge({ p }: { p: Palette }) {
 export function SteelSiteScene({ dark, className = "" }: { dark: boolean; className?: string }) {
   const p = dark ? DARK : LIGHT;
   const id = dark ? "ssd" : "ssl";
-  return (
-    <svg viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true" className={className}>
+  return (<>
+    <SteelEnvironmentPhoto kind="site" className={className}/>
+    <svg data-studio-sketch viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true" className={className}>
       <defs>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={p.skyTop} />
@@ -175,6 +177,6 @@ export function SteelSiteScene({ dark, className = "" }: { dark: boolean; classN
       {dark
         ? [250, 470, 690, 860, 1240, 1450].map((x) => <circle key={x} cx={x} cy={x === 860 ? 64 : GROUND - 2} r={2.2} fill={p.light} opacity={0.85} />)
         : null}
-    </svg>
+    </svg></>
   );
 }

@@ -18,7 +18,7 @@ export function AssetWorkspaceDialog({ open, onOpenChange, title, children, scro
   return <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
       <Dialog.Overlay style={{ zIndex: layer }} className="fixed inset-0 bg-black/50" />
-      <Dialog.Content aria-describedby={undefined} style={{ zIndex: layer + 1 }}
+      <Dialog.Content data-studio-dialog aria-describedby={undefined} style={{ zIndex: layer + 1 }}
         onOpenAutoFocus={() => { opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; }}
         onCloseAutoFocus={event => {
           event.preventDefault();

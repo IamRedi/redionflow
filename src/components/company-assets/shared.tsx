@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search,Shirt,Package,Wrench } from 'lucide-react';
 import { runAssetOperationAction, getAssetSnapshotAction } from '@/app/(workzone)/workzone/asset-operations-actions';
 import { getMachineOperationalStatusAction } from '@/app/(workzone)/workzone/asset-status-actions';
 import { MachineArt, machineKind } from '@/components/steel/machine-art';
@@ -11,7 +11,7 @@ import type { AssetCommand, AssetOperationalStatus, AssetQuery, AssetSnapshot, A
 import { operationalStatusLabels, unknownAssetStatus, type OperationalStatusKey } from '@/lib/company-assets/status';
 import type { AssetCopy } from './copy';
 
-export const assetButton = 'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-semibold outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50';
+export const assetButton = 'steelStudioAssetButton inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-semibold outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50';
 export const assetPrimary = `${assetButton} border-orange-700 bg-orange-700 text-white hover:bg-orange-800 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400`;
 export const assetInput = 'min-h-11 w-full min-w-0 rounded-xl border bg-card px-3 py-2 text-base outline-none focus:border-orange-500 focus-visible:ring-1 focus-visible:ring-orange-500 disabled:opacity-50';
 
@@ -94,7 +94,7 @@ export function AssetFeedback({ message, failed }: { message: string | null; fai
 export function AssetLoading({ label }: { label: string }) { return <p role="status" className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" />{label}</p>; }
 export function AssetField({ label, children }: { label: string; children: ReactNode }) { return <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium">{label}{children}</label>; }
 export function AssetSearch({ value, onChange, label }: { value: string; onChange: (s: string) => void; label: string }) {
-  return <label className="relative block min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><input type="search" value={value} onChange={event => onChange(event.target.value)} aria-label={label} placeholder={label} className={`${assetInput} pl-10`} /></label>;
+  return <label className="relative block min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><input data-studio-input type="search" value={value} onChange={event => onChange(event.target.value)} aria-label={label} placeholder={label} className={`${assetInput} pl-10`} /></label>;
 }
 export function AssetStatus({ value, c }: { value: string; c: AssetCopy }) {
   const label = c[value as keyof AssetCopy] || value;
@@ -169,7 +169,8 @@ export function AssetPicture({ asset, className = 'h-full w-full' }: { asset: Pi
   const [failed, setFailed] = useState<string | null>(null);
   if (asset.photoUrl && failed !== asset.photoUrl) return <img src={asset.photoUrl} alt="" loading="lazy" onError={() => setFailed(asset.photoUrl)} className={`${className} object-cover`} />;
   if (asset.category === 'vehicle') return <MachineArt kind={machineKind({ name: asset.name })} animate={false} className={className} />;
-  return <svg className={className} viewBox="0 0 240 150" aria-hidden="true" fill="none">
+  const Icon=asset.category==='clothing'?Shirt:asset.category==='tool'?Wrench:Package;
+  return <><span data-studio-machine-icon aria-hidden="true" className={className} style={{display:'none'}}><Icon/></span><svg data-studio-sketch className={className} viewBox="0 0 240 150" aria-hidden="true" fill="none">
     <path d="M25 128H215" stroke="#475569" strokeWidth="5" strokeLinecap="round" />
     {asset.category === 'clothing' ? <>
       <path d="M84 25 101 17C103 37 137 37 139 17L156 25 176 108 149 121H91L64 108Z" fill="#f97316" />
@@ -186,5 +187,5 @@ export function AssetPicture({ asset, className = 'h-full w-full' }: { asset: Pi
       <path d="M88 77H126L119 112H94Z" fill="#334155" /><path d="M80 110H137V128H80Z" fill="#f97316" />
       <path d="M57 50H82M57 61H82" stroke="#c2410c" strokeWidth="4" />
     </>}
-  </svg>;
+  </svg></>;
 }

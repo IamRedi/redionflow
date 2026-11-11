@@ -6,6 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
+      data-studio-surface
       className={cn("rounded-xl border bg-card text-card-foreground shadow-b2b-panel", className)}
       {...props}
     />

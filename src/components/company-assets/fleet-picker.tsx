@@ -50,7 +50,7 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
       <div className="flex shrink-0 items-center gap-2 px-3 pb-3 sm:px-5">
         <label className="relative block w-full min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" />
-          <input ref={search} data-testid="fleet-search" type="search" value={query} onChange={event => { setQuery(event.target.value); scrollTop.current = 0; }} aria-label={searchLabel} placeholder={searchLabel} className="h-11 w-full min-w-0 rounded-xl border bg-card pl-10 pr-3 text-base outline-none focus:border-orange-500 focus-visible:ring-1 focus-visible:ring-orange-500" />
+          <input data-studio-input ref={search} data-testid="fleet-search" type="search" value={query} onChange={event => { setQuery(event.target.value); scrollTop.current = 0; }} aria-label={searchLabel} placeholder={searchLabel} className="h-11 w-full min-w-0 rounded-xl border bg-card pl-10 pr-3 text-base outline-none focus:border-orange-500 focus-visible:ring-1 focus-visible:ring-orange-500" />
         </label>
         <AccessKeyButton place="fleet_gps" />
       </div>

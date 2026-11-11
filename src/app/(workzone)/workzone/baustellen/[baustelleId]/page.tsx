@@ -347,9 +347,9 @@ export default async function BaustelleDetailPage({
 
     return (
       <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
-        <div className="relative overflow-hidden rounded-3xl border bg-card">
+        <div data-studio-site-hero data-studio-surface className="relative overflow-hidden rounded-3xl border bg-card">
           <div className="absolute inset-0"><AssetPhoto key={`${baustelle.id}:${baustelle.coverPhotoAt}`} kind="site" id={baustelle.id} src={assetPhotoUrl('site',baustelle.id,baustelle.coverPhotoAt)} alt={baustelle.name} canEdit={documentAccess.upload}><SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" /></AssetPhoto></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
+          <div data-studio-hero-shade className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
           <div className="relative flex min-h-[160px] flex-col justify-end gap-2 p-4 sm:min-h-[190px] sm:p-6">
             <Link className="w-fit text-xs text-muted-foreground hover:underline" href="/workzone">
               ← {t("workzone.siteListBack", currentLang, mode)}

@@ -7,6 +7,7 @@
 
 import type { SteelPhaseKey, SteelSiteShape } from "@/lib/workzone/steel-phases";
 import { STEEL_ART_PALETTE as C } from "@/lib/steel-work/illustration-style";
+import {SteelEnvironmentPhoto,SteelProcessPhoto} from './studio-art';
 
 const STYLE = `
 .sa-spin{transform-box:fill-box;transform-origin:center;animation:sa-spin 1.1s linear infinite}
@@ -342,13 +343,14 @@ const PHASE_SCENES: Record<SteelArtKey, (props: { animate: boolean }) => React.R
   task: Task,
 };
 
-export function SteelPhaseArt({ phase, animate = true, className }: { phase: SteelArtKey; animate?: boolean; className?: string }) {
+export function SteelPhaseArt({ phase, animate = true, className,photoPhase }: { phase: SteelArtKey; animate?: boolean; className?: string;photoPhase?:string }) {
   const Scene = PHASE_SCENES[phase];
-  return (
-    <svg viewBox="0 0 160 120" className={className} role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+  return (<>
+    <SteelProcessPhoto phase={photoPhase??phase} className={className}/>
+    <svg data-studio-sketch viewBox="0 0 160 120" className={className} role="img" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
       <style>{STYLE}</style>
       <Scene animate={animate} />
-    </svg>
+    </svg></>
   );
 }
 
@@ -370,8 +372,9 @@ export function SteelSiteArt({
   /** "slice" fills a card banner; "meet" keeps the whole scene on the right of a wide hero. */
   fit?: "slice" | "meet";
 }) {
-  return (
-    <svg viewBox="0 0 240 110" className={className} role="img" aria-hidden="true" preserveAspectRatio={fit === "meet" ? "xMaxYMax meet" : "xMidYMax slice"}>
+  return (<>
+    <SteelEnvironmentPhoto kind={type==='STEEL_WORKSHOP'?'factory':'site'} className={className}/>
+    <svg data-studio-sketch viewBox="0 0 240 110" className={className} role="img" aria-hidden="true" preserveAspectRatio={fit === "meet" ? "xMaxYMax meet" : "xMidYMax slice"}>
       <style>{STYLE}</style>
       <defs>
         <linearGradient id="sa-sky" x1="0" y1="0" x2="0" y2="1">
@@ -390,7 +393,7 @@ export function SteelSiteArt({
       ) : (
         <AssemblyScene live={live} pct={pct} />
       )}
-    </svg>
+    </svg></>
   );
 }
 

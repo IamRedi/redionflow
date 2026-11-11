@@ -283,7 +283,9 @@ export function WorkzoneMissionControl({
   initialMap = false,
   canEditPhotos = false,
   cardWork = null,
+  realistic = false,
 }: {
+  realistic?: boolean;
   cardWork?: CardWork | null;
   items: MissionItem[];
   archive: MissionItem[];
@@ -466,7 +468,7 @@ export function WorkzoneMissionControl({
         </div>
       ) : (
         <div
-          className="relative overflow-hidden rounded-xl border border-border bg-muted/40 dark:border-emerald-950/20 dark:bg-[#183428]"
+          data-studio-board={realistic || undefined} className="relative overflow-hidden rounded-xl border border-border bg-muted/40 dark:border-emerald-950/20 dark:bg-[#183428]"
           style={{
             minHeight: canvasHeight,
             backgroundImage: canvasBackground,
@@ -478,7 +480,7 @@ export function WorkzoneMissionControl({
             <>
               {/* A steel site at dusk (dark) or morning (light) along the top, fading into the yard. */}
               <SteelSiteScene dark={isDarkTheme} className="pointer-events-none absolute inset-x-0 top-0 h-[520px] w-full opacity-60 dark:opacity-80 lg:h-[600px]" />
-              <div className="pointer-events-none absolute inset-x-0 top-[360px] h-[240px] bg-gradient-to-b from-transparent to-[#e4e1db] dark:to-[#14171d] lg:top-[420px]" />
+              <div data-studio-legacy-fade className="pointer-events-none absolute inset-x-0 top-[360px] h-[240px] bg-gradient-to-b from-transparent to-[#e4e1db] dark:to-[#14171d] lg:top-[420px]" />
             </>
           ) : (
             <>
@@ -513,14 +515,16 @@ export function WorkzoneMissionControl({
             </Button>
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
-          {items.map((item) => {
+          <div data-studio-site-list={realistic || undefined}>{items.map((item) => {
             const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl);
             const target = positions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;
             return (
               <motion.div
                 key={item.id}
-                drag={!readOnly || allowCanvasDrag}
+                initial={realistic ? false : undefined}
+                data-studio-site-card={realistic || undefined}
+                drag={(!realistic || !isCompactCanvas) && (!readOnly || allowCanvasDrag)}
                 dragMomentum={false}
                 dragElastic={0.08}
                 onDragEnd={(_, info) => {
@@ -545,16 +549,16 @@ export function WorkzoneMissionControl({
                 }}
                 animate={{
                   x: target.x,
-                  y: item.activeLiveCount > 0 ? [target.y, target.y - 5, target.y] : target.y,
+                  y: !realistic && item.activeLiveCount > 0 ? [target.y, target.y - 5, target.y] : target.y,
                 }}
                 transition={{
                   x: { duration: 0.25, ease: "easeOut" },
-                  y: item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
+                  y: !realistic && item.activeLiveCount > 0 ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
                 className={`absolute rounded-xl border bg-card/95 p-2.5 shadow-md ${isCompactCanvas ? "w-[148px]" : "w-[196px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
                 {hasCover ? (
-                  <div className={`relative -mx-2.5 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
+                  <div data-studio-card-media className={`relative -mx-2.5 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
                     <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={(item.canEditPhoto??canEditPhotos)&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>
@@ -629,11 +633,11 @@ export function WorkzoneMissionControl({
                 </div>
               </motion.div>
             );
-          })}
+          })}</div>
         </div>
       )}
 
-      <div className="min-w-0 rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]" data-testid="daily-archive">
+      <div data-studio-surface className="min-w-0 rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]" data-testid="daily-archive">
         <h3 className="text-sm font-semibold">{t("workzone.dailyArchive", currentLang)}</h3>
         <div className="mt-2 min-w-0">
           <table className="w-full table-fixed border-collapse border text-xs">

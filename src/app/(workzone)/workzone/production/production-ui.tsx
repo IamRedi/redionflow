@@ -228,7 +228,7 @@ export function BatchSheet({
                   >
                     <div className="flex gap-3 p-3">
                       <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-orange-50 dark:from-slate-800 dark:to-slate-950">
-                        <SteelPhaseArt phase={artKey(step.key)} animate={step.status === "active"} className="absolute inset-0 h-full w-full" />
+                        <SteelPhaseArt photoPhase={step.key} phase={artKey(step.key)} animate={step.status === "active"} className="absolute inset-0 h-full w-full" />
                         {step.status === "done" ? (
                           <span className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-green-600 text-white">
                             <Check className="size-4" strokeWidth={3} />
