@@ -1,5 +1,6 @@
 import sharp from 'sharp';
-export const MAX_PHOTO_BYTES = 12_000_000;
+import { MAX_PHOTO_BYTES } from './image-limits';
+export { MAX_PHOTO_BYTES } from './image-limits';
 export const MAX_WEBP_BYTES = 180_000;
 /** Decode bounded raster images only; auto-orient, remove EXIF/GPS, keep aspect. */
 export async function compactPhoto(bytes: Uint8Array) {

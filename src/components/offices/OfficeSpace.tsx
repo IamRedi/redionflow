@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type {OfficeArtworkState} from '@/lib/offices/artwork';
 import {ArrowLeft,Building2,Info,Settings2} from 'lucide-react';
 import type {SupportedLanguage} from '@/lib/i18n/language';
 import {officeCopy} from '@/lib/offices/copy';
@@ -8,8 +9,8 @@ import {RediOnFooter} from '@/components/branding/RediOnFooter';
 import s from './office.module.css';
 import studio from './studio.module.css';
 
-type Props={room:'reception'|'megi';lang:SupportedLanguage;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean};
-export function OfficeSpace({room,lang,companyName,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false}:Props){
+type Props={artwork?:OfficeArtworkState;room:'reception'|'megi';lang:SupportedLanguage;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean};
+export function OfficeSpace({artwork,room,lang,companyName,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false}:Props){
  const c=officeCopy(lang),w=officeWorkCopy(lang),sq=lang==='sq',reception=room==='reception',name=ownName||'Megi',tools=ownDesk||!!previewBase;
  const base=previewBase||'/workzone/offices/me';
  const href=(view:string)=>previewBase?`${base}?view=${view}`:`${base}/${view==='documents'?'resources':view}`;
@@ -28,7 +29,7 @@ export function OfficeSpace({room,lang,companyName,ownDesk,admin,workEnabled=fal
    <details><summary aria-label={sq?'Rreth aplikacionit':'About the app'}><Info size={16}/></summary><div><p>{companyName} · {c.hours}</p><RediOnFooter/></div></details>
   </div></nav>
   {previewBase&&<p className={s.previewNotice} data-testid="office-preview-notice">{sq?'Pamja e punonjësit · vetëm shikim':'Employee view · read only'}{!previewEnabled?` · ${sq?'Pa hyrje':'Access disabled'}`:''}<span>{sq?'Posta dhe shënimet personale janë private.':'Personal mail and notes remain private.'}</span></p>}
-  <div className={s.nativeScene}><OfficeScene reception={reception} company={companyName} name={name} title={officeTitle||c.administration} doors={doors} objects={objects} doorPage={doorPage} sq={sq}/></div>
+  <div className={s.nativeScene}><OfficeScene reception={reception} company={companyName} name={name} title={officeTitle||c.administration} doors={doors} objects={objects} artwork={artwork} doorPage={doorPage} sq={sq}/></div>
   {!reception&&!tools&&<p className={s.visitorNotice}> {sq?'Puna, shënimet dhe Posta personale mbeten private.':'Work, notes and personal mail remain private.'}{workEnabled&&<Link href={`/workzone/offices/me/mail?compose=1${visitorId?`&to=${encodeURIComponent(visitorId)}`:''}`}>{w.mail} ↗</Link>}</p>}
  </section>;
 }
