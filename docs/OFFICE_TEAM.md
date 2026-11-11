@@ -135,7 +135,19 @@ their owner and every fresh request rechecks access. Current document selection
 is rechecked after parsing. History shows up to 30 turns per selected conversation
 and 20 recent conversations; previous assistant answers are never evidence.
 
-AL Steel's reviewed private office recipe prepares existing staff only. Initial
-employee activation is limited to the purchasing office; other prepared rooms
-can be reviewed and activated by the configured directors. No account roles,
-PINs, global Helper flags or project permissions change during this activation.
+AL Steel's reviewed private office recipe prepares existing staff only. The
+owner subsequently authorized activation of all eleven reviewed staff offices
+and their individual assistants. This changes only OfficeMember activation;
+no account roles, PINs, global Helper flags or project permissions change.
+The assistant receives its own office title/position and allowed workspace
+capabilities as work focus, never as extra permission or evidence of contents.
+
+## Reception circulation
+
+All visible entrances share one floor line, with a right-hand reception desk,
+glass/wood surfaces and architectural depth in the existing room palette. The
+hallway shows four entrances on desktop and two on narrow screens, with bounded
+previous/next navigation and a direct office directory. Compact-height variants
+keep the scene usable in landscape. All offices remain reachable without
+scrolling the room; only the opened directory may scroll independently. Room
+tools, private history and existing project/document controls are reused.
