@@ -37,6 +37,11 @@
 .page { min-width: 0; flex: 1 0 auto; }
 .scroll > footer { flex-shrink: 0; margin-inline: -12px; }
 .scroll:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: -2px; }
+/* The virtual room is a native working surface; its own SVG navigation stays reachable. */
+.scroll:has(:global([data-office-fullscreen])) { container-type:normal;overflow:hidden; }
+.scroll:has(:global([data-office-fullscreen])) > footer { display:none; }
+.shell:has(:global([data-office-fullscreen])) > header { display:none; }
+:global(body):has(.shell :global([data-office-fullscreen])) :global([data-testid="flow-global-tools"]) { display:none; }
 .workzone { grid-template-columns: minmax(0, 1fr); }
 .workzone .scroll { padding-top: calc(var(--workspace-header-height) + 12px); }
 @media(max-width:767px) {

@@ -4,7 +4,8 @@ import { officeActor, OfficeError } from './work-access';
 
 export async function officeDirectory(){
   const actor=await officeActor();
-  return {self:actor.principalId,manager:actor.manager,people:actor.people};
+  const prepared=actor.manager&&process.env.VIRTUAL_OFFICE_TEAM_ENABLED==='true'?await withTenantContext(actor.companyId,tx=>tx.officeMember.findMany({where:{companyProfileId:actor.companyId,enabled:false,worker:{status:'active'}},select:{id:true,title:true,worker:{select:{firstName:true,lastName:true}}},orderBy:{title:'asc'}})):[];
+  return {self:actor.principalId,manager:actor.manager,people:[...actor.people.map(p=>({...p,enabled:true})),...prepared.filter(p=>!actor.people.some(a=>a.id===p.id)).map(p=>({id:p.id,name:`${p.worker!.firstName} ${p.worker!.lastName}`,title:p.title,seat:'staff' as const,enabled:false}))]};
 }
 export async function officeTeamSettings(){
   const actor=await officeActor();

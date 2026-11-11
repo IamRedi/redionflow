@@ -18,10 +18,30 @@ person, office or task is inferred from display names or job categories.
 Employees use their existing PIN login. Operational permissions remain in the
 existing document, plan, site and production modules.
 
-The reception directory exposes names and office functions only. Visiting a
-colleague's room exposes its visual presentation and an addressed compose link,
-never their tasks, notes or messages. A personal room provides physical calendar
-and folder controls, with mail/tasks and accessible return navigation.
+The reception is a fixed native SVG working surface: the reception desk sits
+at the right and named employee doors are part of the drawing. Directors also
+see prepared, disabled rooms; employees only see enabled colleagues. Doors wrap
+within the scene, with a bounded corridor page after 15 rooms rather than an
+unbounded tiny illustration or horizontal scrolling.
+
+Employees visiting a colleague see the room and addressed compose link, never
+their tasks, notes or messages. The two configured directors can preview an
+active employee's prepared office, even while office login is disabled. Every
+preview resource is evaluated using that employee's current operational keys,
+including workbook denies; the director's session/principal remains unchanged.
+The preview exposes permitted document metadata, company assignments and saved
+plans, with read-only workbook views when permitted. It never reads personal
+notes, private mail/receipts or assistant conversations. It has no mutation or
+impersonation endpoint. Inactive accounts and foreign tenants are denied.
+
+The room itself has no shortcut cards or page scrolling. Calendar, folder,
+clipboard, mail tray and workbook drawer are native SVG navigation targets.
+Small headers link back to reception, Workzone or one's own room. The common
+office entry leads directly to the signed-in person's office. SVG uses native
+anchors to preserve its namespace; keyboard labels/focus remain available.
+The existing author signature is available in the native About disclosure,
+without a permanently reserved footer strip. Resource previews use a native
+modal dialog with focus containment, Escape and an explicit return link.
 
 Company tasks require a category and assignee. The initial five business
 categories remain editable; Other is available for both an existing catalogue

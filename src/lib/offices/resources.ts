@@ -5,29 +5,31 @@ import {can,type AccessSubject} from '@/lib/access/rules';
 import {officeActor,OfficeError} from './work-access';
 import {effectiveSessionHours,isReportableSession} from '@/lib/workzone/session-rules';
 import {monthRange,dateKey,formatReportDay} from '@/lib/workzone/date-utils';
+import {officePreviewTarget} from './preview';
 
 export const officeMonth=z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).refine(v=>Number(v.slice(0,4))>=2000&&Number(v.slice(0,4))<=2100);
-export async function officeResourceAccess(){
- const actor=await officeActor();
+export async function officeResourceAccess(previewId?:string){
+ const preview=previewId?await officePreviewTarget(previewId):null;
+ const actor=preview?.actor??await officeActor();
  return withTenantContext(actor.companyId,async tx=>{
-  const subject:AccessSubject|null=actor.kind==='admin'?{kind:'admin'}:await loadWorkerAccess(tx,actor.companyId,actor.id);
+  const subject:AccessSubject|null=preview?await loadWorkerAccess(tx,actor.companyId,preview.member.workerId!):actor.kind==='admin'?{kind:'admin'}:await loadWorkerAccess(tx,actor.companyId,actor.id);
   if(!subject)throw new OfficeError('DENIED');
-  const membership=await tx.officeMember.findFirst({where:{id:actor.principalId,companyProfileId:actor.companyId},select:{workbooksEnabled:true}});
+  const membership=preview?.member??await tx.officeMember.findFirst({where:{id:actor.principalId,companyProfileId:actor.companyId},select:{workbooksEnabled:true}});
   const staffDenied=subject.kind==='worker'&&subject.grants.some(g=>g.place==='staff'&&g.scopeId===''&&g.level==='none');
-  return {actor,subject,workbooks:actor.manager||!staffDenied&&(!!membership?.workbooksEnabled||can(subject,'staff.view'))};
+  return {actor,subject,workbooks:!preview&&actor.manager||!staffDenied&&(!!membership?.workbooksEnabled||can(subject,'staff.view'))};
  });
 }
 /** No title/category inference: every module and site is filtered by its real key. */
-export async function officeResources(){
- const {actor,subject,workbooks}=await officeResourceAccess();
+export async function officeResources(previewId?:string){
+ const {actor,subject,workbooks}=await officeResourceAccess(previewId);
  return withTenantContext(actor.companyId,async tx=>{
   if(await tx.baustelle.count({where:{companyProfileId:actor.companyId}})>500)throw new OfficeError('LIMIT');
   const sites=await tx.baustelle.findMany({where:{companyProfileId:actor.companyId},select:{id:true,name:true,type:true},orderBy:{name:'asc'}});
   return {workbooks,sites:sites.filter(s=>can(subject,'site.view',s.id)).map(s=>({...s,documents:can(subject,'site.documents',s.id),factory:can(subject,'factory.view',s.id),productionWrite:can(subject,'factory.steps',s.id),field:can(subject,'field.view',s.id),costs:can(subject,'costs.view',s.id),details:can(subject,'site.details',s.id)})),plan:can(subject,'daily_plan.view'),warehouse:can(subject,'warehouse.view'),workshop:can(subject,'workshop.view'),fleet:can(subject,'fleet_gps.view')};
  });
 }
-export async function officeSiteFiles(siteId:string){
- const {actor,subject}=await officeResourceAccess();
+export async function officeSiteFiles(siteId:string,previewId?:string){
+ const {actor,subject}=await officeResourceAccess(previewId);
  if(!can(subject,'site.view',siteId))throw new OfficeError('DENIED');
  const costs=can(subject,'costs.view')||can(subject,'site.details',siteId);
  return withTenantContext(actor.companyId,async tx=>{
@@ -38,8 +40,8 @@ export async function officeSiteFiles(siteId:string){
   return {site:{...site,address:site.address??'',description:site.description??''},files:files.map(f=>({...f,createdAt:f.createdAt.toISOString()})),canUpload:can(subject,'site.documents',siteId),canSeeCosts:costs,canEditDetails:can(subject,'site.details',siteId)};
  });
 }
-export async function officeWorkbooks(month:string,workerId?:string){
- officeMonth.parse(month);const {actor,workbooks}=await officeResourceAccess();if(!workbooks)throw new OfficeError('DENIED');
+export async function officeWorkbooks(month:string,workerId?:string,previewId?:string){
+ officeMonth.parse(month);const {actor,workbooks}=await officeResourceAccess(previewId);if(!workbooks)throw new OfficeError('DENIED');
  const {start,end}=monthRange(month),now=new Date();
  return withTenantContext(actor.companyId,async tx=>{
   const where={companyProfileId:actor.companyId,...(workerId?{id:workerId}:{})};

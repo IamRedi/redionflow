@@ -26,6 +26,37 @@ beforeAll(async()=>{
   await prisma.$executeRawUnsafe(`GRANT SELECT ON "OfficeTask","OfficeThread","OfficeMessage","OfficeAttachment","OfficeCategory" TO ${role}`);
 });
 beforeEach(()=>as(megi));
+it('previews employee work using the employee keys without impersonation or private work',async()=>{
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+ await initializeOfficeCategories();
+ const {saveOfficeMember,officeDirectory}=await import('./team-service');
+ const {officePreviewTarget,officePreviewTasks,officePreviewPlan}=await import('./preview');
+ const {officeResources,officeSiteFiles,officeWorkbooks}=await import('./resources');
+ const person=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Preview',lastName:'Demo',crewRole:'OFFICE',accessLevel:'BASE'}});
+ const allowed=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Preview allowed',documents:[]}});
+ const denied=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Preview denied',documents:[]}});
+ const member=await saveOfficeMember({workerId:person.id,title:'Office',enabled:true,workbooksEnabled:false,version:0});
+ await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:person.id,place:'site',scopeId:allowed.id,level:'view'}});
+ const work={...draft(),id:randomUUID(),ownerId:member.id,kind:'COMPANY',categoryId:'OTHER',title:'Visible company assignment'};await saveOfficeTask(work);
+ auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:person.id,companyProfileId:companyId});
+ await saveOfficeTask({...draft(),id:randomUUID(),ownerId:member.id,title:'Employee confidential note'});
+ const employeeSites=(await officeResources()).sites;
+ await expect(officeResources(member.id)).rejects.toThrow('DENIED');
+ as(megi);
+ expect((await officeResources(member.id)).sites).toEqual(employeeSites);
+ expect((await officePreviewTasks(member.id)).map(t=>t.title)).toEqual(['Visible company assignment']);
+ await expect(officeSiteFiles(denied.id,member.id)).rejects.toThrow('DENIED');
+ await expect(officeWorkbooks('2026-11',undefined,member.id)).rejects.toThrow('DENIED');
+ await prisma.accessGrant.create({data:{companyProfileId:companyId,workerId:person.id,place:'daily_plan',scopeId:'',level:'none'}});
+ await expect(officePreviewPlan(member.id,'2026-11-11')).rejects.toThrow('DENIED');
+ expect((await officeWorkSnapshot()).self).toBe(megi);
+ await prisma.officeMember.update({where:{id:member.id},data:{enabled:false}});
+ expect((await officeDirectory()).people.some(p=>p.id===member.id&&!p.enabled)).toBe(true);
+ expect((await officePreviewTarget(member.id)).member.enabled).toBe(false);
+ await prisma.worker.update({where:{id:person.id},data:{status:'inactive'}});
+ await expect(officePreviewTarget(member.id)).rejects.toThrow('NOT_FOUND');
+ vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');
+});
 afterAll(async()=>{
   if(companyId){const where={companyProfileId:companyId};await prisma.officeAttachment.deleteMany({where});await prisma.officeMessage.deleteMany({where});await prisma.officeThread.deleteMany({where});await prisma.officeTask.deleteMany({where});await prisma.officeCategory.deleteMany({where});await prisma.officeMember.deleteMany({where});await prisma.worker.deleteMany({where});await prisma.user.deleteMany({where:{companyProfileId:{in:[companyId,otherCompanyId]}}});await prisma.companyProfile.deleteMany({where:{id:{in:[companyId,otherCompanyId]}}});}
   await prisma.$executeRawUnsafe(`DROP OWNED BY ${role}`);await prisma.$executeRawUnsafe(`DROP ROLE ${role}`);vi.unstubAllEnvs();
