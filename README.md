@@ -191,6 +191,14 @@ Die Fahrzeugkarte bündelt Datenbearbeitung, Foto und Dokumentfristen. Die Werks
 
 <img src="docs/assets/screenshots/steel-service-workspace-synthetic.png" alt="BauFlow service workspace with fictional vehicles grouped by phase" width="100%">
 
+## Empfang und Bürozugang · 11. November 2026
+
+BauFlow bietet einen Empfang und ein Verwaltungsbüro für ausdrücklich freigeschaltete Konten im realen Firmenbetrieb ([PR150](https://github.com/IamRedi/redionflow/pull/150)). Der Raum öffnet den bestehenden Tagesplan, Baustellenakten und das Dashboard am Rechner und Handy. Besucher erhalten keine privaten Kollegendaten; andere Administratoren erhalten nicht automatisch Zugang. Private Post, persönliche Aufgaben und Bürozeit-Kontext folgen später. Die öffentlichen Demos bleiben unverändert.
+
+Die Aufnahme stammt aus der lokalen fiktiven Mira Steel DEMO, nicht aus Kundendaten.
+
+![Empfang mit fiktiven Demodaten](docs/assets/screenshots/office-reception-demo.png)
+
 ## Lizenz
 
 Source-available, alle Rechte vorbehalten. Der Code darf gelesen und zur Bewertung lokal ausgeführt werden, aber nicht kommerziell genutzt werden. Details in [LICENSE](LICENSE).
