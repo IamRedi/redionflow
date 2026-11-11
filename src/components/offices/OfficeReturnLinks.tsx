@@ -8,7 +8,7 @@ import { officeWorkCopy } from '@/lib/offices/work-copy';
 import type { SupportedLanguage } from '@/lib/i18n/language';
 import s from './work.module.css';
 
-const roots=['/app/baustellen','/app/dashboard','/app/profile'];
+const roots=['/app/baustellen','/app/dashboard','/app/profile','/workzone/baustellen','/workzone/inventory','/workzone/workshop'];
 function subscribe(notify:()=>void){window.addEventListener('office-return-change',notify);window.addEventListener('storage',notify);return()=>{window.removeEventListener('office-return-change',notify);window.removeEventListener('storage',notify);};}
 function snapshot(){try{return sessionStorage.getItem('office-return')||'';}catch{return '';}}
 export function OfficeReturnLinks({lang}:{lang:SupportedLanguage}){

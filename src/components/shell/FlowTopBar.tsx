@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OfficeEntry } from '@/components/offices/OfficeEntry';
 import { Home, LayoutDashboard } from 'lucide-react';
 
 import {
@@ -184,6 +185,7 @@ export async function FlowTopBar({
                 logoAlt={t('common.companyLogoAlt', currentLang)}
               />
             )}
+            {contained&&<div className="lg:hidden"><OfficeEntry lang={currentLang} compact /></div>}
             <div className={contained ? "hidden gap-1 lg:grid" : "grid gap-1"}>
               <Link
                 href="/workzone"
@@ -193,6 +195,7 @@ export async function FlowTopBar({
               >
                 <Home className="size-4" />
               </Link>
+              <OfficeEntry lang={currentLang} compact />
               {admin ? (
                 <Link
                   href="/app/dashboard"

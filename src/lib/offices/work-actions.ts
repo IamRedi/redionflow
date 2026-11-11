@@ -1,5 +1,5 @@
 'use server';
-import { officeTeamSettings,saveOfficeMember } from './team-service';
+import { officeTeamSettings,saveOfficeMember,prepareOfficeTeam } from './team-service';
 import { ZodError } from 'zod';
 import { OfficeError } from './work-access';
 import { archiveOfficeTask, initializeOfficeCategories, officeWorkSnapshot, readOfficeThread, saveOfficeCategory, saveOfficeTask, sendOfficeMail } from './work-service';
@@ -21,3 +21,5 @@ export async function unreadOfficeAction(){return safe(officeUnreadCount);}
 
 export async function loadOfficeTeamAction(){return safe(officeTeamSettings);}
 export async function saveOfficeMemberAction(input:unknown){return safe(()=>saveOfficeMember(input));}
+
+export async function prepareOfficeTeamAction(){return safe(prepareOfficeTeam);}

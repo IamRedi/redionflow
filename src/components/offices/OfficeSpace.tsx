@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, FolderOpen, LayoutDashboard, LockKeyhole, UserRound, Mail, ListTodo } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, CalendarDays, FolderOpen, LayoutDashboard, LockKeyhole, UserRound, Mail, ListTodo, BookOpen } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { SupportedLanguage } from '@/lib/i18n/language';
 import { officeCopy } from '@/lib/offices/copy';
@@ -7,10 +7,10 @@ import { officeWorkCopy } from '@/lib/offices/work-copy';
 import styles from './office.module.css';
 import { OfficeMailNotice } from './OfficeMailNotice';
 
-type Props = { room: 'reception' | 'megi'; lang: SupportedLanguage; companyName: string; ownDesk: boolean; admin: boolean; assistant?: ReactNode; workEnabled?:boolean; ownName?:string; unread?:number;visitorId?:string;officeTitle?:string };
+type Props = { room: 'reception' | 'megi'; lang: SupportedLanguage; companyName: string; ownDesk: boolean; admin: boolean; assistant?: ReactNode; workEnabled?:boolean; ownName?:string; unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean };
 
 /** Pure presentation: receives no colleague records, mail, tasks or personal data. */
-export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant,workEnabled=false,ownName,unread=0,visitorId,officeTitle }: Props) {
+export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true }: Props) {
   const c = officeCopy(lang);
   const w = officeWorkCopy(lang);
   const occupantName = ownName||'Megi';
@@ -52,7 +52,7 @@ export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant
         <div className={styles.chair}><i /><b /></div>
         <div className={styles.desk}><div className={styles.deskTop} /><div className={styles.deskFace} /><div className={styles.monitor}><i /></div><div className={styles.keyboard} /><div className={styles.paper} /><div className={styles.cup} /></div>
       </div>
-      {!reception&&ownDesk&&<Link href={`/workzone/plan?office=${origin}`} className={styles.wallCalendar}><span className={styles.calendarRings} aria-hidden="true"/><CalendarDays size={28}/><strong>{c.plan}</strong><span>{lang==='sq'?'Hap kalendarin':'Open calendar'}</span></Link>}
+      {!reception&&ownDesk&&planEnabled&&<Link href={`/workzone/plan?office=${origin}`} className={styles.wallCalendar}><span className={styles.calendarRings} aria-hidden="true"/><CalendarDays size={28}/><strong>{c.plan}</strong><span>{lang==='sq'?'Hap kalendarin':'Open calendar'}</span></Link>}
       {reception ? <Link href="/workzone/offices/megi" className={styles.door} data-testid="office-door">
         <span className={styles.doorGlass} aria-hidden="true" />
         <span className={styles.doorPlate}><span>{c.administration}</span><strong>{occupantName}</strong><span>{ownDesk ? c.enter : c.visit}<ArrowUpRight size={16} /></span></span>
@@ -61,7 +61,8 @@ export function OfficeSpace({ room, lang, companyName, ownDesk, admin, assistant
       {!reception && ownDesk && <div className={styles.deskActions}>
         {links.slice(0, 2).map(({ href, text, Icon }) => <Link href={href} key={href}><Icon size={18} /><span>{text}</span><ArrowUpRight size={15} /></Link>)}
       </div>}
-      {!reception&&ownDesk&&<Link href={admin?'/app/baustellen?office=desk':'/workzone'} className={styles.deskFolder}><FolderOpen size={24}/><span>{c.documents}</span></Link>}
+      {!reception&&ownDesk&&<Link href="/workzone/offices/me/resources" className={styles.deskFolder}><FolderOpen size={24}/><span>{c.documents}</span></Link>}
+      {!reception&&ownDesk&&workbooksEnabled&&<Link href="/workzone/offices/me/workbooks" className={styles.deskWorkbook}><BookOpen size={20}/><span>{lang==='sq'?'Fletoret e punëtorëve':'Staff workbooks'}</span></Link>}
       <span className={styles.roomCaption}>{reception ? c.receptionHint : ownDesk ? c.desk : occupantName}</span>
     </div>
     {tools ? <section className={styles.work} aria-label={c.work}>
