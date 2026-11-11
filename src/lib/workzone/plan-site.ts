@@ -1,5 +1,6 @@
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { dateKey, dayRange, monthRange } from "@/lib/workzone/date-utils";
+import { siteFromSavedRows } from "@/lib/workzone/plan-site-rule";
 
 /**
  * The daily plan is where a worker's site comes from: starting the day puts the worker on
@@ -12,7 +13,17 @@ export async function plannedSiteId(companyId: string, workerId: string, at: Dat
     select: { column: { select: { baustelleId: true, baustelle: { select: { status: true } } } } },
   }));
   const site = assignment?.column;
-  return site?.baustelleId && site.baustelle?.status === "active" ? site.baustelleId : null;
+  if (site?.baustelleId && site.baustelle?.status === "active") return site.baustelleId;
+  // The editable plan may be empty after saving; the saved plan still names the site.
+  return withPilotDbContext(companyId, async (tx) => {
+    const [plan, worker, sites] = await Promise.all([
+      tx.dailyWorkPlan.findUnique({ where: { companyProfileId_planDate: { companyProfileId: companyId, planDate } }, select: { savedRows: { select: { workerNames: true, baustelleName: true } } } }),
+      tx.worker.findFirst({ where: { id: workerId, companyProfileId: companyId }, select: { firstName: true, lastName: true } }),
+      tx.baustelle.findMany({ where: { companyProfileId: companyId, status: "active" }, select: { id: true, name: true } }),
+    ]);
+    if (!plan?.savedRows.length || !worker) return null;
+    return siteFromSavedRows(plan.savedRows, `${worker.firstName} ${worker.lastName}`, sites)?.id ?? null;
+  });
 }
 
 /** Day key → planned site name for one worker over a month (timesheet fallback for days without a site). */
