@@ -50,7 +50,7 @@ export function ReceptionScene({company,doors,doorPage,sq}:{company:string;doors
      <path d={`M0 ${floor}H${wall}`} stroke="var(--oak-light)" strokeWidth="4"/>
      {[.08,.3,.55,.8].map(t=><path key={t} d={`M${wall*t} ${floor+1}L${W*(t*1.4-.2)} ${H}`} stroke="var(--frame)" opacity=".07"/>)}
      <path d={`M0 ${floor+(H-floor)*.4}H${W}M0 ${floor+(H-floor)*.82}H${W}`} stroke="var(--frame)" opacity=".05"/>
-     <path d={`M${mobile?28:58} 30H${wall-30}`} stroke="var(--paper)" strokeWidth="5" strokeLinecap="round"/>
+     <path d={`M${mobile?28:58} ${short?8:30}H${wall-30}`} stroke="var(--paper)" strokeWidth="5" strokeLinecap="round"/>
      <text x={mobile?28:64} y={short?42:99} className={s.hallBrand}>{company}</text>
      <text x={mobile?29:66} y={short?66:124} className={s.hallSubtitle}>{sq?'RECEPSIONI · ZYRAT E EKIPIT':'RECEPTION · TEAM OFFICES'}</text>
      <g data-testid="office-hallway">{shown.map((person,i)=><Entrance key={person.id} person={person} x={mobile?37+i*201:68+i*210} y={short?90:mobile?210:218} width={mobile?142:145} height={short?210:mobile?290:282} prefix={prefix}/>)}</g>
