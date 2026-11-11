@@ -1,5 +1,6 @@
 import { LogOut, SunMoon, UserRound } from "lucide-react";
 import Link from "next/link";
+import { OfficeEntry } from '@/components/offices/OfficeEntry';
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -119,6 +120,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="contents md:flex md:flex-col md:gap-0.5">
               <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
+              <OfficeEntry lang={currentLang} />
               {kidrahtOn && !production ? <AdminNavLink href="/workzone/kidraht" label={KIDRAHT_NAME} /> : null}
             </div>
             {visibleNavSections.map((section, index) => (

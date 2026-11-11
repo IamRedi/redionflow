@@ -60,5 +60,5 @@
 @media (max-width: 1023.98px) {
   .body:has(:global([data-phone-fullscreen])) { isolation: auto; }
   .shell:has(:global([data-phone-fullscreen])) > header { display: none; }
-  :global(body:has([data-phone-fullscreen]) [data-testid="flow-global-tools"]) { display: none; }
+  :global(body):has(.shell :global([data-phone-fullscreen])) :global([data-testid="flow-global-tools"]) { display: none; }
 }
