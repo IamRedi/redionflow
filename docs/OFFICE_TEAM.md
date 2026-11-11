@@ -1,4 +1,4 @@
-# Office team development
+# Employee office workspace
 
 This extends the existing office mail/tasks release. One employee has one
 office identity backed by their existing Worker login; the two configured
@@ -7,8 +7,7 @@ password is created. The migration retains previous principal IDs and moves
 office foreign keys to a tenant-scoped OfficeMember record.
 
 `VIRTUAL_OFFICE_TEAM_ENABLED=true` enables the team management path and
-explicitly enabled employee memberships. It is absent/off in production while
-this work is under development. Disabling it denies employee office access
+explicitly enabled employee memberships. Disabling it denies employee office access
 without deleting mail, attachments or work. Keep the existing office access
 mapping and work flag; do not broaden assistant access.
 
@@ -18,11 +17,12 @@ person, office or task is inferred from display names or job categories.
 Employees use their existing PIN login. Operational permissions remain in the
 existing document, plan, site and production modules.
 
-The reception is a fixed native SVG working surface: the reception desk sits
-at the right and named employee doors are part of the drawing. Directors also
-see prepared, disabled rooms; employees only see enabled colleagues. Doors wrap
-within the scene, with a bounded corridor page after 15 rooms rather than an
-unbounded tiny illustration or horizontal scrolling.
+The reception is a fixed architectural working surface with a right-hand desk
+and named glass office entrances. Directors also see prepared, disabled rooms;
+employees only see enabled colleagues. The hallway scrolls continuously using
+touch, trackpad, wheel, keyboard or mouse drag. Its scrollbar is hidden, while a
+labelled focusable region and direct office directory keep navigation discoverable.
+Dragging must not follow an office link. There is no corridor pagination.
 
 Employees visiting a colleague see the room and addressed compose link, never
 their tasks, notes or messages. The two configured directors can preview an
@@ -34,11 +34,13 @@ plans, with read-only workbook views when permitted. It never reads personal
 notes, private mail/receipts or assistant conversations. It has no mutation or
 impersonation endpoint. Inactive accounts and foreign tenants are denied.
 
-The room itself has no shortcut cards or page scrolling. Calendar, folder,
-clipboard, mail tray and workbook drawer are native SVG navigation targets.
+The room itself has no shortcut cards or page scrolling. The wall calendar,
+clipboard, monitor, mail tray and desk drawers are real labelled navigation links.
+The document drawer uses existing permitted resources; the extra workbook drawer
+and personal monitor are included only when already authorized.
 Small headers link back to reception, Workzone or one's own room. The common
-office entry leads directly to the signed-in person's office. SVG uses native
-anchors to preserve its namespace; keyboard labels/focus remain available.
+office entry leads directly to the signed-in person's office. Keyboard labels,
+visible focus, native link behavior and separated touch targets remain available.
 The existing author signature is available in the native About disclosure,
 without a permanently reserved footer strip. Resource previews use a native
 modal dialog with focus containment, Escape and an explicit return link.
@@ -142,12 +144,29 @@ no account roles, PINs, global Helper flags or project permissions change.
 The assistant receives its own office title/position and allowed workspace
 capabilities as work focus, never as extra permission or evidence of contents.
 
-## Reception circulation
+## Office Studio visual baseline — owner redesign, 11 November 2026
 
-All visible entrances share one floor line, with a right-hand reception desk,
-glass/wood surfaces and architectural depth in the existing room palette. The
-hallway shows four entrances on desktop and two on narrow screens, with bounded
-previous/next navigation and a direct office directory. Compact-height variants
-keep the scene usable in landscape. All offices remain reachable without
-scrolling the room; only the opened directory may scroll independently. Room
-tools, private history and existing project/document controls are reused.
+The owner explicitly requested a distinct photorealistic office style rather than
+the factory/field illustration language. The office area uses walnut, smoked
+glass, brushed metal, limestone and restrained warm lighting. Its own scoped
+workspace tokens do not restyle operational factory, field or vehicle screens.
+Functional text, identities and controls remain HTML, never baked into images.
+The reception counter occludes glass entrances in the foreground; entrances
+share one floor line and slide through one native horizontal region.
+
+Four fictional decorative architectural images were generated with the built-in
+image tool (model identity not exposed), then converted locally to pre-sized
+WebP: wide/portrait companions for the room and reception. They are not photos
+of client premises, measured CAD or business evidence. No client documents,
+photos or employee identities were inputs. Original image hashes, final hashes
+and byte sizes are in `public/office-studio-v1/provenance.json`; all four WebPs
+total under 400 KiB. Project copies are durable and do not reference a generator
+cache path. Native picture selection serves the appropriate static companion;
+there is no generation call, provider credential, new dependency or AI request
+on page load. Room controls remain tied to the current server permission map.
+
+The calendar prints the current report month/day using the existing report clock;
+it opens the existing daily plan and never creates attendance. Drawers, private
+mail, tasks and assistants reuse their existing destinations and authorization.
+Compact-height arrangements preserve reachable controls; the room has no page
+scroll or bottom shortcut bar. About/author and management move into the header.
