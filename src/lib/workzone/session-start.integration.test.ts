@@ -24,7 +24,7 @@ it('uses one business clock for manual start/stop and refuses a restart inside c
  const closed=await prisma.workSession.findUniqueOrThrow({where:{id:live.id}});
  expect(closed).toMatchObject({totalHours:1,isLive:false,endTime:parseWorkDateTime(end)});
  const overlap=await startWorkerSessionAction({workerId,startTime:start});
- expect(overlap.ok).toBe(false);expect((overlap.message??'').toLowerCase()).toContain('overlap');
+ expect(overlap.ok).toBe(false);expect((overlap.message??'').toLowerCase()).toMatch(/overlap|überschneid/);
  expect(await prisma.workSession.count({where:{workerId}})).toBe(1);
 });
 it('serializes simultaneous profile/site starts and double stop emits one saved admin time entry',async()=>{
@@ -96,3 +96,12 @@ it('the boss is told only about a start that was not undone within 5 seconds',as
  await new Promise(resolve=>setTimeout(resolve,6500));
  expect(vi.mocked(sendWorkEventNotification).mock.calls.map(([input])=>input.preference)).toEqual(['workStart']);
 },15000);
+it('a live session without a site takes the planned site on the next start, a set site stays',async()=>{
+ const t=tenants[0],workerId=t.worker.id,start=new Date(Date.now()-3600000);
+ const first=await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null});
+ await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:t.site.id,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:first.id}})).baustelleId).toBe(t.site.id);
+ const other=await prisma.baustelle.create({data:{companyProfileId:t.company.id,name:'Synthetic other site'}});
+ await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:other.id,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:first.id}})).baustelleId).toBe(t.site.id);
+});

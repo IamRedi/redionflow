@@ -236,6 +236,9 @@ export default async function BaustelleDetailPage({
     const isAdmin = can.office;
     const canSeeCosts = isAdmin || Boolean(actor?.allows("costs.view"));
     const canAdvance = can.factorySteps;
+    const adminLogin = Boolean(currentAdmin && !currentWorker);
+    // Production progress (how much the factory made): admins and whoever checks factory elements here.
+    const seeProduction = adminLogin || can.factorySteps;
     const documentAccess=await withTenantContext(currentCompanyId,tx=>siteDocumentAccess(tx,{companyId:currentCompanyId,userId:currentAdmin&&!currentWorker?currentAdmin.id:null,workerId:currentWorker?.id??null},baustelle.id));
     const [batchRows, fileRows, elementRows, workerRows] = await withTenantContext(currentCompanyId, (tx) =>
       Promise.all([
@@ -361,7 +364,8 @@ export default async function BaustelleDetailPage({
                 canSeeCosts={canSeeCosts}
                 canUpload={documentAccess.upload}
               />
-              <PhaseDocumentsButton siteId={baustelle.id}/>
+              {/* Phase documents ("Fazat") are hidden for now: admin logins only. */}
+              {adminLogin ? <PhaseDocumentsButton siteId={baustelle.id}/> : null}
               <PlanNoteButton note={planNote} siteName={baustelle.name} className="size-9" />
               <AccessKeyButton place="site" scopeId={baustelle.id} />
               <WorkingBadge workers={activeWorkerNames} />
@@ -390,11 +394,11 @@ export default async function BaustelleDetailPage({
         {/* Steel firms: the site of the day comes from the daily plan; work starts on the profile.
             Engineers who move between sites get the small start/stop toggle in the header. */}
 
-        <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className={`grid min-w-0 gap-4 lg:items-start ${seeProduction && (factoryView || batches.length > 0) ? "lg:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
           <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
             {/* The factory here is only to look at: what it produced for this site, per process. */}
-            {factoryView ? (
+            {!seeProduction ? null : factoryView ? (
               <SiteFactoryView output={factoryView} processDefinitions={definitions.filter(definition => definition.kind === 'factory')} />
             ) : batches.length > 0 ? (
               <SiteProductionPanel site={{ id: baustelle.id, name: baustelle.name }} batches={batches} canAdvance={canAdvance} canManage={isAdmin} />
@@ -525,7 +529,7 @@ export default async function BaustelleDetailPage({
             </CardContent>
           </Card>
 
-          {features.inventory ? <SafetyEquipmentPanel baustelleId={baustelle.id} rows={safetyRows} currentWorker={currentActorView} /> : null}
+          {features.inventory ? <SafetyEquipmentPanel baustelleId={baustelle.id} rows={safetyRows} currentWorker={currentActorView} hidden={baustelle.safetyPanelHidden} /> : null}
 
           {baustelle.manualTasks.length > 0 ? (
           <Card className="min-w-0 overflow-hidden">

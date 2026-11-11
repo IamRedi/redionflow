@@ -173,6 +173,8 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   // own production panel below the board and never appears as a site card.
   const factorySite = allSites.find((site) => site.type === "STEEL_WORKSHOP") ?? null;
   const baustellen = allSites.filter((site) => site.type !== "STEEL_WORKSHOP");
+  // Production progress (what the factory made, per site): admins and whoever checks factory elements.
+  const seeProduction = Boolean(admin && !worker) || Boolean(worker && accessActor && (accessActor.allows("factory.steps") || baustellen.some((site) => accessActor.allows("factory.steps", site.id))));
   const selectedTaskProgress = await loadSteelTaskProgress(company.id, allSites.filter(site => isSteelSiteType(site.type)).map(site => site.id));
   const workCatalog = allSites.some(site => isSteelSiteType(site.type)) ? await getSteelWorkCatalogAction({}) : null;
   const factoryDefinitions = workCatalog?.ok ? (workCatalog.definitions ?? []).filter(definition => definition.kind === 'factory') : [];
@@ -345,13 +347,14 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       liveSince,
       standortAddress: (b.address ?? "").trim(),
       shape: steelSiteShape(b.name, b.description),
-      material: materialBySite.get(b.id),
+      material: seeProduction ? materialBySite.get(b.id) : undefined,
       pendingCollection,
       pendingSiteTask,
       planNote: planNotes.get(b.id) ?? null,
       equipmentIndicators,
     };
   });
+  const factoryCanManage = Boolean(admin && !worker) || Boolean(worker && accessActor?.allows("new_project.create"));
   const liveMission = missionItems.filter((item) => item.pct < 100 || item.pendingCollection || item.pendingSiteTask);
   const archivedMission = missionItems.filter((item) => item.pct >= 100 && !item.pendingCollection && !item.pendingSiteTask);
   const canvasToolbarButtonClass = "size-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white";
@@ -431,7 +434,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         }
       />
 
-      {factorySite && allows("factory.view") ? (
+      {factorySite && (seeProduction || factoryCanManage) ? (
         <FactoryPanel
           factoryName={factorySite.name}
           factoryId={factorySite.id}
@@ -440,7 +443,8 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
           factoryAddress={(factorySite.address ?? "").trim()}
           siteOutput={siteOutput}
           processDefinitions={factoryDefinitions}
-          canManage={Boolean(admin && !worker) || Boolean(worker && accessActor?.allows("new_project.create"))}
+          canManage={factoryCanManage}
+          showProgress={seeProduction}
         />
       ) : null}
 
@@ -486,7 +490,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
 
           const isLocked = b.status !== "active";
           if (isSteelSiteType(b.type)) {
-            const material = materialBySite.get(b.id);
+            const material = seeProduction ? materialBySite.get(b.id) : undefined;
             const finished = total > 0 && done >= total;
             return (
               <Link
