@@ -192,6 +192,11 @@ enum AssistantLanguage {
 }
 
 model User {
+  officeOwnedTasks OfficeTask[] @relation("OfficeTaskOwner")
+  officeCreatedTasks OfficeTask[] @relation("OfficeTaskCreator")
+  officeSentThreads OfficeThread[] @relation("OfficeThreadSender")
+  officeReceivedThreads OfficeThread[] @relation("OfficeThreadRecipient")
+  officeMessages OfficeMessage[] @relation("OfficeMessageSender")
   siteDocumentGrants SiteDocumentEngineer[] @relation("SiteDocumentGrantedBy")
   phaseDocuments SitePhaseDocument[] @relation("PhaseDocumentUser")
   phaseReceipts SitePhaseDocumentReceipt[] @relation("PhaseReceiptUser")
@@ -251,6 +256,11 @@ model User {
 }
 
 model CompanyProfile {
+  officeCategories OfficeCategory[]
+  officeTasks OfficeTask[]
+  officeThreads OfficeThread[]
+  officeMessages OfficeMessage[]
+  officeAttachments OfficeAttachment[]
   accessGrants AccessGrant[]
   platformSignals PlatformSignal[]
   siteDocumentEngineers SiteDocumentEngineer[]
@@ -338,6 +348,91 @@ model CompanyProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Office records are separate from operational tasks/documents. Identity is the
+// canonical configured admin account, shared by that person's admin/PIN logins.
+model OfficeCategory {
+  id String @id @default(uuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
+  name String
+  archivedAt DateTime?
+  tasks OfficeTask[]
+  @@unique([companyProfileId,id])
+  @@unique([companyProfileId,name])
+}
+
+model OfficeTask {
+  id String @id
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
+  ownerId String
+  createdById String
+  owner User @relation("OfficeTaskOwner", fields:[companyProfileId,ownerId], references:[companyProfileId,id], onDelete:Restrict)
+  createdBy User @relation("OfficeTaskCreator", fields:[companyProfileId,createdById], references:[companyProfileId,id], onDelete:Restrict)
+  kind String
+  title String
+  body String @default("")
+  status String @default("TODO")
+  priority String @default("NORMAL")
+  dueDate String?
+  categoryId String?
+  category OfficeCategory? @relation(fields:[companyProfileId,categoryId], references:[companyProfileId,id], onDelete:Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version Int @default(1)
+  archivedAt DateTime?
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,ownerId,archivedAt])
+}
+
+model OfficeThread {
+  id String @id
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
+  senderId String
+  recipientId String
+  sender User @relation("OfficeThreadSender", fields:[companyProfileId,senderId], references:[companyProfileId,id], onDelete:Restrict)
+  recipient User @relation("OfficeThreadRecipient", fields:[companyProfileId,recipientId], references:[companyProfileId,id], onDelete:Restrict)
+  subject String
+  senderReadAt DateTime?
+  recipientReadAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages OfficeMessage[]
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,senderId,updatedAt])
+  @@index([companyProfileId,recipientId,updatedAt])
+}
+
+model OfficeMessage {
+  id String @id
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
+  threadId String
+  thread OfficeThread @relation(fields:[companyProfileId,threadId], references:[companyProfileId,id], onDelete:Cascade)
+  senderId String
+  sender User @relation("OfficeMessageSender", fields:[companyProfileId,senderId], references:[companyProfileId,id], onDelete:Restrict)
+  body String
+  createdAt DateTime @default(now())
+  attachments OfficeAttachment[]
+  @@unique([companyProfileId,id])
+  @@index([companyProfileId,threadId,createdAt])
+}
+
+model OfficeAttachment {
+  id String @id @default(uuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade)
+  messageId String
+  message OfficeMessage @relation(fields:[companyProfileId,messageId], references:[companyProfileId,id], onDelete:Cascade)
+  fileName String
+  mime String
+  size Int
+  sha256 String
+  dataBytes Bytes
+  @@index([companyProfileId,messageId])
 }
 
 /// Per-tenant cost limits only; never contains prompts, transcripts or API keys.
