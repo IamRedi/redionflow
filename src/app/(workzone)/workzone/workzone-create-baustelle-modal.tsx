@@ -67,13 +67,13 @@ export function WorkzoneCreateBaustelleModal({
 
   const modal = (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden bg-black/45 p-3 sm:p-4">
-      <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-lg border bg-background shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
+      <div data-studio-surface className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
         <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold">{t("workzone.addSiteTitle", currentLang, mode)}</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">{t("workzone.stayInWorkzone", currentLang, mode)}</p>
           </div>
-          <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setIsOpen(false)}>
+          <Button type="button" variant="ghost" size="sm" className="min-h-11 px-3 text-xs" onClick={() => setIsOpen(false)}>
             {t("common.close", currentLang, mode)}
           </Button>
         </div>

@@ -134,9 +134,12 @@ test('steel footer ends the content and the transparent header keeps one book en
           }
           if (!baseline && !underlaySmoke) {
             const profiles = page.getByTestId('flow-team-strip').locator('a[href^="/workzone/admin-profile/"]');
-            await expect(profiles).toHaveCount(3);
-            await profiles.last().focus();
-            expect(await profiles.last().evaluate(el => { const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit === el || el.contains(hit); })).toBe(true);
+            // Contained steel headers now use the worker strip, not duplicate admin shortcuts.
+            await expect(profiles).toHaveCount(0);
+            const workerEntries = page.getByTestId('flow-team-strip').getByRole('button');
+            await expect(workerEntries).toHaveCount(24);
+            await workerEntries.last().focus();
+            expect(await workerEntries.last().evaluate(el => { const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit === el || el.contains(hit); })).toBe(true);
             const announcement = page.getByRole('button', { name: 'Shkruaj nje njoftim te shkurter per ekipin', exact: true });
             await expect(announcement).toHaveCount(1);
             await announcement.click();
@@ -146,7 +149,9 @@ test('steel footer ends the content and the transparent header keeps one book en
             expect(panel!.x).toBeGreaterThanOrEqual(15);
             expect(panel!.x + panel!.width).toBeLessThanOrEqual(width - 15);
             const submit = message.locator('..').locator('button[type="submit"]');
-            expect(await submit.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await announcement.evaluate(el => getComputedStyle(el).backgroundColor));
+            // Crystal can have a transparent color while its gradient distinguishes the action.
+            const material = (el: Element) => { const s = getComputedStyle(el); return [s.backgroundColor, s.backgroundImage]; };
+            expect(await submit.evaluate(material)).not.toEqual(await announcement.evaluate(material));
             await message.press('Escape');
             await expect(message).toHaveCount(0);
           }

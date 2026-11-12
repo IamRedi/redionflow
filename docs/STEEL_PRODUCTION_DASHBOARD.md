@@ -303,3 +303,12 @@ verify the additive migration, exact deployment, health and authenticated views.
 Rollback runs the prior application revision and retains the new column/index and
 stored evidence. Old app versions can continue writing legacy-null snapshots;
 never drop evidence or reset customer projects as part of rollback.
+
+
+### Warm crystal planning and production dashboard — 12 November 2026
+
+The Workzone daily plan, saved-plan calendar and site-creation sheet reuse the established warm stone/copper glass surfaces. The desktop plan header keeps its date navigation beside the title; the phone retains the existing full-screen plan and save actions. Office return links and saved versions keep their existing destinations and behavior.
+
+The steel dashboard reuses the same artwork and warm material language, with opaque chart canvases for legible labels and distinct production series in both themes. Refresh, monitor and copy remain the same operations, presented as three corner icons with accessible names and 44px targets. Compact filters and smaller gaps give the metrics and charts more space. This is a presentation-only change: no database, authorization, notification, attendance or production-calculation changes. Classic company screens remain outside the steel visual scope.
+
+Focused acceptance: `tests/e2e/steel-planning-crystal.spec.ts`, the existing dashboard/theme suites, plan-hours, steel header/footer and Workzone-studio regressions. Local rendered evidence is separate from owner acceptance and a production deployment; the owner must approve merge/deploy.
