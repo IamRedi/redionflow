@@ -181,3 +181,11 @@ Interessant für Baumdienste, Bau-, Tiefbau- und Glasfaserbetriebe, die ihre Bau
 ## Lizenz
 
 Source-available, alle Rechte vorbehalten. Der Code darf gelesen und zur Bewertung lokal ausgeführt werden, aber nicht kommerziell genutzt werden. Details in [LICENSE](LICENSE).
+
+## Bürooberfläche · 12. November 2026
+
+[PR175](https://github.com/IamRedi/redionflow/pull/175) ist im echten Firmenbetrieb veröffentlicht: Beschriftungen und kleine Linienicons sitzen direkt auf Schubladen und Briefumschlag. Arbeitsfenster nutzen kompaktes Kristallglas in den vorhandenen Farben. Die beiden konfigurierten Büro-Administratoren öffnen ihren bestehenden Firmenassistenten am Monitor statt am Firmenlogo; private Gesprächsarchive und Zugriffsregeln bleiben erhalten. Originalfotos und Berechtigungen wurden beim Deployment unverändert bestätigt. Die folgenden Aufnahmen zeigen ausschließlich fiktive Daten.
+
+![Office Studio DEMO · office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
+
+![Office Studio DEMO · private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)

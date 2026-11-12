@@ -169,3 +169,11 @@ Of interest to tree care, construction, civil works and fibre-optic companies th
 ## License
 
 Source-available, all rights reserved. The code may be read and run locally for evaluation, but not used commercially. Details in [LICENSE](LICENSE).
+
+## Office interface · 12 November 2026
+
+[PR175](https://github.com/IamRedi/redionflow/pull/175) is live in the real-company deployment: lettering and small line icons belong to the drawers and mail envelope. Compact crystal work windows keep their existing action colors. The two configured office admins open their existing company assistant beside the monitor instead of from the company logo; private conversation archives and access checks are preserved. Deployment readback confirmed unchanged original photos and permissions. These screenshots contain fictional data only.
+
+![Office Studio DEMO · office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
+
+![Office Studio DEMO · private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)
