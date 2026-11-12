@@ -1948,6 +1948,8 @@
     "confirmStep": "{step} bestätigen",
     "factoryOutput": "Produktion pro Baustelle",
     "factoryOutputHint": "Nur Ansicht, bestätigt wird auf der Baustelle",
+    "factoryProcessProgress": "Fortschritt der Fertigungsschritte",
+    "factoryPartsLine": "Teilezuschnitt: {done}/{total} Stk.",
     "produced": "Produziert",
     "mountedOnSite": "{n} auf der Baustelle montiert",
     "newProject": "Neues Projekt",

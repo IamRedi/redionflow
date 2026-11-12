@@ -213,12 +213,12 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
     : [];
 
   // What the factory produced per site and per process, from the element lists.
-  const siteOutput: SiteFactoryOutput[] = factorySite
+  const siteOutput: SiteFactoryOutput[] = factorySite && seeProduction
     ? factoryOutput(
         withoutWeights(await withTenantContext(company.id, (tx) =>
           tx.siteElement.findMany({
-            where: { companyProfileId: company.id, list: "assembly", baustelle: { status: "active" } },
-            select: { baustelleId: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, processRoutes: true, work: { select: { stage: true, pieces: true } } },
+            where: { companyProfileId: company.id, list: { in: ["assembly", "part"] }, baustelle: { status: "active" } },
+            select: { baustelleId: true, list: true, quantity: true, weightKg: true, factoryDoneAt: true, fieldDoneAt: true, processRoutes: true, work: { select: { stage: true, pieces: true } } },
           }),
         ), showWeights),
         baustellen,
@@ -355,8 +355,8 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
     };
   });
   const factoryCanManage = Boolean(admin && !worker) || Boolean(worker && accessActor?.allows("new_project.create"));
-  const liveMission = missionItems.filter((item) => item.pct < 100 || item.pendingCollection || item.pendingSiteTask);
-  const archivedMission = missionItems.filter((item) => item.pct >= 100 && !item.pendingCollection && !item.pendingSiteTask);
+  const liveMission = missionItems.filter((item) => item.activeLiveCount > 0 || item.pct < 100 || item.pendingCollection || item.pendingSiteTask);
+  const archivedMission = missionItems.filter((item) => item.activeLiveCount === 0 && item.pct >= 100 && !item.pendingCollection && !item.pendingSiteTask);
   const canvasToolbarButtonClass = "size-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white";
   const realisticWorkspace = mode === "bau" && allSites.some(site => isSteelSiteType(site.type));
 

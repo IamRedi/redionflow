@@ -5,13 +5,14 @@ import Link from "next/link";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelPhaseArt } from "@/components/steel/steel-art";
-import { totalOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
+import { factoryProcessPercent, totalOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 import { FACTORY_STEP_KEYS, formatAmount } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
 import { artKey } from "./production-ui";
 
 const amount = (value: number) => formatAmount(Math.round(value));
+const percentLabel = (value: number) => `${value > 0 && value < 1 ? "<1" : Math.floor(value)}%`;
 const fill = (template: string, values: Record<string, string | number>) =>
   Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
 export type FactoryProcessDefinition = { key: string; label: string };
@@ -23,12 +24,18 @@ function processLabel(key: string, definitions: FactoryProcessDefinition[], lang
 }
 
 function Bar({ value, total, className = "h-1.5" }: { value: number; total: number; className?: string }) {
-  const pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  const pct = total > 0 ? Math.min(100, (value / total) * 100) : 0;
   return (
     <span className={`block overflow-hidden rounded-full bg-muted ${className}`}>
       <span className={`block h-full rounded-full ${pct === 100 ? "bg-green-600" : "bg-orange-500"}`} style={{ width: `${pct}%` }} />
     </span>
   );
+}
+
+function PartsLine({ output }: { output: Pick<SiteFactoryOutput, "partCutting"> }) {
+  const { currentLang: lang } = useLanguage();
+  if (!output.partCutting?.eligiblePieces) return null;
+  return <p data-testid="factory-part-cutting" className="text-[11px] tabular-nums text-muted-foreground">{fill(t("elements.factoryPartsLine", lang), { done: amount(output.partCutting.pieces), total: amount(output.partCutting.eligiblePieces) })}</p>;
 }
 
 /** Out of the factory / still in the factory / finished on site, in pieces and kg. */
@@ -37,7 +44,7 @@ function Totals({ output }: { output: Omit<SiteFactoryOutput, "siteId" | "siteNa
   const pcs = t("elements.pieceShort", lang);
   const waitingPieces = output.pieces - output.donePieces;
   return (
-    <div className="grid grid-cols-3 gap-1.5 text-[11px] tabular-nums">
+    <div className="space-y-2"><PartsLine output={output}/>{output.pieces > 0 ? <div className="grid grid-cols-3 gap-1.5 text-[11px] tabular-nums">
       <div className="min-w-0 rounded-xl bg-green-600/10 px-2.5 py-2">
         <div className="truncate font-semibold text-green-800 dark:text-green-300">{t("elements.produced", lang)}</div>
         <div className="text-base font-bold leading-tight">
@@ -60,7 +67,7 @@ function Totals({ output }: { output: Omit<SiteFactoryOutput, "siteId" | "siteNa
         </div>
         <div className="truncate text-muted-foreground">{fill(t("elements.ofArrived", lang), { n: amount(output.donePieces) })}</div>
       </div>
-    </div>
+    </div> : null}</div>
   );
 }
 
@@ -104,21 +111,22 @@ function StageTiles({ output, art = false, processDefinitions = [] }: { output: 
 /** On the site page: what the factory produced for this site. View only. */
 export function SiteFactoryView({ output, processDefinitions = [] }: { output: SiteFactoryOutput; processDefinitions?: FactoryProcessDefinition[] }) {
   const { currentLang: lang } = useLanguage();
+  const pct = factoryProcessPercent(output);
   return (
-    <section id="prodhimi" className="scroll-mt-4 space-y-3 rounded-2xl border bg-card p-3">
+    <section id="prodhimi" data-testid="site-factory-output" className="scroll-mt-4 space-y-3 rounded-2xl border bg-card p-3">
       <div className="flex items-center gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-orange-500/10 text-orange-600">
           <Factory className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold leading-tight">{t("factory.siteSection", lang)}</h2>
-          <p className="truncate text-xs text-muted-foreground">{t("elements.factoryOutputHint", lang)}</p>
+          <p className="truncate text-xs text-muted-foreground">{t("elements.factoryProcessProgress", lang)} · {t("elements.factoryOutputHint", lang)}</p>
         </div>
-        <span className="shrink-0 text-sm font-bold tabular-nums text-orange-600">
-          {output.pieces > 0 ? Math.round((output.donePieces / output.pieces) * 100) : 0}%
+        <span data-testid="factory-process-percent" title={t("elements.factoryProcessProgress", lang)} className="shrink-0 text-sm font-bold tabular-nums text-orange-600">
+          {percentLabel(pct)}
         </span>
       </div>
-      <Bar value={output.donePieces} total={output.pieces} />
+      <Bar value={pct} total={100} />
       <Totals output={output} />
       <StageTiles output={output} processDefinitions={processDefinitions} />
     </section>
@@ -142,17 +150,18 @@ export function AllSitesFactoryView({ sites, processDefinitions = [] }: { sites:
       <h3 className="pt-1 text-sm font-bold">{t("elements.factoryOutput", lang)}</h3>
       <ul className="grid gap-2 md:grid-cols-2">
         {sites.map((site) => {
-          const pct = site.pieces > 0 ? Math.round((site.donePieces / site.pieces) * 100) : 0;
+          const pct = factoryProcessPercent(site);
           return (
             <li key={site.siteId}>
-              <Link href={`/workzone/baustellen/${site.siteId}`} className="block space-y-2 rounded-2xl border bg-background p-3 active:scale-[0.99]">
+              <Link data-testid="factory-output-site" data-site-id={site.siteId} href={`/workzone/baustellen/${site.siteId}`} className="block space-y-2 rounded-2xl border bg-background p-3 active:scale-[0.99]">
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate text-sm font-bold">{site.siteName}</span>
-                  <span className={`shrink-0 text-sm font-bold tabular-nums ${pct === 100 ? "text-green-700 dark:text-green-400" : "text-orange-600"}`}>{pct}%</span>
+                  <span data-testid="factory-process-percent" title={t("elements.factoryProcessProgress", lang)} className={`shrink-0 text-sm font-bold tabular-nums ${pct === 100 ? "text-green-700 dark:text-green-400" : "text-orange-600"}`}>{percentLabel(pct)}</span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </div>
-                <Bar value={site.donePieces} total={site.pieces} />
-                <div className="text-[11px] tabular-nums text-muted-foreground">
+                <div><p className="mb-1 text-[10px] text-muted-foreground">{t("elements.factoryProcessProgress", lang)}</p><Bar value={pct} total={100} /></div>
+                <PartsLine output={site}/>
+                {site.pieces > 0 ? <div className="text-[11px] tabular-nums text-muted-foreground">
                   {fill(site.kg > 0 ? t("elements.siteOutputLine", lang) : t("elements.siteOutputLine", lang).replace(/\s*\(\{kg\}[^)]*\)/, ""), {
                     done: amount(site.donePieces),
                     total: amount(site.pieces),
@@ -160,7 +169,7 @@ export function AllSitesFactoryView({ sites, processDefinitions = [] }: { sites:
                     waiting: amount(site.pieces - site.donePieces),
                     mounted: amount(site.mountedPieces),
                   })}
-                </div>
+                </div> : null}
                 <div className="grid grid-cols-3 gap-1 sm:grid-cols-6">
                   {processKeys(site, processDefinitions).map((key) => (
                     <div key={key} className="min-w-0" title={processLabel(key, processDefinitions, lang)}>
@@ -168,6 +177,7 @@ export function AllSitesFactoryView({ sites, processDefinitions = [] }: { sites:
                       <div className="text-[11px] font-bold tabular-nums">
                         {site.stages[key].marks}/{site.stages[key].eligibleMarks}
                       </div>
+                      <div className="truncate text-[10px] tabular-nums text-muted-foreground">{amount(site.stages[key].pieces)}/{amount(site.stages[key].eligiblePieces)} {t("elements.pieceShort", lang)}</div>
                       <Bar value={site.stages[key].pieces} total={site.stages[key].eligiblePieces} className="h-1" />
                     </div>
                   ))}

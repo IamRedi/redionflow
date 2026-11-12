@@ -800,6 +800,8 @@
     "confirmStep": "Confirmă {step}",
     "factoryOutput": "Producție pe șantiere",
     "factoryOutputHint": "Doar vizualizare, se confirmă pe șantier",
+    "factoryProcessProgress": "Progresul etapelor de producție",
+    "factoryPartsLine": "Tăiere piese: {done}/{total} buc.",
     "produced": "Produse",
     "mountedOnSite": "{n} montate pe șantier",
     "newProject": "Proiect nou",

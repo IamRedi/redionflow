@@ -1866,6 +1866,8 @@
     "confirmStep": "Conferma {step}",
     "factoryOutput": "Produzione per cantiere",
     "factoryOutputHint": "Solo visualizzazione, si conferma in cantiere",
+    "factoryProcessProgress": "Avanzamento delle fasi di produzione",
+    "factoryPartsLine": "Taglio componenti: {done}/{total} pz.",
     "produced": "Prodotti",
     "mountedOnSite": "{n} montati in cantiere",
     "newProject": "Nuovo progetto",

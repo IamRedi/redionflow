@@ -1,5 +1,45 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
+## Partial parts and site priority — 12 November 2026 candidate
+
+Owner screenshots exposed two read-model bugs: factory summaries fetched only
+assemblies, excluding plate cutting and sites with parts only; the phone grid
+rendered the original edit-time order rather than the canvas's priority order.
+Both home and site factory summaries now read the permitted assembly/part lists.
+Process progress includes confirmed piece counts on applicable factory stages,
+including partial checks and selected custom routes. Closed legacy routes retain
+their accepted completion; empty routes do not become complete. The percentage
+is process work, not distinct finished pieces or summed process kilograms.
+
+Keep assembly production/release, delivery, field completion and their kg totals
+unchanged. Part cutting has its own compact count. A part-only project appears
+without a misleading `0/0 produced` assembly line. Existing warm crystal surfaces,
+orange/green meanings, pictures and controls remain; six locales share the copy.
+Production/weight access is retained; restricted home users do not receive the
+new production aggregate in client props. No stored confirmation, account,
+permission, original image, migration, provider or business action is changed.
+
+The board's DOM and automatic canvas layout use the same priority: sites with
+current crews first (most recently activated first); idle sites alphabetically,
+with stable name/ID ties. Idle timestamps cannot outrank a real crew. A currently
+staffed site stays on the board even when its task counter is complete. Existing
+drag/layout persistence is retained; no saved coordinates are deleted or reset.
+
+Branch: `fix/steel-progress-site-order-20261112`, based on PR176. The concurrent
+workshop-presence agent owns separate attendance/workshop changes; preserve that
+checkout and reconcile any later shared-page changes before publication. This
+candidate requires owner approval before merge/deploy. Exact local evidence is
+recorded with its PR, separately from live acceptance.
+
+Local verification passed: production build/TypeScript, changed-file ESLint,
+18 focused factory-stage/output/order cases and an isolated synthetic browser
+flow. Before/after captures cover 1440×900 light, 390×844 dark, 320×740 light and
+760×390 dark. A part-only site shows 4/10 cut (40%), then 7/10 (70%) after another
+saved check, on both home and detail. No assembly is created/released for it;
+restricted field users get no production aggregate. The grid follows active
+crews then alphabetical idle sites, and reprioritizes when the crew moves. No
+real business confirmation, account or permission was written during diagnosis.
+
 ## Catalog containment and office attendance — 12 November 2026
 
 Reception lettering follow-up: the presence list is plain engraved-style text,
