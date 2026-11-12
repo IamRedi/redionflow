@@ -77,6 +77,50 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
 [data-baum-studio="forest-crystal-v1"] {
   background: var(--baum-page-backdrop), hsl(var(--background));
 }
+/* A route-specific environment, with the same crystal material family. The
+   server marker survives loading/errors and also scopes the existing portals. */
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/wood-factory-day.webp');
+  --baum-glass: linear-gradient(125deg, #ffffffcc, #f1f8f2bf);
+  --muted-foreground: 157 18% 25%;
+  --baum-overlay: linear-gradient(125deg, #fffef7f5, #eaf2eaf2);
+  --baum-action: linear-gradient(145deg, #efffe2a6, #b5dec399);
+  --baum-action-base: #c9e9d1b3;
+  --baum-wood-header: linear-gradient(120deg, #ffffffb3, #e8f2e8a6);
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/wood-factory-night.webp');
+  --baum-glass: linear-gradient(125deg, #244136b8, #102b25c4);
+  --muted-foreground: 132 20% 85%;
+  --baum-overlay: linear-gradient(125deg, #273a30f5, #182d27f5);
+  --baum-action: linear-gradient(145deg, #74956b66, #2a5e434d);
+  --baum-action-base: #142e26b3;
+  --baum-wood-header: linear-gradient(120deg, #172b26c4, #172722b3);
+}
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+/* In the factory, keep the working page below the team/navigation. Content
+   cannot pass through the controls as it scrolls; the environment stays put. */
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) > header {
+  background: var(--baum-wood-header);
+  border-bottom: 1px solid hsl(var(--border) / .35);
+  -webkit-backdrop-filter: blur(var(--baum-blur));
+  backdrop-filter: blur(var(--baum-blur));
+}
+[data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="wood"]) > [data-testid="demo-workspace"] {
+  grid-area: 2 / 1;
+  padding-top: 0;
+  scroll-padding-top: 16px;
+}
+[data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] [data-wood-visual="empty"] {
+  background: var(--baum-glass);
+  color: hsl(var(--primary));
+}
+[data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] [data-wood-visual="empty"] > div { color: inherit; }
+[data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] nav { scrollbar-width: thin; }
 /* Decorative, locally served artwork: no extra UI, state, hit area or image
    generation on load. The same composition changes with the existing theme. */
 [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before {
@@ -157,18 +201,26 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-con
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a,button) { min-height: 44px; }
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a[href^="/demo/baustellen/"],button) { min-width: 44px; }
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] .text-green-600 { color: hsl(var(--primary)); }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-baum-environment="wood"] button:is([aria-current="page"],[aria-pressed="true"]) {
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / .65);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .18), inset 0 1px 0 var(--baum-edge);
+}
 @media (hover:hover) {
   body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):hover:not(:disabled) { filter: brightness(1.06); }
 }
 /* Opaque fallbacks are accessibility variants of the same identity. */
 @supports not (backdrop-filter: blur(2px)) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-wood-header: hsl(var(--background)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon) { background: hsl(var(--card)); }
 }
 @media (prefers-reduced-transparency: reduce) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-overlay-blur: 0px; }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   [data-baum-studio="forest-crystal-v1"] { background: hsl(var(--background)); }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) > header { background: hsl(var(--background)); backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon,section[class~="bg-card"],article[class~="bg-card"],div[class~="bg-card"],details[class~="bg-card"],a[class~="bg-card"]) {
     background: hsl(var(--card));
     -webkit-backdrop-filter: none;
@@ -178,6 +230,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"
 @media (forced-colors:active) {
   [data-baum-studio="forest-crystal-v1"] { background: Canvas; }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) > header { background: Canvas; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: CanvasText; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-ui-control="button"],.baum-nav-icon,[data-testid="muster-site-card"],:where(section,article,div,details,a)[class~="border"][class~="bg-card"],:where(section,article,div)[class~="border"][class~="bg-card/95"]) {
     background: Canvas;
     color: CanvasText;
@@ -190,5 +243,6 @@ body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"
 @media print {
   [data-baum-studio="forest-crystal-v1"] { background: white; }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) > header { background: white; backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[data-testid="muster-site-card"],[role="dialog"]) { background: white; color: black; box-shadow: none; backdrop-filter: none; }
 }
