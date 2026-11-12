@@ -111,14 +111,15 @@ successful persistence. The old text-model/free-geometry generator is replaced
 with a single Image API edit using the existing OpenAI adapter and the pinned
 `gpt-image-2.5-flare-2026-09-08` model. This is a separately approved image-model
 and cost contract; the assistant's `gpt-4o-mini` configuration is unchanged.
-The request fixes one image,1024×768,medium quality,transparent WebP80,zero
-retries and a120s deadline. The shipped native style reference is a small PNG
-rendered offline from our own foundation/trusses/cutting/welding SVGs; it
-contains no customer information. No dependency upgrade or new secret is needed.
+The request fixes one image,1024×768,medium quality,opaque WebP80,zero
+retries and a120s deadline. The reference is the shipped synthetic photographic
+process atlas, containing no customer information. No dependency upgrade or new
+secret is needed.
 
-`illustration-style.ts` owns the shared native palette, style version and bounded
-task brief. Every generated scene uses the same flat industrial illustration
-language,4:3 composition and safe margin, with a recognizable workpiece and
+`illustration-style.ts` retains the native palette for legacy SVGs and owns the
+bounded task brief. `photo-style.ts` owns the photographic direction/version.
+Every new generated scene uses that photographic language,4:3 composition and
+safe margin, with a recognizable workpiece and
 tool/action at the contact point. It sends only label/description/type and owned
 linked-process context, never company/site/worker records. Description is the
 source of truth; linked process metadata is supporting context. Owner-confirmed
@@ -148,7 +149,8 @@ Prompt/reference/response bytes are bounded before provider parsing/decoding.
 Only validated raster bytes enter `compactPhoto`; the resulting private WebP
 has orientation/metadata stripped and is at most180KB. Arbitrary provider SVG,
 URLs and remote image downloads are never accepted. Existing validated v1 SVG
-scenes remain readable unchanged and are replaced only by an explicit request.
+scenes remain stored unchanged, represented by photographic defaults on read,
+and are replaced only by an explicit request.
 Private responses retain nosniff,same-origin policy and restrictive CSP. Safe
 diagnostics contain phase/byte counts/allowlisted failure and image usage/model/
 style metadata, never prompts,reference bytes,task text,URLs or provider bodies.
