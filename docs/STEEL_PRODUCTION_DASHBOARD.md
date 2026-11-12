@@ -1,6 +1,5 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
-
 ## Partial parts and site priority — 12 November 2026 candidate
 
 Owner screenshots exposed two read-model bugs: factory summaries fetched only
