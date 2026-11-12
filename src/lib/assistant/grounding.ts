@@ -33,6 +33,11 @@ export function assistantInitialTool(question: string, steel: boolean) {
   if (asset && /^(?:ku|kujt|kush|where|who|wo|wem|wer|dove|chi)\b/u.test(text)) return 'adminSearchCompanyAssets';
   if (workshop && /\b(sa|cil\w*|cfare|which|how many|welche|wie viele|quali|quanti|quante)\b/u.test(text)) return 'adminGetCompanyWorkshop';
   if (asset || workshop) return undefined;
+  const currentAttendance = !/\b(dje|yesterday|gestern|ieri|last week|javen e kaluar)\b|\b20\d{2}-\d{2}-\d{2}\b/u.test(text);
+  const attendanceVerb = /\b(punon\w*|punojn\w*|duke punuar|working|clocked|eingestempelt|arbeitet\w*)\b/u.test(text);
+  const stopWork = /\b(ndalu\w*|ndal\w*)\b.{0,24}\b(pun\w*)\b|\b(stopped working|clocked out|finished work)\b/u.test(text);
+  const whoAtPlace = /\b(kush|cilet|cilat|who|wer|chi|cine|kto)\b/u.test(text)&&/\b(zyr\w*|office|buro|kantier\w*|fabrik\w*)\b/u.test(text);
+  if(currentAttendance&&(attendanceVerb||stopWork||whoAtPlace)&&!/\b(kg|material\w*|proces\w*|process\w*|machine\w*|makin\w*)\b/u.test(text))return 'adminGetWorkforceStatus';
   const site = /\b(kantier\w*|kanti\w*|projekt\w*|sites?|projects?|baustellen?)\b/u.test(text);
   const started = /\b(fill\w*|nis\w*|start\w*|begonn\w*)\b/u.test(text);
   if (site && started) return 'adminGetStartedSteelProjects';

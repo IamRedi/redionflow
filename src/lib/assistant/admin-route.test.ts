@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { ToolExecutionOptions } from 'ai';
 import type { RequesterContext } from './requester';
+vi.mock('@/lib/assistant/workforce-status',async original=>({...await original<typeof import('./workforce-status')>(),adminGetWorkforceStatus:async(...args:unknown[])=>{state.toolCalls.push({name:'adminGetWorkforceStatus',args});return {ok:true,data:{items:[],totalMatching:0,complete:true}};}}));
 
 type CapturedGeneration = {
   system: string;
@@ -119,6 +120,12 @@ function request(question = 'Sa kg janë prodhuar sot?', headers: Record<string,
   return new Request(`${origin}/api/assistant`, { method: 'POST', headers: { origin, 'content-type': 'application/json', ...headers }, body: JSON.stringify({ messages: [{ role: 'user', content: question }] }) });
 }
 function options() { if (!state.captured) throw new Error('No generation options captured'); return state.captured; }
+it('starts office/site/stopped questions with fresh canonical attendance in the current admin scope',async()=>{
+ await (await POST(request('Kush po punon në zyrë dhe kush e ka ndaluar punën sot?'))).text();
+ expect(options().prepareStep({stepNumber:0}).toolChoice).toEqual({type:'tool',toolName:'adminGetWorkforceStatus'});
+ await options().tools.adminGetWorkforceStatus.execute({state:'office'},{toolCallId:'attendance-demo',messages:[]});
+ expect(state.toolCalls.at(-1)).toMatchObject({name:'adminGetWorkforceStatus',args:[{kind:'admin',adminId:'admin-demo',companyId:'company-demo'},{state:'office'}]});
+});
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubEnv('OPENAI_API_KEY', 'synthetic-never-sent'); vi.stubEnv('APP_BASE_URL', origin);
   vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-31T23:30:00Z'));

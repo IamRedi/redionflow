@@ -9,6 +9,7 @@ import { adminSearchCompanyAssets, adminGetCompanyWorkshop } from './asset-tools
 import { applyCanonicalAssetFilters, type CanonicalAssetIntent } from './asset-answer';
 import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts, phaseDocumentListInput, phaseDocumentReceiptInput } from './document-tools';
 import type { createDocumentResolution } from './document-resolution';
+import { adminGetWorkforceStatus, workforceStatusInput } from './workforce-status';
 
 // An empty search string means "no filter" (models sometimes send query: "").
 const text = z.string().trim().max(180);
@@ -44,6 +45,11 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
       inputSchema: z.object({ query: companyText.optional(), workerId: id.optional(), status: z.enum(['active', 'inactive', 'all']).optional(), ...companyPage }),
       execute: input => adminSearchCompanyWorkers(requester, input),
     },
+    ...(steel ? {adminGetWorkforceStatus: {
+      description: 'Current office/site/factory clocks, pauses and ends today. Exact counts, paginated names, unknown/conflicts. End records do not identify who clicked stop; system closures are distinct. Not physical/GPS proof or history.',
+      inputSchema: workforceStatusInput,
+      execute: input => adminGetWorkforceStatus(requester, input),
+    }} : {}),
     adminSearchCompanyFleet: {
       description: 'Search vehicles by ID/name/nickname/plate, equipment and last STORED GPS. In steel companies active/baseRecordActive is only the register flag, never usability: current operationalAvailability/usable includes confirmed custody, pending handovers, reports and workshop blocks. Null or incomplete operational coverage is unknown; never fall back to active=true. Current asset status is separate from historical plan dates. Never refreshes GPS; ambiguous names remain candidates.',
       inputSchema: z.object({ query: companyText.optional(), machineId: id.optional(), active: z.boolean().optional(), ...companyPage }),

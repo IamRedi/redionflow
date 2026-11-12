@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef} from 'react';
-import {Building2,ChevronDown,Monitor,MoveHorizontal} from 'lucide-react';
+import {Building2,ChevronDown,MoveHorizontal} from 'lucide-react';
 import Image from 'next/image';
 import type {OfficeDoor} from './OfficeScene';
 import s from './studio.module.css';
@@ -25,11 +25,13 @@ export function ReceptionScene({company,companyLogo,doors,sq}:{company:string;co
    <div className={s.doorTrack}>{doors.map(p=><a key={p.id} href={p.href} aria-label={`${p.name} · ${p.title}${p.officePresence?` · ${p.officePresence==='paused'?(sq?'Në pauzë':'Paused'):(sq?'Në zyrë':'In the office')}`:''}`} draggable={false} className={s.glassEntrance} data-office-entrance data-office-presence={p.officePresence??undefined}><span className={s.glassReflection}/><span className={s.doorEtching}><strong>{p.name}</strong><small>{p.title}</small>{p.officePresence?<span className={s.doorPresence}><i/>{p.officePresence==='paused'?(sq?'Në pauzë':'Paused'):(sq?'Në zyrë':'In the office')}</span>:<i data-enabled={p.enabled}/>}</span><span className={s.metalHandle}/><span className={s.threshold}/></a>)}</div>
   </div>
   <picture className={s.lobbyForeground}><source media="(max-width:700px) and (min-height:481px)" srcSet="/office-studio-v1/reception-portrait.webp"/><img src="/office-studio-v1/reception-wide.webp" alt="" draggable={false}/></picture>
-  <section className={s.presenceDisplay} data-testid="office-presence-display" aria-label={sq?'Punonjësit në zyrë':'People in the office'}>
-   <header><Monitor size={14}/><span>{sq?'Në zyrë':'In the office'}</span><b>{present.length}</b><i aria-hidden="true"/></header>
-   {present.length?<ul>{present.slice(0,2).map(p=><li key={p.id}><a href={p.href}><span>{p.name}</span>{p.officePresence==='paused'&&<small>{sq?'Pauzë':'Paused'}</small>}</a></li>)}</ul>:<p>{sq?'Për momentin asnjë person.':'No one at the moment.'}</p>}
-   {present.length>2&&<details><summary>+{present.length-2} {sq?(present.length===3?'tjetër':'të tjerë'):'more'}<ChevronDown size={12}/></summary><ul>{present.slice(2).map(p=><li key={p.id}><a href={p.href}><span>{p.name}</span>{p.officePresence==='paused'&&<small>{sq?'Pauzë':'Paused'}</small>}</a></li>)}</ul></details>}
-  </section>
+  <div className={s.presenceCanvas}>
+   <section className={s.presenceDisplay} data-testid="office-presence-display" aria-label={sq?'Punonjësit në zyrë':'People in the office'}>
+    <header><span>{sq?'Në zyrë':'In the office'}</span><b>{present.length}</b></header>
+    {present.length?<ul>{present.slice(0,2).map(p=><li key={p.id}><span title={p.name}>{p.name}</span>{p.officePresence==='paused'&&<small>{sq?'Pauzë':'Paused'}</small>}</li>)}</ul>:<p>{sq?'Për momentin asnjë person.':'No one at the moment.'}</p>}
+    {present.length>2&&<details><summary aria-label={sq?'Lista e plotë e personave në zyrë':'Full list of people in the office'}><span className={s.presenceMoreClosed}>+{present.length-2}</span><span className={s.presenceMoreOpen}>−</span></summary><ul>{present.map(p=><li key={p.id}><span title={p.name}>{p.name}</span>{p.officePresence==='paused'&&<small>{sq?'Pauzë':'Paused'}</small>}</li>)}</ul></details>}
+   </section>
+  </div>
   <details className={s.directory} data-testid="office-directory"><summary><Building2 size={16}/>{sq?'Zgjidh zyrën':'Choose office'}<ChevronDown size={14}/></summary><nav aria-label={sq?'Të gjitha zyrat':'All offices'}>{doors.map(p=><a key={p.id} href={p.href}><span>{p.name}</span><small>{p.title}{p.officePresence?` · ${p.officePresence==='paused'?(sq?'Në pauzë':'Paused'):(sq?'Në zyrë':'In the office')}`:''}</small></a>)}</nav></details>
  </div>;
 }

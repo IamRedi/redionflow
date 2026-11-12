@@ -65,7 +65,7 @@ export async function adminSearchCompanyWorkers(requester: RequesterContext, inp
       tx.worker.findMany({ where: { AND: [where, page.after] }, orderBy: { id: 'asc' }, take: page.limit + 1,
         select: { id: true, firstName: true, lastName: true, position: true, licenses: true, status: true,
           availability: true, level: true, crewRole: true, startedAtCompany: true, preferredLanguage: true, updatedAt: true,
-          sessions: { where: live, orderBy: { startTime: 'desc' }, take: 2, select: { id: true, startTime: true, baustelle: { select: { id: true, name: true, companyProfileId: true } } } },
+          sessions: { where: live, orderBy: { startTime: 'desc' }, take: 2, select: { id: true, startTime: true, workplace: true, baustelle: { select: { id: true, name: true, companyProfileId: true } } } },
           _count: { select: { sessions: { where: live } } } } }),
     ]);
     const items = rows.map(r => ({ id: r.id, name: `${r.firstName} ${r.lastName}`.trim(), position: clipped(r.position),
@@ -73,11 +73,11 @@ export async function adminSearchCompanyWorkers(requester: RequesterContext, inp
       truncatedFields: [ ...(r.position && r.position.length > 300 ? ['position'] : []), ...(r.licenses && r.licenses.length > 300 ? ['licenses'] : []) ],
       startedAtCompany: iso(r.startedAtCompany), preferredLanguage: r.preferredLanguage, updatedAt: iso(r.updatedAt),
       liveSessionCount: r._count.sessions,
-      liveSessions: r.sessions.map(s => ({ id: s.id, startedAt: s.startTime.toISOString(), site: s.baustelle?.companyProfileId === requester.companyId ? { id: s.baustelle.id, name: s.baustelle.name } : null })),
+      liveSessions: r.sessions.map(s => ({ id: s.id, startedAt: s.startTime.toISOString(), workplace: s.workplace??null, site: s.baustelle?.companyProfileId === requester.companyId ? { id: s.baustelle.id, name: s.baustelle.name } : null })),
       liveSessionsComplete: r._count.sessions <= 2, profileUrl: `/app/admin/workers/${r.id}` }));
     return { ...pageInfo(items, total, input, page.limit),
       identityResolution: input.workerId ? 'exact_id' : query && total > 1 ? 'multiple_candidates_require_clarification' : 'directory_matches',
-      caveat: 'Availability is a profile value; a live session is a stored clock-in, not proof of current physical location. Licenses are free text, not verified certificates.' };
+      caveat: 'Availability is a profile value; a live session is a stored clock-in, not proof of current physical location. Use adminGetWorkforceStatus for current working/paused/stopped classification and conflicts. A missing site never establishes office work. Licenses are free text, not verified certificates.' };
   });
 }
 

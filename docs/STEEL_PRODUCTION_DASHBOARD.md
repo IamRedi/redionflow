@@ -2,6 +2,14 @@
 
 ## Catalog containment and office attendance — 12 November 2026
 
+Reception lettering follow-up: the presence list is plain engraved-style text,
+without a panel, border, background, icon or backdrop blur. It follows the
+original photo canvas and sits further left on the marble reception counter;
+the portrait and short-screen coordinates adapt to their actual artwork.
+Names are text rather than redundant navigation buttons. A transparent native
+expansion keeps longer lists available in the same small area. Existing door
+status, office attendance commands and access boundaries remain unchanged.
+
 Office presence follow-up: the same own-room crystal control now stops the
 current office session directly, with the existing profile's pause, break,
 rounding, undo and timesheet rules. A stale office control cannot stop a site
