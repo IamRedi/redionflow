@@ -9,5 +9,5 @@ export function SteelProcessPhoto({phase,className=''}:{phase:string;className?:
  const index=Object.hasOwn(processes,phase)?processes[phase]:undefined;
  // Generic site context for other work; never substitute a different operation.
  if(index===undefined)return <SteelEnvironmentPhoto kind={phase==='laser'||phase==='drilling'?'factory':'site'} className={className}/>;
- return <span aria-hidden="true" data-studio-process={phase} className={`steelStudioProcessPhoto ${className}`} style={{display:'none'}}><span style={{'--process-x':`${(index%3)*50}%`,'--process-y':`${Math.floor(index/3)*100}%`} as CSSProperties}/></span>;
+ return <span aria-hidden="true" data-studio-process={phase} className={`steelStudioProcessPhoto ${className}`} style={{display:'none',position:className.split(/\s+/).includes('absolute')?'absolute':'relative'}}><span style={{'--process-x':`${(index%3)*50}%`,'--process-y':`${Math.floor(index/3)*100}%`} as CSSProperties}/></span>;
 }

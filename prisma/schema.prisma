@@ -1360,6 +1360,8 @@ model WorkSession {
   worker      Worker     @relation(fields: [workerId], references: [id], onDelete: Cascade)
   baustelleId String?
   baustelle   Baustelle? @relation(fields: [baustelleId], references: [id], onDelete: SetNull)
+  /// Explicit office attendance; null preserves existing site/unspecified sessions.
+  workplace   String?
 
   startTime      DateTime
   endTime        DateTime?

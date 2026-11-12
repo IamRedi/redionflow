@@ -46,7 +46,7 @@ html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-inter
 .steelStudioWorkspace:has(:is([data-studio-home],[data-studio-interior])){background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover no-repeat!important}
 .steelStudioPhoto,.steelStudioProcessPhoto{display:none;pointer-events:none;user-select:none}
 body:has([data-steel-studio]) .steelStudioPhoto{display:block!important;background-position:center;background-size:cover;background-repeat:no-repeat}
-body:has([data-steel-studio]) .steelStudioProcessPhoto{display:block!important;overflow:hidden}
+body:has([data-steel-studio]) .steelStudioProcessPhoto{display:block!important;overflow:hidden;isolation:isolate}
 .steelStudioProcessPhoto>span{position:absolute;left:0;top:50%;transform:translateY(-50%);width:100%;aspect-ratio:1;background-image:url('/steel-studio-v1/processes.webp');background-size:300% 200%;background-position:var(--process-x) var(--process-y);background-repeat:no-repeat}
 body:has([data-steel-studio]) [data-studio-sketch]{display:none}
 body:has([data-steel-studio]) [data-studio-surface]{background:var(--steel-glass);border-color:hsl(var(--border)/.8);border-top-color:var(--steel-edge);box-shadow:var(--steel-shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
