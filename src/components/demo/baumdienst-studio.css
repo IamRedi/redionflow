@@ -1,0 +1,156 @@
+/* Baumdienst Musterfirma identity: the clear-crystal material of BauFlow,
+   with this product's forest/petrol palette. The exact opt-in shell also scopes
+   existing dialog portals; importing this file never styles another company. */
+body:has([data-baum-studio="forest-crystal-v1"]) {
+  --background: 140 19% 91%;
+  --foreground: 159 30% 12%;
+  --card: 126 24% 97%;
+  --card-foreground: 159 30% 12%;
+  --popover: 126 24% 97%;
+  --popover-foreground: 159 30% 12%;
+  --primary: 155 52% 25%;
+  --primary-foreground: 120 30% 98%;
+  --secondary: 144 16% 86%;
+  --secondary-foreground: 159 30% 16%;
+  --muted: 139 15% 87%;
+  --muted-foreground: 157 15% 33%;
+  --accent: 148 25% 85%;
+  --accent-foreground: 159 30% 16%;
+  --border: 151 16% 68%;
+  --input: 151 16% 68%;
+  --ring: 155 52% 25%;
+  --baum-glass: linear-gradient(125deg, #fbfff4c9, #ddeae1ba);
+  --baum-overlay: linear-gradient(125deg, #fbfff7f5, #e5eee7f2);
+  --baum-edge: #fffffff0;
+  --baum-shadow: 0 8px 24px #173c2720, inset 0 1px 0 #ffffffb3, inset 0 -1px 0 #36684617;
+  --baum-action: linear-gradient(145deg, #e1f5d7e6, #a9d3bdcf);
+  --baum-action-ink: #123e2c;
+  --baum-action-base: #c4e4c2;
+  --baum-action-edge: #f3ffebeb;
+  --baum-radius: 12px;
+  --baum-blur: 2px;
+  --baum-overlay-blur: 8px;
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
+  --background: 161 24% 10%;
+  --foreground: 110 28% 94%;
+  --card: 160 24% 15%;
+  --card-foreground: 110 28% 94%;
+  --popover: 160 24% 15%;
+  --popover-foreground: 110 28% 94%;
+  --primary: 149 48% 73%;
+  --primary-foreground: 159 36% 11%;
+  --secondary: 160 18% 21%;
+  --secondary-foreground: 110 28% 94%;
+  --muted: 160 18% 20%;
+  --muted-foreground: 135 16% 77%;
+  --accent: 155 23% 24%;
+  --accent-foreground: 110 28% 94%;
+  --border: 152 17% 39%;
+  --input: 152 17% 39%;
+  --ring: 149 48% 73%;
+  --baum-glass: linear-gradient(125deg, #24483bc9, #102d27c2);
+  --baum-overlay: linear-gradient(125deg, #244238f5, #142e27f5);
+  --baum-edge: #d9f4c94d;
+  --baum-shadow: 0 10px 28px #051d2240, inset 0 1px 0 #e0f5cf26, inset 0 -1px 0 #061c2066;
+  --baum-action: linear-gradient(145deg, #557f55a6, #244d3bbf);
+  --baum-action-ink: #ecffda;
+  --baum-action-base: #315c43;
+  --baum-action-edge: #b4df9d80;
+}
+[data-baum-studio="forest-crystal-v1"] {
+  background: radial-gradient(ellipse at 12% 0%, hsl(var(--primary) / .1), transparent 58%), hsl(var(--background));
+}
+/* One material for shared primitives and existing hand-built cards. Plot, map,
+   media and status surfaces retain their functional rendering. */
+body:has([data-baum-studio="forest-crystal-v1"]) :where(
+  [data-ui-surface="card"], [data-testid="muster-site-card"],
+  :where(section,article,div,details,a,button)[class~="border"][class*="bg-card"]
+) {
+  background: var(--baum-glass);
+  border-color: hsl(var(--border) / .75);
+  border-top-color: var(--baum-edge);
+  box-shadow: var(--baum-shadow);
+  -webkit-backdrop-filter: blur(var(--baum-blur)) saturate(1.08);
+  backdrop-filter: blur(var(--baum-blur)) saturate(1.08);
+}
+body:has([data-baum-studio="forest-crystal-v1"]) [role="dialog"] {
+  background: var(--baum-overlay);
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+  border-top-color: var(--baum-edge);
+  box-shadow: var(--baum-shadow);
+  -webkit-backdrop-filter: blur(var(--baum-overlay-blur));
+  backdrop-filter: blur(var(--baum-overlay-blur));
+}
+body:has([data-baum-studio="forest-crystal-v1"]) :is(
+  [data-ui-control="button"][data-ui-variant="outline"],
+  [data-ui-control="button"][data-ui-variant="secondary"],
+  .baum-nav-icon
+) {
+  background: var(--baum-glass);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border) / .8);
+  border-top-color: var(--baum-edge);
+  box-shadow: inset 0 1px 0 var(--baum-edge);
+  -webkit-backdrop-filter: blur(var(--baum-blur));
+  backdrop-filter: blur(var(--baum-blur));
+}
+body:has([data-baum-studio="forest-crystal-v1"]) [data-ui-control="button"][data-ui-variant="default"] {
+  background: var(--baum-action);
+  background-color: var(--baum-action-base);
+  color: var(--baum-action-ink);
+  border: 1px solid hsl(var(--primary) / .5);
+  border-top-color: var(--baum-action-edge);
+  box-shadow: inset 0 1px 0 var(--baum-action-edge), 0 2px 8px hsl(var(--foreground) / .07);
+}
+body:has([data-baum-studio="forest-crystal-v1"]) [data-ui-control="button"]:not(.rounded-full) { border-radius: var(--baum-radius); }
+body:has([data-baum-studio="forest-crystal-v1"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+  background: hsl(var(--card) / .92);
+  border-color: hsl(var(--input));
+  border-radius: var(--baum-radius);
+  color: hsl(var(--foreground));
+}
+body:has([data-baum-studio="forest-crystal-v1"]) .baum-nav-icon[aria-current="page"] {
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / .7);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .25);
+}
+body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):disabled { opacity: .5; }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a,button) { min-height: 44px; }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a[href^="/demo/baustellen/"],button) { min-width: 44px; }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] .text-green-600 { color: hsl(var(--primary)); }
+@media (hover:hover) {
+  body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):hover:not(:disabled) { filter: brightness(1.06); }
+}
+/* Opaque fallbacks are accessibility variants of the same identity. */
+@supports not (backdrop-filter: blur(2px)) {
+  body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon) { background: hsl(var(--card)); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-overlay-blur: 0px; }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon,section[class~="bg-card"],article[class~="bg-card"],div[class~="bg-card"],details[class~="bg-card"],a[class~="bg-card"]) {
+    background: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (forced-colors:active) {
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-ui-control="button"],.baum-nav-icon,[data-testid="muster-site-card"],:where(section,article,div,details,a)[class~="border"][class~="bg-card"],:where(section,article,div)[class~="border"][class~="bg-card/95"]) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media print {
+  [data-baum-studio="forest-crystal-v1"] { background: white; }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[data-testid="muster-site-card"],[role="dialog"]) { background: white; color: black; box-shadow: none; backdrop-filter: none; }
+}

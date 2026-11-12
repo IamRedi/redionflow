@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -309,7 +309,6 @@ export function WorkzoneMissionControl({
 }) {
   const { currentLang } = useLanguage();
   const muster = items.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
-  const reducedMotion = useReducedMotion();
   const mapFleet = useMapFleet();
   const indexVehicles = (mapFleet ?? fleetLocations).map(v => {
     const location = fleetLocations.find(p => p.id === v.id);
@@ -540,7 +539,7 @@ export function WorkzoneMissionControl({
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
           {(!muster || musterReady) && items.map((item) => {
             const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl)||Boolean(item.demoPhotoKey);
-            const animateLive = item.activeLiveCount > 0 && !(item.demoPhotoKey && reducedMotion);
+            const animateLive = item.activeLiveCount > 0 && !item.demoPhotoKey;
             const target = positions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;
             return (

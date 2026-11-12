@@ -8,7 +8,7 @@ import { cn } from "@/lib/ui/cn";
 import styles from "./workshop.module.css";
 
 export const control = "h-11 w-full min-w-0 rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-export const action = "min-h-11 whitespace-normal [&.bg-primary]:dark:text-black";
+export const action = "min-h-11 whitespace-normal";
 export function Field({ label, children }: { label: string; children: ReactElement<{ id?: string }> }) {
   const id = useId();
   return <div className="grid min-w-0 gap-1.5 text-sm font-medium"><label htmlFor={id}>{label}</label>{cloneElement(children, { id })}</div>;

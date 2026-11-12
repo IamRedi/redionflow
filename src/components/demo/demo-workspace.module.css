@@ -8,9 +8,6 @@
   scrollbar-color: hsl(var(--muted-foreground) / .5) hsl(var(--background));
 }
 :global(.dark) .shell { color-scheme: dark; }
-/* The opt-in Musterfirma shell uses the established light emerald text variant
-   on dark surfaces, including translucent primary badges and links. */
-:global(.dark) .shell :global(.text-primary) { color: #6ee7b7; }
 /* Layers: the page scrolls at the bottom; the transparent header (team strip and
    round icons, then logo and the more ring on top) stays fixed above it. */
 .shell > .header { grid-area: 1 / 1; align-self: start; pointer-events: none; }
@@ -60,10 +57,4 @@
   .shell { display: block; height: auto; overflow: visible; }
   .workspace { height: auto; overflow: visible; }
 }
-/* Ice glass: every card in the Musterfirma shell lets the page show softly through. */
-.shell :global(.bg-card),
-.shell :global(.bg-card\/95) {
-  background-color: hsl(var(--card) / .6);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  backdrop-filter: blur(14px) saturate(1.15);
-}
+/* Materials live once in baumdienst-studio.css, including dialog portals. */

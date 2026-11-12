@@ -20,7 +20,7 @@ async function verify(flags,label){
     if(html.includes('id="werkstatt-demo"'))throw new Error(`${label}: native workshop CTA leaked`);
     if(flags.APP_ENV!=='saas'){
       const workzone=await(await fetch('http://127.0.0.1:8766/demo/workzone')).text();
-      if(workzone.includes('data-testid="baum-demo-topbar"')||workzone.includes('workshop-overview-title'))throw new Error(`${label}: workshop template leaked into another profile`);
+      if(workzone.includes('data-testid="baum-demo-topbar"')||workzone.includes('workshop-overview-title')||workzone.includes('data-baum-studio="forest-crystal-v1"'))throw new Error(`${label}: workshop template leaked into another profile`);
     }
     console.log(`PASS: ${label}: workshop 404, presentation/Workzone template excluded.`);
   }finally{child.kill();await new Promise(resolve=>child.once('close',resolve));}

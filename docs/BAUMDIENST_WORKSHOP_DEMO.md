@@ -1,5 +1,29 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
+## UI premium — shqyrtimi dhe plani i parë, 12 nëntor 2026
+
+Kërkesa e re e pronarit autorizon përshtatjen e stilit aktual të AL Steel/BauFlow te Baumdienst, me ngjyrat dhe fushën e vet. Ky është redesign i kërkuar, jo ndryshim i firmës/pilotit. Burimi Baumdienst për këtë punë është ded02052d46a1d40fddfd36f7975d546a8ab9d79 (18 commit-e më i ri se kopja e mëparshme lokale, të ruajtura me fast-forward); është edhe source pin-i i demos së verifikuar. AL Steel është referencë read-only në degën claude/project-thread-an04j1, 42081ea32b2058888f7c3f814e99c0c007f929e6.
+
+Avancimet e 10–12 nëntorit: Workzone me materiale stone/copper/crystal, hapësirë e saktë për ekipin, foto me kontrolle të qeta, site/process interiors, planifikim/dashboard (PR179), profile/notebooks/factory (PR180), magazina (PR182), flota/paneli (PR184) dhe Werkstatt-i clear glass me pak blur e pa korniza bosh (PR185). Arkitektura i mban materialet në steel-studio.css, primitives të përbashkëta dhe data-attributes të kufizuara; rrjedhat/role/tenant/read models mbeten veç stilit. Nuk kopjojmë module zyre ose logjikë prodhimi çeliku në Baumdienst.
+
+RediON Connect u lexua nga burimi canonical plugin-source, përfshirë UI Identity Lock (12.11), ui-experience dhe workspace-lifecycle (11.11). Paketa e instaluar këtu është 0.10.29; burimi dhe ngarkimi në këtë sesion janë prova të veçanta nga shpërndarja te agjentët e tjerë. Nuk u kërkua reload/ndalim i ndonjë agjenti ose publikim i plugin-it.
+
+### UI Identity — një burim për këtë produkt
+
+Scope: vetëm template-i Baumdienst Musterfirma, data-demo-shell=muster, me data-baum-studio=forest-crystal-v1. Status: OWNER_REQUESTED_REDESIGN, kandidat në verifikim; nuk nënkupton miratim vizual përfundimtar. Materiali: clear forest crystal me blur 2px, rim/reflektim statik, sipërfaqe të qarta me kontrast dhe overlay më opak për dialogët. Ngjyrat janë jeshile pylli/petrol dhe neutral i ngrohtë; nuk merret portokallia industriale e AL Steel. Fonti/ikonat outline ekzistuese, StudioIcon/StudioArt dhe fotot origjinale ruhen. Token-at dhe variantet banojnë vetëm te src/components/demo/baumdienst-studio.css; shell-i merret me përmasat/scroll-in, jo me një stil të dytë kartash.
+
+Primitives: Button/Card ekzistuese marrin vetëm metadata semantike për stilimin e kufizuar; jashtë Musterfirma-s nuk kanë ndryshim CSS/sjelljeje. Kartat ekzistuese përdorin të njëjtën familje përmes selector-ëve të kufizuar. Portalët e dialogëve marrin të njëjtat token-a vetëm kur shell-i Muster është në dokument. Grafikët, harta, foto/atlas dhe printimi janë përjashtime funksionale; ngjyrat status/danger nuk zëvendësohen me accent. Fallback për reduced transparency, forced colors dhe mungesë backdrop-filter është opak/i lexueshëm.
+
+### Zhvillimi me radhë
+
+- **Hapi i parë, tani:** themeli visual në Light/Dark, materiale të përbashkëta për karta/kontrolle/dialogë, navigim aktiv nga URL-ja ekzistuese, inventari i dukshëm, ekipi pa mbivendosje nga Më shumë, 44px veprime kryesore dhe prezencë e qetë pa lëkundje të kartave. Pa hequr funksione, ndryshuar përmasa kopertinash, të dhëna ose rrjedha. Testohen Workzone, Werkstatt/inventari, druri, paneli, dashboard-i dhe dialogët.
+- **Pas këtij pranimi:** rafinim i përmbajtjes së kartave Baustelle/pemë dhe proceseve, grupim i detajeve sekondare me aksione të qëndrueshme; asnjë ndryshim i heshtur në inventar/riparime.
+- **Më pas:** harmonizim i plotë i profileve/raporteve/planifikimit dhe app-experience: Auto/Light/Dark me preferencën ekzistuese, rendi locale/profile/browser dhe PWA e sigurt. Gjendja aktuale e Baumdienst ka toggle Light/Dark dhe browser locale fallback; Auto/profile cross-device/PWA mbeten PENDING_RECHECK, jo pretendim ALREADY_COMPLIANT. Nuk shtohet cache autentikimi ose preference store paralel.
+
+Provat: fixture sintetike dhe ekzekutim me runner-in ekzistues në mini-PC, 4 CPU/4GiB dhe rezerva hosti; DB Docker e veçuar me CPU/RAM/port loopback të vet. Laptopi kishte rreth 41GiB të lira në preflight; nuk fshihen workspace të tjera ose ndalen shërbime/agjentë. Rruga e ruajtjes dhe rezultatet e sakta plotësohen pas kontrollit. Nuk gjenerohen foto me pagesë ose ndryshohen modele/provider/dependencies.
+
+Publikimi i portofolit mbetet OWNER_HOLD. AL Steel/piloti dhe demot e tjera janë jashtë shkrimit. Pamja native e prezantimit/README/portofoli shqyrtohen në mbyllje, me prova veçmas nga kodi dhe demoja. Ky seksion zëvendëson si pikë vazhdimi statusin historik më poshtë; nuk e shpall të gjithë UI-n të përfunduar.
+
 ## AKTUALE — korrigjimi i pronarit, 7 nëntor 2026
 
 Dashboard view hap statistikat direkt në fullscreen nga klikimi i hyrjes. Nuk ka toolbar, kthim, ndërrues Workzone/Dashboard, rifreskim manual ose buton tjetër fullscreen brenda monitorit. Rifreskimi 60 sekonda vazhdon në prapavi. Kërkesa native kryhet gjatë klikimit dhe navigimi Next ruan të njëjtin dokument. URL direkte mbush viewport-in; shfletuesi kërkon gjest përdoruesi për fullscreen native. Rruga e zakonshme /demo/dashboard ruan funksionet ekzistuese.
