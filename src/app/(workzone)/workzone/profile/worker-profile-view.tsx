@@ -317,6 +317,7 @@ export async function WorkerProfileView({
                 <span className={`size-1.5 rounded-full ${available ? "bg-green-500" : "bg-amber-500"}`} />
                 {availabilityLabel(worker.availability, currentLang)}
               </span>
+              {activeSession?.baustelle?.name ? <span data-testid="worker-current-workplace" className={`inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 font-medium ${hasOpenPause(activePauseIntervals) ? "bg-amber-500/10 text-amber-800 dark:text-amber-300" : "bg-green-500/10 text-green-800 dark:text-green-200"}`}><span className="size-1.5 shrink-0 rounded-full bg-current" /><span className="min-w-0 break-words">{t(hasOpenPause(activePauseIntervals) ? "workzone.pausedShort" : "workzone.workingNow", currentLang)} · {activeSession.baustelle.name}</span></span> : null}
             </div>
           </div>
           <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1 self-start">

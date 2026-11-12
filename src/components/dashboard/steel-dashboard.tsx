@@ -48,8 +48,6 @@ export function SteelDashboard({ data: d, lang }: {
     }
     function move(overrides: Record<string, string | null>) { start(() => router.push(href({ cursor: null, ...overrides }), { scroll: false })); }
     useEffect(() => {
-        if (!d.readOnly)
-            return;
         const timer = window.setInterval(() => {
             if (document.visibilityState === 'visible')
                 start(() => router.refresh());

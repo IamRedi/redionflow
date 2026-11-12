@@ -1,4 +1,5 @@
 'use server';
+import { effectiveTaskProcessLink } from '@/lib/steel-work/task-process-link';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
@@ -32,7 +33,7 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
     const assignment = await tx.steelSiteTask.findFirst({ where: { companyProfileId: companyId, treeItemId: parsed.data.phaseItemId }, include: { definition: true, treeItem: true } });
     if (!assignment || !assignment.enabled || assignment.definition.archivedAt || assignment.definition.kind !== 'site') return null;
     if (!allowedAt(assignment.baustelleId)) { denied = true; return null; }
-    if (assignment.definition.linkedProcessKey && ['done', 'reopen'].includes(parsed.data.command)) return null;
+    if (effectiveTaskProcessLink(assignment.definition).linkedProcessKey && ['done', 'reopen'].includes(parsed.data.command)) return null;
     if (parsed.data.command === 'done') before = await siteCompletionSnapshot(tx, companyId, assignment.baustelleId);
     const item = assignment.treeItem, text = parsed.data.text.trim();
     let command: SteelPhaseCommand;

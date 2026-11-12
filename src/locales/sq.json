@@ -689,6 +689,7 @@
     "pendingStatus": "Ne pritje",
     "totalLabel": "Totali",
     "remainingLabel": "Mbeten",
+    "pausedShort": "Në pauzë",
     "workingNow": "Duke punuar",
     "fiberTrench": "Trase fibre optike",
     "fiberDrilling": "Shpim horizontal (HDD)",

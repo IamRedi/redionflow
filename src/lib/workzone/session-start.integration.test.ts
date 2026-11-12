@@ -148,3 +148,32 @@ it('a live session without a site takes the planned site on the next start, a se
  await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:other.id,fillMissingSite:true});
  expect((await prisma.workSession.findUniqueOrThrow({where:{id:first.id}})).baustelleId).toBe(t.site.id);
 });
+
+it('profile Start records the unique active factory workplace; explicit plans and office sessions win',async()=>{
+ const t=tenants[0],workerId=t.worker.id,start=new Date(Date.now()-600000);
+ await prisma.worker.update({where:{id:workerId},data:{crewRole:'FACTORY_WORKER'}});
+ const factory=await prisma.baustelle.create({data:{companyProfileId:t.company.id,name:'Punishtja · Synthetic',type:'STEEL_WORKSHOP'}});
+ const first=await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:first.id}})).baustelleId).toBe(factory.id);
+ await prisma.workSession.update({where:{id:first.id},data:{baustelleId:null}});
+ const again=await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null,fillMissingSite:true});
+ expect(again).toMatchObject({id:first.id,kind:'existing',siteAssigned:true});
+ expect(await prisma.workSession.count({where:{workerId,isLive:true}})).toBe(1);
+ await prisma.workSession.update({where:{id:first.id},data:{baustelleId:t.site.id}});
+ await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:first.id}})).baustelleId).toBe(t.site.id);
+ await prisma.workSession.update({where:{id:first.id},data:{baustelleId:null,workplace:'OFFICE'}});
+ await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:first.id}}))).toMatchObject({baustelleId:null,workplace:'OFFICE'});
+});
+it('does not guess among workshops or assign field/office workers to a factory',async()=>{
+ const t=tenants[0],workerId=t.worker.id,start=new Date(Date.now()-600000);
+ for(const name of ['One','Two'])await prisma.baustelle.create({data:{companyProfileId:t.company.id,name,type:'STEEL_WORKSHOP'}});
+ await prisma.worker.update({where:{id:workerId},data:{crewRole:'FACTORY_ENGINEER'}});
+ let result=await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:result.id}})).baustelleId).toBeNull();
+ await prisma.baustelle.updateMany({where:{companyProfileId:t.company.id,type:'STEEL_WORKSHOP',name:'Two'},data:{status:'inactive'}});
+ await prisma.worker.update({where:{id:workerId},data:{crewRole:'FIELD_WORKER'}});
+ result=await beginWorkerSession({companyId:t.company.id,workerId,start,siteId:null,fillMissingSite:true});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:result.id}})).baustelleId).toBeNull();
+});

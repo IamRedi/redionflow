@@ -1,5 +1,30 @@
 # Shared work catalog and material applicability
 
+## Production list is the completion source — 12 November 2026
+
+Standard production-window tasks (Prerje, Asamblim/Asambim, Saldim,
+Pastrim, Lyerje, Ngarkim; canonical English names/keys too) project the
+corresponding material operation automatically. Exact names only, scoped to the
+production window; custom tasks and other windows keep their explicit links.
+Historical wrong/missing links are corrected in the effective read projection,
+without rewriting confirmations, manual notes or original catalog history.
+New saves persist the correct source. All applicable lists/routes contribute;
+an empty source never means complete. Partial quantities remain partial, undo
+reopens the projected phase, and a linked phase cannot be manually checked twice.
+The board, work catalog and completion notifications share this source.
+Element changes invalidate/notify the production dashboard, including removals,
+imports and route edits; visible admin/display dashboards also refresh every
+minute as a fallback, using the existing authenticated data service.
+
+Profile Start records the daily plan's explicit site when present. Factory
+workers/engineers without a planned site get the company's unique active
+STEEL_WORKSHOP stored on the clock, inside the worker transaction. Multiple
+workshops remain unresolved. Existing office/site assignments win; starting
+again never duplicates the clock or changes elapsed time. The profile displays
+the recorded workplace and paused/working state. No historical attendance
+backfill or role/access change is performed by reading a page.
+
+
 ## Match the work, not only the style — 12 November 2026
 
 The follow-up to PR170 fixes subject selection: custom task names previously

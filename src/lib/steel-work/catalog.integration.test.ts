@@ -2,6 +2,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const request = vi.hoisted(() => ({ values: new Map<string, string>() }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: (key: string) => request.values.has(key) ? { value: request.values.get(key) } : undefined }), headers: async () => new Headers() }));
 vi.mock('next/cache', () => ({ revalidatePath: () => undefined }));
+import { projectSteelTasks } from './progress';
+import { addElementWorkAction } from '@/app/(workzone)/workzone/element-actions';
+import { steelDashboardData } from '@/lib/dashboard/steel-data';
 import { prisma } from '@/lib/db/prisma';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { assertAssistantTestDatabase } from '../../../tests/fixtures/assistant-database';
@@ -186,4 +189,25 @@ it('names who put each phase on the site', async () => {
   expect(selected.ok).toBe(true);
   expect(names[builtin.id]).toBe(`${worker.firstName} ${worker.lastName}`.trim());
   expect(await steelPhaseAddedBy(tenants[1].company.id, tenant.site.id, [created.definitionId!])).toEqual({});
+});
+
+it('standard production phases follow list confirmations and reject duplicate manual checks, while retaining legacy records',async()=>{
+ const t=tenants[0];
+ const result=await create('Saldim',{phaseGroup:'production',linkedProcessKey:'assembly',linkedList:'part'});
+ const saved=await prisma.steelWorkDefinition.findUniqueOrThrow({where:{id:result.definitionId!}});
+ expect(saved).toMatchObject({linkedProcessKey:'welding',linkedList:null});
+ // Simulate old incorrect configuration without changing its stored audit/history.
+ await prisma.steelWorkDefinition.update({where:{id:saved.id},data:{linkedProcessKey:'assembly',linkedList:'part'}});
+ const selection=await prisma.steelSiteTask.findFirstOrThrow({where:{definitionId:saved.id}});
+ expect((await getSteelWorkCatalogAction({siteId:t.site.id})).definitions?.find(d=>d.id===saved.id)).toMatchObject({linkedProcessKey:'welding',linkedList:null});
+ expect((await updateSteelPhaseAction({phaseItemId:selection.treeItemId,command:'done'})).ok).toBe(false);
+ const element=await prisma.siteElement.create({data:{companyProfileId:t.company.id,baustelleId:t.site.id,list:'assembly',mark:'SYN-WELD',quantity:4,weightKg:10,processRoutes:{v:1,factory:['welding'],field:[]}}});
+ const project=async()=>projectSteelTasks(await prisma.treeItem.findMany({where:{id:selection.treeItemId},include:{steelTask:{include:{definition:true}}}}),(await prisma.siteElement.findMany({where:{id:element.id},include:{work:true}})).map(e=>({...e,list:'assembly' as const})))[0];
+ expect((await addElementWorkAction({elementId:element.id,stage:'welding',workerIds:[t.worker.id],pieces:3})).ok).toBe(true);
+ expect(await project()).toMatchObject({automatic:true,status:'todo',percent:75});
+ expect((await addElementWorkAction({elementId:element.id,stage:'welding',workerIds:[t.worker.id],pieces:1})).ok).toBe(true);
+ expect(await project()).toMatchObject({automatic:true,status:'done',percent:100});
+ expect((await steelDashboardData({...t.company,country:'AL',displayName:'Synthetic'}, {},false)).totalProgress.stages.welding).toMatchObject({pieces:4,kg:40});
+ expect(await prisma.steelWorkDefinition.findUniqueOrThrow({where:{id:saved.id}})).toMatchObject({linkedProcessKey:'assembly',linkedList:'part'});
+ expect(await prisma.treeItem.findUniqueOrThrow({where:{id:selection.treeItemId}})).toMatchObject({status:'todo'});
 });
