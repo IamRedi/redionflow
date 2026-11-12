@@ -112,6 +112,8 @@ test('shared catalog, historical selections, linked material progress and privat
     await dialog(page).getByRole('combobox', { name: c.link, exact: true }).selectOption('mounted');
     await dialog(page).getByRole('combobox', { name: c.kind, exact: true }).selectOption('COLUMN');
     await save(page); await close(page);
+    // The current board opens work through its phase group first.
+    await page.getByTestId('phase-group-assembly').click();
     await page.getByRole('button').filter({ has: page.getByText('Montimi i kolonave demo', { exact: true }) }).click();
     const automatic = page.getByRole('dialog', { name: 'Montimi i kolonave demo', exact: true });
     await expect(automatic.getByText(/2\/10 copë/)).toBeVisible();
