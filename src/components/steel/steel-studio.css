@@ -28,6 +28,8 @@ body:has([data-steel-studio] [data-studio-home]) {
  --steel-copper:#a33d0b;--steel-copper-soft:#d7b18366;--steel-surface:#e8ddc8b8;
  --steel-scene-shade:linear-gradient(115deg,#1c302b12,#ead6b014 55%,#12332d29);
  --steel-home-backdrop:linear-gradient(115deg,#e6d4b9d4,#d7d6c4c4 48%,#84715ba8);
+ --steel-action-glass:linear-gradient(112deg,transparent 22%,#fff9 23%,#fff0 48%),linear-gradient(160deg,#fff1d9c9,#f6c38791 58%,#ffe4b4b3);
+ --steel-action-ink:#59300e;--steel-action-edge:#fff3d8d9;
 }
 html.dark body:has([data-steel-studio] [data-studio-home]) {
  --background:166 18% 12%;--foreground:39 36% 93%;--card:168 19% 17%;--card-foreground:39 36% 93%;
@@ -38,6 +40,8 @@ html.dark body:has([data-steel-studio] [data-studio-home]) {
  --steel-copper:#ffb56f;--steel-copper-soft:#b67b4140;--steel-surface:#203b33c7;
  --steel-scene-shade:linear-gradient(115deg,#071d2638,#0b211426 55%,#081c1a5c);
  --steel-home-backdrop:linear-gradient(115deg,#182d2bdc,#22352bd9 48%,#413422e3);
+ --steel-action-glass:linear-gradient(112deg,transparent 22%,#ffe3ae24 23%,#fff0 48%),linear-gradient(160deg,#b88a4c66,#46341bba 58%,#ab753c66),#382a1bb3;
+ --steel-action-ink:#ffe4bc;--steel-action-edge:#f3cb8d80;
 }
 .steelStudioWorkspace:has([data-studio-home]){background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover no-repeat!important}
 .steelStudioPhoto,.steelStudioProcessPhoto{display:none;pointer-events:none;user-select:none}
@@ -109,6 +113,9 @@ body:has([data-steel-studio]) [data-studio-machine-icon] svg{width:34%;height:45
 [data-studio-home] #fabrika{border-color:var(--steel-edge)!important}
 [data-studio-home] [data-studio-hero-shade]{background:linear-gradient(90deg,hsl(var(--card)/.92),hsl(var(--card)/.7) 40%,hsl(var(--card)/.05) 85%)!important}
 [data-studio-home] [data-studio-process-card]{background:var(--steel-glass)!important;border-color:var(--steel-edge)!important;box-shadow:var(--steel-shadow)!important}
+/* Static crystal reflections: warm orange tint, visible depth and legible ink. */
+body:has([data-studio-home]) :is([data-studio-control][data-studio-variant=default],button.bg-orange-600,a.bg-orange-600,[data-testid=site-card-open]){background:var(--steel-action-glass)!important;color:var(--steel-action-ink)!important;border:1px solid var(--steel-action-edge)!important;box-shadow:inset 0 1px 0 #fffc,inset 0 -1px 0 #9e652c30,0 4px 14px #8b57232b!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);text-shadow:0 1px 0 #ffffff35}
+html.dark body:has([data-studio-home]) :is([data-studio-control][data-studio-variant=default],button.bg-orange-600,a.bg-orange-600,[data-testid=site-card-open]){box-shadow:inset 0 1px 0 #ffe4ad66,inset 0 -1px 0 #0003,0 5px 16px #0003!important;text-shadow:0 1px 2px #0008}
 @media(max-width:1023px){
  body:has([data-steel-studio]) [data-studio-board] button:has(svg.lucide-rotate-ccw){display:none}
  body:has([data-steel-studio]) [data-studio-site-list]{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px;padding:70px 12px 18px}
@@ -134,3 +141,4 @@ body:has([data-steel-studio]) :is([data-studio-surface],[class~="border"][class~
 @media(prefers-reduced-transparency:reduce){body:has([data-steel-studio]) [data-studio-surface],body:has([data-steel-studio]) [data-studio-site-card],body:has([data-steel-studio]) [data-studio-control]{backdrop-filter:none;-webkit-backdrop-filter:none;background:hsl(var(--card))}body:has([data-steel-studio]) [data-studio-control][data-studio-variant=default]{background:hsl(var(--primary))}}
 @media(prefers-reduced-transparency:reduce){[data-studio-home] :is([data-studio-site-card],[data-studio-process-card]){background:hsl(var(--card))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){[data-studio-home] :is([data-studio-site-card],[data-studio-process-card],[data-studio-surface]){background:hsl(var(--card))!important}}
+@media(prefers-reduced-transparency:reduce){body:has([data-studio-home]){--steel-action-glass:#f3d1a4}html.dark body:has([data-studio-home]){--steel-action-glass:#584222}}

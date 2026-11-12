@@ -29,6 +29,19 @@ theme-aware shadow. Shared photo replacement controls show a 20px corner camera
 mark inside a transparent 44px touch target; existing camera/upload menus,
 private WebP storage and role checks remain unchanged.
 
+The next owner clarification supersedes the reserved side gap: operational
+controls occupy a real header grid row **below** the full-width team, through
+the existing header context/portal. No floating shell clips or covers workers.
+Both rows share the logo/navigation height on desktop; phones stack them without
+an empty top band. Home primary actions use lightly tinted orange crystal with
+static reflections, blur, a fine rim and contrasting ink. Reduced-transparency
+mode retains readable solid fallbacks. Office/reception navigation floats as
+individual glass controls over a full-viewport scene. The old left reception
+title is removed; the tenant's existing validated company logo is rendered on
+the marble wall behind the desk with soft backlighting, without redrawing or
+altering its stored image. Room objects, back destinations, office access,
+manager preview restrictions and personal AI separation remain unchanged.
+
 The owner extended the accepted Office Studio quality and warm artwork palette
 to steel Workzone: photorealistic industrial environments, warm limestone,
 natural steel, muted teal, copper details and restrained frosted glass. This is
