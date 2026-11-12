@@ -10,8 +10,8 @@ cards, borders, archive and factory surfaces. The painting is reused unchanged;
 uploaded site/factory photos still take precedence inside their own cards.
 The `data-studio-home` scope supplies these materials to the home view and its
 existing dialog portals, then releases them on navigation. Site interiors,
-process pages, profiles and offices retain their previous presentation pending
-the owner's next design phase. No workflow, layout persistence, company data,
+process pages, profiles and offices initially retained their previous presentation pending
+the owner's next design phase (see the later site extension below). No workflow, layout persistence, company data,
 access checks or asset storage changes accompany this correction.
 Desktop presentation measures the actual card heights and moves overlapping
 cards down just enough to clear notes/badges, extending the board to the last
@@ -41,6 +41,22 @@ title is removed; the tenant's existing validated company logo is rendered on
 the marble wall behind the desk with soft backlighting, without redrawing or
 altering its stored image. Room objects, back destinations, office access,
 manager preview restrictions and personal AI separation remain unchanged.
+
+The next authorized phase extends these same materials into steel site interiors
+and their existing process/material sheets, via `data-studio-interior`. The
+painting, original uploaded photos, warm glass tokens and light orange crystal
+actions are reused. Group tiles and process cards become compact, the site uses
+the available width, and sheet controls retain 44px touch targets with intrinsic
+widths instead of tall full-width action panels. Done/blocked colors, quantities,
+routes, historical checks, mutations and server-derived role gates are unchanged.
+Worker presence in the steel header is a static soft green with no expanding
+pulse, including a selected worker whose product accent is copper; sick/vacation/
+unavailable states and classic-company presentation remain intact. No new image,
+provider, dependency, feature activation or migration accompanies this phase.
+The selected phase is keyed by its existing ID, not its current list index: a
+refresh/reordering after a note or confirmation must not move the open card to
+another process. This is UI selection state only; command handlers, validations,
+permissions, metrics and storage remain unchanged.
 
 The owner extended the accepted Office Studio quality and warm artwork palette
 to steel Workzone: photorealistic industrial environments, warm limestone,

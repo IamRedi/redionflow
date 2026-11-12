@@ -346,11 +346,11 @@ export default async function BaustelleDetailPage({
     const planNote = (await plannedSiteNotes(currentCompanyId)).get(baustelle.id) ?? null;
 
     return (
-      <div className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
+      <div data-studio-interior={mode === "bau" ? "" : undefined} className="mx-auto w-full max-w-6xl min-w-0 space-y-4 overflow-hidden">
         <div data-studio-site-hero data-studio-surface className="relative overflow-hidden rounded-3xl border bg-card">
           <div className="absolute inset-0"><AssetPhoto key={`${baustelle.id}:${baustelle.coverPhotoAt}`} kind="site" id={baustelle.id} src={assetPhotoUrl('site',baustelle.id,baustelle.coverPhotoAt)} alt={baustelle.name} canEdit={documentAccess.upload}><SteelSiteArt type={baustelle.type} shape={shape} pct={steelPct} live={activeWorkerIds.length > 0} fit="meet" className="absolute inset-0 h-full w-full" /></AssetPhoto></div>
           <div data-studio-hero-shade className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent sm:via-background/60" />
-          <div className="relative flex min-h-[160px] flex-col justify-end gap-2 p-4 sm:min-h-[190px] sm:p-6">
+          <div data-studio-site-heading className="relative flex min-h-[160px] flex-col justify-end gap-2 p-4 sm:min-h-[190px] sm:p-6">
             <Link className="w-fit text-xs text-muted-foreground hover:underline" href="/workzone">
               ← {t("workzone.siteListBack", currentLang, mode)}
             </Link>
@@ -368,7 +368,7 @@ export default async function BaustelleDetailPage({
               {adminLogin ? <PhaseDocumentsButton siteId={baustelle.id}/> : null}
               <PlanNoteButton note={planNote} siteName={baustelle.name} className="size-9" />
               <AccessKeyButton place="site" scopeId={baustelle.id} />
-              <WorkingBadge workers={activeWorkerNames} />
+              <WorkingBadge workers={activeWorkerNames} quiet={mode === "bau"} />
               {currentWorker && isDocumentEngineer(currentWorker.crewRole) ? (
                 <WorkingControls
                   pill
@@ -394,7 +394,7 @@ export default async function BaustelleDetailPage({
         {/* Steel firms: the site of the day comes from the daily plan; work starts on the profile.
             Engineers who move between sites get the small start/stop toggle in the header. */}
 
-        <div className={`grid min-w-0 gap-4 lg:items-start ${seeProduction && (factoryView || batches.length > 0) ? "lg:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
+        <div data-studio-site-columns className={`grid min-w-0 gap-4 lg:items-start ${seeProduction && (factoryView || batches.length > 0) ? "lg:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
           <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
             {/* The factory here is only to look at: what it produced for this site, per process. */}
