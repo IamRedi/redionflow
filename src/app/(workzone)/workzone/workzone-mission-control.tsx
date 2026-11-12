@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { HubsteigerIcon } from "@/components/icons";
@@ -327,7 +327,31 @@ export function WorkzoneMissionControl({
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
   const positions = positionsByViewport[canvasViewport];
-  const canvasHeight = canvasMetrics(canvasViewport, items).height;
+  const siteListRef = useRef<HTMLDivElement>(null);
+  const [cardSizes, setCardSizes] = useState<Record<string, { width: number; height: number }>>({});
+  // Presentation only: keep saved positions, but give taller glass cards room.
+  // Notes, material badges and worker controls can change a card's real height.
+  const displayPositions = useMemo(() => {
+    if (!realistic || isCompactCanvas) return positions;
+    const placed: Array<{ x: number; y: number; width: number; height: number }> = [];
+    const result: CanvasPositions = {};
+    const ordered = [...items].sort((a, b) => (positions[a.id]?.y ?? 0) - (positions[b.id]?.y ?? 0) || (positions[a.id]?.x ?? 0) - (positions[b.id]?.x ?? 0));
+    for (const item of ordered) {
+      const target = positions[item.id] ?? { x: 20, y: 20 };
+      const size = cardSizes[item.id] ?? { width: 196, height: 240 };
+      let y = target.y;
+      // Recheck after moving below a card: a taller card can span several rows.
+      for (let pass = 0; pass < placed.length; pass++) {
+        const hit = placed.find(card => target.x < card.x + card.width + 12 && target.x + size.width + 12 > card.x && y < card.y + card.height + 14 && y + size.height + 14 > card.y);
+        if (!hit) break;
+        y = hit.y + hit.height + 14;
+      }
+      result[item.id] = { x: target.x, y };
+      placed.push({ x: target.x, y, ...size });
+    }
+    return result;
+  }, [realistic, isCompactCanvas, positions, items, cardSizes]);
+  const canvasHeight = Math.max(canvasMetrics(canvasViewport, items).height, ...(!realistic || isCompactCanvas ? [] : items.map(item => (displayPositions[item.id]?.y ?? 20) + (cardSizes[item.id]?.height ?? 240) + 32)));
   const isBauMode = mode !== "baumdienst";
   // Steel firms get the site panorama (SteelSiteScene) on a plain yard colour; Baumdienst keeps its green field.
   const canvasBackground = isBauMode
@@ -380,6 +404,19 @@ export function WorkzoneMissionControl({
     observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     return () => observer.disconnect();
   }, []);
+
+  useLayoutEffect(() => {
+    if (!realistic || isCompactCanvas || isMapMode || !siteListRef.current) return;
+    const cards = Array.from(siteListRef.current.querySelectorAll<HTMLElement>('[data-studio-card-id]'));
+    const measure = () => {
+      const next = Object.fromEntries(cards.map(card => [card.dataset.studioCardId!, { width: card.offsetWidth, height: card.offsetHeight }]));
+      setCardSizes(current => Object.keys(current).length === cards.length && cards.every(card => current[card.dataset.studioCardId!]?.width === card.offsetWidth && current[card.dataset.studioCardId!]?.height === card.offsetHeight) ? current : next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    cards.forEach(card => observer.observe(card));
+    return () => observer.disconnect();
+  }, [realistic, isCompactCanvas, isMapMode, canvasLayoutSignature]);
 
   useEffect(() => {
     const saved = readSavedCanvasLayout(canvasLayoutSignature);
@@ -515,15 +552,16 @@ export function WorkzoneMissionControl({
             </Button>
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
-          <div data-studio-site-list={realistic || undefined}>{items.map((item) => {
+          <div ref={siteListRef} data-studio-site-list={realistic || undefined}>{items.map((item) => {
             const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl);
-            const target = positions[item.id] ?? { x: 20, y: 20 };
+            const target = displayPositions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;
             return (
               <motion.div
                 key={item.id}
                 initial={realistic ? false : undefined}
                 data-studio-site-card={realistic || undefined}
+                data-studio-card-id={realistic ? item.id : undefined}
                 drag={(!realistic || !isCompactCanvas) && (!readOnly || allowCanvasDrag)}
                 dragMomentum={false}
                 dragElastic={0.08}

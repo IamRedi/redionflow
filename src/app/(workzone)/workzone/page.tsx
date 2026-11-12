@@ -359,12 +359,13 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   const liveMission = missionItems.filter((item) => item.pct < 100 || item.pendingCollection || item.pendingSiteTask);
   const archivedMission = missionItems.filter((item) => item.pct >= 100 && !item.pendingCollection && !item.pendingSiteTask);
   const canvasToolbarButtonClass = "size-8 border-white/25 bg-black/25 text-white shadow-sm hover:bg-black/35 hover:text-white";
+  const realisticWorkspace = mode === "bau" && allSites.some(site => isSteelSiteType(site.type));
 
   return (
-    <div className="space-y-4">
+    <div data-studio-home={realisticWorkspace || undefined} className="space-y-4">
       <OfficeEntry lang={currentLang} compact />
       <WorkzoneMissionControl
-        realistic={mode === "bau" && allSites.some(site => isSteelSiteType(site.type))}
+        realistic={realisticWorkspace}
         fleetLocations={fleetLocations}
         initialMap={initialMap}
         gpsSyncAvailable={wanwayEnabled() && Boolean(admin || worker)}

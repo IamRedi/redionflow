@@ -17,6 +17,29 @@ html.dark body:has([data-steel-studio]) {
  --steel-copper:#edbd84;--steel-copper-soft:#46382a;--steel-surface:#20352fec;--steel-scene-shade:linear-gradient(180deg,#061c1838,#061a166b);--steel-workshop-scrim:linear-gradient(180deg,#06201830,#03160f6b);
 }
 .steelStudioWorkspace{background:radial-gradient(ellipse at 15% 0%,#cfaa702e,transparent 55%),radial-gradient(ellipse at 90% 85%,#6f9b861c,transparent 55%),hsl(var(--background))!important}
+/* Workzone home: the owner's exact office painting, copper/stone/teal glass
+   and orange actions. Other routes keep their existing presentation. */
+body:has([data-steel-studio] [data-studio-home]) {
+ --background:36 24% 79%;--foreground:171 24% 13%;--card:39 32% 94%;--card-foreground:171 24% 13%;
+ --primary:21 90% 40%;--primary-foreground:0 0% 100%;--ring:21 90% 40%;
+ --muted:36 21% 83%;--muted-foreground:166 18% 27%;--border:34 21% 63%;--input:34 21% 63%;
+ --steel-glass:linear-gradient(125deg,#fff8eabf,#d7e1d4a8);--steel-edge:#fff7e6c9;
+ --steel-shadow:0 8px 28px #2d251c24,inset 0 1px 0 #fff9e5b3,inset 0 -1px 0 #7d674a1f;
+ --steel-copper:#a33d0b;--steel-copper-soft:#d7b18366;--steel-surface:#e8ddc8b8;
+ --steel-scene-shade:linear-gradient(115deg,#1c302b12,#ead6b014 55%,#12332d29);
+ --steel-home-backdrop:linear-gradient(115deg,#e6d4b9d4,#d7d6c4c4 48%,#84715ba8);
+}
+html.dark body:has([data-steel-studio] [data-studio-home]) {
+ --background:166 18% 12%;--foreground:39 36% 93%;--card:168 19% 17%;--card-foreground:39 36% 93%;
+ --primary:27 96% 62%;--primary-foreground:19 55% 10%;--ring:27 96% 62%;
+ --muted:164 14% 24%;--muted-foreground:41 20% 79%;--border:36 18% 42%;--input:36 18% 42%;
+ --steel-glass:linear-gradient(125deg,#203a34cf,#142b28bf);--steel-edge:#f2d3a24a;
+ --steel-shadow:0 10px 30px #0b171b45,inset 0 1px 0 #ffe1a829,inset 0 -1px 0 #05191766;
+ --steel-copper:#ffb56f;--steel-copper-soft:#b67b4140;--steel-surface:#203b33c7;
+ --steel-scene-shade:linear-gradient(115deg,#071d2638,#0b211426 55%,#081c1a5c);
+ --steel-home-backdrop:linear-gradient(115deg,#182d2bdc,#22352bd9 48%,#413422e3);
+}
+.steelStudioWorkspace:has([data-studio-home]){background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover no-repeat!important}
 .steelStudioPhoto,.steelStudioProcessPhoto{display:none;pointer-events:none;user-select:none}
 body:has([data-steel-studio]) .steelStudioPhoto{display:block!important;background-position:center;background-size:cover;background-repeat:no-repeat}
 body:has([data-steel-studio]) .steelStudioProcessPhoto{display:block!important;overflow:hidden}
@@ -73,6 +96,19 @@ body:has([data-steel-studio]) [data-studio-workshop-phase=ready]{border-top-colo
 body:has([data-steel-studio]) [data-testid=workshop-repair-card],body:has([data-steel-studio]) [data-machine-id]{background:var(--steel-glass);border-color:hsl(var(--border)/.75);box-shadow:0 3px 10px #0b2d2410,inset 0 1px 0 var(--steel-edge)}
 body:has([data-steel-studio]) [data-studio-machine-icon]{display:grid!important;place-items:center;background:radial-gradient(ellipse at 40% 0%,#cfa56725,transparent 75%),hsl(var(--secondary));color:hsl(var(--foreground)/.6)}
 body:has([data-steel-studio]) [data-studio-machine-icon] svg{width:34%;height:45%;stroke-width:1}
+/* One continuous material across the home canvas, its frames and factory. */
+[data-studio-home] [data-studio-board]{border-color:var(--steel-edge)!important;box-shadow:var(--steel-shadow)}
+[data-studio-home] [data-studio-board]>.steelStudioPhoto{background-image:url('/office-studio-v1/connected-work-artwork.webp')!important;background-position:center!important}
+[data-studio-home] [data-studio-site-card]{background:var(--steel-glass)!important;border:1px solid var(--steel-edge)!important;box-shadow:var(--steel-shadow)!important;backdrop-filter:blur(22px) saturate(1.15)!important;-webkit-backdrop-filter:blur(22px) saturate(1.15)!important}
+[data-studio-home] [data-studio-site-card] [data-studio-card-media]{background:hsl(var(--card)/.16);border-bottom-color:var(--steel-edge)!important}
+[data-studio-home] [data-studio-site-card] [data-testid=site-card-open]{background:linear-gradient(165deg,hsl(var(--primary)/.92),hsl(var(--primary)))!important;box-shadow:inset 0 1px 0 #fff6,0 3px 10px #9e390b24!important}
+[data-studio-home] [data-studio-site-card] a[aria-label]{background:var(--steel-glass);border-color:var(--steel-edge);color:hsl(var(--foreground));backdrop-filter:blur(16px)}
+[data-studio-home] [data-studio-site-card] [class~="bg-muted"]{background:hsl(var(--foreground)/.12)}
+[data-studio-home] [data-studio-site-card] :is(a,button):focus-visible{outline:2px solid hsl(var(--ring));outline-offset:3px}
+[data-studio-home] [data-testid=daily-archive]{border-radius:18px;border-color:var(--steel-edge)!important}
+[data-studio-home] #fabrika{border-color:var(--steel-edge)!important}
+[data-studio-home] [data-studio-hero-shade]{background:linear-gradient(90deg,hsl(var(--card)/.92),hsl(var(--card)/.7) 40%,hsl(var(--card)/.05) 85%)!important}
+[data-studio-home] [data-studio-process-card]{background:var(--steel-glass)!important;border-color:var(--steel-edge)!important;box-shadow:var(--steel-shadow)!important}
 @media(max-width:1023px){
  body:has([data-steel-studio]) [data-studio-board] button:has(svg.lucide-rotate-ccw){display:none}
  body:has([data-steel-studio]) [data-studio-site-list]{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px;padding:70px 12px 18px}
@@ -96,3 +132,5 @@ body:has([data-steel-studio]) [data-studio-machine-icon] svg{width:34%;height:45
 /* A non-portalled fixed sheet must keep its viewport containing block. */
 body:has([data-steel-studio]) :is([data-studio-surface],[class~="border"][class~="bg-card"]):has(.fixed,[role=dialog],dialog[open]){backdrop-filter:none;-webkit-backdrop-filter:none}
 @media(prefers-reduced-transparency:reduce){body:has([data-steel-studio]) [data-studio-surface],body:has([data-steel-studio]) [data-studio-site-card],body:has([data-steel-studio]) [data-studio-control]{backdrop-filter:none;-webkit-backdrop-filter:none;background:hsl(var(--card))}body:has([data-steel-studio]) [data-studio-control][data-studio-variant=default]{background:hsl(var(--primary))}}
+@media(prefers-reduced-transparency:reduce){[data-studio-home] :is([data-studio-site-card],[data-studio-process-card]){background:hsl(var(--card))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){[data-studio-home] :is([data-studio-site-card],[data-studio-process-card],[data-studio-surface]){background:hsl(var(--card))!important}}

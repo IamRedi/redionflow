@@ -2,6 +2,24 @@
 
 ## Workzone photographic materials — owner redesign, 12 November 2026
 
+Owner correction after PR162: first finish **Workzone home**. Restore orange
+primary actions, reuse the exact office painting
+`/office-studio-v1/connected-work-artwork.webp` behind the site board, and carry
+its warm stone, copper and teal tones through the surrounding workspace, glass
+cards, borders, archive and factory surfaces. The painting is reused unchanged;
+uploaded site/factory photos still take precedence inside their own cards.
+The `data-studio-home` scope supplies these materials to the home view and its
+existing dialog portals, then releases them on navigation. Site interiors,
+process pages, profiles and offices retain their previous presentation pending
+the owner's next design phase. No workflow, layout persistence, company data,
+access checks or asset storage changes accompany this correction.
+Desktop presentation measures the actual card heights and moves overlapping
+cards down just enough to clear notes/badges, extending the board to the last
+card. Saved coordinates, reset and drag persistence remain in their existing
+format; this visual clearance does not write new coordinates. Phone cards keep
+their existing natural two-column flow. Reduced-transparency/unsupported-blur
+environments receive solid readable cards instead.
+
 The owner extended the accepted Office Studio quality and warm artwork palette
 to steel Workzone: photorealistic industrial environments, warm limestone,
 natural steel, muted teal, copper details and restrained frosted glass. This is
