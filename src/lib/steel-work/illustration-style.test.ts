@@ -8,20 +8,21 @@ function data(prompt: string) {
   return JSON.parse(prompt.split('TASK DATA (JSON):\n')[1]);
 }
 
-it('ships a compact transparent native reference that the provider can actually read', async () => {
+it('ships the accepted compact photographic reference that the provider can actually read', async () => {
   const bytes = await readFile(new URL(`../../../${STEEL_ILLUSTRATION_REFERENCE_PATH}`, import.meta.url));
-  expect(bytes.length).toBeLessThan(100_000);
-  expect(await sharp(bytes).metadata()).toMatchObject({ format: 'png', width: 640, height: 480, hasAlpha: true });
+  expect(bytes.length).toBeLessThan(200_000);
+  expect(await sharp(bytes).metadata()).toMatchObject({ format: 'webp', width: 1200, height: 800, hasAlpha: false });
 });
 
 it('uses the exact established native palette, a stable style and a shipped reference asset', () => {
   expect(STEEL_ART_PALETTE).toEqual({ steel: '#475569', steelDark: '#1e293b', steelLight: '#94a3b8', concrete: '#a8a29e', concreteTop: '#d6d3d1', ground: '#78716c', orange: '#f97316', primer: '#c2410c', spark: '#fde047', zinc: '#cbd5e1' });
   expect(Object.isFrozen(STEEL_ART_PALETTE)).toBe(true);
-  expect(STEEL_ILLUSTRATION_STYLE_VERSION).toBe('alsteel-native-v1');
-  expect(STEEL_ILLUSTRATION_REFERENCE_PATH).toBe('public/illustrations/alsteel-style-v1.png');
+  expect(STEEL_ILLUSTRATION_STYLE_VERSION).toBe('alsteel-industrial-photo-v2');
+  expect(STEEL_ILLUSTRATION_REFERENCE_PATH).toBe('public/steel-studio-v1/processes.webp');
   const prompt = buildSteelIllustrationPrompt(task);
-  for (const token of Object.values(STEEL_ART_PALETTE)) expect(prompt).toContain(token);
-  expect(prompt).toContain('transparent background and a 4:3 composition');
+  expect(prompt).toContain('opaque full-bleed photographic environment and a 4:3 composition');
+  expect(prompt).toContain('Photorealistic premium industrial editorial photography');
+  expect(prompt).toContain('Absolutely NOT illustration');
   expect(prompt).toContain('8% safe margin');
   expect(prompt).toContain('never a contact sheet');
 });

@@ -32,7 +32,7 @@ it('uses the actual installed image edit adapter with one reference, fixed model
   expect(form.get('n')).toBe('1');
   expect(form.get('size')).toBe('1024x768');
   expect(form.get('quality')).toBe('medium');
-  expect(form.get('background')).toBe('transparent');
+  expect(form.get('background')).toBe('opaque');
   expect(form.get('output_format')).toBe('webp');
   expect(form.get('output_compression')).toBe('80');
   const images = [...form.entries()].filter(([key]) => key.startsWith('image'));

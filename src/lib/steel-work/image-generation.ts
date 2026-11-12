@@ -68,7 +68,7 @@ export async function generateSteelImage(prompt: string, reference: Uint8Array, 
     const result = await generateImage({
       model: provider.image(STEEL_IMAGE_MODEL), prompt: { text: prompt, images: [reference] },
       n: 1, maxImagesPerCall: 1, maxRetries: 0, size: '1024x768', abortSignal,
-      providerOptions: { openai: { quality: 'medium', background: 'transparent', outputFormat: 'webp', outputCompression: 80 } },
+      providerOptions: { openai: { quality: 'medium', background: 'opaque', outputFormat: 'webp', outputCompression: 80 } },
     });
     if (result.images.length !== 1) throw new SteelImageGenerationError('invalid_image');
     const image = result.images[0];

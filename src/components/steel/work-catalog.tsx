@@ -6,9 +6,9 @@ import { Archive, ArrowLeft, Camera, Check, ImagePlus, Loader2, PenLine, Plus, R
 import { useCallback, useEffect, useRef, useState, useTransition, type RefObject } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
-import { SteelPhaseArt } from "@/components/steel/steel-art";
+import { SteelWorkPhoto } from "@/components/steel/work-photo";
 import { workCatalogCopy } from "@/components/steel/work-catalog-copy";
-import { steelWorkArtKey, steelWorkLabel } from "@/components/steel/work-catalog-label";
+import { steelWorkLabel } from "@/components/steel/work-catalog-label";
 import { FIELD_STAGES, sideOfStage } from "@/lib/elements/stages";
 import { t } from "@/lib/i18n";
 import { STEEL_PHASE_GROUPS, steelPhaseGroup, type SteelPhaseGroup, type SteelWorkDefinitionView } from "@/lib/steel-work/types";
@@ -37,16 +37,15 @@ export function steelWorkVisualUrl(definition: Pick<SteelWorkDefinitionView, "id
   return definition.visualUpdatedAt ? `/api/steel-work-visuals/${definition.id}?v=${new Date(definition.visualUpdatedAt).getTime()}` : null;
 }
 
-/** Photo or trusted generated image; the existing steel drawing is always a safe fallback. */
-export function SteelWorkVisual({ definition, fallback, src, animate = false, className = "h-full w-full", imageClassName }: {
+/** Uploaded photos win; defaults and generated work use the photographic identity. */
+export function SteelWorkVisual({ definition, fallback, src, className = "h-full w-full", imageClassName }: {
   definition?: SteelWorkDefinitionView | null; fallback?: string; src?: string | null; animate?: boolean; className?: string; imageClassName?: string;
 }) {
   const url = src ?? (definition ? steelWorkVisualUrl(definition) : null);
   const { currentLang } = useLanguage();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const fit = src || definition?.visualStatus === "photo" ? "object-cover" : "object-contain";
   return <div className={`relative isolate overflow-hidden ${className}`} data-steel-work-visual>
-    {url && failedUrl !== url ? <img src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName ?? `h-full w-full ${fit}`} /> : <SteelPhaseArt phase={steelWorkArtKey(definition?.linkedProcessKey ?? fallback ?? definition?.key)} animate={animate} className="h-full w-full p-[8px]" />}
+    {url && failedUrl !== url ? <img src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName ?? "h-full w-full object-cover"} /> : <SteelWorkPhoto definition={definition} fallback={fallback} />}
   </div>;
 }
 

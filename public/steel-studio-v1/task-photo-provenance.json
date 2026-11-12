@@ -1,0 +1,30 @@
+{
+  "style": "alsteel-industrial-photo-v2",
+  "created": "2026-11-12",
+  "files": [
+    {
+      "file": "gutter.webp",
+      "origin": "Built-in image generation; exact model identity not exposed. Fictional photographic decoration, not actual company photos, measured geometry or operational/safety evidence. Original generated PNG retained locally; no client/private records used.",
+      "prompt": "Create one landscape 4:3 close-up industrial photograph for a steel construction app thumbnail. Photorealistic premium editorial photography, believable European construction site, warm natural daylight, slate-grey steel and galvanized zinc, warm limestone/concrete and walnut-brown shadows, restrained copper amber tools and muted deep teal accents. Rich real material textures, natural camera optics, shallow but readable depth. Central task fills frame, all essential work visible within 8% safe margin. Fictional generic scene, never a real company/site record or engineering/safety diagram. No text, lettering, logo, numbers, watermarks, brands, collage, UI. Absolutely no illustration, drawing, cartoon, isometric miniature, CGI or glossy 3D render. Only gloved hands if needed, no face or identifiable people. A gloved hand fastening a galvanized rainwater collection gutter onto its metal brackets along the eave of a steel roof; the U-shaped open gutter and supporting roof edge clearly visible. Tight three-quarter view centered on the gutter bracket and fixing.",
+      "sourceSha256": "e15ad1d2bff3aec220be25080975e8995b255c53ee448ce81b9e74641be6578d",
+      "sha256": "937b60a9b9fa4e4f2a5cf6d86c8d0098f38cf02f8c3a67fd02a05a0dd900d08c",
+      "bytes": 111306
+    },
+    {
+      "file": "purlins.webp",
+      "origin": "Built-in image generation; exact model identity not exposed. Fictional photographic decoration, not actual company photos, measured geometry or operational/safety evidence. Original generated PNG retained locally; no client/private records used.",
+      "prompt": "Create one landscape 4:3 close-up industrial photograph for a steel construction app thumbnail. Photorealistic premium editorial photography, believable European construction site, warm natural daylight, slate-grey steel and galvanized zinc, warm limestone/concrete and walnut-brown shadows, restrained copper amber tools and muted deep teal accents. Rich real material textures, natural camera optics, shallow but readable depth. Central task fills frame, all essential work visible within 8% safe margin. Fictional generic scene, never a real company/site record or engineering/safety diagram. No text, lettering, logo, numbers, watermarks, brands, collage, UI. Absolutely no illustration, drawing, cartoon, isometric miniature, CGI or glossy 3D render. Only gloved hands if needed, no face or identifiable people. A close view of galvanized thin-walled Z-section roof purlins being fastened to the top flange of a dark steel roof rafter. Clearly show repeating purlins and a bolted angle connection, a gloved hand with an orange driver at the bolt; no crane or generic building dominating.",
+      "sourceSha256": "011bb6fe11eeb322793ec27936d862b7f09b4c9fc81101ec91c2212bae242db4",
+      "sha256": "f3f09b2d64d07904f82acccec92daa40772bc82777ae6359c0aaef79b1cc6631",
+      "bytes": 114414
+    },
+    {
+      "file": "inspection.webp",
+      "origin": "Built-in image generation; exact model identity not exposed. Fictional photographic decoration, not actual company photos, measured geometry or operational/safety evidence. Original generated PNG retained locally; no client/private records used.",
+      "prompt": "Create one landscape 4:3 close-up industrial photograph for a steel construction app thumbnail. Photorealistic premium editorial photography, believable European construction site, warm natural daylight, slate-grey steel and galvanized zinc, warm limestone/concrete and walnut-brown shadows, restrained copper amber tools and muted deep teal accents. Rich real material textures, natural camera optics, shallow but readable depth. Central task fills frame, all essential work visible within 8% safe margin. Fictional generic scene, never a real company/site record or engineering/safety diagram. No text, lettering, logo, numbers, watermarks, brands, collage, UI. Absolutely no illustration, drawing, cartoon, isometric miniature, CGI or glossy 3D render. Only gloved hands if needed, no face or identifiable people. A close view of a gloved construction inspector measuring a bolted steel column base connection with a small metal measuring gauge. Anchor nuts, steel base plate and concrete pad visible; the checking action is central, no clipboard or fake diagram.",
+      "sourceSha256": "e14d666e03fb155613620bd0305e12bafe17a1f01e7585883bc9470dde2f17dd",
+      "sha256": "a9ca61c41e0fc2e6364c7a9cd157d3fc634895ab0027d45a0690b1262db8821e",
+      "bytes": 129436
+    }
+  ]
+}
