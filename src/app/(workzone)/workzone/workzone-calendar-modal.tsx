@@ -78,13 +78,13 @@ export function WorkzoneCalendarModal({
       {isOpen ? createPortal(
         <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/45 sm:p-4">
           {/* Phone: the whole screen, scrolling only up and down; desktop: a dialog. */}
-          <div className="h-full w-full overflow-y-auto overscroll-contain bg-background shadow-2xl [scrollbar-width:none] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-2xl sm:border [&::-webkit-scrollbar]:hidden">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
+          <div data-studio-planning data-planning-calendar role="dialog" aria-modal="true" aria-label={t("workzone.calendarPlanning", currentLang)} className="h-full w-full overflow-y-auto overscroll-contain bg-background shadow-2xl [scrollbar-width:none] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-2xl sm:border [&::-webkit-scrollbar]:hidden">
+            <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
               <h2 className="text-sm font-semibold">{t("workzone.calendarPlanning", currentLang)}</h2>
-              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="ghost" size="sm" className="min-h-11 px-3 text-xs" onClick={() => setIsOpen(false)}>
                 {t("common.close", currentLang)}
               </Button>
-            </div>
+            </header>
 
             <div className="space-y-4 p-3 sm:p-4">
               <label className="flex items-center justify-between gap-3 rounded-xl border bg-card px-3 py-2">
@@ -96,7 +96,7 @@ export function WorkzoneCalendarModal({
                       setSelectedDate(event.currentTarget.value);
                       setSelectedVersion("current");
                     }}
-                    className="h-9 rounded-md border bg-background px-3 text-sm dark:[color-scheme:dark]"
+                    className="h-11 min-w-0 max-w-[60%] rounded-md border bg-background px-3 text-sm dark:[color-scheme:dark]"
                   />
               </label>
 
@@ -107,8 +107,9 @@ export function WorkzoneCalendarModal({
                         <button
                           key={entry.id}
                           type="button"
+                          aria-pressed={selectedEntry?.id === entry.id}
                           onClick={() => setSelectedVersion(entry.id)}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                          className={`min-h-11 rounded-full border px-3 py-1 text-xs font-medium transition ${
                             selectedEntry?.id === entry.id
                               ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                               : "bg-background text-foreground/80 hover:bg-muted"

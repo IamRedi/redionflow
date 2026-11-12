@@ -86,7 +86,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
       select: { savedRows: { orderBy: { sortOrder: "asc" } } },
     }));
     return (
-      <div className={`mx-auto w-full min-w-0 max-w-5xl space-y-4 max-lg:pb-8 ${FULL_SCREEN} ${office ? officeSurface.plan : ""}`} data-testid="daily-plan-view" data-phone-fullscreen>
+      <div className={`mx-auto w-full min-w-0 max-w-5xl space-y-4 max-lg:pb-8 ${FULL_SCREEN} ${office ? officeSurface.plan : ""}`} data-testid="daily-plan-view" data-phone-fullscreen data-studio-planning>
         <PlanHeader office={office} date={selectedDate} lang={currentLang} canEdit={false} />
         <SavedPlanList rows={saved?.savedRows ?? []} c={c} me={actor.name} />
       </div>
@@ -231,7 +231,7 @@ export default async function DailyPlanPage({ searchParams }: { searchParams: Pr
   });
 
   return (
-    <div className={`w-full min-w-0 space-y-4 max-lg:pb-28 ${FULL_SCREEN} ${office ? officeSurface.plan : ""}`} data-testid="daily-plan-page" data-phone-fullscreen>
+    <div className={`w-full min-w-0 space-y-4 max-lg:pb-28 ${FULL_SCREEN} ${office ? officeSurface.plan : ""}`} data-testid="daily-plan-page" data-phone-fullscreen data-studio-planning>
       <PlanHeader office={office} date={selectedDate} lang={currentLang} canEdit />
 
       {plan ? (

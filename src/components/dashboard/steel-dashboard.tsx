@@ -11,6 +11,7 @@ import { reportLocale } from '@/lib/workzone/date-utils';
 import { productionDate, productionNumber } from '@/lib/dashboard/steel-format';
 import { sideOfStage } from '@/lib/elements/stages';
 import styles from './steel-dashboard.module.css';
+import '@/components/steel/steel-studio.css';
 
 const colors: Record<Series, string> = { cutParts: 'var(--cut-parts)', cutAssemblies: 'var(--cut-assemblies)', assembled: 'var(--assembled)' };
 export function SteelDashboard({ data: d, lang }: {
@@ -78,14 +79,14 @@ export function SteelDashboard({ data: d, lang }: {
         })}</div>
         {d.projectRows.length === 0 && <div className={styles.emptyState}><Factory size={30}/><h3>{c.noProjects}</h3><p>{c.emptyHint}</p></div>}
       </section>);
-    return (<div className={`${styles.root} ${d.readOnly ? styles.monitor : ''}`} aria-busy={pending} data-testid="steel-dashboard">
+    return (<div className={`${styles.root} ${d.readOnly ? styles.monitor : ''}`} aria-busy={pending} data-testid="steel-dashboard" data-steel-studio data-studio-dashboard>
       <header className={styles.hero}>
         <div><div className={styles.eyebrow}><span className={styles.liveDot}/>{c.eyebrow}<span className={styles.company}>{d.companyName}</span></div>
           <h1>{c.title}</h1><p>{c.subtitle}</p>
         </div>
         <div className={styles.actions}>
           <span className={styles.updated}><ShieldCheck size={13}/>{d.readOnly ? c.readOnly : c.refreshed} · <time dateTime={d.generatedAt}>{clock(d.generatedAt)}</time></span>
-          <div className={styles.actionRow}>
+          <div className={styles.actionRow} data-testid="dashboard-tools">
             <button type="button" className={styles.iconButton} disabled={pending} aria-label={c.refresh} title={c.refresh} onClick={() => start(() => router.refresh())}><RefreshCw size={16} className={pending ? 'animate-spin' : ''}/></button>
             {d.readOnly ? <button type="button" className={styles.iconButton} aria-label={c.fullScreen} title={c.fullScreen} onClick={async () => {
                 try {
@@ -98,7 +99,7 @@ export function SteelDashboard({ data: d, lang }: {
                     setNotice(c.fullScreen);
                 }
             }}><Maximize2 size={16}/></button> : <>
-              <Link className={styles.primaryButton} href={href({}, true)} target="_blank" rel="noopener noreferrer"><Monitor size={15}/>{c.monitor}<ArrowUpRight size={14}/></Link>
+              <Link className={styles.iconButton} href={href({}, true)} target="_blank" rel="noopener noreferrer" aria-label={c.monitor} title={c.monitor}><Monitor size={16}/></Link>
               <button type="button" className={styles.iconButton} aria-label={copied ? c.copied : c.copyLink} title={copied ? c.copied : c.copyLink} onClick={async () => {
                 const url = new URL(href({}, true), window.location.origin).href;
                 try {
