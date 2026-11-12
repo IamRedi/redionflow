@@ -121,7 +121,7 @@ test('shared catalog, historical selections, linked material progress and privat
     await expect(automatic.getByRole('button', { name: t('steel.reopen', 'sq'), exact: true })).toHaveCount(0);
     await automatic.getByRole('button', { name: t('steel.close', 'sq'), exact: true }).click();
 
-    await page.getByRole('button', { name: new RegExp(escaped(t('elements.factoryList', 'sq'))) }).click();
+    await page.getByRole('button', { name: new RegExp(`^${escaped(t('elements.factoryList', 'sq'))}`) }).click();
     await page.getByRole('button').filter({ has: page.getByText(seed.elements.fresh.mark, { exact: true }) }).click();
     await expect(dialog(page).getByRole('button', { name: t('elements.backToList', 'sq'), exact: true })).toBeVisible();
     await dialog(page).getByRole('button', { name: 'Proceset', exact: true }).click();
@@ -150,8 +150,9 @@ test('shared catalog, historical selections, linked material progress and privat
     for (const theme of ['light', 'dark'] as const) for (const [device, width, height] of [['desktop', 1440, 1000], ['phone', 390, 844]] as const) {
       await context.addCookies([{ name: 'bk_theme', value: theme, url: info.project.use.baseURL! }]);
       await page.setViewportSize({ width, height }); await page.goto(aurora);
+      await page.getByTestId('phase-group-assembly').click();
       // Many selected tasks must wrap within the actual site header before a modal masks it.
-      const phaseHeader = page.getByRole('heading', { name: t('steel.phasesTitle', 'sq'), exact: true }).locator('..').locator('..');
+      const phaseHeader = page.locator('[data-studio-phase-summary]');
       await expect.poll(() => phaseHeader.getByRole('listitem').count()).toBeGreaterThanOrEqual(10);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       expect(await phaseHeader.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
