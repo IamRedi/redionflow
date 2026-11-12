@@ -81,21 +81,19 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
    server marker survives loading/errors and also scopes the existing portals. */
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
   --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/wood-factory-day.webp');
-  --baum-glass: linear-gradient(125deg, #ffffffcc, #f1f8f2bf);
+  --baum-glass: linear-gradient(125deg, #effcff8f, #cee6ec66);
   --muted-foreground: 157 18% 25%;
   --baum-overlay: linear-gradient(125deg, #fffef7f5, #eaf2eaf2);
-  --baum-action: linear-gradient(145deg, #efffe2a6, #b5dec399);
-  --baum-action-base: #c9e9d1b3;
-  --baum-wood-header: linear-gradient(120deg, #ffffffb3, #e8f2e8a6);
+  --baum-action: linear-gradient(145deg, #dcfff080, #94cebc59);
+  --baum-action-base: #c9e9d14d;
 }
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/wood-factory-night.webp');
-  --baum-glass: linear-gradient(125deg, #244136b8, #102b25c4);
+  --baum-glass: linear-gradient(125deg, #1e3b3b9e, #0e252eb8);
   --muted-foreground: 132 20% 85%;
   --baum-overlay: linear-gradient(125deg, #273a30f5, #182d27f5);
   --baum-action: linear-gradient(145deg, #74956b66, #2a5e434d);
   --baum-action-base: #142e26b3;
-  --baum-wood-header: linear-gradient(120deg, #172b26c4, #172722b3);
 }
 [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) {
   background-size: cover;
@@ -105,11 +103,15 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-envi
 /* In the factory, keep the working page below the team/navigation. Content
    cannot pass through the controls as it scrolls; the environment stays put. */
 [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) > header {
-  background: var(--baum-wood-header);
-  border-bottom: 1px solid hsl(var(--border) / .35);
-  -webkit-backdrop-filter: blur(var(--baum-blur));
-  backdrop-filter: blur(var(--baum-blur));
+  background: transparent;
+  border-bottom: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) > header > div { padding-top: 0; }
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baum-team-strip"] span[title] { color: hsl(var(--foreground)); font-weight: 600; text-shadow: 0 1px 1px #ffffffb3; }
+html.dark [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baum-team-strip"] span[title] { text-shadow: 0 1px 1px #081b23; }
 [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="wood"]) > [data-testid="demo-workspace"] {
   grid-area: 2 / 1;
   padding-top: 0;
@@ -121,6 +123,26 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-envi
 }
 [data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] [data-wood-visual="empty"] > div { color: inherit; }
 [data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] nav { scrollbar-width: thin; }
+/* The factory is the surface: legal text and the author credit have no panel.
+   Keep their native links, focus rings and 44px hit areas at the content end. */
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baumdienst-demo-footer"],
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baumdienst-demo-footer"] footer {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: hsl(var(--foreground));
+}
+[data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) [data-testid="wood-workspace"] [data-ui-control="button"] { gap: 6px; padding-inline: 12px; }
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) [data-testid="wood-workspace"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+  background: var(--baum-glass);
+  -webkit-backdrop-filter: blur(var(--baum-blur));
+  backdrop-filter: blur(var(--baum-blur));
+}
+[data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] label > svg { z-index: 1; }
+[data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
 /* Decorative, locally served artwork: no extra UI, state, hit area or image
    generation on load. The same composition changes with the existing theme. */
 [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before {
@@ -212,7 +234,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) [data-baum-environment="wood"] 
 /* Opaque fallbacks are accessibility variants of the same identity. */
 @supports not (backdrop-filter: blur(2px)) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); }
-  html:root body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-wood-header: hsl(var(--background)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon) { background: hsl(var(--card)); }
 }
 @media (prefers-reduced-transparency: reduce) {
