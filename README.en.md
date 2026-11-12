@@ -35,6 +35,10 @@ The `/demo` pages are read-only and need no login. All names, addresses, licence
 
 Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
 
+## BauFlow in real operations
+
+[AL-Steel Construction](https://alsteel.al/) in Qerekë, Krujë, Albania uses BauFlow in daily operations to connect its office, workshop and construction sites. The company designs, fabricates and assembles steel structures for industrial buildings and logistics facilities. Public screenshots continue to show fictional sample data only.
+
 ## What is built today
 
 | Status | Meaning and scope |

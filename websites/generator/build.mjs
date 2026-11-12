@@ -11,7 +11,8 @@ import { baum, bau, common, links, locales } from './content.mjs';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const root = resolve(here('../products'));
-const styleVersion = createHash('sha256').update(await readFile(here('./site.css'))).digest('hex').slice(0, 12);
+const styleVersion = createHash('sha256').update((await readFile(here('./site.css'), 'utf8')).replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
+const referenceVersion = createHash('sha256').update((await readFile(here('./reference.css'), 'utf8')).replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const ext = 'rel="noopener"';
 
@@ -49,8 +50,9 @@ function render(p, lang, isIndex) {
     : `<article class="tool at reveal"><div class="tool-head"><h3>ArborTwin</h3><span class="badge">${t(c.tools.arbor.badge)}</span></div><p>${t(c.tools.arbor.text)}</p><ol class="flow">${c.tools.arbor.steps.map((x) => `<li>${t(x)}</li>`).join('')}</ol>${twin}<p class="fine">${t(c.tools.arbor.note)}</p></article>`).join('');
 
   const s = p.showcase;
+  const reference = p.reference ? `<section class="card reference" id="alsteel" aria-labelledby="reference-title"><img class="reference-photo" src="${A}alsteel-hero-1600.webp" srcset="${A}alsteel-hero-960.webp 960w, ${A}alsteel-hero-1600.webp 1600w" sizes="(max-width: 700px) 100vw, 1200px" width="1600" height="1200" alt="${t(p.reference.photoAlt)}" loading="lazy"><div class="reference-shade" aria-hidden="true"></div><div class="reference-content"><div class="reference-identity"><p class="eyebrow"><span class="dot" aria-hidden="true"></span>${t(p.reference.label)}</p><img class="reference-logo" src="${A}alsteel-logo.png" width="1800" height="515" alt="AL Steel Metal Construction" loading="lazy"><h2 id="reference-title" translate="no">${esc(p.reference.name)}</h2><p class="reference-location">${t(p.reference.location)}</p></div><div class="reference-copy"><p>${t(p.reference.description)}</p><p>${t(p.reference.usage)}</p></div><a class="btn ghost" href="${esc(p.reference.href)}">${t(p.reference.cta)}${arrow}</a></div></section>` : '';
   return `<!doctype html>
-<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="${p.themeColor}"><meta name="robots" content="index,follow"><title>${t(p.title)}</title><meta name="description" content="${t(p.description)}"><link rel="canonical" href="${url}"><meta property="og:type" content="website"><meta property="og:title" content="${t(p.title)}"><meta property="og:description" content="${t(p.description)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${p.origin}/about/assets/${p.ogImage}.webp"><meta name="twitter:card" content="summary_large_image">${locales.map((x) => `<link rel="alternate" hreflang="${x}" href="${p.origin}/about/${x}.html">`).join('')}<link rel="alternate" hreflang="x-default" href="${p.origin}/"><link rel="icon" href="${A}${p.key === 'baum' ? 'logo.webp' : 'mark.svg'}"><link rel="preload" href="${A}manrope-variable.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="${A}site.css?v=${styleVersion}"></head>
+<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="${p.themeColor}"><meta name="robots" content="index,follow"><title>${t(p.title)}</title><meta name="description" content="${t(p.description)}"><link rel="canonical" href="${url}"><meta property="og:type" content="website"><meta property="og:title" content="${t(p.title)}"><meta property="og:description" content="${t(p.description)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${p.origin}/about/assets/${p.ogImage}.webp"><meta name="twitter:card" content="summary_large_image">${locales.map((x) => `<link rel="alternate" hreflang="${x}" href="${p.origin}/about/${x}.html">`).join('')}<link rel="alternate" hreflang="x-default" href="${p.origin}/"><link rel="icon" href="${A}${p.key === 'baum' ? 'logo.webp' : 'mark.svg'}"><link rel="preload" href="${A}manrope-variable.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="${A}site.css?v=${styleVersion}">${p.reference ? `<link rel="stylesheet" href="${A}reference.css?v=${referenceVersion}">` : ''}</head>
 <body class="t-${p.key}">${sprite}<a class="skip" href="#main">${t(c.skip)}</a><div class="bg" aria-hidden="true"><div class="grid"></div><div class="glow g1"></div><div class="glow g2"></div></div>
 <header class="top" id="top"><a href="${p.home}" class="brand">${brand}</a><nav class="nav" aria-label="${p.name}"><a href="#ablaeufe">${t(c.nav.processes)}</a><a href="#dashboard">${t(c.nav.dashboard)}</a><a href="#tools">${t(c.nav.tools)}</a><a href="#zugang">${t(c.nav.access)}</a></nav><nav class="langs" aria-label="Language">${locales.map((x) => `<a href="${L}${x}.html" lang="${x}" hreflang="${x}"${x === lang && !isIndex ? ' aria-current="page"' : ''}>${x.toUpperCase()}</a>`).join('')}</nav><a class="btn white sm" href="#zugang">${t(c.nav.login)}</a></header>
 <main id="main">
@@ -59,7 +61,7 @@ function render(p, lang, isIndex) {
 <div class="actions"><a class="btn white" href="#ablaeufe">${t(c.nav.processes)}${arrow}</a>${demoAction}</div>
 <figure class="stage"><div class="frame hero-frame"><div class="bar" aria-hidden="true"><i></i><i></i><i></i><span>${p.hero.bar}</span></div>${img(p.key === 'baum' ? 'b-desk-wz' : 's-desk-wz', p.hero.alt[lang], '', true)}</div><figcaption class="sr">${t(p.hero.alt)}</figcaption></figure>
 <ul class="facts">${c.facts.map((f) => `<li>${t(f)}</li>`).join('')}</ul></section>
-${chain}
+${reference ? reference + '\n' : ''}${chain}
 <section class="platform" id="ablaeufe" aria-labelledby="proc-title">${head(p.processes.eyebrow, p.processes.title, p.processes.text, 'proc-title')}
 <div class="procs">${p.processes.cards.map((x) => `<article class="proc reveal"><div class="handset">${img(x.shot, x.title[lang])}</div><div><h3>${t(x.title)}</h3><p>${t(x.body)}</p></div></article>`).join('')}</div></section>
 <section class="product" aria-labelledby="show-title"><div class="product-head"><div><p class="eyebrow"><span class="dot"></span>${t(s.eyebrow)}</p><h2 id="show-title">${t(s.title)}</h2></div><div><p class="lead">${t(s.text)}</p><ul class="points">${s.points.map((x) => `<li>${check}${t(x)}</li>`).join('')}</ul></div></div>
@@ -87,6 +89,7 @@ for (const p of [baum, bau]) {
   if (p.key === 'bau') for (const f of await readdir(resolve(shots, 'art'))) await copyFile(resolve(shots, 'art', f), resolve(assets, 'art', f));
   else await rm(resolve(assets, 'art'), { recursive: true });
   await copyFile(here('./site.css'), resolve(assets, 'site.css'));
+  if (p.reference) await copyFile(here('./reference.css'), resolve(assets, 'reference.css'));
   await copyFile(resolve(root, 'assets/manrope-variable.ttf'), resolve(assets, 'manrope-variable.ttf'));
   await copyFile(resolve(root, 'fonts/Manrope-OFL.txt'), resolve(assets, 'Manrope-OFL.txt'));
   if (p.key === 'baum') await copyFile(resolve(root, 'assets/logo-256.webp'), resolve(assets, 'logo.webp'));

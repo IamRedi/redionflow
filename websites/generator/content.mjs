@@ -190,6 +190,26 @@ const art = (key, sq, en, de, it) => [key, l(sq, en, de, it)];
 
 export const bau = {
   key: 'bau',
+  reference: {
+    name: 'AL-Steel Construction',
+    photoAlt: l('Montim konstruksioni metalik, foto nga faqja zyrtare e AL-Steel', 'Steel structure assembly, photo from AL-Steel’s official website', 'Montage einer Stahlkonstruktion, Foto von der offiziellen AL-Steel-Website', 'Montaggio di una struttura metallica, foto dal sito ufficiale di AL-Steel'),
+    href: 'https://alsteel.al/',
+    label: l('Në përdorim real', 'Used in real operations', 'Im betrieblichen Einsatz', 'In uso operativo'),
+    location: l('Qerekë, Krujë · Shqipëri', 'Qerekë, Krujë · Albania', 'Qerekë, Krujë · Albanien', 'Qerekë, Krujë · Albania'),
+    description: l(
+      'Projektim, prodhim dhe montim konstruksionesh metalike për objekte industriale dhe ambiente logjistike.',
+      'Design, fabrication and assembly of steel structures for industrial buildings and logistics facilities.',
+      'Planung, Fertigung und Montage von Stahlkonstruktionen für Industriegebäude und Logistikanlagen.',
+      'Progettazione, produzione e montaggio di strutture metalliche per edifici industriali e spazi logistici.',
+    ),
+    usage: l(
+      'AL-Steel përdor realisht BauFlow për të lidhur zyrën, punishten dhe kantierin në punën e përditshme.',
+      'AL-Steel uses BauFlow in its daily operations to connect the office, workshop and construction site.',
+      'AL-Steel nutzt BauFlow im Arbeitsalltag, um Büro, Werkstatt und Baustelle zu verbinden.',
+      'AL-Steel utilizza BauFlow nel lavoro quotidiano per collegare ufficio, officina e cantiere.',
+    ),
+    cta: l('Vizito alsteel.al', 'Visit alsteel.al', 'alsteel.al besuchen', 'Visita alsteel.al'),
+  },
   name: 'BauFlow',
   origin: 'https://www.baumdienstflow.de/bauflow',
   home: '/bauflow/',
