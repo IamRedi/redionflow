@@ -506,8 +506,8 @@ export function WorkzoneMissionControl({
             </>
           ) : (
             <>
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.34),transparent_34%,rgba(31,72,50,0.06)_64%,transparent),radial-gradient(ellipse_at_center,transparent_42%,rgba(87,69,40,0.10))] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(82,135,97,0.08)_64%,transparent),radial-gradient(ellipse_at_center,transparent_44%,rgba(0,0,0,0.24))]" />
-              <div className="pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(30deg,transparent_0_47%,rgba(67,100,78,0.09)_48%_52%,transparent_53%_100%)] [background-size:180px_180px] dark:opacity-35 dark:[background-image:linear-gradient(30deg,transparent_0_47%,rgba(190,210,179,0.08)_48%_52%,transparent_53%_100%)]" />
+              <div data-canvas-forest-layer className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.34),transparent_34%,rgba(31,72,50,0.06)_64%,transparent),radial-gradient(ellipse_at_center,transparent_42%,rgba(87,69,40,0.10))] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(82,135,97,0.08)_64%,transparent),radial-gradient(ellipse_at_center,transparent_44%,rgba(0,0,0,0.24))]" />
+              <div data-canvas-forest-layer className="pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(30deg,transparent_0_47%,rgba(67,100,78,0.09)_48%_52%,transparent_53%_100%)] [background-size:180px_180px] dark:opacity-35 dark:[background-image:linear-gradient(30deg,transparent_0_47%,rgba(190,210,179,0.08)_48%_52%,transparent_53%_100%)]" />
             </>
           )}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5">

@@ -30,6 +30,14 @@ body:has([data-baum-studio="forest-crystal-v1"]) {
   --baum-radius: 12px;
   --baum-blur: 2px;
   --baum-overlay-blur: 8px;
+  --baum-page-backdrop:
+    radial-gradient(ellipse at 4% 4%, #b9ead9b3, transparent 54%),
+    radial-gradient(ellipse at 98% 16%, #e9eec3a6, transparent 52%),
+    radial-gradient(ellipse at 24% 100%, #c1e4e7a6, transparent 55%),
+    radial-gradient(ellipse at 94% 96%, #e8dce980, transparent 52%),
+    linear-gradient(135deg, #eaf4eb, #e1f1ea 48%, #eff0e3);
+  --baum-field-image: url('/baumdienst-studio-v1/connected-landscape-day.webp');
+  --baum-field-scrim: linear-gradient(135deg, #eef9e91a, #e1f1eb1a 48%, #eaf4e94d);
 }
 html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
   --background: 161 24% 10%;
@@ -57,9 +65,34 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
   --baum-action-ink: #ecffda;
   --baum-action-base: #315c43;
   --baum-action-edge: #b4df9d80;
+  --baum-page-backdrop:
+    radial-gradient(ellipse at 4% 4%, #285e4c80, transparent 54%),
+    radial-gradient(ellipse at 98% 16%, #31466566, transparent 52%),
+    radial-gradient(ellipse at 24% 100%, #255d6266, transparent 55%),
+    radial-gradient(ellipse at 94% 96%, #51415d47, transparent 52%),
+    linear-gradient(135deg, #102923, #102724 48%, #111f2a);
+  --baum-field-image: url('/baumdienst-studio-v1/connected-landscape-night.webp');
+  --baum-field-scrim: linear-gradient(135deg, #0d2b2626, #112c3226 48%, #081f2c4d);
 }
 [data-baum-studio="forest-crystal-v1"] {
-  background: radial-gradient(ellipse at 12% 0%, hsl(var(--primary) / .1), transparent 58%), hsl(var(--background));
+  background: var(--baum-page-backdrop), hsl(var(--background));
+}
+/* Decorative, locally served artwork: no extra UI, state, hit area or image
+   generation on load. The same composition changes with the existing theme. */
+[data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--baum-field-scrim), var(--baum-field-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+[data-baum-studio="forest-crystal-v1"] [data-canvas-forest-layer] { display: none; }
+@media (max-width: 639px) {
+  /* Focus the meeting point of trees, terrain and office in the taller field. */
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { background-position: center, 70% center; }
 }
 /* One material for shared primitives and existing hand-built cards. Plot, map,
    media and status surfaces retain their functional rendering. */
@@ -134,6 +167,8 @@ body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"
 }
 @media (prefers-reduced-transparency: reduce) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-overlay-blur: 0px; }
+  [data-baum-studio="forest-crystal-v1"] { background: hsl(var(--background)); }
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon,section[class~="bg-card"],article[class~="bg-card"],div[class~="bg-card"],details[class~="bg-card"],a[class~="bg-card"]) {
     background: hsl(var(--card));
     -webkit-backdrop-filter: none;
@@ -141,6 +176,8 @@ body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"
   }
 }
 @media (forced-colors:active) {
+  [data-baum-studio="forest-crystal-v1"] { background: Canvas; }
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-ui-control="button"],.baum-nav-icon,[data-testid="muster-site-card"],:where(section,article,div,details,a)[class~="border"][class~="bg-card"],:where(section,article,div)[class~="border"][class~="bg-card/95"]) {
     background: Canvas;
     color: CanvasText;
@@ -152,5 +189,6 @@ body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"
 }
 @media print {
   [data-baum-studio="forest-crystal-v1"] { background: white; }
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[data-testid="muster-site-card"],[role="dialog"]) { background: white; color: black; box-shadow: none; backdrop-filter: none; }
 }
