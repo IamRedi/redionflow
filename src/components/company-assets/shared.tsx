@@ -53,7 +53,7 @@ export function useAssetMutation(c: AssetCopy, after: () => Promise<unknown>) {
   return { run, pending, message, failed, result };
 }
 
-export function useAssetSnapshot(query: AssetQuery, c: AssetCopy) {
+export function useAssetSnapshot(query: AssetQuery, c: AssetCopy, refreshInterval = 0) {
   const queryKey = JSON.stringify(query);
   const [loaded, setLoaded] = useState<{ key: string; snapshot: AssetSnapshot } | null>(null);
   const [request, setRequest] = useState<{ key: string; loading: boolean; error: string | null }>({key:queryKey,loading:true,error:null});
@@ -79,8 +79,9 @@ export function useAssetSnapshot(query: AssetQuery, c: AssetCopy) {
     let last = 0;
     const refresh = () => { const now = Date.now(); if (document.visibilityState === 'hidden' || now - last < 1000) return; last = now; void load(); };
     window.addEventListener('focus', refresh); document.addEventListener('visibilitychange', refresh);
-    return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
-  }, [load]);
+    const timer=refreshInterval>0?setInterval(refresh,refreshInterval):null;
+    return () => { if(timer)clearInterval(timer);window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [load,refreshInterval]);
   // Refresh the same query in place; a new query can never expose an older result.
   const snapshot=loaded?.key===queryKey?loaded.snapshot:null;
   const loading=request.key!==queryKey||request.loading;

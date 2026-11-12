@@ -156,7 +156,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
           select: { id: true, description: true },
         },
         workSessions: {
-          where: { isLive: true, endTime: null },
+          where: { isLive: true, endTime: null, workplace:null, startTime:{lte:new Date()},worker:{companyProfileId:company.id,status:"active",availability:"AVAILABLE"},pauseIntervals:{none:{endedAt:null}} },
           select: { startTime: true, worker: { select: { firstName: true, lastName: true } } },
         },
       },
@@ -440,6 +440,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         <FactoryPanel
           factoryName={factorySite.name}
           factoryId={factorySite.id}
+          workingNames={[...new Set(factorySite.workSessions.map(s=>`${s.worker.firstName} ${s.worker.lastName}`.trim()))]}
           photoUrl={assetPhotoUrl('site',factorySite.id,factorySite.coverPhotoAt)}
           canEditPhoto={photoPermissions.office||photoPermissions.factorySteps}
           factoryAddress={(factorySite.address ?? "").trim()}

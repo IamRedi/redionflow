@@ -50,8 +50,8 @@ the application's non-null optional schema. See the official
 
 Current workforce questions use `adminGetWorkforceStatus`: one fresh,
 repeatable-read tenant snapshot after revalidating the active administrator.
-It distinguishes explicit OFFICE, recorded construction sites, STEEL_WORKSHOP
-factories, unknown locations, pauses, valid stops during the current company
+It distinguishes explicit OFFICE and WORKSHOP (service workshop), recorded
+construction sites, STEEL_WORKSHOP factories, unknown locations, pauses, valid stops during the current company
 day, no current session and conflicting records. Job titles, office access,
 logins, plans and GPS never establish attendance. Duplicate/future/inconsistent
 clocks and availability conflicts require review rather than a guessed state.

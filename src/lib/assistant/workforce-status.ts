@@ -8,7 +8,7 @@ import { categorizeAssistantFailure } from './diagnostics';
 import type { RequesterContext } from './requester';
 
 export const workforceStatusInput = z.object({
-  state: z.enum(['activity','all','live','working','office','site','factory','paused','stopped','no_live_session','needs_review']).default('activity'),
+  state: z.enum(['activity','all','live','working','office','site','factory','workshop','paused','stopped','no_live_session','needs_review']).default('activity'),
   workerId: z.string().regex(/^[a-z0-9_-]{1,120}$/i).optional(),
   query: z.string().trim().max(100).optional(),
   cursor: z.string().regex(/^[a-z0-9_-]{1,120}$/i).optional(),
@@ -16,7 +16,7 @@ export const workforceStatusInput = z.object({
 }).strict();
 type Input = z.input<typeof workforceStatusInput>;
 type Status = 'working'|'paused'|'stopped'|'no_live_session'|'needs_review';
-type Location = {kind:'office'|'site'|'factory'|'unknown';siteId:string|null;name:string|null};
+type Location = {kind:'office'|'site'|'factory'|'workshop'|'unknown';siteId:string|null;name:string|null};
 const failure = (code:string,message:string)=>({ok:false as const,code,message});
 const forbidden = ()=>failure('FORBIDDEN','Only a current administrator of this company may read workforce attendance.');
 
@@ -53,23 +53,24 @@ export async function adminGetWorkforceStatus(requester:RequesterContext,input:I
         if(sessions.length){
           if(sessions.length!==1)reasons.push('multiple_open_or_inconsistent_sessions');
           if(s.endTime||!s.isLive||s.startTime>now)reasons.push('invalid_current_clock_record');
-          if(s.workplace&&s.workplace!=='OFFICE')reasons.push('unknown_workplace_value');
+          if(s.workplace&&!['OFFICE','WORKSHOP'].includes(s.workplace))reasons.push('unknown_workplace_value');
           if(s.workplace==='OFFICE'&&s.baustelleId)reasons.push('office_and_site_conflict');
+          if(s.workplace==='WORKSHOP'&&s.baustelleId)reasons.push('workshop_and_site_conflict');
           if(s.baustelleId&&(!s.baustelle||s.baustelle.companyProfileId!==requester.companyId))reasons.push('site_not_available_in_company');
           if(w.availability!=='AVAILABLE')reasons.push('profile_availability_conflicts_with_live_clock');
           if(lastStop&&lastStop>s.startTime)reasons.push('closed_record_overlaps_live_clock');
           if(s.pauseIntervals.length>1||s.pauseIntervals.some(p=>p.startedAt<s.startTime||p.startedAt>now))reasons.push('inconsistent_open_pause');
           status=reasons.length?'needs_review':s.pauseIntervals.length?'paused':'working';
-          if(!reasons.length)location=s.workplace==='OFFICE'?{kind:'office',siteId:null,name:'Office'}:s.baustelle?{kind:s.baustelle.type==='STEEL_WORKSHOP'?'factory':'site',siteId:s.baustelle.id,name:s.baustelle.name}:{kind:'unknown',siteId:null,name:null};
+          if(!reasons.length)location=s.workplace==='OFFICE'?{kind:'office',siteId:null,name:'Office'}:s.workplace==='WORKSHOP'?{kind:'workshop',siteId:null,name:'Workshop'}:s.baustelle?{kind:s.baustelle.type==='STEEL_WORKSHOP'?'factory':'site',siteId:s.baustelle.id,name:s.baustelle.name}:{kind:'unknown',siteId:null,name:null};
         }
         return {workerId:w.id,name:`${w.firstName} ${w.lastName}`.trim(),profileAvailability:w.availability,status,location,startedAt:status==='working'||status==='paused'?s.startTime.toISOString():null,lastStoppedAtToday:lastStop?.toISOString()??null,lastStopKind:stop?(stop.closedBySystem?'system':'recorded'):null,reasons};
       });
-      const summary={activeWorkers:snapshot.length,working:0,paused:0,officeWorking:0,officePaused:0,siteWorking:0,sitePaused:0,factoryWorking:0,factoryPaused:0,unknownLocationWorking:0,unknownLocationPaused:0,stoppedToday:0,noLiveSession:0,needsReview:0};
+      const summary={activeWorkers:snapshot.length,working:0,paused:0,officeWorking:0,officePaused:0,siteWorking:0,sitePaused:0,factoryWorking:0,factoryPaused:0,workshopWorking:0,workshopPaused:0,unknownLocationWorking:0,unknownLocationPaused:0,stoppedToday:0,noLiveSession:0,needsReview:0};
       for(const row of snapshot){
         if(row.status==='working'||row.status==='paused'){
           summary[row.status]++;
           const place=row.location.kind==='unknown'?'unknownLocation':row.location.kind;
-          const key=`${place}${row.status==='working'?'Working':'Paused'}` as 'officeWorking'|'officePaused'|'siteWorking'|'sitePaused'|'factoryWorking'|'factoryPaused'|'unknownLocationWorking'|'unknownLocationPaused';summary[key]++;
+          const key=`${place}${row.status==='working'?'Working':'Paused'}` as 'officeWorking'|'officePaused'|'siteWorking'|'sitePaused'|'factoryWorking'|'factoryPaused'|'workshopWorking'|'workshopPaused'|'unknownLocationWorking'|'unknownLocationPaused';summary[key]++;
         }else if(row.status==='stopped')summary.stoppedToday++;else if(row.status==='no_live_session')summary.noLiveSession++;else summary.needsReview++;
       }
       const matching=snapshot.filter(r=>{
@@ -77,12 +78,12 @@ export async function adminGetWorkforceStatus(requester:RequesterContext,input:I
           case 'all':return true;
           case 'activity':return r.status!=='no_live_session';
           case 'live':return r.status==='working'||r.status==='paused';
-          case 'office':case 'site':case 'factory':return (r.status==='working'||r.status==='paused')&&r.location.kind===filters.state;
+          case 'office':case 'site':case 'factory':case 'workshop':return (r.status==='working'||r.status==='paused')&&r.location.kind===filters.state;
           default:return r.status===filters.state;
         }
       }).sort((a,b)=>a.workerId<b.workerId?-1:a.workerId>b.workerId?1:0);
       const after=matching.filter(r=>!filters.cursor||r.workerId>filters.cursor),items=after.slice(0,filters.limit),hasMore=after.length>items.length;
-      return {ok:true as const,source:'Current WorkSession clock, explicit workplace, site and open pause records',retrievedAt:now.toISOString(),timeZone,readOnly:true,consistency:'One repeatable-read snapshot; current stored attendance, not physical/GPS verification.',data:{date,filters,summary,summaryScope:'All active company workers matching workerId/query before the state/page filter.',items,totalMatching:matching.length,returned:items.length,hasMore,nextCursor:hasMore?items.at(-1)!.workerId:null,complete:!filters.cursor&&!hasMore,identityResolution:filters.workerId?'exact_id':filters.query&&workers.length>1?'multiple_candidates_require_clarification':'company_workforce',rules:{office:'Explicit OFFICE workplace only; never inferred from job, office access, login or plan.',site:'Recorded company site only; STEEL_WORKSHOP is factory, not a construction site.',stopped:'No open/inconsistent clock and a valid recorded end during the current company day.',noLiveSession:'No current session and no valid end today. This does not prove absence, logout or a stop today.',needsReview:'Conflicting/invalid records. Do not infer working, stopped or a location.',page:'Counts cover the matching scope; items can be a partial page. Fetch nextCursor before claiming a complete name list.'}}};
+      return {ok:true as const,source:'Current WorkSession clock, explicit workplace, site and open pause records',retrievedAt:now.toISOString(),timeZone,readOnly:true,consistency:'One repeatable-read snapshot; current stored attendance, not physical/GPS verification.',data:{date,filters,summary,summaryScope:'All active company workers matching workerId/query before the state/page filter.',items,totalMatching:matching.length,returned:items.length,hasMore,nextCursor:hasMore?items.at(-1)!.workerId:null,complete:!filters.cursor&&!hasMore,identityResolution:filters.workerId?'exact_id':filters.query&&workers.length>1?'multiple_candidates_require_clarification':'company_workforce',rules:{workshop:'Explicit WORKSHOP workplace only; separate from the factory site and repair queue.',office:'Explicit OFFICE workplace only; never inferred from job, office access, login or plan.',site:'Recorded company site only; STEEL_WORKSHOP is factory, not a construction site.',stopped:'No open/inconsistent clock and a valid recorded end during the current company day.',noLiveSession:'No current session and no valid end today. This does not prove absence, logout or a stop today.',needsReview:'Conflicting/invalid records. Do not infer working, stopped or a location.',page:'Counts cover the matching scope; items can be a partial page. Fetch nextCursor before claiming a complete name list.'}}};
     },{isolationLevel:'RepeatableRead',timeout:10000,maxWait:3000});
   }catch(error){return {...failure('DATA_UNAVAILABLE','Current attendance could not be read. Do not infer nobody working, stopped, office/site location or reuse a previous answer.'),diagnostic:categorizeAssistantFailure(error,{source:'database'})};}
 }

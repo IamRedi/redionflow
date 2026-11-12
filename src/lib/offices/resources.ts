@@ -1,3 +1,4 @@
+import {explicitWorkplaceLabel} from '@/lib/workzone/explicit-workplace';
 import {z} from 'zod';
 import {withTenantContext} from '@/lib/db/tenant-context';
 import {loadWorkerAccess} from '@/lib/access/load';
@@ -54,7 +55,7 @@ export async function officeWorkbooks(month:string,workerId?:string,previewId?:s
   const summary=workers.map(w=>{const rows=sessions.filter(s=>s.workerId===w.id);return {...w,hours:Math.round(rows.reduce((sum,s)=>sum+effectiveSessionHours(s,now),0)*100)/100,days:new Set(rows.map(s=>dateKey(s.startTime))).size,live:rows.some(s=>!s.endTime)};});
   const rows=workerId?Array.from({length:new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).getUTCDate()},(_,i)=>{
    const date=`${month}-${String(i+1).padStart(2,'0')}`,day=new Date(`${date}T12:00:00Z`),found=sessions.filter(s=>dateKey(s.startTime)===date),closed=found.filter(s=>s.endTime);
-   return {date,dayOfMonth:date.slice(8),dayName:formatReportDay(day,'sq'),startTime:found.length?new Date(Math.min(...found.map(s=>s.startTime.getTime()))):null,endTime:closed.length?new Date(Math.max(...closed.map(s=>s.endTime!.getTime()))):null,hasLive:found.some(s=>!s.endTime),breakMinutes:found.reduce((sum,s)=>sum+s.breakMinutes,0),locations:[...new Set(found.map(s=>s.workplace==='OFFICE'?'Zyrë':s.baustelle?.name).filter(Boolean))].join(', ')||'-',totalHours:found.reduce((sum,s)=>sum+effectiveSessionHours(s,now),0),hasWork:found.length>0};
+   return {date,dayOfMonth:date.slice(8),dayName:formatReportDay(day,'sq'),startTime:found.length?new Date(Math.min(...found.map(s=>s.startTime.getTime()))):null,endTime:closed.length?new Date(Math.max(...closed.map(s=>s.endTime!.getTime()))):null,hasLive:found.some(s=>!s.endTime),breakMinutes:found.reduce((sum,s)=>sum+s.breakMinutes,0),locations:[...new Set(found.map(s=>explicitWorkplaceLabel(s.workplace,'sq')??s.baustelle?.name).filter(Boolean))].join(', ')||'-',totalHours:found.reduce((sum,s)=>sum+effectiveSessionHours(s,now),0),hasWork:found.length>0};
   }):[];
   return {month,asOf:now.toISOString(),summary,rows};
  });

@@ -139,7 +139,7 @@ export type WorkerLoginValues = z.infer<typeof workerLoginSchema>;
 
 export const stopWorkSessionSchema = z.object({
   sessionId: z.string().min(1),
-  expectedWorkplace: z.literal('OFFICE').optional(),
+  expectedWorkplace: z.enum(['OFFICE','WORKSHOP']).optional(),
   breakMinutes: z.coerce.number().int().refine((value) => [0, 15, 30, 60].includes(value), t("validation.breakMinutesInvalid")),
   endTime: z.string().min(1),
 });
