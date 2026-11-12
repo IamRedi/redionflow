@@ -126,7 +126,7 @@ describe('private original photos and legacy assets', () => {
   it.each(['image/svg+xml', 'image/webp'])('shows a photographic default for legacy %s without rewriting it or making a model request', async mime => {
     mocks.tx.steelWorkVisual.findFirst.mockResolvedValue({ mime, scene, data: stored, definition });
     await expect(readSteelWorkVisual(definitionId)).resolves.toEqual({ data: reference, mime: 'image/webp' });
-    expect(mocks.reference).toHaveBeenCalledWith(expect.stringContaining('site.webp'));
+    expect(mocks.reference).toHaveBeenCalledWith(expect.stringContaining('roof-trim.webp'));
     expect(mocks.tx.steelWorkVisual.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { companyProfileId: companyId, definitionId } }));
     expect(mocks.tx.steelWorkVisual.upsert).not.toHaveBeenCalled(); expect(mocks.quota).not.toHaveBeenCalled(); expect(mocks.image).not.toHaveBeenCalled();
   });

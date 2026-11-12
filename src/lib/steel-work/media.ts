@@ -114,14 +114,15 @@ export async function generateSteelWorkVisual(definitionId: string, revision: nu
 export async function readSteelWorkVisual(id: string) {
   if (!validId.test(id)) return null;
   const actor = await fleetActor();
-  const visual = await withTenantContext(actor.companyId, tx => tx.steelWorkVisual.findFirst({ where: { companyProfileId: actor.companyId, definitionId: id }, select: { data: true, scene: true, mime: true, definition: { select: { key: true, label: true, linkedProcessKey: true, kind: true, visualStatus: true } } } }));
+  const visual = await withTenantContext(actor.companyId, tx => tx.steelWorkVisual.findFirst({ where: { companyProfileId: actor.companyId, definitionId: id }, select: { data: true, scene: true, mime: true, definition: { select: { key: true, label: true, description: true, linkedProcessKey: true, kind: true, visualStatus: true } } } }));
   if (!visual) return null;
   const currentStyle = visual.scene && typeof visual.scene === 'object' && !Array.isArray(visual.scene) && visual.scene.style === STEEL_ILLUSTRATION_STYLE_VERSION;
   if (visual.mime === 'image/webp' && visual.data && (visual.definition.visualStatus === 'photo' || currentStyle)) return { data: new Uint8Array(visual.data), mime: 'image/webp' };
   // Legacy AI/SVG bytes remain untouched. Reads never regenerate, reserve quota
   // or rewrite customer data; show the same photographic default as empty cards.
   const photo = steelWorkPhoto(visual.definition);
-  const bytes = await readFile(join(process.cwd(), 'public', 'steel-studio-v1', photo.src.split('/').at(-1)!));
+  const folder = photo.src.startsWith('/steel-process-photos-v1/') ? 'steel-process-photos-v1' : 'steel-studio-v1';
+  const bytes = await readFile(join(process.cwd(), 'public', folder, photo.src.split('/').at(-1)!));
   if (photo.panel === undefined) return { data: new Uint8Array(bytes), mime: 'image/webp' };
   const image = sharp(bytes), metadata = await image.metadata();
   const width = Math.floor(metadata.width! / 3), height = Math.floor(metadata.height! / 2);
