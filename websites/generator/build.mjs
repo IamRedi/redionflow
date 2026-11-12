@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { baum, bau, common, links, locales } from './content.mjs';
+import { renderBauflow } from './bauflow-page.mjs';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const root = resolve(here('../products'));
@@ -23,6 +24,7 @@ const twin = '<svg class="twin" viewBox="0 0 320 170" fill="none" aria-hidden="t
 const signature = '<div class="redion-author-footer"><a class="redion-signature" href="https://www.redioncekrezi.de/" translate="no" data-theme="dark" aria-label="by RediON"><span class="redion-by" aria-hidden="true">by</span><span class="redion-word" aria-hidden="true"><span class="redion-r">R</span><span class="redion-e">e</span><span class="redion-d">d</span><span class="redion-i">i</span><span class="redion-on">ON</span></span></a></div>';
 
 function render(p, lang, isIndex) {
+  if (p.key === 'bau') return renderBauflow(p, lang, isIndex, links);
   const t = (o) => esc(o[lang]);
   const A = isIndex ? 'about/assets/' : 'assets/';
   const L = isIndex ? 'about/' : './';
@@ -89,6 +91,7 @@ for (const p of [baum, bau]) {
   if (p.key === 'bau') for (const f of await readdir(resolve(shots, 'art'))) await copyFile(resolve(shots, 'art', f), resolve(assets, 'art', f));
   else await rm(resolve(assets, 'art'), { recursive: true });
   await copyFile(here('./site.css'), resolve(assets, 'site.css'));
+  if (p.key === 'bau') for (const name of ['bauflow.css', 'bauflow-theme.js']) await copyFile(here(`./${name}`), resolve(assets, name));
   if (p.reference) await copyFile(here('./reference.css'), resolve(assets, 'reference.css'));
   await copyFile(resolve(root, 'assets/manrope-variable.ttf'), resolve(assets, 'manrope-variable.ttf'));
   await copyFile(resolve(root, 'fonts/Manrope-OFL.txt'), resolve(assets, 'Manrope-OFL.txt'));
