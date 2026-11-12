@@ -1,5 +1,31 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
+## Clothing stock groups — 12 November 2026 candidate
+
+The warehouse clothing tab groups the full permitted dataset by item name and
+size before pagination. Case and surrounding whitespace share a group; absent
+sizes share the localized size-not-recorded group. Distinct named types and sizes
+remain separate. Compact cards reuse the established warehouse surfaces, orange
+accent, outline icons and typography, with reserve and recorded employee custody
+counts. Blocked/pending units without a holder are shown separately, not as free
+reserve. Worker and tenant visibility applies before aggregation.
+
+Opening a group shows its paginated individual units and the existing detail,
+issue, return, transfer, confirmation and history controls. Closing a detail
+refreshes the same group/page. Imported clothing XLS references are hidden from
+the normal identity line and code detail; their stored values, search, scan and
+explicit later label-generation behavior remain unchanged. Tools and site
+equipment keep their individual warehouse cards.
+
+This is a read-model/UI change only: no import rerun, migration, stock/custody
+rewrite, new grants, original media replacement or provider changes. The accepted
+PR180 profile/notebook/factory work is the source baseline. Concurrent warehouse
+crystal styling stays in its separate checkout; reconcile its final revision
+before merging either feature. This candidate requires owner approval to merge
+and deploy. Public presentation assessment: NO_CONTENT_CHANGE for this internal
+inventory-density refinement; existing inventory/custody capabilities and entry
+links remain accurate, with no readiness/status or new public claim.
+
 ## Partial parts and site priority — 12 November 2026 candidate
 
 Owner screenshots exposed two read-model bugs: factory summaries fetched only

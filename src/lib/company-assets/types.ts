@@ -37,14 +37,17 @@ export type AssetFileView = { id: string; name: string; kind: 'photo' | 'invoice
 export type AssetHistoryView = { id: string; type: string; actor: string; at: string; note: string; repairId: string | null };
 export type AssetCodeView = { id: string; kind: 'factory' | 'label'; value: string };
 export type AssetDetail = { asset: AssetSummary; codes: AssetCodeView[]; repairs: AssetRepairView[]; incidents: AssetIncidentView[]; handovers: AssetHandoverView[]; history: AssetHistoryView[]; files: AssetFileView[]; permissions: AssetPermissions };
+export type ClothingGroupFilter = { name: string; size: string | null };
+export type ClothingGroup = ClothingGroupFilter & { key: string; total: number; reserve: number; assigned: number; other: number };
 export type AssetSnapshot = {
   assets: AssetSummary[]; total: number; page: number; hasMore: boolean;
   counts: { total: number; available: number; issued: number; workshop: number; pending: number; lost: number; retired: number };
   workers: AssetPerson[]; sites: AssetPerson[]; handovers: AssetHandoverView[]; incidents: AssetIncidentView[]; repairs: AssetRepairView[];
   permissions: AssetPermissions; serverNow: string;
   queueHasMore?: { handovers: boolean; incidents: boolean; repairs: boolean };
+  clothingGroups?: { groups: ClothingGroup[]; total: number };
 };
-export type AssetQuery = { query?: string; scan?: string; page?: number; category?: AssetCategory; includeInactive?: boolean; workerId?: string };
+export type AssetQuery = { query?: string; scan?: string; page?: number; category?: AssetCategory; includeInactive?: boolean; workerId?: string; groupClothing?: boolean; clothingGroup?: ClothingGroupFilter };
 export type AssetCommand =
   | { type: 'report'; asset: AssetRef; kind: 'defect' | 'lost' | 'retire'; note: string }
   | { type: 'decide-incident'; incidentId: string; revision: number; approve: boolean; note: string }
