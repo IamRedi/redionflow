@@ -81,3 +81,16 @@ README auf Deutsch und Englisch, Screenshots aus den Demos, Architekturbild, [Pr
 1. Demos mit den interessierten Betrieben durchgehen und Rückmeldungen sammeln.
 2. Einen Pilotbetrieb je Produkt auf einer eigenen Instanz einrichten.
 3. Offene Sicherheitspunkte schließen (CSP, Scanner), danach Offline-Modus im Feld testen.
+
+
+## BauFlow presentation renewal · 12 November 2026 · READY / PENDING_PUBLICATION
+
+Reviewed application: AL-Steel production `d2846d1797f2a91cd5a49af6b483067ca43ce615` (PR188). The owner explicitly requested the website/portfolio renewal, superseding the previous routine-media deferral for this delivery. No operational app, account, provider, schema, customer record or production configuration was changed.
+
+The native BauFlow site adopts the accepted warm stone/copper/clear-crystal material, four actual SQ/EN/DE/IT editions, compact controls, automatic/light/dark appearance, personal offices/reception, internal mail/tasks, role-scoped assistants, factory/site workflow, document receipts, assets and repair phases. Screenshots are genuine captures from the matching local application tree with an isolated Mira Steel DEMO tenant; no customer data or fabricated AI replies. Twelve responsive WebP captures total 892,910 bytes; original local PNGs and prior public media are retained. The existing approved AL-Steel reference logo/photo remain byte-identical. The older fibre-construction public demo does not represent the new private office version. AI/GPS/notifications remain configuration-dependent. Readiness stays Prod90.
+
+Existing PRs are consolidated, not duplicated: redionflow155 (native website), redionflow154 (showcase README/media), portfolio79 (first-page card, case study, directory and the previously prepared AL-Steel reference from portfolio80). BaumdienstFlow's generated pages/assets and other portfolio products are preserved. Native publication is a separate combined static package; do not push the Railway-connected app branch or deploy only the BauFlow subtree.
+
+Local evidence: `outputs/bauflow-web-renewal-20261112`. Generator/syntax, static link/asset/locale/metadata checks; 32 native locale/viewport/theme cases plus theme persistence/Auto/reflow; portfolio lint/typecheck/content/native/public-site tests, production build/SSR checks and 48 portfolio UI/link observations. Genuine application capture had zero browser errors, and its dedicated synthetic tenant was removed. Owned app preview/PostgreSQL were stopped. No paid API, AI generation or GitHub Actions were used.
+
+Gates: CONTENT/LOCALE/UI/SEO_ASSETS/SYNC local PASS for the stated scope; application sign-in links are the existing company entrances. The command-line native read returned HTTP403, but an anonymous desktop browser resolved both the native root and SQ edition with HTTP200 and the expected existing titles; the portfolio SQ homepage also resolved correctly. Candidate publication/readback is still pending; source/local previews do not establish published PASS. Exact candidate publication, owner editorial acceptance, physical iPhone/Safari and measured Lighthouse scores are not claimed. Publication requires owner approval on the reviewed source/media/targets. Existing public reference rights and product licenses are preserved.
