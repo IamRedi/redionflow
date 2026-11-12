@@ -30,8 +30,9 @@ Unknown future custom work retains neutral context until a suitable specific
 image is supplied/generated; a generic view is not claimed as evidence of that
 operation. This patch does not alter the working explicit AI generation flow.
 
-Source preparation uses a separate branch over PR170/249f06a; other agent work
-and checkout remain untouched. Bounded catalog metadata was read without image
+Source preparation uses a separate branch over PR171/a5371cc (including PR170);
+the other agent's new attendance/reception work and checkout remain untouched.
+Bounded catalog metadata was read without image
 bytes, personnel or work-history content. The coverage receipt checks the 36
 definitions in that snapshot against specific defaults. Focused tests and a
 synthetic two-site production/mounting browser fixture verify the reported

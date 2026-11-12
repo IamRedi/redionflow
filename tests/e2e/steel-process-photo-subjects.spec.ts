@@ -79,6 +79,7 @@ test('task photos describe the operation consistently across sites, cards and ca
         await first.scrollIntoViewIfNeeded();
         const image=first.locator('[data-steel-work-visual] img');
         await expect.poll(()=>image.evaluate(el=>(el as HTMLImageElement).complete&&(el as HTMLImageElement).naturalWidth>0)).toBe(true);
+        await expect.poll(()=>page.locator('[data-studio-phase-card] [data-steel-work-visual] img').evaluateAll(images=>images.every(el=>(el as HTMLImageElement).complete&&(el as HTMLImageElement).naturalWidth>0))).toBe(true);
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
         await page.screenshot({path:info.outputPath(`${group}-${siteIndex}-${width}-${theme}.png`),fullPage:false});
         if(group==='production') {
