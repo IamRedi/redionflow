@@ -142,10 +142,29 @@ async function completeHandover(tx: Tx, actor: AssetActor, asset:OwnedAsset, han
   return true;
 }
 
+/** Single-piece and group requests share exactly the same confirmation rules. */
+async function requestAssetHandover(tx:Tx,actor:AssetActor,a:OwnedAsset,c:Extract<AssetMutation['command'],{type:'handover'}>) {
+  await unblocked(tx,actor,a,c.kind==='return');
+      if(!actor.canManage && (c.kind==='issue'?!!a.holderWorkerId||c.toWorkerId!==actor.workerId:a.holderWorkerId!==actor.workerId)) return assetFail('DENIED');
+      const to=c.kind==='return'?null:await workerPerson(tx,actor,c.toWorkerId??assetFail('WORKER_REQUIRED'));
+      const site=c.kind==='return'?null:await sitePerson(tx,actor,c.siteId);
+      if(c.kind==='return'&&!a.holderWorkerId || c.kind==='issue'&&a.holderWorkerId || c.kind==='transfer'&&(!a.holderWorkerId||a.holderWorkerId===to?.id&&a.siteId===(site?.id??null)))return assetFail('INVALID_TRANSITION');
+      const kind=c.kind==='transfer'&&a.holderWorkerId===to?.id?'issue':c.kind;
+      const from=a.holderWorkerId?await workerPerson(tx,actor,a.holderWorkerId,false):null;
+      const inactiveReturn=!!from&&!from.active&&kind==='return';
+      if(from&&!from.active&&!inactiveReturn)return assetFail('RETURN_REQUIRED');
+      if(inactiveReturn&&(!actor.canManage||!c.note?.trim()))return assetFail('RETURN_NOTE_REQUIRED');
+      const required:Required=inactiveReturn?[{key:'office',name:'Office'}]:kind==='transfer'?[{key:`worker:${from!.id}`,name:from!.name},{key:`worker:${to!.id}`,name:to!.name}]:[{key:'office',name:'Office'},{key:`worker:${(to??from)!.id}`,name:(to??from)!.name}];
+      const approved=confirmationKeys(actor,required).map(key=>({key,name:actor.name,at:new Date().toISOString()}));
+      const h=await tx.companyAssetHandover.create({data:{...owned(actor),assetId:a.id,kind,fromWorkerId:from?.id,toWorkerId:to?.id,siteId:site?.id,required,confirmations:approved,createdByKey:assetActorKey(actor),createdByName:actor.name,note:c.note??''}});
+      await event(tx,actor,a.id,inactiveReturn?'inactive-holder-return':'handover.requested',c.note??''); await bump(tx,actor,a); await completeHandover(tx,actor,a,h,approved); return h.id;
+}
+
 export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
   const parsed=assetMutationSchema.safeParse(input); if(!parsed.success)return assetFail('INVALID_INPUT');
   const actor=await assetActor(), {requestId,command:c}=parsed.data;
   if (c.type === 'register' && !actor.canRegister) return assetFail('DENIED');
+  if (c.type === 'issue-clothing-group') requireManage(actor);
   const fingerprint=createHash('sha256').update(JSON.stringify([assetActorKey(actor),c])).digest('hex');
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`asset-receipt:${actor.companyId}:${requestId}`}))`;
@@ -181,21 +200,23 @@ export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
           const value=await freshLabel(tx,actor);await tx.companyAssetCode.create({data:{...owned(actor),assetId:a.id,kind:'label',value,matchValue:scanCodeKey(value),createdByKey:assetActorKey(actor),createdByName:actor.name}});await event(tx,actor,a.id,'code.generated',value);result={code:value};
         }
       }
+    } else if(c.type==='issue-clothing-group') {
+      // Serialize quantity requests for one group; per-asset locks still guard
+      // races with individual issue/edit/report commands. Any failure rolls back
+      // every pending request and the receipt, never a partially issued quantity.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`clothing-group-issue:${actor.companyId}:`}::text || jsonb_build_array(lower(btrim(${c.group.name}::text)),lower(btrim(${c.group.size??''}::text)))::text))`;
+      await workerPerson(tx,actor,c.toWorkerId);
+      const candidates=await tx.$queryRaw<{id:string}[]>(Prisma.sql`${assetProjection(actor)} SELECT id FROM assets WHERE ${visibleSql(actor)} AND category='clothing' AND availability='available' AND lower(btrim(name))=lower(btrim(${c.group.name})) AND lower(btrim(COALESCE(size,'')))=lower(btrim(${c.group.size??''})) ORDER BY id LIMIT ${c.quantity}`);
+      if(candidates.length!==c.quantity)return assetFail('INSUFFICIENT_STOCK');
+      const handoverIds:string[]=[],normalize=(value:string|null)=>value?.trim().toLowerCase()??'';
+      for(const candidate of candidates){
+        const ref:AssetRef={kind:'inventory',id:candidate.id},a=await lockOwnedAsset(tx,actor,ref);
+        if(a.category!=='clothing'||a.holderWorkerId||normalize(a.name)!==normalize(c.group.name)||normalize(a.size)!==normalize(c.group.size))return assetFail('CONFLICT');
+        handoverIds.push(await requestAssetHandover(tx,actor,a,{type:'handover',asset:ref,kind:'issue',toWorkerId:c.toWorkerId,note:c.note}));
+      }
+      result={handoverIds,quantity:c.quantity,group:{name:c.group.name,size:c.group.size}};
     } else if(c.type==='handover') {
-      const a=await lockOwnedAsset(tx,actor,c.asset); await unblocked(tx,actor,a,c.kind==='return');
-      if(!actor.canManage && (c.kind==='issue'?!!a.holderWorkerId||c.toWorkerId!==actor.workerId:a.holderWorkerId!==actor.workerId)) return assetFail('DENIED');
-      const to=c.kind==='return'?null:await workerPerson(tx,actor,c.toWorkerId??assetFail('WORKER_REQUIRED'));
-      const site=c.kind==='return'?null:await sitePerson(tx,actor,c.siteId);
-      if(c.kind==='return'&&!a.holderWorkerId || c.kind==='issue'&&a.holderWorkerId || c.kind==='transfer'&&(!a.holderWorkerId||a.holderWorkerId===to?.id&&a.siteId===(site?.id??null)))return assetFail('INVALID_TRANSITION');
-      const kind=c.kind==='transfer'&&a.holderWorkerId===to?.id?'issue':c.kind;
-      const from=a.holderWorkerId?await workerPerson(tx,actor,a.holderWorkerId,false):null;
-      const inactiveReturn=!!from&&!from.active&&kind==='return';
-      if(from&&!from.active&&!inactiveReturn)return assetFail('RETURN_REQUIRED');
-      if(inactiveReturn&&(!actor.canManage||!c.note?.trim()))return assetFail('RETURN_NOTE_REQUIRED');
-      const required:Required=inactiveReturn?[{key:'office',name:'Office'}]:kind==='transfer'?[{key:`worker:${from!.id}`,name:from!.name},{key:`worker:${to!.id}`,name:to!.name}]:[{key:'office',name:'Office'},{key:`worker:${(to??from)!.id}`,name:(to??from)!.name}];
-      const approved=confirmationKeys(actor,required).map(key=>({key,name:actor.name,at:new Date().toISOString()}));
-      const h=await tx.companyAssetHandover.create({data:{...owned(actor),assetId:a.id,kind,fromWorkerId:from?.id,toWorkerId:to?.id,siteId:site?.id,required,confirmations:approved,createdByKey:assetActorKey(actor),createdByName:actor.name,note:c.note??''}});
-      await event(tx,actor,a.id,inactiveReturn?'inactive-holder-return':'handover.requested',c.note??''); await bump(tx,actor,a); await completeHandover(tx,actor,a,h,approved); result={handoverId:h.id};
+      const a=await lockOwnedAsset(tx,actor,c.asset);result={handoverId:await requestAssetHandover(tx,actor,a,c)};
     } else if(c.type==='confirm-handover'||c.type==='decline-handover'||c.type==='cancel-handover') {
       const h=await tx.companyAssetHandover.findFirst({where:{id:c.handoverId,...owned(actor)}}); if(!h)return assetFail('NOT_FOUND');
       const a=await assetById(tx,actor,h.assetId);

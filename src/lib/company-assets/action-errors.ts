@@ -10,10 +10,11 @@ const copy = {
   pl: ['Nie zapisano. Odśwież i spróbuj ponownie.', 'Brak uprawnień do tej operacji.', 'Dane zmieniły się. Odśwież przed kontynuowaniem.', 'Zasób niedostępny. Sprawdź przekazania, zgłoszenia i warsztat.', 'Potwierdź test działania i dodaj notatkę lub dokumentację naprawy.', 'Plik odrzucony. JPG/PNG/WebP do 12 MB lub PDF do 5 MB.', 'Użyj Magazynu / Warsztatu i wymaganych potwierdzeń.'],
   ro: ['Nu s-a salvat. Reîncarcă și încearcă din nou.', 'Nu ai dreptul să faci această operațiune.', 'Datele s-au schimbat. Reîncarcă înainte de a continua.', 'Indisponibil. Verifică predările, raportările și atelierul.', 'Confirmă testul și adaugă nota sau documentația reparației.', 'Fișier refuzat. JPG/PNG/WebP până la 12 MB sau PDF până la 5 MB.', 'Folosește Depozit / Atelier pentru operațiune și confirmările necesare.'],
 } as const;
+const stockCopy={sq:'Nuk ka mjaft copë të lira në këtë grup. Rifresko stokun dhe zgjidh sasinë përsëri.',en:'There are not enough available pieces in this group. Refresh stock and choose the quantity again.',de:'In dieser Gruppe sind nicht genug freie Stücke vorhanden. Bestand aktualisieren und Menge erneut wählen.',it:'Non ci sono abbastanza pezzi disponibili nel gruppo. Aggiorna la scorta e scegli di nuovo la quantità.',pl:'W tej grupie nie ma wystarczającej liczby wolnych sztuk. Odśwież stan i wybierz ilość ponownie.',ro:'Nu sunt suficiente bucăți disponibile în acest grup. Actualizează stocul și alege din nou cantitatea.'} as const;
 export async function assetActionError(error: unknown) {
   const code = error instanceof AssetOperationError ? error.code : error instanceof ZodError ? 'INVALID_INPUT' : 'FAILED';
-  const text = copy[await resolveRequestLanguage()];
+  const language=await resolveRequestLanguage(),text = copy[language];
   const index = code === 'DENIED' || code === 'NOT_FOUND' ? 1 : code === 'CONFLICT' ? 2 : ['ASSET_UNAVAILABLE','REPAIR_ALREADY_OPEN','WORKER_UNAVAILABLE','SITE_UNAVAILABLE'].includes(code) ? 3 : code === 'REPAIR_EVIDENCE_REQUIRED' ? 4 : code.startsWith('FILE_') ? 5 : ['LEGACY_CONFIRMATION_REQUIRED','AMBIGUOUS_CUSTODY','USE_REPAIR_WORKFLOW','RETURN_REQUIRED','RETURN_NOTE_REQUIRED'].includes(code) ? 6 : 0;
-  return { ok: false as const, message: text[index], code };
+  return { ok: false as const, message: code==='INSUFFICIENT_STOCK'?stockCopy[language]:text[index], code };
 }
 export async function assetWorkflowMessage() { return copy[await resolveRequestLanguage()][6]; }

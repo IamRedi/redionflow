@@ -1,5 +1,35 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
+## Clothing group issue — 12 November 2026 candidate
+
+Managers can open a clothing type/size group, choose one active employee and a
+quantity, then request the handover without opening each piece. The compact
+form uses the accepted PR182 crystal warehouse controls and shows current free
+reserve. The server resolves exact eligible pieces; clients cannot substitute
+other asset IDs, types, sizes, tenants or recipients. Registration-only workers
+do not gain management rights.
+
+Each selected piece keeps its own normal pending handover, required parties,
+confirmation, cancellation/decline and audit trail. Stock is reserved while
+pending; custody and TAKE movements change only after the existing confirmations.
+An office employee requesting clothes for themselves cannot approve both sides.
+The recipient can use the existing inline confirmation cards without opening
+piece details. There is no new automatic or collective signature.
+
+One idempotent command creates up to 100 requests in a single transaction.
+Same-group quantity requests serialize; canonical per-asset locks and fresh
+availability/type/size checks still protect races with individual actions.
+Insufficient or changed stock fails the complete quantity. A failure on a later
+piece rolls back earlier pending requests, revisions, events and the receipt.
+Retrying one UUID returns the original result rather than reserving twice.
+
+No migration, import rerun, existing clothing rewrite, new permission, original
+photo, provider or dependency change accompanies this candidate. It is based on
+the merged PR182, including the other agent's warehouse/office presentation.
+Merge/deploy requires separate owner approval. Native presentation/portfolio
+assessment: NO_CONTENT_CHANGE for a quantity shortcut within the existing
+warehouse handover capability; no new public module, link or readiness claim.
+
 ## Clothing stock groups — 12 November 2026 candidate
 
 The warehouse clothing tab groups the full permitted dataset by item name and
