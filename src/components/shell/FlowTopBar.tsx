@@ -157,7 +157,7 @@ export async function FlowTopBar({
   const companyLogo = safeCompanyLogo(companyBrand?.logoDataUrl);
 
   return (
-    <div className={contained ? "w-full min-w-0 px-4 pb-3 pt-14 sm:px-5 lg:min-h-[110px] lg:py-3" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
+    <div className={contained ? "w-full min-w-0 px-4 pb-3 pt-14 sm:px-5 lg:min-h-[110px] lg:py-3 lg:pr-[272px]" : "mx-auto grid min-h-[158px] w-full min-w-0 max-w-6xl gap-2 px-4 pb-1 pt-8 sm:px-5 lg:min-h-[104px]"}>
       {contained && <WorkspaceHeaderOffset />}
       <div className={`grid grid-cols-[auto_minmax(0,1fr)] ${contained ? "items-center" : "items-start lg:grid-cols-[auto_minmax(0,1fr)_auto]"} gap-3`}>
         {/* Keep the production logo and scrollable team side by side in normal flow. */}

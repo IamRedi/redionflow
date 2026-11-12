@@ -24,8 +24,13 @@ belongs at the end of the scrolling content, not in a permanently visible row.
 The stationary header/team wrapper stays transparent. Owner clarification after PR44: the scrolling
 content must actually pass behind that transparent header on desktop and phone;
 testing only its CSS background color is insufficient. Preserve initial clearance
-and click access through empty header space. Desktop alerts sit under
-the single KiDraht book icon, with no duplicate admin-menu entry. Preserve the
+and click access through empty header space. Owner correction,
+12 November 2026 supersedes the earlier desktop placement: KiDraht joins fleet,
+workshop and alerts on one row; reserve their width outside the team's scroll
+viewport. Keep one visible office entry in the header, not another in the page.
+Photo replacement uses a small camera glyph with an accessible transparent
+touch target. Keep the single KiDraht icon with no duplicate admin-menu entry.
+Preserve the
 project's existing visual identity and verify these behaviors at the beginning
 and end of desktop/narrow views. The focused regression is
 `tests/e2e/steel-footer-header.spec.ts`; local PASS and owner acceptance differ.

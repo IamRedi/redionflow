@@ -20,6 +20,15 @@ format; this visual clearance does not write new coordinates. Phone cards keep
 their existing natural two-column flow. Reduced-transparency/unsupported-blur
 environments receive solid readable cards instead.
 
+Follow-up owner correction, 12 November: keep only the header office entry
+(between Home and Panel on desktop). The single desktop operational row now
+contains fleet, workshop, announcements, notifications and KiDraht, beside a
+reserved gap outside the scrollable team strip. The transparent header and
+reachable full team remain. Comfortable team names gain one pixel and a subtle
+theme-aware shadow. Shared photo replacement controls show a 20px corner camera
+mark inside a transparent 44px touch target; existing camera/upload menus,
+private WebP storage and role checks remain unchanged.
+
 The owner extended the accepted Office Studio quality and warm artwork palette
 to steel Workzone: photorealistic industrial environments, warm limestone,
 natural steel, muted teal, copper details and restrained frosted glass. This is

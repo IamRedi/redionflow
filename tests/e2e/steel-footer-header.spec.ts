@@ -42,8 +42,9 @@ test('steel footer ends the content and the transparent header keeps one book en
             const main = document.querySelector('[data-testid="app-workspace-scroll"]')!, header = document.querySelector('[data-testid="admin-topbar"],[data-testid="workzone-topbar"]')!, strip = document.querySelector('[data-testid="flow-team-strip"]')!;
             const credit = document.querySelector('a[aria-label="by RediON"]')!, footer = credit.closest('footer')!, book = document.querySelector('[data-testid="flow-global-tools"] a[href="/workzone/kidraht"]')!;
             const f = footer.getBoundingClientRect(), b = book.getBoundingClientRect();
-            const alerts = [...document.querySelectorAll('button')].filter(el => el.getClientRects().length && /Shkruaj nje njoftim|Njofto ekipin/.test(el.getAttribute('aria-label') ?? '')).map(el => el.getBoundingClientRect());
-            return { width: innerWidth, height: innerHeight, footerInsideMain: main.contains(footer), footerVisible: f.top < innerHeight && f.bottom > 0, footerTop: f.top, footerHeight: f.height, footerBg: getComputedStyle(footer).backgroundColor, headerBg: getComputedStyle(header).backgroundColor, headerBorder: getComputedStyle(header).borderBottomWidth, headerTop: header.getBoundingClientRect().top, stripBg: getComputedStyle(strip).backgroundColor, bookVisibleText: (book as HTMLElement).innerText.trim(), bookCount: document.querySelectorAll('a[href="/workzone/kidraht"]').length, alertsBelowBook: alerts.length === 2 && alerts.every(r => r.top >= b.bottom + 3), alertsCentered: alerts.length === 2 && Math.abs((alerts[0].left + alerts[1].right) / 2 - b.x - b.width / 2) < 2, workersReachTools: strip.getBoundingClientRect().right >= b.right, outerHeight: document.documentElement.scrollHeight, horizontalOverflow: document.documentElement.scrollWidth > innerWidth };
+            const alerts = [...document.querySelectorAll('[data-testid="flow-header-alerts"] button')].filter(el => el.getClientRects().length).map(el => el.getBoundingClientRect());
+            const fleet = document.querySelector('[data-testid="fleet-dock-open"]')!.getBoundingClientRect();
+            return { width: innerWidth, height: innerHeight, footerInsideMain: main.contains(footer), footerVisible: f.top < innerHeight && f.bottom > 0, footerTop: f.top, footerHeight: f.height, footerBg: getComputedStyle(footer).backgroundColor, headerBg: getComputedStyle(header).backgroundColor, headerBorder: getComputedStyle(header).borderBottomWidth, headerTop: header.getBoundingClientRect().top, stripBg: getComputedStyle(strip).backgroundColor, bookVisibleText: (book as HTMLElement).innerText.trim(), bookCount: document.querySelectorAll('a[href="/workzone/kidraht"]').length, alertsBesideBook: alerts.length === 2 && alerts.every(r => Math.abs(r.top - b.top) < 1 && r.right <= b.left), workersClearTools: strip.getBoundingClientRect().right + 12 <= fleet.left, outerHeight: document.documentElement.scrollHeight, horizontalOverflow: document.documentElement.scrollWidth > innerWidth };
           });
           console.log('FOOTER_HEADER', JSON.stringify({ baseline, theme, view, ...state }));
           await page.screenshot({ path: info.outputPath(`${baseline ? 'before' : 'after'}-${view}-${theme}-${width}-top.png`) });
@@ -105,9 +106,8 @@ test('steel footer ends the content and the transparent header keeps one book en
               await expect(workshop).toBeFocused();
             }
             if (width >= 1024) {
-              expect(state.alertsBelowBook).toBe(true);
-              expect(state.alertsCentered).toBe(true);
-              expect(state.workersReachTools).toBe(true);
+              expect(state.alertsBesideBook).toBe(true);
+              expect(state.workersClearTools).toBe(true);
             }
             await main.press('PageDown');
             // A short landscape viewport advances less than 100px per keypress.

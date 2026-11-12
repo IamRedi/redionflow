@@ -187,8 +187,8 @@ export function WorkerIconStrip({
   const canContact = Boolean(openWorker?.phone || openWorker?.emailAccount || whatsapp);
 
   return (
-    <div ref={wrapRef} className={cn("no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1", comfortable && 'lg:scroll-pr-[112px]')}>
-      <div className={`flex min-w-max items-start gap-2 pr-5 ${comfortable ? 'lg:pr-[112px]' : ''} ${insetClassName}`}>
+    <div ref={wrapRef} className="no-scrollbar min-h-[58px] w-full min-w-0 overflow-x-auto pb-1">
+      <div className={`flex min-w-max items-start gap-2 pr-5 ${insetClassName}`}>
         {workers.map((worker) => {
           const badge = workerBadgeLabel(worker.lastName);
           const nameLabel = firstNameLabel(worker.firstName);
@@ -276,7 +276,7 @@ export function WorkerIconStrip({
                   </span>
                 ) : null}
               </button>
-              <span className="max-w-12 truncate text-center text-[9px] font-medium leading-none text-muted-foreground" title={`${worker.firstName} ${worker.lastName}`}>
+              <span data-worker-name className={cn("max-w-12 truncate text-center leading-tight", comfortable ? "text-[10px] font-semibold text-foreground [text-shadow:0_1px_2px_#fff9] dark:[text-shadow:0_1px_3px_#000c]" : "text-[9px] font-medium text-muted-foreground")} title={`${worker.firstName} ${worker.lastName}`}>
                 {nameLabel}
               </span>
             </div>

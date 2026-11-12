@@ -39,11 +39,10 @@ test('camera/upload covers replace vehicle, site and factory art with private co
     await expect(
       p.getByRole('button', { name: 'Zgjidh foto', exact: true }),
     ).toBeVisible();
-    expect(
-      (await cover
-        .getByRole('button', { name: /Ndrysho foton:/ })
-        .boundingBox())!.width,
-    ).toBeLessThanOrEqual(36);
+    const touchTarget = (await cover.locator('[data-photo-trigger]').boundingBox())!;
+    expect(Math.round(touchTarget.width)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(touchTarget.height)).toBeGreaterThanOrEqual(44);
+    expect(Math.round((await cover.locator('[data-photo-glyph]').boundingBox())!.width)).toBeLessThanOrEqual(20);
     await cover
       .locator('input[data-photo-input="upload"]')
       .setInputFiles({
@@ -124,6 +123,9 @@ test('camera/upload covers replace vehicle, site and factory art with private co
     await page.goto('/workzone');
     await uploadCover(page, 'site', site.id);
     await uploadCover(page, 'site', factory.id);
+    await page.goto(`/workzone/admin-workers/${worker.id}`);
+    await uploadCover(page, 'worker', worker.id);
+    await page.goto('/workzone');
     await page.reload();
     await expect(
       page.getByTestId(`asset-photo-site-${site.id}`).getByRole('img'),
@@ -157,7 +159,7 @@ test('camera/upload covers replace vehicle, site and factory art with private co
     }
     expect(
       await prisma.assetPhoto.count({ where: { companyProfileId: companyId } }),
-    ).toBe(3);
+    ).toBe(4);
     const anonymous = await browser.newContext({
       baseURL: info.project.use.baseURL,
     });
