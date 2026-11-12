@@ -81,7 +81,7 @@ export default async function BaustellenAdminPage() {
   const field = "h-9 w-full rounded-lg border bg-background px-2.5 text-sm outline-none focus:border-primary";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div data-studio-management className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">{tx("admin.navBaustellenGroup")}</div>

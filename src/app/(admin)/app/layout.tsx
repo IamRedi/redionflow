@@ -1,3 +1,4 @@
+import '@/components/steel/steel-studio.css';
 import { OfficeReturnBar } from '@/components/offices/OfficeReturnBar';
 import { LogOut, SunMoon, UserRound } from "lucide-react";
 import Link from "next/link";
@@ -101,7 +102,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .filter((section) => section.items.length > 0);
 
   return (
-    <div className={production ? `${workspace.shell} bg-background` : 'min-h-dvh bg-background'}>
+    <div data-steel-studio={production || undefined} data-studio-admin={production || undefined} className={production ? `${workspace.shell} bg-background` : 'min-h-dvh bg-background'}>
       <header data-testid="admin-topbar" className={production ? "relative z-10 print:hidden" : "sticky top-0 z-10 print:hidden"}>
         <FlowTopBar contained={production} />
       </header>
@@ -121,7 +122,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="contents md:flex md:flex-col md:gap-0.5">
               <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
-              <OfficeEntry lang={currentLang} compact />
+              {!production && <OfficeEntry lang={currentLang} compact />}
               {kidrahtOn && !production ? <AdminNavLink href="/workzone/kidraht" label={KIDRAHT_NAME} /> : null}
             </div>
             {visibleNavSections.map((section, index) => (

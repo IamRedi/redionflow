@@ -19,7 +19,7 @@ export default async function FuelPage({
   ]);
   const c = fleetCopy(lang);
   return (
-    <div className="min-w-0 space-y-6">
+    <div data-studio-fuel className="min-w-0 space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/workzone" className="text-sm text-muted-foreground">

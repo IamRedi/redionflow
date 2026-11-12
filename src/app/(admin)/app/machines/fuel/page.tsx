@@ -11,7 +11,7 @@ export default async function FleetFuelPage() {
   await requireAdminTenant();
   const [data, lang] = await Promise.all([readFuelLog(), resolveRequestLanguage()]);
   const c = fleetCopy(lang);
-  return <div className="min-w-0 space-y-5">
+  return <div data-studio-fuel className="min-w-0 space-y-5">
     <header>
       <Link href="/app/admin#machines" className="inline-flex min-h-11 items-center text-sm text-muted-foreground">← {c.fleet}</Link>
       <h1 className="text-2xl font-bold">{c.fuelLog}</h1>

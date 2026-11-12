@@ -361,7 +361,7 @@ export default async function AdminHrFleetPage({ searchParams }: { searchParams?
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div data-studio-management className="mx-auto max-w-7xl space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">{t("admin.operations", currentLang, mode)}</div>
