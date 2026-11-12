@@ -118,7 +118,7 @@ html.dark [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environme
   scroll-padding-top: 16px;
 }
 [data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] [data-wood-visual="empty"] {
-  background: var(--baum-glass);
+  background: transparent;
   color: hsl(var(--primary));
 }
 [data-baum-studio="forest-crystal-v1"] [data-baum-environment="wood"] [data-wood-visual="empty"] > div { color: inherit; }
@@ -135,7 +135,7 @@ html.dark [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environme
   color: hsl(var(--foreground));
 }
 [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="wood"])) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
-body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) [data-testid="wood-workspace"] [data-ui-control="button"] { gap: 6px; padding-inline: 12px; }
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) [data-testid="wood-workspace"] [data-ui-control="button"] { min-width: 44px; gap: 6px; padding-inline: 12px; }
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) [data-testid="wood-workspace"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
   background: var(--baum-glass);
   -webkit-backdrop-filter: blur(var(--baum-blur));
