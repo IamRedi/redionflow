@@ -5,11 +5,14 @@ const id = z.string().trim().min(1).max(128), note = z.string().trim().min(1).ma
 export const assetRefSchema = z.object({ kind: z.enum(['machine','inventory']), id }).strict();
 const optionalNote = z.string().trim().max(2000).optional();
 const clothingGroupSchema = z.object({name:z.string().trim().min(1).max(120),size:z.string().trim().max(80).nullable()}).strict();
+// PR183 receipts have no marker; their immutable membership remains compatible.
+export const clothingIssueReceiptSchema = z.object({batchType:z.literal('clothing-issue').optional(),handoverIds:z.array(id).min(1).max(100),quantity:z.number().int().min(1).max(100),group:clothingGroupSchema}).strict().refine(r=>r.quantity===r.handoverIds.length&&new Set(r.handoverIds).size===r.quantity);
 export const assetMutationSchema = z.object({ requestId: z.uuid(), command: z.discriminatedUnion('type', [
   z.object({ type:z.literal('report'),asset:assetRefSchema,kind:z.enum(['defect','lost','retire']),note }).strict(),
   z.object({ type:z.literal('decide-incident'),incidentId:id,revision,approve:z.boolean(),note }).strict(),
   z.object({ type:z.literal('handover'),asset:assetRefSchema,kind:z.enum(['issue','return','transfer']),toWorkerId:id.optional(),siteId:id.optional(),note:optionalNote }).strict(),
   z.object({ type:z.literal('issue-clothing-group'),group:clothingGroupSchema,toWorkerId:id,quantity:z.number().int().min(1).max(100),note:optionalNote }).strict(),
+  z.object({type:z.literal('confirm-clothing-batch'),batchId:z.uuid(),members:z.array(z.object({id,revision}).strict()).min(1).max(100).refine(rows=>new Set(rows.map(r=>r.id)).size===rows.length),note:optionalNote}).strict(),
   z.object({ type:z.enum(['confirm-handover','decline-handover','cancel-handover']),handoverId:id,revision,note:optionalNote }).strict(),
   z.object({ type:z.literal('repair-phase'),repairId:id,revision,phase:z.enum(['received','repairing','ready']),repairNote:optionalNote,tested:z.boolean().optional() }).strict(),
   z.object({ type:z.literal('repair-location'),repairId:id,revision,location:z.enum(['internal','external']),provider:z.string().trim().max(200).optional(),note }).strict(),
@@ -23,4 +26,4 @@ export const assetMutationSchema = z.object({ requestId: z.uuid(), command: z.di
   z.object({ type:z.literal('code-remove'),asset:assetRefSchema,codeId:id }).strict(),
   z.object({ type:z.literal('edit'),asset:assetRefSchema,revision,name:z.string().trim().min(1).max(120),size:z.string().trim().max(80).optional(),note:optionalNote }).strict(),
 ]) }).strict();
-export const assetQuerySchema = z.object({query:z.string().trim().max(120).optional(),scan:scanCode.optional(),page:z.number().int().min(1).max(100000).optional(),category:z.enum(['vehicle','tool','clothing','equipment']).optional(),includeInactive:z.boolean().optional(),workerId:id.optional(),groupClothing:z.boolean().optional(),clothingGroup:clothingGroupSchema.optional()}).strict().refine(q=>(!q.groupClothing&&!q.clothingGroup||q.category==='clothing')&&!(q.groupClothing&&q.clothingGroup));
+export const assetQuerySchema = z.object({query:z.string().trim().max(120).optional(),scan:scanCode.optional(),page:z.number().int().min(1).max(100000).optional(),category:z.enum(['vehicle','tool','clothing','equipment']).optional(),includeInactive:z.boolean().optional(),workerId:id.optional(),groupClothing:z.boolean().optional(),groupHandovers:z.boolean().optional(),clothingGroup:clothingGroupSchema.optional()}).strict().refine(q=>(!q.groupClothing&&!q.clothingGroup||q.category==='clothing')&&!(q.groupClothing&&q.clothingGroup));

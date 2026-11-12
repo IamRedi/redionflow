@@ -269,3 +269,30 @@ do not tighten the check or rewrite attendance to make old code appear current.
 Public presentation work remains OWNER_DEFERRED under the owner's instruction;
 no new marketing claim, media publication or readiness increase accompanies this
 candidate. Existing separate presentation follow-ups remain open.
+
+## 12 November clothing delivery confirmation candidate
+
+The recipient can confirm all remaining pieces from one original quantity
+handover in one action. The card uses the durable issue-command receipt, not a
+shared name, recipient or timestamp: separate requests stay separate. Existing
+PR183 receipts remain readable without backfilling or rewriting historical data.
+Each piece retains its own signature, revision, events and custody movement;
+custody changes only after all required parties have signed. An OFFICE recipient
+cannot supply the independent office signature on their own delivery.
+
+The authenticated recipient supplies the complete displayed pending membership
+and revisions. The server validates the company, original creator, clothing
+category and recipient, locks assets in canonical order, then rereads membership.
+A stale or changed piece rejects the whole action; any later failure rolls back
+every earlier signature and movement. Request UUID replay remains idempotent.
+Details retain individual confirmation/refusal and history. Old individual
+handovers and other asset views keep their existing behavior. The warehouse
+expands at most five complete receipts (100 pieces each) across its queue limit,
+rather than displaying a partial page as a complete delivery.
+
+No migration, import, permission change, dependency, original media or real
+inventory write is part of this candidate. Verification uses synthetic local
+fixtures only. Public presentation/README/About/portfolio assessment:
+NO_CONTENT_CHANGE within the existing clothing handover capability; no readiness
+increase or new public media. Other presentation work remains OWNER_DEFERRED.
+Merge and deployment require separate owner approval under AGENTS.md.

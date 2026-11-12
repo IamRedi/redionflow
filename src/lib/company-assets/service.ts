@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { assetActor, assetActorKey, assetFail, type AssetActor } from './access';
-import { assetMutationSchema, assetQuerySchema, assetRefSchema } from './validation';
+import { assetMutationSchema, assetQuerySchema, assetRefSchema, clothingIssueReceiptSchema } from './validation';
 import { generateAssetLabelCode, scanCodeCandidates, scanCodeKey } from '@/lib/inventory/scan-code';
 import type { AssetRef, AssetQuery, AssetSnapshot, AssetDetail, AssetSummary, AssetHandoverView, AssetRepairView, AssetIncidentView, AssetMutation, AssetOperationalStatus } from './types';
 
@@ -160,6 +160,27 @@ async function requestAssetHandover(tx:Tx,actor:AssetActor,a:OwnedAsset,c:Extrac
       await event(tx,actor,a.id,inactiveReturn?'inactive-holder-return':'handover.requested',c.note??''); await bump(tx,actor,a); await completeHandover(tx,actor,a,h,approved); return h.id;
 }
 
+/** Both entry points write the same individual signature, custody and audit events. */
+async function confirmHandover(tx:Tx,actor:AssetActor,asset:OwnedAsset,current:Prisma.CompanyAssetHandoverGetPayload<Record<string,never>>,note='') {
+  const approved=confirmations(current.confirmations),keys=confirmationKeys(actor,requiredPeople(current.required));
+  if(!keys.length)return assetFail('DENIED');
+  const additions=keys.filter(key=>!approved.some(p=>p.key===key));
+  if(!additions.length)return assetFail('INVALID_TRANSITION');
+  approved.push(...additions.map(key=>({key,name:actor.name,at:new Date().toISOString()})));
+  const completed=await completeHandover(tx,actor,asset,current,approved);
+  if(!completed){await tx.companyAssetHandover.update({where:{id:current.id},data:{confirmations:approved,revision:{increment:1}}});await bump(tx,actor,asset);}
+  await event(tx,actor,asset.id,'handover.confirmed',note);
+  return completed;
+}
+
+function validClothingBatch(rows:HandoverRow[],ids:string[],creator:string,recipient:string) {
+  return rows.length===ids.length&&rows.every(h=>ids.includes(h.id)&&h.kind==='issue'&&h.fromWorkerId===null&&h.toWorkerId===recipient&&h.createdByKey===creator&&h.asset.inventoryItem?.category==='CLOTHING'&&h.asset.machineId===null);
+}
+function needsRecipientConfirmation(h:HandoverRow,actor:AssetActor){
+  const key=assetActorKey(actor);
+  return h.status==='pending'&&h.toWorkerId===actor.workerId&&requiredPeople(h.required).some(p=>p.key===key)&&!confirmations(h.confirmations).some(p=>p.key===key);
+}
+
 export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
   const parsed=assetMutationSchema.safeParse(input); if(!parsed.success)return assetFail('INVALID_INPUT');
   const actor=await assetActor(), {requestId,command:c}=parsed.data;
@@ -214,7 +235,26 @@ export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
         if(a.category!=='clothing'||a.holderWorkerId||normalize(a.name)!==normalize(c.group.name)||normalize(a.size)!==normalize(c.group.size))return assetFail('CONFLICT');
         handoverIds.push(await requestAssetHandover(tx,actor,a,{type:'handover',asset:ref,kind:'issue',toWorkerId:c.toWorkerId,note:c.note}));
       }
-      result={handoverIds,quantity:c.quantity,group:{name:c.group.name,size:c.group.size}};
+      result={batchType:'clothing-issue',handoverIds,quantity:c.quantity,group:{name:c.group.name,size:c.group.size}};
+    } else if(c.type==='confirm-clothing-batch') {
+      if(!actor.workerId)return assetFail('DENIED');
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`clothing-batch-confirm:${actor.companyId}:${c.batchId}`}))`;
+      const original=await tx.companyAssetCommandReceipt.findUnique({where:{companyProfileId_requestId:{companyProfileId:actor.companyId,requestId:c.batchId}}});
+      const batch=clothingIssueReceiptSchema.safeParse(original?.result);
+      if(!original||!batch.success)return assetFail('NOT_FOUND');
+      const load=()=>tx.companyAssetHandover.findMany({where:{...owned(actor),id:{in:batch.data.handoverIds}},include:assetInclude,orderBy:{asset:{inventoryItemId:'asc'}}});
+      let rows=await load();
+      if(!validClothingBatch(rows,batch.data.handoverIds,original.actorKey,actor.workerId))return assetFail('DENIED');
+      // Match issue order and individual mutation locks before re-reading revisions.
+      const assets=new Map<string,OwnedAsset>();
+      for(const h of rows)assets.set(h.id,await lockOwnedAsset(tx,actor,refOf(h.asset)));
+      rows=await load();
+      if(!validClothingBatch(rows,batch.data.handoverIds,original.actorKey,actor.workerId))return assetFail('CONFLICT');
+      const pending=rows.filter(h=>needsRecipientConfirmation(h,actor));
+      if(pending.length!==c.members.length||pending.some(h=>!c.members.some(m=>m.id===h.id&&m.revision===h.revision)))return assetFail('CONFLICT');
+      let completedCount=0;
+      for(const h of pending)if(await confirmHandover(tx,actor,assets.get(h.id)!,h,c.note))completedCount++;
+      result={batchId:c.batchId,confirmedCount:pending.length,completedCount};
     } else if(c.type==='handover') {
       const a=await lockOwnedAsset(tx,actor,c.asset);result={handoverId:await requestAssetHandover(tx,actor,a,c)};
     } else if(c.type==='confirm-handover'||c.type==='decline-handover'||c.type==='cancel-handover') {
@@ -225,10 +265,7 @@ export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
       if(c.type==='cancel-handover'){if(!actor.canManage&&current.createdByKey!==assetActorKey(actor))return assetFail('DENIED');}
       else if(!keys.length)return assetFail('DENIED');
       if(c.type==='confirm-handover') {
-        const approved=confirmations(current.confirmations);const additions=keys.filter(key=>!approved.some(p=>p.key===key)); if(!additions.length)return assetFail('INVALID_TRANSITION');
-        approved.push(...additions.map(key=>({key,name:actor.name,at:new Date().toISOString()})));
-        if(!await completeHandover(tx,actor,a,current,approved)){await tx.companyAssetHandover.update({where:{id:current.id},data:{confirmations:approved,revision:{increment:1}}});await bump(tx,actor,a);}
-        await event(tx,actor,a.id,'handover.confirmed',c.note??'');
+        await confirmHandover(tx,actor,a,current,c.note);
       }else{await tx.companyAssetHandover.update({where:{id:current.id},data:{status:c.type==='decline-handover'?'declined':'cancelled',note:c.note??current.note,revision:{increment:1}}});await event(tx,actor,a.id,c.type==='decline-handover'?'handover.declined':'handover.cancelled',c.note??'');await bump(tx,actor,a);}
     } else if(c.type==='report') {
       const a=await lockOwnedAsset(tx,actor,c.asset);await assertAssetVisible(tx,actor,a);
@@ -372,6 +409,25 @@ function handoverView(h:HandoverRow,actor:AssetActor):AssetHandoverView{
 function repairView(r:RepairRow,current?:AssetSummary):AssetRepairView{return{id:r.id,asset:refOf(r.asset),name:queueName(r),code:r.asset.inventoryItem?.barcode??r.asset.inventoryItem?.itemCode??null,plate:r.asset.machine?.targe??null,photoUrl:current?.photoUrl??null,category:current?.category??(r.asset.machine?'vehicle':r.asset.inventoryItem?.category==='CLOTHING'?'clothing':r.asset.inventoryItem?.category==='WORK_TOOL'?'tool':'equipment'),phase:r.phase as AssetRepairView['phase'],location:r.location as AssetRepairView['location'],provider:r.provider,problem:r.problem,repairNote:r.repairNote,tested:r.tested,revision:r.revision,reportedBy:r.reportedByName,createdAt:r.createdAt.toISOString(),updatedAt:r.updatedAt.toISOString()};}
 function incidentView(r:IncidentRow):AssetIncidentView{return{id:r.id,asset:refOf(r.asset),name:queueName(r),kind:r.kind as AssetIncidentView['kind'],status:r.status as AssetIncidentView['status'],revision:r.revision,note:r.note,reportedBy:r.reportedByName,createdAt:r.createdAt.toISOString()};}
 
+/** Expand immutable issue receipts, never infer a delivery from names or dates. */
+async function clothingHandoverBatches(tx:Tx,actor:AssetActor,visible:HandoverRow[]) {
+ const batches:NonNullable<AssetSnapshot['handoverBatches']>=[],grouped=new Set<string>();
+ const ids=actor.workerId?visible.filter(h=>needsRecipientConfirmation(h,actor)).map(h=>h.id):[];
+ if(!ids.length)return {batches,grouped,hasMore:false};
+ const receipts=await tx.$queryRaw<{requestId:string;actorKey:string;result:Prisma.JsonValue;createdAt:Date}[]>(Prisma.sql`SELECT "requestId","actorKey",result,"createdAt" FROM "CompanyAssetCommandReceipt" WHERE "companyProfileId"=${actor.companyId} AND jsonb_exists_any(result->'handoverIds',ARRAY[${Prisma.join(ids)}]::text[]) ORDER BY "createdAt" DESC,"requestId" DESC LIMIT 6`);
+ for(const receipt of receipts.slice(0,5)){
+  const parsed=clothingIssueReceiptSchema.safeParse(receipt.result);if(!parsed.success)continue;
+  const batch=parsed.data,rows=await tx.companyAssetHandover.findMany({where:{...owned(actor),id:{in:batch.handoverIds}},include:assetInclude,orderBy:[{createdAt:'asc'},{id:'asc'}]});
+  if(!validClothingBatch(rows,batch.handoverIds,receipt.actorKey,actor.workerId!))continue;
+  const items=rows.filter(h=>needsRecipientConfirmation(h,actor)).map(h=>handoverView(h,actor));
+  // Remove every original member from the individual queue, including rows
+  // closed between reads. Never present a pagination fragment as a full batch.
+  for(const id of batch.handoverIds)grouped.add(id);
+  if(items.length)batches.push({id:receipt.requestId,...batch.group,total:batch.quantity,items,createdAt:receipt.createdAt.toISOString()});
+ }
+ return {batches,grouped,hasMore:receipts.length>5};
+}
+
 export async function readAssetSnapshot(input:AssetQuery={}):Promise<AssetSnapshot>{
  const parsed=assetQuerySchema.safeParse(input);if(!parsed.success)return assetFail('INVALID_INPUT');const q=parsed.data,actor=await assetActor(),page=q.page??1,limit=30;
  return withTenantContext(actor.companyId,async tx=>{
@@ -401,7 +457,8 @@ export async function readAssetSnapshot(input:AssetQuery={}):Promise<AssetSnapsh
   const queueRefs=[...new Map(queue.map(job=>{const ref=refOf(job.asset);return [`${ref.kind}:${ref.id}`,ref] as const;})).values()];
   const queueRows=queueRefs.length?await tx.$queryRaw<RawAsset[]>(Prisma.sql`${assetProjection(actor)} SELECT * FROM assets WHERE (${Prisma.join(queueRefs.map(ref=>Prisma.sql`(kind=${ref.kind} AND id=${ref.id})`),' OR ')}) AND ${visibleSql(actor)}`):[];
   const currentAssets=new Map(queueRows.map(row=>[`${row.kind}:${row.id}`,summary(row)]));
-  return {assets:rows.slice(0,limit).map(summary),...(groups?{clothingGroups:{groups:groups.slice(0,limit).map(({nameKey,sizeKey,...g})=>({...g,key:JSON.stringify([nameKey,sizeKey])})),total:groupTotal}}:{}),total:counts.total,page,hasMore:(groups??rows).length>limit,counts,workers:workers.map(w=>({id:w.id,name:personName(w)})),sites,handovers:handovers.slice(0,100).map(h=>handoverView(h,actor)),incidents:incidents.slice(0,100).map(incidentView),repairs:queue.map(job=>{const ref=refOf(job.asset);return repairView(job,currentAssets.get(`${ref.kind}:${ref.id}`));}),permissions:permissions(actor),serverNow:new Date().toISOString(),queueHasMore:{handovers:handovers.length>100,incidents:incidents.length>100,repairs:repairs.length>100||ready.length>20}};
+  const grouped=q.groupHandovers?await clothingHandoverBatches(tx,actor,handovers.slice(0,100)):{batches:[],grouped:new Set<string>(),hasMore:false};
+  return {assets:rows.slice(0,limit).map(summary),...(groups?{clothingGroups:{groups:groups.slice(0,limit).map(({nameKey,sizeKey,...g})=>({...g,key:JSON.stringify([nameKey,sizeKey])})),total:groupTotal}}:{}),total:counts.total,page,hasMore:(groups??rows).length>limit,counts,workers:workers.map(w=>({id:w.id,name:personName(w)})),sites,handovers:handovers.slice(0,100).filter(h=>!grouped.grouped.has(h.id)).map(h=>handoverView(h,actor)),...(q.groupHandovers?{handoverBatches:grouped.batches}:{}),incidents:incidents.slice(0,100).map(incidentView),repairs:queue.map(job=>{const ref=refOf(job.asset);return repairView(job,currentAssets.get(`${ref.kind}:${ref.id}`));}),permissions:permissions(actor),serverNow:new Date().toISOString(),queueHasMore:{handovers:handovers.length>100||grouped.hasMore,incidents:incidents.length>100,repairs:repairs.length>100||ready.length>20}};
  });
 }
 
