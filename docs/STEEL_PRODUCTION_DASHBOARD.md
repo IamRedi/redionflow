@@ -1,28 +1,6 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
 
-### Warehouse crystal and reception hours — 12 November 2026
-
-The steel warehouse and inventory-item detail cards reuse the established warm
-stone/copper crystal surfaces. Workzone and admin warehouse entry points keep
-all existing authorization and scan/registration parameters. Controls remain
-compact with 44px touch targets; narrow item headers give names/codes their own
-space. Uploaded pictures, categories, quantities, handovers, incidents, repair
-commands and access rules are unchanged. Vehicle detail styling is excluded.
-
-Office scenes no longer expose the About/info control. The existing localized
-office schedule is shown once on a physical reception-wall plaque; this is a
-presentation of the current schedule, not a change to attendance or hours.
-
-Focused acceptance: `tests/e2e/steel-warehouse-crystal.spec.ts` covers desktop,
-narrow/short sizes, both themes, text enlargement, focus return, unchanged
-inventory/handovers/grants and isolation from classic inventory. The existing
-assets/workshop regression now checks the current ready-history preview and
-measures primary-action contrast against rendered gradient/backdrop pixels,
-retaining the 4.5:1 threshold. Parallel PR181 clothing grouping remains separate;
-photo-frame selectors avoid resizing its text-only group headers.
-
-
 ## Partial parts and site priority — 12 November 2026 candidate
 
 Owner screenshots exposed two read-model bugs: factory summaries fetched only
@@ -62,6 +40,28 @@ saved check, on both home and detail. No assembly is created/released for it;
 restricted field users get no production aggregate. The grid follows active
 crews then alphabetical idle sites, and reprioritizes when the crew moves. No
 real business confirmation, account or permission was written during diagnosis.
+
+
+## Warehouse crystal and reception hours — 12 November 2026
+
+The steel warehouse and inventory-item detail cards reuse the established warm
+stone/copper crystal surfaces. Workzone and admin warehouse entry points keep
+all existing authorization and scan/registration parameters. Controls remain
+compact with 44px touch targets; narrow item headers give names/codes their own
+space. Uploaded pictures, categories, quantities, handovers, incidents, repair
+commands and access rules are unchanged. Vehicle detail styling is excluded.
+
+Office scenes no longer expose the About/info control. The existing localized
+office schedule is shown once on a physical reception-wall plaque; this is a
+presentation of the current schedule, not a change to attendance or hours.
+
+Focused acceptance: `tests/e2e/steel-warehouse-crystal.spec.ts` covers desktop,
+narrow/short sizes, both themes, text enlargement, focus return, unchanged
+inventory/handovers/grants and isolation from classic inventory. The existing
+assets/workshop regression now checks the current ready-history preview and
+measures primary-action contrast against rendered gradient/backdrop pixels,
+retaining the 4.5:1 threshold. Parallel PR181 clothing grouping remains separate;
+photo-frame selectors avoid resizing its text-only group headers.
 
 ## Catalog containment and office attendance — 12 November 2026
 
