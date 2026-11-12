@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { ToolExecutionOptions } from 'ai';
 import type { RequesterContext } from './requester';
-vi.mock('@/lib/assistant/workforce-status',async original=>({...await original<typeof import('./workforce-status')>(),adminGetWorkforceStatus:async(...args:unknown[])=>{state.toolCalls.push({name:'adminGetWorkforceStatus',args});return {ok:true,data:{items:[],totalMatching:0,complete:true}};}}));
+vi.mock('@/lib/assistant/workforce-status',async original=>({...await original<typeof import('./workforce-status')>(),adminGetWorkforceStatus:async(...args:unknown[])=>{state.toolCalls.push({name:'adminGetWorkforceStatus',args});return state.workforceResult??{ok:true,data:{items:[],totalMatching:0,complete:true}};}}));
 
 type CapturedGeneration = {
   system: string;
@@ -29,7 +29,8 @@ const state = vi.hoisted(() => ({
   replayed: false, archiveUnavailable: false,
   summaryResult: null as unknown,
   sourceCall: null as { input: Record<string, unknown> } | null,
-  assetSourceCall: null as { toolName: 'adminSearchCompanyAssets' | 'adminGetCompanyWorkshop'; input: Record<string, unknown> } | null,
+  workforceResult: null as unknown,
+  assetSourceCall: null as { toolName: 'adminSearchCompanyAssets' | 'adminGetCompanyWorkshop' | 'adminGetWorkforceStatus'; input: Record<string, unknown> } | null,
   assetResult: null as unknown,
   documentResult: null as unknown,
   documentReceipts: vi.fn(),
@@ -135,7 +136,7 @@ beforeEach(() => {
   state.responseText = 'Synthetic grounded answer'; state.finishReason = 'stop';
   state.replayed = false; state.archiveUnavailable = false;
   state.summaryResult = null; state.sourceCall = null;
-  state.assetResult = null; state.assetSourceCall = null;
+  state.assetResult = null; state.assetSourceCall = null; state.workforceResult = null;
   state.documentResult = null;
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
@@ -414,4 +415,16 @@ it('does not turn a failed factory source into a guessed total or zero confirmat
   const answer = await (await POST(request('Sa materiale ka bërë fabrika dje?'))).text();
   expect(answer).toContain('Nuk kam konfirmime të plota'); expect(answer).not.toContain('0 kg');
   expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer, diagnostics: expect.objectContaining({ canonicalProduction: { applied: true, unavailable: true } }) }));
+});
+
+
+it('replaces invented attendance names before emitting and archiving, and discards model-invented filters',async()=>{
+ state.workforceResult={ok:true,data:{filters:{state:'activity',limit:30},summary:{activeWorkers:3,working:3,officeWorking:1,officePaused:0,siteWorking:1,sitePaused:0,factoryWorking:0,factoryPaused:0,unknownLocationWorking:1,unknownLocationPaused:0,needsReview:0},items:[{workerId:'a',name:'Office Person',status:'working',location:{kind:'office'}},{workerId:'b',name:'Site Person',status:'working',location:{kind:'site'}},{workerId:'c',name:'Unknown Person',status:'working',location:{kind:'unknown'}}],totalMatching:3,returned:3,complete:true}};
+ state.assetSourceCall={toolName:'adminGetWorkforceStatus',input:{state:'office',query:'Invented Person',limit:1}};
+ state.responseText='In the office: Invented Person and Unknown Person.';
+ const answer=await (await POST(request('Kush po punon në zyrë dhe kush në kantier tani? Përgjigju shkurt sipas regjistrimeve.'))).text();
+ expect(answer).toContain('Në zyrë: 1 — Office Person.');expect(answer).toContain('Në kantier: 1 — Site Person.');expect(answer).toContain('1 punonjës kanë punë aktive pa vend të konfirmuar.');
+ expect(answer).not.toContain('Invented');expect(answer).not.toContain('Unknown Person');
+ expect(state.toolCalls.at(-1)?.args[1]).toEqual({state:'activity',limit:30});
+ expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({answer,status:'completed',diagnostics:expect.objectContaining({canonicalWorkforce:{applied:true,unavailable:false}})}));
 });

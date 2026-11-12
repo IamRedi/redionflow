@@ -24,6 +24,7 @@ import { assistantResponseStream } from '@/lib/assistant/response-stream';
 import { createLegacyWeightQualifier } from '@/lib/assistant/weight-qualifier';
 import { createCanonicalProductionAnswer, resolveCanonicalProductionIntent } from '@/lib/assistant/production-answer';
 import { createCanonicalAssetAnswer, resolveCanonicalAssetIntent } from '@/lib/assistant/asset-answer';
+import { createCanonicalWorkforceAnswer, resolveCanonicalWorkforceIntent } from '@/lib/assistant/workforce-answer';
 import type { RequesterContext } from '@/lib/assistant/requester';
 import { logger } from '@/lib/observability/logger';
 
@@ -118,14 +119,16 @@ export async function POST(req: Request) {
     const metaQuestion = assistantMetaQuestion(question);
     const productionIntent = steel && !metaQuestion ? resolveCanonicalProductionIntent(parsed.data.messages) : null;
     const assetIntent = steel && !metaQuestion && !productionIntent ? resolveCanonicalAssetIntent(question) : null;
+    const workforceIntent = steel && !metaQuestion && !productionIntent && !assetIntent ? resolveCanonicalWorkforceIntent(question) : null;
     const documents = createDocumentResolution();
-    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel, assetIntent), ...(steel ? steelAssistantTools(requester, turn, documents) : {}), ...platformAssistantTools(requester, { guide: steel }) };
+    const registry = { ...legacyAssistantTools(requester, turn, steel), ...companyAssistantTools(requester, steel, assetIntent, workforceIntent), ...(steel ? steelAssistantTools(requester, turn, documents) : {}), ...platformAssistantTools(requester, { guide: steel }) };
     if (!metaQuestion) delete registry.getAssistantCapabilities;
     else for (const name of Object.keys(registry)) if (name !== 'getAssistantCapabilities') delete registry[name];
     const diagnostics = createAssistantRunDiagnostics();
     const weightQualifier = createLegacyWeightQualifier(turn);
     const productionAnswer = createCanonicalProductionAnswer({ intent: productionIntent, turn, language });
     const assetAnswer = createCanonicalAssetAnswer({ intent: assetIntent, language });
+    const workforceAnswer = createCanonicalWorkforceAnswer({ intent: workforceIntent, language });
     const runId = history.runId;
     const tools = groundedTools(registry, turn.timeZone, () => new Date(), async event => {
       const stored = await appendTrace(requester, { ...event, runId, evidence: { ...event.evidence, ...(event.failure ? { failure: event.failure } : {}) } });
@@ -134,6 +137,7 @@ export async function POST(req: Request) {
       weightQualifier.observe(event);
       productionAnswer.observe(event);
       assetAnswer.observe(event);
+      workforceAnswer.observe(event);
     });
     const disconnect = new AbortController();
     const generationRequest = new Request(req.url, { signal: AbortSignal.any([req.signal, disconnect.signal]) });
@@ -150,14 +154,14 @@ export async function POST(req: Request) {
     });
     return assistantResponseStream(result.fullStream, {
       diagnostics, headers: headers(), fallback: code => failureMessage(language, code), storageFailure: storageMessage(language),
-      transformAnswer: text => weightQualifier.transformAnswer(assetAnswer.transformAnswer(productionAnswer.transformAnswer(text))),
+      transformAnswer: text => weightQualifier.transformAnswer(workforceAnswer.transformAnswer(assetAnswer.transformAnswer(productionAnswer.transformAnswer(text)))),
       onCancel: () => disconnect.abort(),
       onToolError: async event => {
         if (!await appendTrace(requester, { runId, toolCallId: event.toolCallId, toolName: event.toolName, input: event.input, result: { ok: false, diagnostic: event.failure }, status: 'error' })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
       },
       onCheckpoint: async answer => { if (!await checkpointRun(requester, { runId, answer })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE'); },
       onComplete: async final => {
-        if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: { ...final.diagnostics, weightQualification: weightQualifier.snapshot(), canonicalProduction: productionAnswer.snapshot(), canonicalAsset: assetAnswer.snapshot() }, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
+        if (!await finishRun(requester, { runId, answer: final.answer, status: final.status, model: 'gpt-4o-mini', finishReason: final.diagnostics.finishReason ?? 'unknown', errorCode: final.diagnostics.failure?.code.toUpperCase(), diagnostics: { ...final.diagnostics, weightQualification: weightQualifier.snapshot(), canonicalProduction: productionAnswer.snapshot(), canonicalAsset: assetAnswer.snapshot(), canonicalWorkforce: workforceAnswer.snapshot() }, usage })) throw new AssistantHistoryError(503, 'HISTORY_UNAVAILABLE');
         const fault = final.diagnostics.failure ?? (final.diagnostics.lastToolFailure?.code === 'db' ? final.diagnostics.lastToolFailure : undefined);
         void reportAssistantFailure(requester, fault ?? undefined).catch(() => {});
         logger.info({ event: 'assistant.run', runId, status: final.status, failure: final.diagnostics.failure, lastToolFailure: final.diagnostics.lastToolFailure, steps: final.diagnostics.steps, providerCalls: final.diagnostics.providerCalls, failedToolResults: final.diagnostics.failedToolResults }, 'Assistant request completed');

@@ -10,6 +10,7 @@ import { applyCanonicalAssetFilters, type CanonicalAssetIntent } from './asset-a
 import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts, phaseDocumentListInput, phaseDocumentReceiptInput } from './document-tools';
 import type { createDocumentResolution } from './document-resolution';
 import { adminGetWorkforceStatus, workforceStatusInput } from './workforce-status';
+import type { WorkforceIntent } from './workforce-answer';
 
 // An empty search string means "no filter" (models sometimes send query: "").
 const text = z.string().trim().max(180);
@@ -33,7 +34,7 @@ function productionPeriod(turn: Turn, input: { date?: string; month?: string }) 
   return { date: chosenDate, month: chosenDate ? chosenDate.slice(0, 7) : input.month ?? (turn.currentMonthRequested ? turn.currentMonth : undefined) };
 }
 
-export function companyAssistantTools(requester: RequesterContext, steel = false, assetIntent: CanonicalAssetIntent | null = null): ToolSet {
+export function companyAssistantTools(requester: RequesterContext, steel = false, assetIntent: CanonicalAssetIntent | null = null, workforceIntent: WorkforceIntent | null = null): ToolSet {
   return {
     getAssistantCapabilities: {
       description: 'Static capabilities and limitations only, for greetings or questions about this assistant. Reads no workers, fleet, receipts or other business records. It provides no operational facts or statistics.',
@@ -48,7 +49,7 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
     ...(steel ? {adminGetWorkforceStatus: {
       description: 'Current office/site/factory clocks, pauses and ends today. Exact counts, paginated names, unknown/conflicts. End records do not identify who clicked stop; system closures are distinct. Not physical/GPS proof or history.',
       inputSchema: workforceStatusInput,
-      execute: input => adminGetWorkforceStatus(requester, input),
+      execute: input => adminGetWorkforceStatus(requester, workforceIntent?{state:workforceIntent.state,limit:30}:input),
     }} : {}),
     adminSearchCompanyFleet: {
       description: 'Search vehicles by ID/name/nickname/plate, equipment and last STORED GPS. In steel companies active/baseRecordActive is only the register flag, never usability: current operationalAvailability/usable includes confirmed custody, pending handovers, reports and workshop blocks. Null or incomplete operational coverage is unknown; never fall back to active=true. Current asset status is separate from historical plan dates. Never refreshes GPS; ambiguous names remain candidates.',
