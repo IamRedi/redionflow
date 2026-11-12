@@ -4,7 +4,7 @@ import { steelWorkPhoto } from '@/lib/steel-work/photo-style';
 
 /** Synthetic decoration, not a record of this company's work or premises. */
 export function SteelWorkPhoto({ definition, fallback, className = 'h-full w-full' }: {
-  definition?: { key?: string | null; label?: string | null; linkedProcessKey?: string | null; kind?: string } | null;
+  definition?: { key?: string | null; label?: string | null; description?: string | null; linkedProcessKey?: string | null; kind?: string } | null;
   fallback?: string; className?: string;
 }) {
   const photo = steelWorkPhoto(definition ?? {}, fallback);

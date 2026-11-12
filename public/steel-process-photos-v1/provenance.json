@@ -1,0 +1,142 @@
+{
+  "created": "2026-11-12",
+  "style": "alsteel-industrial-photo-v2",
+  "origin": "Built-in image generation, exact model identity not exposed. Fictional illustrative industrial photographs, not actual AL Steel work/premises, measured CAD, operational evidence or safety instructions. No private company images or records sent. Original generated PNGs retained locally.",
+  "files": [
+    {
+      "file": "foundation.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Fresh concrete foundation pad with edge formwork, a gloved hand using a small concrete trowel finishing the upper concrete surface. CONCRETE FOUNDATION ONLY, no steel columns, beams, anchor rods or protruding bolts. Close-up of the foundation work.",
+      "sourceSha256": "2b9b35479e045d96f2c02314f17adf0a1d90acc65422d6c488d1cbc33e1552e1",
+      "sha256": "9c19b5fea98875400377c44535b10cc496e1e91216e84b6e9c0f4b916e920462",
+      "bytes": 140814,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "foundation-anchors.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. A concrete foundation footing with a cluster of upright threaded steel anchor rods, nuts and a positioning template. Gloved hands adjusting a nut with a wrench on the template. Concrete footing and threaded anchor bolts BOTH clearly visible. No steel column erected yet, no building panorama or crane.",
+      "sourceSha256": "1eb2c56ea29f7409d06d884fec0310a43b51e59bc53f2099b071aca73ea0fe21",
+      "sha256": "c29b1c519d3126674e9d09d87a8a62b1912ebe0bdeb2d96d6dcc0b3d3a585b1c",
+      "bytes": 124656,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "columns.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Erecting a vertical steel H-section column onto its base plate and concrete footing. The column is suspended from a realistic sling attached above, the base is aligned over anchor bolts; gloved hands guide the base plate. Three-quarter view with enough column height to clearly identify column erection, connection at the center. No generic completed frame dominating.",
+      "sourceSha256": "6b720b29279a73486d987a4b7315a353a0c2db2018592d13009cc0fa3ac59dcb",
+      "sha256": "37efa8c65dbb378aa44d8a80a31d333b6d45bc57be965ce95d5fc98fa1046c7b",
+      "bytes": 101694,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "trusses.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Installing a triangular LATTICE STEEL ROOF TRUSS with clear diagonal web members, raised with two balanced crane slings toward its column-top bolted seat. Frame a recognizable complete triangular truss and the seat connection as the main subject. This is a roof truss installation, not a flat assembly table or generic solid beam.",
+      "sourceSha256": "94a3698f0aae0c20bc95b4326fd8893ecf8c5c098c0100b1e5a22001dd388a50",
+      "sha256": "11c3d25f9f4f8a0cdca83384433e5d3bb9b7d046cabf72ceb4e214b355b250fa",
+      "bytes": 99884,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "roof-panels.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Installation of profiled metal insulated sandwich ROOF panels over steel roof purlins. View from just above roof level: a gloved hand uses an orange cordless screw gun to fasten one corrugated roof panel at its overlap to the steel support. Show the panel seam, roof slope and supporting purlin, not a vertical wall.",
+      "sourceSha256": "8bdeb3420a095dffcc95bc187a053ce539131e55252531e691098affaf3a1eab",
+      "sha256": "466f1024de0f9e75ba5a773b8202f159e68df760393f25e5b82b9f3675805e07",
+      "bytes": 88316,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "wall-panels.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Installation of VERTICAL metal insulated sandwich wall cladding panels against the steel frame of an industrial hall. A gloved hand uses a cordless screw gun at a visible wall panel-to-steel-rail fixing. Three-quarter side view, vertical panel seams, sheet-metal surfaces and supporting wall rail. Not roofing or bare building frame.",
+      "sourceSha256": "1c4f676efb6e6325b349580530749e840c6fe18982e908206bbe1351117ea66a",
+      "sha256": "1bcbefb9828220fd2b5258e9dcdd47019e9eb74d309897d99d4b89b1e9359a86",
+      "bytes": 78458,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "roof-trim.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Installation of thin folded metal flashing along a roof/facade edge: an L- or Z-section sheet-metal trim wraps the corner, with its fold and two faces visible. Orange cordless driver in a gloved hand fastens a screw through the trim into its steel support. Tight view of the edge joint. Not timber, wooden boards, gutter or generic beam erection.",
+      "sourceSha256": "4490fd73c309cc21b61f85da5dbef7aac9d415c47dcc11dff4cf6fd92215ee26",
+      "sha256": "efc15b4bf46a0a0ed360948a9c5f7d3aa588eb0106cfa01785836d4e8ff07a5c",
+      "bytes": 100432,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "stairs.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Installing a fabricated steel staircase flight next to a low industrial mezzanine. A gloved hand tightens a bolt connecting the steel stair stringer to its landing bracket, multiple metal treads and both diagonal stringers clearly visible. Close three-quarter side view emphasizes recognizable steel stairs and the fixing action. Not a ladder or generic frame.",
+      "sourceSha256": "723d3f1b14b34f9e225ab1259e473751dcb5665763d904be6f10e27e5f565eb2",
+      "sha256": "c86e15e7977c916c59edec3a8663003fc5814705683eaeee9db74b888d0b0275",
+      "bytes": 110730,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "stud-welding.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. A STUD WELDING gun in a gloved hand positioned vertically on the TOP FLANGE of a steel I-beam, fixing short headed steel shear connector studs one by one. A neat row of several already attached headed studs is visible behind the gun, with a small ceramic ferrule at the active contact. Clearly identifiable headed studs, beam flange and stud-welding gun. No bolts being drilled into concrete, ordinary screw gun or generic arc welding of a joint.",
+      "sourceSha256": "b2b86a2c64f683d1d5aad1dbfb9f2e4d931cdba6f84ec2924033af436ce2a9bc",
+      "sha256": "96585b0b1e30b09cd61ab4d814ddb528b2ee41491057d1af412f0d1764868469",
+      "bytes": 84364,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "panel-screws.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Completing the fasteners of a profiled metal sandwich wall panel: a gloved hand uses an orange cordless screw gun to tighten a self-drilling metal roofing/cladding screw with a sealing washer through the profiled panel to its underlying steel rail. Close view of the actual screw, washer and panel surface. Not a large structural hex bolt or a purlin connection.",
+      "sourceSha256": "90be5d8725e1d212120337b22f8e5e45b9d670d2ba8248d2cefb0c44b2b3f3a1",
+      "sha256": "2841998353c82ea08f483e3384b3e15ab8948109555ba790a619691d99542893",
+      "bytes": 64098,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "cutting.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. A real industrial HORIZONTAL BAND SAW making a cross-cut through a structural steel I-beam clamped on a roller support. The thin toothed band-saw blade is visible cutting across the beam with a narrow cut kerf and modest coolant. Saw guide, blade and beam section are the main subjects. No vertical drill, drill bit, grinder or welding torch.",
+      "sourceSha256": "96ce9801ca9d3dddca560bf69418bf9d2b22b1b5e616c2dbe1cbc0b3d557449c",
+      "sha256": "e91359640da091f6397ab0568ba769b2874a1639e5d095960119e767af09dad5",
+      "bytes": 118890,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "drilling.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. A real magnetic-base industrial drill with a visible rotating annular cutter making a circular hole through a thick steel connection plate. The cutting bit, precise new hole and metal chips are central, with the magnetic drill base firmly on the plate. Factory close-up. Not a bandsaw, grinder, bolting wrench or generic factory hall.",
+      "sourceSha256": "4b9b5f1c9546b7f8054cb93b06c48b4215824b680a859b6510f190d8d7fc20fa",
+      "sha256": "274e5ab206d4488db59fc55b16ad90850246a05714aa342480dd7d33dc6eacff",
+      "bytes": 115346,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "bolting.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Tightening a large structural hex bolt and nut in a STEEL BEAM END-PLATE TO COLUMN connection using an impact wrench in gloved hands. Distinct beam flange, column, end plate and row of large structural bolts are clearly visible. Center the socket actually seated on one nut. Not a drill making a hole or a welding torch.",
+      "sourceSha256": "b4277c2dffd679df490192230a184e0ed62da46a0740b3556598a67c3c75ddba",
+      "sha256": "a238a0406598902d3394b02d320da7ad80750020df99d65bcc8b718756b66111",
+      "bytes": 85228,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "staging.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Fabricated steel beams and small steel connection parts neatly grouped, secured with transport straps and resting on timber dunnage in a factory dispatch staging area, READY FOR LOADING. The prepared steel bundles are the entire main subject; workshop loading bay softly behind. No active crane, truck loading, welding or unfinished assembly. No shipping labels or text.",
+      "sourceSha256": "8a592761e2470c036e029b40073e772c35a34fe17ad32794e42a45f929c0ec71",
+      "sha256": "0493870efdb0ecd22f9cc51170a19689c70d066738f0b519c99c3cb1c6bd48cd",
+      "bytes": 120734,
+      "width": 960,
+      "height": 720
+    },
+    {
+      "file": "receiving.webp",
+      "prompt": "Create ONE landscape 4:3 industrial photograph used to identify this specific steel-construction work operation in a small app card. Photorealistic premium European industrial editorial photography, realistic camera optics and physical scale, warm natural daylight, slate-grey brushed steel, galvanized zinc, warm limestone/concrete, walnut-brown shadows, restrained copper/orange tools and muted deep teal. Workpiece and actual action clearly identifiable at the center with 8% safe margin. Full-bleed real photographic environment, not a generic building panorama. Fictional illustrative scene, not actual AL Steel premises, engineering measurements or a safety instruction. No text, numbers, logos, signage, branding, watermark, diagrams, collage or UI. NO cartoon, drawing, miniature, isometric illustration, CGI or glossy 3D rendering. No identifiable people or faces; only gloved hands as needed. Receiving delivered fabricated steel members at a construction site: a crane with proper balanced slings lowers a bundle of galvanized steel sections from an unbranded flatbed truck onto timber dunnage in a designated receiving area. Open site daylight and concrete ground, no factory roof, no outgoing production operation. The arriving bundle, flatbed and receiving stack are central.",
+      "sourceSha256": "b11e895d3eb7b6d36cb0e8ecb16ee11e3012af3c8d7d6ba34be967841529c77f",
+      "sha256": "97ef0b2570b32ffafe617df3bb7a2cabf38ecb3ed22fc8a4a5d22a5d8399a4f3",
+      "bytes": 150046,
+      "width": 960,
+      "height": 720
+    }
+  ]
+}
