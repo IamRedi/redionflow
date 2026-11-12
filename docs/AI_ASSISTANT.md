@@ -48,6 +48,20 @@ the application's non-null optional schema. See the official
 
 ## AL Steel production
 
+Current workforce questions use `adminGetWorkforceStatus`: one fresh,
+repeatable-read tenant snapshot after revalidating the active administrator.
+It distinguishes explicit OFFICE, recorded construction sites, STEEL_WORKSHOP
+factories, unknown locations, pauses, valid stops during the current company
+day, no current session and conflicting records. Job titles, office access,
+logins, plans and GPS never establish attendance. Duplicate/future/inconsistent
+clocks and availability conflicts require review rather than a guessed state.
+No current clock is not evidence of a stop today, absence or logout. Counts
+cover the stated worker scope; names paginate and never silently clip into a
+complete list. Historical requests still use their dated report tools. The
+legacy live-workforce tool is omitted in steel mode; the classic registry is unchanged. Only admin
+tools gain this data; Worker Helper and private office assistants remain separate.
+Existing model, quotas and private question/tool/answer archive are unchanged.
+
 Steel mode removes legacy tree/dashboard/calculation tools from its registry.
 Those tools retain their own non-steel audience.
 

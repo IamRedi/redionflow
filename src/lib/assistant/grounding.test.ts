@@ -5,6 +5,13 @@ import { assistantInitialTool, assistantMetaQuestion, groundedStep, groundedTool
 
 const options: ToolExecutionOptions = { toolCallId:'synthetic', messages:[] };
 const clock = () => new Date('2026-11-05T10:00:00Z');
+it.each(['Kush po punon në zyrë?','Kush po punon në kantier?','Kush e ka ndaluar punën sot?','Who is working in the office?'])('routes current attendance to recorded workforce evidence: %s',question=>{
+ expect(assistantInitialTool(question,true)).toBe('adminGetWorkforceStatus');
+});
+it('keeps historical attendance and project start questions separate',()=>{
+ expect(assistantInitialTool('Kush po punonte dje në zyrë?',true)).not.toBe('adminGetWorkforceStatus');
+ expect(assistantInitialTool('Sa kantiere kanë filluar punë?',true)).toBe('adminGetStartedSteelProjects');
+});
 function guarded(execute: (input: unknown) => Promise<unknown>) {
   return groundedTools({ read: { inputSchema:z.object({}), execute: (input: unknown, _options: ToolExecutionOptions) => execute(input) } }, 'Europe/Tirane', clock).read.execute!;
 }

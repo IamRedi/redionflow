@@ -131,11 +131,11 @@ export function legacyAssistantTools(requester: RequesterContext, turn: ReturnTy
         inputSchema: z.object({}),
         execute: async () => getCompanyBaustellenDirectory(requester),
       },
-      adminGetLiveWorkforce: {
+      ...(!steel ? {adminGetLiveWorkforce: {
         description: "Admin only: all workers currently clocked in live, site, and since when.",
         inputSchema: z.object({}),
         execute: async () => adminGetLiveWorkforce(requester),
-      },
+      }} : {}),
       adminGetDashboardSnapshot: {
         description:
           "Admin only: read-only snapshot of the real admin dashboard with KPI statistics, site progress, weekly hours per site, and worker rankings. Prefer this for dashboard/KPI questions and never invent numbers.",
