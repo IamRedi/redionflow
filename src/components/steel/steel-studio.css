@@ -421,3 +421,53 @@ body:has([data-steel-studio]) :is([data-studio-admin],[data-testid=fleet-picker]
  body:has([data-studio-admin]) [data-studio-audit] td:before {content:attr(data-label);display:block;margin-bottom:5px;font-size:10px;font-weight:600;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:hsl(var(--muted-foreground));}
  body:has([data-studio-admin]) [data-studio-audit] pre {max-width:none;margin:0;padding:8px;border-radius:10px;background:hsl(var(--card)/.45);}
 }
+
+/* Workshop refinement: clear ice panes, open empty bays. Other steel surfaces
+   keep their accepted materials. Counts, filters and service commands are intact. */
+body:has([data-steel-studio]) [data-testid=workshop-workspace] {
+ --workshop-ice:linear-gradient(130deg,#f3fffd80,#edffff73);
+ --workshop-ice-edge:#efffffbd;--workshop-ice-ink:#0d2926;
+ --workshop-ice-shadow:0 4px 14px #102c2821,inset 0 1px 0 #fff9,inset 0 -1px 0 #bce3dc45;
+ --workshop-ice-light:brightness(1.5);--workshop-ice-text:0 1px 1px #ffffff8c;
+}
+html.dark body:has([data-steel-studio]) [data-testid=workshop-workspace] {
+ --workshop-ice:linear-gradient(130deg,#071c206b,#092a285c);
+ --workshop-ice-edge:#dafff36b;--workshop-ice-ink:#effff9;
+ --workshop-ice-shadow:0 4px 14px #001b1b33,inset 0 1px 0 #dbfff83d,inset 0 -1px 0 #041b1b66;
+ --workshop-ice-light:brightness(.6);--workshop-ice-text:0 1px 2px #001b1bd9;
+}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-studio-workshop-phase][class~="border"][class~="bg-card"] {background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-studio-workshop-phase]>h2 {margin:0;padding:8px 10px;border:1px solid var(--workshop-ice-edge);border-radius:12px;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] :is([data-studio-workshop-phase]>h2,[data-testid=workshop-history-heading]>h2,header h1,.steelStudioAssetButton,[data-testid=workshop-repair-card]) {
+ background:var(--workshop-ice);border-color:var(--workshop-ice-edge);box-shadow:var(--workshop-ice-shadow);color:var(--workshop-ice-ink);text-shadow:var(--workshop-ice-text);backdrop-filter:blur(2px) var(--workshop-ice-light);-webkit-backdrop-filter:blur(2px) var(--workshop-ice-light);
+}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-studio-workshop-phase]>h2 .text-muted-foreground,body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-repair-card] .text-muted-foreground {color:var(--workshop-ice-ink);}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-history-preview] {padding:0;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-history-heading] {margin-bottom:8px;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-history-heading]>h2 {min-height:44px;padding:8px 10px;border:1px solid var(--workshop-ice-edge);border-radius:12px;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-history-preview][data-workshop-empty=true] [data-testid=workshop-history-heading] {margin-bottom:0;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-presence][class] {padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] input:not([type=checkbox]):not([type=radio]) {background:var(--workshop-ice);border-color:var(--workshop-ice-edge);color:var(--workshop-ice-ink);text-shadow:var(--workshop-ice-text);backdrop-filter:blur(2px) var(--workshop-ice-light);-webkit-backdrop-filter:blur(2px) var(--workshop-ice-light);}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] input::placeholder {color:var(--workshop-ice-ink);opacity:1;}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-studio-workshop-phase]>button {margin:8px 0 0;}
+@media(max-width:1023.98px) {
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-active-bays] [data-workshop-empty=true] {display:none;}
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-active-bays] h2 {display:none;}
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-testid=workshop-active-bays]>section>div {padding-top:0;}
+}
+@media(prefers-reduced-transparency:reduce) {
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] {--workshop-ice:hsl(var(--card));--workshop-ice-ink:hsl(var(--foreground));--workshop-ice-text:none;}
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] :is([data-studio-workshop-phase]>h2,[data-testid=workshop-history-heading]>h2,header h1,.steelStudioAssetButton,[data-testid=workshop-repair-card],input) {backdrop-filter:none;-webkit-backdrop-filter:none;}
+}
+@media(forced-colors:active) {
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] {--workshop-ice:Canvas;--workshop-ice-ink:CanvasText;--workshop-ice-edge:CanvasText;--workshop-ice-shadow:none;--workshop-ice-text:none;}
+}
+body:has([data-steel-studio]) [data-testid=workshop-workspace] .steelStudioAssetButton[aria-pressed=true] {border-color:var(--steel-copper);box-shadow:var(--workshop-ice-shadow),inset 0 0 0 1px var(--steel-copper);}
+body:has([data-steel-studio]) [data-testid=workshop-active-bays] {align-items:start;}
+body:has([data-steel-studio]) [data-testid=workshop-active-bays] [data-workshop-empty=true]>div {display:none;}
+body:has([data-steel-studio]) [data-testid=workshop-active-bays]>section>div {padding:8px 0 0;}
+body:has([data-steel-studio]) [data-testid=workshop-history-preview][data-workshop-empty=true] :is([data-testid=workshop-history-grid],[data-testid=workshop-history-heading]>button) {display:none;}
+body:has([data-steel-studio]) [data-workshop-search-empty] {display:block;}
+@media(max-width:1023.98px){body:has([data-steel-studio]) [data-testid=workshop-active-bays]>section>div {padding-top:0;}}
+body:has([data-steel-studio]) [data-testid=workshop-workspace]>div>nav .steelStudioAssetButton>span:first-child {white-space:normal;text-overflow:clip;overflow:visible;line-height:1.2;text-align:left;}
+@media(prefers-reduced-transparency:reduce),(forced-colors:active){body:has([data-steel-studio]) [data-testid=workshop-workspace] input:not([type=checkbox]):not([type=radio]) {backdrop-filter:none;-webkit-backdrop-filter:none;}}
