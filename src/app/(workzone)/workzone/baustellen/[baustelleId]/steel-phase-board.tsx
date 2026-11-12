@@ -102,7 +102,7 @@ export function SteelPhaseBoard({
   const { currentLang } = useLanguage();
   const router = useRouter();
   const [items, setItems] = useState(phases);
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +126,9 @@ export function SteelPhaseBoard({
   const [group, setGroup] = useState<SteelPhaseGroup | null>(null);
   const groupOf = (item: SteelPhaseView) => item.group ?? "assembly";
   const visible = group ? items.filter((item) => groupOf(item) === group) : [];
-  const open = openIndex === null ? null : visible[openIndex] ?? null;
+  // A server refresh may reorder the phases. Keep the selected process itself.
+  const openIndex = visible.findIndex((item) => item.id === openId);
+  const open = openIndex < 0 ? null : visible[openIndex];
   const doneCount = visible.filter((item) => item.status === "done").length;
   const pct = visible.length > 0 ? Math.round(visible.reduce((sum, item) => sum + phasePercent(item), 0) / visible.length) : 0;
   const groupStats = (key: SteelPhaseGroup) => {
@@ -137,7 +139,7 @@ export function SteelPhaseBoard({
   const GROUP_ART: Record<SteelPhaseGroup, string> = { concrete: "foundation", production: "welding", assembly: "columns" };
 
   useEffect(() => {
-    if (openIndex === null) return;
+    if (openIndex < 0) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(event: KeyboardEvent) {
@@ -152,10 +154,10 @@ export function SteelPhaseBoard({
       window.removeEventListener("keydown", onKey);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openIndex, editor]);
+  }, [openId, openIndex, editor]);
 
   function closeSheet() {
-    setOpenIndex(null);
+    setOpenId(null);
     setEditor(null);
     setError(null);
   }
@@ -163,7 +165,10 @@ export function SteelPhaseBoard({
   function move(step: number) {
     setEditor(null);
     setError(null);
-    setOpenIndex((index) => (index === null || visible.length === 0 ? index : (index + step + visible.length) % visible.length));
+    setOpenId((id) => {
+      const index = visible.findIndex((item) => item.id === id);
+      return index < 0 || visible.length === 0 ? null : visible[(index + step + visible.length) % visible.length].id;
+    });
   }
 
   function openEditor(kind: Exclude<Editor, null>) {
@@ -201,7 +206,7 @@ export function SteelPhaseBoard({
   const chips = t("steel.materialChips", currentLang).split(",").map((chip) => chip.trim()).filter(Boolean);
 
   return (
-    <div className="space-y-4">
+    <div data-studio-phase-board className="space-y-4">
       {group === null ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -212,9 +217,9 @@ export function SteelPhaseBoard({
             {STEEL_PHASE_GROUPS.map((key) => {
               const stats = groupStats(key);
               return (
-                <button key={key} type="button" data-testid={`phase-group-${key}`} onClick={() => { setGroup(key); setOpenIndex(null); }}
+                <button key={key} type="button" data-studio-phase-group data-testid={`phase-group-${key}`} onClick={() => { setGroup(key); setOpenId(null); }}
                   className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 bg-card p-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/40 sm:flex-col sm:items-stretch sm:p-0 ${stats.total > 0 && stats.done === stats.total ? "border-green-500/60" : stats.blocked ? "border-amber-500/70" : "border-border"}`}>
-                  <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 sm:w-full sm:rounded-none">
+                  <div data-studio-phase-media className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 sm:w-full sm:rounded-none">
                     <SteelWorkVisual fallback={GROUP_ART[key]} animate={stats.total > stats.done} className="absolute inset-0 h-full w-full" />
                   </div>
                   <div className="flex min-w-0 flex-1 items-center justify-between gap-2 sm:p-3">
@@ -232,14 +237,14 @@ export function SteelPhaseBoard({
       ) : (
       <>
       {/* Process track: the phases in work order, like a line in the hall. */}
-      <div className="flex items-center gap-4 rounded-2xl border bg-gradient-to-r from-orange-500/[0.07] via-transparent to-transparent p-3 sm:p-4">
+      <div data-studio-phase-summary className="flex items-center gap-4 rounded-2xl border bg-gradient-to-r from-orange-500/[0.07] via-transparent to-transparent p-3 sm:p-4">
         <div className="text-orange-600 dark:text-orange-400">
           <SteelProgressRing pct={pct} size={60} label={`${t("steel.progress", currentLang)} ${pct}%`} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <button type="button" onClick={() => { setGroup(null); setOpenIndex(null); }} className="inline-flex min-h-9 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+              <button type="button" onClick={() => { setGroup(null); setOpenId(null); }} className="inline-flex min-h-9 items-center gap-1 rounded-full border bg-card px-3 text-xs font-semibold text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
                 <ChevronLeft className="size-4" />{t("steel.groupsBack", currentLang)}
               </button>
               <h2 className="truncate text-base font-semibold">{group ? groupName(group) : t("steel.phasesTitle", currentLang)}</h2>
@@ -273,21 +278,22 @@ export function SteelPhaseBoard({
 
       {visible.length === 0 ? <p className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t("steel.groupEmpty", currentLang)}</p> : null}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {visible.map((item, index) => {
+        {visible.map((item) => {
           const style = STATUS_STYLE[item.status];
           return (
             <button
               key={item.id}
               type="button"
+              data-studio-phase-card
               onClick={() => {
-                setOpenIndex(index);
+                setOpenId(item.id);
                 setEditor(null);
               }}
               className={`group relative flex min-h-[200px] flex-col overflow-hidden rounded-2xl border-2 bg-card text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/40 ${
                 item.status === "done" ? "border-green-500/60" : item.status === "blocked" ? "border-amber-500/70" : "border-border"
               }`}
             >
-              <div className="relative aspect-[4/3] w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
+              <div data-studio-phase-media className="relative aspect-[4/3] w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
                 <SteelWorkVisual definition={definitionOf(item)} fallback={item.key} animate={item.status !== "done"} className="absolute inset-0 h-full w-full" />
                 {item.status === "done" ? (
                   <span className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-green-500 text-white shadow-md">
@@ -327,9 +333,10 @@ export function SteelPhaseBoard({
       {typeof document !== "undefined"
         ? createPortal(
       <AnimatePresence>
-        {open && openIndex !== null ? (
+        {open ? (
           <motion.div
             key="sheet"
+            data-studio-process-sheet
             role="dialog"
             aria-modal="true"
             aria-label={phaseName(open, currentLang)}
@@ -418,7 +425,7 @@ export function SteelPhaseBoard({
                   </div>
                 </div>
 
-                <div className="mt-auto pb-[env(safe-area-inset-bottom)]">
+                <div data-studio-phase-actions className="mt-auto pb-[env(safe-area-inset-bottom)]">
                   {!canEdit && !canReport ? (
                     <p className="rounded-xl border bg-muted/40 p-4 text-center text-sm text-muted-foreground">{t("steel.needsLogin", currentLang)}</p>
                   ) : editor ? (

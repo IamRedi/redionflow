@@ -147,11 +147,12 @@ export function ElementListButtons({
 
   return (
     <>
-      <div className="grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
+      <div data-studio-list-launchers className="grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
         {visible.map((button) => (
           <div key={button.side} className="flex min-w-0 items-stretch gap-1.5">
           <button
             type="button"
+            data-studio-list-open
             onClick={() => setOpen(button.side)}
             className="relative flex min-h-[64px] min-w-0 flex-1 items-center gap-3 overflow-hidden rounded-2xl bg-orange-600 px-3 py-2.5 text-left text-white shadow-md active:scale-[0.98]"
           >
@@ -438,13 +439,13 @@ function ListView({
   return (
     <>
       {/* Summary: compact, the list is what matters */}
-      <div className="rounded-2xl border bg-card p-3">
+      <div data-studio-list-summary className="rounded-2xl border bg-card p-3">
         <div className="flex items-center gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-600 text-white">
             {side === "factory" ? <Factory className="size-5" /> : <HardHat className="size-5" />}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-bold leading-tight">{side === "factory" ? t("elements.factoryList", lang) : t("elements.fieldList", lang)}</div>
+            <div data-studio-list-title className="truncate text-base font-bold leading-tight">{side === "factory" ? t("elements.factoryList", lang) : t("elements.fieldList", lang)}</div>
             <div className="truncate text-xs tabular-nums text-muted-foreground">
               {shown.length > 0
                 ? `${shown.length} ${t("elements.marks", lang).toLowerCase()} · ${formatAmount(pieces)} ${t("elements.pieces", lang).toLowerCase()}${totalKg > 0 ? ` · ${formatAmount(totalKg)} kg` : ""}`

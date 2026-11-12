@@ -207,6 +207,7 @@ export function WorkerIconStrip({
             <div key={worker.id} className="relative flex w-12 shrink-0 flex-col items-center gap-1">
               <button
                 type="button"
+                data-worker-live={worker.live && worker.availability === "AVAILABLE" ? "true" : undefined}
                 title={`${worker.firstName} ${worker.lastName} - ${availabilityAriaLabel(worker.availability, currentLang)}${worker.live ? ` (${t("workzone.live", currentLang)})` : ` (${t("workzone.offline", currentLang)})`}`}
                 aria-label={`${worker.firstName} ${worker.lastName} - ${availabilityAriaLabel(worker.availability, currentLang)}${worker.live ? ` (${t("workzone.live", currentLang)})` : ` (${t("workzone.offline", currentLang)})`}`}
                 onClick={(event) => {

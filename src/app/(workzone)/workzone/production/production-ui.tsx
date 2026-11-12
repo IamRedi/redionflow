@@ -92,6 +92,7 @@ export function Sheet({ children, onClose, label, closeLabel }: { children: Reac
   if (typeof document === "undefined") return null;
   return createPortal(
     <motion.div
+      data-studio-process-sheet
       role="dialog"
       aria-modal="true"
       aria-label={label}
