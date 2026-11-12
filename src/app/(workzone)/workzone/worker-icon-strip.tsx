@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
+import { AssetThumbnail } from '@/components/asset-thumbnail';
+import { createPortal } from 'react-dom';
 import { Mail, Phone, UserRound } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -104,6 +106,7 @@ export function WorkerIconStrip({
   const [dismissedDecisionKey, setDismissedDecisionKey] = useState<string | null>(null);
   const [clientStateReady, setClientStateReady] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   function dismissOwnVacationSignal(worker: WorkerBadge) {
     if (!worker.activeProfile || !worker.vacationDecisionSignalKey) return;
@@ -135,7 +138,7 @@ export function WorkerIconStrip({
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       if (!wrapRef.current) return;
-      if (!wrapRef.current.contains(event.target as Node)) setOpenMenu(null);
+      if (!wrapRef.current.contains(event.target as Node) && !menuRef.current?.contains(event.target as Node)) setOpenMenu(null);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -239,7 +242,12 @@ export function WorkerIconStrip({
                 )}
               >
                 {worker.profileImageUrl ? (
-                  <Image
+                  worker.profileImageUrl.startsWith('/api/asset-photos/') ? <AssetThumbnail
+                    src={worker.profileImageUrl}
+                    alt={`${worker.firstName} ${worker.lastName}`}
+                    sizes="64px"
+                    className="absolute inset-0 h-full w-full rounded-full object-cover"
+                  /> : <Image
                     src={worker.profileImageUrl} unoptimized={worker.profileImageUrl.startsWith("/api/")}
                     alt={`${worker.firstName} ${worker.lastName}`}
                     fill
@@ -285,8 +293,8 @@ export function WorkerIconStrip({
         })}
         {trailing}
       </div>
-      {openWorker ? (
-        <div className="fixed z-40 w-44 rounded-md border bg-card p-2 shadow-lg" style={{ top: openMenu!.top, left: openMenu!.left }}>
+      {openWorker ? createPortal(
+        <div ref={menuRef} className="fixed z-[1600] w-44 rounded-md border bg-card p-2 shadow-lg" style={{ top: openMenu!.top, left: openMenu!.left }}>
           <div className="mb-1 text-[11px] font-semibold">
             {openWorker.firstName} {openWorker.lastName}
           </div>
@@ -328,7 +336,7 @@ export function WorkerIconStrip({
             ) : null}
             {!canContact ? <div className="px-2 py-1.5 text-xs text-muted-foreground">{t("workzone.noContactAvailable", currentLang)}</div> : null}
           </div>
-        </div>
+        </div>, document.body
       ) : null}
     </div>
   );

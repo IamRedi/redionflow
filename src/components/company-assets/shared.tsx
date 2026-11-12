@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Search,Shirt,Package,Wrench } from 'lucide-react';
@@ -11,6 +10,8 @@ import type { AssetCommand, AssetOperationalStatus, AssetQuery, AssetSnapshot, A
 import { operationalStatusLabels, unknownAssetStatus, type OperationalStatusKey } from '@/lib/company-assets/status';
 import type { AssetCopy } from './copy';
 import { visibleAssetCode } from '@/lib/company-assets/identity';
+import { AssetThumbnail } from '@/components/asset-thumbnail';
+import type { PhotoShape } from '@/lib/asset-photos/rendition';
 
 export const assetButton = 'steelStudioAssetButton inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-semibold outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50';
 export const assetPrimary = `${assetButton} border-orange-700 bg-orange-700 text-white hover:bg-orange-800 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400`;
@@ -167,9 +168,9 @@ export function assetTime(value: string, language: string) {
   if (!Number.isFinite(date.getTime())) return '—';
   return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
-export function AssetPicture({ asset, className = 'h-full w-full' }: { asset: Pick<AssetSummary,'name'|'category'|'photoUrl'>; className?: string }) {
+export function AssetPicture({ asset, className = 'h-full w-full', sizes = '100vw', shape = 'square' }: { asset: Pick<AssetSummary,'name'|'category'|'photoUrl'>; className?: string; sizes?: string; shape?: PhotoShape }) {
   const [failed, setFailed] = useState<string | null>(null);
-  if (asset.photoUrl && failed !== asset.photoUrl) return <img src={asset.photoUrl} alt="" loading="lazy" onError={() => setFailed(asset.photoUrl)} className={`${className} object-cover`} />;
+  if (asset.photoUrl && failed !== asset.photoUrl) return <AssetThumbnail src={asset.photoUrl} sizes={sizes} shape={shape} alt="" onError={() => setFailed(asset.photoUrl)} className={`${className} object-cover`} />;
   if (asset.category === 'vehicle') return <MachineArt kind={machineKind({ name: asset.name })} animate={false} className={className} />;
   const Icon=asset.category==='clothing'?Shirt:asset.category==='tool'?Wrench:Package;
   return <><span data-studio-machine-icon aria-hidden="true" className={className} style={{display:'none'}}><Icon/></span><svg data-studio-sketch className={className} viewBox="0 0 240 150" aria-hidden="true" fill="none">

@@ -41,8 +41,8 @@ async function as(kind: 'admin' | 'worker', index = 0) {
     await createTestSession(kind, tenants[index][kind].id),
   );
 }
-const get = (kind: string, id: string) =>
-  GET(new Request('http://127.0.0.1'), {
+const get = (kind: string, id: string, width?: string) =>
+  GET(new Request(`http://127.0.0.1${width ? `?w=${width}` : ''}`), {
     params: Promise.resolve({ kind, id }),
   });
 beforeEach(async () => {
@@ -89,6 +89,11 @@ it('stores only the bounded WebP separately, updates the cover marker and serves
   expect(Buffer.from(await response.arrayBuffer())).toEqual(
     Buffer.from(row.data),
   );
+  const preview = await get('machine', tenants[0].machine.id, '192');
+  expect(preview.status).toBe(200);
+  expect(preview.headers.get('cache-control')).toBe('private, no-store');
+  expect((await sharp(Buffer.from(await preview.arrayBuffer())).metadata()).width).toBeLessThanOrEqual(meta.width!);
+  expect((await prisma.assetPhoto.findUniqueOrThrow({where:{id:row.id}})).data).toEqual(row.data);
 });
 it('denies foreign/mixed/anonymous access and keeps an existing photo when replacement fails', async () => {
   await saveAssetPhoto('machine', tenants[0].machine.id, await file());
@@ -108,6 +113,7 @@ it('denies foreign/mixed/anonymous access and keeps an existing photo when repla
   ).rejects.toThrow('PHOTO_NOT_FOUND');
   await as('admin', 1);
   expect((await get('machine', tenants[0].machine.id)).status).toBe(404);
+  expect((await get('machine', tenants[0].machine.id, '192')).status).toBe(404);
   request.values.set(
     'bk_worker_id',
     await createTestSession('worker', tenants[0].worker.id),
@@ -115,6 +121,7 @@ it('denies foreign/mixed/anonymous access and keeps an existing photo when repla
   expect((await get('machine', tenants[0].machine.id)).status).toBe(404);
   request.values.clear();
   expect((await get('machine', tenants[0].machine.id)).status).toBe(404);
+  expect((await get('machine', tenants[0].machine.id, '192')).status).toBe(404);
 });
 it('keeps office, field and factory photo edits within the existing role permissions', async () => {
   await saveAssetPhoto('machine', tenants[0].machine.id, await file());

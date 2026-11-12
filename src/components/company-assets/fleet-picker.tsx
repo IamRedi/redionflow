@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { MachineArt, machineKind } from '@/components/steel/machine-art';
@@ -11,6 +10,7 @@ import { assetCopy } from './copy';
 import { useLanguage } from '@/components/i18n/language-provider';
 import type { AssetOperationalStatus } from '@/lib/company-assets/types';
 import { AccessKeyButton } from '@/components/access/access-key-button';
+import { AssetThumbnail } from '@/components/asset-thumbnail';
 
 function searchable(value: string) {
   return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -18,7 +18,7 @@ function searchable(value: string) {
 
 function FleetThumbnail({ machine }: { machine: MachineSideItem }) {
   const [failed, setFailed] = useState<string | null>(null);
-  return machine.imageUrl && failed !== machine.imageUrl ? <img src={machine.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" onError={() => setFailed(machine.imageUrl)} /> : <MachineArt kind={machineKind(machine)} animate={false} className="h-full w-full p-1.5" />;
+  return machine.imageUrl && failed !== machine.imageUrl ? <AssetThumbnail src={machine.imageUrl} shape="4x3" sizes="(max-width:640px) 30vw, 160px" alt="" className="h-full w-full object-cover" onError={() => setFailed(machine.imageUrl)} /> : <MachineArt kind={machineKind(machine)} animate={false} className="h-full w-full p-1.5" />;
 }
 
 export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId, statusFor }: {
