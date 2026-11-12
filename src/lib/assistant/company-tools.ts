@@ -77,7 +77,7 @@ export async function adminSearchCompanyWorkers(requester: RequesterContext, inp
       liveSessionsComplete: r._count.sessions <= 2, profileUrl: `/app/admin/workers/${r.id}` }));
     return { ...pageInfo(items, total, input, page.limit),
       identityResolution: input.workerId ? 'exact_id' : query && total > 1 ? 'multiple_candidates_require_clarification' : 'directory_matches',
-      caveat: 'Availability is a profile value; a live session is a stored clock-in, not proof of current physical location. Use adminGetWorkforceStatus for current working/paused/stopped classification and conflicts. A missing site never establishes office work. Licenses are free text, not verified certificates.' };
+      caveat: 'Availability is a profile value; a live session is a stored clock-in, not proof of current physical location. Use the available attendance tools for working/paused/stopped classification and conflicts. A missing site never establishes office work. Licenses are free text, not verified certificates.' };
   });
 }
 
