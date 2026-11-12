@@ -79,7 +79,7 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
 }
 /* A route-specific environment, with the same crystal material family. The
    server marker survives loading/errors and also scopes the existing portals. */
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) {
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) {
   --baum-glass: linear-gradient(125deg, #effcff8f, #cee6ec66);
   --foreground: 164 36% 6%;
   --card-foreground: 164 36% 6%;
@@ -91,7 +91,7 @@ body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environmen
   --baum-action: linear-gradient(145deg, #dcfff080, #94cebc59);
   --baum-action-base: #c9e9d14d;
 }
-html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) {
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) {
   --baum-glass: linear-gradient(125deg, #1e3b3b9e, #0e252eb8);
   --muted-foreground: 132 20% 85%;
   --baum-overlay: linear-gradient(125deg, #273a30f5, #182d27f5);
@@ -111,38 +111,39 @@ body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="r
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="repair"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/repair-workshop-night.webp');
 }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) {
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="inventory"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/tool-warehouse-day.webp');
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="inventory"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/tool-warehouse-night.webp');
+}
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
-/* In the factory, keep the working page below the team/navigation. Content
-   cannot pass through the controls as it scrolls; the environment stays put. */
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) > header {
+/* Transparent chrome floats over the full scrolling page. The shared shell
+   reserves initial header clearance without clipping content at its lower edge. */
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) > header {
   background: transparent;
   border-bottom: 0;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) > header > div { padding-top: 0; }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baum-team-strip"] span[title] { color: hsl(var(--foreground)); font-weight: 600; text-shadow: 0 1px 1px #ffffffb3; }
-html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baum-team-strip"] span[title] { text-shadow: 0 1px 1px #081b23; }
-[data-baum-studio="forest-crystal-v1"]:has(:is([data-baum-environment="wood"], [data-baum-environment="repair"])) > [data-testid="demo-workspace"] {
-  grid-area: 2 / 1;
-  padding-top: 0;
-  scroll-padding-top: 16px;
-}
-[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"]) [data-wood-visual="empty"] {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) > header > div { padding-top: 0; }
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baum-team-strip"] span[title] { color: hsl(var(--foreground)); font-weight: 600; text-shadow: 0 1px 1px #ffffffb3; }
+html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baum-team-strip"] span[title] { text-shadow: 0 1px 1px #081b23; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]) [data-wood-visual="empty"] {
   background: transparent;
   color: hsl(var(--primary));
 }
-[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"]) [data-wood-visual="empty"] > div { color: inherit; }
-[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"]) nav { scrollbar-width: thin; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]) [data-wood-visual="empty"] > div { color: inherit; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]) nav { scrollbar-width: thin; }
 /* The factory is the surface: legal text and the author credit have no panel.
    Keep their native links, focus rings and 44px hit areas at the content end. */
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baumdienst-demo-footer"],
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baumdienst-demo-footer"] footer {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baumdienst-demo-footer"],
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baumdienst-demo-footer"] footer {
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -150,19 +151,19 @@ html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-envir
   backdrop-filter: none;
   color: hsl(var(--foreground));
 }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-control="button"] { min-width: 44px; gap: 6px; padding-inline: 12px; }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-control="button"] { min-width: 44px; gap: 6px; padding-inline: 12px; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
   background: var(--baum-glass);
   -webkit-backdrop-filter: blur(var(--baum-blur));
   backdrop-filter: blur(var(--baum-blur));
 }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) label > svg { z-index: 1; }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) label > svg { z-index: 1; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
 /* Light keeps the accepted ice film; stronger ink carries the hierarchy.
    Explicit type weights and semantic status colors remain functional variants. */
-html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) :is([data-baum-environment], [role="dialog"]) { font-weight: 500; }
-html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) [data-testid="baumdienst-demo-footer"] nav { font-weight: 500; }
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) :is([data-baum-environment], [role="dialog"]) { font-weight: 500; }
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) [data-testid="baumdienst-demo-footer"] nav { font-weight: 500; }
 /* Decorative, locally served artwork: no extra UI, state, hit area or image
    generation on load. The same composition changes with the existing theme. */
 [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before {
@@ -178,7 +179,7 @@ html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data
 [data-baum-studio="forest-crystal-v1"] [data-canvas-forest-layer] { display: none; }
 @media (max-width: 639px) {
   /* Keep the repair bench and tools in the narrow crop of the same room. */
-  [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="repair"])) { background-position: 75% center; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="repair"], [data-baum-environment="inventory"]))) { background-position: 75% center; }
   /* Focus the meeting point of trees, terrain and office in the taller field. */
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { background-position: center, 70% center; }
 }
@@ -245,7 +246,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-con
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a,button) { min-height: 44px; }
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a[href^="/demo/baustellen/"],button) { min-width: 44px; }
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] .text-green-600 { color: hsl(var(--primary)); }
-body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="wood"], [data-baum-environment="repair"]) :is(button,a):is([aria-current="page"],[aria-pressed="true"]) {
+body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]) :is(button,a):is([aria-current="page"],[aria-pressed="true"]) {
   color: hsl(var(--primary));
   border-color: hsl(var(--primary) / .65);
   box-shadow: inset 0 0 0 1px hsl(var(--primary) / .18), inset 0 1px 0 var(--baum-edge);
@@ -256,15 +257,15 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 /* Opaque fallbacks are accessibility variants of the same identity. */
 @supports not (backdrop-filter: blur(2px)) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); }
-  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon) { background: hsl(var(--card)); }
 }
 @media (prefers-reduced-transparency: reduce) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-overlay-blur: 0px; }
-  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   [data-baum-studio="forest-crystal-v1"] { background: hsl(var(--background)); }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
-  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) > header { background: hsl(var(--background)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) > header { background: hsl(var(--background)); backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon,section[class~="bg-card"],article[class~="bg-card"],div[class~="bg-card"],details[class~="bg-card"],a[class~="bg-card"]) {
     background: hsl(var(--card));
     -webkit-backdrop-filter: none;
@@ -274,7 +275,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 @media (forced-colors:active) {
   [data-baum-studio="forest-crystal-v1"] { background: Canvas; }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
-  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) > header { background: Canvas; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: CanvasText; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) > header { background: Canvas; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: CanvasText; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-ui-control="button"],.baum-nav-icon,[data-testid="muster-site-card"],:where(section,article,div,details,a)[class~="border"][class~="bg-card"],:where(section,article,div)[class~="border"][class~="bg-card/95"]) {
     background: Canvas;
     color: CanvasText;
@@ -287,6 +288,6 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 @media print {
   [data-baum-studio="forest-crystal-v1"] { background: white; }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
-  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"]))) > header { background: white; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"]))) > header { background: white; backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[data-testid="muster-site-card"],[role="dialog"]) { background: white; color: black; box-shadow: none; backdrop-filter: none; }
 }

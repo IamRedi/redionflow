@@ -8,8 +8,8 @@
   scrollbar-color: hsl(var(--muted-foreground) / .5) hsl(var(--background));
 }
 :global(.dark) .shell { color-scheme: dark; }
-/* Layers: the page scrolls at the bottom; the transparent header (team strip and
-   round icons, then logo and the more ring on top) stays fixed above it. */
+/* One full-height scrolling canvas under the floating, transparent team/header.
+   Initial clearance and focus padding keep the first content/actions reachable. */
 .shell > .header { grid-area: 1 / 1; align-self: start; pointer-events: none; }
 .shell > .header :is(a, button, summary, select, input, details, [data-testid="baum-team-strip"]) { pointer-events: auto; }
 .shell > .workspace { grid-area: 1 / 1 / -1 / -1; padding-top: var(--demo-header-height, 152px); scroll-padding-top: calc(var(--demo-header-height, 152px) + 8px); }
@@ -35,6 +35,7 @@
 .header [data-demo-teamrow] svg { width: 20px; height: 20px; }
 .workspace {
   position: relative;
+  z-index: 0;
   min-height: 0;
   min-width: 0;
   overflow-y: auto;

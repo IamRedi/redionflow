@@ -17,7 +17,9 @@ test("workspace uses the viewport, scrolls the natural legal footer, and preserv
       if (route.startsWith("/demo/workshop")) {
         await expect(page.getByRole("button", { name: route.includes("tab=tools") ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
         const teamHeader = (await page.getByTestId("baum-demo-topbar").boundingBox())!;
-        expect((await workspace.boundingBox())!.y).toBeGreaterThanOrEqual(teamHeader.y + teamHeader.height - 1);
+        const initialContent = (await workspace.locator(":scope > div > div").first().boundingBox())!;
+        expect(initialContent.y).toBeGreaterThanOrEqual(teamHeader.y + teamHeader.height - 1);
+        expect((await workspace.boundingBox())!.y).toBeLessThanOrEqual(1);
       }
       const signature = page.getByRole("link", { name: "by RediON", exact: true });
       await expect(signature).toHaveCount(1);
