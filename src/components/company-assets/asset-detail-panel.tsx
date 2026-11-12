@@ -134,7 +134,7 @@ export function AssetDetailPanel({ asset: incomingAsset, initialReport, onClose,
   const files = detail.files.filter(file => (file.kind !== 'invoice' || canRepair) && (mode !== 'documents' || !file.repairId));
   const visibleFiles = service && !allDetails ? files.filter(file => file.repairId === attachmentRepair?.id) : files;
   const otherRepairs = service ? detail.repairs.filter(repair => repair.id !== shownRepair?.id) : detail.repairs;
-  return <div className={`mx-auto flex w-full min-w-0 flex-col gap-5 pb-2 ${service ? 'max-w-5xl' : ''}`} aria-busy={busy} data-testid="asset-detail" data-studio-item-detail={asset.kind === 'inventory' || undefined}>
+  return <div className={`mx-auto flex w-full min-w-0 flex-col gap-5 pb-2 ${service ? 'max-w-5xl' : ''}`} aria-busy={busy} data-testid="asset-detail" data-studio-item-detail={asset.kind === 'inventory' || undefined} data-studio-service-detail={asset.kind === 'machine' || undefined}>
     {mode !== 'documents' ? <div data-studio-item-header className="flex flex-wrap items-start gap-4">
       <div data-studio-item-photo className="relative h-28 w-36 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-950">
         <AssetPicture asset={item} />

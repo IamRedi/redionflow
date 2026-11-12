@@ -32,7 +32,7 @@ export default async function FleetGpsPage() {
   const devicesById = new Map(devices.map((d) => [d.machineId, d]));
   const locationsById = new Map(locations.map((p) => [p.id, p]));
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div data-studio-management className="mx-auto max-w-6xl space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">{c.fleet} · {c.gps}</h1>

@@ -134,7 +134,7 @@ function defectDateLabel(value: string) {
 
 function Detail({ label, value, wrap = false }: { label: string; value: string | number | null | undefined; wrap?: boolean }) {
   return (
-    <div className={cn('rounded-md border bg-background/70 px-3 py-2', wrap && 'min-w-0')}>
+    <div data-studio-vehicle-fact className={cn('rounded-md border bg-background/70 px-3 py-2', wrap && 'min-w-0')}>
       <div className={cn('text-[11px] uppercase tracking-wide text-muted-foreground', wrap && 'break-words')}>{label}</div>
       <div className={cn('mt-0.5 text-sm font-medium', wrap && 'break-words')}>{value ?? "-"}</div>
     </div>
@@ -175,7 +175,7 @@ function MachineCardSurface({ enhanced, title, onClose, returnFocusRef, children
   return <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-[1399] bg-background" />
-      <Dialog.Content data-testid="fleet-machine-card" className="fixed inset-0 z-[1400] flex h-dvh min-h-0 min-w-0 flex-col bg-background text-foreground outline-none"
+      <Dialog.Content data-testid="fleet-machine-card" data-studio-dialog data-studio-vehicle className="fixed inset-0 z-[1400] flex h-dvh min-h-0 min-w-0 flex-col bg-background text-foreground outline-none"
         onOpenAutoFocus={() => { opener.current = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null; }}
         onCloseAutoFocus={event => { event.preventDefault(); const target = opener.current?.isConnected ? opener.current : returnFocusRef.current; target?.focus({ preventScroll: true }); }}>
         <Dialog.Title className="sr-only">{title}</Dialog.Title>
@@ -429,9 +429,9 @@ export function MachineSidebar({
                 </span>}
               </div>
 
-              <div className={enhancedOperations ? 'no-scrollbar mx-auto grid min-h-0 w-full min-w-0 flex-1 auto-rows-max gap-3 overflow-y-auto overscroll-contain p-3 sm:p-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-5' : 'mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[minmax(150px,32vh)_auto] gap-3 overflow-y-auto p-3 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1 lg:gap-5 lg:overflow-hidden'}>
+              <div data-studio-vehicle-body={enhancedOperations || undefined} className={enhancedOperations ? 'no-scrollbar mx-auto grid min-h-0 w-full min-w-0 flex-1 auto-rows-max gap-3 overflow-y-auto overscroll-contain p-3 sm:p-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start lg:gap-5' : 'mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[minmax(150px,32vh)_auto] gap-3 overflow-y-auto p-3 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-1 lg:gap-5 lg:overflow-hidden'}>
                 {/* Picture of the machine with its name on a plate in the corner */}
-                <div className={cn('relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950', enhancedOperations && 'h-[min(38dvh,300px)] min-h-[170px] lg:sticky lg:top-0 lg:h-[min(75dvh,650px)]')}>
+                <div data-studio-vehicle-photo={enhancedOperations || undefined} className={cn('relative min-h-0 overflow-hidden rounded-3xl border bg-gradient-to-br from-orange-50 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950', enhancedOperations && 'h-[min(38dvh,300px)] min-h-[170px] lg:sticky lg:top-0 lg:h-[min(75dvh,650px)]')}>
                   <AssetPhoto key={`${selected.id}:${selected.imageUrl}`} kind="machine" id={selected.id} src={selected.imageUrl} alt={machineLabel(selected)} canEdit={canEditPhotos}>
                     <MachineArt kind={machineKind(selected)} animate={enhancedOperations ? statusFor(selected.id)?.usable === true : selected.isActive} className="absolute inset-0 h-full w-full p-4 pt-14" />
                   </AssetPhoto>
@@ -447,7 +447,7 @@ export function MachineSidebar({
 
                 <div className={enhancedOperations ? 'flex min-h-0 min-w-0 flex-col gap-3' : 'flex min-h-0 flex-col gap-3 lg:overflow-y-auto'}>
                   {enhancedOperations ? <AssetOperationalStatusBadge status={statusFor(selected.id)} c={assets} /> : null}
-                  <div className="rounded-2xl border bg-card p-3">
+                  <div data-studio-vehicle-actions={enhancedOperations || undefined} className="rounded-2xl border bg-card p-3">
                     <div className="flex flex-wrap gap-2">
                       {selected.gps ? <a href={mapsLink(selected.gps.lat, selected.gps.lng)} target="_blank" rel="noreferrer" className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-orange-600 px-4 font-semibold text-white">{c.maps}</a> : <span className="flex flex-1 items-center text-sm text-muted-foreground">{c.noGps}</span>}
                       <Link onClick={() => setSelectedId(null)} href={'/workzone/fuel?machine=' + selected.id} className="flex min-h-12 flex-1 items-center justify-center rounded-xl border px-4 font-semibold">{c.fuel}</Link>

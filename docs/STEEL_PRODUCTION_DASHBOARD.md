@@ -67,6 +67,27 @@ crews then alphabetical idle sites, and reprioritizes when the crew moves. No
 real business confirmation, account or permission was written during diagnosis.
 
 
+## Fleet and control-panel crystal — 12 November 2026
+
+The authenticated steel admin shell now loads the same warm stone/copper
+crystal identity as Workzone. Its existing production predicate remains the
+scope gate; classic companies retain their original theme. Personnel, fleet GPS,
+workshop, site directory, settings and audit retain their existing destinations,
+queries, forms and authorization. Only the header's existing office entry stays
+visible for steel; the duplicate sidebar shortcut is omitted.
+
+Fleet thumbnails keep three phone columns, names, plates and operational status.
+Vehicle cards use a shorter photo, compact crystal actions and readable facts;
+service/document cards share the existing inventory detail treatment. The audit
+retains its complete fields and becomes labelled cards on narrow screens.
+GPS links/data, fuel receipt actions, maintenance phases, deadlines, uploads,
+privacy toggles and all access rules remain unchanged. No provider/dependency,
+new images, migration or business-data rewrite accompanies this presentation.
+
+Focused evidence: `tests/e2e/steel-fleet-admin-crystal.spec.ts`, existing
+assets/workshop flows and transparent-header/footer regression. Use synthetic
+fixtures only; visual acceptance and live readback remain separate.
+
 ## Warehouse crystal and reception hours — 12 November 2026
 
 The steel warehouse and inventory-item detail cards reuse the established warm
