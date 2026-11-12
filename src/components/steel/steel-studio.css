@@ -19,7 +19,7 @@ html.dark body:has([data-steel-studio]) {
 .steelStudioWorkspace{background:radial-gradient(ellipse at 15% 0%,#cfaa702e,transparent 55%),radial-gradient(ellipse at 90% 85%,#6f9b861c,transparent 55%),hsl(var(--background))!important}
 /* Owner-approved painting, copper/stone/teal glass and crystal actions.
    The same materials extend into steel sites; other routes keep their scope. */
-body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning])),body:has([data-studio-dashboard]) {
+body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])),body:has([data-studio-dashboard],[data-studio-profile],[data-studio-notebook]) {
  --background:36 24% 79%;--foreground:171 24% 13%;--card:39 32% 94%;--card-foreground:171 24% 13%;
  --primary:21 90% 40%;--primary-foreground:0 0% 100%;--ring:21 90% 40%;
  --muted:36 21% 83%;--muted-foreground:166 18% 27%;--border:34 21% 63%;--input:34 21% 63%;
@@ -31,7 +31,7 @@ body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data
  --steel-action-glass:linear-gradient(112deg,transparent 22%,#fff9 23%,#fff0 48%),linear-gradient(160deg,#fff1d9c9,#f6c38791 58%,#ffe4b4b3);
  --steel-action-ink:#59300e;--steel-action-edge:#fff3d8d9;
 }
-html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning])),html.dark body:has([data-studio-dashboard]) {
+html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])),html.dark body:has([data-studio-dashboard],[data-studio-profile],[data-studio-notebook]) {
  --background:166 18% 12%;--foreground:39 36% 93%;--card:168 19% 17%;--card-foreground:39 36% 93%;
  --primary:27 96% 62%;--primary-foreground:19 55% 10%;--ring:27 96% 62%;
  --muted:164 14% 24%;--muted-foreground:41 20% 79%;--border:36 18% 42%;--input:36 18% 42%;
@@ -43,7 +43,7 @@ html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-inter
  --steel-action-glass:linear-gradient(112deg,transparent 22%,#ffe3ae24 23%,#fff0 48%),linear-gradient(160deg,#b88a4c66,#46341bba 58%,#ab753c66),#382a1bb3;
  --steel-action-ink:#ffe4bc;--steel-action-edge:#f3cb8d80;
 }
-.steelStudioWorkspace:has(:is([data-studio-home],[data-studio-interior],[data-studio-planning])){background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover no-repeat!important}
+.steelStudioWorkspace:has(:is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])){background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover no-repeat!important}
 .steelStudioPhoto,.steelStudioProcessPhoto{display:none;pointer-events:none;user-select:none}
 body:has([data-steel-studio]) .steelStudioPhoto{display:block!important;background-position:center;background-size:cover;background-repeat:no-repeat}
 body:has([data-steel-studio]) .steelStudioProcessPhoto{display:block!important;overflow:hidden;isolation:isolate}
@@ -114,8 +114,8 @@ body:has([data-steel-studio]) [data-studio-machine-icon] svg{width:34%;height:45
 [data-studio-home] [data-studio-hero-shade]{background:linear-gradient(90deg,hsl(var(--card)/.92),hsl(var(--card)/.7) 40%,hsl(var(--card)/.05) 85%)!important}
 [data-studio-home] [data-studio-process-card]{background:var(--steel-glass)!important;border-color:var(--steel-edge)!important;box-shadow:var(--steel-shadow)!important}
 /* Static crystal reflections: warm orange tint, visible depth and legible ink. */
-body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning])) :is([data-studio-control][data-studio-variant=default],button.bg-orange-600,a.bg-orange-600,[data-testid=site-card-open]){background:var(--steel-action-glass)!important;color:var(--steel-action-ink)!important;border:1px solid var(--steel-action-edge)!important;box-shadow:inset 0 1px 0 #fffc,inset 0 -1px 0 #9e652c30,0 4px 14px #8b57232b!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);text-shadow:0 1px 0 #ffffff35}
-html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning])) :is([data-studio-control][data-studio-variant=default],button.bg-orange-600,a.bg-orange-600,[data-testid=site-card-open]){box-shadow:inset 0 1px 0 #ffe4ad66,inset 0 -1px 0 #0003,0 5px 16px #0003!important;text-shadow:0 1px 2px #0008}
+body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])) :is([data-studio-control][data-studio-variant=default],button.bg-orange-600,a.bg-orange-600,[data-testid=site-card-open]){background:var(--steel-action-glass)!important;color:var(--steel-action-ink)!important;border:1px solid var(--steel-action-edge)!important;box-shadow:inset 0 1px 0 #fffc,inset 0 -1px 0 #9e652c30,0 4px 14px #8b57232b!important;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);text-shadow:0 1px 0 #ffffff35}
+html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])) :is([data-studio-control][data-studio-variant=default],button.bg-orange-600,a.bg-orange-600,[data-testid=site-card-open]){box-shadow:inset 0 1px 0 #ffe4ad66,inset 0 -1px 0 #0003,0 5px 16px #0003!important;text-shadow:0 1px 2px #0008}
 @media(max-width:1023px){
  body:has([data-steel-studio]) [data-studio-board] button:has(svg.lucide-rotate-ccw){display:none}
  body:has([data-steel-studio]) [data-studio-site-list]{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px;padding:70px 12px 18px}
@@ -141,7 +141,7 @@ body:has([data-steel-studio]) :is([data-studio-surface],[class~="border"][class~
 @media(prefers-reduced-transparency:reduce){body:has([data-steel-studio]) [data-studio-surface],body:has([data-steel-studio]) [data-studio-site-card],body:has([data-steel-studio]) [data-studio-control]{backdrop-filter:none;-webkit-backdrop-filter:none;background:hsl(var(--card))}body:has([data-steel-studio]) [data-studio-control][data-studio-variant=default]{background:hsl(var(--primary))}}
 @media(prefers-reduced-transparency:reduce){[data-studio-home] :is([data-studio-site-card],[data-studio-process-card]){background:hsl(var(--card))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){[data-studio-home] :is([data-studio-site-card],[data-studio-process-card],[data-studio-surface]){background:hsl(var(--card))!important}}
-@media(prefers-reduced-transparency:reduce){body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning])){--steel-action-glass:#f3d1a4}html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning])){--steel-action-glass:#584222}}
+@media(prefers-reduced-transparency:reduce){body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])){--steel-action-glass:#f3d1a4}html.dark body:has([data-steel-studio] :is([data-studio-home],[data-studio-interior],[data-studio-planning],[data-studio-profile],[data-studio-notebook])){--steel-action-glass:#584222}}
 
 /* Site workspaces reuse the accepted home material, not a second theme. */
 [data-steel-studio] [data-studio-interior]{max-width:none;overflow:visible}
@@ -232,7 +232,7 @@ body:has([data-steel-studio]) [data-workshop-compact] [data-testid=workshop-sear
 
 /* Work planning uses the same stone/copper crystal, including its portal calendar.
    No filters on the page root: fixed assignment sheets retain viewport coordinates. */
-body:has([data-studio-dashboard]) [data-testid="app-workspace-scroll"] {
+body:has([data-studio-dashboard],[data-studio-profile],[data-studio-notebook]) [data-testid="app-workspace-scroll"] {
  background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover fixed;
 }
 body:has([data-steel-studio]) [data-studio-planning] {color:hsl(var(--foreground));}
@@ -274,3 +274,47 @@ body:has([data-steel-studio]) [data-studio-planning] .fixed > [class~="bg-backgr
 body:has([data-steel-studio]) [data-studio-planning] [data-testid="plan-header"] a:has(>svg) {min-width:44px;min-height:44px;}
 
 body:has([data-steel-studio]) [data-planning-calendar] button[aria-pressed=true] {background:var(--steel-action-glass);color:var(--steel-action-ink);border-color:var(--steel-action-edge);box-shadow:var(--steel-shadow);}
+
+/* Profiles and notebooks reuse the accepted material without changing their data. */
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook]) {min-width:0;}
+body:has([data-steel-studio]) [data-studio-profile] :is(button,a)[class~="size-9"],
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook]) :is(button,a)[class~="h-9"],
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook]) label:has(>input[type=date],>input[type=month]) {min-width:44px;min-height:44px;height:auto;}
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook]) :is(button,a)[class~="border"],
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook]) label:has(>input[type=date],>input[type=month]) {background:var(--steel-glass);border-color:hsl(var(--border)/.7);box-shadow:inset 0 1px 0 var(--steel-edge);backdrop-filter:blur(14px);}
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook]) :is(input,textarea,select) {border-color:hsl(var(--border)/.8);color:hsl(var(--foreground));}
+body:has([data-steel-studio]) [data-studio-profile] button:is(.bg-green-600,.bg-red-600) {min-height:44px;border:1px solid var(--steel-edge);box-shadow:var(--steel-shadow);}
+body:has([data-steel-studio]) [data-studio-profile] button.bg-green-600:not(:disabled) {background:linear-gradient(115deg,#fff8,transparent 45%),linear-gradient(150deg,#dcf4d5bd,#9bceb3b8);color:#164b32;}
+body:has([data-steel-studio]) [data-studio-profile] button.bg-red-600:not(:disabled) {background:linear-gradient(115deg,#fff8,transparent 45%),linear-gradient(150deg,#fce8ddda,#dfb7a8bf);color:#793322;}
+html.dark body:has([data-steel-studio]) [data-studio-profile] button.bg-green-600:not(:disabled) {background:linear-gradient(115deg,#ffffff20,transparent 45%),linear-gradient(150deg,#315d47e6,#1b3e30e6);color:#d7f4df;}
+html.dark body:has([data-steel-studio]) [data-studio-profile] button.bg-red-600:not(:disabled) {background:linear-gradient(115deg,#ffffff20,transparent 45%),linear-gradient(150deg,#654538e6,#472921e6);color:#ffe2d6;}
+body:has([data-steel-studio]) [data-studio-notebook] [data-notebook-summary] {padding:14px;border-radius:18px;}
+body:has([data-steel-studio]) [data-studio-notebook] [data-notebook-summary] dl {margin-top:10px;}
+body:has([data-steel-studio]) [data-studio-notebook] [data-notebook-summary] dl>div {background:var(--steel-glass);border-color:hsl(var(--border)/.65);box-shadow:inset 0 1px 0 var(--steel-edge);padding:8px 10px;}
+body:has([data-steel-studio]) [data-studio-notebook] [data-testid=timesheet-days] {border-radius:18px;}
+body:has([data-steel-studio]) [data-studio-element-process] {min-width:0;overflow:hidden;padding:8px;background:var(--steel-glass);border-width:1px;box-shadow:var(--steel-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+body:has([data-steel-studio]) [data-studio-element-process]>[data-steel-work-visual] {border-radius:12px;border:1px solid var(--steel-edge);}
+@media(max-width:480px) {
+ body:has([data-steel-studio]) [data-studio-notebook]>div:first-child {flex-wrap:wrap;}
+ body:has([data-steel-studio]) [data-studio-notebook] [data-notebook-summary] dd {font-size:18px;}
+ body:has([data-steel-studio]) [data-studio-element-process] {padding:7px;}
+ body:has([data-steel-studio]) [data-studio-element-process]>.flex {gap:5px;}
+ body:has([data-steel-studio]) [data-studio-element-process]>.flex>span:last-child {font-size:13px;}
+}
+@media(prefers-reduced-transparency:reduce) {
+ body:has([data-steel-studio]) [data-studio-element-process] {background:hsl(var(--card));backdrop-filter:none;-webkit-backdrop-filter:none;}
+}
+@media print {
+ body:has([data-studio-notebook]),body:has([data-studio-notebook]) [data-testid=app-workspace-scroll],body:has([data-studio-notebook]) [data-studio-notebook] {background:white!important;color:black!important;}
+ body:has([data-studio-notebook]) [data-studio-notebook] [data-studio-surface] {background:white!important;color:black!important;border-color:black;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
+}
+
+@media(min-width:1280px) {body:has([data-steel-studio]) [data-studio-element-grid] {grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));}}
+
+/* Factual hours and status labels keep contrast over the warm glass. */
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook],[data-studio-element-process]) {--steel-record-copper:#7e350a;--steel-record-green:#176137;--steel-record-amber:#784214;}
+html.dark body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook],[data-studio-element-process]) {--steel-record-copper:#ffcb92;--steel-record-green:#b6e5bf;--steel-record-amber:#ffe0a4;}
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook],[data-studio-element-process]) :is(.text-primary,.text-orange-700) {color:var(--steel-record-copper);}
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook],[data-studio-element-process]) .text-green-700 {color:var(--steel-record-green);}
+body:has([data-steel-studio]) :is([data-studio-profile],[data-studio-notebook],[data-studio-element-process]) .text-amber-700 {color:var(--steel-record-amber);}
+body:has([data-steel-studio]) [data-studio-notebook] [class~="text-muted-foreground/70"] {color:hsl(var(--muted-foreground));}

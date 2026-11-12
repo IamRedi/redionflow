@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, FileSpreadsheet, HardHat, Loader2, Lock, Minus, RotateCcw, Search, Trash2, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type ReactNode } from "react";
+import { SteelWorkVisual } from '@/components/steel/work-catalog';
 import Image from 'next/image';
 import { SlidersHorizontal } from 'lucide-react';
 import { ElementProcessEditor } from '@/components/steel/element-process-editor';
@@ -809,7 +810,7 @@ function ElementDetail({
         <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: stages.filter(stage => cap > 0 && stagePieces(element, stage) >= cap).length, total: stages.length })}</span>
         {onProcesses ? <button type="button" onClick={onProcesses} className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4" />{processButton(lang)}</button> : null}
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div data-studio-element-grid={side === 'factory' || undefined} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stages.map((stage) => {
           const entries = element.work.filter((entry) => entry.stage === stage);
           const through = stagePieces(element, stage);
@@ -821,19 +822,22 @@ function ElementDetail({
             <button
               key={stage}
               type="button"
+              data-testid="element-process-card"
+              data-studio-element-process={side === 'factory' || undefined}
               disabled={!canEdit && entries.length === 0}
               onClick={() => onStage(stage)}
               className={`flex min-h-[104px] flex-col rounded-2xl border-2 p-3 text-left transition active:scale-[0.98] disabled:active:scale-100 ${
                 full ? "border-green-600/60 bg-green-600/[0.06]" : entries.length > 0 ? "border-orange-500/50 bg-orange-500/[0.05]" : skipped ? "border-dashed bg-muted/40 opacity-70" : `bg-card ${canEdit ? "hover:border-orange-500/60" : ""}`
               }`}
             >
-              <span className="flex items-center gap-2">
+              {side === "factory" ? <SteelWorkVisual definition={definition} fallback={stage} className="mb-2 h-20 w-full shrink-0 overflow-hidden rounded-xl sm:h-24" /> : null}
+              <span className="flex w-full min-w-0 items-center gap-2">
                 <span className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold ${full ? "bg-green-600 text-white" : entries.length > 0 ? "bg-orange-500 text-white" : "bg-muted text-muted-foreground"}`}>
                   {full ? <Check className="size-4" /> : skipped ? <Minus className="size-4" /> : side === 'factory' ? <Factory className="size-4" /> : <HardHat className="size-4" />}
                 </span>
                 <span className={`min-w-0 truncate text-base font-bold ${skipped ? "text-muted-foreground line-through decoration-1" : ""}`}>{stageLabel(stage, lang, definitions)}</span>
               </span>
-              {definition?.visualUpdatedAt ? <Image unoptimized src={`/api/steel-work-visuals/${definition.id}?v=${Date.parse(definition.visualUpdatedAt)}`} width={160} height={80} alt="" className="mt-2 h-16 w-full rounded-lg object-cover" /> : null}
+              {side !== "factory" && definition?.visualUpdatedAt ? <Image unoptimized src={`/api/steel-work-visuals/${definition.id}?v=${Date.parse(definition.visualUpdatedAt)}`} width={160} height={80} alt="" className="mt-2 h-16 w-full rounded-lg object-cover" /> : null}
               {entries.length > 0 ? (
                 <span className="mt-2 min-w-0">
                   <span className={`block text-sm font-bold tabular-nums ${full ? "text-green-700 dark:text-green-400" : "text-orange-700 dark:text-orange-300"}`}>

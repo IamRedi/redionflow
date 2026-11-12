@@ -80,7 +80,7 @@ export async function MonthlyTimesheet({ rows, worker, month, lang }: { rows: Ro
     <>
       {/* Screen */}
       <section className="space-y-3 print:hidden" data-testid="timesheet-card">
-        <div className="rounded-3xl border bg-card p-4 shadow-sm sm:p-5">
+        <div data-notebook-summary className="rounded-3xl border bg-card p-4 shadow-sm sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">{c.title}</p>
           <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3">
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
@@ -101,7 +101,7 @@ export async function MonthlyTimesheet({ rows, worker, month, lang }: { rows: Ro
           </dl>
         </div>
 
-        <ol className="overflow-hidden rounded-3xl border bg-card shadow-sm" data-testid="timesheet-days">
+        <ol data-studio-surface className="overflow-hidden rounded-3xl border bg-card shadow-sm" data-testid="timesheet-days">
           {rows.map((row) => {
             const sunday = isSunday(row.date);
             const isToday = row.date === today;
