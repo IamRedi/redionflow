@@ -9,10 +9,28 @@ import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '.
 import { beginWorkerSession } from './session-start';
 import { startWorkerSessionAction, startWorkSessionPauseAction, stopWorkerSessionAction, stopWorkSessionPauseAction } from '@/app/(workzone)/workzone/hr-actions';
 import { startWorkingAction } from '@/app/(workzone)/workzone/actions';
-import { ownOfficePresence, startOwnOfficeWork } from '@/lib/offices/presence';
+import { ownOfficePresence, startOwnOfficeWork, stopOwnOfficeWork } from '@/lib/offices/presence';
+import { officeDirectory } from '@/lib/offices/team-service';
 import { workDateTimeInput, parseWorkDateTime, monthKey } from './date-utils';
 const pressedLongAgo=(id:string)=>prisma.$executeRaw`UPDATE "WorkSession" SET "createdAt"=now()-interval '10 minutes' WHERE id=${id}`;
 let tenants:Awaited<ReturnType<typeof seedSecurityTenants>>;
+it('stops in the office using real pauses, clears the directory and rejects stale or foreign stops',async()=>{
+ const t=tenants[0],other=tenants[1],workerId=t.worker.id;
+ vi.stubEnv('VIRTUAL_OFFICE_WORK_ENABLED','true');vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+ vi.stubEnv('VIRTUAL_OFFICE_ACCESS_JSON',JSON.stringify({companyId:t.company.id,megi:{adminId:t.admin.id,workerId},almet:{adminId:'synthetic-unassigned-admin'}}));
+ await startOwnOfficeWork();const session=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ await prisma.workSession.update({where:{id:session.id},data:{startTime:new Date(Date.now()-2*3600000)}});await pressedLongAgo(session.id);
+ await prisma.workSessionPauseInterval.createMany({data:[{workerId,workSessionId:session.id,startedAt:new Date(Date.now()-30*60000),endedAt:new Date(Date.now()-15*60000)},{workerId,workSessionId:session.id,startedAt:new Date(Date.now()-5*60000)}]});
+ const current=(await officeDirectory()).people.find(p=>p.id===t.admin.id)!;expect(current.officePresence).toBe('paused');expect(current).not.toHaveProperty('startTime');expect(current).not.toHaveProperty('totalHours');
+ const foreign=await beginWorkerSession({companyId:other.company.id,workerId:other.worker.id,start:new Date(),siteId:null,workplace:'OFFICE'});
+ await expect(stopOwnOfficeWork(foreign.id)).rejects.toThrow('CONFLICT');expect((await prisma.workSession.findUniqueOrThrow({where:{id:foreign.id}})).isLive).toBe(true);
+ await stopOwnOfficeWork(session.id);const closed=await prisma.workSession.findUniqueOrThrow({where:{id:session.id}});
+ expect(closed.isLive).toBe(false);expect(closed.workplace).toBe('OFFICE');expect(closed.endTime).not.toBeNull();expect(closed.breakMinutes).toBeGreaterThanOrEqual(19);expect(closed.breakMinutes).toBeLessThanOrEqual(20);expect(closed.totalHours).toBeGreaterThan(1.6);expect(closed.totalHours).toBeLessThan(1.7);
+ expect((await ownOfficePresence()).active).toBe(false);expect((await officeDirectory()).people.find(p=>p.id===t.admin.id)?.officePresence).toBeNull();
+ await expect(stopOwnOfficeWork(session.id)).rejects.toThrow('CONFLICT');
+ await startOwnOfficeWork();await beginWorkerSession({companyId:t.company.id,workerId,start:new Date(),siteId:t.site.id,moveExisting:true});
+ await expect(stopOwnOfficeWork(session.id)).rejects.toThrow('CONFLICT');expect((await prisma.workSession.findUniqueOrThrow({where:{id:session.id}})).isLive).toBe(true);
+});
 it('starts only the signed-in office owner, reuses one clock and preserves office until an explicit site start',async()=>{
  const t=tenants[0],other=tenants[1],workerId=t.worker.id;
  vi.stubEnv('VIRTUAL_OFFICE_WORK_ENABLED','true');vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');

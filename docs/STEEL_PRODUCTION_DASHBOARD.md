@@ -2,6 +2,18 @@
 
 ## Catalog containment and office attendance — 12 November 2026
 
+Office presence follow-up: the same own-room crystal control now stops the
+current office session directly, with the existing profile's pause, break,
+rounding, undo and timesheet rules. A stale office control cannot stop a site
+session or a colleague's clock. Reception doors display green **Në zyrë** only
+for a live office session; paused people are labelled separately. A compact
+digital glass display on the reception desk lists the already-visible office
+holders currently present, with extra names behind one small expansion. It
+shares only names and present/paused status, never hours, private mail or tasks.
+The existing realtime/focus refresh keeps the display current. No migration,
+new accounts, permissions, provider or subscription changes accompany this
+follow-up. PR166 warehouse registration remains in the production baseline.
+
 The catalog's process sprite is positioned inside its own thumbnail, including
 the create/edit preview. The shared visual wrapper clips to its bounds; existing
 absolute factory illustrations retain their positioning.
@@ -14,7 +26,7 @@ no attendance control. The existing locked start/resume/move engine records
 start time when moving from a site. The additive nullable column leaves old
 sessions untouched. Planned-site fill and GPS cannot override this explicit
 office choice; an explicit site start clears it. Workbooks show **Zyrë**;
-**Në zyrë** opens the existing work profile for Nis/Ndalo. Unavailable workers
+The subsequent office follow-up replaces the profile link with direct Ndalo. Unavailable workers
 cannot start, and an absent account link gives a bounded error without guessing
 identity or creating a worker. No accounts, roles or office grants are changed.
 

@@ -650,6 +650,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     return { ok: false, message: tr("cannotStopOtherWorkerSession") };
   }
   if (!session.isLive) return { ok: false, message: tr("sessionAlreadyEnded") };
+  if (parsed.data.expectedWorkplace && (session.workplace !== parsed.data.expectedWorkplace || session.baustelleId)) return { ok: false, message: tr('sessionNotActive') };
 
   const endTime = parseWorkDateTime(parsed.data.endTime);
   if (!endTime || endTime < session.startTime || endTime.getTime() > Date.now() + 60_000) {
@@ -658,7 +659,8 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
 
   // Stopping within 5 seconds of pressing start (or a session under a minute) leaves no record.
   if (isTrivialSession(session.startTime, endTime) || isQuickUndo(session.createdAt)) {
-    await prisma.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null } });
+    const removed = await prisma.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) } });
+    if (parsed.data.expectedWorkplace && !removed.count) return { ok: false, message: tr('sessionNotActive') };
     revalidateWorkerProfile(session.workerId);
     revalidatePath(`/workzone/baustellen`);
     notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
@@ -674,7 +676,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
 
   await Promise.all(openPauseUpdates);
   const stopped = await prisma.workSession.updateMany({
-    where: { id: session.id, isLive: true, endTime: null },
+    where: { id: session.id, isLive: true, endTime: null, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) },
     data: {
       endTime,
       breakMinutes,
