@@ -53,7 +53,7 @@ export function WorkshopWorkspace({ initialAsset, embedded = false }: { initialA
    </>:null}
   </div>
   <AssetWorkspaceDialog open={!!expanded} onOpenChange={value=>{if(!value)setExpanded(null);}} title={expanded==='ready'?c.serviceHistory:expanded?c[expanded]:c.workshop} scrollBody layer={1550} returnFocusRef={expanded==='ready'?historyButton:undefined}>
-   <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-4">{rows.filter(r=>r.phase===expanded).map(r=><RepairCard key={r.id} repair={r} language={language} c={c} onOpen={()=>open(r)}/>)}</div>
+   <div className="grid gap-2 p-3" style={{gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,12rem),1fr))"}}>{rows.filter(r=>r.phase===expanded).map(r=><RepairCard key={r.id} repair={r} language={language} c={c} onOpen={()=>open(r)}/>)}</div>
    {!rows.some(r=>r.phase===expanded)?<p className="p-4 text-sm text-muted-foreground">{c.empty}</p>:null}
    {data.snapshot?.queueHasMore?.repairs?<p role="status" className="px-4 pb-4 text-xs text-muted-foreground">{c.queueLimit}</p>:null}
   </AssetWorkspaceDialog>
