@@ -6,7 +6,7 @@ import type {OfficeDoor} from './OfficeScene';
 import s from './studio.module.css';
 
 /** Continuous native scrolling; destinations and permissions remain server-derived. */
-export function ReceptionScene({company,companyLogo,doors,sq}:{company:string;companyLogo?:string|null;doors:OfficeDoor[];doorPage?:number;sq:boolean}){
+export function ReceptionScene({company,companyLogo,doors,sq,hours}:{company:string;companyLogo?:string|null;doors:OfficeDoor[];doorPage?:number;sq:boolean;hours?:string}){
  const viewport=useRef<HTMLDivElement>(null),drag=useRef<{x:number;left:number}|null>(null),dragged=useRef(false);
  const present=doors.filter(p=>p.enabled&&p.officePresence);
  useEffect(()=>{const el=viewport.current;if(!el)return;const wheel=(e:WheelEvent)=>{if(e.ctrlKey||Math.abs(e.deltaX)>=Math.abs(e.deltaY))return;const before=el.scrollLeft;el.scrollLeft+=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?el.clientWidth:1);if(el.scrollLeft!==before)e.preventDefault();};el.addEventListener('wheel',wheel,{passive:false});return()=>el.removeEventListener('wheel',wheel);},[]);
@@ -14,6 +14,7 @@ export function ReceptionScene({company,companyLogo,doors,sq}:{company:string;co
   <picture className={s.lobbyPhoto}><source media="(max-width:700px) and (min-height:481px)" srcSet="/office-studio-v1/reception-portrait.webp"/><img src="/office-studio-v1/reception-wide.webp" alt="" draggable={false} fetchPriority="high"/></picture>
   <div className={`${s.wallBrandCanvas} ${s.wallGlowCanvas}`} aria-hidden="true"><div className={s.wallBrand}/></div>
   <div className={s.wallBrandCanvas} aria-label={company}><div className={s.wallBrand} data-testid="office-wall-logo">{companyLogo?<Image src={companyLogo} alt={company} width={360} height={120} unoptimized draggable={false}/>:<span>{company}</span>}</div></div>
+  {hours&&<div className={`${s.wallBrandCanvas} ${s.hoursCanvas}`}><div className={s.hoursPlaque} data-testid="office-wall-hours"><p>{hours}</p></div></div>}
   <div className={s.hallCaption}><MoveHorizontal size={15}/><span>{sq?'Rrëshqit për zyrat':'Slide through the offices'}</span></div>
   <div className={s.doorViewport} ref={viewport} data-testid="office-hallway" tabIndex={0} role="region" aria-label={sq?'Korridori i zyrave, rrëshqit majtas ose djathtas':'Office corridor, scroll left or right'}
    onKeyDown={e=>{if(e.target!==e.currentTarget)return;if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();e.currentTarget.scrollBy({left:(e.key==='ArrowRight'?1:-1)*240,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}}

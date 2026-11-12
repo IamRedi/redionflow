@@ -134,11 +134,11 @@ export function AssetDetailPanel({ asset: incomingAsset, initialReport, onClose,
   const files = detail.files.filter(file => (file.kind !== 'invoice' || canRepair) && (mode !== 'documents' || !file.repairId));
   const visibleFiles = service && !allDetails ? files.filter(file => file.repairId === attachmentRepair?.id) : files;
   const otherRepairs = service ? detail.repairs.filter(repair => repair.id !== shownRepair?.id) : detail.repairs;
-  return <div className={`mx-auto flex w-full min-w-0 flex-col gap-5 pb-2 ${service ? 'max-w-5xl' : ''}`} aria-busy={busy} data-testid="asset-detail">
-    {mode !== 'documents' ? <div className="flex flex-wrap items-start gap-4">
-      <div className="relative h-28 w-36 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-950">
+  return <div className={`mx-auto flex w-full min-w-0 flex-col gap-5 pb-2 ${service ? 'max-w-5xl' : ''}`} aria-busy={busy} data-testid="asset-detail" data-studio-item-detail={asset.kind === 'inventory' || undefined}>
+    {mode !== 'documents' ? <div data-studio-item-header className="flex flex-wrap items-start gap-4">
+      <div data-studio-item-photo className="relative h-28 w-36 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-br from-orange-50 to-slate-100 dark:from-slate-800 dark:to-slate-950">
         <AssetPicture asset={item} />
-        {canManage ? <button type="button" className="absolute bottom-1 right-1 grid size-11 place-items-center rounded-xl border bg-card/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" disabled={busy} onClick={() => cover.current?.click()} aria-label={c.cover}><ImagePlus size={18} /></button> : null}
+        {canManage ? <button type="button" className="absolute bottom-1 right-1 grid size-11 place-items-center rounded-xl border bg-card/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" disabled={busy} onClick={() => cover.current?.click()} aria-label={c.cover} data-studio-item-cover><ImagePlus size={18} /></button> : null}
       </div>
       <div className="min-w-0 flex-1"><h2 className="break-words text-xl font-semibold">{item.name}</h2><p className="mt-1 break-words font-mono text-sm text-muted-foreground">{assetIdentity(item) || '—'}</p><div className="mt-2"><AssetOperationalStatusBadge status={operationalStatusFromSummary(item)} c={c} /></div>{item.holder ? <p className="mt-2 text-sm">{c.worker}: {item.holder.name}</p> : null}{item.site ? <p className="text-sm text-muted-foreground">{c.site}: {item.site.name}</p> : null}</div>
       <div className="flex flex-wrap gap-2">{canManage && complete ? <><button type="button" aria-label={c.camera} disabled={busy} onClick={() => coverCamera.current?.click()} className={assetButton}><Camera size={18} /></button><button type="button" disabled={busy} onClick={() => {setEditing(!editing);setEditName(item.name);setEditSize(item.size || '');}} className={assetButton}><PenLine size={16} />{c.edit}</button></> : null}{onClose ? <button type="button" className={assetButton} onClick={onClose}>{c.close}</button> : null}</div>

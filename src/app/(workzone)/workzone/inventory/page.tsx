@@ -1,4 +1,5 @@
 import { NoAccessHere } from '@/components/access/no-access';
+import { WarehouseSurface } from '@/components/company-assets/warehouse-surface';
 import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
 import { currentCompanyActor } from '@/lib/site-files/actor';
 import { assetActor } from '@/lib/company-assets/access';
@@ -8,5 +9,5 @@ export default async function WarehousePage({searchParams}:{searchParams:Promise
   const actor=await assetActor(),params=await searchParams;
   if(actor.workerId&&!(await currentCompanyActor(actor.companyId))?.allows('warehouse.view'))return <NoAccessHere backHref="/workzone"/>;
   const scan=typeof params.scan==='string'?normalizeScanCode(params.scan):'';
-  return <AssetWarehouse initialRegister={actor.canRegister&&params.register==='1'} initialFactoryCode={actor.canRegister&&validScanCode(scan)?scan:undefined}/>;
+  return <WarehouseSurface companyId={actor.companyId}><AssetWarehouse initialRegister={actor.canRegister&&params.register==='1'} initialFactoryCode={actor.canRegister&&validScanCode(scan)?scan:undefined}/></WarehouseSurface>;
 }
