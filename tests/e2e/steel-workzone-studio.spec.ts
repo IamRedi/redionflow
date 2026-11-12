@@ -15,6 +15,9 @@ test('photorealistic steel workspace preserves sites, factory, photos, fleet and
  try{
   const admin=await prisma.user.create({data:{companyProfileId:company.id,name:'Studio Chief · DEMO',email:`studio-${company.id}@example.test`,role:'ADMIN',isActive:true}});
   const seed=await seedSteelAssetsWorkshop(company.id,company.id);
+  await prisma.worker.createMany({data:Array.from({length:26},(_,i)=>({companyProfileId:company.id,firstName:`Crew${String(i+1).padStart(2,'0')}`,lastName:'Synthetic'}))});
+  await prisma.officeMember.create({data:{companyProfileId:company.id,userId:admin.id,enabled:true,title:'Synthetic office'}});
+  await prisma.companyProfile.update({where:{id:company.id},data:{kidrahtWorkspaceId:'synthetic-workspace',kidrahtApiKey:'synthetic-only'}});
   const covered=await prisma.baustelle.create({data:{companyProfileId:company.id,type:'STEEL_ASSEMBLY',name:'Glass pavilion · DEMO',address:'Fictional industrial park',coverPhotoAt:new Date()}});
   const photo=await sharp({create:{width:640,height:360,channels:3,background:'#718b82'}}).webp().toBuffer();
   await prisma.assetPhoto.create({data:{companyProfileId:company.id,baustelleId:covered.id,data:photo}});
@@ -32,6 +35,14 @@ test('photorealistic steel workspace preserves sites, factory, photos, fleet and
    await page.setViewportSize({width,height});await context.addCookies([{name:'bk_theme',value:theme,url:base}]);await page.goto('/workzone');
    await expect(page.getByTestId('app-workspace-scroll')).toBeVisible();await expect(page.getByTestId('site-card-open')).toHaveCount(8);await fits();
    if(!baseline){await expect(page.locator('[data-steel-studio]')).toHaveCount(1);await expect(page.locator('[data-studio-environment=site]').first()).toBeVisible();expect(await page.getByTestId('workzone-topbar').evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+    await expect(page.getByTestId('office-header-entry').filter({visible:true})).toHaveCount(1);
+    const header=await page.evaluate(()=>{
+     const strip=document.querySelector('[data-testid=flow-team-strip]')!.getBoundingClientRect();
+     const controls=[...document.querySelectorAll('[data-testid=flow-global-tools] a,[data-testid=flow-global-tools] button')].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect());
+     return {noOverlap:controls.every((a,i)=>controls.every((b,j)=>i===j||a.right<=b.x||b.right<=a.x||a.bottom<=b.y||b.bottom<=a.y)),sameRow:controls.every(r=>Math.abs(r.top-controls[0].top)<1),clearTeam:strip.right+12<=Math.min(...controls.map(r=>r.left)),names:[...document.querySelectorAll('[data-worker-name]')].map(e=>({size:parseFloat(getComputedStyle(e).fontSize),shadow:getComputedStyle(e).textShadow}))};
+    });
+    expect(header.noOverlap).toBe(true);expect(header.sameRow).toBe(true);expect(header.names.length).toBeGreaterThanOrEqual(28);expect(header.names.every(n=>n.size>=10&&n.shadow!=='none')).toBe(true);if(width>=1024)expect(header.clearTeam).toBe(true);
+    const photo=page.locator('[data-studio-site-card] [data-photo-trigger]').first();const photoBox=(await photo.boundingBox())!;expect(Math.round(photoBox.width)).toBeGreaterThanOrEqual(44);expect(Math.round(photoBox.height)).toBeGreaterThanOrEqual(44);expect(await photo.evaluate(e=>getComputedStyle(e).backgroundColor)).toBe('rgba(0, 0, 0, 0)');expect(Math.round((await photo.locator('[data-photo-glyph]').boundingBox())!.width)).toBeLessThanOrEqual(20);
     expect(await page.locator('[data-studio-board]>.steelStudioPhoto').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('/office-studio-v1/connected-work-artwork.webp');
     expect(await page.locator('.steelStudioWorkspace').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('/office-studio-v1/connected-work-artwork.webp');
     const action=await page.getByTestId('site-card-open').first().evaluate(e=>getComputedStyle(e).backgroundImage);expect(action).toContain('linear-gradient');expect(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--primary').trim())).toBe(theme==='light'?'21 90% 40%':'27 96% 62%');
@@ -59,7 +70,7 @@ test('photorealistic steel workspace preserves sites, factory, photos, fleet and
   if(!baseline){await expect(page.locator('[data-studio-home]')).toHaveCount(0);expect(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--primary').trim())).toBe('160 30% 72%');}
   if(!baseline){await page.emulateMedia({media:'print'});const ink=await page.evaluate(()=>getComputedStyle(document.body).color.match(/\d+/g)?.slice(0,3).map(Number)??[]);expect(ink).toHaveLength(3);expect(ink.every(value=>value<50)).toBe(true);await page.emulateMedia({media:'screen'});}
   expect(await prisma.companyAssetRepair.count({where:{companyProfileId:company.id}})).toBe(8);expect(await prisma.workSession.count({where:{worker:{companyProfileId:company.id}}})).toBe(0);expect(errors).toEqual([]);
- }finally{await cleanupSteelAssetsWorkshop(company.id);}
+ }finally{await prisma.officeMember.deleteMany({where:{companyProfileId:company.id}});await cleanupSteelAssetsWorkshop(company.id);}
 });
 
 test('classic companies keep their existing palette and do not load industrial assets',async({page,context},info)=>{

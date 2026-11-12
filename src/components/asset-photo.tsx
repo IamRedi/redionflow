@@ -114,12 +114,13 @@ export function AssetPhoto({
       )}
       {canEdit && (
         <div
-          className={kind === 'worker' ? 'absolute -bottom-1 -right-1 z-30' : 'absolute right-2 top-2 z-30'}
+          className={kind === 'worker' ? 'absolute -bottom-1 -right-1 z-30' : 'absolute right-0 top-0 z-30'}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
           <button
             ref={trigger}
+            data-photo-trigger
             type="button"
             disabled={pending}
             aria-label={`${c.edit}: ${alt}`}
@@ -138,13 +139,15 @@ export function AssetPhoto({
               setHost(e.currentTarget.closest<HTMLElement>('[role="dialog"]'));
               setOpen(!open);
             }}
-            className="grid size-8 place-items-center rounded-full border border-white/70 bg-white/90 text-slate-800 shadow-sm hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600 disabled:opacity-60"
+            className={`group flex size-11 justify-end rounded-lg bg-transparent p-1.5 text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600 disabled:opacity-60 ${kind === 'worker' ? 'items-end' : 'items-start'}`}
           >
+            <span data-photo-glyph className="grid size-5 shrink-0 place-items-center rounded-md bg-white/75 shadow-sm ring-1 ring-white/50 backdrop-blur-sm transition group-hover:bg-white">
             {pending ? (
-              <LoaderCircle className="size-4 animate-spin" />
+              <LoaderCircle className="size-3.5 animate-spin" />
             ) : (
-              <Camera className="size-4" />
+              <Camera className="size-3.5" />
             )}
+            </span>
           </button>
           {open &&
             createPortal(
