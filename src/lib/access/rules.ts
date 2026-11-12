@@ -13,7 +13,13 @@ export const ACCESS_PLACES = ["site", "field", "factory", "new_project", "fleet_
 export type AccessPlace = (typeof ACCESS_PLACES)[number];
 export type AccessLevel = "BASE" | "FULL_VIEW";
 /** "none" takes away what the level or the whole place would give (Hiq). */
-export type GrantLevel = "view" | "act" | "none";
+export type GrantLevel = "view" | "register" | "act" | "none";
+
+/** Registration is deliberately a warehouse-only choice. */
+export function isGrantLevel(place: AccessPlace, value: unknown): value is GrantLevel {
+  return value === "view" || value === "act" || value === "none" || (place === "warehouse" && value === "register");
+}
+export const grantChoices = (place: AccessPlace): GrantLevel[] => place === "warehouse" ? ["act", "register", "view", "none"] : ["act", "view", "none"];
 
 /**
  * Every action belongs to one place. `<place>.view` is the place's view action.
@@ -30,7 +36,7 @@ export const ACCESS_ACTIONS = {
   "new_project.view": "new_project", "new_project.create": "new_project",
   "fleet_gps.view": "fleet_gps", "fleet_gps.manage": "fleet_gps",
   "workshop.view": "workshop", "workshop.repair": "workshop",
-  "warehouse.view": "warehouse", "warehouse.manage": "warehouse",
+  "warehouse.view": "warehouse", "warehouse.register": "warehouse", "warehouse.manage": "warehouse",
   "daily_plan.view": "daily_plan", "daily_plan.edit": "daily_plan",
   "costs.view": "costs", "costs.manage": "costs",
   "staff.view": "staff", "staff.manage": "staff",
@@ -78,7 +84,7 @@ export function legacyActions(crewRole: string | null, legacySiteGrants: Readonl
     case "FACTORY_ENGINEER":
       return [...all(["factory.steps", "site.plan", "site.missing_material"]), ...[...legacySiteGrants].map(scopeId => ({ action: "site.documents" as const, scopeId }))];
     case "OFFICE":
-      return all(["site.plan", "site.documents", "site.missing_material", "site.details", "new_project.create", "warehouse.manage", "workshop.repair", "costs.view", "costs.manage"]);
+      return all(["site.plan", "site.documents", "site.missing_material", "site.details", "new_project.create", "warehouse.register", "warehouse.manage", "workshop.repair", "costs.view", "costs.manage"]);
     case "MECHANIC":
       return all(["workshop.repair"]);
     default:
@@ -100,7 +106,7 @@ export function can(subject: AccessSubject, action: AccessAction, scopeId = "", 
   const own = (scopeId ? subject.grants.find(g => g.place === place && g.scopeId === scopeId) : undefined)
     ?? subject.grants.find(g => g.place === place && g.scopeId === "");
   // A key-button choice is final: "view" also stops acting that a crew role gave.
-  if (own) return own.level === "act" || (own.level === "view" && view);
+  if (own) return own.level === "act" || (own.level === "view" && view) || (place === "warehouse" && own.level === "register" && (view || action === "warehouse.register"));
   if (view && EVERYONE_VIEWS.has(place)) return true;
   if (view && effectiveLevel(subject) === "FULL_VIEW" && FULL_VIEW_PLACES.has(place)) return true;
   // Crew roles count only until the boss sets the level; then the role's

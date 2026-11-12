@@ -26,9 +26,9 @@ beforeEach(async()=>{
  const company=await prisma.companyProfile.create({data:{displayName:`Fictional assistant assets ${randomUUID()}`,legalName:'Synthetic asset company',country:'AL'}});companies.push(company.id);
  const other=await prisma.companyProfile.create({data:{displayName:`Fictional foreign assets ${randomUUID()}`,legalName:'Synthetic foreign company'}});companies.push(other.id);
  const admin=await prisma.user.create({data:{companyProfileId:company.id,email:`assistant-assets-${randomUUID()}@example.test`,name:'Fictional chief',role:'ADMIN'}});
- boss={companyId:company.id,userId:admin.id,workerId:null,name:'Fictional chief',canManage:true,canRepair:true};
+ boss={companyId:company.id,userId:admin.id,workerId:null,name:'Fictional chief',canRegister:true,canManage:true,canRepair:true};
  const workers=await Promise.all(['A','B','Mechanic'].map(firstName=>prisma.worker.create({data:{companyProfileId:company.id,firstName,lastName:'Fictional',crewRole:firstName==='Mechanic'?'MECHANIC':'FIELD_WORKER',nationalId:'DO_NOT_EXPORT_HR_ID'}})));
- [workerA,workerB,mechanic]=workers.map(w=>({companyId:company.id,userId:null,workerId:w.id,name:`${w.firstName} Fictional`,canManage:false,canRepair:w.crewRole==='MECHANIC'}));
+ [workerA,workerB,mechanic]=workers.map(w=>({companyId:company.id,userId:null,workerId:w.id,name:`${w.firstName} Fictional`,canRegister:false,canManage:false,canRepair:w.crewRole==='MECHANIC'}));
  const sites=await Promise.all(['A','B'].map(name=>prisma.baustelle.create({data:{companyProfileId:company.id,name:`Fictional steel site ${name}`,type:'STEEL_ASSEMBLY',documents:[]}})));[siteA,siteB]=sites.map(s=>s.id);
  const inventory=await prisma.companyInventoryItem.create({data:{companyProfileId:company.id,name:'Fictional drill',itemCode:'ONLY-ITEM-CODE',barcode:`BAR-${randomUUID()}`,category:'WORK_TOOL'}});item={kind:'inventory',id:inventory.id};
  const vehicle=await prisma.machine.create({data:{companyProfileId:company.id,name:'Fictional van',targe:'ZZ 001 DM',hourlyRateCents:100}});machine={kind:'machine',id:vehicle.id};

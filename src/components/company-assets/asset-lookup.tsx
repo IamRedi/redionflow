@@ -24,7 +24,7 @@ export function AssetLookup({c,onSelect,onRegister,compact=false}:{c:AssetCopy;o
       if(!result.ok){setError(result.message||c.loadError);setRows(null);return;}
       const data=result.data;
       if(nextPage===1&&data.total===1&&data.assets.length===1){select(data.assets[0]);return;}
-      setRows(data.assets);setPage(data.page);setMore(data.hasMore);setCanRegister(data.permissions.canManage);
+      setRows(data.assets);setPage(data.page);setMore(data.hasMore);setCanRegister(data.permissions.canRegister);
     }catch{if(own===epoch.current){setError(c.loadError);setRows(null);}}
     finally{if(own===epoch.current)setLoading(false);}
   }

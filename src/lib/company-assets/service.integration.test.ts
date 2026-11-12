@@ -31,8 +31,8 @@ beforeEach(async()=>{
  const b=await prisma.companyProfile.create({data:{displayName:`Asset foreign ${randomUUID()}`,legalName:'Synthetic foreign company'}});companies.push(b.id);
  const user=await prisma.user.create({data:{companyProfileId:a.id,email:`asset-${randomUUID()}@example.test`,name:'Fictional chief',role:'ADMIN'}});
  const workers=await Promise.all(['A','B','Mechanic'].map(firstName=>prisma.worker.create({data:{companyProfileId:a.id,firstName,lastName:'Fictional',crewRole:firstName==='Mechanic'?'MECHANIC':'FIELD_WORKER'}})));
- boss={companyId:a.id,userId:user.id,workerId:null,name:'Fictional chief',canManage:true,canRepair:true};
- [workerA,workerB,mechanic]=workers.map(w=>({companyId:a.id,userId:null,workerId:w.id,name:`${w.firstName} Fictional`,canManage:false,canRepair:w.crewRole==='MECHANIC'}));
+ boss={companyId:a.id,userId:user.id,workerId:null,name:'Fictional chief',canRegister:true,canManage:true,canRepair:true};
+ [workerA,workerB,mechanic]=workers.map(w=>({companyId:a.id,userId:null,workerId:w.id,name:`${w.firstName} Fictional`,canRegister:false,canManage:false,canRepair:w.crewRole==='MECHANIC'}));
  await prisma.baustelle.create({data:{companyProfileId:a.id,name:'Synthetic steel site',type:'STEEL_ASSEMBLY',documents:[]}});
  const item=await prisma.companyInventoryItem.create({data:{companyProfileId:a.id,name:'Fictional drill',category:'WORK_TOOL',itemCode:'ITEM-ONLY-CODE',barcode:`BAR-${randomUUID()}`}});ref={kind:'inventory',id:item.id};
  const m=await prisma.machine.create({data:{companyProfileId:a.id,name:'Fictional truck',hourlyRateCents:100,targe:'TEST 001'}});machine={kind:'machine',id:m.id};

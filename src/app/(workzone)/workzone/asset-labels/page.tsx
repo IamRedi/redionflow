@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { assetActor } from '@/lib/company-assets/access';
+import { assetActor, assetActorKey } from '@/lib/company-assets/access';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { BarcodeLabel } from '@/components/inventory/barcode-label';
 import { LabelPrintButton } from '@/components/inventory/label-print-button';
@@ -9,7 +9,7 @@ import { assetRefSchema } from '@/lib/company-assets/validation';
 import { readOwnedAsset } from '@/lib/company-assets/service';
 import styles from './asset-labels.module.css';
 export default async function AssetLabelsPage({searchParams}:{searchParams:Promise<{items?:string}>}){
-  const actor=await assetActor();if(!actor.canManage)notFound();
+  const actor=await assetActor();if(!actor.canRegister&&!actor.canManage)notFound();
   const raw=(await searchParams).items??'';if(raw.length>14000)notFound();
   const values=[...new Set(raw.split(','))];if(!values.length||values.length>100)notFound();
   const refs=values.map(value=>{const [kind,id,...extra]=value.split(':');const result=assetRefSchema.safeParse({kind,id});if(extra.length||!result.success)notFound();return result.data;});
@@ -17,6 +17,9 @@ export default async function AssetLabelsPage({searchParams}:{searchParams:Promi
     const rows=[];
     for(const ref of refs){
       const asset=await readOwnedAsset(tx,actor,ref);
+      // Registration-only access prints the person's newly registered items,
+      // without granting unrestricted access to existing equipment or vehicles.
+      if(!actor.canManage && (ref.kind!=='inventory' || !asset.id || !await tx.companyAssetEvent.findFirst({where:{companyProfileId:actor.companyId,assetId:asset.id,type:'registered',actorKey:assetActorKey(actor)},select:{id:true}})))notFound();
       const generated=asset.id?await tx.companyAssetCode.findFirst({where:{companyProfileId:actor.companyId,assetId:asset.id,kind:'label',revokedAt:null},select:{value:true}}):null;
       const code=generated?.value??asset.code;
       if(!code||code.length>40||!/^[0-9A-Z .$/+%\-]+$/.test(code))notFound();

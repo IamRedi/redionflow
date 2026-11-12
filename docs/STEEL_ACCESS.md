@@ -27,6 +27,53 @@ factory list and the field list. A grant is a row in `AccessGrant`
 of that place. The most specific choice decides: this site, then the whole
 place, then the level; `none` takes away what the level gives.
 
+## Warehouse equipment registration (2026-11-12, PR preparation)
+
+The warehouse key and the worker profile's access card also offer
+**Regjistron pajisje** (`register`), only for the company-wide warehouse.
+This grants `warehouse.view` and `warehouse.register`, never
+`warehouse.manage` or access to other places. Only an active company admin
+can assign or revoke it. The existing `AccessGrant` row is reused; the
+additive migration widens its constraint without changing anyone's grants.
+
+Registration UI, unknown-code intake and the registration server command use
+fresh `warehouse.register` access. The registration command records the worker's
+actual identity and checks permission before idempotency receipts, including
+after revocation. Existing office management, repair and personal handover
+permissions stay unchanged; this new grant does not confer any of them.
+Registration-only workers may print labels for their own registered inventory
+items; existing equipment and vehicle labels remain restricted.
+
+An engineer can use the existing Workzone warehouse and registration form
+without changing their crew role or becoming an administrator. No employee's
+real permissions are activated by deploying this feature. Change `register`
+to `view` to stop adding equipment, or `none` to remove warehouse page access.
+Beside the employee profile's main actions, **Regjistro pajisje** opens the shared warehouse
+with the form ready. Unknown-code intake also goes there, rather than adding
+an unassigned item inside the profile's holder-filtered inventory list.
+Release/activation still requires the owner's separate approval.
+
+Review: [PR166](https://github.com/IamRedi/redionflow/pull/166).
+Local synthetic verification: 1,154 unit cases, production build/TypeScript,
+full lint and nine browser flows pass. The complete integration run has
+493 passes and one existing notification-completion assertion failure,
+reproduced on the unchanged PR165 baseline (`977ee240`). It is not counted as
+a full integration PASS; production notification behavior was not assessed.
+The handover browser fixture explicitly receives warehouse viewing access;
+its existing business assertions remain unchanged.
+
+The native presentation and portfolio keep their accepted public claims:
+NO_CONTENT_CHANGE for this internal, unreleased permission refinement.
+Existing presentation follow-ups remain separate. No real grants were changed.
+
+Synthetic review captures:
+
+![Warehouse key on desktop, with fictional company data](assets/warehouse-registration-key-desktop.png)
+
+![Registration-only choice on a narrow screen, with fictional workers](assets/warehouse-registration-key-phone.png)
+
+![Visible intake entry on an employee profile, with fictional data](assets/warehouse-registration-employee-phone.png)
+
 ## Migration from crew roles
 
 Until the switch-on, `legacyActions()` gives each crew role exactly its

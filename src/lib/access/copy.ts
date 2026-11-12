@@ -4,6 +4,8 @@ const LANGS = ["sq", "en", "de", "it", "pl", "ro"] as const;
 const words = {
   access: ["Akseset", "Access", "Zugriff", "Accessi", "Dostęp", "Acces"],
   acts: ["Vepron", "Can act", "Darf handeln", "Può operare", "Może działać", "Poate acționa"],
+  registers: ["Regjistron pajisje", "Registers equipment", "Erfasst Geräte", "Registra attrezzature", "Rejestruje sprzęt", "Înregistrează echipamente"],
+  registerHint: ["Shton pajisje të reja; kjo leje nuk jep menaxhimin e pajisjeve ekzistuese.", "Adds new equipment; this permission does not grant management of existing equipment.", "Erfasst neue Geräte; diese Freigabe erlaubt keine Verwaltung bestehender Geräte.", "Aggiunge nuove attrezzature; questo permesso non consente di gestire quelle esistenti.", "Dodaje nowy sprzęt; to uprawnienie nie pozwala zarządzać istniejącym sprzętem.", "Adaugă echipamente noi; această permisiune nu acordă gestionarea celor existente."],
   sees: ["Shikon", "Can view", "Darf sehen", "Può vedere", "Może widzieć", "Poate vedea"],
   add: ["Shto", "Add", "Hinzufügen", "Aggiungi", "Dodaj", "Adaugă"],
   remove: ["Hiq", "Remove", "Entfernen", "Rimuovi", "Usuń", "Elimină"],

@@ -13,7 +13,7 @@ export type OwnedAsset = {
   code: string | null; plate: string | null; size: string | null; category: AssetSummary['category']; photoUrl: string | null;
 };
 const owned = (actor: AssetActor) => ({ companyProfileId: actor.companyId });
-const permissions = (actor: AssetActor) => ({ canManage: actor.canManage, canRepair: actor.canRepair, workerId: actor.workerId });
+const permissions = (actor: AssetActor) => ({ canRegister: actor.canRegister, canManage: actor.canManage, canRepair: actor.canRepair, workerId: actor.workerId });
 const activeRepairs = ['reported','received','repairing'];
 const holderStatuses = ['ACTIVE','PENDING_ADMIN_DELETE_CONFIRMATION','PENDING_WORKER_DELETE_CONFIRMATION'] as const;
 const personName = (person: { firstName: string; lastName: string }) => `${person.firstName} ${person.lastName}`.trim();
@@ -145,6 +145,7 @@ async function completeHandover(tx: Tx, actor: AssetActor, asset:OwnedAsset, han
 export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
   const parsed=assetMutationSchema.safeParse(input); if(!parsed.success)return assetFail('INVALID_INPUT');
   const actor=await assetActor(), {requestId,command:c}=parsed.data;
+  if (c.type === 'register' && !actor.canRegister) return assetFail('DENIED');
   const fingerprint=createHash('sha256').update(JSON.stringify([assetActorKey(actor),c])).digest('hex');
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`asset-receipt:${actor.companyId}:${requestId}`}))`;
@@ -152,7 +153,7 @@ export async function runAssetMutation(input:AssetMutation):Promise<unknown> {
     if(receipt){if(receipt.actorKey!==assetActorKey(actor)||receipt.fingerprint!==fingerprint)return assetFail('CONFLICT');return receipt.result;}
     let result:Prisma.InputJsonValue={saved:true};
     if(c.type==='register') {
-      requireManage(actor); const refs:AssetRef[]=[];
+      const refs:AssetRef[]=[];
       for(let i=0;i<(c.quantity??1);i++){
         const suffix=(c.quantity??1)>1?`-${String(i+1).padStart(3,'0')}`:'';
         const item=await tx.companyInventoryItem.create({data:{...owned(actor),category:c.category==='clothing'?'CLOTHING':c.category==='equipment'?'SITE_EQUIPMENT':'WORK_TOOL',name:c.name,itemCode:c.code?`${c.code}${suffix}`:`INV-${randomUUID().slice(0,12)}`,barcode:c.barcode?`${c.barcode}${suffix}`:await freshLabel(tx,actor),sizeLabel:c.size,note:c.note}});

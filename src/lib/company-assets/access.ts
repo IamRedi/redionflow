@@ -3,8 +3,10 @@ import { getCurrentWorker } from '@/lib/workzone/worker-session';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { loadWorkerAccess } from '@/lib/access/load';
+import { can } from '@/lib/access/rules';
 
-export type AssetActor = { companyId: string; userId: string | null; workerId: string | null; name: string; canManage: boolean; canRepair: boolean };
+export type AssetActor = { companyId: string; userId: string | null; workerId: string | null; name: string; canRegister: boolean; canManage: boolean; canRepair: boolean };
 export class AssetOperationError extends Error { constructor(readonly code: string) { super(code); this.name = 'AssetOperationError'; } }
 export const assetFail = (code: string): never => { throw new AssetOperationError(code); };
 export const assetActorKey = (actor: AssetActor) => actor.userId ? `user:${actor.userId}` : `worker:${actor.workerId}`;
@@ -18,10 +20,12 @@ export async function assetActor(): Promise<AssetActor> {
     if (admin) {
       const user = await tx.user.findFirst({ where: { id: admin.id, companyProfileId: companyId, role: 'ADMIN', isActive: true }, select: { id: true, name: true, email: true } });
       if (!user) return assetFail('DENIED');
-      return { companyId, userId: user.id, workerId: null, name: user.name || user.email, canManage: true, canRepair: true };
+      return { companyId, userId: user.id, workerId: null, name: user.name || user.email, canRegister: true, canManage: true, canRepair: true };
     }
     const fresh = await tx.worker.findFirst({ where: { id: worker!.id, companyProfileId: companyId, status: 'active' }, select: { id: true, firstName: true, lastName: true, crewRole: true } });
     if (!fresh) return assetFail('DENIED');
-    return { companyId, userId: null, workerId: fresh.id, name: `${fresh.firstName} ${fresh.lastName}`.trim(), canManage: fresh.crewRole === 'OFFICE', canRepair: fresh.crewRole === 'OFFICE' || fresh.crewRole === 'MECHANIC' };
+    const subject = await loadWorkerAccess(tx, companyId, fresh.id);
+    if (!subject || subject.kind !== 'worker' || !subject.active) return assetFail('DENIED');
+    return { companyId, userId: null, workerId: fresh.id, name: `${fresh.firstName} ${fresh.lastName}`.trim(), canRegister: can(subject, 'warehouse.register'), canManage: fresh.crewRole === 'OFFICE', canRepair: fresh.crewRole === 'OFFICE' || fresh.crewRole === 'MECHANIC' };
   });
 }

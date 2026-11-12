@@ -15,7 +15,7 @@ beforeEach(async()=>{
  const admin=await prisma.user.create({data:{companyProfileId:companyId,name:'Fictional chief',email:`legacy-${randomUUID()}@example.test`,role:'ADMIN'}});
  const person=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Fictional',lastName:'Worker'}});workerId=person.id;
  const item=await prisma.companyInventoryItem.create({data:{companyProfileId:companyId,name:'Fictional drill',category:'WORK_TOOL',itemCode:'LEGACY-DRILL'}});itemId=item.id;
- boss={companyId,userId:admin.id,workerId:null,name:'Fictional chief',canManage:true,canRepair:true};worker={companyId,userId:null,workerId,name:'Fictional Worker',canManage:false,canRepair:false};identity.actor.mockResolvedValue(boss);
+ boss={companyId,userId:admin.id,workerId:null,name:'Fictional chief',canRegister:true,canManage:true,canRepair:true};worker={companyId,userId:null,workerId,name:'Fictional Worker',canRegister:false,canManage:false,canRepair:false};identity.actor.mockResolvedValue(boss);
 });
 afterEach(async()=>{await prisma.companyOperationalAsset.deleteMany({where:{companyProfileId:companyId}});await prisma.workerAssetItem.deleteMany({where:{companyInventoryItemId:itemId}});await prisma.inventoryAssetMovement.deleteMany({where:{companyProfileId:companyId}});await prisma.user.deleteMany({where:{companyProfileId:companyId}});await prisma.companyProfile.delete({where:{id:companyId}});});
 it.each(['PENDING_ADMIN_CONFIRMATION','PENDING_WORKER_CONFIRMATION'] as const)('completes an authentic existing %s with the opposite party and records one TAKE',async status=>{
