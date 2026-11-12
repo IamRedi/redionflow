@@ -97,6 +97,27 @@ crews then alphabetical idle sites, and reprioritizes when the crew moves. No
 real business confirmation, account or permission was written during diagnosis.
 
 
+## Workshop clear glass and empty bays — 12 November 2026
+
+Owner refinement: the steel workshop uses a clearer ice-glass variant with
+lower opacity and 2px backdrop blur, retaining the accepted warm scene, accents,
+original pictures and light/dark identity. Active phase wrappers and the history
+wrapper are unframed; empty phases retain only their compact heading/count on
+desktop. Phones retain one row of phase controls, with complete wrapping labels
+and no duplicate empty heading below. Empty history does not show an empty grid
+or a useless expansion control. The filtered no-results message remains concise.
+
+Existing read models, polling, repair commands, counts, historical job selection,
+scan, work presence and authorization are unchanged. The visibility/material
+rules are scoped to the steel workshop; other routes and classic styling retain
+their existing behavior. Reduced-transparency/forced-color fallbacks remain.
+
+Focused evidence: `tests/e2e/steel-workshop-clear-glass.spec.ts` covers empty,
+partly populated and fully empty states, both themes and desktop/phone/short
+landscape; repair/machine/grant records must remain identical through viewing,
+filtering and historical-detail open/close. Existing service/fleet regressions
+remain part of acceptance. Physical-phone approval and deployment are separate.
+
 ## Fleet and control-panel crystal — 12 November 2026
 
 The authenticated steel admin shell now loads the same warm stone/copper
