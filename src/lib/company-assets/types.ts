@@ -52,6 +52,7 @@ export type AssetCommand =
   | { type: 'report'; asset: AssetRef; kind: 'defect' | 'lost' | 'retire'; note: string }
   | { type: 'decide-incident'; incidentId: string; revision: number; approve: boolean; note: string }
   | { type: 'handover'; asset: AssetRef; kind: 'issue' | 'return' | 'transfer'; toWorkerId?: string; siteId?: string; note?: string }
+  | { type: 'issue-clothing-group'; group: ClothingGroupFilter; toWorkerId: string; quantity: number; note?: string }
   | { type: 'confirm-handover' | 'decline-handover' | 'cancel-handover'; handoverId: string; revision: number; note?: string }
   | { type: 'repair-phase'; repairId: string; revision: number; phase: 'received' | 'repairing' | 'ready'; repairNote?: string; tested?: boolean }
   | { type: 'repair-location'; repairId: string; revision: number; location: RepairLocation; provider?: string; note: string }

@@ -1,5 +1,9 @@
 type Lang = 'sq' | 'en' | 'de' | 'it' | 'pl' | 'ro';
 const words = {
+  issueClothing: ['Shpërndaj veshje','Issue clothing','Kleidung ausgeben','Distribuisci indumenti','Wydaj odzież','Distribuie îmbrăcăminte'],
+  requestGroupIssue: ['Kërko dorëzimin','Request handover','Übergabe anfordern','Richiedi consegna','Zleć przekazanie','Solicită predarea'],
+  groupIssueHint: ['Çdo copë ruan konfirmimet ekzistuese. Kalimi te punonjësi kryhet vetëm pasi të plotësohen.','Every piece keeps its existing confirmations. Custody changes only once they are complete.','Jedes Stück behält die erforderlichen Bestätigungen. Die Zuordnung ändert sich erst nach deren Abschluss.','Ogni pezzo conserva le conferme previste. L’assegnazione cambia solo quando sono complete.','Każda sztuka zachowuje wymagane potwierdzenia. Przypisanie zmienia się dopiero po ich zebraniu.','Fiecare bucată păstrează confirmările necesare. Atribuirea se schimbă numai după completarea lor.'],
+  groupIssuePending: ['copë në pritje të konfirmimeve.','pieces awaiting confirmations.','Stück warten auf Bestätigung.','pezzi in attesa delle conferme.','szt. oczekuje na potwierdzenie.','bucăți așteaptă confirmările.'],
   reserve: ['Rezervë','Reserve','Reserve','Scorta','Zapas','Rezervă'],
   withWorkers: ['Te punonjësit','With employees','Bei Mitarbeitern','Ai dipendenti','U pracowników','La angajați'],
   otherState: ['Gjendje tjetër','Other status','Anderer Status','Altro stato','Inny status','Altă stare'],
