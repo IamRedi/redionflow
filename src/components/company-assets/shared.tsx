@@ -10,6 +10,7 @@ import { MachineArt, machineKind } from '@/components/steel/machine-art';
 import type { AssetCommand, AssetOperationalStatus, AssetQuery, AssetSnapshot, AssetSummary } from '@/lib/company-assets/types';
 import { operationalStatusLabels, unknownAssetStatus, type OperationalStatusKey } from '@/lib/company-assets/status';
 import type { AssetCopy } from './copy';
+import { visibleAssetCode } from '@/lib/company-assets/identity';
 
 export const assetButton = 'steelStudioAssetButton inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 py-2 text-sm font-semibold outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-50';
 export const assetPrimary = `${assetButton} border-orange-700 bg-orange-700 text-white hover:bg-orange-800 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400`;
@@ -160,7 +161,7 @@ export function useMachineOperationalStatuses(machines: { id: string; operationa
   }
   return { statusFor, reload };
 }
-export function assetIdentity(asset: Pick<AssetSummary, 'code' | 'plate' | 'size'>) { return [asset.plate, asset.code, asset.size].filter(Boolean).join(' · '); }
+export function assetIdentity(asset: Pick<AssetSummary, 'code' | 'plate' | 'size'> & Partial<Pick<AssetSummary,'category'>>) { return [asset.plate, visibleAssetCode(asset), asset.size].filter(Boolean).join(' · '); }
 export function assetTime(value: string, language: string) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return '—';
