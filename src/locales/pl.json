@@ -800,6 +800,8 @@
     "confirmStep": "Potwierdź {step}",
     "factoryOutput": "Produkcja na budowy",
     "factoryOutputHint": "Tylko podgląd, potwierdza się na budowie",
+    "factoryProcessProgress": "Postęp etapów produkcji",
+    "factoryPartsLine": "Cięcie części: {done}/{total} szt.",
     "produced": "Wyprodukowano",
     "mountedOnSite": "{n} zamontowanych na budowie",
     "newProject": "Nowy projekt",

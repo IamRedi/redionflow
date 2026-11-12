@@ -1882,6 +1882,8 @@
     "confirmStep": "Konfirmo {step}",
     "factoryOutput": "Prodhimi për kantieret",
     "factoryOutputHint": "Vetëm shikim, konfirmohet te kantieri",
+    "factoryProcessProgress": "Progresi i proceseve",
+    "factoryPartsLine": "Prerja e pjesëve: {done}/{total} copë",
     "produced": "Prodhuar",
     "mountedOnSite": "{n} të montuara në kantier",
     "newProject": "Projekt i ri",

@@ -1826,6 +1826,8 @@
     "confirmStep": "Confirm {step}",
     "factoryOutput": "Production per site",
     "factoryOutputHint": "View only, checked on the site",
+    "factoryProcessProgress": "Production process progress",
+    "factoryPartsLine": "Part cutting: {done}/{total} pcs",
     "produced": "Produced",
     "mountedOnSite": "{n} mounted on site",
     "newProject": "New project",

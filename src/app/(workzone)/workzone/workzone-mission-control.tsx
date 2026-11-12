@@ -21,6 +21,7 @@ import { useMapFleet, useSetWorkzoneMapMode } from "./workzone-map-fleet";
 import { isSteelSiteType, type SteelSiteShape } from "@/lib/workzone/steel-phases";
 import { WorkingControls } from "./baustellen/[baustelleId]/working-controls";
 import { LiveWorkerNames } from "./live-worker-names";
+import { orderWorkzoneSites } from "@/lib/workzone/site-order";
 
 type MissionItem = {
   id: string;
@@ -82,17 +83,7 @@ function canvasSignature(items: MissionItem[]) {
 }
 
 function orderedCanvasItems(items: MissionItem[]) {
-  return [...items].sort((a, b) => {
-    const aLiveTime = a.liveSince ? Date.parse(a.liveSince) : 0;
-    const bLiveTime = b.liveSince ? Date.parse(b.liveSince) : 0;
-    const liveTimeDelta = bLiveTime - aLiveTime;
-    if (liveTimeDelta !== 0) return liveTimeDelta;
-    const activeDelta = Number(b.status === "active") - Number(a.status === "active");
-    if (activeDelta !== 0) return activeDelta;
-    const liveDelta = b.activeLiveCount - a.activeLiveCount;
-    if (liveDelta !== 0) return liveDelta;
-    return a.name.localeCompare(b.name, "de");
-  });
+  return orderWorkzoneSites(items);
 }
 
 function canvasMetrics(viewport: CanvasViewport, items: MissionItem[]) {
@@ -552,7 +543,7 @@ export function WorkzoneMissionControl({
             </Button>
           </div>
           {toolbar ? <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">{toolbar}</div> : null}
-          <div ref={siteListRef} data-studio-site-list={realistic || undefined}>{items.map((item) => {
+          <div ref={siteListRef} data-studio-site-list={realistic || undefined}>{orderedCanvasItems(items).map((item) => {
             const hasCover=isSteelSiteType(item.type)||Boolean(item.photoUrl);
             const target = displayPositions[item.id] ?? { x: 20, y: 20 };
             const standort = item.standortAddress || defaultAddress;

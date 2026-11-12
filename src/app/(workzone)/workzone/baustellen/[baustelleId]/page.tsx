@@ -339,7 +339,7 @@ export default async function BaustelleDetailPage({
     }));
     const factoryView =
       factoryOutput(
-        withoutWeights(elementRows, showWeights).filter((element) => element.list === "assembly").map((element) => ({ ...element, baustelleId: baustelle.id })),
+        withoutWeights(elementRows, showWeights).map((element) => ({ ...element, baustelleId: baustelle.id })),
         [{ id: baustelle.id, name: baustelle.name }],
       )[0] ?? null;
     const shape = steelSiteShape(baustelle.name, baustelle.description);
