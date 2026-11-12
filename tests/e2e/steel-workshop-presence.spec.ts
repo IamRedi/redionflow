@@ -27,7 +27,7 @@ test('factory and workshop show actual people; compact workshop preserves repair
    await page.setViewportSize({width,height});await context.addCookies([{name:'bk_theme',value:theme,url:base}]);await page.goto('/workzone');
    await page.locator('#fabrika').scrollIntoViewIfNeeded();
    if(!baseline){
-    const names=page.locator('#fabrika').getByTestId('live-worker-names');await expect(names).toContainText('Arben');await expect(names).toHaveAttribute('aria-label','Arben DEMO, Elira DEMO, Dritan DEMO, Mira DEMO');
+    const names=page.locator('#fabrika').getByTestId('live-worker-names');await expect(names).toBeVisible();expect((await names.getAttribute('aria-label'))?.split(', ').sort()).toEqual(workers.map(w=>`${w.firstName} ${w.lastName}`).sort());
     expect(await names.getAttribute('title')).toBeNull();await names.click();await expect(page.getByTestId('live-worker-names-list')).toContainText('Mira DEMO');
     await page.screenshot({path:`${out}/after-factory-${theme}-${width}.png`});await page.locator('#fabrika h2').click();
    }else await page.screenshot({path:`${out}/before-factory-${theme}-${width}.png`});
