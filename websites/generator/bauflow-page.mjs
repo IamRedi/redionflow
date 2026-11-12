@@ -2,7 +2,7 @@ import copy from './bauflow-copy.mjs';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const revision=createHash('sha256').update(await readFile(new URL('./bauflow.css',import.meta.url))).digest('hex').slice(0,12);
+const revision=createHash('sha256').update((await readFile(new URL('./bauflow.css',import.meta.url),'utf8')).replace(/\r\n/g,'\n')).digest('hex').slice(0,12);
 const paths={arrow:'M5 12h14m-6-6 6 6-6 6',office:'M4 21V4h11v17M8 8h3m-3 4h3m-3 4h3m4-7h5v12M2 21h20',plan:'M5 5h14v16H5zM8 3v4m8-4v4M5 10h14m-10 4h1m4 0h1m-6 3h1',factory:'M3 21V9l6 3V6l6 5V3h4l2 18H3zm3-5h2m4 0h2m4 0h1',document:'M5 3h10l4 4v14H5zM15 3v5h4M8 12h8m-8 4h8',warehouse:'m3 9 9-6 9 6v12H3V9zm4 12V11h10v10m-10-6h10m-10 3h10',fleet:'M3 7h11v11H3zM14 11h4l3 4v3h-7M8 18a2 2 0 1 1-4 0m16 0a2 2 0 1 1-4 0',clock:'M12 7v5l3 2M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',check:'m5 12 4 4L19 6',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m0-6v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1'};
 const icon=k=>`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[k]}"/></svg>`;
 export function renderBauflow(p,lang,isIndex,links){
