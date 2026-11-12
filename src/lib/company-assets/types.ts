@@ -39,6 +39,7 @@ export type AssetCodeView = { id: string; kind: 'factory' | 'label'; value: stri
 export type AssetDetail = { asset: AssetSummary; codes: AssetCodeView[]; repairs: AssetRepairView[]; incidents: AssetIncidentView[]; handovers: AssetHandoverView[]; history: AssetHistoryView[]; files: AssetFileView[]; permissions: AssetPermissions };
 export type ClothingGroupFilter = { name: string; size: string | null };
 export type ClothingGroup = ClothingGroupFilter & { key: string; total: number; reserve: number; assigned: number; other: number };
+export type ClothingHandoverBatchView = ClothingGroupFilter & { id: string; total: number; items: AssetHandoverView[]; createdAt: string };
 export type AssetSnapshot = {
   assets: AssetSummary[]; total: number; page: number; hasMore: boolean;
   counts: { total: number; available: number; issued: number; workshop: number; pending: number; lost: number; retired: number };
@@ -46,13 +47,15 @@ export type AssetSnapshot = {
   permissions: AssetPermissions; serverNow: string;
   queueHasMore?: { handovers: boolean; incidents: boolean; repairs: boolean };
   clothingGroups?: { groups: ClothingGroup[]; total: number };
+  handoverBatches?: ClothingHandoverBatchView[];
 };
-export type AssetQuery = { query?: string; scan?: string; page?: number; category?: AssetCategory; includeInactive?: boolean; workerId?: string; groupClothing?: boolean; clothingGroup?: ClothingGroupFilter };
+export type AssetQuery = { query?: string; scan?: string; page?: number; category?: AssetCategory; includeInactive?: boolean; workerId?: string; groupClothing?: boolean; groupHandovers?: boolean; clothingGroup?: ClothingGroupFilter };
 export type AssetCommand =
   | { type: 'report'; asset: AssetRef; kind: 'defect' | 'lost' | 'retire'; note: string }
   | { type: 'decide-incident'; incidentId: string; revision: number; approve: boolean; note: string }
   | { type: 'handover'; asset: AssetRef; kind: 'issue' | 'return' | 'transfer'; toWorkerId?: string; siteId?: string; note?: string }
   | { type: 'issue-clothing-group'; group: ClothingGroupFilter; toWorkerId: string; quantity: number; note?: string }
+  | { type: 'confirm-clothing-batch'; batchId: string; members: { id: string; revision: number }[]; note?: string }
   | { type: 'confirm-handover' | 'decline-handover' | 'cancel-handover'; handoverId: string; revision: number; note?: string }
   | { type: 'repair-phase'; repairId: string; revision: number; phase: 'received' | 'repairing' | 'ready'; repairNote?: string; tested?: boolean }
   | { type: 'repair-location'; repairId: string; revision: number; location: RepairLocation; provider?: string; note: string }
