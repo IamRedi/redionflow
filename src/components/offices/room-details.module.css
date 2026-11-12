@@ -1,0 +1,14 @@
+.natural [data-office-etching]{padding:3px 5px;gap:7px;border:0;border-radius:0;background:none;box-shadow:none;color:#f5ecda;text-shadow:0 1px 1px #20150fe6,0 -1px 0 #ffffff1c;transform:perspective(900px) rotateY(-2deg)}
+.natural [data-office-etching] strong{font-size:12px;font-weight:550;letter-spacing:.015em}
+.natural [data-office-etching] svg{width:16px;height:16px;flex:none;filter:drop-shadow(0 1px 1px #20150f99)}
+.natural [data-office-object=mail]{padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform:perspective(450px) rotateX(12deg) rotateZ(-3deg);color:#2c433a}
+.natural [data-office-envelope]{top:0;left:0;width:100%;height:100%;rotate:-1deg;border-radius:1px;background:linear-gradient(150deg,#fffdf0,#e2e2d3);box-shadow:2px 6px 8px #271b1238,0 -3px 0 #f3f0df}
+.natural [data-office-object=mail]>span:last-child{position:absolute;bottom:7px;left:9px;right:9px;justify-content:center;gap:6px;font-size:11px;text-shadow:0 1px 0 #fff9}
+.natural [data-office-object=mail] b{background:#e0ead7c9;border:1px solid #82998955;color:#25483d;box-shadow:inset 0 1px 0 #fff8}
+.natural [data-office-object=tasks]>svg{width:19px;height:19px;stroke-width:1.25}.natural [data-office-object=tasks] strong{font-weight:550;letter-spacing:.015em}
+.natural [data-office-object=assistant]{border:0;border-radius:0;background:linear-gradient(115deg,#edfce610,transparent 48%),linear-gradient(#223d3c88,#132b29a8);box-shadow:none}
+.natural [data-office-object=assistant] strong{font-size:13px;letter-spacing:.025em;font-weight:550}.natural [data-office-object=assistant] small{font-size:9px}
+.natural [data-office-art-edit]{border:0;border-radius:0;background:none;box-shadow:none;filter:drop-shadow(0 1px 2px #081a16);color:#f8f6e8}
+@media(max-width:700px) and (min-height:481px){.natural [data-office-etching]{gap:4px;padding:3px}.natural [data-office-etching] strong{font-size:10px}.natural [data-office-etching] svg{width:14px;height:14px}.natural [data-office-object=mail]>span:last-child{bottom:5px;left:5px;right:5px;font-size:10px;gap:4px}.natural [data-office-object=assistant] strong{font-size:13px}}
+@media(max-height:480px){.natural [data-office-object=assistant] strong{font-size:11px}.natural [data-office-object=assistant] small{display:none}.natural [data-office-etching] strong{font-size:10px}.natural [data-office-object=mail]>span:last-child{font-size:10px}}
+@media(forced-colors:active){.natural [data-office-etching]{color:CanvasText;background:Canvas;text-shadow:none}.natural [data-office-object=assistant]{background:Canvas;color:CanvasText}}

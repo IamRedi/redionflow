@@ -6,6 +6,7 @@ import type { OfficeArtworkState } from '@/lib/offices/artwork';
 import { updateOfficeArtwork } from '@/lib/offices/artwork-actions';
 import { MAX_PHOTO_BYTES } from '@/lib/asset-photos/image-limits';
 import s from './studio.module.css';
+import glass from './surfaces.module.css';
 
 const defaultArt = '/office-studio-v1/connected-work-artwork.webp';
 export function OfficeArtwork({ initial, sq }: { initial?: OfficeArtworkState; sq: boolean }) {
@@ -27,8 +28,8 @@ export function OfficeArtwork({ initial, sq }: { initial?: OfficeArtworkState; s
   // Already compressed WebP; private URLs must retain browser authentication.
   const picture = <span className={s.artMat}><Image unoptimized width={1100} height={825} src={source} alt={sq ? 'Piktura e zyrës' : 'Office artwork'} draggable={false}/></span>;
   return <>
-    {art?.editable ? <button type="button" className={s.artFrame} data-testid="office-artwork" aria-label={sq ? 'Ndrysho foton e zyrës' : 'Change office photo'} onClick={() => { setError(''); dialog.current?.showModal(); }}>{picture}<span className={s.artEdit} aria-hidden="true"><Pencil size={12}/></span></button> : <figure className={s.artFrame} data-testid="office-artwork">{picture}</figure>}
-    {art?.editable && <dialog ref={dialog} className={s.artDialog} aria-labelledby="office-art-title" onCancel={event => { if (busy) event.preventDefault(); }}>
+    {art?.editable ? <button type="button" className={s.artFrame} data-testid="office-artwork" aria-label={sq ? 'Ndrysho foton e zyrës' : 'Change office photo'} onClick={() => { setError(''); dialog.current?.showModal(); }}>{picture}<span className={s.artEdit} data-office-art-edit aria-hidden="true"><Pencil size={12}/></span></button> : <figure className={s.artFrame} data-testid="office-artwork">{picture}</figure>}
+    {art?.editable && <dialog ref={dialog} className={`${s.artDialog} ${glass.dialog}`} aria-labelledby="office-art-title" onCancel={event => { if (busy) event.preventDefault(); }}>
       <header><button type="button" disabled={busy} onClick={() => dialog.current?.close()} aria-label={sq ? 'Kthehu në zyrë' : 'Back to office'}><ArrowLeft size={18}/></button><h2 id="office-art-title">{sq ? 'Fotoja e zyrës' : 'Office photo'}</h2></header>
       <div className={s.artPreview}><Image unoptimized width={1100} height={825} src={source} alt={sq ? 'Fotoja aktuale' : 'Current photo'}/></div>
       <p>{sq ? 'Zgjidh një foto tënden. Ajo duket për personat që mund të vizitojnë zyrën.' : 'Choose your own photo. It is visible to people who can visit your office.'}</p>

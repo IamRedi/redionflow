@@ -1,5 +1,52 @@
 # Company offices — reception and Megi's office
 
+## Current office UI candidate — 12 November 2026
+
+Owner direction: the existing photographic office is the visual baseline.
+Furniture actions belong to the scene: drawer names and small Lucide line-art
+icons sit directly on wood, without a label plate; mail remains a paper envelope,
+tasks a clipboard and the assistant the computer screen. Keep the original
+wide/portrait room and artwork assets, object positions, keyboard labels and
+44px touch targets. This supersedes the initial CSS-room description below.
+
+Work windows use the office's warm stone/teal crystal material, shared typography
+and compact controls. Preserve existing action hues, including orange primary
+actions and the company chat's green message/send colors. Glass changes material,
+not action meaning. Mail, task lists/editors, documents, workbooks and team pages
+share one viewport-sized work surface with a single primary scroll region; the
+daily plan gets this treatment only through its existing verified `office=desk`
+entry. Work pages keep the existing author signature at the true end of their
+scrolling content; scene/chat surfaces retain the existing About exception.
+No new legal destination or unrelated application-wide style is introduced.
+
+For the two **configured admin principals**, with office work enabled, the tenant
+logo is branding only. The existing company assistant opens from the monitor at
+`/workzone/offices/me/assistant`, beside it on a wide screen and within the visible
+viewport on phones/short windows. Native modal focus containment and Escape/close
+return to the monitor. The durable company conversation component, archives,
+read-only tools, access/quotas/provider and business APIs are unchanged. Each
+principal sees their own archive; visitors get no private scene actions. Other
+admins and workers retain their existing logo-assistant entries. The separately
+authorized staff assistant keeps its existing identity and permission checks.
+
+Preparation branch: `feat/office-scene-crystal-ui-20261112`. It includes PR174
+(`872002b`) without modifying the other agent's attendance/production work. No
+schema, real records, permissions, provider/feature configuration or original
+photos change. Local visual evidence and exact check outcomes belong in the PR;
+this candidate is not live until separately approved, merged and deployed.
+
+Local verification: production build, scoped ESLint, 31 office-policy/private
+history checks and the office UI browser flow passed on isolated WSL/synthetic
+data. Before/after captures cover room, company chat, mail, tasks, documents and
+workbooks at 1440×900 light, 390×844 dark, 320×740 light and 760×390 dark. Checks
+include private archives for both principals, disabled-assistant denial, the
+unchanged logo entry for another admin, visitor privacy, Escape/focus return,
+internal editor/footer scrolling, plan entry and a 200% visual viewport. No
+provider request, real task/mail submission or physical-phone keyboard test was
+performed. The original action-color variables match the captured baseline.
+
+The remaining sections record the original phase-B implementation/history.
+
 VO-ALSTEEL-001, first implementation slice, 11 November 2026.
 Prepared from production `61da78ccc78d2acf39c255bd3410bb1f803ebc25` (PR149).
 Phase B shipped as PR150 / merge `1dfb0ef` on 11 November 2026. Reception and
