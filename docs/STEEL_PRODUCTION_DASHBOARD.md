@@ -312,3 +312,12 @@ The Workzone daily plan, saved-plan calendar and site-creation sheet reuse the e
 The steel dashboard reuses the same artwork and warm material language, with opaque chart canvases for legible labels and distinct production series in both themes. Refresh, monitor and copy remain the same operations, presented as three corner icons with accessible names and 44px targets. Compact filters and smaller gaps give the metrics and charts more space. This is a presentation-only change: no database, authorization, notification, attendance or production-calculation changes. Classic company screens remain outside the steel visual scope.
 
 Focused acceptance: `tests/e2e/steel-planning-crystal.spec.ts`, the existing dashboard/theme suites, plan-hours, steel header/footer and Workzone-studio regressions. Local rendered evidence is separate from owner acceptance and a production deployment; the owner must approve merge/deploy.
+
+
+### Crystal worker profiles, notebooks and factory process cards — 12 November 2026
+
+Worker profiles and their daily/monthly report routes reuse the accepted warm crystal material through steel-scoped markers and a shared notebook surface. Start/stop keep their semantic green/red colors, compact controls retain touch targets, and the existing report rows, hours, permissions and A4 print branch remain unchanged. Non-steel companies keep their original presentation.
+
+Factory-list process cards reuse `SteelWorkVisual` and its existing company-photo-first fallback. The factory grid adapts to available width; field-list rendering and all stage selection, quantities, permissions and confirmations stay on their existing paths. Office navigation has a more specific border-free rule so the legacy native navigation border cannot draw a line across the room.
+
+Focused evidence: `tests/e2e/steel-profile-notebook-crystal.spec.ts`, existing worker-profile/document/photo and factory-sync/Workzone regressions. Before/after synthetic renders cover desktop, narrow/touch and short landscape, light/dark, text zoom, office navigation and report print. Local acceptance and owner production acceptance remain separate.

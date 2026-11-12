@@ -1,3 +1,4 @@
+import { NotebookSurface } from '@/components/reports/notebook-surface';
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -51,7 +52,7 @@ export default async function MonthlyReportPage({ params }: { params: Promise<{ 
     .filter((row): row is { id: string; date: string; start: string; end: string } => Boolean(row));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 print:max-w-none print:text-black">
+    <NotebookSurface companyId={report.worker.companyProfileId} className="mx-auto max-w-6xl space-y-4 print:max-w-none print:text-black">
       <div className="flex items-center justify-between gap-2 print:hidden">
         <Link href="/workzone/profile" title={t("report.back")} aria-label={t("report.back")} className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
           <ArrowLeft className="size-4" />
@@ -106,6 +107,6 @@ export default async function MonthlyReportPage({ params }: { params: Promise<{ 
           </section>
         </CardContent>
       </Card>
-    </div>
+    </NotebookSurface>
   );
 }

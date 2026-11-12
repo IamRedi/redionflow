@@ -1,3 +1,4 @@
+import '@/components/steel/steel-studio.css';
 import { explicitWorkplaceLabel } from '@/lib/workzone/explicit-workplace';
 import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
 import { WorkerAccessPanel } from "@/components/access/worker-access-panel";
@@ -299,7 +300,7 @@ export async function WorkerProfileView({
   const metricLink = "group flex min-h-16 min-w-0 flex-col justify-center gap-1 px-2 py-2 transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4";
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-3" data-testid="worker-profile">
+    <div className="mx-auto w-full max-w-4xl space-y-3" data-testid="worker-profile" data-steel-studio={assetOperations || undefined} data-studio-profile={assetOperations || undefined}>
       {/* Who: photo, name, role. Start and stop right below. */}
       <section className="relative overflow-hidden rounded-2xl border bg-card" data-testid="worker-profile-summary">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
