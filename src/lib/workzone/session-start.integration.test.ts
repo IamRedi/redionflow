@@ -9,9 +9,34 @@ import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '.
 import { beginWorkerSession } from './session-start';
 import { startWorkerSessionAction, startWorkSessionPauseAction, stopWorkerSessionAction, stopWorkSessionPauseAction } from '@/app/(workzone)/workzone/hr-actions';
 import { startWorkingAction } from '@/app/(workzone)/workzone/actions';
+import { ownOfficePresence, startOwnOfficeWork } from '@/lib/offices/presence';
 import { workDateTimeInput, parseWorkDateTime, monthKey } from './date-utils';
 const pressedLongAgo=(id:string)=>prisma.$executeRaw`UPDATE "WorkSession" SET "createdAt"=now()-interval '10 minutes' WHERE id=${id}`;
 let tenants:Awaited<ReturnType<typeof seedSecurityTenants>>;
+it('starts only the signed-in office owner, reuses one clock and preserves office until an explicit site start',async()=>{
+ const t=tenants[0],other=tenants[1],workerId=t.worker.id;
+ vi.stubEnv('VIRTUAL_OFFICE_WORK_ENABLED','true');vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','true');
+ vi.stubEnv('VIRTUAL_OFFICE_ACCESS_JSON',JSON.stringify({companyId:t.company.id,megi:{adminId:t.admin.id,workerId},almet:{adminId:'synthetic-unassigned-admin'}}));
+ await Promise.all([startOwnOfficeWork(),startOwnOfficeWork()]);
+ const live=await prisma.workSession.findFirstOrThrow({where:{workerId,isLive:true}});
+ expect(await prisma.workSession.count({where:{workerId,isLive:true}})).toBe(1);expect(live.workplace).toBe('OFFICE');expect(live.baustelleId).toBeNull();expect((await ownOfficePresence()).active).toBe(true);
+ await beginWorkerSession({companyId:t.company.id,workerId,start:new Date(),siteId:t.site.id,fillMissingSite:true});
+ await prisma.workSession.updateMany({where:{workerId,isLive:true,workplace:null},data:{baustelleId:t.site.id}});
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:live.id}})).workplace).toBe('OFFICE');
+ await beginWorkerSession({companyId:t.company.id,workerId,start:new Date(),siteId:t.site.id,moveExisting:true});
+ const moved=await prisma.workSession.findUniqueOrThrow({where:{id:live.id}});expect(moved.workplace).toBeNull();expect(moved.baustelleId).toBe(t.site.id);expect(moved.startTime).toEqual(live.startTime);
+ request.values.clear();request.values.set('bk_worker_id',await createTestSession('worker',workerId));
+ await startOwnOfficeWork();expect((await ownOfficePresence()).active).toBe(true);
+ // Staff offices use the same existing enabled membership, and revocation is immediate.
+ vi.stubEnv('VIRTUAL_OFFICE_ACCESS_JSON',JSON.stringify({companyId:t.company.id,megi:{adminId:t.admin.id},almet:{adminId:'synthetic-unassigned-admin'}}));
+ const member=await prisma.officeMember.create({data:{companyProfileId:t.company.id,workerId,enabled:true,title:'Synthetic office'}});
+ await startOwnOfficeWork();expect((await ownOfficePresence()).active).toBe(true);
+ await prisma.officeMember.update({where:{id:member.id},data:{enabled:false}});await expect(startOwnOfficeWork()).rejects.toThrow('DENIED');
+ await prisma.officeMember.update({where:{id:member.id},data:{enabled:true}});
+ await prisma.worker.update({where:{id:workerId},data:{availability:'VACATION'}});await expect(startOwnOfficeWork()).rejects.toThrow('CONFLICT');
+ request.values.clear();request.values.set('bk_admin_id',await createTestSession('admin',other.admin.id));await expect(startOwnOfficeWork()).rejects.toThrow('DENIED');
+ expect(await prisma.workSession.count({where:{workerId:other.worker.id}})).toBe(0);
+});
 beforeEach(async()=>{vi.stubEnv('SESSION_SIGNING_SECRET','synthetic-plan-hours-local-secret-only');tenants=await seedSecurityTenants();request.values.clear();request.values.set('bk_admin_id',await createTestSession('admin',tenants[0].admin.id));});
 afterEach(async()=>{await removeSecurityTenants(tenants.map(t=>t.company.id));vi.unstubAllEnvs();});
 it('uses one business clock for manual start/stop and refuses a restart inside closed work',async()=>{

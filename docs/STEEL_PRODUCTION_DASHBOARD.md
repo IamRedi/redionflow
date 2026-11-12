@@ -1,5 +1,23 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
+## Catalog containment and office attendance — 12 November 2026
+
+The catalog's process sprite is positioned inside its own thumbnail, including
+the create/edit preview. The shared visual wrapper clips to its bounds; existing
+absolute factory illustrations retain their positioning.
+
+Each office owner gets a compact crystal **Puno në zyrë** action in their own
+room's floating upper navigation. The server resolves the current account's
+existing worker link, never a submitted colleague ID. A manager's preview has
+no attendance control. The existing locked start/resume/move engine records
+`WorkSession.workplace = OFFICE`, preserving a single live clock and the same
+start time when moving from a site. The additive nullable column leaves old
+sessions untouched. Planned-site fill and GPS cannot override this explicit
+office choice; an explicit site start clears it. Workbooks show **Zyrë**;
+**Në zyrë** opens the existing work profile for Nis/Ndalo. Unavailable workers
+cannot start, and an absent account link gives a bounded error without guessing
+identity or creating a worker. No accounts, roles or office grants are changed.
+
 ## Workzone photographic materials — owner redesign, 12 November 2026
 
 Owner correction after PR162: first finish **Workzone home**. Restore orange

@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     lng: parsed.data.lng,
   });
 
-  const matchedBaustelleId = baustelle?.id ?? session.baustelleId ?? null;
+  const matchedBaustelleId = session.workplace === 'OFFICE' ? null : baustelle?.id ?? session.baustelleId ?? null;
   const point = await createGpsLocationPointSafe({
     companyProfileId: worker.companyProfileId,
     workerId: worker.id,
@@ -126,8 +126,8 @@ export async function POST(request: NextRequest) {
   });
   if (!point) return NextResponse.json({ ok: false, message: m.databaseNotReady }, { status: 503 });
 
-  if (!session.baustelleId && baustelle?.id) {
-    await prisma.workSession.update({ where: { id: session.id }, data: { baustelleId: baustelle.id } });
+  if (!session.baustelleId && baustelle?.id && session.workplace !== 'OFFICE') {
+    await prisma.workSession.updateMany({ where: { id: session.id, isLive: true, endTime: null, workplace: null }, data: { baustelleId: baustelle.id } });
   }
 
   return NextResponse.json({ ok: true, baustelleId: matchedBaustelleId });

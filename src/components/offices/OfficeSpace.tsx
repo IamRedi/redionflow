@@ -8,9 +8,10 @@ import {OfficeScene,type OfficeDoor,type OfficeObject} from './OfficeScene';
 import {RediOnFooter} from '@/components/branding/RediOnFooter';
 import s from './office.module.css';
 import studio from './studio.module.css';
+import {OfficeWorkButton} from './OfficeWorkButton';
 
-type Props={artwork?:OfficeArtworkState;room:'reception'|'megi';lang:SupportedLanguage;companyLogo?:string|null;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean};
-export function OfficeSpace({artwork,room,lang,companyName,companyLogo,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false}:Props){
+type Props={presence?:{active:boolean;profile:string}|null;artwork?:OfficeArtworkState;room:'reception'|'megi';lang:SupportedLanguage;companyLogo?:string|null;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean};
+export function OfficeSpace({presence,artwork,room,lang,companyName,companyLogo,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false}:Props){
  const c=officeCopy(lang),w=officeWorkCopy(lang),sq=lang==='sq',reception=room==='reception',name=ownName||'Megi',tools=ownDesk||!!previewBase;
  const base=previewBase||'/workzone/offices/me';
  const href=(view:string)=>previewBase?`${base}?view=${view}`:`${base}/${view==='documents'?'resources':view}`;
@@ -24,6 +25,7 @@ export function OfficeSpace({artwork,room,lang,companyName,companyLogo,ownDesk,a
  ]:[];
  return <section className={`fixed ${s.nativeOffice} ${studio.shell}`} data-testid="office-space" data-office-fullscreen>
   <nav data-testid="office-floating-nav" className={`${s.nativeNav} ${studio.nav}`} aria-label={c.offices}><Link href={reception?'/workzone':'/workzone/offices'}><ArrowLeft size={16}/>{reception?'Workzone':c.reception}</Link><h1>{reception?c.reception:`${sq?'Zyra':'Office'} · ${name}`}</h1><div className={studio.navTools}>
+   {!reception&&ownDesk&&!previewBase&&workEnabled&&<OfficeWorkButton active={presence?.active??false} profile={presence?.profile??null} sq={sq}/>}
    {(reception||!ownDesk)&&<Link href="/workzone/offices/me" aria-label={sq?'Zyra ime':'My office'}><Building2 size={16}/><span>{sq?'Zyra ime':'My office'}</span></Link>}
    {reception&&canManage&&<Link href="/workzone/offices/team" aria-label={sq?'Menaxho zyrat':'Manage offices'} title={sq?'Menaxho zyrat':'Manage offices'}><Settings2 size={16}/></Link>}
    <details><summary aria-label={sq?'Rreth aplikacionit':'About the app'}><Info size={16}/></summary><div><p>{companyName} · {c.hours}</p><RediOnFooter/></div></details>

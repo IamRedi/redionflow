@@ -436,7 +436,7 @@ export async function saveDailyPlanAction(input: { date: string; lang?: string }
         if (!column.baustelleId) continue;
         const workerIds = column.assignments.filter((a) => a.kind === "WORKER" && a.workerId).map((a) => a.workerId!);
         if (workerIds.length) await tx.workSession.updateMany({
-          where: { workerId: { in: workerIds }, isLive: true, endTime: null, OR: [{ baustelleId: null }, { baustelleId: { not: column.baustelleId } }] },
+          where: { workerId: { in: workerIds }, isLive: true, endTime: null, workplace: null, OR: [{ baustelleId: null }, { baustelleId: { not: column.baustelleId } }] },
           data: { baustelleId: column.baustelleId },
         });
       }
