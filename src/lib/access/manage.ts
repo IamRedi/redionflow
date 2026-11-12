@@ -4,7 +4,7 @@ import { withTenantContext } from "@/lib/db/tenant-context";
 import { logger } from "@/lib/observability/logger";
 
 import { applyAccessLevel } from "./apply";
-import { ACCESS_ACTIONS, ACCESS_PLACES, can, effectiveLevel, legacyActions, placeOf, type AccessAction, type AccessLevel, type AccessPlace, type AccessSubject, type GrantLevel } from "./rules";
+import { ACCESS_ACTIONS, ACCESS_PLACES, can, effectiveLevel, isGrantLevel, legacyActions, placeOf, type AccessAction, type AccessLevel, type AccessPlace, type AccessSubject, type GrantLevel } from "./rules";
 
 type Tx = Prisma.TransactionClient;
 
@@ -42,7 +42,7 @@ function subjectOf(row: WorkerRow): Extract<AccessSubject, { kind: "worker" }> {
     crewRole: row.crewRole,
     grants: row.accessGrants.flatMap(g => {
       const place = readAccessPlace(g.place);
-      return place && (g.level === "view" || g.level === "act" || g.level === "none") ? [{ place, scopeId: g.scopeId, level: g.level as GrantLevel }] : [];
+      return place && isGrantLevel(place, g.level) ? [{ place, scopeId: g.scopeId, level: g.level }] : [];
     }),
     legacySiteGrants: new Set(row.siteDocumentGrants.map(g => g.baustelleId)),
   };
@@ -97,7 +97,7 @@ export async function setPlaceAccess(input: { place: unknown; scopeId?: unknown;
   const place = readAccessPlace(input.place) ?? assetFail("BAD_INPUT");
   const scopeId = cleanScope(place, input.scopeId);
   const workerId = typeof input.workerId === "string" ? input.workerId : assetFail("BAD_INPUT");
-  const level = input.level === "view" || input.level === "act" || input.level === "none" ? input.level : input.level === null ? null : assetFail("BAD_INPUT");
+  const level = isGrantLevel(place, input.level) ? input.level : input.level === null ? null : assetFail("BAD_INPUT");
   const actor = await accessAdmin();
   await withTenantContext(actor.companyId, async tx => {
     await checkScope(tx, actor.companyId, place, scopeId);

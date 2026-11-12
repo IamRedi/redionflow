@@ -9,7 +9,7 @@ import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dial
 import { useLanguage } from '@/components/i18n/language-provider';
 import { accessCopy, type AccessCopy } from '@/lib/access/copy';
 import type { PlacePerson } from '@/lib/access/manage';
-import type { AccessPlace } from '@/lib/access/rules';
+import { grantChoices, type AccessPlace, type GrantLevel } from '@/lib/access/rules';
 
 type Snapshot = { place: AccessPlace; scopeId: string; scopeName: string; admins: string[]; people: PlacePerson[] };
 type Result = { ok: true; data: Snapshot } | { ok: false; message: string };
@@ -62,7 +62,7 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
   if (!snapshot) return <p role="status" className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" />{c.loading}</p>;
   if (!snapshot.ok) return <div className="space-y-3 py-4"><p className="text-sm text-red-700 dark:text-red-300">{snapshot.message || c.failed}</p><button type="button" className={chip} onClick={() => void reload()}>{c.failed}</button></div>;
   const { people, admins } = snapshot.data;
-  async function change(workerId: string, level: 'view' | 'act' | 'none' | null) {
+  async function change(workerId: string, level: GrantLevel | null) {
     setBusy(workerId); setMessage(null);
     try {
       const r = await setPlaceAccessAction({ place, scopeId, workerId, level }) as Result;
@@ -73,7 +73,7 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
   const seeing = people.filter(p => p.acts === 'none' && p.sees);
   const removed = people.filter(p => !p.sees && p.grant === 'none');
   const others = people.filter(p => p.grantScope !== 'here' && !p.sees && p.grant !== 'none');
-  const state = (p: PlacePerson) => p.acts !== 'none' ? 'act' : p.sees ? 'view' : 'none';
+  const state = (p: PlacePerson) => p.grant === 'register' ? 'register' : p.acts !== 'none' ? 'act' : p.sees ? 'view' : 'none';
   const tag = (p: PlacePerson) => {
     if (p.grantScope === 'all') return c.wholePlace;
     if (p.grantScope === 'here') return null;
@@ -83,13 +83,14 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
   };
   const row = (p: PlacePerson) => <li key={p.id} className="flex min-h-12 flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-1.5">
     <span className="min-w-0 basis-full sm:basis-auto sm:flex-1"><span className="block break-words text-sm font-medium">{p.name}</span>{tag(p) ? <span className="block text-xs text-muted-foreground">{tag(p)}</span> : null}</span>
-    <span role="group" aria-label={p.name} className="inline-flex shrink-0 overflow-hidden rounded-lg border text-xs font-semibold">
-      {(['act', 'view', 'none'] as const).map(level => <button key={level} type="button" aria-pressed={state(p) === level} disabled={busy !== null || state(p) === level} onClick={() => void change(p.id, level)} data-testid={`access-set-${level}`}
-        className={`min-h-10 px-2 sm:px-2.5 disabled:cursor-default ${state(p) === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>{level === 'act' ? c.acts : level === 'view' ? c.sees : c.remove}</button>)}
+    <span role="group" aria-label={p.name} className={`${place === 'warehouse' ? 'grid w-full grid-cols-2 sm:w-auto' : 'inline-flex shrink-0'} overflow-hidden rounded-lg border text-xs font-semibold`}>
+      {grantChoices(place).map(level => <button key={level} type="button" aria-pressed={state(p) === level} disabled={busy !== null || state(p) === level} onClick={() => void change(p.id, level)} data-testid={`access-set-${level}`}
+        className={`min-h-11 px-2 sm:px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 disabled:cursor-default ${state(p) === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>{level === 'act' ? c.acts : level === 'register' ? c.registers : level === 'view' ? c.sees : c.remove}</button>)}
     </span>
     {p.grantScope === 'here' ? <button type="button" disabled={busy !== null} onClick={() => void change(p.id, null)} aria-label={`${c.reset}: ${p.name}`} title={c.reset} className="grid size-10 shrink-0 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">{busy === p.id ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}</button> : null}
   </li>;
   return <div className="space-y-5 pb-2" data-testid="access-sheet">
+    {place === 'warehouse' ? <p className="text-sm text-muted-foreground">{c.registerHint}</p> : null}
     <p className="rounded-xl bg-muted px-3 py-2 text-sm">{c.admins}: <span className="font-medium">{admins.join(', ')}</span></p>
     {message ? <p role="alert" className="text-sm text-red-700 dark:text-red-300">{message}</p> : null}
     <section><h3 className="mb-2 text-sm font-semibold">{c.acts} · {acting.length}</h3>{acting.length ? <ul className="space-y-2">{acting.map(row)}</ul> : <p className="text-sm text-muted-foreground">{c.nobody}</p>}</section>
@@ -101,8 +102,9 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
         <option value="">{c.choose}</option>
         {others.map(p => <option key={p.id} value={p.id}>{p.name}{p.level === 'FULL_VIEW' ? ` · ${c.full}` : ''}</option>)}
       </select>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${place === 'warehouse' ? 'sm:grid-cols-3' : 'grid-cols-2'}`}>
         <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'view')} className={`${chip} justify-center disabled:opacity-50`} data-testid="access-add-view">+ {c.sees}</button>
+        {place === 'warehouse' ? <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'register')} className={`${chip} justify-center disabled:opacity-50`} data-testid="access-add-register">+ {c.registers}</button> : null}
         <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'act')} className={`${chip} justify-center border-orange-700 bg-orange-700 text-white hover:bg-orange-800 disabled:opacity-50 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950`} data-testid="access-add-act">+ {c.acts}</button>
       </div>
     </section>

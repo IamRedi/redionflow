@@ -10,6 +10,13 @@ const worker = (crewRole: string | null, extra: Partial<Extract<AccessSubject, {
 const actions = Object.keys(ACCESS_ACTIONS) as AccessAction[];
 
 describe("access rules", () => {
+  it('warehouse registration grants viewing and registration only, for any active crew role',()=>{
+    for(const role of CREW_ROLES){
+      const person=worker(role,{accessLevel:'BASE',grants:[{place:'warehouse',scopeId:'',level:'register'}]});
+      for(const action of actions)expect(can(person,action),`${role} ${action}`).toBe(['warehouse.view','warehouse.register','daily_plan.view'].includes(action));
+      expect(can({...person,active:false},'warehouse.register')).toBe(false);
+    }
+  });
   it("admin may do everything", () => {
     for (const action of actions) expect(can({ kind: "admin" }, action, "s1")).toBe(true);
   });

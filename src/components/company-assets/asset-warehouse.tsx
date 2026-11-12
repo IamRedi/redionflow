@@ -12,9 +12,10 @@ import { AssetDetailDialog, HandoverCard } from './asset-detail-panel';
 import { AssetLookup } from './asset-lookup';
 import { AssetFeedback, AssetField, AssetLoading, AssetPicture, AssetSearch, AssetStatus, assetButton, assetIdentity, assetInput, assetPrimary, useAssetMutation, useAssetSnapshot } from './shared';
 import { AccessKeyButton } from '@/components/access/access-key-button';
+import Link from 'next/link';
 
 const categories = [{key:'tool',label:'tools',icon:Wrench},{key:'clothing',label:'clothing',icon:Shirt},{key:'equipment',label:'equipment',icon:Package}] as const;
-export function AssetWarehouse({workerId,initialFactoryCode=''}: {workerId?:string;initialFactoryCode?:string}) {
+export function AssetWarehouse({workerId,initialFactoryCode='',initialRegister=false}: {workerId?:string;initialFactoryCode?:string;initialRegister?:boolean}) {
   const {currentLang:language}=useLanguage();
   const c=assetCopy(language);
   const [category,setCategory]=useState<Exclude<AssetCategory,'vehicle'>>('tool');
@@ -23,7 +24,7 @@ export function AssetWarehouse({workerId,initialFactoryCode=''}: {workerId?:stri
   const [page,setPage]=useState(1);
   const [inactive,setInactive]=useState(false);
   const [selected,setSelected]=useState<AssetRef|null>(null);
-  const [register,setRegister]=useState(!!initialFactoryCode);
+  const [register,setRegister]=useState(initialRegister||!!initialFactoryCode);
   const [factoryCode,setFactoryCode]=useState(initialFactoryCode);
   const [scanFactory,setScanFactory]=useState(false);
   const [name,setName]=useState('');
@@ -39,10 +40,11 @@ export function AssetWarehouse({workerId,initialFactoryCode=''}: {workerId?:stri
   const snapshot=filtering?null:data.snapshot;
   const busy=mutation.pending||data.loading||filtering||!!data.error;
   const canManage=!!snapshot?.permissions.canManage;
+  const canRegister=!!snapshot?.permissions.canRegister;
   return <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4" data-testid="asset-warehouse" aria-busy={data.loading||filtering}>
-    <div className="flex flex-wrap items-center gap-3"><h1 className="min-w-0 flex-1 basis-full break-words text-xl font-semibold sm:basis-auto">{c.warehouse}</h1>{workerId?null:<AccessKeyButton place="warehouse"/>}<AssetLookup c={c} onSelect={setSelected} onRegister={value=>{setFactoryCode(value);setRegister(true);}}/>{canManage?<button type="button" className={assetPrimary} disabled={busy} onClick={()=>setRegister(!register)}>{register?<X size={18}/>:<Plus size={18}/>}<span>{register?c.cancel:c.addAsset}</span></button>:null}</div>
+    <div className="flex flex-wrap items-center gap-3"><h1 className="min-w-0 flex-1 basis-full break-words text-xl font-semibold sm:basis-auto">{c.warehouse}</h1>{workerId?null:<AccessKeyButton place="warehouse"/>}<AssetLookup c={c} onSelect={setSelected} onRegister={workerId?undefined:value=>{setFactoryCode(value);setRegister(true);}}/>{canRegister&&workerId?<Link href="/workzone/inventory?register=1" className={assetPrimary}><Plus size={18}/><span>{c.addAsset}</span></Link>:canRegister?<button type="button" className={assetPrimary} disabled={busy} onClick={()=>setRegister(!register)}>{register?<X size={18}/>:<Plus size={18}/>}<span>{register?c.cancel:c.addAsset}</span></button>:null}</div>
     <div role="tablist" aria-label={c.warehouse} className="flex min-w-0 flex-wrap gap-2">{categories.map(({key,label,icon:Icon})=><button type="button" key={key} role="tab" aria-selected={category===key} aria-controls="warehouse-items" id={`asset-tab-${key}`} onClick={()=>{setCategory(key);setPage(1);setRegister(false);}} className={`${assetButton} flex-1 sm:flex-none ${category===key?'border-orange-500 bg-orange-500/10 text-orange-800 dark:text-orange-300':''}`}><Icon size={18} className="shrink-0"/><span>{c[label]}</span></button>)}</div>
-    {register&&canManage?<form className="grid gap-3 rounded-2xl border bg-card p-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={async event=>{event.preventDefault();if(await mutation.run({type:'register',name:name.trim(),category,size:category==='clothing'?size.trim():undefined,quantity,code:quantity===1?code.trim()||undefined:undefined,barcode:quantity===1?barcode.trim()||undefined:undefined,factoryCode:normalizeScanCode(factoryCode)||undefined,note:note.trim()})){setRegister(false);setName('');setSize('');setCode('');setBarcode('');setFactoryCode('');setQuantity(1);setNote('');}}}>
+    {register&&canRegister&&!workerId?<form className="grid gap-3 rounded-2xl border bg-card p-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={async event=>{event.preventDefault();if(await mutation.run({type:'register',name:name.trim(),category,size:category==='clothing'?size.trim():undefined,quantity,code:quantity===1?code.trim()||undefined:undefined,barcode:quantity===1?barcode.trim()||undefined:undefined,factoryCode:normalizeScanCode(factoryCode)||undefined,note:note.trim()})){setRegister(false);setName('');setSize('');setCode('');setBarcode('');setFactoryCode('');setQuantity(1);setNote('');}}}>
       <AssetField label={c.name}><input autoFocus required value={name} onChange={event=>setName(event.target.value)} maxLength={120} className={assetInput} disabled={busy}/></AssetField>
       {category==='clothing'?<AssetField label={c.size}><input required value={size} onChange={event=>setSize(event.target.value)} maxLength={40} className={assetInput} disabled={busy}/></AssetField>:null}
       <AssetField label={c.quantity}><input required type="number" min={1} max={100} step={1} value={quantity} onChange={event=>setQuantity(Number(event.target.value))} className={assetInput} disabled={busy}/></AssetField>

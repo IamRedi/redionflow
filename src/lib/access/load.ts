@@ -1,7 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { logger } from "@/lib/observability/logger";
 
-import { ACCESS_PLACES, can, type AccessAction, type AccessGrantRow, type AccessLevel, type AccessPlace, type AccessSubject } from "./rules";
+import { ACCESS_PLACES, can, isGrantLevel, type AccessAction, type AccessGrantRow, type AccessLevel, type AccessPlace, type AccessSubject } from "./rules";
 
 type Tx = Prisma.TransactionClient;
 
@@ -22,7 +22,7 @@ export async function loadWorkerAccess(tx: Tx, companyId: string, workerId: stri
   const grants: AccessGrantRow[] = [];
   for (const grant of worker.accessGrants) {
     const place = readPlace(grant.place);
-    if (place && (grant.level === "view" || grant.level === "act" || grant.level === "none")) grants.push({ place, scopeId: grant.scopeId, level: grant.level });
+    if (place && isGrantLevel(place, grant.level)) grants.push({ place, scopeId: grant.scopeId, level: grant.level });
   }
   return {
     kind: "worker",

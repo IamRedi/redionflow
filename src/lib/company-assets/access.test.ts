@@ -7,7 +7,8 @@ vi.mock('@/lib/dashboard/steel-access',()=>({isSteelCompany:mocks.steel}));
 vi.mock('@/lib/db/tenant-context',()=>({withTenantContext:async(_id:string,fn:(tx:typeof mocks.tx)=>unknown)=>fn(mocks.tx)}));
 import {assetActor} from './access';
 import {assetMutationSchema} from './validation';
-beforeEach(()=>{vi.resetAllMocks();mocks.company.mockResolvedValue('company-fixture');mocks.steel.mockResolvedValue(true);mocks.worker.mockResolvedValue({id:'worker-fixture'});mocks.tx.worker.findFirst.mockResolvedValue({id:'worker-fixture',firstName:'Fictional',lastName:'Operator',crewRole:'FIELD_WORKER'});});
+const freshWorker=(crewRole='FIELD_WORKER',level?:string)=>({id:'worker-fixture',firstName:'Fictional',lastName:'Operator',status:'active',crewRole,accessLevel:null,accessGrants:level?[{place:'warehouse',scopeId:'',level}]:[],siteDocumentGrants:[]});
+beforeEach(()=>{vi.resetAllMocks();mocks.company.mockResolvedValue('company-fixture');mocks.steel.mockResolvedValue(true);mocks.worker.mockResolvedValue({id:'worker-fixture'});mocks.tx.worker.findFirst.mockResolvedValue(freshWorker());});
 it('denies anonymous, mixed identities and non-steel companies before returning permissions',async()=>{
  mocks.worker.mockResolvedValueOnce(null);await expect(assetActor()).rejects.toMatchObject({code:'DENIED'});
  mocks.admin.mockResolvedValueOnce({id:'admin-fixture'});await expect(assetActor()).rejects.toMatchObject({code:'DENIED'});
@@ -15,9 +16,17 @@ it('denies anonymous, mixed identities and non-steel companies before returning 
  expect(mocks.tx.worker.findFirst).not.toHaveBeenCalled();
 });
 it.each([['FIELD_WORKER',false,false],['FIELD_ENGINEER',false,false],['OFFICE',true,true],['MECHANIC',false,true]])('resolves %s from fresh owned role data',async(crewRole,canManage,canRepair)=>{
- mocks.tx.worker.findFirst.mockResolvedValue({id:'worker-fixture',firstName:'Fictional',lastName:'Operator',crewRole});
- expect(await assetActor()).toMatchObject({companyId:'company-fixture',workerId:'worker-fixture',userId:null,canManage,canRepair});
+ mocks.tx.worker.findFirst.mockResolvedValue(freshWorker(crewRole));
+ expect(await assetActor()).toMatchObject({companyId:'company-fixture',workerId:'worker-fixture',userId:null,canRegister:canManage,canManage,canRepair});
  expect(mocks.tx.worker.findFirst).toHaveBeenCalledWith(expect.objectContaining({where:{id:'worker-fixture',companyProfileId:'company-fixture',status:'active'}}));
+});
+it('uses fresh warehouse registration grants without adding management or repair access',async()=>{
+ for(const level of ['register','act','view','none']){
+  mocks.tx.worker.findFirst.mockResolvedValue(freshWorker('FIELD_ENGINEER',level));
+  expect(await assetActor()).toMatchObject({canRegister:level==='register'||level==='act',canManage:false,canRepair:false});
+ }
+ mocks.tx.worker.findFirst.mockResolvedValue(freshWorker('OFFICE','view'));
+ expect(await assetActor()).toMatchObject({canRegister:false});
 });
 it('denies a stale or foreign worker even with a decoded session',async()=>{mocks.tx.worker.findFirst.mockResolvedValue(null);await expect(assetActor()).rejects.toMatchObject({code:'DENIED'});});
 it('requires a fresh active tenant admin record',async()=>{mocks.worker.mockResolvedValue(null);mocks.admin.mockResolvedValue({id:'admin-fixture'});mocks.tx.user.findFirst.mockResolvedValue({id:'admin-fixture',name:'Fictional office',email:'fixture@example.test'});expect(await assetActor()).toMatchObject({userId:'admin-fixture',canManage:true,canRepair:true});mocks.tx.user.findFirst.mockResolvedValue(null);await expect(assetActor()).rejects.toMatchObject({code:'DENIED'});});

@@ -9,7 +9,7 @@ export type AssetOperationalStatus = {
   usable: boolean | null; known: boolean; readAt: string;
 };
 export type AssetPerson = { id: string; name: string };
-export type AssetPermissions = { canManage: boolean; canRepair: boolean; workerId: string | null };
+export type AssetPermissions = { canRegister: boolean; canManage: boolean; canRepair: boolean; workerId: string | null };
 export type AssetSummary = AssetRef & {
   key: string; name: string; category: AssetCategory; code: string | null; plate: string | null; size: string | null;
   photoUrl: string | null; availability: AssetAvailability; revision: number;
