@@ -50,6 +50,8 @@ test('factory and workshop show actual people; compact workshop preserves repair
   await page.setViewportSize({width:390,height:844});await page.goto('/workzone');await page.getByTestId('workshop-dock-open').click();
   const zoom=await page.addStyleTag({content:'html{font-size:200%!important}'});
   expect(await page.getByTestId('workshop-workspace').evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);
+  expect(await page.getByTestId('workshop-history-heading').evaluate(e=>{const [a,b]=[...e.children].map(n=>n.getBoundingClientRect());return a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top;})).toBe(true);
+  expect(await page.getByTestId('workshop-active-bays').getByTestId('workshop-repair-card').filter({visible:true}).first().locator('span.line-clamp-2').evaluate(e=>e.getBoundingClientRect().width>=4*parseFloat(getComputedStyle(e).fontSize))).toBe(true);
   await page.getByRole('button',{name:'Hap historikun',exact:true}).click();await page.keyboard.press('Escape');
   await page.screenshot({path:`${out}/after-workshop-text-zoom.png`});await zoom.evaluate(e=>e.remove());
   const search=page.getByTestId('workshop-search').getByRole('searchbox');await search.fill('ZZ 010 DM');await expect(page.getByTestId('workshop-history-preview').getByTestId('workshop-repair-card')).toHaveCount(1);

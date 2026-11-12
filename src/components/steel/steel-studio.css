@@ -222,3 +222,10 @@ html.dark body.mode-bau:has([data-steel-studio]) [data-studio-working-badge=true
 body:has([data-steel-studio]) [data-workshop-compact] [data-studio-workshop-phase]{border-top-width:2px}
 body:has([data-steel-studio]) [data-workshop-compact] [data-studio-workshop-phase]>h2{padding-top:0}
 body:has([data-steel-studio]) [data-workshop-compact] [data-testid=workshop-search] input{height:44px;min-height:44px}
+
+/* Rem-based container sizing also responds to enlarged text, not just viewport width. */
+[data-workshop-compact] [data-testid=workshop-history-preview]{container-type:inline-size}
+@container(max-width:18rem){
+ [data-workshop-compact] [data-testid=workshop-history-grid]{grid-template-columns:repeat(auto-fit,minmax(min(100%,6rem),1fr))}
+ [data-workshop-compact] [data-testid=workshop-history-grid]>button:nth-child(3){display:none}
+}
