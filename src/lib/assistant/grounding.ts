@@ -27,6 +27,7 @@ export function assistantInitialTool(question: string, steel: boolean) {
   const workshop = /\b(oficin\w*|officin\w*|ripar\w*|defekt\w*|repair\w*|workshops?|werkstatt\w*|reparatur\w*)\b/u.test(text);
   if (/^(?:si\b|how (?:do|can) i\b|where (?:do|can) i\b|wie kann ich\b|come posso\b)/u.test(text)) return undefined;
   const worker = /\b(punetor\w*|workers?|employees?|mitarbeiter\w*|operaio\w*|angajat\w*|pracownik\w*)\b/u.test(text);
+  if(workshop&&!asset&&/\b(kush|who|wer)\b/u.test(text)&&/\b(punon\w*|punojn\w*|working|arbeitet\w*)\b/u.test(text))return 'adminGetWorkforceStatus';
   if ((asset || workshop) && worker) return undefined;
   // A mentioned site must not redirect an asset custody/location question to
   // the site directory. Worker-specific lists still allow worker discovery first.

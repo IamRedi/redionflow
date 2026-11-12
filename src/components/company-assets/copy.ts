@@ -1,5 +1,12 @@
 type Lang = 'sq' | 'en' | 'de' | 'it' | 'pl' | 'ro';
 const words = {
+  pausedShort:['Pauzë','Paused','Pause','In pausa','Przerwa','Pauză'],
+  workHere:['Puno këtu','Work here','Hier arbeiten','Lavora qui','Pracuj tutaj','Lucrează aici'],
+  stopWorking:['Ndalo','Stop','Stoppen','Ferma','Zatrzymaj','Oprește'],
+  workingHere:['Në oficinë','In workshop','In der Werkstatt','In officina','W warsztacie','În atelier'],
+  openHistory:['Hap historikun','Open history','Verlauf öffnen','Apri cronologia','Otwórz historię','Deschide istoricul'],
+  showMore:['Shfaq më shumë','Show more','Mehr anzeigen','Mostra altro','Pokaż więcej','Arată mai multe'],
+
   editVehicle: ['Edito mjetin','Edit vehicle','Fahrzeug bearbeiten','Modifica mezzo','Edytuj pojazd','Editează vehiculul'],
   serviceHistory: ['Historiku i serviseve','Service history','Serviceverlauf','Storico interventi','Historia serwisowa','Istoric service'],
   openRepair: ['Hap riparimin','Open repair','Reparatur öffnen','Apri riparazione','Otwórz naprawę','Deschide reparația'],

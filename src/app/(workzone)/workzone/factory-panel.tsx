@@ -4,6 +4,7 @@ import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelSiteArt } from "@/components/steel/steel-art";
 import { totalOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 import { formatAmount } from "@/lib/factory/production";
+import { LiveWorkerNames } from "./live-worker-names";
 import { t } from "@/lib/i18n";
 
 import { NewProjectButton } from "./new-project";
@@ -25,6 +26,7 @@ export function FactoryPanel({
   photoUrl,
   canEditPhoto=false,
   factoryAddress,
+  workingNames = [],
   siteOutput,
   canManage,
   processDefinitions,
@@ -35,6 +37,7 @@ export function FactoryPanel({
   photoUrl?: string|null;
   canEditPhoto?: boolean;
   factoryAddress: string;
+  workingNames?:string[];
   siteOutput: SiteFactoryOutput[];
   canManage: boolean;
   processDefinitions?: Array<{ key: string; label: string }>;
@@ -55,6 +58,7 @@ export function FactoryPanel({
         <div className="relative flex min-h-[150px] flex-col justify-end gap-2 p-4 sm:p-6">
           <span className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400">{t("factory.title", lang)}</span>
           <h2 className="text-2xl font-bold tracking-tight">{factoryName}</h2>
+          {workingNames.length ? <LiveWorkerNames names={workingNames} className="max-w-md !text-xs"/> : null}
           <p className="max-w-md text-sm text-muted-foreground">{factoryAddress || t("factory.subtitle", lang)}</p>
           <div className="flex flex-wrap items-center gap-2">
             {showProgress ? <>

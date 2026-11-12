@@ -57,12 +57,42 @@ history; their old resolve action cannot bypass the workshop.
 
 ## Compact workshop and current vehicle status
 
-The workshop board uses small thumbnails and compact, whole-row actions, with
-name/plate, problem, exact phase, repair route and update time. Desktop columns
-fit their content; phone filters show phase counts and initially select a phase
-with work in it. Search also matches the problem and repair provider. The Ready
-column is recent completed-job history, not a claim that those vehicles are
-currently available: a newer report or allocation block takes precedence.
+The workshop board uses the existing photographic workshop scene and crystal
+surfaces, with three compact active bays. Phone phase tabs select one bay at a
+time. Cards show a small thumbnail, name and plate/code; clicking opens the
+same repair detail and authorized progression actions. Search is compact and
+also matches the problem and provider. Completed jobs occupy one history card
+with at most three previews; its All action opens the bounded recent queue.
+Each asset still exposes its own full stored service history. A completed job
+is not proof of current availability: a newer defect or allocation block wins.
+Same-query visible refreshes preserve nodes and scroll position.
+
+## Recorded people at factory and workshop
+
+The factory hero reuses the site's actual live WorkSession names, with no
+second manual attendance check. Site/factory names exclude paused, future,
+ended, unavailable and explicit non-site workplace records. The names control
+uses one custom full-name popover; its accessible label replaces the duplicate
+native title tooltip. Workshop popovers and history open above the workshop
+surface, retaining accessible repair navigation.
+
+A steel mechanic's profile Nis records explicit WORKSHOP when no plan/site or
+explicit workplace already applies. Existing factory defaults and office/site
+clocks remain intact. Puno këtu/Ndalo in Oficina affect only the authenticated
+worker, or an administrator's existing immutable worker link. Unlinked admins
+can read the roster but cannot invent a worker identity. The existing workshop
+view permission is checked on the server; no role or grant is added. Starts
+reuse the worker lock/live clock, pauses and quick undo; stops reject a clock
+that has moved elsewhere. Invalid/ambiguous clocks fail closed. GPS cannot
+replace an explicit workplace with a nearby site. Profile, timesheet and office
+ledger labels include the service workshop.
+
+Migration 20261112142000_workshop_workplace only extends the existing check to
+OFFICE or WORKSHOP, both requiring a null site; it rewrites no historical rows.
+Admin attendance tools and canonical answers distinguish the service workshop
+from STEEL_WORKSHOP factory sites. Counts/names come from current records,
+not repairs, job titles or GPS. Existing assistant quotas and worker isolation
+remain in force. No production clock is backfilled by this change.
 
 Vehicle surfaces use the same tenant-scoped operational projection. Reported,
 received and repairing remain distinct; a pending defect incident cannot keep a
@@ -224,3 +254,18 @@ presentation follow-up changes copy only. Service editing also preserves unsaved
 repair notes across phase changes and keeps clothing out of defect reporting,
 including manual-code lookup from the workshop. These paths use the existing
 domain rules and are covered by the asset browser flow.
+
+## 12 November attendance and density candidate
+
+The focused local acceptance uses `steel-workshop-presence.spec.ts` plus the
+workshop-presence, session-start, canonical workforce and existing asset/security
+suites. Synthetic data only; real employee clocks, repairs and grants are not
+used for testing. Before/after captures cover desktop/phone and light/dark;
+narrow/landscape checks retain access to the first/last actions and history.
+The isolated migration retains both place/site exclusivity and historical rows.
+Publication requires owner approval and the existing verified-backup/restore
+release procedure. Rollback retains WORKSHOP records and the extended check;
+do not tighten the check or rewrite attendance to make old code appear current.
+Public presentation work remains OWNER_DEFERRED under the owner's instruction;
+no new marketing claim, media publication or readiness increase accompanies this
+candidate. Existing separate presentation follow-ups remain open.

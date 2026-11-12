@@ -419,7 +419,7 @@ it('does not turn a failed factory source into a guessed total or zero confirmat
 
 
 it('replaces invented attendance names before emitting and archiving, and discards model-invented filters',async()=>{
- state.workforceResult={ok:true,data:{filters:{state:'activity',limit:30},summary:{activeWorkers:3,working:3,officeWorking:1,officePaused:0,siteWorking:1,sitePaused:0,factoryWorking:0,factoryPaused:0,unknownLocationWorking:1,unknownLocationPaused:0,needsReview:0},items:[{workerId:'a',name:'Office Person',status:'working',location:{kind:'office'}},{workerId:'b',name:'Site Person',status:'working',location:{kind:'site'}},{workerId:'c',name:'Unknown Person',status:'working',location:{kind:'unknown'}}],totalMatching:3,returned:3,complete:true}};
+ state.workforceResult={ok:true,data:{filters:{state:'activity',limit:30},summary:{activeWorkers:3,working:3,officeWorking:1,officePaused:0,siteWorking:1,sitePaused:0,factoryWorking:0,factoryPaused:0,workshopWorking:0,workshopPaused:0,unknownLocationWorking:1,unknownLocationPaused:0,needsReview:0},items:[{workerId:'a',name:'Office Person',status:'working',location:{kind:'office'}},{workerId:'b',name:'Site Person',status:'working',location:{kind:'site'}},{workerId:'c',name:'Unknown Person',status:'working',location:{kind:'unknown'}}],totalMatching:3,returned:3,complete:true}};
  state.assetSourceCall={toolName:'adminGetWorkforceStatus',input:{state:'office',query:'Invented Person',limit:1}};
  state.responseText='In the office: Invented Person and Unknown Person.';
  const answer=await (await POST(request('Kush po punon në zyrë dhe kush në kantier tani? Përgjigju shkurt sipas regjistrimeve.'))).text();

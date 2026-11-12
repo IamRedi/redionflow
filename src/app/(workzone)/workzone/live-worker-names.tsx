@@ -13,7 +13,7 @@ export function shortWorkerName(full: string) {
  * "+N". Hovering (mouse) or tapping the names opens the full list. The list is
  * portalled to the body so card overflow, transforms and drag never clip it.
  */
-export function LiveWorkerNames({ names, max = 3, className = "" }: { names: string[]; max?: number; className?: string }) {
+export function LiveWorkerNames({ names, max = 3, className = "", layer = 1300 }: { names: string[]; max?: number; className?: string; layer?:number }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const anchor = useRef<HTMLButtonElement>(null);
@@ -60,14 +60,14 @@ export function LiveWorkerNames({ names, max = 3, className = "" }: { names: str
         type="button"
         data-testid="live-worker-names"
         aria-expanded={open}
-        title={names.join(", ")}
-        className={`flex w-full min-w-0 items-center gap-1 text-left text-[11px] font-medium text-green-600 dark:text-green-400 ${className}`}
+        aria-label={names.join(", ")}
+        className={`flex w-full min-w-0 items-center gap-1 text-left text-[11px] font-medium text-green-700 dark:text-green-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 ${className}`}
         onPointerDown={(event) => { lastPointer.current = event.pointerType; event.stopPropagation(); }}
         onPointerEnter={(event) => { if (event.pointerType === "mouse") keepOpen(); }}
         onPointerLeave={(event) => { if (event.pointerType === "mouse") closeSoon(); }}
         onClick={(event) => { event.preventDefault(); event.stopPropagation(); if (lastPointer.current === "mouse") keepOpen(); else setOpen((value) => !value); }}
       >
-        <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-green-500" />
+        <span className="size-1.5 shrink-0 rounded-full bg-green-500" />
         <span className="min-w-0 truncate">{shown.join(", ")}</span>
         {rest > 0 ? <span className="shrink-0 rounded-full bg-green-500/15 px-1.5 text-[10px] font-semibold tabular-nums">+{rest}</span> : null}
       </button>
@@ -77,8 +77,8 @@ export function LiveWorkerNames({ names, max = 3, className = "" }: { names: str
               ref={list}
               role="dialog"
               data-testid="live-worker-names-list"
-              style={{ left: pos.left, top: pos.top }}
-              className="fixed z-[1300] w-[220px] rounded-xl border bg-popover p-2 text-popover-foreground shadow-lg"
+              style={{ left: pos.left, top: pos.top, zIndex:layer }}
+              className="pointer-events-auto fixed w-[220px] rounded-xl border bg-popover p-2 text-popover-foreground shadow-lg"
               onPointerEnter={keepOpen}
               onPointerLeave={(event) => { if (event.pointerType === "mouse") closeSoon(); }}
             >

@@ -1,3 +1,4 @@
+import { explicitWorkplaceLabel } from './explicit-workplace';
 import { prisma } from "@/lib/db/prisma";
 import { plannedSiteNames } from "@/lib/workzone/plan-site";
 import { findMachinePresencesForBaustelles } from "@/lib/workzone/fleet-gps";
@@ -543,7 +544,7 @@ export function monthlySessionRows(report: Awaited<ReturnType<typeof getWorkerMo
     const breakMinutes = sessions.reduce((sum, session) => sum + session.breakMinutes, 0);
     const totalHours = sessions.reduce((sum, session) => sum + effectiveSessionHours(session), 0);
     const locations = [
-      ...new Set(sessions.map((session) => session.workplace === 'OFFICE' ? (lang === 'sq' ? 'Zyrë' : lang === 'de' ? 'Büro' : 'Office') : session.baustelle?.name ?? "-").filter((name) => name && name !== "-")),
+      ...new Set(sessions.map((session) => explicitWorkplaceLabel(session.workplace,lang) ?? session.baustelle?.name ?? "-").filter((name) => name && name !== "-")),
     ];
 
     return {
