@@ -49,8 +49,9 @@ test('steel interiors keep real process commands, material routes and viewer bou
    await page.getByTestId('phase-group-assembly').click();await fits(page);await snap('phases',theme,width);
    const phase=page.getByRole('button').filter({has:page.getByText('Pastrim demo',{exact:true})});await phase.click();
    const sheet=page.getByRole('dialog',{name:'Pastrim demo',exact:true});await expect(sheet).toBeVisible();await fits(page);
-   if(!baseline){const actions=await sheet.locator('[data-studio-phase-actions] button').evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {w:r.width,h:r.height};}));expect(actions.length).toBeGreaterThan(1);expect(actions.every(r=>r.h>=44&&r.h<=49&&r.w>=44)).toBe(true);}
-   await snap('phase-detail',theme,width);await sheet.getByRole('button',{name:text('steel.close'),exact:true}).click();
+   await snap('phase-detail',theme,width);
+   if(!baseline)await expect.poll(async()=>{const actions=await sheet.locator('[data-studio-phase-actions] button').evaluateAll(ns=>ns.map(n=>{const r=n.getBoundingClientRect();return {w:Math.round(r.width*100)/100,h:Math.round(r.height*100)/100};}));return actions.length>1&&actions.every(r=>r.h>=44&&r.h<=49&&r.w>=44);},{message:'Settled process actions remain compact 44px touch targets'}).toBe(true);
+   await sheet.getByRole('button',{name:text('steel.close'),exact:true}).click();
    await page.getByRole('button',{name:new RegExp('^'+text('elements.factoryList'))}).click();await fits(page);await snap('materials',theme,width);
    if(!baseline)expect(await page.locator('[data-studio-list-title]').evaluate(e=>e.scrollWidth<=e.clientWidth+1&&e.scrollHeight<=e.clientHeight+1)).toBe(true);
    await page.getByRole('dialog').last().getByRole('button').filter({has:page.getByText(seed.elements.column.mark,{exact:true})}).click();await fits(page);await snap('element',theme,width);
