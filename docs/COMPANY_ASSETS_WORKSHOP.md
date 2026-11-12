@@ -296,3 +296,19 @@ fixtures only. Public presentation/README/About/portfolio assessment:
 NO_CONTENT_CHANGE within the existing clothing handover capability; no readiness
 increase or new public media. Other presentation work remains OWNER_DEFERRED.
 Merge and deployment require separate owner approval under AGENTS.md.
+
+Local laptop/WSL verification: 35 focused company-asset integration cases passed,
+including seven new batch cases (old receipts, recipient/tenant boundaries,
+stale membership, transaction rollback, concurrent confirmation, independent
+office signature and full membership across the 100-row queue boundary).
+Production build/TypeScript, changed-file ESLint and the synthetic browser flow
+passed. Before/after renders were inspected at 1440/390/320/760 landscape in
+light/dark; text 200%, focus, 44px actions and overflow checks passed. The flow
+issues two separate deliveries of three and two pieces, confirms the first in
+one action, refuses one piece of the second, then confirms the remainder; base
+inventory rows stay identical and each accepted piece has its own TAKE/audit.
+PR185's four workshop files were merged unchanged into the candidate; build,
+lint and the browser flow passed again on that combined source. Domain tests
+were retained without rerunning because their service sources did not change.
+All nine feature source/test files and the four preserved PR185 files match
+the tested mirror. Physical phone acceptance and publication remain pending.
