@@ -264,6 +264,7 @@ function AssistantChat({
           messages.map((m) => (
             <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
+                data-chat-message={m.role}
                 className={`max-w-[82%] whitespace-pre-wrap rounded-2xl px-3 py-1.5 text-[14.5px] leading-snug shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] ${
                   m.role === "user"
                     ? "rounded-tr-sm bg-[#d9fdd3] text-[#111b21] dark:bg-[#005c4b] dark:text-[#e9edef]"
@@ -285,6 +286,7 @@ function AssistantChat({
       </div>
 
       <form
+        data-chat-compose
         className={`flex shrink-0 items-end gap-2 bg-[#f0f2f5] px-2.5 py-2 dark:bg-[#1f2c34] ${compact ? "pb-[max(0.5rem,env(safe-area-inset-bottom))]" : "rounded-b-2xl"}`}
         onSubmit={(e) => {
           e.preventDefault();

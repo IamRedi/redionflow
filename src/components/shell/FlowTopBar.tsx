@@ -21,6 +21,7 @@ import { NotificationBell } from './NotificationBell';
 import { TopbarAnnouncementButton } from '@/app/(workzone)/workzone/topbar-announcement-button';
 import { WorkspaceHeaderOffset } from './WorkspaceHeaderOffset';
 import { ProductionHeaderToolsSlot } from './ProductionHeaderActions';
+import { currentOfficeAccess } from '@/lib/offices/access';
 
 function adminInitial(value: string | null | undefined) {
   const source = value?.trim();
@@ -39,6 +40,8 @@ export async function FlowTopBar({
     getCurrentCompanyId(),
   ]);
   const currentWorkerId = (await getCurrentWorker())?.id;
+  const office = await currentOfficeAccess();
+  const assistantAtDesk = process.env.VIRTUAL_OFFICE_WORK_ENABLED === 'true' && office?.kind === 'admin' && (office.seat === 'megi' || office.seat === 'almet');
   // The boss decides who may use the AI; others get a short message instead.
   const assistantBlocked = tenantId && (admin || currentWorkerId)
     ? !(await hasAssistantAccess(admin ? { kind: 'admin', adminId: admin.id, companyId: tenantId } : { kind: 'worker', workerId: currentWorkerId!, companyId: tenantId }))
@@ -164,7 +167,9 @@ export async function FlowTopBar({
         {/* Keep the production logo and scrollable team side by side in normal flow. */}
         <div className={`pointer-events-none relative z-10 ${contained ? "col-start-1 row-start-1 flex-row items-center lg:row-span-2 lg:self-center" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
           <div className={`flex items-center gap-2 ${contained ? "shrink-0" : ""}`}>
-            {admin ? (
+            {assistantAtDesk ? (
+              <AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t('common.companyLogoAlt', currentLang)} />
+            ) : admin ? (
               <TeamAssistantLogoTrigger
                 compact
                 blocked={assistantBlocked}

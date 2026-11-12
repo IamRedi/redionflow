@@ -1,0 +1,38 @@
+.workspace,.dialog,.plan{--background:39 25% 91%;--card:42 33% 98%;--foreground:166 20% 17%;--muted:38 19% 84%;--muted-foreground:164 12% 34%;--border:35 18% 69%;--office-glass:linear-gradient(132deg,#fffaf0ed,#e3e5d9db);--office-edge:#fff9e3b8;--office-shadow:0 16px 48px #211c1738,inset 0 1px 0 #fffdf2b3;--office-shine:linear-gradient(112deg,transparent 22%,#fff5 23%,#fff0 48%)}
+:global(.dark) :is(.workspace,.dialog,.plan){--background:169 18% 12%;--card:166 18% 18%;--foreground:41 29% 92%;--muted:164 13% 23%;--muted-foreground:40 17% 75%;--border:155 13% 36%;--office-glass:linear-gradient(132deg,#244039ed,#142b27ed);--office-edge:#d4ddba5c;--office-shadow:0 16px 48px #06131166,inset 0 1px 0 #e3e7c51f;--office-shine:linear-gradient(112deg,transparent 22%,#fff1 23%,#fff0 48%)}
+.view{position:fixed;inset:0;z-index:65;display:grid;min-width:0;min-height:0;overflow:hidden;padding:clamp(10px,2vw,24px);background:linear-gradient(115deg,#efe1ca70,#25413742),url('/office-studio-v1/room-wide.webp') center/cover;color:hsl(var(--foreground))}
+:global(.dark) .view{background-image:linear-gradient(115deg,#152b26a6,#152f325c),url('/office-studio-v1/room-wide.webp')}
+:global(body):has(.view){overflow:hidden}
+.surface{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;border:1px solid var(--office-edge);border-radius:18px;background:var(--office-glass);backdrop-filter:blur(22px) saturate(1.12);box-shadow:var(--office-shadow);color:hsl(var(--foreground))}
+.content{flex:1;min-width:0}.surface>footer{flex:none}:global(main):has(.view)>:global(footer){display:none}
+.surface :is(h1,h2){letter-spacing:-.025em}.surface h1{font-size:clamp(20px,2vw,26px)}
+.surface :global(.bg-card){background-color:hsl(var(--card)/.72)}
+.surface.surface :is(input,select,textarea){min-width:0;font-size:16px;background-color:hsl(var(--card)/.68);border-color:hsl(var(--border)/.65);box-shadow:inset 0 1px 0 #fff4}
+.surface :is(button,input,select,textarea),.dialog :is(button,input,select,textarea){backdrop-filter:blur(12px);background-image:var(--office-shine)}
+.surface :is(button,a,input,select,textarea,summary):focus-visible,.dialog :is(button,a,input,select,textarea,summary):focus-visible{outline:2px solid hsl(var(--ring));outline-offset:3px}
+.dialog.dialog{background:var(--office-glass);border-color:var(--office-edge);box-shadow:var(--office-shadow);backdrop-filter:blur(24px) saturate(1.1);color:hsl(var(--foreground))}
+.dialog.dialog::backdrop{background:#10241b42;backdrop-filter:blur(3px)}
+.dialog.assistant{inset:auto;left:var(--office-left,12px);top:var(--office-top,12px);width:var(--office-width,min(420px,calc(100vw - 24px)));height:var(--office-height,calc(100dvh - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);margin:0;padding:0;overflow:hidden;border-radius:17px}
+.assistant[open]{display:flex;flex-direction:column}
+.assistant{container-type:inline-size}
+.assistantHeader{display:flex;align-items:center;gap:10px;flex:none;padding:8px 10px 8px 14px;border-bottom:1px solid #d3f3e45c;background:var(--office-shine),linear-gradient(145deg,#008069dd,#008069b8);color:#fff;box-shadow:inset 0 1px 0 #e5fff347}
+.assistantHeader>div{flex:1;min-width:0}.assistantHeader h1{font-size:15px;font-weight:650;line-height:1.4}.assistantHeader p{font-size:11px;color:#f4fff3d9}.assistantHeader a{display:grid;place-items:center;flex:none;min-width:44px;min-height:44px;border-radius:11px;background:#ffffff10}.assistantHeader a:hover{background:#ffffff24}
+:global(.dark) .assistantHeader{background:var(--office-shine),linear-gradient(145deg,#202c33e8,#202c33bf);border-color:#c4ded836}
+.chat{min-width:0;min-height:0;flex:1;overflow:hidden}.chat :global(.chat-wallpaper){background:linear-gradient(140deg,#fffaf025,#b7c6b01c)}
+.chat :global([data-chat-message=user]){background:#d9fdd3c9;border:1px solid #c5eacda8;box-shadow:inset 0 1px 0 #fff8,0 2px 5px #1e493812}
+.chat :global([data-chat-message=assistant]){background:#ffffffd6;border:1px solid #fff9;box-shadow:inset 0 1px 0 #fff9,0 2px 5px #1e493812}
+.chat :global([data-chat-compose]){background:#f0f2f57a;border-top:1px solid hsl(var(--border)/.5)}
+.chat :global([data-chat-compose]) input{background:#ffffffbf;font-size:16px}.chat :global([data-chat-compose]) button{background:var(--office-shine),linear-gradient(145deg,#00a884dd,#00a884bd)}
+:global(.dark) .chat :global([data-chat-message=user]){background:#005c4bce;border-color:#6fbfa14d;color:#e9edef}
+:global(.dark) .chat :global([data-chat-message=assistant]){background:#202c33dd;border-color:#c1d2c32b;color:#e9edef}
+:global(.dark) .chat :global([data-chat-compose]){background:#1f2c3480}:global(.dark) .chat :global([data-chat-compose]) input{background:#2a3942bb}
+.personal{min-height:0;flex:1;overflow:auto}.personal :global([data-testid=office-personal-ai]){min-height:100%;padding:12px;gap:12px}
+.personal :is(button,input,select,textarea){background-color:hsl(var(--card)/.65)}
+.plan{background:var(--office-glass);color:hsl(var(--foreground));border:1px solid var(--office-edge);border-radius:16px;padding:12px;backdrop-filter:blur(20px);box-shadow:var(--office-shadow)}
+.plan :global(.bg-card){background-color:hsl(var(--card)/.7)}.plan :is(button,input,select,textarea){background-image:var(--office-shine);backdrop-filter:blur(12px)}
+.plan :global(.bg-primary){background-color:hsl(var(--primary)/.86)}.plan :global(.bg-orange-600){background-color:rgb(234 88 12/.86)}.plan :global(.bg-emerald-600){background-color:rgb(5 150 105/.86)}
+@container(max-width:280px){.assistantHeader>svg{display:none}.assistantHeader{gap:6px;padding-left:10px}.assistantHeader h1{font-size:14px}.assistantHeader p{font-size:10px}.chat :global([data-testid=assistant-history-controls])>div:first-child{flex-wrap:wrap}.chat :global([data-testid=assistant-history-controls]) select{flex-basis:100%}}
+@media(max-width:600px){.view{padding:8px}.surface{border-radius:13px}.assistant{border-radius:14px}.assistantHeader{padding-left:12px}.surface h1{font-size:22px}}
+@media(prefers-reduced-transparency:reduce){.surface,.dialog{background:hsl(var(--background));backdrop-filter:none}}
+@media(forced-colors:active){.surface,.dialog{background:Canvas;color:CanvasText;border:1px solid CanvasText}.assistantHeader{background:Canvas;color:CanvasText}}
+@media print{.view{position:static;display:block;padding:0;background:white}.surface{overflow:visible;border:0;background:white;box-shadow:none;backdrop-filter:none}}
