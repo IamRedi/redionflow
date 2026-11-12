@@ -47,7 +47,7 @@ export function AccessKeyButton({ place, scopeId = '', className = '', compact =
     <AssetWorkspaceDialog open={open} onOpenChange={next => { setOpen(next); if (!next && everywhere) { setEverywhere(false); setSnapshot(null); } }} title={title} scrollBody compact>
       {open && scopeId ? <div role="group" aria-label={c.access} className="mb-4 grid grid-cols-2 overflow-hidden rounded-xl border text-sm font-semibold">
         {([false, true] as const).map(all => <button key={String(all)} type="button" aria-pressed={everywhere === all} disabled={everywhere === all} onClick={() => { setSnapshot(null); setEverywhere(all); }} data-testid={`access-scope-${all ? 'all' : 'here'}`}
-          className={`min-h-11 px-3 disabled:cursor-default ${everywhere === all ? 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950' : 'hover:bg-muted'}`}>{all ? c.allSites : c.thisSite}</button>)}
+          className={`min-h-11 px-3 disabled:cursor-default ${everywhere === all ? 'bg-orange-700 text-white dark:bg-orange-500 dark:text-slate-950' : 'hover:bg-muted'}`}>{all ? c.allSites : c.thisSite}</button>)}
       </div> : null}
       {open ? <AccessSheet key={scope} c={c} snapshot={snapshot} reload={load} setSnapshot={setSnapshot} place={place} scopeId={scope} /> : null}
     </AssetWorkspaceDialog>
@@ -82,12 +82,12 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
     return c.full;
   };
   const row = (p: PlacePerson) => <li key={p.id} className="flex min-h-12 flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-1.5">
-    <span className="min-w-0 basis-full sm:basis-auto sm:flex-1"><span className="block break-words text-sm font-medium">{p.name}</span>{tag(p) ? <span className="block text-xs text-muted-foreground">{tag(p)}</span> : null}</span>
-    <span role="group" aria-label={p.name} className={`${place === 'warehouse' ? 'grid w-full grid-cols-2 sm:w-auto' : 'inline-flex shrink-0'} overflow-hidden rounded-lg border text-xs font-semibold`}>
+    <span className={place === 'warehouse' ? 'min-w-0 flex-1' : 'min-w-0 basis-full sm:basis-auto sm:flex-1'}><span className="block break-words text-sm font-medium">{p.name}</span>{tag(p) ? <span className="block text-xs text-muted-foreground">{tag(p)}</span> : null}</span>
+    <span role="group" aria-label={p.name} className={`${place === 'warehouse' ? 'order-last grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))]' : 'inline-flex shrink-0'} overflow-hidden rounded-lg border text-xs font-semibold`}>
       {grantChoices(place).map(level => <button key={level} type="button" aria-pressed={state(p) === level} disabled={busy !== null || state(p) === level} onClick={() => void change(p.id, level)} data-testid={`access-set-${level}`}
-        className={`min-h-11 px-2 sm:px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 disabled:cursor-default ${state(p) === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>{level === 'act' ? c.acts : level === 'register' ? c.registers : level === 'view' ? c.sees : c.remove}</button>)}
+        className={`min-h-11 px-2 sm:px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 disabled:cursor-default ${state(p) === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-700 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>{level === 'act' ? c.acts : level === 'register' ? c.registers : level === 'view' ? c.sees : c.remove}</button>)}
     </span>
-    {p.grantScope === 'here' ? <button type="button" disabled={busy !== null} onClick={() => void change(p.id, null)} aria-label={`${c.reset}: ${p.name}`} title={c.reset} className="grid size-10 shrink-0 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">{busy === p.id ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}</button> : null}
+    {p.grantScope === 'here' ? <button type="button" disabled={busy !== null} onClick={() => void change(p.id, null)} aria-label={`${c.reset}: ${p.name}`} title={c.reset} className="grid size-11 shrink-0 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">{busy === p.id ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}</button> : null}
   </li>;
   return <div className="space-y-5 pb-2" data-testid="access-sheet">
     {place === 'warehouse' ? <p className="text-sm text-muted-foreground">{c.registerHint}</p> : null}
@@ -102,9 +102,9 @@ function AccessSheet({ c, snapshot, reload, setSnapshot, place, scopeId }: { c: 
         <option value="">{c.choose}</option>
         {others.map(p => <option key={p.id} value={p.id}>{p.name}{p.level === 'FULL_VIEW' ? ` · ${c.full}` : ''}</option>)}
       </select>
-      <div className={`grid gap-2 ${place === 'warehouse' ? 'sm:grid-cols-3' : 'grid-cols-2'}`}>
+      <div className={`grid grid-cols-2 gap-2 ${place === 'warehouse' ? 'sm:grid-cols-3' : ''}`}>
         <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'view')} className={`${chip} justify-center disabled:opacity-50`} data-testid="access-add-view">+ {c.sees}</button>
-        {place === 'warehouse' ? <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'register')} className={`${chip} justify-center disabled:opacity-50`} data-testid="access-add-register">+ {c.registers}</button> : null}
+        {place === 'warehouse' ? <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'register')} className={`${chip} order-last col-span-2 justify-center disabled:opacity-50 sm:order-none sm:col-span-1`} data-testid="access-add-register">+ {c.registers}</button> : null}
         <button type="button" disabled={!pick || busy !== null} onClick={() => void change(pick, 'act')} className={`${chip} justify-center border-orange-700 bg-orange-700 text-white hover:bg-orange-800 disabled:opacity-50 dark:border-orange-500 dark:bg-orange-500 dark:text-slate-950`} data-testid="access-add-act">+ {c.acts}</button>
       </div>
     </section>

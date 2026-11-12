@@ -13,9 +13,11 @@ async function localOnly(context:BrowserContext,origin:string){
 async function fit(page:Page){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   for(const dialog of await page.getByRole('dialog').all())expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+  for(const choice of await page.locator('[data-testid^="access-set-"], [data-testid^="worker-access-warehouse-"]').all())expect(await choice.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
 }
 test('warehouse registration is granted by admin, usable by an engineer and revoked without promoting their role',async({page,context,browser,baseURL})=>{
   test.setTimeout(240000);assertE2ETestDatabase(process.env);
+  page.setDefaultTimeout(15000);
   const origin=validateE2ETarget(baseURL!).baseURL;await localOnly(context,origin);
   let companyId:string|undefined,employee:BrowserContext|undefined;
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
@@ -32,6 +34,14 @@ test('warehouse registration is granted by admin, usable by an engineer and revo
       await page.goto('/app/inventory');await expect(page.getByTestId('asset-warehouse')).toBeVisible();
       await capture(`warehouse-${theme}-${viewport.width}`);
       await page.getByTestId('access-key-warehouse').click();await expect(page.getByTestId('access-sheet')).toBeVisible();
+      if(!baseline){
+        const contrast=await page.getByTestId('access-sheet').locator('button[aria-pressed="true"]').first().evaluate(el=>{
+          const style=getComputedStyle(el);
+          const luminance=(color:string)=>{const rgb=(color.match(/[\d.]+/g)??[]).slice(0,3).map(Number).map(n=>{const v=n/255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;});return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722;};
+          const a=luminance(style.color),b=luminance(style.backgroundColor);return (Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);
+        });
+        expect(contrast).toBeGreaterThanOrEqual(4.5);
+      }
       await capture(`key-${theme}-${viewport.width}`);
       await page.keyboard.press('Escape');await expect(page.getByTestId('access-key-warehouse')).toBeFocused();
     }
@@ -45,16 +55,28 @@ test('warehouse registration is granted by admin, usable by an engineer and revo
       await page.setViewportSize(viewport);await page.goto(`/workzone/admin-workers/${seed.worker.id}`);
       await page.getByTestId('worker-access-open').click();
       await expect(page.getByTestId('worker-access-warehouse-register')).toHaveAttribute('aria-pressed','true');
+      await page.getByTestId('worker-access-warehouse-register').scrollIntoViewIfNeeded();
       await capture(`profile-${viewport.width}`);await page.keyboard.press('Escape');
     }
     await page.setViewportSize({width:780,height:640});await page.goto('/app/inventory');await page.getByTestId('access-key-warehouse').click();
     await page.evaluate(()=>document.documentElement.style.fontSize='200%');await capture('key-text-zoom');
     await page.evaluate(()=>document.documentElement.style.fontSize='');await page.keyboard.press('Escape');
     await page.setViewportSize({width:390,height:844});
+    // The Add choice also works for a basic worker who cannot yet see this place.
+    const assistant=await prisma.worker.create({data:{companyProfileId:companyId,firstName:'Synthetic Intake Assistant',lastName:'DEMO',crewRole:'FIELD_WORKER',accessLevel:'BASE'}});
+    await page.goto('/app/inventory');await page.getByTestId('access-key-warehouse').click();
+    await page.locator('#access-add-warehouse').selectOption(assistant.id);await page.getByTestId('access-add-register').click();
+    await expect(page.getByTestId('access-key-warehouse')).toContainText('2');
+    const assistantRow=page.getByTestId('access-sheet').getByRole('listitem').filter({hasText:assistant.firstName});
+    await expect(assistantRow.getByTestId('access-set-register')).toHaveAttribute('aria-pressed','true');
+    await assistantRow.getByTestId('access-set-none').click();await expect(page.getByTestId('access-key-warehouse')).toContainText('1');
+    await page.keyboard.press('Escape');
     employee=await browser.newContext({viewport:{width:390,height:844}});await localOnly(employee,origin);
-    const ep=await employee.newPage();ep.on('pageerror',e=>errors.push(e.message));
+    const ep=await employee.newPage();ep.setDefaultTimeout(15000);ep.on('pageerror',e=>errors.push(e.message));
     await ep.goto('/workzone/login');await ep.locator('input[name=name]').fill(seed.worker.firstName);await ep.locator('input[name=loginCode]').fill(seed.workerCode);await ep.locator('button[type=submit]').click();await expect(ep).toHaveURL(/\/workzone\/profile$/);
-    await ep.getByRole('link',{name:c.addAsset,exact:true}).click();await expect(ep).toHaveURL(/\/workzone\/inventory\?register=1$/);
+    await expect(ep.getByTestId('warehouse-register-open')).toBeVisible();
+    if(process.env.WAREHOUSE_EVIDENCE_DIR)await ep.screenshot({path:`${process.env.WAREHOUSE_EVIDENCE_DIR}/after-employee-profile-390.png`});
+    await ep.getByTestId('warehouse-register-open').click();await expect(ep).toHaveURL(/\/workzone\/inventory\?register=1$/);
     await expect(ep.getByTestId('access-key-warehouse')).toHaveCount(0);
     await ep.getByLabel(c.name,{exact:true}).fill('Synthetic registered drill');
     const form=ep.locator('form').filter({has:ep.getByLabel(c.quantity,{exact:true})});await form.getByRole('button',{name:c.add,exact:true}).click();
@@ -71,5 +93,5 @@ test('warehouse registration is granted by admin, usable by an engineer and revo
     await ep.reload();await expect(ep.getByText('Nuk ke akses këtu. Aksesin ta jep shefi.')).toBeVisible();
     expect((await prisma.worker.findUniqueOrThrow({where:{id:seed.worker.id}})).crewRole).toBe('FIELD_ENGINEER');
     expect(errors).toEqual([]);
-  }finally{await employee?.close();if(companyId)await cleanupSteelAssetsWorkshop(companyId);}
+  }finally{await employee?.close().catch(()=>undefined);if(companyId)await cleanupSteelAssetsWorkshop(companyId);}
 });

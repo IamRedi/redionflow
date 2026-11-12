@@ -64,14 +64,14 @@ function AccessCard({ c, workerId, state, setState, reload }: { c: AccessCopy; w
   const setPlace = (place: AccessPlace, scopeId: string, level: Choice | null) => run(`${place}:${scopeId}`, () => setPlaceAccessAction({ place, scopeId, workerId, level }));
 
   const segment = (key: string, current: Choice, onPick: (level: Choice) => void, place: AccessPlace) => (
-    <span role="group" aria-label={c.place(place)} className={`${place === 'warehouse' ? 'grid w-full grid-cols-2 sm:w-auto' : 'inline-flex shrink-0'} overflow-hidden rounded-lg border text-xs font-semibold`}>
+    <span role="group" aria-label={c.place(place)} className={`${place === 'warehouse' ? 'grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))]' : 'inline-flex shrink-0'} overflow-hidden rounded-lg border text-xs font-semibold`}>
       {grantChoices(place).map(level => <button key={level} type="button" aria-pressed={current === level} disabled={busy !== null || current === level} onClick={() => onPick(level)} data-testid={`worker-access-${key}-${level}`}
-        className={`min-h-11 px-2 sm:px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 disabled:cursor-default ${current === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>
+        className={`min-h-11 px-2 sm:px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500 disabled:cursor-default ${current === level ? (level === 'none' ? 'bg-red-600 text-white dark:bg-red-500 dark:text-slate-950' : 'bg-orange-700 text-white dark:bg-orange-500 dark:text-slate-950') : 'hover:bg-muted'}`}>
         {level === 'act' ? c.acts : level === 'register' ? c.registers : level === 'view' ? c.sees : c.remove}</button>)}
     </span>
   );
   const reset = (key: string, onReset: () => void) => (
-    <button type="button" disabled={busy !== null} onClick={onReset} aria-label={c.reset} title={c.reset} className="grid size-10 shrink-0 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">
+    <button type="button" disabled={busy !== null} onClick={onReset} aria-label={c.reset} title={c.reset} className="grid size-11 shrink-0 place-items-center rounded-lg border hover:bg-muted disabled:opacity-50">
       {busy === key ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
     </button>
   );
@@ -82,7 +82,7 @@ function AccessCard({ c, workerId, state, setState, reload }: { c: AccessCopy; w
       <h3 className="mb-2 text-sm font-semibold">{c.level}</h3>
       <div role="group" className="grid grid-cols-2 overflow-hidden rounded-xl border text-sm font-semibold">
         {(['BASE', 'FULL_VIEW'] as const).map(level => <button key={level} type="button" aria-pressed={d.level === level} disabled={busy !== null || (d.level === level && d.levelSet)} onClick={() => void setLevel(level)}
-          className={`min-h-11 px-3 disabled:cursor-default ${d.level === level ? 'bg-orange-600 text-white dark:bg-orange-500 dark:text-slate-950' : 'hover:bg-muted'}`}>{level === 'BASE' ? c.base : c.full}</button>)}
+          className={`min-h-11 px-3 disabled:cursor-default ${d.level === level ? 'bg-orange-700 text-white dark:bg-orange-500 dark:text-slate-950' : 'hover:bg-muted'}`}>{level === 'BASE' ? c.base : c.full}</button>)}
       </div>
       <p className="mt-2 text-xs leading-snug text-muted-foreground">{d.level === 'BASE' ? c.baseHint : c.fullHint}</p>
     </section>
@@ -96,14 +96,15 @@ function AccessCard({ c, workerId, state, setState, reload }: { c: AccessCopy; w
           const key = `${p.place}:`;
           return <li key={p.place} className="rounded-xl border bg-card px-3 py-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex min-w-0 basis-full items-center gap-2 sm:basis-auto sm:flex-1">
+              <span className={p.place === 'warehouse' ? 'flex min-w-0 flex-1 items-center gap-2' : 'flex min-w-0 basis-full items-center gap-2 sm:basis-auto sm:flex-1'}>
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-orange-500/10 text-orange-700 dark:text-orange-300"><Icon size={16} /></span>
                 <span className="min-w-0"><span className="block text-sm font-medium">{c.place(p.place)}</span>
                   <span className="block text-xs text-muted-foreground">{p.grant ? (scoped.length ? c.allSites : '') : c.fromLevel}{p.acts === 'some' ? `${p.grant ? '' : ', '}${c.partly}` : ''}</span></span>
               </span>
-              <span className={`flex min-w-0 items-center gap-1.5 ${p.place === 'warehouse' ? 'w-full flex-wrap sm:w-auto' : 'shrink-0'}`}>
+              {p.grant && p.place === 'warehouse' ? reset(key, () => void setPlace(p.place, '', null)) : null}
+              <span className={`flex min-w-0 items-center gap-1.5 ${p.place === 'warehouse' ? 'w-full' : 'shrink-0'}`}>
                 {segment(p.place, current, level => void setPlace(p.place, '', level), p.place)}
-                {p.grant ? reset(key, () => void setPlace(p.place, '', null)) : null}
+                {p.grant && p.place !== 'warehouse' ? reset(key, () => void setPlace(p.place, '', null)) : null}
               </span>
             </div>
             {p.place === 'warehouse' ? <p className="mt-2 text-xs text-muted-foreground">{c.registerHint}</p> : null}

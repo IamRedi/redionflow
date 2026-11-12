@@ -2,6 +2,8 @@ import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
 import { WorkerAccessPanel } from "@/components/access/worker-access-panel";
 import { getCurrentCompanyId } from '@/lib/db/tenant';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
+import { assetActor } from '@/lib/company-assets/access';
+import { assetCopy } from '@/components/company-assets/copy';
 import { plannedSteelSchedule, plannedScheduleLabel } from '@/lib/workzone/planned-schedule';
 import { AssetPhoto } from '@/components/asset-photo';
 import Link from "next/link";
@@ -238,6 +240,7 @@ export async function WorkerProfileView({
   const [currentLang, companyCountry] = await Promise.all([resolveRequestLanguage(), getCompanyCountry()]);
   const companyId = await getCurrentCompanyId();
   const assetOperations = Boolean(companyId && await isSteelCompany(companyId));
+  const canRegisterEquipment = assetOperations && (await assetActor()).canRegister;
   const plannedSchedule = plannedSteelSchedule(worker.crewRole, assetOperations && companyCountry === 'AL');
   const showAssistantAccess = mode === "admin" && Boolean(companyId && await companyLimitsAssistant(companyId));
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
@@ -368,6 +371,7 @@ export async function WorkerProfileView({
             }
           />
           <div className="flex flex-wrap items-start gap-2">
+            {canRegisterEquipment ? <Link href="/workzone/inventory?register=1" data-testid="warehouse-register-open" className="inline-flex min-h-11 items-center gap-1.5 rounded-full border bg-card px-3 text-xs font-medium transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Plus className="size-4 text-orange-600 dark:text-orange-400" strokeWidth={1.8}/>{assetCopy(currentLang).addAsset}</Link> : null}
             {mode === "admin" && assetOperations ? <WorkerAccessPanel workerId={worker.id} /> : null}
             <WorkerAssets workerId={worker.id} documents={documents} currentLang={currentLang} />
           </div>

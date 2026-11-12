@@ -82,6 +82,8 @@ test('warehouse separates individual clothing, confirmed handovers and worker lo
     await detail(page).getByRole('button',{name:c.confirm,exact:true}).click();
     await expect.poll(()=>prisma.companyAssetHandover.count({where:{companyProfileId:companyId,status:'pending'}})).toBe(1);
     expect((await prisma.companyOperationalAsset.findUniqueOrThrow({where:{inventoryItemId:seed.tool.id}})).holderWorkerId).toBeNull();
+    // Basic workers need an explicit viewing key to enter the shared warehouse.
+    await prisma.accessGrant.create({data:{companyProfileId:fixture.companyId,workerId:seed.worker.id,place:'warehouse',scopeId:'',level:'view'}});
     const worker=await loginWorker(browser,info,seed.worker,seed.workerCode);workerContext=worker.context;
     await worker.page.goto('/workzone/inventory');
     await expect(worker.page.getByRole('button',{name:c.addAsset,exact:true})).toHaveCount(0);
@@ -111,7 +113,7 @@ test('warehouse separates individual clothing, confirmed handovers and worker lo
     await expect.poll(()=>prisma.companyInventoryItem.count({where:{companyProfileId:companyId,name:'Synthetic batch vest',sizeLabel:'XL'}})).toBe(3);
     const rows=await prisma.companyInventoryItem.findMany({where:{companyProfileId:companyId,name:'Synthetic batch vest'}});expect(new Set(rows.map(row=>row.itemCode)).size).toBe(3);expect(new Set(rows.map(row=>row.barcode)).size).toBe(3);
     await page.screenshot({path:info.outputPath('warehouse-confirmed-light-desktop.png')});
-  }finally{await workerContext?.close();if(companyId)await cleanupSteelAssetsWorkshop(companyId);}
+  }finally{await workerContext?.close().catch(()=>undefined);if(companyId)await cleanupSteelAssetsWorkshop(companyId);}
 });
 
 test('mechanic repairs with external provider and private evidence before tested ready',async({page,context,browser},info)=>{

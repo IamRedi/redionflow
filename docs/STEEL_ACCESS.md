@@ -48,10 +48,31 @@ An engineer can use the existing Workzone warehouse and registration form
 without changing their crew role or becoming an administrator. No employee's
 real permissions are activated by deploying this feature. Change `register`
 to `view` to stop adding equipment, or `none` to remove warehouse page access.
-On the employee's profile, **Regjistro pajisje** opens the shared warehouse
+Beside the employee profile's main actions, **Regjistro pajisje** opens the shared warehouse
 with the form ready. Unknown-code intake also goes there, rather than adding
 an unassigned item inside the profile's holder-filtered inventory list.
 Release/activation still requires the owner's separate approval.
+
+Review: [PR166](https://github.com/IamRedi/redionflow/pull/166).
+Local synthetic verification: 1,154 unit cases, production build/TypeScript,
+full lint and nine browser flows pass. The complete integration run has
+493 passes and one existing notification-completion assertion failure,
+reproduced on the unchanged PR165 baseline (`977ee240`). It is not counted as
+a full integration PASS; production notification behavior was not assessed.
+The handover browser fixture explicitly receives warehouse viewing access;
+its existing business assertions remain unchanged.
+
+The native presentation and portfolio keep their accepted public claims:
+NO_CONTENT_CHANGE for this internal, unreleased permission refinement.
+Existing presentation follow-ups remain separate. No real grants were changed.
+
+Synthetic review captures:
+
+![Warehouse key on desktop, with fictional company data](assets/warehouse-registration-key-desktop.png)
+
+![Registration-only choice on a narrow screen, with fictional workers](assets/warehouse-registration-key-phone.png)
+
+![Visible intake entry on an employee profile, with fictional data](assets/warehouse-registration-employee-phone.png)
 
 ## Migration from crew roles
 
