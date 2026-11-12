@@ -5,11 +5,11 @@
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 
 - **BaumdienstFlow** for tree care companies: tree lists with coordinates, removals, crown work, aerial lifts and chippers.
-- **BauFlow** for construction, civil works and fibre-optic contractors: task lists instead of trees, trenches, house connections, directional drilling, tools and traffic safety.
+- **BauFlow** for construction and steel fabrication: personal offices, material lists, production, site assembly, warehouse and workshop. In real use at AL-Steel; the separate older fibre-construction demo uses fictitious data.
 
 Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) runs are reserved for explicitly selected cloud verification.
 
-**[Deutsche Version](README.md)** · **As of 6 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **BauFlow reviewed: 12 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
@@ -23,6 +23,27 @@ The user interface, the demo data and most documents are in German, because the 
 The `/demo` pages are read-only and need no login. All names, addresses, licence plates and companies are made up. Both demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
 
 Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
+
+## BauFlow: connected offices, factory and site · 12 November 2026
+
+A calendar on the wall, documents in a drawer and an assistant on the monitor. Each team member opens a personal workspace with the tools and information they are allowed to use.
+
+Reception connects the team’s offices. Start/Stop reflects actual working presence. Internal mail with attachments, personal tasks and work assigned by administration. Personal assistants use the employee’s context and permissions; the management assistant stays separate.
+
+Kilograms by day and project, with confirmation evidence. Part cutting, assembly cutting and assembly are separate processes; they are not added together as one steel total.
+
+Owners and administrators manage the company. Engineers work within their role and site permissions; office and field staff see the functions they are authorized to use.
+
+BauFlow is in real operational use at AL-Steel. Screens here use fictitious data; operational access requires a company account. AI, GPS and notifications depend on configuration and device permissions.
+
+![Your personal office · DEMO](docs/assets/screenshots/current-office-desktop.webp)
+
+![Reception and team offices · DEMO](docs/assets/screenshots/current-reception-desktop.webp)
+
+![Production dashboard and calendar · DEMO](docs/assets/screenshots/current-dashboard-desktop.webp)
+
+Verified application baseline: [d2846d1](https://github.com/IamRedi/redionflow/commit/d2846d1797f2a91cd5a49af6b483067ca43ce615) · [Product presentation](https://www.baumdienstflow.de/bauflow/about/en.html). The older public fibre-construction demo does not show this office version. External email is not included.
+
 
 ## What is built today
 
@@ -179,15 +200,6 @@ The vehicle card brings together data editing, photo and document expiry dates. 
 
 <img src="docs/assets/screenshots/steel-service-workspace-synthetic.png" alt="BauFlow service workspace with fictional vehicles grouped by phase" width="100%">
 
-## Reception and office access · 11 November 2026
-
-BauFlow now has a reception and administration office for explicitly authorized accounts in the real-company deployment ([PR150](https://github.com/IamRedi/redionflow/pull/150)). The room opens the existing daily plan, site files and dashboard on desktop and phone. A visitor receives no colleague records. Other administrators do not gain access automatically. [PR153](https://github.com/IamRedi/redionflow/pull/153) adds internal mail with attachments, private notes, personal tasks and categorized company tasks for the designated accounts. Direct return controls connect mail, tasks, office, reception and the daily plan. Office time context and external email remain outside this release; public demos are unchanged.
-
-The screenshot is a local capture with the fictional Mira Steel DEMO fixture, not client data.
-
-![Reception with fictional demo data](docs/assets/screenshots/office-reception-demo.png)
-
-![Private office tasks with fictional demo data](docs/assets/screenshots/office-tasks-demo.png)
 
 ## License
 

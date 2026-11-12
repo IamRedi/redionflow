@@ -1,0 +1,103 @@
+{
+  "reviewed": "2026-11-12",
+  "applicationRevision": "d2846d1797f2a91cd5a49af6b483067ca43ce615",
+  "data": "Entirely synthetic Mira Steel DEMO tenant; actual local application. No customer records.",
+  "captures": [
+    {
+      "file": "current-dashboard-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "8fb2a859293afeafa6f796dc778d6f0388429eca802a814e4449e37016d3dec5",
+      "bytes": 87240,
+      "locale": "en"
+    },
+    {
+      "file": "current-inventory-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "de7e856a3766fcefd3f9d2c18bd19a0c28966029649e68b561b7da6773b6e9a0",
+      "bytes": 73566,
+      "locale": "en"
+    },
+    {
+      "file": "current-office-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "5f10a8a964605e70c8f85b4eace98bf5f7a33fa7a85ff7f8e1bf26a7b78d84d1",
+      "bytes": 93304,
+      "locale": "en"
+    },
+    {
+      "file": "current-reception-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "146757499ba2957aaef2d4fb037d4feb47142558eae051965b5fcdedc450ae47",
+      "bytes": 103886,
+      "locale": "en"
+    },
+    {
+      "file": "current-site-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "bb3619fa2c04fe75aeaed7442a964aafad4cb3430567a10a9a59613b721f98f2",
+      "bytes": 91644,
+      "locale": "en"
+    },
+    {
+      "file": "current-tasks-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "5cf72dfcac94c1fd3a4652c148d5f8a8eb64a768a4616ce15b164b8b608eb6a2",
+      "bytes": 36526,
+      "locale": "en"
+    },
+    {
+      "file": "current-workshop-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "f4458b6d863c60ad9df5ef93017d7ded62939c5e82a885c7f3cff9962646816d",
+      "bytes": 116760,
+      "locale": "en"
+    },
+    {
+      "file": "current-workzone-desktop.webp",
+      "width": 1600,
+      "height": 1000,
+      "sha256": "e0f430acfad23c6c17cece21d0d6691e35316c25628fb92ff4a839f95da526f8",
+      "bytes": 147302,
+      "locale": "en"
+    },
+    {
+      "file": "current-dashboard-phone.webp",
+      "width": 390,
+      "height": 844,
+      "sha256": "949a0baf3e51c270e41623cb432d7f1f580e01db86998ec5182780fb514b2d6f",
+      "bytes": 38238,
+      "locale": "en"
+    },
+    {
+      "file": "current-office-phone.webp",
+      "width": 390,
+      "height": 844,
+      "sha256": "3acdf33f60b5572a4b366eead19fc080210f52d0ca6031302df3697776520cc1",
+      "bytes": 33322,
+      "locale": "en"
+    },
+    {
+      "file": "current-tasks-phone.webp",
+      "width": 390,
+      "height": 844,
+      "sha256": "d3c4f77dc61582592e6b59209c08c76aaf318e14f0762d7277921a45a0fc22e1",
+      "bytes": 21694,
+      "locale": "en"
+    },
+    {
+      "file": "current-workzone-phone.webp",
+      "width": 390,
+      "height": 844,
+      "sha256": "6b0a52770620e59b48f62fc1999874c084a032a30565e615b2ec7bbcccecf8f2",
+      "bytes": 49428,
+      "locale": "en"
+    }
+  ]
+}

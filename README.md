@@ -5,11 +5,11 @@
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 
 - **BaumdienstFlow** für Baumpflege- und Baumdienstbetriebe: Baumlisten mit Koordinaten, Fällungen, Kronenpflege, Hubsteiger und Häcksler.
-- **BauFlow** für Bau-, Tiefbau- und Glasfaserbetriebe: Arbeitslisten statt Bäume, Trassen, Hausanschlüsse, Spülbohrung, Werkzeug und Absicherung.
+- **BauFlow** für Bau und Stahlfertigung: persönliche Büros, Materiallisten, Fertigungsprozesse, Montage, Lager und Werkstatt. Im realen Betrieb bei AL-Steel; die getrennte ältere Glasfaser-Demo nutzt fiktive Daten.
 
 Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) werden nur für ausdrücklich ausgewählte Cloud-Prüfungen gestartet.
 
-**[English version](README.en.md)** · **Stand: 6. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **BauFlow geprüft: 12. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
 ## Websites und Live-Demos
 
@@ -21,6 +21,27 @@ Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redi
 Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Alle Namen, Adressen, Kennzeichen und Firmen sind erfunden. Beide Demos werden jede Nacht um 02:00 UTC auf den Ausgangsstand zurückgesetzt. Einen Admin-Zugang zum Ausprobieren gibt es auf Anfrage.
 
 Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten** derselben fiktiven Firma verknüpft: Ein Knopf „Firmenwissen“ in der oberen Leiste und eine Unterweisungskarte auf jeder Baustelle öffnen die vom Chef freigegebenen Regeln und die Sicherheitsunterweisung für diese Baustelle. Mitarbeitende melden sich dort mit einer PIN an.
+
+## BauFlow: vernetzte Büros, Fertigung und Baustelle · 12. November 2026
+
+Kalender an der Wand, Dokumente in der Schublade und der Assistent auf dem Monitor. Jedes Teammitglied öffnet seinen Arbeitsraum mit den erlaubten Werkzeugen und Informationen.
+
+Der Empfang verbindet die Teambüros. Start/Stopp zeigt die tatsächlich erfasste Arbeitspräsenz. Interne Post mit Anhängen, persönliche Aufgaben und Aufträge der Verwaltung. Persönliche Assistenten nutzen den Kontext und die Rechte des Mitarbeiters; der Führungsassistent bleibt getrennt.
+
+Kilogramm nach Tag und Projekt, mit Nachweisen der Bestätigungen. Teilezuschnitt, Baugruppenzuschnitt und Zusammenbau sind getrennte Prozesse; sie werden nicht zu einer einzigen Stahlmenge addiert.
+
+Inhaber und Administratoren verwalten das Unternehmen. Ingenieure arbeiten nach Rolle und Baustellenrechten; Büro- und Außenteams sehen ihre freigegebenen Funktionen.
+
+BauFlow ist bei AL-Steel im realen Betrieb. Die Ansichten hier zeigen fiktive Daten; der operative Zugang erfordert ein Firmenkonto. KI, GPS und Benachrichtigungen hängen von Konfiguration und Gerätefreigaben ab.
+
+![Das persönliche Büro · DEMO](docs/assets/screenshots/current-office-desktop.webp)
+
+![Empfang und Teambüros · DEMO](docs/assets/screenshots/current-reception-desktop.webp)
+
+![Produktionsübersicht und Kalender · DEMO](docs/assets/screenshots/current-dashboard-desktop.webp)
+
+Verifizierte App-Basis: [d2846d1](https://github.com/IamRedi/redionflow/commit/d2846d1797f2a91cd5a49af6b483067ca43ce615) · [Produktpräsentation](https://www.baumdienstflow.de/bauflow/about/de.html). Die ältere öffentliche Glasfaser-Demo zeigt nicht diese Büroversion. Externe E-Mail ist nicht enthalten.
+
 
 ## Was heute umgesetzt ist
 
@@ -191,15 +212,6 @@ Die Fahrzeugkarte bündelt Datenbearbeitung, Foto und Dokumentfristen. Die Werks
 
 <img src="docs/assets/screenshots/steel-service-workspace-synthetic.png" alt="BauFlow service workspace with fictional vehicles grouped by phase" width="100%">
 
-## Empfang und Bürozugang · 11. November 2026
-
-BauFlow bietet einen Empfang und ein Verwaltungsbüro für ausdrücklich freigeschaltete Konten im realen Firmenbetrieb ([PR150](https://github.com/IamRedi/redionflow/pull/150)). Der Raum öffnet den bestehenden Tagesplan, Baustellenakten und das Dashboard am Rechner und Handy. Besucher erhalten keine privaten Kollegendaten; andere Administratoren erhalten nicht automatisch Zugang. [PR153](https://github.com/IamRedi/redionflow/pull/153) ergänzt interne Post mit Anhängen, private Notizen, persönliche Aufgaben und kategorisierte Firmenaufgaben für freigeschaltete Konten. Direkte Rückwege verbinden Post, Aufgaben, Büro, Empfang und Tagesplan. Bürozeit-Kontext und externe E-Mail gehören nicht zu dieser Veröffentlichung. Die öffentlichen Demos bleiben unverändert.
-
-Die Aufnahme stammt aus der lokalen fiktiven Mira Steel DEMO, nicht aus Kundendaten.
-
-![Empfang mit fiktiven Demodaten](docs/assets/screenshots/office-reception-demo.png)
-
-![Private Büroaufgaben mit fiktiven Demodaten](docs/assets/screenshots/office-tasks-demo.png)
 
 ## Lizenz
 
