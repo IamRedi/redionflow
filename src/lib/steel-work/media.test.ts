@@ -67,7 +67,7 @@ describe('specific private and fenced illustrations', () => {
     expect(mocks.image).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('folded sheet-metal trims at roof or facade edges'), reference, expect.any(AbortSignal));
     expect(mocks.compact).toHaveBeenCalledExactlyOnceWith(generated);
     expect(mocks.tx.steelWorkVisual.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { companyProfileId_definitionId: { companyProfileId: companyId, definitionId } }, create: expect.objectContaining({ companyProfileId: companyId, definitionId, data: stored, mime: 'image/webp' }), update: expect.objectContaining({ data: stored, mime: 'image/webp' }) }));
-    expect(mocks.tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ action: 'steel.visual_generated', payload: { definitionId, revision, style: 'alsteel-native-v1', bytes: 3 } }) }));
+    expect(mocks.tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ action: 'steel.visual_generated', payload: { definitionId, revision, style: 'alsteel-industrial-photo-v2', bytes: 3 } }) }));
   });
   it.each(['rate', 'budget', 'unavailable'])('fails closed for %s quota denial', async reason => {
     mocks.quota.mockResolvedValue({ ok: false, reason, retryAfterSeconds: 60 });
@@ -123,11 +123,15 @@ describe('private original photos and legacy assets', () => {
   it('does not replace existing media with an invalid uploaded photo', async () => {
     mocks.compact.mockRejectedValue(new Error('PHOTO_FILE')); await expect(uploadSteelWorkVisual(definitionId, revision, new File(['fixture'], 'fixture.png', { type: 'image/png' }))).rejects.toThrow('PHOTO_FILE'); expect(mocks.tx.steelWorkVisual.upsert).not.toHaveBeenCalled(); expect(mocks.tx.steelWorkDefinition.updateMany).not.toHaveBeenCalled();
   });
-  it('reads stored legacy SVG without rewriting it or making a model request', async () => {
-    mocks.tx.steelWorkVisual.findFirst.mockResolvedValue({ mime: 'image/svg+xml', scene, data: null }); const result = await readSteelWorkVisual(definitionId);
-    expect(result?.mime).toBe('image/svg+xml'); expect(new TextDecoder().decode(result?.data)).toContain('viewBox="0 0 320 160"'); expect(mocks.tx.steelWorkVisual.findFirst).toHaveBeenCalledWith({ where: { companyProfileId: companyId, definitionId }, select: { data: true, scene: true, mime: true } }); expect(mocks.image).not.toHaveBeenCalled();
+  it.each(['image/svg+xml', 'image/webp'])('shows a photographic default for legacy %s without rewriting it or making a model request', async mime => {
+    mocks.tx.steelWorkVisual.findFirst.mockResolvedValue({ mime, scene, data: stored, definition });
+    await expect(readSteelWorkVisual(definitionId)).resolves.toEqual({ data: reference, mime: 'image/webp' });
+    expect(mocks.reference).toHaveBeenCalledWith(expect.stringContaining('site.webp'));
+    expect(mocks.tx.steelWorkVisual.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { companyProfileId: companyId, definitionId } }));
+    expect(mocks.tx.steelWorkVisual.upsert).not.toHaveBeenCalled(); expect(mocks.quota).not.toHaveBeenCalled(); expect(mocks.image).not.toHaveBeenCalled();
   });
-  it('reads generated or uploaded WebP only for the authenticated company', async () => {
-    mocks.tx.steelWorkVisual.findFirst.mockResolvedValue({ mime: 'image/webp', scene: null, data: stored }); await expect(readSteelWorkVisual(definitionId)).resolves.toEqual({ data: stored, mime: 'image/webp' }); expect(mocks.image).not.toHaveBeenCalled();
+  it.each(['photo', 'generated'])('reads %s WebP for the authenticated company and preserves photos', async status => {
+    mocks.tx.steelWorkVisual.findFirst.mockResolvedValue({ mime: 'image/webp', scene: status === 'generated' ? { style: 'alsteel-industrial-photo-v2' } : null, data: stored, definition: { ...definition, visualStatus: status } });
+    await expect(readSteelWorkVisual(definitionId)).resolves.toEqual({ data: stored, mime: 'image/webp' }); expect(mocks.reference).not.toHaveBeenCalled(); expect(mocks.image).not.toHaveBeenCalled();
   });
 });

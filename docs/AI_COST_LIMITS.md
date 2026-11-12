@@ -79,8 +79,10 @@ paid-provider quality evaluation is claimed here.
 The illustration path uses the existing OpenAI account and the pinned
 `gpt-image-2.5-flare-2026-09-08` image model, not the assistant's text model or
 token reservation. One explicit create/edit/regenerate request allows exactly
-one Image API edit with a shipped synthetic style reference,1024×768,medium
-quality,transparent WebP80,120s deadline and zero retries. No batches,automatic
+one Image API edit with the shipped synthetic photographic style reference,1024×768,medium
+quality,opaque WebP80,120s deadline and zero retries. Style is
+`alsteel-industrial-photo-v2`; the provider/model and all quotas are unchanged.
+No batches,automatic
 backfill,render-time jobs or failure retries are started. Publication/activation
 of this new image-model contract requires the owner's concrete PR approval.
 

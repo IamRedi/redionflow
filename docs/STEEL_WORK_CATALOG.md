@@ -1,5 +1,41 @@
 # Shared work catalog and material applicability
 
+## Photographic work images — 12 November 2026
+
+The current style is `alsteel-industrial-photo-v2`, superseding the older
+vector/transparent illustration direction below. Catalog rows, previews, site
+task cards/dialogs and material process visuals use the same photographic
+defaults. The existing six-process atlas is reused; gutter installation,
+purlins and structural inspection have three new compact WebPs. Their prompts,
+hashes and synthetic origin are in `public/steel-studio-v1/task-photo-provenance.json`.
+Unknown custom work uses neutral site/factory context rather than a different
+specific operation. These are generated illustrative scenes, not real AL Steel
+premises, completed-work evidence, measured geometry or safety instructions.
+
+Uploaded company photos retain priority and their exact stored bytes. Legacy
+generated rasters/SVGs remain in the database unchanged; the private read route
+returns the matching photographic default. No database migration, backfill,
+permission change or image generation runs during reads. Existing company/RLS
+guards and private no-store response headers remain intact.
+
+An explicit create/edit/regenerate action uses the existing pinned image model,
+one call, existing quotas/deadline/zero retries, the accepted photographic atlas
+as reference and an opaque 4:3 photographic composition. Bounded task metadata
+and owner-confirmed construction vocabulary remain authoritative for subject
+selection. A style marker in the existing visual JSON plus the existing audit
+event identifies new generations, including when an older image is retained
+after a failed regeneration. Uploaded photos cannot be regenerated over.
+No provider/model/dependency or cost-limit change is included. Local provider
+tests are mocked; real model quality/access is not claimed.
+
+Integration base: PR169 / `8fece4c` (including PR166); other agent's office-presence checkout is
+untouched. Merge/deploy requires separate owner approval. Rollback the app
+revision to restore legacy rendering; stored legacy images are not rewritten.
+Do not reset current business data or permissions. Local verification receipts
+and renders: `outputs/steel-task-photo-style` in the task workspace; PR records
+the exact tested revision. Public presentation/portfolio: no new public claim
+or published screenshot for this internal asset consistency change.
+
 Review candidate for the real AL Steel company. Production records are not test
 fixtures. This change is prepared over PR53/df65504; merge/publication requires
 the owner's approval for the exact reviewed revision.
