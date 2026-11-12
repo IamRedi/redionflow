@@ -1,13 +1,12 @@
 .tools {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  position: relative;
   z-index: 1000;
   display: flex;
   align-items: center;
   gap: 4px;
   background: transparent;
   pointer-events: none;
+  max-width: 100%;
 }
 .navigation,.assets,.alerts { display: flex; align-items: center; gap: 4px; }
 .assets:empty { display: none; }
@@ -16,12 +15,11 @@
 .navigation > a,.assets > button,.alerts > div > button,.alerts > form > button,.book > a { background-color: hsl(var(--background)); }
 .tools :is(a,button):hover { background-color: hsl(var(--muted)); }
 @media(max-width:359px) {
-  .tools { inset-inline: 0; justify-content: center; gap: 0; }
+  .tools { justify-content: center; gap: 0; }
   .navigation,.assets,.alerts { gap: 0; }
 }
 @media(min-width:1024px) {
-  /* A dedicated row outside the team's scroll viewport; no controls over faces. */
-  .tools { top: 58px; gap: 6px; }
+  .tools { gap: 6px; }
   .navigation { display: none; }
   .assets,.alerts { gap: 6px; }
 }

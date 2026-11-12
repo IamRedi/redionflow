@@ -26,8 +26,12 @@ content must actually pass behind that transparent header on desktop and phone;
 testing only its CSS background color is insufficient. Preserve initial clearance
 and click access through empty header space. Owner correction,
 12 November 2026 supersedes the earlier desktop placement: KiDraht joins fleet,
-workshop and alerts on one row; reserve their width outside the team's scroll
-viewport. Keep one visible office entry in the header, not another in the page.
+workshop and alerts on one row. Latest owner correction: this row belongs below
+the full-width team strip in normal header flow, with no reserved horizontal
+blank area or floating invisible layer over workers. Keep one visible office
+entry in the header, not another in the page. Primary home actions use light
+orange crystal glass. Office scenes fill the viewport, with individual floating
+glass navigation controls and the tenant's original logo on the reception wall.
 Photo replacement uses a small camera glyph with an accessible transparent
 touch target. Keep the single KiDraht icon with no duplicate admin-menu entry.
 Preserve the
