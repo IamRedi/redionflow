@@ -50,8 +50,8 @@ export async function siteCompletionSnapshot(tx: Prisma.TransactionClient, compa
   const lang = await resolveRequestLanguage();
   const elements = site.siteElements.map(e => ({ ...e, list: e.list === 'part' ? 'part' as const : 'assembly' as const }));
   const tasks = projectSteelTasks(site.treeItems, elements), totals = steelTaskTotals(tasks);
-  const processes: CompletionSnapshot['processes'] = tasks.map(task => ({ id: task.id, label: steelWorkLabel({ kind: 'site', key: task.treeId, label: task.steelTask?.definition.label || readSteelPhaseMeta(task.notes).label }, lang), side: sideOfStage(task.steelTask?.definition.linkedProcessKey ?? '') ?? (site.type === 'STEEL_WORKSHOP' ? 'factory' : 'field'), complete: task.status === 'done' }));
-  const linked = new Set(tasks.map(task => task.steelTask?.definition.linkedProcessKey).filter(Boolean));
+  const processes: CompletionSnapshot['processes'] = tasks.map(task => ({ id: task.id, label: steelWorkLabel({ kind: 'site', key: task.treeId, label: task.steelTask?.definition.label || readSteelPhaseMeta(task.notes).label }, lang), side: sideOfStage(task.linkedProcessKey ?? '') ?? (site.type === 'STEEL_WORKSHOP' ? 'factory' : 'field'), complete: task.status === 'done' }));
+  const linked = new Set(tasks.map(task => task.linkedProcessKey).filter(Boolean));
   for (const side of ['factory', 'field'] as const) {
     const keys = new Set(elements.flatMap(e => [...stagesFor(side, e.list, e.processRoutes)]));
     const definitions = await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId, kind: side, key: { in: [...keys] } }, select: { key: true, label: true } });

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { effectiveTaskProcessLink } from './task-process-link';
 import type { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import type { CompanyActor } from '@/lib/site-files/actor';
@@ -41,7 +42,7 @@ export async function readSteelWorkCatalog(companyId: string, siteId?: string): 
     await ensureSteelWorkCatalog(companyId, tx);
     if (siteId && !await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: { in: ['STEEL_ASSEMBLY', 'STEEL_WORKSHOP'] } }, select: { id: true } })) fail('NOT_FOUND');
     const rows = await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId }, orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }, { id: 'asc' }], include: { siteTasks: { where: { companyProfileId: companyId, ...(siteId ? { baustelleId: siteId } : { baustelleId: '__none__' }) }, take: 1 } } });
-    return rows.map(({ siteTasks, ...row }) => ({ ...row, kind: row.kind as SteelWorkKind, linkedList: row.linkedList as 'assembly' | 'part' | null, archivedAt: row.archivedAt?.toISOString() ?? null, visualUpdatedAt: row.visualUpdatedAt?.toISOString() ?? null, ...(siteId ? { enabled: siteTasks[0]?.enabled ?? false, selectionPosition: siteTasks[0]?.enabled ? siteTasks[0].position : null, phaseItemId: siteTasks[0]?.treeItemId ?? null, ...(siteTasks[0] ? { selectionRevision: siteTasks[0].revision } : {}) } : {}) }));
+    return rows.map(({ siteTasks, ...row }) => ({ ...row, ...(row.kind==='site'?effectiveTaskProcessLink(row):{}), kind: row.kind as SteelWorkKind, linkedList: (row.kind==='site'?effectiveTaskProcessLink(row).linkedList:row.linkedList) as 'assembly' | 'part' | null, archivedAt: row.archivedAt?.toISOString() ?? null, visualUpdatedAt: row.visualUpdatedAt?.toISOString() ?? null, ...(siteId ? { enabled: siteTasks[0]?.enabled ?? false, selectionPosition: siteTasks[0]?.enabled ? siteTasks[0].position : null, phaseItemId: siteTasks[0]?.treeItemId ?? null, ...(siteTasks[0] ? { selectionRevision: siteTasks[0].revision } : {}) } : {}) }));
   });
 }
 
@@ -54,16 +55,16 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     if (!input.label.trim() && (!input.id || !existing || !builtinKeys.has(existing.key))) fail('INVALID_INPUT');
     if (input.id && (!existing || existing.revision !== input.revision || existing.kind !== input.kind)) fail('CONFLICT');
     if (existing?.archivedAt) fail('ARCHIVED');
-    const linkedProcessKey = input.kind === 'site' ? input.linkedProcessKey || null : null;
-    // 'all' = both material lists (assemblies and parts); stored as null.
-    const linkedList = linkedProcessKey && input.linkedList !== 'all' ? input.linkedList ?? 'assembly' : null;
-    const linkedKind = linkedProcessKey ? input.linkedKind || null : null;
+    const phaseGroup = input.kind === 'site' ? (input.phaseGroup === undefined ? existing?.phaseGroup ?? null : input.phaseGroup ? steelPhaseGroup(input.phaseGroup) : null) : null;
+    const link=effectiveTaskProcessLink({...input,key:existing?.key,phaseGroup,linkedList:input.linkedList==='all'?null:input.linkedList??'assembly'});
+    const linkedProcessKey = input.kind === 'site' ? link.linkedProcessKey : null;
+    const linkedList = linkedProcessKey ? link.linkedList : null;
+    const linkedKind = linkedProcessKey ? link.linkedKind : null;
     if (linkedProcessKey) {
       const process = await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: companyId, key: linkedProcessKey, kind: { in: ['factory', 'field'] } }, select: { kind: true, archivedAt: true } });
       const unchangedLink = !!input.id && existing?.linkedProcessKey === linkedProcessKey && existing.linkedList === linkedList && existing.linkedKind === linkedKind;
       if (!process || process.archivedAt && !unchangedLink || linkedList === 'part' && process.kind === 'field') fail('INVALID_LINK');
     }
-    const phaseGroup = input.kind === 'site' ? (input.phaseGroup === undefined ? existing?.phaseGroup ?? null : input.phaseGroup ? steelPhaseGroup(input.phaseGroup) : null) : null;
     const data = { label: input.label, description: input.description ?? '', linkedProcessKey, linkedList, linkedKind, phaseGroup };
     let definition;
     // Reusing the same kind/label is idempotent; never overwrite a shared definition through a create form.

@@ -9,9 +9,16 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
   if (!Number.isFinite(input.start.getTime()) || input.start.getTime() > now.getTime() + 60_000) throw new SessionStartError('CLOCK');
   return prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "Worker" WHERE id=${input.workerId} AND "companyProfileId"=${input.companyId} FOR UPDATE`;
-    const worker = await tx.worker.findFirst({ where: { id: input.workerId, companyProfileId: input.companyId, status: 'active' }, select: { id: true } });
+    const worker = await tx.worker.findFirst({ where: { id: input.workerId, companyProfileId: input.companyId, status: 'active' }, select: { id: true, crewRole:true } });
     if (!worker) throw new SessionStartError('WORKER');
     if (input.siteId && !await tx.baustelle.findFirst({ where: { id: input.siteId, companyProfileId: input.companyId }, select: { id: true } })) throw new SessionStartError('SITE');
+    let siteId=input.siteId;
+    // An explicit profile Start records the factory crew's default workplace.
+    // Plans/explicit locations win; multiple workshops stay unassigned.
+    if(!siteId&&!input.workplace&&input.fillMissingSite&&['FACTORY_WORKER','FACTORY_ENGINEER'].includes(worker.crewRole??'')){
+      const workshops=await tx.baustelle.findMany({where:{companyProfileId:input.companyId,type:'STEEL_WORKSHOP',status:'active'},select:{id:true},take:2});
+      if(workshops.length===1)siteId=workshops[0].id;
+    }
     const existing = await tx.workSession.findFirst({ where: { workerId: worker.id, isLive: true, endTime: null }, orderBy: { startTime: 'desc' } });
     if (existing) {
       if (input.moveExisting && (existing.baustelleId !== input.siteId || existing.workplace !== (input.workplace ?? null))) {
@@ -19,7 +26,10 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
         return { kind: 'moved' as const, id: existing.id };
       }
       // Already working without a site: the plan's site fills the gap.
-      if (input.fillMissingSite && input.siteId && !existing.baustelleId && existing.workplace !== 'OFFICE') await tx.workSession.update({ where: { id: existing.id }, data: { baustelleId: input.siteId } });
+      if (input.fillMissingSite && siteId && !existing.baustelleId && existing.workplace !== 'OFFICE') {
+        await tx.workSession.update({ where: { id: existing.id }, data: { baustelleId: siteId } });
+        return {kind:'existing' as const,id:existing.id,siteAssigned:true};
+      }
       return { kind: 'existing' as const, id: existing.id };
     }
     // A stop reversed within the undo window reopens the same session, as if it never stopped.
@@ -27,12 +37,12 @@ export async function beginWorkerSession(input: { companyId: string; workerId: s
     const justStopped = await tx.workSession.findFirst({ where: { workerId: worker.id, isLive: false, closedBySystem: false, endTime: { gte: new Date(now.getTime() - QUICK_UNDO_MS - 60_000) }, updatedAt: { gte: new Date(now.getTime() - QUICK_UNDO_MS) } }, orderBy: { updatedAt: 'desc' } });
     if (justStopped?.endTime) {
       await tx.workSessionPauseInterval.updateMany({ where: { workSessionId: justStopped.id, endedAt: justStopped.endTime }, data: { endedAt: null } });
-      await tx.workSession.update({ where: { id: justStopped.id }, data: { endTime: null, totalHours: 0, isLive: true, ...(input.moveExisting ? { baustelleId: input.siteId, workplace: input.workplace ?? null } : input.fillMissingSite && input.siteId && !justStopped.baustelleId && justStopped.workplace !== 'OFFICE' ? { baustelleId: input.siteId } : {}) } });
+      await tx.workSession.update({ where: { id: justStopped.id }, data: { endTime: null, totalHours: 0, isLive: true, ...(input.moveExisting ? { baustelleId: input.siteId, workplace: input.workplace ?? null } : input.fillMissingSite && siteId && !justStopped.baustelleId && justStopped.workplace !== 'OFFICE' ? { baustelleId: siteId } : {}) } });
       return { kind: 'resumed' as const, id: justStopped.id };
     }
     const overlap = await tx.workSession.findFirst({ where: { workerId: worker.id, endTime: { gt: input.start }, startTime: { lt: now } }, select: { id: true } });
     if (overlap) throw new SessionStartError('OVERLAP');
-    const row = await tx.workSession.create({ data: { workerId: worker.id, baustelleId: input.siteId, workplace: input.workplace ?? null, startTime: input.start, breakMinutes: 30, isLive: true } });
+    const row = await tx.workSession.create({ data: { workerId: worker.id, baustelleId: siteId, workplace: input.workplace ?? null, startTime: input.start, breakMinutes: 30, isLive: true } });
     return { kind: 'created' as const, id: row.id };
   });
 }

@@ -12,10 +12,12 @@ type RealtimePayload = {
   scope: string[];
 };
 
-function scopeMatchesRoute(scope: string, pathname: string) {
+export function scopeMatchesRoute(scope: string, pathname: string) {
   if (scope === "announcement-bar" || scope === "worker-strip" || scope === "machine-sidebar") {
     return pathname.startsWith("/workzone") || pathname.startsWith("/app");
   }
+
+  if (scope === "production-dashboard") return pathname === "/app/dashboard" || pathname === "/display/dashboard";
 
   if (scope === "fleet-gps") {
     return pathname.startsWith("/app/fleet-gps");

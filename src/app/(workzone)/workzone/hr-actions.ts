@@ -514,15 +514,19 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   const selectedStartTime = parseActionDate(startTime, new Date());
   if (!Number.isFinite(selectedStartTime.getTime())) return { ok: false, message: tr('checkStartTime') };
   // The worker's site for the day comes from the daily plan.
-  const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime).catch(() => null);
+  const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime);
   let sessionId: string;
   try {
     const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId, fillMissingSite: true });
     sessionId = result.id;
-    if (result.kind === 'existing') return { ok: true, message: tr('workAlreadyActive') };
+    if (result.kind === 'existing') {
+      if('siteAssigned' in result&&result.siteAssigned){revalidateWorkerProfile(workerId);revalidatePath('/workzone');notifyRealtimeUpdate('worker.session.updated',['worker-strip','working-badge']);}
+      return { ok: true, message: tr('workAlreadyActive') };
+    }
     if (result.kind === 'resumed') {
       revalidateWorkerProfile(workerId);
       revalidatePath(`/workzone/baustellen`);
+  revalidatePath("/workzone");
       notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
       return { ok: true, message: tr("workResumed") };
     }
@@ -544,6 +548,7 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
 
   revalidateWorkerProfile(workerId);
   revalidatePath(`/workzone/baustellen`);
+  revalidatePath("/workzone");
   notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
   return { ok: true, message: tr("workStarted") };
 }
@@ -663,6 +668,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     if (parsed.data.expectedWorkplace && !removed.count) return { ok: false, message: tr('sessionNotActive') };
     revalidateWorkerProfile(session.workerId);
     revalidatePath(`/workzone/baustellen`);
+  revalidatePath("/workzone");
     notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
     return { ok: true, message: tr("shortClickDiscarded") };
   }
@@ -709,6 +715,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
 
   revalidateWorkerProfile(session.workerId);
   revalidatePath(`/workzone/baustellen`);
+  revalidatePath("/workzone");
   notifyRealtimeUpdate("worker.session.updated", ["worker-strip", "working-badge"]);
   return { ok: true, message: tr("workEnded") };
 }

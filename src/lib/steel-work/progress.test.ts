@@ -32,3 +32,27 @@ it('counts the same selected phases as the steel board, without an imported gene
   expect(steelTaskTotals(projectSteelTasks(rows, []))).toMatchObject({ total: 1, done: 1, pct: 100 });
   expect(rows[1]).toMatchObject({ treeId: '1', status: 'todo' });
 });
+
+it('standard production tasks derive their own operation from factory confirmations, not stale/manual checks',()=>{
+ for(const [label,stage] of [['Prerje','cutting'],['Asambim','assembly'],['Saldim','welding'],['Pastrim','cleaning'],['Lyerje','coating'],['Ngarkim','loading']]){
+  const row={...task,status:'todo',steelTask:{...task.steelTask,definition:{id:'def',label,phaseGroup:'production',linkedProcessKey:'assembly',linkedList:'part'}}};
+  const source=element({work:[{stage,pieces:10}]});
+  expect(projectSteelTasks([row],[source])[0]).toMatchObject({automatic:true,linkedProcessKey:stage,status:'done',completedPieces:10,requiredPieces:10,percent:100});
+  expect(row.status).toBe('todo');expect(row.steelTask.definition.linkedProcessKey).toBe('assembly');
+  expect(projectSteelTasks([row],[element({work:[{stage,pieces:4}]})])[0]).toMatchObject({status:'todo',percent:40});
+ }
+});
+it('does not infer a custom production task, count unselected material routes, or complete an empty list',()=>{
+ const production=(label:string)=>({...task,steelTask:{...task.steelTask,definition:{id:'def',label,phaseGroup:'production'}}});
+ expect(projectSteelTasks([production('Pastrim special')],[element()])[0].automatic).toBe(false);
+ expect(projectSteelTasks([production('constructor')],[element()])[0].automatic).toBe(false);
+ expect(projectSteelTasks([production('Saldim')],[element({processRoutes:{v:1,factory:['cutting'],field:[]}})])[0]).toMatchObject({status:'todo',requiredPieces:0,percent:null});
+ expect(projectSteelTasks([production('Saldim')],[])[0]).toMatchObject({status:'todo',percent:null});
+});
+
+it('preserves an explicit custom-process identity even when its task has a standard production name',()=>{
+ const custom='fp-aaaaaaaaaaaaaaaaaaaaaaaa';
+ const row={...task,steelTask:{...task.steelTask,definition:{id:'def',label:'Saldim',phaseGroup:'production',linkedProcessKey:custom,linkedList:'assembly'}}};
+ const source=element({processRoutes:{v:1,factory:[custom],field:[]},work:[{stage:custom,pieces:10}]});
+ expect(projectSteelTasks([row],[source])[0]).toMatchObject({linkedProcessKey:custom,status:'done',completedPieces:10});
+});

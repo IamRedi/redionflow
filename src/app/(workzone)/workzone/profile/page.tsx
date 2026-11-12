@@ -9,7 +9,7 @@ export default async function WorkerProfilePage() {
   const worker = await getCurrentWorker();
   if (!worker || worker.status !== "active") redirect("/workzone/login");
 
-  const [catalogRows, activeAssignments] = await Promise.all([
+  const [catalogRows, activeAssignments, workSites] = await Promise.all([
     prisma.companyInventoryItem.findMany({
       where: { companyProfileId: worker.companyProfileId, isActive: true },
       orderBy: [{ category: "asc" }, { itemCode: "asc" }],
@@ -24,6 +24,10 @@ export default async function WorkerProfilePage() {
         worker: { select: { id: true, firstName: true, lastName: true } },
       },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.baustelle.findMany({
+      where:{companyProfileId:worker.companyProfileId,id:{in:[...new Set(worker.sessions.flatMap(session=>session.baustelleId?[session.baustelleId]:[]))]}},
+      select:{id:true,name:true},
     }),
   ]);
   const assignmentByItemId = new Map<string, (typeof activeAssignments)[number]>();
@@ -54,7 +58,7 @@ export default async function WorkerProfilePage() {
 
   return (
     <WorkerProfileView
-      worker={{ ...worker, vacationRequests, notificationSettings }}
+      worker={{ ...worker, sessions:worker.sessions.map(session=>({...session,baustelle:workSites.find(site=>site.id===session.baustelleId)??null})), vacationRequests, notificationSettings }}
       mode="worker"
       catalogItems={catalogItems}
       inventoryMovements={inventoryMovements}

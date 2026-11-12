@@ -22,9 +22,11 @@ import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime } 
 import type { ActionResult } from "@/lib/validation/action-result";
 import { dispatchCompletions, siteCompletionSnapshot, type CompletionSnapshot } from '@/lib/notifications/events';
 
-function revalidateSite(baustelleId: string) {
+function revalidateSite(baustelleId: string, companyId:string) {
   revalidatePath(`/workzone/baustellen/${baustelleId}`);
-  notifyRealtimeUpdate("baustelle.updated", ["workzone-cards"]);
+  revalidatePath("/app/dashboard");
+  revalidatePath("/display/dashboard");
+  notifyRealtimeUpdate("baustelle.updated", ["workzone-cards", "production-dashboard"], companyId);
 }
 
 export type ElementImportState = { ok: boolean; message: string; results?: ElementImportResult[] };
@@ -100,7 +102,7 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
     throw error;
   }
   if (!results) return { ok: false, message: tr("siteNotFound") };
-  revalidateSite(baustelleId);
+  revalidateSite(baustelleId, companyId);
   const added = results.reduce((sum, r) => sum + r.added, 0);
   const updated = results.reduce((sum, r) => sum + r.updated, 0);
   return { ok: true, message: tr("elementListImported", { added, updated }), results };
@@ -212,7 +214,7 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
   if (result === "notReady") return { ok: false, message: tr("elementNotFromFactory") };
   if (result === "full") return { ok: false, message: tr("elementStepFull") };
   await dispatchCompletions(companyId, before, after, result.workId);
-  revalidateSite(result.siteId);
+  revalidateSite(result.siteId, companyId);
   return { ok: true, message: "OK", checkedByName: actor.name, workId: result.workId, pieces: result.count };
 }
 
@@ -251,7 +253,7 @@ export async function removeElementWorkAction(input: unknown): Promise<ActionRes
   if (!result) return { ok: false, message: tr("invalidInput") };
   if (result === "denied") return { ok: false, message: tr("elementCheckOnlyEngineer") };
   if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };
-  revalidateSite(result);
+  revalidateSite(result, companyId);
   return { ok: true, message: "OK" };
 }
 
@@ -305,7 +307,7 @@ export async function setElementDoneAction(input: unknown): Promise<ActionResult
   if (result === "noSteps") return { ok: false, message: tr("elementNeedsStep") };
   if (result === "onSite") return { ok: false, message: tr("elementAlreadyOnSite") };
   await dispatchCompletions(companyId, before, after, transitionKey);
-  revalidateSite(result);
+  revalidateSite(result, companyId);
   return { ok: true, message: "OK", doneByName: actor.name };
 }
 
@@ -375,7 +377,7 @@ export async function setElementProcessesAction(input: unknown): Promise<Element
     return { revisions };
   }, { timeout: 30_000, maxWait: 10_000 });
   if ("code" in result) return { ok: false, code: result.code, message: tr(result.code === "ALREADY_ON_SITE" ? "elementAlreadyOnSite" : "invalidInput") };
-  revalidateSite(siteId);
+  revalidateSite(siteId, companyId);
   return { ok: true, message: "OK", revisions: result.revisions };
 }
 
@@ -488,7 +490,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
   );}catch(error){if(error instanceof ElementImportConflict)return {ok:false,message:tr('elementImportQuantityConflict',{mark:error.message})};if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
   if (!siteId) return { ok: false, message: tr("invalidInput") };
   revalidatePath("/workzone");
-  revalidateSite(siteId);
+  revalidateSite(siteId, companyId);
   const elements = lists.filter((item) => item.list.list === "assembly").reduce((sum, item) => sum + item.list.elements.length, 0);
   const parts = lists.filter((item) => item.list.list === "part").reduce((sum, item) => sum + item.list.elements.length, 0);
   return { ok: true, message: tr("projectSiteReady", { name, elements, parts, files: lists.length + others.length }), siteId };
@@ -526,6 +528,6 @@ export async function deleteElementSourceAction(input: unknown): Promise<ActionR
     return removed.count;
   }, { timeout: 30_000 });
   if (deleted === null) return { ok: false, message: tr("accessDenied") };
-  revalidateSite(siteId);
+  revalidateSite(siteId, companyId);
   return { ok: true, message: "OK", deleted };
 }

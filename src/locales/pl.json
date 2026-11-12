@@ -377,6 +377,7 @@
     "pendingStatus": "Otwarte",
     "totalLabel": "Lacznie",
     "remainingLabel": "Pozostalo",
+    "pausedShort": "Przerwa",
     "workingNow": "Teraz pracuje",
     "fiberTrench": "Trasa światłowodu",
     "fiberDrilling": "Przewiert sterowany (HDD)",

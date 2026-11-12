@@ -695,6 +695,7 @@
     "pendingStatus": "In attesa",
     "totalLabel": "Totale",
     "remainingLabel": "Rimanenti",
+    "pausedShort": "In pausa",
     "workingNow": "Al lavoro",
     "fiberTrench": "Tracciato fibra ottica",
     "fiberDrilling": "Perforazione orizzontale (HDD)",

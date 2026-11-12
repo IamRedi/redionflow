@@ -724,6 +724,7 @@
     "pendingStatus": "Offen",
     "totalLabel": "Gesamt",
     "remainingLabel": "Rest",
+    "pausedShort": "Pause",
     "workingNow": "Arbeitet gerade",
     "fiberTrench": "Glasfaser-Trasse",
     "fiberDrilling": "Spülbohrung (HDD)",

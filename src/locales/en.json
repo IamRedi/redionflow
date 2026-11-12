@@ -687,6 +687,7 @@
     "pendingStatus": "Pending",
     "totalLabel": "Total",
     "remainingLabel": "Remaining",
+    "pausedShort": "Paused",
     "workingNow": "Working now",
     "fiberTrench": "Fiber route (trench)",
     "fiberDrilling": "Directional drilling (HDD)",
