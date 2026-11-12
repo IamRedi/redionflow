@@ -37,11 +37,13 @@
 .page { min-width: 0; flex: 1 0 auto; }
 .scroll > footer { flex-shrink: 0; margin-inline: -12px; }
 .scroll:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: -2px; }
+/* Size containment traps non-portalled fixed editors below the team header. */
+.scroll:has(:global(.fixed)) { container-type: normal; }
 /* The virtual room is a native working surface; its own SVG navigation stays reachable. */
-.scroll:has(:global([data-office-fullscreen])) { container-type:normal;overflow:hidden; }
-.scroll:has(:global([data-office-fullscreen])) > footer { display:none; }
-.shell:has(:global([data-office-fullscreen])) > header { display:none; }
-:global(body):has(.shell :global([data-office-fullscreen])) :global([data-testid="flow-global-tools"]) { display:none; }
+.scroll:has(:global([data-office-fullscreen]),:global([data-office-view])) { container-type:normal;overflow:hidden; }
+.scroll:has(:global([data-office-fullscreen]),:global([data-office-view])) > footer { display:none; }
+.shell:has(:global([data-office-fullscreen]),:global([data-office-view])) > header { display:none; }
+:global(body):has(.shell :is(:global([data-office-fullscreen]),:global([data-office-view]))) :global([data-testid="flow-global-tools"]) { display:none; }
 .workzone { grid-template-columns: minmax(0, 1fr); }
 .workzone .scroll { padding-top: calc(var(--workspace-header-height) + 12px); }
 @media(max-width:767px) {
@@ -64,6 +66,7 @@
 /* A page that becomes its own full screen on phones (daily plan) must escape the isolated body. */
 @media (max-width: 1023.98px) {
   .body:has(:global([data-phone-fullscreen])) { isolation: auto; }
+  .scroll:has(:global([data-phone-fullscreen])) { container-type: normal; }
   .shell:has(:global([data-phone-fullscreen])) > header { display: none; }
   :global(body):has(.shell :global([data-phone-fullscreen])) :global([data-testid="flow-global-tools"]) { display: none; }
 }
