@@ -1,6 +1,12 @@
 # Company offices — reception and Megi's office
 
-## Current office UI candidate — 12 November 2026
+## Released office UI — 12 November 2026
+
+Owner-approved PR175 is merged and live at `f79798cba4410329d687dbdb40d2e336a4b1d9f6`.
+Railway deployment `d480b28e-29a3-4b42-9ccc-3417c0b328b6` succeeded. Bounded
+readback verified 16 runtime source hashes, room/assistant/task responses and
+unchanged permission, configuration, original artwork and photo fingerprints.
+PR174 is the unchanged parent. No migration or provider call was introduced.
 
 Owner direction: the existing photographic office is the visual baseline.
 Furniture actions belong to the scene: drawer names and small Lucide line-art
@@ -29,11 +35,11 @@ principal sees their own archive; visitors get no private scene actions. Other
 admins and workers retain their existing logo-assistant entries. The separately
 authorized staff assistant keeps its existing identity and permission checks.
 
-Preparation branch: `feat/office-scene-crystal-ui-20261112`. It includes PR174
+Preparation branch was `feat/office-scene-crystal-ui-20261112`. It includes PR174
 (`872002b`) without modifying the other agent's attendance/production work. No
 schema, real records, permissions, provider/feature configuration or original
-photos change. Local visual evidence and exact check outcomes belong in the PR;
-this candidate is not live until separately approved, merged and deployed.
+photos change. Local visual evidence and exact check outcomes belong in PR175;
+the owner separately approved its merge and application publication.
 
 Local verification: production build, scoped ESLint, 31 office-policy/private
 history checks and the office UI browser flow passed on isolated WSL/synthetic
