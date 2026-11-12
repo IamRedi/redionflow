@@ -1,11 +1,10 @@
 import Link from 'next/link';
 import type {OfficeArtworkState} from '@/lib/offices/artwork';
-import {ArrowLeft,Building2,Info,Settings2} from 'lucide-react';
+import {ArrowLeft,Building2,Settings2} from 'lucide-react';
 import type {SupportedLanguage} from '@/lib/i18n/language';
 import {officeCopy} from '@/lib/offices/copy';
 import {officeWorkCopy} from '@/lib/offices/work-copy';
 import {OfficeScene,type OfficeDoor,type OfficeObject} from './OfficeScene';
-import {RediOnFooter} from '@/components/branding/RediOnFooter';
 import s from './office.module.css';
 import studio from './studio.module.css';
 import {OfficeWorkButton} from './OfficeWorkButton';
@@ -28,10 +27,9 @@ export function OfficeSpace({presence,artwork,room,lang,companyName,companyLogo,
    {!reception&&ownDesk&&!previewBase&&workEnabled&&<OfficeWorkButton active={presence?.active??false} sessionId={presence?.sessionId??null} paused={presence?.paused??false} sq={sq}/>}
    {(reception||!ownDesk)&&<Link href="/workzone/offices/me" aria-label={sq?'Zyra ime':'My office'}><Building2 size={16}/><span>{sq?'Zyra ime':'My office'}</span></Link>}
    {reception&&canManage&&<Link href="/workzone/offices/team" aria-label={sq?'Menaxho zyrat':'Manage offices'} title={sq?'Menaxho zyrat':'Manage offices'}><Settings2 size={16}/></Link>}
-   <details><summary aria-label={sq?'Rreth aplikacionit':'About the app'}><Info size={16}/></summary><div><p>{companyName} · {c.hours}</p><RediOnFooter/></div></details>
   </div></nav>
   {previewBase&&<p className={s.previewNotice} data-testid="office-preview-notice">{sq?'Pamja e punonjësit · vetëm shikim':'Employee view · read only'}{!previewEnabled?` · ${sq?'Pa hyrje':'Access disabled'}`:''}<span>{sq?'Posta dhe shënimet personale janë private.':'Personal mail and notes remain private.'}</span></p>}
-  <div data-testid="office-native-scene" className={s.nativeScene}><OfficeScene reception={reception} companyLogo={companyLogo} company={companyName} name={name} title={officeTitle||c.administration} doors={doors} objects={objects} artwork={artwork} doorPage={doorPage} sq={sq}/></div>
+  <div data-testid="office-native-scene" className={s.nativeScene}><OfficeScene reception={reception} companyLogo={companyLogo} company={companyName} name={name} title={officeTitle||c.administration} doors={doors} objects={objects} hours={c.hours} artwork={artwork} doorPage={doorPage} sq={sq}/></div>
   {!reception&&!tools&&<p className={s.visitorNotice}> {sq?'Puna, shënimet dhe Posta personale mbeten private.':'Work, notes and personal mail remain private.'}{workEnabled&&<Link href={`/workzone/offices/me/mail?compose=1${visitorId?`&to=${encodeURIComponent(visitorId)}`:''}`}>{w.mail} ↗</Link>}</p>}
  </section>;
 }

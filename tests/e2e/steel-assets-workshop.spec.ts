@@ -52,19 +52,28 @@ async function touch(control:Locator,width:number,height:number) {
 }
 async function readablePrimary(control:Locator) {
   await expect(control).toBeVisible();
-  const ratio=await control.evaluate(element=>{
+  const foreground=await control.evaluate(element=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=1;
-    const context=canvas.getContext('2d')!;
-    const luminance=(color:string)=>{
-      context.clearRect(0,0,1,1);context.fillStyle=color;context.fillRect(0,0,1,1);
-      const rgb=[...context.getImageData(0,0,1,1).data].slice(0,3).map(value=>{const s=value/255;return s<=0.04045?s/12.92:((s+0.055)/1.055)**2.4;});
-      return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2];
-    };
-    const style=getComputedStyle(element),foreground=luminance(style.color),background=luminance(style.backgroundColor);
-    return(Math.max(foreground,background)+0.05)/(Math.min(foreground,background)+0.05);
+    const context=canvas.getContext('2d')!;context.fillStyle=getComputedStyle(element).color;context.fillRect(0,0,1,1);
+    return [...context.getImageData(0,0,1,1).data].slice(0,3);
   });
-  expect(ratio).toBeGreaterThanOrEqual(4.5);
+  // Sample the rendered crystal, including its gradients/backdrop. A transparent
+  // backgroundColor alone incorrectly treats the accepted glass as solid black.
+  const original=await control.getAttribute('style');
+  const style=await control.page().addStyleTag({content:'[data-contrast-background], [data-contrast-background] * {color:transparent!important;text-shadow:none!important;transition:none!important;} [data-contrast-background] svg {visibility:hidden!important;}'});
+  try {
+    await control.evaluate(el=>el.setAttribute('data-contrast-background',''));
+    const rendered=await sharp(await control.screenshot()).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    const luminance=(rgb:number[])=>rgb.map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+    const ink=luminance(foreground),ratios:number[]=[];
+    for(let y=8;y<rendered.info.height-8;y+=4)for(let x=8;x<rendered.info.width-8;x+=4){const offset=(y*rendered.info.width+x)*4,bg=luminance([...rendered.data.subarray(offset,offset+3)]);ratios.push((Math.max(ink,bg)+.05)/(Math.min(ink,bg)+.05));}
+    expect(ratios.length).toBeGreaterThan(0);expect(Math.min(...ratios)).toBeGreaterThanOrEqual(4.5);
+  } finally {
+    await control.evaluate((el,value)=>{el.removeAttribute('data-contrast-background');if(value===null)el.removeAttribute('style');else el.setAttribute('style',value);},original);
+    await style.evaluate(el=>el.remove());
+  }
 }
+
 async function production(companyId:string) {
   return {elements:await prisma.siteElement.findMany({where:{companyProfileId:companyId},orderBy:{id:'asc'}}),work:await prisma.siteElementWork.findMany({where:{companyProfileId:companyId},orderBy:{id:'asc'}})};
 }
@@ -161,7 +170,7 @@ test('mechanic repairs with external provider and private evidence before tested
     await expect.poll(async()=>(await prisma.companyAssetRepair.findFirstOrThrow({where:{companyProfileId:companyId}})).phase).toBe('ready');
     await detail(mechanic.page).getByRole('button',{name:c.allDetails,exact:true}).click();await expect(detail(mechanic.page).getByRole('heading',{name:c.history,exact:true})).toBeVisible();
     expect(await prisma.companyAssetEvent.count({where:{companyProfileId:companyId,type:'repair.ready',actorName:`${seed.mechanic.firstName} ${seed.mechanic.lastName}`}})).toBe(1);
-    await closeDetail(mechanic.page);await expect(mechanic.page.locator('#workshop-phase-ready')).toContainText(seed.machines[0].name);
+    await closeDetail(mechanic.page);await expect(mechanic.page.getByTestId('workshop-history-preview')).toContainText(seed.machines[0].name);
     expect(await production(companyId)).toEqual(before);
     await mechanic.page.screenshot({path:info.outputPath('workshop-ready-light-desktop.png')});
   }finally{for(const item of other)await item.close();if(companyId)await cleanupSteelAssetsWorkshop(companyId);}
