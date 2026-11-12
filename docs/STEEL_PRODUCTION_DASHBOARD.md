@@ -97,6 +97,31 @@ crews then alphabetical idle sites, and reprioritizes when the crew moves. No
 real business confirmation, account or permission was written during diagnosis.
 
 
+## Office controls and overlay reachability — 12 November 2026
+
+Office mail, tasks, document folders, staff workbooks and team settings are native
+full-screen work surfaces, like the room itself. Their own return navigation
+replaces the Workzone team/header while open; the normal transparent header
+returns on leaving the office surface. The room materials, buttons, footer and
+all operational permissions are retained.
+
+A fixed editor inside the app scroll region temporarily releases size
+containment so its controls stay at viewport coordinates above the team.
+Normal pages retain their existing size container for map sizing. The phone
+plan receives the same exception while it is full screen.
+
+Shared confirmation cards reuse the existing Radix dialog portal and focus
+scope. They escape glass/scroll ancestors, remain inside the dynamic viewport,
+wrap their actions and return focus to the opener. Cancel is focused first;
+clicking the backdrop does not confirm or dismiss an operation. Command
+callbacks, disabled states, deletion rules and server authorization are intact.
+
+The focused synthetic browser check is `steel-office-overlay-controls.spec.ts`:
+before/after office routes, task/mail editors, folder documents and delete
+control, phase documents, room/plan returns and a nested plan confirmation.
+It checks actual hit targets, scrolling, light/dark, desktop, phone and short
+landscape; no real document, account or service is removed in this check.
+
 ## Workshop clear glass and empty bays — 12 November 2026
 
 Owner refinement: the steel workshop uses a clearer ice-glass variant with
