@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import sharp from 'sharp';
 import { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { fleetActor } from '@/lib/fleet/access';
@@ -8,7 +9,7 @@ import { getRequesterContext } from '@/lib/assistant/requester';
 import { categorizeAssistantFailure } from '@/lib/assistant/diagnostics';
 import { logger } from '@/lib/observability/logger';
 import { canManageSteelCatalog } from './types';
-import { renderSteelScene } from './visual';
+import { steelWorkPhoto } from './photo-style';
 import { buildSteelIllustrationPrompt, STEEL_ILLUSTRATION_STYLE_VERSION } from './illustration-style';
 import { generateSteelImage, SteelImageGenerationError, STEEL_IMAGE_MODEL } from './image-generation';
 import { reserveSteelImageQuota } from './image-quota';
@@ -67,7 +68,7 @@ export async function generateSteelWorkVisual(definitionId: string, revision: nu
   let providerCalls = 0, outputBytes = 0;
   try {
     // Literal path keeps Next's file trace scoped to this public style asset.
-    const reference = new Uint8Array(await readFile(join(process.cwd(), 'public', 'illustrations', 'alsteel-style-v1.png')));
+    const reference = new Uint8Array(await readFile(join(process.cwd(), 'public', 'steel-studio-v1', 'processes.webp')));
     const prompt = buildSteelIllustrationPrompt({ key: definition.key, label: definition.label, description: definition.description, kind: definition.kind as 'site' | 'factory' | 'field',
       linkedProcess: definition.linked ? { key: definition.linked.key, label: definition.linked.label, description: definition.linked.description, list: definition.linkedList as 'assembly' | 'part' | null, elementKind: definition.linkedKind } : undefined });
     phase = 'quota';
@@ -93,8 +94,8 @@ export async function generateSteelWorkVisual(definitionId: string, revision: nu
       if (current.count !== 1) return false; // A newer photo/edit always wins.
       await tx.steelWorkVisual.upsert({
         where: { companyProfileId_definitionId: { companyProfileId: actor.companyId, definitionId } },
-        create: { companyProfileId: actor.companyId, definitionId, data: new Uint8Array(image.data), scene: Prisma.DbNull, mime: 'image/webp' },
-        update: { data: new Uint8Array(image.data), scene: Prisma.DbNull, mime: 'image/webp' },
+        create: { companyProfileId: actor.companyId, definitionId, data: new Uint8Array(image.data), scene: { style: STEEL_ILLUSTRATION_STYLE_VERSION }, mime: 'image/webp' },
+        update: { data: new Uint8Array(image.data), scene: { style: STEEL_ILLUSTRATION_STYLE_VERSION }, mime: 'image/webp' },
       });
       await tx.auditLog.create({ data: { companyProfileId: actor.companyId, actorType: actor.workerId ? 'WORKER' : 'ADMIN', actorId: (actor.workerId ?? actor.userId)!, action: 'steel.visual_generated', payload: { definitionId, revision, style: STEEL_ILLUSTRATION_STYLE_VERSION, bytes: image.data.length } } });
       return true;
@@ -113,9 +114,16 @@ export async function generateSteelWorkVisual(definitionId: string, revision: nu
 export async function readSteelWorkVisual(id: string) {
   if (!validId.test(id)) return null;
   const actor = await fleetActor();
-  const visual = await withTenantContext(actor.companyId, tx => tx.steelWorkVisual.findFirst({ where: { companyProfileId: actor.companyId, definitionId: id }, select: { data: true, scene: true, mime: true } }));
+  const visual = await withTenantContext(actor.companyId, tx => tx.steelWorkVisual.findFirst({ where: { companyProfileId: actor.companyId, definitionId: id }, select: { data: true, scene: true, mime: true, definition: { select: { key: true, label: true, linkedProcessKey: true, kind: true, visualStatus: true } } } }));
   if (!visual) return null;
-  if (visual.mime === 'image/webp' && visual.data) return { data: new Uint8Array(visual.data), mime: 'image/webp' };
-  const svg = renderSteelScene(visual.scene);
-  return svg ? { data: new TextEncoder().encode(svg), mime: 'image/svg+xml' } : null;
+  const currentStyle = visual.scene && typeof visual.scene === 'object' && !Array.isArray(visual.scene) && visual.scene.style === STEEL_ILLUSTRATION_STYLE_VERSION;
+  if (visual.mime === 'image/webp' && visual.data && (visual.definition.visualStatus === 'photo' || currentStyle)) return { data: new Uint8Array(visual.data), mime: 'image/webp' };
+  // Legacy AI/SVG bytes remain untouched. Reads never regenerate, reserve quota
+  // or rewrite customer data; show the same photographic default as empty cards.
+  const photo = steelWorkPhoto(visual.definition);
+  const bytes = await readFile(join(process.cwd(), 'public', 'steel-studio-v1', photo.src.split('/').at(-1)!));
+  if (photo.panel === undefined) return { data: new Uint8Array(bytes), mime: 'image/webp' };
+  const image = sharp(bytes), metadata = await image.metadata();
+  const width = Math.floor(metadata.width! / 3), height = Math.floor(metadata.height! / 2);
+  return { data: new Uint8Array(await image.extract({ left: (photo.panel % 3) * width, top: Math.floor(photo.panel / 3) * height, width, height }).webp({ quality: 80 }).toBuffer()), mime: 'image/webp' };
 }
