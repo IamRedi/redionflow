@@ -60,6 +60,10 @@ cover the stated worker scope; names paginate and never silently clip into a
 complete list. Historical requests still use their dated report tools. The
 legacy live-workforce tool is omitted in steel mode; the classic registry is unchanged. Only admin
 tools gain this data; Worker Helper and private office assistants remain separate.
+Current global office/site/stop questions also receive a server-rendered answer from
+those exact rows before delivery and archival. Recognized global filters cannot be
+narrowed by model-invented names; partial names stay explicitly partial and unknown
+locations are stated. A failed source produces an unavailable answer, never model prose.
 Existing model, quotas and private question/tool/answer archive are unchanged.
 
 Steel mode removes legacy tree/dashboard/calculation tools from its registry.
