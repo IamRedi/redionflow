@@ -1,5 +1,12 @@
 type Lang = 'sq' | 'en' | 'de' | 'it' | 'pl' | 'ro';
 const words = {
+  reserve: ['Rezervë','Reserve','Reserve','Scorta','Zapas','Rezervă'],
+  withWorkers: ['Te punonjësit','With employees','Bei Mitarbeitern','Ai dipendenti','U pracowników','La angajați'],
+  otherState: ['Gjendje tjetër','Other status','Anderer Status','Altro stato','Inny status','Altă stare'],
+  noSize: ['Pa masë','Size not recorded','Größe nicht erfasst','Taglia non indicata','Rozmiar niepodany','Mărime neînregistrată'],
+  groups: ['grupe','groups','Gruppen','gruppi','grupy','grupe'],
+  pieces: ['copë','pieces','Stück','pezzi','szt.','bucăți'],
+  backToClothing: ['Kthehu te veshjet','Back to clothing','Zurück zur Kleidung','Torna agli indumenti','Wróć do odzieży','Înapoi la îmbrăcăminte'],
   pausedShort:['Pauzë','Paused','Pause','In pausa','Przerwa','Pauză'],
   workHere:['Puno këtu','Work here','Hier arbeiten','Lavora qui','Pracuj tutaj','Lucrează aici'],
   stopWorking:['Ndalo','Stop','Stoppen','Ferma','Zatrzymaj','Oprește'],
