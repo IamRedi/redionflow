@@ -13,5 +13,5 @@ export default async function DemoWorkshopPage({ searchParams }: { searchParams:
   const asset = known ? params.asset : undefined;
   const site = /^site-[a-f0-9]{24}$/.test(params.site ?? "") ? params.site : undefined;
   const worker = /^worker-[a-f0-9]{24}$/.test(params.worker ?? "") ? params.worker : undefined;
-  return <div data-baum-environment={tab === "tools" ? "inventory" : "repair"}><WorkshopDemo key={`${tab}:${asset ?? ''}:${site ?? ''}:${worker ?? ''}`} tab={tab} initialAsset={asset} initialSite={site} initialWorker={worker} showDetail={params.detail === "1"} now={new Date().toISOString()} /></div>;
+  return <div data-baum-environment={tab === "tools" ? "inventory" : tab === "fleet" ? "fleet" : "repair"}><WorkshopDemo key={`${tab}:${asset ?? ''}:${site ?? ''}:${worker ?? ''}`} tab={tab} initialAsset={asset} initialSite={site} initialWorker={worker} showDetail={params.detail === "1"} now={new Date().toISOString()} /></div>;
 }

@@ -3,7 +3,7 @@ import { resetWorkshopFixture } from "./shared-fixture";
 
 test.beforeEach(async () => { await resetWorkshopFixture(); });
 
-test("all four Muster workspaces paint and receive input beneath transparent chrome without a clipping seam", async ({ page, context }, info) => {
+test("all five Muster workspaces paint and receive input beneath transparent chrome without a clipping seam", async ({ page, context }, info) => {
   const baseURL = String(info.project.use.baseURL);
   await context.addCookies([{ name: "bk_lang", value: "de", url: baseURL }]);
   await context.route("https://*.tile.openstreetmap.org/**", route => route.abort());
@@ -12,12 +12,12 @@ test("all four Muster workspaces paint and receive input beneath transparent chr
   for (const theme of ["light", "dark"]) for (const [width, height] of [[1440, 900], [390, 844], [320, 700], [740, 360]]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: baseURL }]);
     await page.setViewportSize({ width, height });
-    for (const route of ["/demo/workshop", "/demo/workshop?tab=tools", "/demo/wood", "/demo/workzone"]) {
+    for (const route of ["/demo/workshop", "/demo/workshop?tab=tools", "/demo/workshop?tab=fleet", "/demo/wood", "/demo/workzone"]) {
       await page.goto(route);
       const workspace = page.getByTestId("demo-workspace");
       const marker = route.includes("workshop") ? page.getByTestId("workshop-demo").locator(":scope > header") : route.endsWith("wood") ? page.getByTestId("wood-workspace").locator(":scope > header") : page.getByTestId("workzone-canvas");
       await expect(marker).toBeVisible();
-      if (route.includes("workshop")) await expect(page.getByRole("button", { name: route.includes("tools") ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
+      if (route.includes("workshop")) await expect(page.getByRole("button", { name: (route.includes("tools") || route.includes("fleet")) ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
       await expect.poll(async () => workspace.evaluate(el => el.scrollTop)).toBe(0);
       const header = (await page.getByTestId("baum-demo-topbar").boundingBox())!;
       const content = (await workspace.locator(":scope > div > div").first().boundingBox())!;
@@ -39,11 +39,12 @@ test("all four Muster workspaces paint and receive input beneath transparent chr
         return { painted: target === el || (target !== null && el.contains(target)), outerStill: document.documentElement.scrollHeight <= innerHeight + 1, fits: document.documentElement.scrollWidth <= innerWidth };
       }, { x: after.x + after.width / 2, y: headerBottom - 6 });
       expect(hit).toEqual({ painted: true, outerStill: true, fits: true });
-      if (route.includes("tools")) {
-        await expect(page.locator('[data-baum-environment="inventory"]')).toHaveCount(1);
+      if (route.includes("tools") || route.includes("fleet")) {
+        const fleet = route.includes("fleet");
+        await expect(page.locator(`[data-baum-environment="${fleet ? "fleet" : "inventory"}"]`)).toHaveCount(1);
         const backdrop = await page.locator('[data-baum-studio="forest-crystal-v1"]').evaluate(el => getComputedStyle(el).backgroundImage);
-        expect(backdrop).toContain(`tool-warehouse-${theme === "light" ? "day" : "night"}.webp`);
-        if (width === 390) await page.screenshot({ path: info.outputPath(`inventory-continuous-${theme}-phone.png`) });
+        expect(backdrop).toContain(`${fleet ? "fleet-yard" : "tool-warehouse"}-${theme === "light" ? "day" : "night"}.webp`);
+        if (width === 390) await page.screenshot({ path: info.outputPath(`${fleet ? "fleet" : "inventory"}-continuous-${theme}-phone.png`) });
       }
     }
   }

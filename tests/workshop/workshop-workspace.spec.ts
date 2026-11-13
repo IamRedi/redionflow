@@ -10,12 +10,12 @@ test("workspace uses the viewport, scrolls the natural legal footer, and preserv
   for (const theme of ["light", "dark"]) for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 390, height: 360 }]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
     await page.setViewportSize(size);
-    for (const route of ["/demo/workshop", "/demo/workshop?tab=tools", "/demo/workzone", "/demo/dashboard"]) {
+    for (const route of ["/demo/workshop", "/demo/workshop?tab=tools", "/demo/workshop?tab=fleet", "/demo/workzone", "/demo/dashboard"]) {
       await page.goto(route);
       const workspace = page.getByTestId("demo-workspace");
       await expect(workspace).toBeVisible();
       if (route.startsWith("/demo/workshop")) {
-        await expect(page.getByRole("button", { name: route.includes("tab=tools") ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
+        await expect(page.getByRole("button", { name: (route.includes("tab=tools") || route.includes("tab=fleet")) ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
         const teamHeader = (await page.getByTestId("baum-demo-topbar").boundingBox())!;
         const initialContent = (await workspace.locator(":scope > div > div").first().boundingBox())!;
         expect(initialContent.y).toBeGreaterThanOrEqual(teamHeader.y + teamHeader.height - 1);
