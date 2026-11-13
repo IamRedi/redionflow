@@ -24,6 +24,18 @@ Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten*
 
 ## BauFlow: vernetzte Büros, Fertigung und Baustelle · 12. November 2026
 
+**Aufgabenjournal · 13. November 2026.** Persönliche Kristallkarten mit Titel,
+Status, Wichtigkeit und optionaler Notiz; erledigen, bearbeiten und archivieren
+direkt aus der Karte. Freiwillige Erinnerungen gelten nur für die Person, die
+sie setzt, und verwenden die Firmenzeit. Der eingerichtete Server sendet auch
+bei geschlossener App über den vorhandenen Push-Kanal. Gerätefreigabe und
+Netz/OS bleiben Voraussetzung; die genaue Zuordnung der physischen iPhone-Probe
+zu einer geplanten Erinnerung steht noch aus. Firmenzugang erforderlich,
+keine Freischaltung in der öffentlichen Demo. Veröffentlicht mit
+[PR #191](https://github.com/IamRedi/redionflow/pull/191),
+[Produktionsrevision 3b327f8](https://github.com/IamRedi/redionflow/commit/3b327f80132328ff3a69a2d689b3c49bb28fac04).
+Die bestehenden Aufnahmen unten zeigen den zuvor abgenommenen Stand vom 12. November.
+
 Kalender an der Wand, Dokumente in der Schublade und der Assistent auf dem Monitor. Jedes Teammitglied öffnet seinen Arbeitsraum mit den erlaubten Werkzeugen und Informationen.
 
 Der Empfang verbindet die Teambüros. Start/Stopp zeigt die tatsächlich erfasste Arbeitspräsenz. Interne Post mit Anhängen, persönliche Aufgaben und Aufträge der Verwaltung. Persönliche Assistenten nutzen den Kontext und die Rechte des Mitarbeiters; der Führungsassistent bleibt getrennt.

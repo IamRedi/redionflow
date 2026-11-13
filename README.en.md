@@ -26,6 +26,17 @@ Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant**
 
 ## BauFlow: connected offices, factory and site · 12 November 2026
 
+**Task journal · 13 November 2026.** Personal crystal cards with title, status,
+importance and an optional note; complete, edit and archive from the card.
+Opt-in reminders belong only to the person who schedules them and use company
+time. The configured server sends through the existing push channel even when
+the app is closed. Device permission and network/OS delivery still apply;
+correlation of the physical iPhone check with a scheduled reminder remains pending.
+Company sign-in is required; this is not enabled in the public demo.
+Released in [PR #191](https://github.com/IamRedi/redionflow/pull/191),
+[production revision 3b327f8](https://github.com/IamRedi/redionflow/commit/3b327f80132328ff3a69a2d689b3c49bb28fac04).
+The existing captures below show the previously accepted 12 November version.
+
 A calendar on the wall, documents in a drawer and an assistant on the monitor. Each team member opens a personal workspace with the tools and information they are allowed to use.
 
 Reception connects the team’s offices. Start/Stop reflects actual working presence. Internal mail with attachments, personal tasks and work assigned by administration. Personal assistants use the employee’s context and permissions; the management assistant stays separate.
