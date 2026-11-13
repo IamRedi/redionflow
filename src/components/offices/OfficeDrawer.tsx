@@ -20,5 +20,5 @@ export function OfficeDrawer({children,backHref,label,placement}:{children:React
   place();window.addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);
   return()=>{window.removeEventListener('resize',place);window.visualViewport?.removeEventListener('resize',place);};
  },[placement]);
- return <dialog ref={ref} className={`${s.officeDrawer} ${glass.dialog} ${placement==='assistant'?glass.assistant:''}`} data-office-drawer={placement??'work'} aria-label={label} onCancel={e=>{e.preventDefault();router.push(backHref);}}>{children}</dialog>;
+ return <dialog ref={ref} className={`${s.officeDrawer} ${glass.dialog} ${placement==='assistant'?glass.assistant:glass.workDialog}`} data-office-drawer={placement??'work'} aria-label={label} onCancel={e=>{e.preventDefault();router.push(backHref);}}>{children}</dialog>;
 }

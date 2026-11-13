@@ -236,6 +236,8 @@ body:has([data-studio-dashboard],[data-studio-profile],[data-studio-notebook],[d
  background:var(--steel-home-backdrop),url('/office-studio-v1/connected-work-artwork.webp') center/cover fixed;
 }
 body:has([data-steel-studio]) [data-studio-planning] {color:hsl(var(--foreground));}
+body:has([data-steel-studio]) [data-studio-planning] [data-testid=saved-plan]>ul>li {background:var(--steel-glass);border-color:var(--steel-edge);box-shadow:var(--steel-shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+body:has([data-steel-studio]) [data-studio-planning] [data-testid=saved-plan]>ul>li>ul>li {background:hsl(var(--card)/.38);border-color:hsl(var(--border)/.5);}
 body:has([data-steel-studio]) [data-studio-planning] :is(input,textarea,select) {background:hsl(var(--card)/.78);color:hsl(var(--foreground));border-color:hsl(var(--border)/.8);border-radius:10px;}
 body:has([data-steel-studio]) [data-studio-planning] :is(button,a)[class~="border"] {box-shadow:inset 0 1px 0 var(--steel-edge);}
 body:has([data-steel-studio]) [data-studio-planning] :is(button,a)[class~="bg-orange-600"],

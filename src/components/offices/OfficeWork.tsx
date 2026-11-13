@@ -10,6 +10,7 @@ import { archiveTaskAction, initializeCategoriesAction, loadOfficeWork, readThre
 import { officeWorkCopy } from '@/lib/offices/work-copy';
 import type { SupportedLanguage } from '@/lib/i18n/language';
 import s from './work.module.css';
+import glass from './surfaces.module.css';
 import { dateKey } from '@/lib/workzone/date-utils';
 
 type Task=OfficeSnapshot['tasks'][number];
@@ -41,7 +42,7 @@ export function OfficeWork({initial,view,lang,initialCompose=false,initialRecipi
   const mailRows=data.threads.filter(t=>(filter==='all'||filter==='unread'&&t.unread||filter==='sent'&&t.senderId===data.self||filter==='inbox'&&t.recipientId===data.self)&&`${t.subject} ${name(t.senderId)} ${name(t.recipientId)}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const unread=data.threads.filter(t=>t.unread).length;
   return <section className={s.workspace} data-testid="office-work" aria-busy={busy}>
-    <nav className={s.nav} aria-label={c.desk}>
+    <nav className={`${s.nav} ${glass.backNav}`} aria-label={c.desk}>
       <Link href="/workzone/offices/me"><ArrowLeft size={17}/>{c.desk}</Link>
       <Link href="/workzone/offices">{c.reception}</Link>
       <Link href="/workzone/plan?office=desk"><CalendarDays size={16}/>{c.plan}</Link>
