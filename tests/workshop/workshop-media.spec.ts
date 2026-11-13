@@ -39,9 +39,14 @@ test("logo and site galleries expose explicit AI actions, saved logo removal and
 });
 
 test("wood phase images can be removed and restored without changing processing history",async({page,request})=>{
+  // A temporary initial snapshot failure must not expose an action that cannot be confirmed.
+  let firstRead=true;
+  await page.route("**/api/demo/baumdienst/workshop",async route=>{if(firstRead&&route.request().method()==="GET"){firstRead=false;await route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"connection"})});}else await route.continue();});
   await page.setViewportSize({width:390,height:844});await page.goto("/demo/wood");await page.getByRole("button",{name:"Arbeiten & Phasen",exact:true}).click();
   const before=await(await request.get("/api/demo/baumdienst/wood")).json();
   await page.getByRole("button",{name:"Phasenbild · Sägen",exact:true}).click();const d=page.getByRole("dialog");await expect(d.getByRole("button",{name:"Mit KI erstellen",exact:true})).toBeVisible();
+  await expect(d.getByRole("button",{name:"Bild entfernen",exact:true})).toBeDisabled();
+  await expect(d.getByRole("button",{name:"Bild entfernen",exact:true})).toBeEnabled({timeout:15000});
   await d.getByRole("button",{name:"Bild entfernen",exact:true}).click();await expect(d.getByRole("button",{name:"Bild entfernen",exact:true})).toHaveCount(0);
   await d.locator("summary").filter({hasText:"Entfernte Bilder"}).click();await d.getByRole("button",{name:"Bild wiederherstellen",exact:true}).click();await expect(d.getByRole("button",{name:"Bild entfernen",exact:true})).toBeVisible();
   const after=await(await request.get("/api/demo/baumdienst/wood")).json();expect(after.events).toEqual(before.events);expect(after.jobs).toEqual(before.jobs);expect(after.revision).toBe(before.revision);
