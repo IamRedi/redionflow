@@ -25,6 +25,9 @@ test("plain workspace labels leave the scenery clear; wood lists and opened card
     expect(await page.getByRole("dialog").evaluate(el => getComputedStyle(el).backgroundImage)).toBe(material);
     await page.keyboard.press("Escape");
     await page.goto("/demo/wood");
+    const background = await page.locator('[data-demo-shell="muster"]').evaluate(el => getComputedStyle(el).backgroundImage);
+    expect(background).toContain(`wood-factory-${theme === "dark" ? "night" : "day"}.webp`);
+    if (theme === "light") expect(background).not.toContain("linear-gradient");
     const job = page.getByRole("button", { name: /Buchenholz 33 cm · Musterauftrag/ });
     await expect(job).toBeVisible();
     const woodMaterial = await job.evaluate(el => getComputedStyle(el).backgroundImage);

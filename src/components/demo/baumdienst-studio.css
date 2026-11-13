@@ -115,7 +115,8 @@ body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environmen
 }
 /* Environment images are separate; material and workspace rules stay shared. */
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
-  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/wood-factory-day.webp');
+  /* Daylight is already in the artwork; a pale scrim washed out the room. */
+  --baum-page-backdrop: url('/baumdienst-studio-v1/wood-factory-day.webp');
 }
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/wood-factory-night.webp');

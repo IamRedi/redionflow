@@ -14,7 +14,8 @@ test("full-screen forest scene keeps cards, map, plan and archive reachable with
     const boxes=await cards.evaluateAll(es=>es.map(e=>e.getBoundingClientRect().toJSON()));
     for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++)expect(boxes[i].right<=boxes[j].left+1||boxes[j].right<=boxes[i].left+1||boxes[i].bottom<=boxes[j].top+1||boxes[j].bottom<=boxes[i].top+1).toBe(true);
     await expect(page.getByTestId("wood-overview")).toHaveCount(0);await expect(page.getByRole("region",{name:"Werkstatt",exact:true})).toHaveCount(0);
-    const shell=page.locator('[data-demo-shell="muster"]');expect(await shell.evaluate(e=>getComputedStyle(e).backgroundImage)).toContain(`connected-landscape-${theme==="dark"?"night":"day"}.webp`);
+    const shell=page.locator('[data-demo-shell="muster"]'),background=await shell.evaluate(e=>getComputedStyle(e).backgroundImage);expect(background).toContain(`connected-landscape-${theme==="dark"?"night":"clear-day"}.webp`);
+    if(theme==="light")expect(background).not.toContain("linear-gradient");
     expect(await page.getByTestId("demo-workspace").evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
     await expect(page.getByRole("link",{name:"Tageplan +",exact:true})).toHaveAttribute("href",/\/demo\/plan\?date=/);

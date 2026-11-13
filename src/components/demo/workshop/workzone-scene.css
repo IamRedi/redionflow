@@ -1,4 +1,10 @@
 /* Only the opt-in Muster scene. The photo is the room, never a framed panel. */
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] [data-baum-environment="workzone"]) {
+  /* Clear-air sibling keeps the original misty artwork available for rollback.
+     Glass belongs to controls/cards, not a white film over the environment. */
+  --baum-field-image: url('/baumdienst-studio-v1/connected-landscape-clear-day.webp');
+  --baum-field-scrim: none;
+}
 [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) {
   background-image: var(--baum-field-scrim), var(--baum-field-image);
   background-position: center; background-size: cover; background-repeat: no-repeat;
