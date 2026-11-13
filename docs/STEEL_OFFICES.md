@@ -1,5 +1,26 @@
 # Company offices — reception and Megi's office
 
+## Office work surface correction — 13 November 2026
+
+The manager's employee-view plan, documents, tasks and workbooks use the same
+warm stone/teal crystal as the existing office. Read-only previews remain
+read-only. Office work drawers and saved plan cards reuse that material;
+return links use compact, legible semibold glass controls with 44px touch
+targets. Room photographs, artwork, object positions and assistant surfaces
+remain unchanged.
+
+Reception doors and the directory prioritize the already-resolved real office
+presence. Within the remaining rooms, the configured Megi principal precedes
+Almet, followed by the existing staff order. Names and job titles are not used
+to infer identity, access or attendance. Paused office sessions keep their
+existing label; no work timer or presence write is introduced by sorting.
+
+This is a presentation correction, without a schema, permission, calculation,
+file-storage or provider change. Local acceptance and publication are separate;
+AGENTS.md still requires owner approval before merge/deploy. Native presentation
+and portfolio: NO_CONTENT_CHANGE, since existing capabilities and approved
+office imagery stay accurate.
+
 ## Released office UI — 12 November 2026
 
 Owner-approved PR175 is merged and live at `f79798cba4410329d687dbdb40d2e336a4b1d9f6`.

@@ -42,7 +42,7 @@ function PlanHeader({ date, lang, canEdit, office }: { date: string; lang: Suppo
   const nav = "grid size-10 shrink-0 place-items-center rounded-xl border bg-card shadow-sm transition hover:bg-muted sm:size-11";
   return (
     <section className="rounded-3xl border bg-card p-3 shadow-sm max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-3 max-lg:rounded-none max-lg:border-x-0 max-lg:border-t-0 max-lg:bg-background/95 max-lg:pt-[max(0.75rem,env(safe-area-inset-top))] max-lg:backdrop-blur sm:p-5" data-testid="plan-header">
-      <Link href={backHref} className="hidden text-xs text-muted-foreground hover:text-foreground lg:inline">← {backLabel}</Link>
+      <Link href={backHref} className="hidden min-h-11 w-fit items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm hover:bg-muted lg:inline-flex"><ArrowLeft className="size-4" aria-hidden/>{backLabel}</Link>
       <div className="flex items-center gap-2 lg:mt-1">
         <Link href={backHref} className="grid size-10 shrink-0 place-items-center rounded-full border bg-card shadow-sm hover:bg-muted lg:hidden" aria-label={backLabel} data-testid="plan-close"><ArrowLeft className="size-5" aria-hidden /></Link>
         <CalendarDays className="hidden size-6 text-orange-600 dark:text-orange-400 lg:block" aria-hidden />
