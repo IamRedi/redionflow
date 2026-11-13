@@ -14,7 +14,7 @@ import { notificationAudience } from './audience';
 import { registerNotificationSubscription } from './notification-store';
 import { encodeBrowserSubscription } from './web-push';
 import { dispatchWorkNotification, siteCompletionSnapshot } from './events';
-import { sendNotification } from './sendNotification';
+import { sendInstalledNotification, sendNotification } from './sendNotification';
 import { updateSteelPhaseAction } from '@/app/(workzone)/workzone/steel-phase-actions';
 import { saveDailyPlanAction } from '@/app/(workzone)/workzone/daily-plan-actions';
 import { GET as config, POST as register } from '@/app/api/notifications/register/route';
@@ -47,6 +47,8 @@ it('records one completed task rather than the unrelated imported row; repeated 
  const item=await prisma.treeItem.create({data:{baustelleId:a.site.id,treeId:definition.key,species:'task',diameter:0}});
  await prisma.steelSiteTask.create({data:{companyProfileId:a.company.id,baustelleId:a.site.id,definitionId:definition.id,treeItemId:item.id}});
  await registerNotificationSubscription(a.admin.id,encodeBrowserSubscription(sub(a.admin.id)));
+ // Process/site completion is opt-in. Registering a device does not opt in.
+ await prisma.notificationSettings.update({where:{userId:a.admin.id},data:{workEnd:true}});
  expect((await updateSteelPhaseAction({phaseItemId:item.id,command:'done'})).ok).toBe(true);
  expect(provider.send).toHaveBeenCalledTimes(2); // process and site, only the admin has access
  expect(await withTenantContext(a.company.id,tx=>siteCompletionSnapshot(tx,a.company.id,a.site.id))).toMatchObject({complete:true});
@@ -67,6 +69,20 @@ it('standard push preserves Firebase devices, deduplicates an event and removes 
  expect(provider.send).toHaveBeenCalledTimes(1);expect(provider.fcm).toHaveBeenCalledTimes(1);
  provider.send.mockRejectedValueOnce(Object.assign(new Error('expired'),{statusCode:410}));await sendNotification({userIds:[a.worker.id],title:'Test',body:'Synthetic'});
  expect(await prisma.notificationSubscription.count({where:{userId:a.worker.id}})).toBe(0);expect(await prisma.notificationSubscription.count({where:{userId:b.worker.id}})).toBe(1);
+});
+it('the installed background sender has no request impersonation or cross-company override',async()=>{
+ const a=tenants[0],b=tenants[1];
+ await registerNotificationSubscription(a.worker.id,encodeBrowserSubscription(sub(a.worker.id)));
+ await registerNotificationSubscription(b.worker.id,encodeBrowserSubscription(sub(b.worker.id)));
+ const input={userIds:[a.worker.id,b.worker.id],title:'Reminder',body:'Synthetic only'};
+ request.cookies.clear();vi.stubEnv('INSTALLATION_COMPANY_ID','');
+ expect(await sendInstalledNotification(a.company.id,input)).toEqual({sent:0,failed:0});
+ vi.stubEnv('INSTALLATION_COMPANY_ID',a.company.id);
+ expect(await sendInstalledNotification(b.company.id,input)).toEqual({sent:0,failed:0});
+ vi.stubEnv('RLS_ENFORCE','true');expect(await sendInstalledNotification(a.company.id,input)).toEqual({sent:0,failed:0});
+ vi.stubEnv('RLS_ENFORCE','false');
+ expect(await sendInstalledNotification(a.company.id,input)).toEqual({sent:1,failed:0});expect(provider.send).toHaveBeenCalledTimes(1);
+ expect(provider.send).toHaveBeenCalledWith(expect.objectContaining({endpoint:sub(a.worker.id).endpoint}),expect.any(String),expect.any(Object));
 });
 it('registration and self-test require a single authenticated owner; same endpoint cannot be claimed with different keys',async()=>{
  const a=tenants[0],b=tenants[1],s=sub('owned');
