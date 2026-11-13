@@ -5,3 +5,4 @@
 :global([data-demo-shell="muster"]):has(.tv) { grid-template-rows: minmax(0, 1fr); }
 
 :global([data-demo-shell="muster"]):has(.tv) > main { padding: 0; scrollbar-gutter: auto; }
+:global([data-demo-shell="muster"]):has(.tv) > main > div > div { padding: 16px 20px 24px; }

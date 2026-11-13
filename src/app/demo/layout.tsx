@@ -17,6 +17,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/public-demo";
 import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
+import { FleetInspectionProvider } from "@/components/demo/workshop/fleet-inspection-context";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
@@ -102,7 +103,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
       </header>
       {features.machines ? workshopEnabled ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
-      {workshopEnabled ? <DemoWorkspace footer={<BaumdienstDemoFooter lang={demoLanguage} />}>{children}</DemoWorkspace> : <div className="mx-auto max-w-6xl lg:pr-20">
+      {workshopEnabled ? <FleetInspectionProvider rows={machines.map(m => ({ plate: m.targe ?? "", hu: m.tuvDate?.toISOString() ?? null, sp: m.spDate?.toISOString() ?? null, uvv: m.uvvDate?.toISOString() ?? null }))}><DemoWorkspace footer={<BaumdienstDemoFooter lang={demoLanguage} />}>{children}</DemoWorkspace></FleetInspectionProvider> : <div className="mx-auto max-w-6xl lg:pr-20">
         <main className="px-5 pb-24 pt-4 lg:pb-6 print:max-w-none print:px-0 print:py-0">{children}</main>
         <RediOnFooter />
       </div>}
