@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
+import { workshopSection } from "@/lib/workshop/section-navigation";
+import { workshopTabs, type WorkshopTab } from "@/lib/workshop/demo-model";
 
 /** Active location comes from the existing route, never a second navigation store. */
 export function DemoNavigationLink({ href, label, children, className, preserveWorkshopScope = false }: { href: string; label: string; children: ReactNode; className: string; preserveWorkshopScope?: boolean }) {
   const pathname = usePathname(), params = useSearchParams();
   const [path, query] = href.split("?");
   const tab = new URLSearchParams(query).get("tab");
-  const active = pathname === path && (tab ? params.get("tab") === tab : path !== "/demo/workshop" || !params.get("tab") || params.get("tab") === "orders");
+  const currentTab = workshopTabs.includes(params.get("tab") as WorkshopTab) ? params.get("tab") as WorkshopTab : "orders";
+  const section = workshopSection(currentTab, params.get("section"));
+  const active = pathname === path && (path === "/demo/workshop" ? section === (tab || "orders") : true);
   const link = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
     const item = link.current, nav = item?.closest<HTMLElement>("[data-demo-navigation]");

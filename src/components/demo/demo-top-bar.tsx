@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Bot, Boxes, FileText, History, Home, LayoutDashboard, Monitor, Package, Settings2, MoreHorizontal, TreePine, Truck, Wrench } from "lucide-react";
-import type { ReactNode } from "react";
+import { Bot, BookOpenCheck, Home, LayoutDashboard, Monitor, Package, Settings2, UserRound, TreePine, Truck, Wrench } from "lucide-react";
 import { cookies } from "next/headers";
 
 import { AppBrand } from "@/components/branding/AppBrand";
@@ -39,7 +38,7 @@ type DemoWorker = {
   live: boolean;
 };
 
-export async function DemoTopBar({ workers, mode, workshopEnabled = false, fleetQuickView }: { workers: DemoWorker[]; mode?: CompanyMode; workshopEnabled?: boolean; fleetQuickView?: ReactNode }) {
+export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { workers: DemoWorker[]; mode?: CompanyMode; workshopEnabled?: boolean }) {
   const currentLang = await resolveRequestLanguage();
   const kidraht = kidrahtDemoUrl(mode);
 
@@ -47,7 +46,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false, fleet
     const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
     return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5" data-testid="baum-demo-topbar">
-      <div data-demo-teamrow className="relative min-w-0"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} /></div>
+      <div data-demo-teamrow className="relative flex min-w-0 items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><div className="min-w-0 flex-1"><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} /></div><DemoActorBar mode="notifications"/><details data-demo-profile className="relative shrink-0"><summary aria-label={c.profile} title={c.profile} className={`${navIcon} cursor-pointer list-none`}><UserRound className="size-4" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><LanguageSwitcher/></div></details></div>
       <div data-demo-actionrow className="mt-2 flex min-w-0 items-start gap-2">
         <nav data-demo-navigation aria-label="Demo" className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5 [&>*]:shrink-0">
           <DemoNavigationLink href="/demo/workzone" label={workzoneName} className={navIcon}><Home className="size-4" /></DemoNavigationLink>
@@ -58,12 +57,8 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false, fleet
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop" label={c.title} className={navIcon}><Wrench className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=tools" label={c.tools} className={navIcon}><Package className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=fleet" label={c.fleet} className={navIcon}><Truck className="size-4" /></DemoNavigationLink>
-          <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=parts" label={c.parts} className={navIcon}><Boxes className="size-4" /></DemoNavigationLink>
-          <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=documents" label={c.documents} className={navIcon}><FileText className="size-4" /></DemoNavigationLink>
-          <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=history" label={c.history} className={navIcon}><History className="size-4" /></DemoNavigationLink>
-          <DemoActorBar mode="notifications"/>
         </nav>
-        <details className="relative shrink-0"><summary aria-label={c.more} className={`${navIcon} cursor-pointer list-none`}><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><div className="flex items-center justify-end gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div>{fleetQuickView}</div></details>
+        <div data-demo-utilities className="flex shrink-0 items-center gap-1">{kidraht?<Link href="/demo/kidraht" aria-label={t("demo.kidrahtTitle",currentLang)} title={t("demo.kidrahtTitle",currentLang)} className={navIcon}><BookOpenCheck className="size-4"/></Link>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/></div>
       </div>
     </div>;
   }

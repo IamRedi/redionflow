@@ -12,7 +12,7 @@ test("one navigation, expandable search, readable ice filter and three registrat
     Object.assign(window, { registrationNfcSignals: signals, NDEFReader: class { onreading = null; onreadingerror = null; async scan({ signal }: { signal: AbortSignal }) { signals.push(signal); } } });
   });
   const search = "Name, Kennzeichen, Code oder Defekt suchen…";
-  const labels = ["Workzone", "Kontrollpanel", "Büros", "Dashboard view", "Holzwerkstatt", "Werkstatt", "Inventar", "Flotte", "Ersatzteile", "Dokumente", "Historie"];
+  const labels = ["Workzone", "Kontrollpanel", "Büros", "Dashboard view", "Holzwerkstatt", "Werkstatt", "Inventar", "Flotte"];
   for (const theme of ["light", "dark"]) for (const width of [1440, 390]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: base }]);
     await page.setViewportSize({ width, height: 900 });
@@ -55,14 +55,14 @@ test("one navigation, expandable search, readable ice filter and three registrat
     await expect.poll(() => page.evaluate(() => (window as unknown as { registrationNfcSignals: AbortSignal[] }).registrationNfcSignals.length)).toBe(1);
     await page.keyboard.press("Escape");
     expect(await page.evaluate(() => (window as unknown as { registrationNfcSignals: AbortSignal[] }).registrationNfcSignals.every(s => s.aborted))).toBe(true);
-    await page.getByLabel("Mehr", { exact: true }).click();
-    await page.getByRole("button", { name: "Kran-LKW", exact: true }).click();
-    const quick = page.locator('[data-demo-fleet="embedded"] > aside > div:nth-of-type(2)');
+    await page.getByRole("navigation", {name:"Demo",exact:true}).getByRole("link",{name:"Flotte",exact:true}).click();
+    await page.getByTestId("fleet-asset-card").filter({has:page.getByRole("heading",{name:"Kran-LKW",exact:true})}).getByRole("button",{name:"Details öffnen",exact:true}).click();
+    await page.getByRole("dialog").getByText("Service & Details",{exact:true}).click();
+    const quick = page.getByRole("dialog");
     await expect(quick).toBeVisible();
     const bounds = (await quick.boundingBox())!; expect(bounds.y).toBeGreaterThanOrEqual(0); expect(bounds.y + bounds.height).toBeLessThanOrEqual(901);
-    const manage = quick.locator('a[href*="detail=1"]'); await manage.scrollIntoViewIfNeeded(); await expect(manage).toBeInViewport();
+    const manage = quick.getByRole("link",{name:"Fahrzeugakte",exact:true}); await expect(manage).toHaveAttribute("href", /^\/demo\/machines\//); await manage.scrollIntoViewIfNeeded(); await expect(manage).toBeInViewport();
     await quick.getByRole("button", { name: "Schließen", exact: true }).click();
-    await page.getByLabel("Mehr", { exact: true }).click();
     const list = page.getByTestId("workshop-scroll-region");
     await list.focus(); await page.keyboard.press("Control+End");
     const row = page.getByTestId("baumdienst-demo-footer"); await expect(row).toBeInViewport();

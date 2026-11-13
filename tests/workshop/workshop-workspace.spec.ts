@@ -19,7 +19,8 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
       const scroller = workshop ? page.getByTestId(wood ? "wood-scroll-region" : "workshop-scroll-region") : workspace;
       await expect(scroller).toBeVisible();
       if (workshop) {
-        await expect(page.getByRole("button", { name: wood ? "Auftrag erstellen" : (route.includes("tab=tools") || route.includes("tab=fleet")) ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
+        const resource = /tab=(parts|documents|history)/.test(route);
+        await expect(resource ? page.getByTestId("section-folder") : page.getByRole("button", { name: wood ? "Auftrag erstellen" : (route.includes("tab=tools") || route.includes("tab=fleet")) ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
         const teamHeader = (await page.getByTestId("baum-demo-topbar").boundingBox())!;
         const initialContent = (await workspace.locator(":scope > div > div").first().boundingBox())!;
         expect(initialContent.y).toBeGreaterThanOrEqual(teamHeader.y + teamHeader.height - 1);
@@ -56,7 +57,7 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
           expect((await toolbar.boundingBox())!.height).toBeLessThan(size.width > 1000 ? 140 : 180);
         }
         await expect(toolbar.getByRole("navigation").locator("a,button")).toHaveCount(wood ? 4 : 0);
-        if (!wood) await expect(page.getByTestId("workshop-status-line").locator("dd")).toHaveCount(3);
+        if (!wood) await expect(page.getByTestId("workshop-status-line").locator("dd")).toHaveCount(route === "/demo/workshop" ? 3 : 0);
         const targets = await page.locator("[data-demo-navigation]").locator("a,button").evaluateAll(els => els.map(el => el.getBoundingClientRect().height));
         expect(targets.every(height => height >= 44)).toBe(true);
         expect((await scroller.boundingBox())!.height).toBeGreaterThan(55);

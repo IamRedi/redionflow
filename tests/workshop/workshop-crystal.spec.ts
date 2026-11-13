@@ -25,9 +25,9 @@ test("one forest material spans the workspace, with reachable navigation and no 
       if (route === "/demo/workshop?tab=tools") await expect(page.getByRole("navigation", { name: "Demo", exact: true }).getByRole("link", { name: "Inventar", exact: true })).toHaveAttribute("aria-current", "page");
     }
     const team = await page.getByTestId("baum-team-strip").boundingBox();
-    const more = page.getByLabel("Mehr", { exact: true });
+    const more = page.getByLabel("Profil", { exact: true });
     const settings = (await more.boundingBox())!;
-    expect(settings.y).toBeGreaterThanOrEqual(team!.y + team!.height - 1);
+    expect(settings.x).toBeGreaterThanOrEqual(team!.x + team!.width - 1);
     expect(settings.height).toBeGreaterThanOrEqual(44);
     for (const action of await page.getByTestId("muster-site-card").first().getByRole("link").all()) expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await more.click();

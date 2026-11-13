@@ -1,6 +1,20 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-## AKTUALE — 13.11.2026 / Një navigim dhe komanda sipas nevojës
+## AKTUALE — 13.11.2026 / Dosjet e seksioneve dhe komanda minimale
+
+Vetëm Musterfirma BaumdienstFlow. Rreshti kryesor ka tetë hyrje: Workzone, Paneli i kontrollit, Zyrat, Dashboard view, Punëtoria e drurit, Werkstatt, Inventari dhe Flota. Dokumentet, Pjesët rezervë dhe Historiku nuk përsëriten si seksione kryesore. Një buton Dosja e seksionit në Werkstatt, Flotë dhe Inventar hap listën e seksionit, Dokumentet, Raporte & historiku ose Pjesët rezervë. Në telefon butoni është ikonë 44px me emër të aksesueshëm; menuja përdor të njëjtin Radix ice glass, Light/Night, fokus dhe kufij të ekranit si filtri i inventarit.
+
+Konteksti përdor URL-në ekzistuese, jo gjendje ose magazinë të re: tab=orders|fleet|tools për listat dhe section=orders|fleet|tools&tab=documents|history|parts për dosjet. Titulli, sfondi dhe hyrja aktive ndjekin seksionin pronar; asset/site/worker ruhen dhe detail pastrohet gjatë kalimit. Flota filtron pajisjet me kind=fleet. Dosja e Werkstatt-it lidhet me pajisjet që kanë riparime dhe dokumentet që kanë jobId; ngarkimi këtu kërkon zgjedhjen e riparimit që skedari të mos mbetet jashtë pamjes. Inventari përmban të njëjtat pajisje të firmës, përfshirë mjetet, me identitetet/skedarët origjinalë. Lidhjet historike pa section ruajnë pamjen e plotë të mëparshme. Lidhja Dokumente nga karta e pajisjes hap dosjen e Flotës ose Inventarit sipas llojit. Filtrat e kantierit/punonjësit përdorin historikun ekzistues për dokumentet dhe ngjarjet.
+
+Raporte & historiku paraqet ngjarjet ekzistuese të pajisjeve dhe lëvizjet e pjesëve të lidhura me kontekstin. Nuk shtohet motor i ri raportesh financiare/PDF. Eksporti i plotë ekzistues mbetet te shpjegimi i demos. Pjesët rezervë kanë vetëm një stok të përbashkët dhe një regjistër lëvizjesh; kjo thuhet qartë në pamje, edhe kur hapen nga seksione të ndryshme. Asnjë transferim, dokument, riparim ose gjendje stoku nuk kopjohet. Numëruesit e tri fazave shfaqen vetëm te lista e Werkstatt-it; Regjistro/Defekt/Skano vetëm te listat përkatëse, jo mbi dosjet ku nuk kanë kuptim.
+
+KiDraht dhe Light/Night janë dy komanda minimale të dukshme djathtas. Flota ka një hyrje të vetme në navigim. Njoftimet dhe Profili janë pranë ekipit; brenda Profilit ruhen roli/gjuha. Hiqet lista e dytë e katër makinave nga menuja Më shumë. Të gjitha detajet origjinale të mjeteve mbeten te lidhja Dosja e mjetit në Service & Details të kartës së Flotës/Inventarit: përdoret ID-ja e makinës nga leximi ekzistues, me përputhje unike të targës; identitetet e paqarta nuk krijojnë lidhje. Nuk ndryshohet rrjedha e targës/barkodit opsional, regjistrimit/kamerës/NFC, fotove, konfirmimeve, roleve ose API-ve.
+
+Ruhet app-i fiks me scroll brenda listës, komandat touch, Day/Night, ikonat, fotografitë, footer-i natyral pa shell dhe një by RediON. Nuk ka migrime, varësi të reja, thirrje AI ose ndryshim kufijsh. AL Steel, demot e tjera, portofoli dhe çështja e veçantë e logos/PWA #194 mbeten jashtë scope. Portofoli OWNER_HOLD/PENDING_PUBLICATION.
+
+Verifikimi dhe publikimi përfundimtar: PENDING_RECHECK.
+
+## HISTORIKE — 13.11.2026 / Një navigim dhe komanda sipas nevojës
 
 Vetëm Musterfirma BaumdienstFlow. Korrigjimi i pronarit: një rresht kryesor Workzone, Paneli, Zyrat, Dashboard view, Punëtoria, Werkstatt, Inventari, Flota, Pjesët, Dokumentet dhe Historiku. Gjashtë hyrjet e dyta të Werkstatt-it hiqen nga toolbar-i; Flota është në rreshtin kryesor edhe në desktop. Paneli nuk përsërit më të njëjtat hyrje: ruan planin/kalendarin, ekipin, kantieret, logon dhe cilësimet/rregullat. Hyrjet aktuale të planit/hartës/TV, të drejtat dhe veprimet ruhen. Në telefon rreshti lëviz horizontalisht dhe ikona aktive sillet brenda tij, pa lëvizur dokumentin. Në ndërrimin e tab-eve ruhen asset/site/worker të URL-së; heqja e filtrit asset pastron edhe URL-në, pa ridalin të dhënat e filtrit të fshehur.
 

@@ -1,7 +1,7 @@
 import { workshopDay } from "./demo-model";
 
 /** Read-only projection of the existing tenant Machine inspection dates. */
-export type FleetInspectionRow = { plate: string; hu: string | null; sp: string | null; uvv: string | null };
+export type FleetInspectionRow = { machineId?: string; plate: string; hu: string | null; sp: string | null; uvv: string | null };
 export type FleetInspectionState = "ok" | "due" | "expired" | "unknown";
 export function fleetInspectionState(date: string | null | undefined, now: string): FleetInspectionState {
   if (!date || !Number.isFinite(Date.parse(date))) return "unknown";

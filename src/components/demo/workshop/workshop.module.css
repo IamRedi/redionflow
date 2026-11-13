@@ -15,6 +15,7 @@
 .searchField { display: flex; align-items: center; gap: 2px; width: min(320px, calc(100vw - 100px)); min-width: 0; }
 .searchField input { min-width: 0; }
 .filterTrigger { display: inline-flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 8px; max-width: 100%; border: 1px solid hsl(var(--border)); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; }
+.sectionTrigger { flex-shrink: 0; }
 .filterTrigger:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
 .filterMenu { z-index: 1300; max-height: var(--radix-select-content-available-height); min-width: var(--radix-select-trigger-width); max-width: calc(100vw - 24px); overflow: auto; border: 1px solid hsl(var(--border)); border-top-color: var(--baum-edge); border-radius: 14px; padding: 4px; background: var(--baum-glass); color: hsl(var(--foreground)); box-shadow: var(--baum-shadow); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); }
 .filterOption { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; outline: none; }
@@ -51,6 +52,8 @@
 .information[open] > summary > svg:last-child { transform: rotate(180deg); }
 @media (max-width: 639px) {
   .fixedApp { gap: 6px; }
+  .sectionTrigger { width: 44px; padding: 0; justify-content: center; }
+  .sectionTrigger [data-section-label], .sectionTrigger > span:last-child { display: none; }
   .commandBar { gap: 4px 6px; }
   .heading { display: block; }
   .heading h1 { font-size: 17px; }
