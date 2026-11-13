@@ -63,6 +63,7 @@ test("repair, parts, release, issue/return, shared document, reload and history 
   const documentDownload = page.waitForEvent("download"); await docRow.getByRole("link", { name: "Herunterladen" }).click();
   const documentPath = await (await documentDownload).path();
   expect(await readFile(documentPath!, "utf8")).toBe(content);
+  await page.getByTestId("workshop-scroll-region").locator("summary").filter({ hasText: workshopCopy("de").shared }).click();
   const exported = page.waitForEvent("download"); await page.getByRole("button", { name: "Demodaten exportieren", exact: true }).click();
   const { state } = JSON.parse(await readFile((await (await exported).path())!, "utf8"));
   expect(state.assets.find((a: { id: string }) => a.id === "crane").events.length).toBeGreaterThan(5);

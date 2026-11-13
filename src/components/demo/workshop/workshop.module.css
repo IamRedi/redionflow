@@ -1,5 +1,47 @@
 .art { --forest: hsl(var(--primary)); --metal: #65766d; --glass: #bfdbd2; --ink: #233b31; --ground: hsl(var(--muted)); color: var(--forest); }
-.tabs { scrollbar-width: thin; }
+.fixedApp { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; gap: 10px; }
+.toolbar { flex: 0 1 auto; min-width: 0; min-height: 0; max-height: calc(100% - min(40%, 160px)); overflow: auto; scrollbar-width: thin; padding: 2px; }
+.commandBar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; padding: 8px 12px; border: 1px solid hsl(var(--border)); border-radius: 18px; }
+.heading { display: flex; min-width: 0; flex: 1; flex-wrap: wrap; align-items: center; gap: 2px 20px; }
+.heading h1 { font-size: 20px; line-height: 1.3; font-weight: 700; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.statusLine { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; line-height: 1.5; }
+.statusLine > div, .statusLine dt { display: inline-flex; align-items: center; gap: 5px; }
+.statusLine dt { color: hsl(var(--muted-foreground)); }
+.statusLine svg { width: 13px; height: 13px; flex-shrink: 0; color: hsl(var(--primary)); }
+.statusLine dd { font-weight: 700; font-variant-numeric: tabular-nums; }
+.commands { display: flex; flex-shrink: 0; align-items: center; gap: 6px; }
+.navigationRow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.tabs > a { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; min-height: 44px; gap: 6px; padding: 7px 12px; border: 1px solid hsl(var(--border)); border-radius: 999px; font-size: 12px; font-weight: 600; }
+.filters { display: flex; flex: 1; min-width: min(100%, 260px); align-items: center; gap: 6px; }
+.search { display: block; position: relative; flex: 1; min-width: 0; }
+.search > svg { position: absolute; top: 14px; left: 11px; width: 16px; height: 16px; color: hsl(var(--muted-foreground)); pointer-events: none; }
+.kindFilter { flex-shrink: 0; width: 144px; }
+.list { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scroll-padding-block: 8px; padding: 2px 2px 0; }
+.list:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+.list > * + * { margin-top: 12px; }
+.list > [data-testid="baumdienst-demo-footer"] { margin-top: 12px; }
+.information { margin-top: 14px; }
+.information summary { list-style: none; }
+.information summary::-webkit-details-marker { display: none; }
+.information[open] > summary > svg:last-child { transform: rotate(180deg); }
+@media (max-width: 639px) {
+  .fixedApp { gap: 6px; }
+  .commandBar { padding: 5px 7px; gap: 4px 6px; }
+  .heading { display: block; }
+  .heading h1 { font-size: 17px; }
+  .statusLine { gap: 3px 8px; font-size: 10px; margin-top: 4px; }
+  .statusLine svg { width: 12px; height: 12px; }
+  .statusLine dt span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; display: block; }
+  .navigationRow { gap: 6px; margin-top: 6px; }
+  .tabs { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); width: 100%; }
+  .tabs > a { padding: 0; min-width: 44px; width: 100%; }
+  .tabs > a span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .filters { width: 100%; min-width: 0; }
+  .kindFilter { width: 125px; font-size: 12px; padding-inline: 7px; }
+}
+@media (max-height: 560px) and (min-width: 640px) { .commandBar { padding-block: 3px; } .navigationRow { margin-top: 4px; } .tabs > a { width: 44px; padding: 0; } .tabs > a span { display: none; } }
+@media print { .fixedApp, .list { height: auto; overflow: visible; } .toolbar { display: none; } }
 .fleetGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,196px),220px)); align-items: start; gap: 12px; }
 .fleetCard { min-width: 0; width: 100%; overflow: hidden; }
 .fleetPhoto { width: 100%; aspect-ratio: 4 / 3; border-bottom: 1px solid hsl(var(--border) / .5); background: #0c2b35; }
@@ -37,7 +79,6 @@ details[open] > .barcodeToggle svg { transform: rotate(180deg); }
 .sway { transform-origin: 80% 85%; animation: treeSway 6s ease-in-out infinite; }
 .repair { transform-box: fill-box; transform-origin: center; animation: toolTurn 4s ease-in-out infinite; }
 .arrive { animation: arrive .25s ease-out both; }
-@media (max-height: 560px) { .heroStats { display: none; } .heroMain { padding-block: 16px; } }
 .card { transition: border-color .2s, box-shadow .2s, transform .2s; }
 @media (hover: hover) { .card:hover { transform: translateY(-2px); box-shadow: 0 7px 20px hsl(var(--foreground) / .06); border-color: hsl(var(--primary) / .45); } }
 @keyframes treeSway { 0%,100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }

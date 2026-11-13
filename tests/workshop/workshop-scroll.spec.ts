@@ -3,7 +3,7 @@ import { resetWorkshopFixture } from "./shared-fixture";
 
 test.beforeEach(async () => { await resetWorkshopFixture(); });
 
-test("all five Muster workspaces paint and receive input beneath transparent chrome without a clipping seam", async ({ page, context }, info) => {
+test("Muster keeps its continuous canvas, with stationary compact workshop controls above an unobstructed list", async ({ page, context }, info) => {
   const baseURL = String(info.project.use.baseURL);
   await context.addCookies([{ name: "bk_lang", value: "de", url: baseURL }]);
   await context.route("https://*.tile.openstreetmap.org/**", route => route.abort());
@@ -27,6 +27,33 @@ test("all five Muster workspaces paint and receive input beneath transparent chr
       const clip = (await workspace.boundingBox())!;
       expect(clip.y).toBeLessThanOrEqual(1);
       expect(clip.height).toBeGreaterThanOrEqual(height - 1);
+      if (route.includes("workshop")) {
+        const list = page.getByTestId("workshop-scroll-region");
+        await expect(list).toBeVisible();
+        const toolbar = page.getByTestId("workshop-demo").locator(":scope > header");
+        const geometry = await toolbar.evaluate(el => {
+          const r = el.getBoundingClientRect(); return { y: r.y, height: r.height };
+        });
+        const bounds = (await list.boundingBox())!;
+        expect(bounds.y).toBeGreaterThanOrEqual(geometry.y + geometry.height - 1);
+        expect(bounds.y + bounds.height).toBeLessThanOrEqual(height + 1);
+        await list.evaluate(el => { el.scrollTop = el.scrollHeight; });
+        await expect(page.getByRole("link", { name: "by RediON", exact: true })).toBeInViewport();
+        expect((await marker.boundingBox())!.y).toBeCloseTo(before.y, 0);
+        expect(await workspace.evaluate(el => el.scrollTop)).toBe(0);
+        await list.evaluate(el => { el.scrollTop = 0; });
+        const card = route === "/demo/workshop" ? list.getByRole("button", { name: /^Details öffnen:/ }).first() : list.locator("article").first();
+        await card.scrollIntoViewIfNeeded();
+        // A short viewport may initially show the repair-column heading. Scroll
+        // the card into the list, then measure and hit-test the visible part in
+        // one frame, rather than sampling a point above an off-screen card.
+        expect(await card.evaluate(el => {
+          const r = el.getBoundingClientRect(), list = el.closest('[data-testid="workshop-scroll-region"]')!.getBoundingClientRect();
+          const top = Math.max(r.top, list.top), bottom = Math.min(r.bottom, list.bottom, innerHeight);
+          const hit = document.elementFromPoint(r.x + r.width / 2, (top + bottom) / 2);
+          return bottom > top && (hit === el || hit !== null && el.contains(hit));
+        })).toBe(true);
+      } else {
       const targetScroll = before.y - headerBottom + 14;
       expect(targetScroll).toBeGreaterThan(0);
       await workspace.evaluate((el, top) => { el.scrollTop = top; }, targetScroll);
@@ -39,6 +66,7 @@ test("all five Muster workspaces paint and receive input beneath transparent chr
         return { painted: target === el || (target !== null && el.contains(target)), outerStill: document.documentElement.scrollHeight <= innerHeight + 1, fits: document.documentElement.scrollWidth <= innerWidth };
       }, { x: after.x + after.width / 2, y: headerBottom - 6 });
       expect(hit).toEqual({ painted: true, outerStill: true, fits: true });
+      }
       if (route.includes("tools") || route.includes("fleet")) {
         const fleet = route.includes("fleet");
         await expect(page.locator(`[data-baum-environment="${fleet ? "fleet" : "inventory"}"]`)).toHaveCount(1);

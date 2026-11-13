@@ -19,6 +19,13 @@ test("dashboard, control panel and TV are directly reachable at desktop and touc
   await expect(page.getByTestId("demo-control-panel")).toBeVisible();
   for(const worker of before.directory.workers) await expect(page.getByTestId("demo-control-panel").getByRole("link",{name:worker.name,exact:true})).toHaveAttribute("href",`/demo/workers/${worker.id}`);
   await page.screenshot({path:info.outputPath("control-phone.png")});
+  await page.getByTestId("demo-control-panel").locator("summary").click();
+  await page.locator('a[href="/demo/workshop?tab=tools#custody-policy"]').click();
+  const policy = page.locator("#custody-policy");
+  await expect(policy).toHaveAttribute("open", "");
+  await expect(policy.locator("summary")).toBeFocused();
+  await expect(policy.getByRole("checkbox")).toBeInViewport();
+  expect(await page.getByTestId("demo-workspace").evaluate(el => el.scrollTop)).toBe(0);
   const after=await(await request.get(api)).json() as WorkshopSnapshot;expect(after.revision).toBe(before.revision);expect(after.state).toEqual(before.state);
 });
 

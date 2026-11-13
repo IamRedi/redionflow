@@ -1,6 +1,26 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-## AKTUALE — 13.11.2026 / Asistenti pranë monitorit dhe logoja origjinale
+## AKTUALE — 13.11.2026 / Inventari dhe Werkstatt-i si workspace kompakt
+
+Vetëm Musterfirma BaumdienstFlow, /demo/workshop dhe gjashtë tab-et ekzistuese: Riparimet, Flota, Inventari, Pjesët, Dokumentet dhe Historiku. Ky hap stabilizon pjesën e tyre të përbashkët; Workzone, druri, paneli/TV dhe zyrat ruajnë sjelljen ekzistuese dhe vlerësohen veçmas në hapin e ardhshëm. AL Steel, demot e tjera dhe portofoli mbeten jashtë ndryshimit.
+
+Faqja është një app me lartësinë e viewport-it. Header-i transparent me ekipin/navigimin ruhet. Titulli dhe veprimet janë një command bar crystal kompakt; tre statuset janë një përmbledhje semantike dl me ikona dhe numra, jo tre panele të mëdha ose butona të rremë. Regjistro/Defekt, Skano dhe Rifresko ruajnë të njëjtët handler-a dhe target-e touch 44px. Tab-et përdorin gjerësinë e nevojshme, me kërkimin/filtrin pranë tyre kur ka vend; në telefon janë gjashtë hyrje me ikona, me emra të aksesueshëm dhe gjendjen e zgjedhur. Titulli tregon seksionin aktual.
+
+Workspace-i i jashtëm nuk lëviz. Vetëm lista workshop-scroll-region përdor hapësirën e mbetur dhe ka scroll kur përmbajtja është më e gjatë; komandat nuk zhduken pas punonjësve. CSS flex/min-height:0 dhe madhësitë nga viewport-i zëvendësojnë lartësitë arbitrare. Në ekran shumë të ulët ose tekst të zmadhuar, toolbar-i mund të lëvizë brenda kufirit të vet për të mbajtur edhe listën edhe komandat të arritshme. Ky është fallback i aksesueshmërisë, jo prerje/overflow:hidden e përmbajtjes.
+
+Lidhja ekzistuese nga Paneli i kontrollit me #custody-policy hap automatikisht të dy disclosure-t pas hidratimit. Efekti dëgjon edhe hashchange, ruan rolin admin, scroll-on vetëm listën dhe fokuson summary-n pa lëvizur shell-in. Nuk ndryshon checkbox-in ose politikën me këtë vizitë; prova kontrollon ruajtjen e plotë të inventarit.
+
+Shpjegimi i demos, eksporti, sinkronizimi dhe rregullat ekzistuese të dorëzimit ruhen në disclosure-in e përbashkët pas listës. Footer-i ekzistues lokalizohet në server dhe kalon si slot te lista, vetëm një herë; legal/by RediON janë pa shell, në fund të përmbajtjes, dhe lëvizin normalisht me të. Nuk rezervohet rresht permanent për branding. Kërkimi/filtrat, scope site/worker, dialogët, barcode/targa/NFC, custody, riparimet, pjesët, dokumentet, fotografitë, API-të dhe namespace-t nuk ndryshojnë. Nuk ka migrim, provider/dependency të ri ose thirrje AI.
+
+Prova e parë lokale: toolbar 117px në 1440×900 dhe 159px në 390×844; lista përkatësisht rreth 630px dhe 526px. Glass ice, sfondet e magazinës/oficinës/oborrit Day/Night, tekstet e zeza Light, ikonat dhe kartat kompakte ruhen. Verifikimi përfundimtar lokal në mini-PC: 695 unit, 5 integrime AI me provider të simuluar, 46 browser dhe tri profile izolimi PASS, bashkë me lint/types/build production. Gjashtë tab-et, gjashtë gjuhët, Light/Night, desktop/telefon, ekranet e ulëta, 200% tekst, 44px touch, fokus, footer-i në fund dhe pozicioni pas një ruajtjeje të vogël mbulohen nga provat. Kalimi nga Paneli i kontrollit te rregullat hap disclosure-t, fokuson summary-n dhe lë shell-in në scrollTop 0, pa ndryshuar inventarin.
+
+Seria e parë 44/46 ruhet me trace: eksporti tashmë kërkon hapjen e disclosure-it dhe matja e kartës në ekran të ulët bëhet pasi ajo hyn në listën e dukshme, me hit-test në të njëjtin frame. Seria pasuese 46/46 kaloi, por kontrolli vizual gjeti lidhjen e fshehur #custody-policy; faza e review-it u ndërpre, pa e quajtur mbyllje PASS dhe pa humbur cache/evidence. Pas korrigjimit u ribënë të gjitha gates për burimin e fundit. Provat janë outputs/baum-workspacecompact-tests dhe manifestet source-revision/build-source; nuk u dobësua asnjë guard ose assertion të dhënash. Nuk u bë kërkesë reale AI.
+
+Publikimi i kufizuar, source SHA, ruajtja online dhe mbyllja e fixture-it: PENDING_DEPLOY. Referenca e rikthimit është release 12f8b4f / deployment 81f35b19-28ce-4c5b-b22a-144377983210. Telefoni fizik, tastiera reale dhe një audit i plotë i kontrastit nuk deklarohen të certifikuar.
+
+Prezantimi publik/showcase/portofoli: OWNER_HOLD/PENDING_PUBLICATION; ky korrigjim i dendësisë nuk autorizon publikim marketingu ose rritje readiness. Google Doc-i ekzistues përditësohet në vend pas pranimit teknik, duke ruajtur historikun dhe tabelën native.
+
+## HISTORIKE — 13.11.2026 / Asistenti pranë monitorit dhe logoja origjinale
 
 Vetëm Musterfirma BaumdienstFlow. Asistenti hapet në një panel crystal të ngushtë pranë monitorit, sipas modelit të AL Steel të lexuar vetëm në burimin ffcfc3f. Nuk ndryshon asnjë kod, konfigurim, të dhënë apo punë aktive e pilotit. Paneli ka titull/rol/mbyllje kompakte, kuotën ekzistuese, pyetjet dhe përgjigjet si mesazhe të dallueshme, një zonë scroll për historikun dhe fushën e shkrimit gjithmonë poshtë. Burimet dhe shpjegimi i plotë i privatësisë janë në disclosure-in OpenAI, pa hequr tekstin ekzistues. Biseda mbetet private e rolit dhe e ruajtur në të njëjtin namespace/API.
 
