@@ -10,15 +10,16 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
   for (const theme of ["light", "dark"]) for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 390, height: 360 }]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
     await page.setViewportSize(size);
-    for (const route of ["/demo/workshop", "/demo/workshop?tab=tools", "/demo/workshop?tab=fleet", "/demo/workshop?tab=parts", "/demo/workshop?tab=documents", "/demo/workshop?tab=history", "/demo/workzone", "/demo/dashboard"]) {
+    for (const route of ["/demo/workshop", "/demo/workshop?tab=tools", "/demo/workshop?tab=fleet", "/demo/workshop?tab=parts", "/demo/workshop?tab=documents", "/demo/workshop?tab=history", "/demo/wood", "/demo/workzone", "/demo/dashboard"]) {
       await page.goto(route);
       const workspace = page.getByTestId("demo-workspace");
       await expect(workspace).toBeVisible();
-      const workshop = route.startsWith("/demo/workshop");
-      const scroller = workshop ? page.getByTestId("workshop-scroll-region") : workspace;
+      const workshop = route.startsWith("/demo/workshop") || route === "/demo/wood";
+      const wood = route === "/demo/wood";
+      const scroller = workshop ? page.getByTestId(wood ? "wood-scroll-region" : "workshop-scroll-region") : workspace;
       await expect(scroller).toBeVisible();
-      if (route.startsWith("/demo/workshop")) {
-        await expect(page.getByRole("button", { name: (route.includes("tab=tools") || route.includes("tab=fleet")) ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
+      if (workshop) {
+        await expect(page.getByRole("button", { name: wood ? "Auftrag erstellen" : (route.includes("tab=tools") || route.includes("tab=fleet")) ? "Gerät erfassen" : "Defekt melden", exact: true })).toBeEnabled();
         const teamHeader = (await page.getByTestId("baum-demo-topbar").boundingBox())!;
         const initialContent = (await workspace.locator(":scope > div > div").first().boundingBox())!;
         expect(initialContent.y).toBeGreaterThanOrEqual(teamHeader.y + teamHeader.height - 1);
@@ -45,17 +46,17 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
       const scrollers = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>("body *")].filter(el => {
         const s = getComputedStyle(el); return /auto|scroll/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 2 && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
       }).map(el => el.getAttribute("data-testid") || el.tagName));
-      expect(scrollers.filter(id => id !== (workshop ? "workshop-scroll-region" : "demo-workspace") && !(workshop && id === "HEADER"))).toEqual([]);
+      expect(scrollers.filter(id => id !== (workshop ? wood ? "wood-scroll-region" : "workshop-scroll-region" : "demo-workspace") && !(workshop && id === "HEADER"))).toEqual([]);
       if (workshop) {
         expect(await workspace.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
-        const toolbar = page.getByTestId("workshop-demo").locator(":scope > header");
+        const toolbar = page.getByTestId(wood ? "wood-workspace" : "workshop-demo").locator(":scope > header");
         if (size.height >= 844) {
           expect(await toolbar.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
           expect((await toolbar.boundingBox())!.height).toBeLessThan(size.width > 1000 ? 140 : 180);
         }
-        await expect(toolbar.getByRole("navigation").getByRole("link")).toHaveCount(6);
-        await expect(page.getByTestId("workshop-status-line").locator("dd")).toHaveCount(3);
-        const targets = await toolbar.getByRole("link").evaluateAll(els => els.map(el => el.getBoundingClientRect().height));
+        await expect(toolbar.getByRole("navigation").locator("a,button")).toHaveCount(wood ? 4 : 6);
+        if (!wood) await expect(page.getByTestId("workshop-status-line").locator("dd")).toHaveCount(3);
+        const targets = await toolbar.getByRole("navigation").locator("a,button").evaluateAll(els => els.map(el => el.getBoundingClientRect().height));
         expect(targets.every(height => height >= 44)).toBe(true);
         expect((await scroller.boundingBox())!.height).toBeGreaterThan(55);
       }

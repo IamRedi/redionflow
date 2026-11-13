@@ -49,12 +49,14 @@ test("dialog portals retain the identity, focus and primary touch targets in bot
     const register = page.getByRole("button", { name: "Gerät erfassen", exact: true });
     await expect(register).toBeEnabled();
     expect((await register.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    const material = await page.getByTestId("workshop-demo").locator("article").first().evaluate(el => getComputedStyle(el).backgroundImage);
     await register.click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     expect(await dialog.evaluate(el => Boolean(el.closest('[data-baum-studio]')))).toBe(false);
     expect(await dialog.evaluate(el => getComputedStyle(el).backgroundImage)).toContain("linear-gradient");
-    expect(await dialog.evaluate(el => getComputedStyle(el).backgroundImage)).toMatch(/0\.9\d+/);
+    expect(await dialog.evaluate(el => getComputedStyle(el).backgroundImage)).toBe(material);
+    expect(await dialog.evaluate(el => getComputedStyle(el).backdropFilter)).toBe("blur(12px)");
     const name = dialog.getByLabel("Bezeichnung", { exact: true });
     await name.fill("DEMO · Nur visueller Entwurf");
     await name.press("Tab");

@@ -98,6 +98,21 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-
   --baum-action: linear-gradient(145deg, #74956b66, #2a5e434d);
   --baum-action-base: #142e26b3;
 }
+/* Owner: labels sit on the environment; only controls/data cards carry glass.
+   Opened cards use that same ice material, with extra blur for readable forms. */
+body:has([data-baum-studio="forest-crystal-v1"]) { --baum-label-shadow: 0 1px 2px #fff, 0 0 5px #f3fff5e6; }
+html.dark body:has([data-baum-studio="forest-crystal-v1"]) { --baum-label-shadow: 0 1px 2px #041b20, 0 0 5px #041b20e6; }
+html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"]))) {
+  --baum-overlay: var(--baum-glass);
+  --baum-overlay-blur: 12px;
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-status] {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  text-shadow: var(--baum-label-shadow);
+}
 /* Environment images are separate; material and workspace rules stay shared. */
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
   --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/wood-factory-day.webp');

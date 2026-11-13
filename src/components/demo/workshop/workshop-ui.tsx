@@ -14,7 +14,7 @@ export function Field({ label, children }: { label: string; children: ReactEleme
   return <div className="grid min-w-0 gap-1.5 text-sm font-medium"><label htmlFor={id}>{label}</label>{cloneElement(children, { id })}</div>;
 }
 export function Status({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "green" | "amber" | "blue" }) {
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", tone === "green" && "border-emerald-700/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200", tone === "amber" && "border-amber-700/30 bg-amber-500/10 text-amber-900 dark:text-amber-200", tone === "blue" && "border-blue-700/30 bg-blue-500/10 text-blue-800 dark:text-blue-200")}>{children}</span>;
+  return <span data-ui-status className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", tone === "green" && "border-emerald-700/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200", tone === "amber" && "border-amber-700/30 bg-amber-500/10 text-amber-900 dark:text-amber-200", tone === "blue" && "border-blue-700/30 bg-blue-500/10 text-blue-800 dark:text-blue-200")}>{children}</span>;
 }
 export function WorkshopDialog({ title, description, children, open, onClose, closeLabel, headerAction, wide = false }: { title: string; description?: string; children: ReactNode; open: boolean; onClose: () => void; closeLabel: string; headerAction?: ReactNode; wide?: boolean }) {
   const previous = useRef<HTMLElement | null>(null);

@@ -27,10 +27,10 @@ test("Muster keeps its continuous canvas, with stationary compact workshop contr
       const clip = (await workspace.boundingBox())!;
       expect(clip.y).toBeLessThanOrEqual(1);
       expect(clip.height).toBeGreaterThanOrEqual(height - 1);
-      if (route.includes("workshop")) {
-        const list = page.getByTestId("workshop-scroll-region");
+      if (route.includes("workshop") || route.endsWith("wood")) {
+        const list = page.getByTestId(route.endsWith("wood") ? "wood-scroll-region" : "workshop-scroll-region");
         await expect(list).toBeVisible();
-        const toolbar = page.getByTestId("workshop-demo").locator(":scope > header");
+        const toolbar = page.getByTestId(route.endsWith("wood") ? "wood-workspace" : "workshop-demo").locator(":scope > header");
         const geometry = await toolbar.evaluate(el => {
           const r = el.getBoundingClientRect(); return { y: r.y, height: r.height };
         });
@@ -42,13 +42,13 @@ test("Muster keeps its continuous canvas, with stationary compact workshop contr
         expect((await marker.boundingBox())!.y).toBeCloseTo(before.y, 0);
         expect(await workspace.evaluate(el => el.scrollTop)).toBe(0);
         await list.evaluate(el => { el.scrollTop = 0; });
-        const card = route === "/demo/workshop" ? list.getByRole("button", { name: /^Details öffnen:/ }).first() : list.locator("article").first();
+        const card = route.endsWith("wood") ? list.getByRole("button", { name: /Buchenholz 33 cm · Musterauftrag/ }).first() : route === "/demo/workshop" ? list.getByRole("button", { name: /^Details öffnen:/ }).first() : list.locator("article").first();
         await card.scrollIntoViewIfNeeded();
         // A short viewport may initially show the repair-column heading. Scroll
         // the card into the list, then measure and hit-test the visible part in
         // one frame, rather than sampling a point above an off-screen card.
         expect(await card.evaluate(el => {
-          const r = el.getBoundingClientRect(), list = el.closest('[data-testid="workshop-scroll-region"]')!.getBoundingClientRect();
+          const r = el.getBoundingClientRect(), list = el.closest('[data-testid$="scroll-region"]')!.getBoundingClientRect();
           const top = Math.max(r.top, list.top), bottom = Math.min(r.bottom, list.bottom, innerHeight);
           const hit = document.elementFromPoint(r.x + r.width / 2, (top + bottom) / 2);
           return bottom > top && (hit === el || hit !== null && el.contains(hit));
