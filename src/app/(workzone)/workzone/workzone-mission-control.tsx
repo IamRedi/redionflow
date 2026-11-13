@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
+import { sceneLayout } from "@/lib/workshop/scene-layout";
+import { sceneCopy } from "@/lib/workshop/scene-copy";
+import { ArrowUpRight, ChevronLeft, ChevronRight, ListFilter, LayoutDashboard, Map, MapPin, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -92,7 +94,8 @@ function musterMobileCardWidth(width: number) {
   return Math.max(140, Math.min(172, Math.floor((width - 36) / 2)));
 }
 
-function canvasMetrics(viewport: CanvasViewport, items: MissionItem[], availableWidth = 0) {
+function canvasMetrics(viewport: CanvasViewport, items: MissionItem[], availableWidth = 0, sceneHeight = 0) {
+  if (sceneHeight > 0) return sceneLayout(availableWidth, sceneHeight, items.length);
   const count = items.length;
   const mobile = viewport === "mobile";
   // Steel site cards carry a small drawing and a material chip, so they are a bit taller.
@@ -147,8 +150,8 @@ function softOffset(index: number, viewport: CanvasViewport) {
   return viewport === "mobile" ? mobileOffsets[index % mobileOffsets.length] : desktopOffsets[index % desktopOffsets.length];
 }
 
-function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport, width = 0): CanvasPositions {
-  const metrics = canvasMetrics(viewport, items, width);
+function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport, width = 0, sceneHeight = 0): CanvasPositions {
+  const metrics = canvasMetrics(viewport, items, width, sceneHeight);
   return Object.fromEntries(
     orderedCanvasItems(items).map((item, index) => {
       const column = index % metrics.columns;
@@ -157,18 +160,18 @@ function autoCanvasLayout(items: MissionItem[], viewport: CanvasViewport, width 
       return [
         item.id,
         {
-          x: clamp(metrics.left + column * metrics.columnGap + offset.x, 10, metrics.maxX),
-          y: clamp(metrics.top + row * metrics.rowGap + offset.y, 10, metrics.maxY),
+          x: clamp(metrics.left + column * metrics.columnGap + (sceneHeight ? 0 : offset.x), 10, metrics.maxX),
+          y: clamp(("startY" in metrics ? metrics.startY : metrics.top) + row * metrics.rowGap + (sceneHeight ? 0 : offset.y), 10, metrics.maxY),
         },
       ];
     }),
   );
 }
 
-function autoLayouts(items: MissionItem[], width = 0): Record<CanvasViewport, CanvasPositions> {
+function autoLayouts(items: MissionItem[], width = 0, sceneHeight = 0): Record<CanvasViewport, CanvasPositions> {
   return {
-    desktop: autoCanvasLayout(items, "desktop", width),
-    mobile: autoCanvasLayout(items, "mobile", width),
+    desktop: autoCanvasLayout(items, "desktop", width, sceneHeight),
+    mobile: autoCanvasLayout(items, "mobile", width, sceneHeight),
   };
 }
 
@@ -183,8 +186,8 @@ function sameViewportLayouts(a: Record<CanvasViewport, CanvasPositions>, b: Reco
   return sameCanvasPositions(a.desktop, b.desktop) && sameCanvasPositions(a.mobile, b.mobile);
 }
 
-function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, viewport: CanvasViewport, fallbackPositions = autoCanvasLayout(items, viewport), width = 0) {
-  const metrics = canvasMetrics(viewport, items, width);
+function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, viewport: CanvasViewport, fallbackPositions = autoCanvasLayout(items, viewport), width = 0, sceneHeight = 0) {
+  const metrics = canvasMetrics(viewport, items, width, sceneHeight);
   return Object.fromEntries(
     items.map((item) => {
       const position = positions[item.id] ?? fallbackPositions[item.id] ?? { x: metrics.left, y: metrics.top };
@@ -199,10 +202,10 @@ function clampCanvasLayout(items: MissionItem[], positions: CanvasPositions, vie
   );
 }
 
-function readSavedCanvasLayout(signature: string): Record<CanvasViewport, CanvasPositions> | null {
+function readSavedCanvasLayout(signature: string, storageKey = CANVAS_LAYOUT_STORAGE_KEY): Record<CanvasViewport, CanvasPositions> | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(CANVAS_LAYOUT_STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SavedCanvasLayout>;
     if (parsed.signature !== signature || !parsed.positionsByViewport?.desktop || !parsed.positionsByViewport.mobile) return null;
@@ -212,10 +215,10 @@ function readSavedCanvasLayout(signature: string): Record<CanvasViewport, Canvas
   }
 }
 
-function saveCanvasLayout(signature: string, positionsByViewport: Record<CanvasViewport, CanvasPositions>) {
+function saveCanvasLayout(signature: string, positionsByViewport: Record<CanvasViewport, CanvasPositions>, storageKey = CANVAS_LAYOUT_STORAGE_KEY) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(CANVAS_LAYOUT_STORAGE_KEY, JSON.stringify({ signature, positionsByViewport }));
+    window.localStorage.setItem(storageKey, JSON.stringify({ signature, positionsByViewport }));
   } catch {
     // Layout persistence is a convenience; the canvas still works if storage is blocked.
   }
@@ -277,7 +280,7 @@ function typeLabel(type: string, lang: string) {
 }
 
 export function WorkzoneMissionControl({
-  items,
+  items: allItems,
   archive,
   defaultAddress,
   toolbar,
@@ -291,6 +294,7 @@ export function WorkzoneMissionControl({
   initialMap = false,
   canEditPhotos = false,
   demoPhotoReadOnly = false,
+  musterScene = false,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -306,9 +310,19 @@ export function WorkzoneMissionControl({
   initialMap?: boolean;
   canEditPhotos?: boolean;
   demoPhotoReadOnly?: boolean;
+  musterScene?: boolean;
 }) {
   const { currentLang } = useLanguage();
-  const muster = items.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
+  const muster = allItems.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
+  const immersive = musterScene && detailHrefBase === "/demo/baustellen";
+  const [canvasWidth, setCanvasWidth] = useState(0), [sceneHeight, setSceneHeight] = useState(0), [scenePage, setScenePage] = useState(0);
+  const geometry = immersive ? sceneLayout(canvasWidth || 360, sceneHeight || 680, allItems.length) : null;
+  const pageCount = Math.max(1, Math.ceil(allItems.length / (geometry?.capacity || allItems.length || 1)));
+  const page = Math.min(scenePage, pageCount - 1);
+  const capacity = geometry?.capacity ?? 1;
+  const items = useMemo(() => immersive ? orderedCanvasItems(allItems).slice(page * capacity, (page + 1) * capacity) : allItems, [allItems, immersive, capacity, page]);
+  const storageKey = immersive ? `workzone:muster-scene-layout:v1:${page}` : CANVAS_LAYOUT_STORAGE_KEY;
+  const sc = sceneCopy(currentLang);
   const mapFleet = useMapFleet();
   const indexVehicles = (mapFleet ?? fleetLocations).map(v => {
     const location = fleetLocations.find(p => p.id === v.id);
@@ -326,28 +340,28 @@ export function WorkzoneMissionControl({
   const mapFrameRef = useRef<HTMLDivElement>(null);
   function focusOnMap(kind: MissionMapFocus['kind'], id: string) {
     setMapFocus(current => ({ kind, id, request: (current?.request ?? 0) + 1 }));
-    if (window.innerWidth < 1024) mapFrameRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (!immersive && window.innerWidth < 1024) mapFrameRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }
   const [addressCoords, setAddressCoords] = useState<Record<string, { lat: number; lng: number }>>({});
   const workspaceRef = useRef<HTMLDivElement>(null);
-  const [canvasWidth, setCanvasWidth] = useState(0);
   const [musterReady, setMusterReady] = useState(false);
   useEffect(() => {
     const element = workspaceRef.current;
-    if (!muster || !element) return;
+    if ((!muster && !immersive) || !element) return;
     const observer = new ResizeObserver(entries => {
       const width = Math.round(entries[0].contentRect.width);
       if (width > 0) setCanvasWidth(width);
+      if (immersive) setSceneHeight(Math.round(entries[0].contentRect.height));
     });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [muster, isMapMode]);
-  const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:compact-width-${canvasWidth}` : ""}`, [items, muster, canvasWidth]);
+  }, [muster, immersive, isMapMode]);
+  const canvasLayoutSignature = useMemo(() => `${canvasSignature(items)}${muster ? `:compact-width-${canvasWidth}` : ""}${immersive ? `:scene-${sceneHeight}-${page}` : ""}`, [items, muster, canvasWidth, immersive, sceneHeight, page]);
   // Restore browser-only saved positions in the effect below, after hydration.
   const [positionsByViewport, setPositionsByViewport] = useState<Record<CanvasViewport, CanvasPositions>>(() => autoLayouts(items));
   const canvasViewport: CanvasViewport = isCompactCanvas ? "mobile" : "desktop";
   const positions = positionsByViewport[canvasViewport];
-  const canvasHeight = canvasMetrics(canvasViewport, items, canvasWidth).height;
+  const canvasHeight = canvasMetrics(canvasViewport, items, canvasWidth, immersive ? sceneHeight : 0).height;
   const isBauMode = mode !== "baumdienst";
   // Steel firms get the site panorama (SteelSiteScene) on a plain yard colour; Baumdienst keeps its green field.
   const canvasBackground = isBauMode
@@ -402,36 +416,38 @@ export function WorkzoneMissionControl({
   }, []);
 
   useEffect(() => {
-    const saved = readSavedCanvasLayout(canvasLayoutSignature);
-    const fallback = autoLayouts(items, canvasWidth);
+    // Do not replace a saved scene with the zero-size hydration fallback.
+    if (immersive && (!canvasWidth || !sceneHeight)) return;
+    const saved = readSavedCanvasLayout(canvasLayoutSignature, storageKey);
+    const fallback = autoLayouts(items, canvasWidth, immersive ? sceneHeight : 0);
     const next = saved
       ? {
-          desktop: clampCanvasLayout(items, saved.desktop, "desktop", fallback.desktop, canvasWidth),
-          mobile: clampCanvasLayout(items, saved.mobile, "mobile", fallback.mobile, canvasWidth),
+          desktop: clampCanvasLayout(items, saved.desktop, "desktop", fallback.desktop, canvasWidth, immersive ? sceneHeight : 0),
+          mobile: clampCanvasLayout(items, saved.mobile, "mobile", fallback.mobile, canvasWidth, immersive ? sceneHeight : 0),
         }
       : fallback;
-    saveCanvasLayout(canvasLayoutSignature, next);
+    saveCanvasLayout(canvasLayoutSignature, next, storageKey);
     queueMicrotask(() => {
       setPositionsByViewport((current) => (sameViewportLayouts(current, next) ? current : next));
       if (muster && canvasWidth > 0) setMusterReady(true);
     });
-  }, [canvasLayoutSignature, items, canvasWidth, muster]);
+  }, [canvasLayoutSignature, items, canvasWidth, muster, immersive, sceneHeight, storageKey]);
 
   function resetCurrentCanvasLayout() {
-    const nextViewportPositions = autoCanvasLayout(items, canvasViewport, canvasWidth);
+    const nextViewportPositions = autoCanvasLayout(items, canvasViewport, canvasWidth, immersive ? sceneHeight : 0);
     setPositionsByViewport((prev) => {
       const next = {
         ...prev,
         [canvasViewport]: nextViewportPositions,
       };
-      saveCanvasLayout(canvasLayoutSignature, next);
+      saveCanvasLayout(canvasLayoutSignature, next, storageKey);
       return next;
     });
   }
 
   useEffect(() => {
     if (!isMapMode) return;
-    const unresolved = items.filter((item) => !item.coordinates && item.standortAddress?.trim() && !addressCoords[item.id]);
+    const unresolved = (immersive ? allItems : items).filter((item) => !item.coordinates && item.standortAddress?.trim() && !addressCoords[item.id]);
     if (unresolved.length === 0) return;
 
     let active = true;
@@ -463,10 +479,10 @@ export function WorkzoneMissionControl({
       active = false;
       controller.abort();
     };
-  }, [isMapMode, items, addressCoords]);
+  }, [isMapMode, items, allItems, immersive, addressCoords]);
 
   return (
-    <div ref={workspaceRef} className="w-full min-w-0 space-y-4">
+    <div ref={workspaceRef} data-workzone-scene={immersive ? "fixed" : undefined} data-scene-density={geometry?.minimal ? "minimal" : geometry?.compact ? "compact" : "standard"} className={immersive ? "relative h-full min-h-0 w-full min-w-0" : "w-full min-w-0 space-y-4"}>
       {isMapMode ? (
         <div className={mapStyles.layout} data-testid="workzone-map-layout">
           <div ref={mapFrameRef} className={mapStyles.frame} data-testid="workzone-map-frame">
@@ -482,17 +498,19 @@ export function WorkzoneMissionControl({
               <LayoutDashboard className="h-3.5 w-3.5" />
             </Button>
             {toolbar ? <div className={`${mapStyles.toolbar} absolute right-3 top-3 z-[500] flex items-center gap-1.5`}>{toolbar}</div> : null}
-            <WorkzoneMissionMap items={mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focus={mapFocus} onFocusChange={focusOnMap} />
+            <WorkzoneMissionMap items={immersive ? allItems.map(item => ({...item, coordinates:item.coordinates ?? addressCoords[item.id] ?? null})).filter(item => item.coordinates) : mapItems} vehicles={fleetLocations} isBau={isBauMode} canRefresh={gpsSyncAvailable} focus={mapFocus} onFocusChange={focusOnMap} />
           </div>
 
-          <WorkzoneMapIndex items={items.map(item => ({ id: item.id, name: item.name, standortAddress: item.standortAddress, coordinates: item.coordinates ?? addressCoords[item.id] ?? null }))} vehicles={indexVehicles} focus={mapFocus} onFocus={focusOnMap} />
+          {immersive && <details data-scene-map-index open={!isCompactCanvas || undefined}><summary aria-label={sc.page}><ListFilter className="size-4"/><span>{sc.page}</span></summary><div role="region" aria-label={sc.page} tabIndex={0} data-testid="scene-map-index-scroll"><WorkzoneMapIndex items={allItems.map(item => ({ id: item.id, name: item.name, standortAddress: item.standortAddress, coordinates: item.coordinates ?? addressCoords[item.id] ?? null }))} vehicles={indexVehicles} focus={mapFocus} onFocus={focusOnMap}/></div></details>}
+          {!immersive && <WorkzoneMapIndex items={items.map(item => ({ id: item.id, name: item.name, standortAddress: item.standortAddress, coordinates: item.coordinates ?? addressCoords[item.id] ?? null }))} vehicles={indexVehicles} focus={mapFocus} onFocus={focusOnMap} />}
         </div>
       ) : (
         <div
           data-testid="workzone-canvas"
           className="relative overflow-hidden rounded-xl border border-border bg-muted/40 dark:border-emerald-950/20 dark:bg-[#183428]"
           style={{
-            minHeight: canvasHeight,
+            minHeight: immersive ? 0 : canvasHeight,
+            height: immersive ? "100%" : undefined,
             backgroundImage: canvasBackground,
             backgroundSize: canvasBackgroundSize,
             contain: "layout paint",
@@ -553,7 +571,7 @@ export function WorkzoneMissionControl({
                 onDragEnd={(_, info) => {
                   if (readOnly && !allowCanvasDrag) return;
                   const current = positions[item.id] ?? { x: 20, y: 20 };
-                  const { maxX, maxY } = canvasMetrics(canvasViewport, items, canvasWidth);
+                  const { maxX, maxY } = canvasMetrics(canvasViewport, items, canvasWidth, immersive ? sceneHeight : 0);
                   const next = {
                     x: clamp(Math.round(current.x + info.offset.x), 10, maxX),
                     y: clamp(Math.round(current.y + info.offset.y), 10, maxY),
@@ -566,7 +584,7 @@ export function WorkzoneMissionControl({
                         [item.id]: next,
                       },
                     };
-                    saveCanvasLayout(canvasLayoutSignature, nextPositions);
+                    saveCanvasLayout(canvasLayoutSignature, nextPositions, storageKey);
                     return nextPositions;
                   });
                 }}
@@ -578,11 +596,11 @@ export function WorkzoneMissionControl({
                   x: { duration: 0.25, ease: "easeOut" },
                   y: animateLive ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25, ease: "easeOut" },
                 }}
-                style={item.demoPhotoKey && isCompactCanvas ? { width: musterMobileCardWidth(canvasWidth || 330) } : undefined}
+                style={geometry ? { width: geometry.cardWidth, height: geometry.cardHeight } : item.demoPhotoKey && isCompactCanvas ? { width: musterMobileCardWidth(canvasWidth || 330) } : undefined}
                 className={`absolute rounded-xl border bg-card/95 p-3 shadow-md ${item.demoPhotoKey ? isCompactCanvas ? "p-2.5" : "w-[240px]" : isCompactCanvas ? "w-[148px]" : "w-[210px]"} ${hasCover ? "overflow-hidden pt-0" : ""}`}
               >
                 {hasCover ? (
-                  <div className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
+                  <div data-site-cover className={`relative -mx-3 mb-2 border-b ${isCompactCanvas ? "h-14" : "h-20"}`}>
                     {item.demoPhotoKey ? <DemoPhoto readOnly={demoPhotoReadOnly} kind="site" target={item.id} photoKey={item.demoPhotoKey} alt={item.name} className="h-full w-full"><BaumdienstSiteArt className="h-full w-full" /></DemoPhoto> : <AssetPhoto key={`${item.id}:${item.photoUrl}`} kind="site" id={item.id} src={item.photoUrl} alt={item.name} canEdit={canEditPhotos&&!readOnly}>
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>}
@@ -607,10 +625,10 @@ export function WorkzoneMissionControl({
                     <span className={`h-2.5 w-2.5 rounded-full ${item.activeLiveCount > 0 ? "animate-pulse bg-green-500" : "bg-zinc-400"}`} />
                   </div>
                 </div>
-                <p className={`mt-1 ${isCompactCanvas ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
-                {item.workers.length > 0 ? <p className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
-                {item.demoPhotoKey && item.planSummary && <p className={`mt-1 text-[11px] text-primary ${isCompactCanvas ? "line-clamp-1" : "line-clamp-2"}`}>{t("workzone.plan", currentLang)}: {item.planSummary}</p>}
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p data-site-name className={`mt-1 ${isCompactCanvas || immersive ? "line-clamp-2 text-[12px] leading-4" : "truncate text-sm"} font-semibold`}>{item.name}</p>
+                {item.workers.length > 0 ? <p data-site-workers className="truncate text-[11px] text-green-600">{item.workers.join(", ")}</p> : <p data-site-workers className="text-[11px] text-muted-foreground">{t("workzone.noLiveWorkers", currentLang)}</p>}
+                {item.demoPhotoKey && item.planSummary && <p data-site-plan className={`mt-1 text-[11px] text-primary ${isCompactCanvas ? "line-clamp-1" : "line-clamp-2"}`}>{t("workzone.plan", currentLang)}: {item.planSummary}</p>}
+                <p data-site-progress className="mt-1 text-[11px] text-muted-foreground">
                   {item.done}/{item.total} ({item.pct}%)
                 </p>
                 {isSteelSiteType(item.type) ? (
@@ -634,23 +652,23 @@ export function WorkzoneMissionControl({
                 ) : null}
                 {item.haltCount > 0 ? <p className="text-[11px] font-semibold text-red-500">🅿️🚫 {item.haltCount}</p> : null}
                 {item.pendingSiteTask ? (
-                  <p className="mt-1 line-clamp-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-700 dark:text-sky-200">
+                  <p data-site-note className="mt-1 line-clamp-2 rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-700 dark:text-sky-200">
                     {t("common.note", currentLang)}: {item.pendingSiteTask}
                   </p>
                 ) : null}
-                {item.demoPhotoKey && !isCompactCanvas && <div className="mt-2"><InventoryScope scope="site" identity={item.demoPhotoKey} compact now={new Date().toISOString()} /></div>}
-                <div className="mt-2 flex items-center gap-1">
+                {item.demoPhotoKey && !isCompactCanvas && !immersive && <div className="mt-2"><InventoryScope scope="site" identity={item.demoPhotoKey} compact now={new Date().toISOString()} /></div>}
+                <div data-site-actions className="mt-2 flex items-center gap-1">
                   {allowDetailNavigation ? (
                     <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "h-8 px-2.5" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
-                      <Link href={`${detailHrefBase}/${item.id}`}>{t("common.open", currentLang)}</Link>
+                      <Link href={`${detailHrefBase}/${item.id}`} aria-label={immersive ? `${t("common.open",currentLang)}: ${item.name}` : undefined} title={immersive ? `${t("common.open",currentLang)}: ${item.name}` : undefined}>{immersive ? <ArrowUpRight className="size-4"/> : t("common.open", currentLang)}</Link>
                     </Button>
                   ) : null}
                   <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? isCompactCanvas ? "h-8 w-8 px-0" : "h-8 px-2.5" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
                     <a href={fallbackAddressUrl(standort)} target="_blank" rel="noreferrer" aria-label={t("common.location", currentLang)} title={t("common.location", currentLang)}>
-                      {item.demoPhotoKey && isCompactCanvas ? <MapPin className="size-3.5" /> : t("common.location", currentLang)}
+                      {item.demoPhotoKey && (isCompactCanvas || immersive) ? <MapPin className="size-3.5" /> : t("common.location", currentLang)}
                     </a>
                   </Button>
-                  {item.demoPhotoKey && isCompactCanvas ? <InventoryScope scope="site" identity={item.demoPhotoKey} tight now={new Date().toISOString()} /> : null}
+                  {item.demoPhotoKey && (isCompactCanvas || immersive) ? <InventoryScope scope="site" identity={item.demoPhotoKey} tight now={new Date().toISOString()} /> : null}
                 </div>
               </motion.div>
             );
@@ -658,7 +676,7 @@ export function WorkzoneMissionControl({
         </div>
       )}
 
-      <div className="rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]">
+      {!immersive && <div className="rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]">
         <h3 className="text-sm font-semibold">{t("workzone.dailyArchive", currentLang)}</h3>
         <div className="mt-2 overflow-x-auto">
           <table className="w-full min-w-[480px] border-collapse border text-xs">
@@ -687,7 +705,8 @@ export function WorkzoneMissionControl({
             </tbody>
           </table>
         </div>
-      </div>
+      </div>}
+      {immersive && !isMapMode && pageCount > 1 && <nav data-scene-pages aria-label={sc.page}><Button variant="outline" size="icon" className="size-11 rounded-full" aria-label={sc.previous} disabled={page === 0} onClick={() => setScenePage(page - 1)}><ChevronLeft className="size-4"/></Button><span aria-live="polite">{page + 1} / {pageCount}</span><Button variant="outline" size="icon" className="size-11 rounded-full" aria-label={sc.next} disabled={page === pageCount - 1} onClick={() => setScenePage(page + 1)}><ChevronRight className="size-4"/></Button></nav>}
     </div>
   );
 }

@@ -1,6 +1,20 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-## AKTUALE — 13.11.2026 / Dosjet e seksioneve dhe komanda minimale
+## AKTUALE — 13.11.2026 / Workzone 2.5D si app pa scroll
+
+Vetëm Musterfirma BaumdienstFlow. Korrigjimi i pronarit: Workzone është fushë e vetme fikse, me pamjen pyll–terren–zyrë në të gjithë viewport-in dhe kartat ice glass mbi ambientin. Përdoren figurat ekzistuese connected-landscape-day/night.webp, me të njëjtin mekanizëm Light/Night; asnjë gjenerim, shpenzim AI ose zëvendësim fotografie. Figura mbulon edhe zonën e header-it transparent, pa kornizë ose shell të dytë rreth fushës. Profili/rolet, ekipi, tetë hyrjet kryesore, KiDraht dhe tema ruhen.
+
+Punëtoria e drurit dhe përmbledhja e Werkstatt-it nuk përsëriten më poshtë Workzone; hyrjet kryesore mbeten në navigim. Arkivi ditor ruhet në Arkivi & informacioni pranë planit/kalendarit. Lista e arkivit, lidhjet origjinale të kantiereve, destinacionet ligjore dhe saktësisht një by RediON janë brenda këtij dialogu, në fund të përmbajtjes. Kjo pamje fikse përdor përjashtimin About/settings të sipërfaqeve të punës; nuk rezervohet ose ngjitet një rresht permanent për footer/branding.
+
+Gjeometria llogaritet nga hapësira reale pas header-it përmes ResizeObserver. Nuk zvogëlohet e gjithë UI-ja me scale. Kartat mbajnë emrin, progresin, ekipin, foton dhe hyrjet Hap/Vendndodhja/Inventari; në ekran të ulët mbeten kryesoret dhe detajet e plota hapen te kantieri. Nëse kantieret tejkalojnë kapacitetin, faqet me shigjeta 44px i bëjnë të gjitha të arritshme pa scroll të jashtëm ose prerje të regjistrimeve. Numri i faqes është progres kuptimplotë. Drag/reflow ruhen brenda kufijve të viewport-it, me namespace UI workzone:muster-scene-layout:v1:<page>; pozicionet e vjetra v4 nuk ndryshohen dhe kjo nuk është një magazinë tjetër të dhënash biznesi.
+
+Harta përdor të gjitha kantieret, pavarësisht faqes së fushës. Pager-i nuk shfaqet mbi hartë; indeksi i saj është overlay me listë të kufizuar, që hapet kur duhet në telefon. Zoom/fokus/vendndodhja dhe butonat e planit/kalendarit ruhen. Fokusi i hartës nuk e scroll-on më skenën drejt header-it. Listat/dialogët e detajeve mund të lëvizin brenda kufijve të tyre; Workzone dhe dokumenti i jashtëm mbeten fiks. Veprimet e skanimit, pajisjeve dhe dorëzimeve përdorin të njëjtat lidhje ekzistuese.
+
+WorkzoneMissionControl ka një hyrje opt-in musterScene, aktivizuar vetëm nga MusterWorkzone me rrugën demo të kantierit. Rruga standarde, layout/storage v4 dhe pamjet e tjera të kompanive ruajnë sjelljen e mëparshme. Serveri, autorizimet, modeli, planet, inventari, skedarët dhe namespace-t e ruajtjes nuk ndryshojnë. AL Steel, demot e tjera dhe portofoli mbeten jashtë scope; çështja e logos/PWA #194 nuk fillohet. Portofoli OWNER_HOLD/PENDING_PUBLICATION.
+
+Verifikimi dhe publikimi: PENDING_RECHECK.
+
+## HISTORIKE — 13.11.2026 / Dosjet e seksioneve dhe komanda minimale
 
 Vetëm Musterfirma BaumdienstFlow. Rreshti kryesor ka tetë hyrje: Workzone, Paneli i kontrollit, Zyrat, Dashboard view, Punëtoria e drurit, Werkstatt, Inventari dhe Flota. Dokumentet, Pjesët rezervë dhe Historiku nuk përsëriten si seksione kryesore. Një buton Dosja e seksionit në Werkstatt, Flotë dhe Inventar hap listën e seksionit, Dokumentet, Raporte & historiku ose Pjesët rezervë. Në telefon butoni është ikonë 44px me emër të aksesueshëm; menuja përdor të njëjtin Radix ice glass, Light/Night, fokus dhe kufij të ekranit si filtri i inventarit.
 

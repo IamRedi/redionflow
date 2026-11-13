@@ -6,10 +6,10 @@ import { t } from "@/lib/i18n";
 import { equipmentQuantity, readLatLng } from "@/lib/workzone/site-json";
 import { WorkzoneMissionControl } from "@/app/(workzone)/workzone/workzone-mission-control";
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
-import { WorkshopOverview } from "@/components/demo/workshop/workshop-overview";
+import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoSiteKey } from "@/lib/workshop/shared-store";
-import { WoodOverview } from "@/components/demo/workshop/wood-overview";
+
 import { restoreOfficeSites } from "@/lib/workshop/offices/restore-sites";
 
 const workzoneName="Workzone";
@@ -141,7 +141,7 @@ export async function DemoWorkzoneContent({ monitor = false }: { monitor?: boole
   const archivedMission = missionItems.filter((item) => item.pct >= 100 && !item.pendingCollection && !item.pendingSiteTask);
 
   return (
-    <div className="space-y-4">
+    <div className={workshopEnabled ? "h-full min-h-0 min-w-0" : "space-y-4"} data-baum-environment={workshopEnabled ? "workzone" : undefined}>
       {workshopEnabled ? <h1 className="sr-only">{workzoneName}</h1> : <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">{t("admin.publicDemo", currentLang)}</div>
@@ -150,7 +150,7 @@ export async function DemoWorkzoneContent({ monitor = false }: { monitor?: boole
         <h1 className="mt-1 text-xl font-semibold">{workzoneName}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("demo.workzoneDescription", currentLang)}</p>
       </div>}
-      {workshopEnabled ? <MusterWorkzone monitor={monitor} now={new Date().toISOString()} missions={missionItems} defaultAddress={defaultAddress} sites={baustellen.map(b=>({id:b.id,key:demoSiteKey(b),trees:b.treeItems}))} /> : <WorkzoneMissionControl
+      {workshopEnabled ? <MusterWorkzone footer={<BaumdienstDemoFooter lang={currentLang}/>} monitor={monitor} now={new Date().toISOString()} missions={missionItems} defaultAddress={defaultAddress} sites={baustellen.map(b=>({id:b.id,key:demoSiteKey(b),trees:b.treeItems}))} /> : <WorkzoneMissionControl
         items={liveMission}
         archive={archivedMission}
         defaultAddress={defaultAddress}
@@ -159,7 +159,6 @@ export async function DemoWorkzoneContent({ monitor = false }: { monitor?: boole
         allowCanvasDrag={!workshopEnabled}
         mode={mode}
       />}
-      {workshopEnabled ? <><WoodOverview /><WorkshopOverview /></> : null}
     </div>
   );
 }

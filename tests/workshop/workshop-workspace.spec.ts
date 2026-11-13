@@ -26,6 +26,16 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
         expect(initialContent.y).toBeGreaterThanOrEqual(teamHeader.y + teamHeader.height - 1);
         expect((await workspace.boundingBox())!.y).toBeLessThanOrEqual(1);
       }
+      if (route === "/demo/workzone") {
+        expect(await workspace.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+        await page.getByRole("button", {name:"Archiv & Informationen",exact:true}).click();
+        const info=page.getByRole("dialog");
+        await expect(info.getByRole("link", {name:"by RediON",exact:true})).toHaveCount(1);
+        await expect(info.getByRole("link", {name:"Datenschutz",exact:true})).toHaveAttribute("href","/demo/privacy");
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", {name:"Archiv & Informationen",exact:true})).toBeFocused();
+        continue;
+      }
       const signature = page.getByRole("link", { name: "by RediON", exact: true });
       await expect(signature).toHaveCount(1);
       const footer = (await signature.boundingBox())!;

@@ -79,7 +79,7 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
 }
 /* A route-specific environment, with the same crystal material family. The
    server marker survives loading/errors and also scopes the existing portals. */
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"], [data-baum-environment="workzone"]))) {
   --baum-glass: linear-gradient(125deg, #effcff8f, #cee6ec66);
   --foreground: 164 36% 6%;
   --card-foreground: 164 36% 6%;
@@ -91,7 +91,7 @@ body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environmen
   --baum-action: linear-gradient(145deg, #dcfff080, #94cebc59);
   --baum-action-base: #c9e9d14d;
 }
-html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"], [data-baum-environment="workzone"]))) {
   --baum-glass: linear-gradient(125deg, #1e3b3b9e, #0e252eb8);
   --muted-foreground: 132 20% 85%;
   --baum-overlay: linear-gradient(125deg, #273a30f5, #182d27f5);

@@ -16,7 +16,14 @@ test("original Workzone canvas, reflow, map and plan entries stay usable on desk
   expect(await page.locator('[data-testid^="demo-photo-site-"] img').evaluateAll(images=>images.every(image=>getComputedStyle(image).objectFit==="cover"))).toBe(true);
 
     const canvas = page.getByTestId("workzone-canvas"); await expect(canvas).toBeVisible();
-    const cards = canvas.getByTestId("muster-site-card"); await expect(cards).toHaveCount(before.directory.sites.length);
+    const cards = canvas.getByTestId("muster-site-card"); await expect(cards.first()).toBeVisible();
+    const seen=new Set<string>();
+    for(let p=0;p<30;p++){
+      for(const href of await cards.locator('a[href^="/demo/baustellen/"]').evaluateAll(es=>es.map(e=>e.getAttribute("href")!)))seen.add(href);
+      const next=page.getByRole("button",{name:"Nächste Baustellen",exact:true});if(!await next.count()||await next.isDisabled())break;
+      const previous=await page.locator('[data-scene-pages] span').innerText();await next.click();await expect(page.locator('[data-scene-pages] span')).not.toHaveText(previous);
+    }
+    expect(seen.size).toBe(before.directory.sites.length);
     await expect(page.getByRole("link", { name: "Tageplan +", exact: true })).toHaveAttribute("href", /\/demo\/plan\?date=/);
     for (const label of ["Kartenmodus", "Layout neu ordnen"]) {
       const box = await page.getByRole("button", { name: label, exact: true }).boundingBox(); expect(box!.width).toBeGreaterThanOrEqual(44); expect(box!.height).toBeGreaterThanOrEqual(44);

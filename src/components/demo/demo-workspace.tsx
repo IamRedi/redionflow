@@ -8,7 +8,7 @@ function ScrollWorkspace({ children, footer }: { children: ReactNode; footer?: R
   const ref = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const officeScene = pathname === "/demo/offices" || pathname.startsWith("/demo/offices/");
-  const workshop = pathname === "/demo/workshop" || pathname === "/demo/wood";
+  const workshop = pathname === "/demo/workshop" || pathname === "/demo/wood" || pathname === "/demo/workzone";
   const query = useSearchParams().toString();
   const location = `${pathname}?${query}`;
   // Deliberate navigation starts at the top; small saves/refreshes keep position.

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import "@/components/demo/baumdienst-studio.css";
+import "@/components/demo/workshop/workzone-scene.css";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
 import { DemoHeaderOffset } from "@/components/demo/demo-header-offset";

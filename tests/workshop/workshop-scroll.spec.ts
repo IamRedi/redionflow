@@ -54,18 +54,11 @@ test("Muster keeps its continuous canvas, with stationary compact workshop contr
           return bottom > top && (hit === el || hit !== null && el.contains(hit));
         })).toBe(true);
       } else {
-      const targetScroll = before.y - headerBottom + 14;
-      expect(targetScroll).toBeGreaterThan(0);
-      await workspace.evaluate((el, top) => { el.scrollTop = top; }, targetScroll);
-      await expect.poll(async () => (await marker.boundingBox())!.y).toBeLessThan(headerBottom - 8);
-      // A point just inside the header's empty bottom padding must see the
-      // actual scrolling content, not the background or an invisible header.
-      const after = (await marker.boundingBox())!;
-      const hit = await marker.evaluate((el, point) => {
-        const target = document.elementFromPoint(point.x, point.y);
-        return { painted: target === el || (target !== null && el.contains(target)), outerStill: document.documentElement.scrollHeight <= innerHeight + 1, fits: document.documentElement.scrollWidth <= innerWidth };
-      }, { x: after.x + after.width / 2, y: headerBottom - 6 });
-      expect(hit).toEqual({ painted: true, outerStill: true, fits: true });
+      await workspace.evaluate(el=>{el.scrollTop=el.scrollHeight;});
+      expect(await workspace.evaluate(el=>el.scrollTop)).toBe(0);
+      expect((await marker.boundingBox())!.y).toBeCloseTo(before.y,0);
+      const hit=await marker.evaluate(el=>{const r=el.getBoundingClientRect(),target=document.elementFromPoint(r.x+r.width/2,r.y+7);return {painted:target===el||target!==null&&el.contains(target),outerStill:document.documentElement.scrollHeight<=innerHeight+1,fits:document.documentElement.scrollWidth<=innerWidth}});
+      expect(hit).toEqual({painted:true,outerStill:true,fits:true});
       }
       if (route.includes("tools") || route.includes("fleet")) {
         const fleet = route.includes("fleet");
