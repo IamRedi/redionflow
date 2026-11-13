@@ -1,10 +1,12 @@
-import type { ReactNode } from "react";
+import { ViewTransition, type ReactNode } from "react";
 import type { Viewport } from "next";
 import { notFound } from "next/navigation";
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
+import "@/components/demo/baumdienst-studio.css";
+import "@/components/demo/workshop/workzone-scene.css";
+import "@/components/demo/scene-transitions.css";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
-import { WorkshopFleet } from "@/components/demo/workshop/workshop-fleet";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
 import { DemoHeaderOffset } from "@/components/demo/demo-header-offset";
 import shellStyles from "@/components/demo/demo-workspace.module.css";
@@ -16,6 +18,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/public-demo";
 import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
+import { FleetInspectionProvider } from "@/components/demo/workshop/fleet-inspection-context";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
@@ -70,10 +73,10 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
   const demoLanguage = workshopEnabled ? await resolveRequestLanguage() : "de";
   // Mirrors the real Workzone layout: theme background, dark green only in dark mode.
-  const pageTone = mode === "baumdienst" ? "dark:bg-[#10211a]" : "";
+  const pageTone = mode === "baumdienst" && !workshopEnabled ? "dark:bg-[#10211a]" : "";
 
-  return (
-    <div data-demo-shell={workshopEnabled ? "muster" : undefined} className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
+  const shell = (
+    <div data-demo-shell={workshopEnabled ? "muster" : undefined} data-baum-studio={workshopEnabled ? "forest-crystal-v1" : undefined} className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
       <header className={workshopEnabled ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         {workshopEnabled ? <DemoHeaderOffset /> : null}
         <div className="pt-3">
@@ -99,12 +102,15 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
           ) : null}
         </div>
       </header>
-      {features.machines ? workshopEnabled ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
+      {features.machines && !workshopEnabled ? <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
-      {workshopEnabled ? <DemoWorkspace footer={<BaumdienstDemoFooter lang={demoLanguage} />}>{children}</DemoWorkspace> : <div className="mx-auto max-w-6xl lg:pr-20">
+      {workshopEnabled ? <FleetInspectionProvider rows={machines.map(m => ({ machineId: m.id, plate: m.targe ?? "", hu: m.tuvDate?.toISOString() ?? null, sp: m.spDate?.toISOString() ?? null, uvv: m.uvvDate?.toISOString() ?? null }))}><DemoWorkspace footer={<BaumdienstDemoFooter lang={demoLanguage} />}>{children}</DemoWorkspace></FleetInspectionProvider> : <div className="mx-auto max-w-6xl lg:pr-20">
         <main className="px-5 pb-24 pt-4 lg:pb-6 print:max-w-none print:px-0 print:py-0">{children}</main>
         <RediOnFooter />
       </div>}
     </div>
   );
+  // Only deliberate Muster navigation/appearance changes animate. Refreshes,
+  // polling, saves and same-room panels keep the normal immediate behavior.
+  return workshopEnabled ? <ViewTransition default="none" update={{ "baum-scene": "baum-diffuse", "baum-theme": "baum-diffuse", default: "none" }}>{shell}</ViewTransition> : shell;
 }

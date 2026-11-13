@@ -15,6 +15,7 @@ import { DemoPhoto } from "./demo-photo";
 import { BaumdienstSiteArt } from "./workshop-art";
 import { InventoryScope } from "./inventory-scope";
 import { WoodSiteSection } from "./wood-overview";
+import { OfficeSiteArchive } from "../offices/site-archive";
 
 const companyLabel="BaumdienstFlow · Musterfirma", briefingLabel="KiDraht ↗";
 type Point = { id: string; treeId: string; status: string; lat: number; lng: number };
@@ -27,6 +28,7 @@ export function MusterSite({ id, siteKey, name, address, description, trees, poi
     <header className="space-y-3"><Link href="/demo/workzone" className="inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:underline">← {c.back}</Link><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-widest text-primary">{companyLabel}</p><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight sm:text-3xl">{name}</h1>{address && <p className="mt-2 flex items-start gap-2 text-sm text-muted-foreground"><MapPin className="mt-0.5 size-4 shrink-0" />{address}</p>}</div><span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">{c.shared}</span></div>{description && <details className="max-w-3xl"><summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground"><BookOpenCheck className="size-4" />{c.instructions}<ChevronDown className="size-3" /></summary><p className="pb-3 text-sm leading-relaxed text-muted-foreground">{description}</p></details>}</header>
     <MusterTreeGrid siteKey={siteKey} items={trees} />
     <WoodSiteSection siteKey={siteKey}/>
+    <OfficeSiteArchive siteId={id}/>
     <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
       <details className="group rounded-2xl border bg-card px-4"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium"><span className="flex items-center gap-2"><Package className="size-4 text-primary" />{c.siteInventory}<span className="text-muted-foreground">{assets.length}</span></span><ChevronDown className="size-4 group-open:rotate-180" /></summary><div className="pb-4"><InventoryScope scope="site" identity={siteKey} now={now} /></div></details>
       <details className="group rounded-2xl border bg-card px-4"><summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium"><span className="flex items-center gap-2"><UsersRound className="size-4 text-primary" />{c.team}<span className="text-muted-foreground">{crew.length}</span></span><ChevronDown className="size-4 group-open:rotate-180" /></summary><div className="space-y-2 pb-4">{crew.map(w => <Link key={w.id} className="flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm focus-visible:outline focus-visible:outline-2" href={`/demo/workers/${w.id}`}><UsersRound className="size-4 text-primary" />{w.name}</Link>)}{!crew.length && <p className="text-sm text-muted-foreground">{c.empty}</p>}</div></details>

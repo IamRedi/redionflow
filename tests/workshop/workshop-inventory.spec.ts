@@ -1,3 +1,4 @@
+import { openScanner } from "./workspace-actions";
 import { switchDemoRole } from "./demo-role";
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
@@ -23,7 +24,7 @@ test("phone worker takes → manager confirms → colleague transfer needs both 
   try {
     await page.setViewportSize({width:390,height:844}); await page.goto("/demo/workshop?tab=tools");
     await switchDemoRole(page,worker.key);
-    await page.getByRole("button",{name:"Scannen",exact:true}).click(); await page.getByLabel("Barcode / NFC-Code").fill("WG-103"); await page.getByRole("button",{name:"Gerät öffnen",exact:true}).click();
+    await openScanner(page); await page.getByLabel("Barcode / NFC-Code").fill("WG-103"); await page.getByRole("button",{name:"Gerät öffnen",exact:true}).click();
     let dialog=page.getByRole("dialog"); await dialog.getByRole("button",{name:"Gerät mitnehmen",exact:true}).click();
     await dialog.getByLabel("Baustelle (optional)").selectOption(site.key); await dialog.getByRole("button",{name:`Bestätigen · ${worker.name}`,exact:true}).click();
     await expect(dialog).toContainText("Bestätigung ausstehend");
@@ -55,11 +56,12 @@ test("barcode/NFC identify the same unit without a mutation and stop listening w
     } });
   });
   await page.goto("/demo/workshop?tab=tools");
-  await expect(page.getByRole("button", { name: "Scannen", exact: true })).toBeEnabled();
-  expect((await page.getByRole("textbox", { name: "Name, Kennzeichen, Code oder Defekt suchen…" }).boundingBox())!.width).toBeGreaterThan(140);
+  await expect(page.getByRole("button", { name: "Gerät erfassen", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Name, Kennzeichen, Code oder Defekt suchen…", exact: true }).click();
+  expect((await page.getByRole("searchbox", { name: "Name, Kennzeichen, Code oder Defekt suchen…" }).boundingBox())!.width).toBeGreaterThan(140);
   expect((await page.getByRole("combobox", { name: "Alle Geräte", exact: true }).boundingBox())!.width).toBeLessThan(145);
   const before = await (await request.get(api)).json() as WorkshopSnapshot;
-  await page.getByRole("button", { name: "Scannen", exact: true }).click();
+  await openScanner(page);
   await page.getByLabel("Barcode / NFC-Code").fill("unknown");
   await page.getByRole("button", { name: "Gerät öffnen", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("Kein passender");
@@ -68,7 +70,7 @@ test("barcode/NFC identify the same unit without a mutation and stop listening w
   await expect(page.getByRole("dialog")).toHaveAccessibleName("Stangensäge · WG-102");
   await expect.poll(() => page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null)).toBe(true);
   await page.getByRole("dialog").getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Scannen", exact: true }).click();
+  await openScanner(page);
   await page.getByRole("button", { name: "NFC", exact: true }).click();
   await page.evaluate(() => {
     const w = window as unknown as { inventoryTestNfc: { reader: { onreading: (e: unknown) => void } } };

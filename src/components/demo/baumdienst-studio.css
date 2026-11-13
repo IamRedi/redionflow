@@ -1,0 +1,341 @@
+/* Baumdienst Musterfirma identity: the clear-crystal material of BauFlow,
+   with this product's forest/petrol palette. The exact opt-in shell also scopes
+   existing dialog portals; importing this file never styles another company. */
+body:has([data-baum-studio="forest-crystal-v1"]) {
+  --background: 140 19% 91%;
+  --foreground: 159 30% 12%;
+  --card: 126 24% 97%;
+  --card-foreground: 159 30% 12%;
+  --popover: 126 24% 97%;
+  --popover-foreground: 159 30% 12%;
+  --primary: 155 52% 25%;
+  --primary-foreground: 120 30% 98%;
+  --secondary: 144 16% 86%;
+  --secondary-foreground: 159 30% 16%;
+  --muted: 139 15% 87%;
+  --muted-foreground: 157 15% 33%;
+  --accent: 148 25% 85%;
+  --accent-foreground: 159 30% 16%;
+  --border: 151 16% 68%;
+  --input: 151 16% 68%;
+  --ring: 155 52% 25%;
+  --baum-glass: linear-gradient(125deg, #fbfff4c9, #ddeae1ba);
+  --baum-overlay: linear-gradient(125deg, #fbfff7f5, #e5eee7f2);
+  --baum-edge: #fffffff0;
+  --baum-shadow: 0 8px 24px #173c2720, inset 0 1px 0 #ffffffb3, inset 0 -1px 0 #36684617;
+  --baum-action: linear-gradient(145deg, #e1f5d7e6, #a9d3bdcf);
+  --baum-action-ink: #123e2c;
+  --baum-action-base: #c4e4c2;
+  --baum-action-edge: #f3ffebeb;
+  --baum-radius: 12px;
+  --baum-blur: 2px;
+  --baum-overlay-blur: 8px;
+  --baum-page-backdrop:
+    radial-gradient(ellipse at 4% 4%, #b9ead9b3, transparent 54%),
+    radial-gradient(ellipse at 98% 16%, #e9eec3a6, transparent 52%),
+    radial-gradient(ellipse at 24% 100%, #c1e4e7a6, transparent 55%),
+    radial-gradient(ellipse at 94% 96%, #e8dce980, transparent 52%),
+    linear-gradient(135deg, #eaf4eb, #e1f1ea 48%, #eff0e3);
+  --baum-field-image: url('/baumdienst-studio-v1/connected-landscape-day.webp');
+  --baum-field-scrim: linear-gradient(135deg, #eef9e91a, #e1f1eb1a 48%, #eaf4e94d);
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
+  --background: 161 24% 10%;
+  --foreground: 110 28% 94%;
+  --card: 160 24% 15%;
+  --card-foreground: 110 28% 94%;
+  --popover: 160 24% 15%;
+  --popover-foreground: 110 28% 94%;
+  --primary: 149 48% 73%;
+  --primary-foreground: 159 36% 11%;
+  --secondary: 160 18% 21%;
+  --secondary-foreground: 110 28% 94%;
+  --muted: 160 18% 20%;
+  --muted-foreground: 135 16% 77%;
+  --accent: 155 23% 24%;
+  --accent-foreground: 110 28% 94%;
+  --border: 152 17% 39%;
+  --input: 152 17% 39%;
+  --ring: 149 48% 73%;
+  --baum-glass: linear-gradient(125deg, #24483bc9, #102d27c2);
+  --baum-overlay: linear-gradient(125deg, #244238f5, #142e27f5);
+  --baum-edge: #d9f4c94d;
+  --baum-shadow: 0 10px 28px #051d2240, inset 0 1px 0 #e0f5cf26, inset 0 -1px 0 #061c2066;
+  --baum-action: linear-gradient(145deg, #557f55a6, #244d3bbf);
+  --baum-action-ink: #ecffda;
+  --baum-action-base: #315c43;
+  --baum-action-edge: #b4df9d80;
+  --baum-page-backdrop:
+    radial-gradient(ellipse at 4% 4%, #285e4c80, transparent 54%),
+    radial-gradient(ellipse at 98% 16%, #31466566, transparent 52%),
+    radial-gradient(ellipse at 24% 100%, #255d6266, transparent 55%),
+    radial-gradient(ellipse at 94% 96%, #51415d47, transparent 52%),
+    linear-gradient(135deg, #102923, #102724 48%, #111f2a);
+  --baum-field-image: url('/baumdienst-studio-v1/connected-landscape-night.webp');
+  --baum-field-scrim: linear-gradient(135deg, #0d2b2626, #112c3226 48%, #081f2c4d);
+}
+[data-baum-studio="forest-crystal-v1"] {
+  background: var(--baum-page-backdrop), hsl(var(--background));
+}
+/* A route-specific environment, with the same crystal material family. The
+   server marker survives loading/errors and also scopes the existing portals. */
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"], [data-baum-environment="workzone"]))) {
+  --baum-glass: linear-gradient(125deg, #effcff8f, #cee6ec66);
+  --foreground: 164 36% 6%;
+  --card-foreground: 164 36% 6%;
+  --popover-foreground: 164 36% 6%;
+  --muted-foreground: 164 24% 15%;
+  --primary: 156 52% 18%;
+  --baum-action-ink: #0b251d;
+  --baum-overlay: linear-gradient(125deg, #fffef7f5, #eaf2eaf2);
+  --baum-action: linear-gradient(145deg, #dcfff080, #94cebc59);
+  --baum-action-base: #c9e9d14d;
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"], [data-baum-environment="workzone"]))) {
+  --baum-glass: linear-gradient(125deg, #1e3b3b9e, #0e252eb8);
+  --muted-foreground: 132 20% 85%;
+  --baum-overlay: linear-gradient(125deg, #273a30f5, #182d27f5);
+  --baum-action: linear-gradient(145deg, #74956b66, #2a5e434d);
+  --baum-action-base: #142e26b3;
+}
+/* Owner: labels sit on the environment; only controls/data cards carry glass.
+   Opened cards use that same ice material, with extra blur for readable forms. */
+body:has([data-baum-studio="forest-crystal-v1"]) { --baum-label-shadow: 0 1px 2px #fff, 0 0 5px #f3fff5e6; }
+html.dark body:has([data-baum-studio="forest-crystal-v1"]) { --baum-label-shadow: 0 1px 2px #041b20, 0 0 5px #041b20e6; }
+html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"]))) {
+  --baum-overlay: var(--baum-glass);
+  --baum-overlay-blur: 12px;
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-status] {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  text-shadow: var(--baum-label-shadow);
+}
+/* Environment images are separate; material and workspace rules stay shared. */
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
+  /* Daylight is already in the artwork; a pale scrim washed out the room. */
+  --baum-page-backdrop: url('/baumdienst-studio-v1/wood-factory-day.webp');
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="wood"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/wood-factory-night.webp');
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="repair"])) {
+  --baum-page-backdrop: url('/baumdienst-studio-v1/repair-workshop-day.webp');
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="repair"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/repair-workshop-night.webp');
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="inventory"])) {
+  --baum-page-backdrop: url('/baumdienst-studio-v1/tool-warehouse-day.webp');
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="inventory"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/tool-warehouse-night.webp');
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="fleet"])) {
+  --baum-page-backdrop: url('/baumdienst-studio-v1/fleet-yard-day.webp');
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="fleet"])) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/fleet-yard-night.webp');
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
+  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/control-office-day.webp');
+}
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
+  --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/control-office-night.webp');
+}
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+/* Transparent chrome floats over the full scrolling page. The shared shell
+   reserves initial header clearance without clipping content at its lower edge. */
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header {
+  background: transparent;
+  border-bottom: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header > div { padding-top: 0; }
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baum-team-strip"] span[title] { color: hsl(var(--foreground)); font-weight: 600; text-shadow: 0 1px 1px #ffffffb3; }
+html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baum-team-strip"] span[title] { text-shadow: 0 1px 1px #081b23; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) [data-wood-visual="empty"] {
+  background: transparent;
+  color: hsl(var(--primary));
+}
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) [data-wood-visual="empty"] > div { color: inherit; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) nav { scrollbar-width: thin; }
+/* The environment is the surface: legal text and the author credit have no panel.
+   Keep their native links, focus rings and 44px hit areas at the content end. */
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"],
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"] footer {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: hsl(var(--foreground));
+}
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-control="button"] { min-width: 44px; gap: 6px; padding-inline: 12px; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+  background: var(--baum-glass);
+  -webkit-backdrop-filter: blur(var(--baum-blur));
+  backdrop-filter: blur(var(--baum-blur));
+}
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) label > svg { z-index: 1; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
+/* Light keeps the accepted ice film; stronger ink carries the hierarchy.
+   Explicit type weights and semantic status colors remain functional variants. */
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-baum-environment], [role="dialog"]) { font-weight: 500; }
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"] nav { font-weight: 500; }
+/* Decorative, locally served artwork: no extra UI, state, hit area or image
+   generation on load. The same composition changes with the existing theme. */
+[data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--baum-field-scrim), var(--baum-field-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+[data-baum-studio="forest-crystal-v1"] [data-canvas-forest-layer] { display: none; }
+@media (max-width: 639px) {
+  /* Keep the repair bench and tools in the narrow crop of the same room. */
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="repair"], [data-baum-environment="inventory"]))) { background-position: 75% center; }
+  /* Keep the parked crane truck and timber depot in the same narrow yard. */
+  [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="fleet"])) { background-position: 85% center; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where([data-baum-environment="control"])) { background-position: 75% center; }
+  /* Focus the meeting point of trees, terrain and office in the taller field. */
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { background-position: center, 70% center; }
+}
+/* One material for shared primitives and existing hand-built cards. Plot, map,
+   media and status surfaces retain their functional rendering. */
+body:has([data-baum-studio="forest-crystal-v1"]) :where(
+  [data-ui-surface="card"], [data-testid="muster-site-card"],
+  :where(section,article,div,details,a,button)[class~="border"][class*="bg-card"]
+) {
+  background: var(--baum-glass);
+  border-color: hsl(var(--border) / .75);
+  border-top-color: var(--baum-edge);
+  box-shadow: var(--baum-shadow);
+  -webkit-backdrop-filter: blur(var(--baum-blur)) saturate(1.08);
+  backdrop-filter: blur(var(--baum-blur)) saturate(1.08);
+}
+body:has([data-baum-studio="forest-crystal-v1"]) [role="dialog"] {
+  background: var(--baum-overlay);
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+  border-top-color: var(--baum-edge);
+  box-shadow: var(--baum-shadow);
+  -webkit-backdrop-filter: blur(var(--baum-overlay-blur));
+  backdrop-filter: blur(var(--baum-overlay-blur));
+}
+body:has([data-baum-studio="forest-crystal-v1"]) :is(
+  [data-ui-control="button"][data-ui-variant="outline"],
+  [data-ui-control="button"][data-ui-variant="secondary"],
+  .baum-nav-icon
+) {
+  background: var(--baum-glass);
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border) / .8);
+  border-top-color: var(--baum-edge);
+  box-shadow: inset 0 1px 0 var(--baum-edge);
+  -webkit-backdrop-filter: blur(var(--baum-blur));
+  backdrop-filter: blur(var(--baum-blur));
+}
+body:has([data-baum-studio="forest-crystal-v1"]) [data-ui-control="button"][data-ui-variant="default"] {
+  background: var(--baum-action);
+  background-color: var(--baum-action-base);
+  color: var(--baum-action-ink);
+  border: 1px solid hsl(var(--primary) / .5);
+  border-top-color: var(--baum-action-edge);
+  box-shadow: inset 0 1px 0 var(--baum-action-edge), 0 2px 8px hsl(var(--foreground) / .07);
+}
+body:has([data-baum-studio="forest-crystal-v1"]) [data-ui-control="button"]:not(.rounded-full) { border-radius: var(--baum-radius); }
+body:has([data-baum-studio="forest-crystal-v1"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+  background: hsl(var(--card) / .92);
+  border-color: hsl(var(--input));
+  border-radius: var(--baum-radius);
+  color: hsl(var(--foreground));
+}
+body:has([data-baum-studio="forest-crystal-v1"]) select { color-scheme: light; }
+html.dark body:has([data-baum-studio="forest-crystal-v1"]) select { color-scheme: dark; }
+body:has([data-baum-studio="forest-crystal-v1"]) select option { background: hsl(var(--card)); color: hsl(var(--foreground)); }
+body:has([data-baum-studio="forest-crystal-v1"]) .baum-nav-icon[aria-current="page"] {
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / .7);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .25);
+}
+body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):disabled { opacity: .5; }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a,button) { min-height: 44px; }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a[href^="/demo/baustellen/"],button) { min-width: 44px; }
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] .text-green-600 { color: hsl(var(--primary)); }
+body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) :is(button,a):is([aria-current="page"],[aria-pressed="true"]) {
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / .65);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / .18), inset 0 1px 0 var(--baum-edge);
+}
+@media (hover:hover) {
+  body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-control="button"]):hover:not(:disabled) { filter: brightness(1.06); }
+}
+/* Opaque fallbacks are accessibility variants of the same identity. */
+@supports not (backdrop-filter: blur(2px)) {
+  body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon) { background: hsl(var(--card)); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-overlay-blur: 0px; }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  [data-baum-studio="forest-crystal-v1"] { background: hsl(var(--background)); }
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header { background: hsl(var(--background)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon,section[class~="bg-card"],article[class~="bg-card"],div[class~="bg-card"],details[class~="bg-card"],a[class~="bg-card"]) {
+    background: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (forced-colors:active) {
+  [data-baum-studio="forest-crystal-v1"] { background: Canvas; }
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header { background: Canvas; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: CanvasText; }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-ui-control="button"],.baum-nav-icon,[data-testid="muster-site-card"],:where(section,article,div,details,a)[class~="border"][class~="bg-card"],:where(section,article,div)[class~="border"][class~="bg-card/95"]) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media print {
+  [data-baum-studio="forest-crystal-v1"] { background: white; }
+  [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header { background: white; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[data-testid="muster-site-card"],[role="dialog"]) { background: white; color: black; box-shadow: none; backdrop-filter: none; }
+}
+
+/* The monitor remains a clean display. One glass film carries the dashboard;
+   nested metric chips keep their borders without opaque background patches. */
+[data-baum-environment="monitor"] [data-baum-dashboard="muster"] :where([class*="bg-background/"]) { background: transparent; }
+[data-baum-environment="monitor"] [data-baum-dashboard="muster"] > div:first-child { background: var(--baum-glass); box-shadow: var(--baum-shadow); backdrop-filter: blur(var(--baum-blur)); }
+[data-baum-environment="monitor"] [data-baum-dashboard="muster"] > div:first-child > div { background: transparent; }
+[data-baum-environment="monitor"] :where([data-ui-surface="card"], [data-baum-dashboard="muster"] > div) { min-width: 0; }
+@media (forced-colors: active) { [data-baum-environment="monitor"] [data-baum-dashboard="muster"] > div:first-child { background: Canvas; box-shadow: none; backdrop-filter: none; } }
+@media print { [data-baum-environment="monitor"] [data-baum-dashboard="muster"] > div:first-child { background: white; box-shadow: none; backdrop-filter: none; } }
+
+/* Reception uses the same forest ice material; room desks reuse the planning office. */
+body:has([data-baum-studio="forest-crystal-v1"] [data-baum-environment="reception"]) { --baum-page-backdrop: linear-gradient(120deg,#f6f5e51a,#e2f0e30d 48%,#f3ebdc26),url('/baumdienst-studio-v1/office-reception-day.webp'); }
+html.dark body:has([data-baum-studio="forest-crystal-v1"] [data-baum-environment="reception"]) { --baum-page-backdrop: linear-gradient(120deg,#101d241a,#10291f1a 48%,#0c1b2926),url('/baumdienst-studio-v1/office-reception-night.webp'); }
+@media(max-width:600px) { [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="reception"]) { background-position:62% center; } }

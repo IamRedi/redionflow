@@ -4,5 +4,5 @@ import { DemoControlPanel } from "@/components/demo/workshop/demo-control-panel"
 
 export default async function DemoControlPage() {
   try { await requireWorkshopDemo(); } catch (e) { if (e instanceof SharedWorkshopError && e.status === 404) notFound(); throw e; }
-  return <DemoControlPanel />;
+  return <div data-baum-environment="control"><DemoControlPanel /></div>;
 }

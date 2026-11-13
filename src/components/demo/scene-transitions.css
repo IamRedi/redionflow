@@ -1,0 +1,25 @@
+/* The React boundary exists only in the exact Muster layout. No persistent
+   overlay, screenshot store, initial-load effect, or alternate router. */
+html:has([data-baum-studio="forest-crystal-v1"])::view-transition-group(.baum-diffuse) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(.22, .61, .36, 1);
+}
+html:has([data-baum-studio="forest-crystal-v1"])::view-transition-old(.baum-diffuse) {
+  animation: baum-diffuse-out 420ms cubic-bezier(.22, .61, .36, 1) both;
+}
+html:has([data-baum-studio="forest-crystal-v1"])::view-transition-new(.baum-diffuse) {
+  animation: baum-diffuse-in 420ms cubic-bezier(.22, .61, .36, 1) both;
+}
+@keyframes baum-diffuse-out {
+  from { opacity: 1; filter: blur(0); }
+  to { opacity: 0; filter: blur(2px); }
+}
+@keyframes baum-diffuse-in {
+  from { opacity: 0; filter: blur(2px); }
+  to { opacity: 1; filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active), print {
+  html:has([data-baum-studio="forest-crystal-v1"])::view-transition-group(.baum-diffuse),
+  html:has([data-baum-studio="forest-crystal-v1"])::view-transition-old(.baum-diffuse),
+  html:has([data-baum-studio="forest-crystal-v1"])::view-transition-new(.baum-diffuse) { animation: none !important; }
+}

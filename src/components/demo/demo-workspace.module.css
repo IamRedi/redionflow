@@ -8,11 +8,8 @@
   scrollbar-color: hsl(var(--muted-foreground) / .5) hsl(var(--background));
 }
 :global(.dark) .shell { color-scheme: dark; }
-/* The opt-in Musterfirma shell uses the established light emerald text variant
-   on dark surfaces, including translucent primary badges and links. */
-:global(.dark) .shell :global(.text-primary) { color: #6ee7b7; }
-/* Layers: the page scrolls at the bottom; the transparent header (team strip and
-   round icons, then logo and the more ring on top) stays fixed above it. */
+/* One full-height scrolling canvas under the floating, transparent team/header.
+   Initial clearance and focus padding keep the first content/actions reachable. */
 .shell > .header { grid-area: 1 / 1; align-self: start; pointer-events: none; }
 .shell > .header :is(a, button, summary, select, input, details, [data-testid="baum-team-strip"]) { pointer-events: auto; }
 .shell > .workspace { grid-area: 1 / 1 / -1 / -1; padding-top: var(--demo-header-height, 152px); scroll-padding-top: calc(var(--demo-header-height, 152px) + 8px); }
@@ -38,6 +35,7 @@
 .header [data-demo-teamrow] svg { width: 20px; height: 20px; }
 .workspace {
   position: relative;
+  z-index: 0;
   min-height: 0;
   min-width: 0;
   overflow-y: auto;
@@ -60,10 +58,16 @@
   .shell { display: block; height: auto; overflow: visible; }
   .workspace { height: auto; overflow: visible; }
 }
-/* Ice glass: every card in the Musterfirma shell lets the page show softly through. */
-.shell :global(.bg-card),
-.shell :global(.bg-card\/95) {
-  background-color: hsl(var(--card) / .6);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  backdrop-filter: blur(14px) saturate(1.15);
-}
+/* Materials live once in baumdienst-studio.css, including dialog portals. */
+.shell:has([data-office-scene]) > .header,
+.shell:has([data-office-scene]) > [data-demo-fleet] { display: none; }
+.shell:has([data-office-scene]) > .workspace { padding: 0; scroll-padding: 0; overflow: hidden; scrollbar-gutter: auto; }
+.officeContent, .officeContent > [data-office-scene] { width: 100%; height: 100%; min-width: 0; min-height: 0; }
+.officeWorkspace { overflow: hidden; }
+/* Workshop controls stay above the one scrolling list. Other routes retain
+   their continuous canvas; the workshop owns its natural content-end footer. */
+.shell > .workshopWorkspace { overflow: hidden; scrollbar-gutter: auto; }
+.workshopContent { height: 100%; min-width: 0; min-height: 0; padding: 6px 12px 0; }
+.workshopContent > [data-baum-environment] { height: 100%; min-height: 0; }
+@media (min-width: 640px) { .workshopContent { padding-inline: 20px; } }
+@media print { .workshopContent, .workshopContent > [data-baum-environment] { height: auto; } }

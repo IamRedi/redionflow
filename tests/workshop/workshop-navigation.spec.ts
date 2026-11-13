@@ -1,3 +1,4 @@
+import { openRegistration } from "./workspace-actions";
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { resetWorkshopFixture } from "./shared-fixture";
@@ -19,6 +20,13 @@ test("dashboard, control panel and TV are directly reachable at desktop and touc
   await expect(page.getByTestId("demo-control-panel")).toBeVisible();
   for(const worker of before.directory.workers) await expect(page.getByTestId("demo-control-panel").getByRole("link",{name:worker.name,exact:true})).toHaveAttribute("href",`/demo/workers/${worker.id}`);
   await page.screenshot({path:info.outputPath("control-phone.png")});
+  await page.getByTestId("demo-control-panel").locator("summary").click();
+  await page.locator('a[href="/demo/workshop?tab=tools#custody-policy"]').click();
+  const policy = page.locator("#custody-policy");
+  await expect(policy).toHaveAttribute("open", "");
+  await expect(policy.locator("summary")).toBeFocused();
+  await expect(policy.getByRole("checkbox")).toBeInViewport();
+  expect(await page.getByTestId("demo-workspace").evaluate(el => el.scrollTop)).toBe(0);
   const after=await(await request.get(api)).json() as WorkshopSnapshot;expect(after.revision).toBe(before.revision);expect(after.state).toEqual(before.state);
 });
 
@@ -47,7 +55,7 @@ test("vehicles use plates, optional additional tags print only after explicit as
 
 test("vehicle registration and optional label editing preserve one record through the touch form",async({page,request})=>{
   await page.setViewportSize({width:390,height:844});await page.goto("/demo/workshop?tab=fleet");
-  await page.getByRole("button",{name:"Gerät erfassen",exact:true}).click();const d=page.getByRole("dialog");
+  await openRegistration(page);const d=page.getByRole("dialog");
   await d.getByLabel("Bezeichnung",{exact:true}).fill("DEMO · Fahrzeug ohne Etikett");await d.locator('select[name="category"]').selectOption("vehicle");
   await d.getByLabel("Kennzeichen",{exact:true}).fill("MU-TEST 76");await d.getByLabel("Nächste Prüfung",{exact:true}).fill("2027-11-05");
   await d.getByRole("button",{name:"Gerät erfassen",exact:true}).click();await expect(d).toHaveAccessibleName("DEMO · Fahrzeug ohne Etikett · MU-TEST 76");

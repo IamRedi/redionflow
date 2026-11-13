@@ -7,5 +7,5 @@ import styles from "./tv.module.css";
 export default async function DemoTvPage({searchParams}:{searchParams:Promise<{view?:string;week?:string}>}) {
   try { await requireWorkshopDemo(); } catch(error) { if(error instanceof SharedWorkshopError&&error.status===404)notFound();throw error; }
   const params=await searchParams;
-  return <div className={styles.tv} data-demo-tv><DemoTvRefresh/><DemoDashboardContent searchParams={Promise.resolve({week:params.week})} monitor/></div>;
+  return <div className={styles.tv} data-demo-tv data-baum-environment="monitor"><DemoTvRefresh/><DemoDashboardContent searchParams={Promise.resolve({week:params.week})} monitor/></div>;
 }

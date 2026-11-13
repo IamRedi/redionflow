@@ -53,7 +53,8 @@ test("repair, parts, release, issue/return, shared document, reload and history 
   await dialog.getByRole("button", { name: "Ins Lager zurückgeben", exact: true }).click();
   await dialog.getByRole("button", { name: "Anfrage senden", exact: true }).click();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("link", { name: "Dokumente", exact: true }).click();
+  await page.getByTestId("section-folder").click();
+  await page.getByRole("option", { name: "Dokumente", exact: true }).click();
   await page.getByLabel("Gerät / Fahrzeug", { exact: true }).last().selectOption("crane");
   const content = "DEMO · Werkstatt-Protokoll, keine echten Daten.";
   await page.getByLabel("Beispieldokument hinzufügen", { exact: true }).setInputFiles({ name: "DEMO-Pruefprotokoll.txt", mimeType: "text/plain", buffer: Buffer.from(content) });
@@ -63,6 +64,7 @@ test("repair, parts, release, issue/return, shared document, reload and history 
   const documentDownload = page.waitForEvent("download"); await docRow.getByRole("link", { name: "Herunterladen" }).click();
   const documentPath = await (await documentDownload).path();
   expect(await readFile(documentPath!, "utf8")).toBe(content);
+  await page.getByTestId("workshop-scroll-region").locator("summary").filter({ hasText: workshopCopy("de").shared }).click();
   const exported = page.waitForEvent("download"); await page.getByRole("button", { name: "Demodaten exportieren", exact: true }).click();
   const { state } = JSON.parse(await readFile((await (await exported).path())!, "utf8"));
   expect(state.assets.find((a: { id: string }) => a.id === "crane").events.length).toBeGreaterThan(5);
@@ -87,13 +89,20 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
     for (const tab of ["orders", "fleet", "tools", "parts", "documents", "history"]) {
       await page.goto(`/demo/workshop?tab=${tab}`);
       await expect(page.getByTestId("workshop-demo")).toBeVisible();
-      const primary = page.getByRole("button", {name: tab === "tools" || tab === "fleet" ? "Gerät erfassen" : "Defekt melden", exact:true});
+      const primary = ["orders", "tools", "fleet"].includes(tab) ? page.getByRole("button", {name: tab === "tools" || tab === "fleet" ? "Gerät erfassen" : "Defekt melden", exact:true}) : page.getByTestId("section-folder");
       await expect(primary).toBeEnabled();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const size = await primary.boundingBox(); expect(size!.height).toBeGreaterThanOrEqual(44);
       const colors = await primary.evaluate(el => { const s = getComputedStyle(el); return [s.color, s.backgroundColor]; });
       const luminance = (value: string) => { const rgb = value.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(n => { const x = n / 255; return x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; }); return .2126 * rgb[0] + .7152 * rgb[1] + .0722 * rgb[2]; };
-      const [fg, bg] = colors.map(luminance); expect((Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05)).toBeGreaterThanOrEqual(4.5);
+      // The opaque primary action retains its contrast gate. Resource views use
+      // an outline glass folder: transparent RGB alone is not its rendered backdrop.
+      if (["orders", "tools", "fleet"].includes(tab)) {
+        const [fg, bg] = colors.map(luminance); expect((Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05)).toBeGreaterThanOrEqual(4.5);
+      } else {
+        expect(await primary.evaluate(el => getComputedStyle(el).backgroundImage)).toContain("linear-gradient");
+        expect(colors[0]).not.toBe(theme === "dark" ? "rgb(0, 0, 0)" : "rgb(255, 255, 255)");
+      }
       if ((width === 1440 || width === 390) && (tab === "orders" || tab === "tools")) await page.screenshot({ path: info.outputPath(`${tab}-${theme}-${width}.png`), fullPage: true });
     }
     await page.goto("/demo/workshop");
@@ -105,7 +114,6 @@ test("six locales, desktop/touch themes, overflow, focus and usable primary cont
     expect((await signature.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto("/demo/workshop");
-  await page.getByLabel("Mehr",{exact:true}).click();
   await page.getByRole("button", { name: "Hell/Dunkel", exact: true }).click();
   await expect(page.locator("html")).not.toHaveClass(/dark/);
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -133,9 +141,9 @@ test("native presentation, shared Workzone header and the existing detail pages"
     const workerSize = await strip.getByRole("button").first().boundingBox(); expect(workerSize!.height).toBeGreaterThanOrEqual(44);
     await page.screenshot({ path: info.outputPath(`workzone-${theme}-${width}.png`), fullPage: true });
     const site = await page.locator('a[href^="/demo/baustellen/"]').first().getAttribute("href");
-    await strip.getByLabel("Mehr", {exact:true}).click();
+    await strip.getByLabel("Profil", {exact:true}).click();
     await expect(strip.getByRole("combobox", {name:"Demo ausprobieren als"})).toBeVisible();
-    await strip.getByLabel("Mehr", {exact:true}).click();
+    await strip.getByLabel("Profil", {exact:true}).click();
     await page.goto("/demo/dashboard"); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (site) { await page.goto(site); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); }
   }

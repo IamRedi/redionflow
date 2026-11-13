@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Bot, Home, LayoutDashboard, Monitor, Settings2, MoreHorizontal, TreePine, Truck, Wrench } from "lucide-react";
-import { cookies } from "next/headers";
+import { Bot, BookOpenCheck, Home, LayoutDashboard, Monitor, Package, Settings2, UserRound, TreePine, Truck, Wrench } from "lucide-react";
 
 import { AppBrand } from "@/components/branding/AppBrand";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -18,12 +17,12 @@ import { DemoTeamStrip } from "./workshop/demo-team-strip";
 import { navigationCopy } from "@/lib/workshop/navigation-copy";
 import { DemoDashboardLaunch } from "./workshop/demo-dashboard-launch";
 import { DemoBrand } from "./workshop/demo-brand";
+import { DemoNavigationLink } from "./workshop/demo-navigation-link";
 import { woodCopy } from "@/lib/workshop/wood-copy";
+import { DemoOfficeEntry } from "./offices/office-entry";
 
-/** Same compact round icon buttons as the production (AL-Steel) header; names stay in aria-label/title. */
-/** Frosted ("ice glass") round shell: the page shows softly through it. */
-const demoGlass="border border-black/10 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]";
-const navIcon=`inline-flex size-11 items-center justify-center rounded-full ${demoGlass} text-foreground/80 transition hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring`;
+/** Compact round navigation reuses the one scoped forest crystal material. */
+const navIcon="baum-nav-icon inline-flex size-11 shrink-0 items-center justify-center rounded-full text-foreground/80 transition focus-visible:ring-2 focus-visible:ring-ring";
 const workzoneName="Workzone", dashboardName="Dashboard", aiLabel="AI", aiPreview="AI preview";
 
 type DemoWorker = {
@@ -43,21 +42,23 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
   const kidraht = kidrahtDemoUrl(mode);
 
   if (mode === "baumdienst" && workshopEnabled) {
-    const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
+    const c = workshopCopy(currentLang);
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
-    return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5 lg:pr-20" data-testid="baum-demo-topbar">
-      <div data-demo-teamrow className="relative min-w-0"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} />
-        {/* Only the round button sits over the strip; workers scroll underneath it. */}<div className="absolute right-0 top-1/2 z-20 -translate-y-1/2 lg:fixed lg:right-5 lg:top-10 lg:translate-y-0"><details className="relative"><summary aria-label={c.more} className="grid size-11 cursor-pointer list-none place-items-center rounded-full border border-black/10 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-md dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-5" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><div className="flex items-center justify-end gap-2">{kidraht?<KidrahtButton href="/demo/kidraht" title={t("demo.kidrahtTitle",currentLang)} className="h-11 min-w-11"/>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/><LanguageSwitcher/></div></div></details></div>
+    return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5" data-testid="baum-demo-topbar">
+      <div data-demo-teamrow className="relative flex min-w-0 items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><div className="min-w-0 flex-1"><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} /></div><DemoActorBar mode="notifications"/><details data-demo-profile className="relative shrink-0"><summary aria-label={c.profile} title={c.profile} className={`${navIcon} cursor-pointer list-none`}><UserRound className="size-4" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><LanguageSwitcher/></div></details></div>
+      <div data-demo-actionrow className="mt-2 flex min-w-0 items-start gap-2">
+        <nav data-demo-navigation aria-label="Demo" className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5 [&>*]:shrink-0">
+          <DemoNavigationLink href="/demo/workzone" label={workzoneName} className={navIcon}><Home className="size-4" /></DemoNavigationLink>
+          <DemoNavigationLink href="/demo/control" label={n.panel} className={navIcon}><Settings2 className="size-4" /></DemoNavigationLink>
+          <DemoOfficeEntry className={navIcon}/>
+          <DemoDashboardLaunch href="/demo/tv?view=dashboard" label={n.tv} className={navIcon}><Monitor className="size-4" /></DemoDashboardLaunch>
+          <DemoNavigationLink href="/demo/wood" label={wood.title} className={navIcon}><TreePine className="size-4" /></DemoNavigationLink>
+          <DemoNavigationLink preserveWorkshopScope href="/demo/workshop" label={c.title} className={navIcon}><Wrench className="size-4" /></DemoNavigationLink>
+          <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=tools" label={c.tools} className={navIcon}><Package className="size-4" /></DemoNavigationLink>
+          <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=fleet" label={c.fleet} className={navIcon}><Truck className="size-4" /></DemoNavigationLink>
+        </nav>
+        <div data-demo-utilities className="flex shrink-0 items-center gap-1">{kidraht?<Link href="/demo/kidraht" aria-label={t("demo.kidrahtTitle",currentLang)} title={t("demo.kidrahtTitle",currentLang)} className={navIcon}><BookOpenCheck className="size-4"/></Link>:null}<DemoThemeButton label={t("admin.themeToggle",currentLang)} errorLabel={c.error}/></div>
       </div>
-      <nav data-demo-navigation aria-label="Demo" className="no-scrollbar mt-2 flex min-w-0 items-center gap-1 overflow-x-auto sm:gap-1.5 pb-1 [&>*]:shrink-0">
-        <Link href="/demo/workzone" aria-label={workzoneName} title={workzoneName} className={navIcon}><Home className="size-4" /></Link>
-        <Link href="/demo/control" aria-label={n.panel} title={n.panel} className={navIcon}><Settings2 className="size-4" /></Link>
-        <DemoDashboardLaunch href="/demo/tv?view=dashboard" label={n.tv} className={navIcon}><Monitor className="size-4" /></DemoDashboardLaunch>
-        <Link href="/demo/wood" aria-label={wood.title} title={wood.title} className={navIcon}><TreePine className="size-4" /></Link>
-        <Link href="/demo/workshop" aria-label={c.title} title={c.title} className={navIcon}><Wrench className="size-4" /></Link>
-        <Link href="/demo/workshop?tab=fleet" aria-label={`${c.fleet} · Demo`} title={c.fleet} className={`${navIcon} lg:hidden`}><Truck className="size-4" /></Link>
-        <DemoActorBar mode="notifications"/>
-      </nav>
     </div>;
   }
 

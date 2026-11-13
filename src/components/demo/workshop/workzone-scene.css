@@ -1,0 +1,50 @@
+/* Only the opt-in Muster scene. The photo is the room, never a framed panel. */
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] [data-baum-environment="workzone"]) {
+  /* Clear-air sibling keeps the original misty artwork available for rollback.
+     Glass belongs to controls/cards, not a white film over the environment. */
+  --baum-field-image: url('/baumdienst-studio-v1/connected-landscape-clear-day.webp');
+  --baum-field-scrim: none;
+}
+[data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) {
+  background-image: var(--baum-field-scrim), var(--baum-field-image);
+  background-position: center; background-size: cover; background-repeat: no-repeat;
+}
+body:has([data-baum-environment="workzone"]) { --baum-label-shadow: 0 1px 2px #fffffff0, 0 0 10px #ffffff80; }
+html.dark body:has([data-baum-environment="workzone"]) { --baum-label-shadow: 0 1px 3px #061c20, 0 0 8px #061c2099; }
+[data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) > header > div { padding-top: 0; }
+[data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
+[data-baum-environment="workzone"] { height: 100%; min-height: 0; min-width: 0; }
+[data-baum-environment="workzone"] [data-workzone-scene] > [data-testid="workzone-canvas"] { border: 0; border-radius: 0; background: transparent !important; contain: layout; }
+[data-baum-environment="workzone"] [data-testid="workzone-canvas"]::before { display: none; }
+[data-workzone-scene="fixed"] [data-testid="muster-site-card"] { display: flex; flex-direction: column; padding: 0 10px 8px; box-shadow: var(--baum-shadow), 0 24px 24px -18px #042c3c99; }
+[data-workzone-scene="fixed"] [data-site-cover] { flex-shrink: 0; margin: 0 -10px 7px; height: 80px; }
+[data-workzone-scene="fixed"] [data-site-name] { flex-shrink: 0; font-size: 13px; line-height: 17px; white-space: normal; overflow: hidden; text-overflow: ellipsis; }
+[data-workzone-scene="fixed"] [data-site-workers] { flex-shrink: 0; color: hsl(var(--foreground)); font-weight: 500; font-size: 10px; line-height: 15px; }
+[data-workzone-scene="fixed"] [data-site-progress] { flex-shrink: 0; font-size: 10px; line-height: 15px; }
+[data-workzone-scene="fixed"] [data-site-note] { font-size: 10px; line-height: 14px; max-height: 36px; }
+[data-workzone-scene="fixed"] [data-site-plan] { font-size: 10px; line-height: 14px; }
+[data-workzone-scene="fixed"] [data-site-actions] { flex-shrink: 0; margin-top: auto; padding-top: 4px; gap: 4px; }
+[data-workzone-scene="fixed"] [data-site-actions] :is(a,button) { min-width: 44px; width: 44px; height: 44px; padding-inline:0; justify-content:center; }
+[data-workzone-scene="fixed"][data-scene-density="compact"] [data-site-cover] { height: 54px; }
+[data-workzone-scene="fixed"][data-scene-density="compact"] :is([data-site-note],[data-site-plan]) { display: none; }
+[data-workzone-scene="fixed"][data-scene-density="minimal"] :is([data-site-cover],[data-site-note],[data-site-plan],[data-site-workers],[data-site-progress]) { display: none; }
+[data-workzone-scene="fixed"][data-scene-density="minimal"] [data-site-name] { line-height: 15px; font-size: 11px; }
+[data-scene-pages] { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; z-index: 5; }
+[data-scene-pages] span { font-size: 11px; font-weight: 600; text-shadow: var(--baum-label-shadow); }
+[data-workzone-scene="fixed"] [data-testid="workzone-map-layout"] { position: relative; height: 100%; min-height: 0; grid-template-columns: minmax(0,1fr); }
+[data-workzone-scene="fixed"] [data-testid="workzone-map-frame"] { height: 100%; min-height: 0; }
+[data-scene-map-index] { position: absolute; right: 12px; top: 70px; z-index: 500; max-height: calc(100% - 82px); display: flex; flex-direction: column; min-height: 0; max-width: min(264px,calc(100% - 24px)); }
+[data-scene-map-index] > summary { display: inline-flex; min-height: 44px; flex-shrink: 0; align-self: flex-end; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid hsl(var(--border)); border-radius: 999px; background: var(--baum-overlay); font-size: 12px; cursor: pointer; list-style: none; }
+[data-scene-map-index] > div { max-height: max(44px,calc(100dvh - var(--demo-header-height,152px) - 148px)); min-height: 0; overflow: auto; overscroll-behavior: contain; margin-top: 6px; border-radius: 14px; }
+[data-scene-map-index] > div > aside { max-height: none; }
+[data-scene-map-index]:not([open]) > div { display: none; }
+@media(max-width:639px) {
+  [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) { background-position: 70% center; }
+  [data-workzone-scene="fixed"] [data-site-cover] { height: 64px; }
+}
+@media(prefers-reduced-transparency:reduce) { [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) { background: hsl(var(--background)); } }
+@media(forced-colors:active) { [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) { background: Canvas; } [data-scene-pages] span { text-shadow: none; } [data-scene-map-index] > summary { background: Canvas; border-color: CanvasText; } }
+@media print { [data-workzone-scene="fixed"] { height: auto; } [data-workzone-scene="fixed"] [data-testid="workzone-canvas"] { height: auto !important; overflow: visible; } [data-workzone-scene="fixed"] [data-testid="muster-site-card"] { position: static; transform: none !important; width: 100% !important; height: auto !important; margin-bottom: 12px; break-inside: avoid; } [data-scene-pages] { display: none; } }
+
+[data-baum-environment="workzone"] [data-testid="workzone-map-index"] :is(a,button) { min-width:44px; min-height:44px; }
+[data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="workzone"]) [data-testid="baum-team-strip"] span[title] { color:hsl(var(--foreground)); font-weight:600; text-shadow:var(--baum-label-shadow); }

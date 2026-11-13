@@ -21,6 +21,7 @@ import { BaumdienstSiteArt } from "@/components/demo/workshop/workshop-art";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoSiteKey, requireWorkshopDemo } from "@/lib/workshop/shared-store";
 import { workshopCopy } from "@/lib/workshop/copy";
+import { restoreOfficeSites } from "@/lib/workshop/offices/restore-sites";
 
 function formatDateTime(date: Date) {
   return date.toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
@@ -32,6 +33,7 @@ export default async function DemoBaustelleDetailPage({ params }: { params: Prom
   const tr = (key: string) => t(key, currentLang, mode);
   const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
   const demoCompany = workshopEnabled ? await requireWorkshopDemo() : null;
+  if (demoCompany) await restoreOfficeSites(demoCompany.id);
   const kidraht = kidrahtDemoUrl(mode);
   const baustelle = await prisma.baustelle.findUnique({
     where: { id: baustelleId, ...(demoCompany ? { companyProfileId: demoCompany.id } : {}) },

@@ -315,7 +315,7 @@ export async function DemoDashboardContent({ searchParams, monitor = false }: { 
   ];
 
   return (
-    <div className={workshopEnabled ? "min-w-0 space-y-5 pb-8" : "mx-auto max-w-7xl space-y-5 pb-8"}>
+    <div data-baum-dashboard={workshopEnabled ? "muster" : undefined} className={workshopEnabled ? "min-w-0 space-y-5 pb-8" : "mx-auto max-w-7xl space-y-5 pb-8"}>
       <div className="overflow-hidden rounded-[28px] border border-border/80 bg-background/85 shadow-lg shadow-emerald-950/5 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-emerald-500/[0.08] via-background to-background px-4 py-4 sm:px-5">
           <div className="min-w-0">
