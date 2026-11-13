@@ -88,7 +88,7 @@ test("finance reads canonical hours; saved calculator drafts and newly created s
     await role(request, origin, "finance"); const finance = await snapshot(request, "?month=2001-01");
     const w = finance.workers.find((w: { id: string }) => w.id === worker.id); expect(w.hours).toBe(8); expect(w.sessionCount).toBe(1); expect(w.provisional).toBe(false);
     expect((await snapshot(request, "?month=2001-02")).workers.find((w: { id: string }) => w.id === worker.id).hours).toBe(0);
-    await role(page.context().request, origin, "finance"); await page.goto("/demo/offices/finance"); await page.getByRole("button", { name: "Personal & Stunden", exact: true }).click();
+    await role(page.context().request, origin, "finance"); await page.goto("/demo/offices/finance"); await page.getByRole("button", { name: "Im Büro arbeiten", exact: true }).click(); await page.getByRole("button", { name: "Personal & Stunden", exact: true }).click();
     const d = page.getByRole("dialog"); await d.getByLabel("Berichtsmonat", { exact: true }).fill("2001-01");
     await expect(d.getByRole("link", { name: `${worker.firstName} ${worker.lastName}`, exact: true })).toHaveAttribute("href", `/demo/workers/${worker.id}`);
     await expect(d.locator("article").filter({ has: page.getByRole("link", { name: `${worker.firstName} ${worker.lastName}`, exact: true }) })).toContainText("8 h");
@@ -109,7 +109,7 @@ test("finance reads canonical hours; saved calculator drafts and newly created s
   } finally { await prisma.workSession.delete({ where: { id: session.id } }); }
 });
 
-test("compact inventory and Day/Night offices preserve touch targets, private visits and the natural footer", async ({ page, context, request }, info) => {
+test("compact inventory and 2.5D Day/Night offices preserve physical controls, private visits and settings footer", async ({ page, context, request }, info) => {
   const origin = String(info.project.use.baseURL), errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   const before = await (await request.get("/api/demo/baumdienst/workshop")).json();
   for (const theme of ["light", "dark"]) for (const [width, height] of [[1440, 900], [390, 844], [320, 700], [740, 360]]) {
@@ -118,17 +118,32 @@ test("compact inventory and Day/Night offices preserve touch targets, private vi
     const cards = page.getByTestId("inventory-asset-card"); expect(await cards.count()).toBeGreaterThanOrEqual(2);
     const allCards = page.locator('[data-testid="inventory-asset-card"], [data-testid="fleet-asset-card"]');
     await expect(allCards).toHaveCount(before.state.assets.length);
+    await expect.poll(async () => Math.abs((await allCards.nth(0).boundingBox())!.y - (await allCards.nth(1).boundingBox())!.y)).toBeLessThan(2);
     const a = (await allCards.nth(0).boundingBox())!, b = (await allCards.nth(1).boundingBox())!;
     expect(a.width).toBeLessThanOrEqual(221); expect(Math.abs(a.y - b.y)).toBeLessThan(2);
     expect((await cards.nth(0).boundingBox())!.width).toBeLessThanOrEqual(221);
     await cards.nth(0).getByRole("button", { name: "Details öffnen", exact: true }).click(); await expect(page.getByRole("dialog")).toBeVisible(); await page.keyboard.press("Escape");
     await page.screenshot({ path: info.outputPath(`inventory-compact-${theme}-${width}.png`) });
     await page.goto("/demo/offices"); await expect(page.getByTestId("office-reception-scene")).toBeVisible();
-    const nav = page.getByRole("navigation", { name: "Demo", exact: true }); await expect(nav.getByRole("link", { name: "Büros", exact: true })).toHaveCount(1);
-    const root = page.locator('[data-baum-studio="forest-crystal-v1"]'); expect(await root.evaluate(el => getComputedStyle(el).backgroundImage)).toContain(`office-reception-${theme === "light" ? "day" : "night"}.webp`);
+    await expect(page.getByRole("navigation", { name: "Demo", exact: true })).toHaveCount(0);
+    const reception = page.getByTestId("office-reception-scene");
+    expect(await reception.locator("[aria-hidden=true]").first().evaluate(el => getComputedStyle(el).backgroundImage)).toContain(`office-reception-${theme === "light" ? "day" : "night"}.webp`);
+    await expect(page.locator("[data-office-door]")).toHaveCount(4);
+    await page.getByRole("button", { name: "Büroeinstellungen", exact: true }).click();
     const select = page.getByLabel("Fiktive Rolle ausprobieren", { exact: true }); await select.selectOption("finance"); await expect(select).toHaveValue("finance");
-    await page.getByRole("link", { name: /Mein Büro/ }).click(); await expect(page.getByRole("button", { name: "Personal & Stunden", exact: true })).toBeVisible();
+    await expect(page.getByRole("dialog").getByRole("link", { name: "by RediON", exact: true })).toHaveAttribute("href", "https://www.redioncekrezi.de/");
+    expect(await page.getByTestId("baumdienst-demo-footer").evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+    await page.keyboard.press("Escape");
+    await page.getByRole("link", { name: /Mein Büro/ }).click();
+    await expect(page.locator("[data-office-object]")).toHaveCount(6);
+    await expect(page.getByTestId("baumdienst-demo-footer")).toHaveCount(0);
+    const room = page.getByTestId("office-room-scene");
+    const portrait = width <= 700 && height > 480;
+    expect(await room.locator("[aria-hidden=true]").first().evaluate(el => getComputedStyle(el).backgroundImage)).toContain(`office-room-${portrait ? "portrait" : "wide"}-${theme === "light" ? "day" : "night"}.webp`);
+    await page.getByRole("button", { name: "Im Büro arbeiten", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Personal & Stunden", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Baustelle erstellen", exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
     if (width === 390 && theme === "light") {
       await page.getByRole("button", { name: "Aufgaben & Notizen", exact: true }).click();
       const dialog = page.getByRole("dialog");
@@ -143,18 +158,18 @@ test("compact inventory and Day/Night offices preserve touch targets, private vi
       await expect(page.getByRole("dialog").getByRole("button", { name: "Assistent fragen", exact: true })).toBeDisabled();
       await page.keyboard.press("Escape");
     }
-    const actions = await page.locator("[data-office-action]").evaluateAll(es => es.map(e => ({ w: e.getBoundingClientRect().width, h: e.getBoundingClientRect().height }))); expect(actions.every(a => a.w >= 44 && a.h >= 44)).toBe(true);
-    expect(await root.evaluate(el => getComputedStyle(el).backgroundImage)).toContain(`control-office-${theme === "light" ? "day" : "night"}.webp`);
-    const main = page.getByTestId("demo-workspace"); expect(await main.evaluate(el => ({ fits: el.scrollWidth <= el.clientWidth + 1, outer: document.documentElement.scrollHeight <= innerHeight + 1 }))).toEqual({ fits: true, outer: true });
-    await main.evaluate(el => { el.scrollTop = el.scrollHeight; }); await expect(page.getByRole("link", { name: "by RediON", exact: true })).toBeInViewport();
-    expect(await page.getByTestId("baumdienst-demo-footer").evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+    const actions = await page.locator("[data-office-object]").evaluateAll(es => es.map(e => ({ w: e.getBoundingClientRect().width, h: e.getBoundingClientRect().height, top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom,left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right })));
+    expect(actions.every(a => a.w >= 44 && a.h >= 44 && a.top >= 0 && a.bottom <= height + 1 && a.left >= 0 && a.right <= width + 1)).toBe(true);
+    const main = page.getByTestId("demo-workspace");
+    expect(await main.evaluate(el => ({ fits: el.scrollWidth <= el.clientWidth + 1, noScroll:el.scrollHeight <= el.clientHeight + 1, outer: document.documentElement.scrollHeight <= innerHeight + 1 }))).toEqual({ fits: true, noScroll:true, outer: true });
     await page.screenshot({ path: info.outputPath(`office-finance-${theme}-${width}.png`) });
     if (width === 390 && theme === "light") {
       await page.addStyleTag({ content: "html{font-size:200% !important}" });
-      expect(await main.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
-      await main.evaluate(el => { el.scrollTop = el.scrollHeight; });
-      await expect(page.getByRole("link", { name: "by RediON", exact: true })).toBeInViewport();
+      expect(await main.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+      await page.getByRole("button", { name: "Im Büro arbeiten", exact: true }).click();
+      await expect(page.getByRole("button", { name: "Personal & Stunden", exact: true })).toBeVisible();
       await page.screenshot({ path: info.outputPath("office-finance-text-200.png") });
+      await page.keyboard.press("Escape");
     }
     await page.goto("/demo/offices/manager"); await expect(page.getByRole("button", { name: "Ordner & Archiv", exact: true })).toHaveCount(0); await expect(page.getByText("Zu Besuch", { exact: true })).toBeVisible();
   }
@@ -162,4 +177,27 @@ test("compact inventory and Day/Night offices preserve touch targets, private vi
   await expect(page.getByTestId("demo-workspace")).toContainText("20 Textversuche");
   await expect(page.getByTestId("demo-workspace")).toContainText("store:false");
   expect(errors).toEqual([]); const after = await (await request.get("/api/demo/baumdienst/workshop")).json(); expect(after.state).toEqual(before.state); expect(after.revision).toBe(before.revision);
+});
+
+
+test("a rejected persona change stays visible and visiting another room never reveals private controls", async ({ page, context }, info) => {
+  const origin = String(info.project.use.baseURL);
+  await role(context.request, origin, "manager");
+  await page.goto("/demo/offices/manager");
+  await page.getByRole("button", { name: "Büroeinstellungen", exact:true }).click();
+  await context.route("**/api/demo/baumdienst/offices/actor", r => r.fulfill({ status:403, contentType:"application/json", body:JSON.stringify({ error:"permission" }) }));
+  await page.getByLabel("Fiktive Rolle ausprobieren", { exact:true }).selectOption("finance");
+  await expect(page.getByRole("dialog").getByRole("alert")).toBeVisible();
+  await expect(page.getByLabel("Fiktive Rolle ausprobieren", { exact:true })).toHaveValue("manager");
+  await context.unroute("**/api/demo/baumdienst/offices/actor");
+  await page.getByLabel("Fiktive Rolle ausprobieren", { exact:true }).selectOption("finance");
+  await expect(page.getByLabel("Fiktive Rolle ausprobieren", { exact:true })).toHaveValue("finance");
+  await page.keyboard.press("Escape");
+  await page.getByRole("link", { name:"Mein Büro", exact:true }).click();
+  await expect(page.getByRole("heading", { name:"Anna Schneider", exact:true })).toBeVisible();
+  await expect(page.locator("[data-office-object]")).toHaveCount(6);
+  await page.goto("/demo/offices/manager?tab=archive");
+  await expect(page.getByRole("button", { name:"Zu Besuch", exact:true })).toBeVisible();
+  await expect(page.locator("[data-office-object]")).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });

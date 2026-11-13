@@ -1,6 +1,43 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-## AKTUALE — 13.11.2026 / Inventari kompakt dhe zyrat e Musterfirma-s
+## AKTUALE — 13.11.2026 / Zyrat si ambient 2.5D në një ekran
+
+Vetëm Musterfirma BaumdienstFlow. Referenca e pronarit është zyra 2.5D e AL Steel; burimi më i ri ffcfc3f u lexua vetëm për modelin e ndërveprimit, pa ndryshuar checkout-in aktiv të pilotit, të dhënat ose konfigurimin e tij. Ambienti i Baumdienst ruan lisin, drurin, gjelbërimin, identitetin fiktiv dhe materialet crystal të veta. Katër figura të reja japin të njëjtat mobilie Day/Night në kompozim desktop dhe kompozim vertikal telefoni. Të pesë rolet ndajnë këtë ambient të qëndrueshëm; emri, funksioni, të drejtat dhe të dhënat personalizohen nga roli, jo nga llogari ose inventar i dytë.
+
+### Veprimet janë pjesë e ambientit
+
+| Objekti | Veprimi ekzistues |
+| --- | --- |
+| Kalendari në mur | Plani ditor /demo/plan; data reale në Europe/Berlin |
+| Blloku i detyrave | Detyrat/shënimet private të rolit, statuset dhe arkivimi |
+| Monitori | Asistenti i atij roli, biseda e ruajtur dhe kufiri ekzistues |
+| Zarfi në tavolinë | Gjendja e emailit: ende pa lidhje inbox; nuk dërgon mesazhe |
+| Sirtari Dokumentet | Dosjet, origjinalet private/ndarja e shprehur dhe lidhjet me kantieret |
+| Sirtari Fletoret | Veprimet e lejuara të rolit: personel/orë, kantier, kërkesa dhe oferta/kalkulatori |
+
+Butoni i vogël Puno në zyrë është hyrje e drejtpërdrejtë te i njëjti grup veprimesh, që të mos varen nga gjetja e një objekti në pamje. Nuk hiqet asnjë funksion i versionit të parë. Receta e të drejtave, API-të, ruajtja baumdienst-offices:v1, UUID/revision/fingerprint, burimi kanonik i orëve, arkivi pa dublim dhe lidhjet e kantierit mbeten siç dokumentohen më poshtë. Nuk ndryshon schema, migration, dependency, provider, secret apo kuotë. Teksti AI mbetet20 kërkesa të shkurtra/ditë gjithsej dhe imazhet20/ditë veçmas. Nuk nevojitet gjenerim i ri nga çelësi i aplikacionit për këtë stilim.
+
+Recepsioni ripërdor çiftin ekzistues office-reception-{day,night}.webp. Emrat dhe funksionet vendosen mbi dyert fizike të xhamit; hyrja e recepsionistes është mbishkrim mbi tavolinën e pritjes. Logoja përdor kopertinën ekzistuese të firmës kur është e disponueshme, me SVG peme rezervë. Nuk sajohet prani online ose sensorë zyrash. Në telefon panorama lëviz horizontalisht me prekje/keyboard; fillimi vendoset pranë dyerve, jo në një skaj bosh. Cilësimet kanë edhe listën e plotë të pesë zyrave për hyrje të drejtpërdrejtë.
+
+### Layout dhe privatësia e pamjes
+
+Marker-at server data-office-scene=reception/room aktivizojnë vetëm rrugët e zyrave. Shell-i i zakonshëm i punonjësve/navigimit/flotës fshihet vetëm aty, padding hiqet dhe main zë viewport-in pa scroll vertikal. Kthimi Recepsioni/Workzone mbetet sipër. Modulet e tjera ruajnë header-in, scroll-in dhe footer-in ekzistues. Në këtë sipërfaqe native, rreshti ligjor dhe një by RediON janë vetëm në fundin e dialogut të cilësimeve; nuk ka footer të ngjitur ose vend të rezervuar në skenë.
+
+Objektet dhe fotografia ndajnë të njëjtin plan koordinatash: desktop1672×941, telefon992×1586. CSS cover ruan aspektin dhe hitbox-et me min44px; sirtarët dhe zarfi kufizohen brenda ekranit të ngushtë. Për ekran horizontal të shkurtër kalendari tregon datën kompakte dhe objektet ripozicionohen pa mbivendosje. Dialogët e punës mbeten me scroll të tyre kur përmbajtja është e gjatë; skena pas tyre nuk lëviz. Theme Light/Night dhe gjuha përdorin kontrollet ekzistuese, pa store të ri. Ky ndryshim nuk zbaton ende Auto/theme profile sync.
+
+Vizita në zyrën e tjetrit tregon ambientin/emrin dhe hyrjen te zyra vetjake, pa objekte private ose dialog arkivi. Kushti own kontrollon edhe actor===room gjatë navigimit, për të mos shfaqur përkohësisht kontrolle nga snapshot-i i dhomës së kaluar. Ndërrimi i rolit pret konfirmimin e serverit; dështimi shfaqet dhe nuk raportohet si ndërrim i kryer. Rrugët dhe API-të ruajnë guard-in requireWorkshopDemo/kompaninë fiktive. Demoja publike mbetet për të dhëna fiktive; zgjedhësi i roleve nuk është autentikim për firma reale.
+
+Të gjitha objektet janë Link/Button realë me emra të lexueshëm, SVG, tastierë, focus të dukshëm dhe target minimal44px. Letra ka ngjyra të lexueshme në të dy temat; monitori mbetet ekran i errët, identiteti Light përdor bojë të errët. Reduced motion, reduced transparency, forced colors dhe print kanë fallback; figura dekorative nuk pretendon të dhëna pune. Kalendari ka numra me kuptim real; nuk shtohen numërime dekorative.
+
+### Burimi i figurave dhe verifikimi
+
+Saktësisht katër thirrje built-in image_gen: wide Day, edit Night, portrait Day, edit Night. Modeli i saktë NOT_EXPOSED. Origjinalet: outputs/imagegen/office-room-{wide,portrait}-{day,night}.png; promptet outputs/baum-office25-prompts.json dhe manifesti outputs/baum-office25-assets.json. Sharp0.35.5 ekzistues bën vetëm transkodimin WebP quality85/effort6. Skedarët e rinj në public/baumdienst-studio-v1: wide-day185718byte, wide-night143518, portrait-day147388, portrait-night113614. SVG-ja botanike mbi mur ripërdor /api/demo/baumdienst/art/tree-oak. Asnjë foto e ngarkuar apo origjinal dokumenti nuk zëvendësohet.
+
+Verifikimi dhe publikimi: PENDING për këtë revision deri në përfundimin e gate-ve dhe readback-ut online. Baza e krahasimit është source902df8b; demoja para ndryshimit është077b690 / deployment f70ebab6-e7ba-4d5e-bba6-de5d6f56ace1. Testet në mini-PC përdorin vetëm fixture-in loopback të këtij job-i, pa çelësa AI dhe pa prekur shërbime aktive. Pamja para/pas kontrollohet në desktop,390/320px dhe740×360, dy tema dhe zmadhim teksti; kjo nuk certifikon telefon fizik, NFC/kamerë ose tastierë reale telefoni.
+
+Prezantimi/portofoli dhe public showcase mbeten OWNER_HOLD/PENDING_PUBLICATION sipas kërkesës së pronarit. Nuk rritet readiness dhe nuk pretendohet PRESENTATION_PASS. Ky është hap i UI-së së zyrave, jo publikim në portofol.
+
+## HISTORIKE — 13.11.2026 / Inventari kompakt dhe zyrat e Musterfirma-s
 
 Zbatimi i parë i zyrave është vetëm për BaumdienstFlow Musterfirma. Inventari përdor të njëjtin komponent kompakt si Flota: foto 4:3 me objektin e plotë, gjerësi desktop 196–220 px dhe dy kolona në telefon. Lista mbetet një inventar i vetëm me mjete dhe vegla, jo dy regjistra. Emri, identiteti, mbajtësi/vendi, fotoja dhe hyrja 44 px te detajet ruhen. Targat mbeten identiteti kryesor i mjeteve; barkodi është shtesë opsionale. Marrja, konfirmimet, transferimet, defektet dhe historiku i Werkstatt-it nuk ndryshojnë.
 

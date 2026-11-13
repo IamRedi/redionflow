@@ -7,11 +7,12 @@ import styles from "./demo-workspace.module.css";
 function ScrollWorkspace({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   const ref = useRef<HTMLElement>(null);
   const pathname = usePathname();
+  const officeScene = pathname === "/demo/offices" || pathname.startsWith("/demo/offices/");
   const query = useSearchParams().toString();
   const location = `${pathname}?${query}`;
   // Deliberate navigation starts at the top; small saves/refreshes keep position.
   useEffect(() => { ref.current?.scrollTo({ top: 0 }); }, [location]);
-  return <main ref={ref} className={styles.workspace} tabIndex={0} data-testid="demo-workspace"><div className="flex min-h-full min-w-0 flex-col"><div className="min-w-0 flex-1 px-5 pb-6 pt-4 lg:pr-20 print:max-w-none print:px-0 print:py-0">{children}</div>{footer}</div></main>;
+  return <main ref={ref} className={`${styles.workspace} ${officeScene ? styles.officeWorkspace : ""}`} tabIndex={0} data-testid="demo-workspace">{officeScene ? <div className={styles.officeContent}>{children}</div> : <div className="flex min-h-full min-w-0 flex-col"><div className="min-w-0 flex-1 px-5 pb-6 pt-4 lg:pr-20 print:max-w-none print:px-0 print:py-0">{children}</div>{footer}</div>}</main>;
 }
 export function DemoWorkspace({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   // Demo routes already render dynamically (cookies/company data). Rendering the

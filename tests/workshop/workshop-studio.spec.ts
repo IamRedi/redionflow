@@ -25,7 +25,9 @@ test("botanical studio keeps six/two columns, characteristic leaves, seasons and
     expect(await atlas.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
     await atlas.getByRole("button",{name:"Schließen",exact:true}).click();await expect(magnifier).toBeFocused();await page.getByRole("dialog").getByRole("button",{name:"Schließen",exact:true}).click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   }
-  const after=await(await request.get("/api/demo/baumdienst/workshop")).json() as WorkshopSnapshot;expect(after.state.custody.treeEvents).toEqual(s.state.custody.treeEvents);
+  // The read may reuse a keep-alive socket closed during the visual tour.
+  // Retry one ECONNRESET only; HTTP failures and the unchanged-history assertion still fail.
+  const after=await(await request.get("/api/demo/baumdienst/workshop",{maxRetries:1})).json() as WorkshopSnapshot;expect(after.state.custody.treeEvents).toEqual(s.state.custody.treeEvents);
 });
 test("generated raster persists across devices and a real uploaded photo has priority",async({page,request,browser},info)=>{
   const s=await(await request.get("/api/demo/baumdienst/workshop")).json() as WorkshopSnapshot,asset=s.state.assets.find(a=>a.id==="blower")!,id=randomUUID();

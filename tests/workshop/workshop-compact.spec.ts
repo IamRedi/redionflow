@@ -21,6 +21,8 @@ test("compact fleet cards bind HU/SP/UVV to existing machine dates; office and m
       await page.setViewportSize({ width, height }); await page.goto("/demo/workshop?tab=fleet");
       await expect(page.getByRole("button", { name: "Gerät erfassen", exact: true })).toBeEnabled();
       const cards = page.getByTestId("fleet-asset-card"); await expect(cards).toHaveCount(4);
+      // Cards enter with a short transform; measure the completed row, not a staggered frame.
+      await expect.poll(async () => Math.abs((await cards.nth(0).boundingBox())!.y - (await cards.nth(1).boundingBox())!.y)).toBeLessThan(2);
       const a = (await cards.nth(0).boundingBox())!, b = (await cards.nth(1).boundingBox())!;
       expect(Math.abs(a.y - b.y)).toBeLessThan(2);
       expect(a.width).toBeLessThanOrEqual(221);
