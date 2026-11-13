@@ -79,7 +79,7 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
 }
 /* A route-specific environment, with the same crystal material family. The
    server marker survives loading/errors and also scopes the existing portals. */
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) {
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
   --baum-glass: linear-gradient(125deg, #effcff8f, #cee6ec66);
   --foreground: 164 36% 6%;
   --card-foreground: 164 36% 6%;
@@ -91,7 +91,7 @@ body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environmen
   --baum-action: linear-gradient(145deg, #dcfff080, #94cebc59);
   --baum-action-base: #c9e9d14d;
 }
-html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) {
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
   --baum-glass: linear-gradient(125deg, #1e3b3b9e, #0e252eb8);
   --muted-foreground: 132 20% 85%;
   --baum-overlay: linear-gradient(125deg, #273a30f5, #182d27f5);
@@ -123,39 +123,39 @@ body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="f
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="fleet"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/fleet-yard-night.webp');
 }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="control"], [data-baum-environment="monitor"]))) {
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
   --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/control-office-day.webp');
 }
-html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="control"], [data-baum-environment="monitor"]))) {
+html.dark body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/control-office-night.webp');
 }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 /* Transparent chrome floats over the full scrolling page. The shared shell
    reserves initial header clearance without clipping content at its lower edge. */
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) > header {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header {
   background: transparent;
   border-bottom: 0;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) > header > div { padding-top: 0; }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baum-team-strip"] span[title] { color: hsl(var(--foreground)); font-weight: 600; text-shadow: 0 1px 1px #ffffffb3; }
-html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baum-team-strip"] span[title] { text-shadow: 0 1px 1px #081b23; }
-[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]) [data-wood-visual="empty"] {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header > div { padding-top: 0; }
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baum-demo-topbar"] { padding-top: 12px; }
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baum-team-strip"] span[title] { color: hsl(var(--foreground)); font-weight: 600; text-shadow: 0 1px 1px #ffffffb3; }
+html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baum-team-strip"] span[title] { text-shadow: 0 1px 1px #081b23; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) [data-wood-visual="empty"] {
   background: transparent;
   color: hsl(var(--primary));
 }
-[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]) [data-wood-visual="empty"] > div { color: inherit; }
-[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]) nav { scrollbar-width: thin; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) [data-wood-visual="empty"] > div { color: inherit; }
+[data-baum-studio="forest-crystal-v1"] :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) nav { scrollbar-width: thin; }
 /* The environment is the surface: legal text and the author credit have no panel.
    Keep their native links, focus rings and 44px hit areas at the content end. */
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baumdienst-demo-footer"],
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baumdienst-demo-footer"] footer {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"],
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"] footer {
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -163,19 +163,19 @@ html.dark [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-envir
   backdrop-filter: none;
   color: hsl(var(--foreground));
 }
-[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-control="button"] { min-width: 44px; gap: 6px; padding-inline: 12px; }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
+[data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"] footer { padding-block: 0; --credit-by: hsl(var(--foreground)); }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) [data-ui-control="button"] { min-width: 44px; gap: 6px; padding-inline: 12px; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea) {
   background: var(--baum-glass);
   -webkit-backdrop-filter: blur(var(--baum-blur));
   backdrop-filter: blur(var(--baum-blur));
 }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) label > svg { z-index: 1; }
-body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) label > svg { z-index: 1; }
+body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-testid="wood-workspace"], [data-testid="workshop-demo"], [role="dialog"]) input::placeholder { color: hsl(var(--muted-foreground)); opacity: 1; }
 /* Light keeps the accepted ice film; stronger ink carries the hierarchy.
    Explicit type weights and semantic status colors remain functional variants. */
-html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) :is([data-baum-environment], [role="dialog"]) { font-weight: 500; }
-html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) [data-testid="baumdienst-demo-footer"] nav { font-weight: 500; }
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) :is([data-baum-environment], [role="dialog"]) { font-weight: 500; }
+html:not(.dark) body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) [data-testid="baumdienst-demo-footer"] nav { font-weight: 500; }
 /* Decorative, locally served artwork: no extra UI, state, hit area or image
    generation on load. The same composition changes with the existing theme. */
 [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before {
@@ -261,7 +261,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is(.baum-nav-icon,[data-ui-con
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a,button) { min-height: 44px; }
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] :is(a[href^="/demo/baustellen/"],button) { min-width: 44px; }
 body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-site-card"] .text-green-600 { color: hsl(var(--primary)); }
-body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]) :is(button,a):is([aria-current="page"],[aria-pressed="true"]) {
+body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]) :is(button,a):is([aria-current="page"],[aria-pressed="true"]) {
   color: hsl(var(--primary));
   border-color: hsl(var(--primary) / .65);
   box-shadow: inset 0 0 0 1px hsl(var(--primary) / .18), inset 0 1px 0 var(--baum-edge);
@@ -272,15 +272,15 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 /* Opaque fallbacks are accessibility variants of the same identity. */
 @supports not (backdrop-filter: blur(2px)) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); }
-  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon) { background: hsl(var(--card)); }
 }
 @media (prefers-reduced-transparency: reduce) {
   body:has([data-baum-studio="forest-crystal-v1"]) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-blur: 0px; --baum-overlay-blur: 0px; }
-  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
+  html:root body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) { --baum-glass: hsl(var(--card)); --baum-overlay: hsl(var(--card)); --baum-action: linear-gradient(hsl(var(--primary)),hsl(var(--primary))); --baum-action-base: hsl(var(--primary)); --baum-action-ink: hsl(var(--primary-foreground)); }
   [data-baum-studio="forest-crystal-v1"] { background: hsl(var(--background)); }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
-  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) > header { background: hsl(var(--background)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header { background: hsl(var(--background)); backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-testid="muster-site-card"],.baum-nav-icon,section[class~="bg-card"],article[class~="bg-card"],div[class~="bg-card"],details[class~="bg-card"],a[class~="bg-card"]) {
     background: hsl(var(--card));
     -webkit-backdrop-filter: none;
@@ -290,7 +290,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 @media (forced-colors:active) {
   [data-baum-studio="forest-crystal-v1"] { background: Canvas; }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
-  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) > header { background: Canvas; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: CanvasText; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header { background: Canvas; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: CanvasText; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[role="dialog"],[data-ui-control="button"],.baum-nav-icon,[data-testid="muster-site-card"],:where(section,article,div,details,a)[class~="border"][class~="bg-card"],:where(section,article,div)[class~="border"][class~="bg-card/95"]) {
     background: Canvas;
     color: CanvasText;
@@ -303,7 +303,7 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 @media print {
   [data-baum-studio="forest-crystal-v1"] { background: white; }
   [data-baum-studio="forest-crystal-v1"] [data-testid="workzone-canvas"]::before { display: none; }
-  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"]))) > header { background: white; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-baum-studio="forest-crystal-v1"]:has(:where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) > header { background: white; backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:has([data-baum-studio="forest-crystal-v1"]) :is([data-ui-surface="card"],[data-testid="muster-site-card"],[role="dialog"]) { background: white; color: black; box-shadow: none; backdrop-filter: none; }
 }
 
@@ -315,3 +315,8 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is([data-baum-environment="woo
 [data-baum-environment="monitor"] :where([data-ui-surface="card"], [data-baum-dashboard="muster"] > div) { min-width: 0; }
 @media (forced-colors: active) { [data-baum-environment="monitor"] [data-baum-dashboard="muster"] > div:first-child { background: Canvas; box-shadow: none; backdrop-filter: none; } }
 @media print { [data-baum-environment="monitor"] [data-baum-dashboard="muster"] > div:first-child { background: white; box-shadow: none; backdrop-filter: none; } }
+
+/* Reception uses the same forest ice material; room desks reuse the planning office. */
+body:has([data-baum-studio="forest-crystal-v1"] [data-baum-environment="reception"]) { --baum-page-backdrop: linear-gradient(120deg,#f6f5e51a,#e2f0e30d 48%,#f3ebdc26),url('/baumdienst-studio-v1/office-reception-day.webp'); }
+html.dark body:has([data-baum-studio="forest-crystal-v1"] [data-baum-environment="reception"]) { --baum-page-backdrop: linear-gradient(120deg,#101d241a,#10291f1a 48%,#0c1b2926),url('/baumdienst-studio-v1/office-reception-night.webp'); }
+@media(max-width:600px) { [data-baum-studio="forest-crystal-v1"]:has([data-baum-environment="reception"]) { background-position:62% center; } }

@@ -1,6 +1,6 @@
 "use client";
 import { assetIdentity, assetPlate } from "@/lib/workshop/asset-identity";
-import { ArrowRight, Clock3, MapPin, UserRound } from "lucide-react";
+import { ArrowRight, Barcode, Clock3, MapPin, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { workshopCopy } from "@/lib/workshop/copy";
@@ -15,15 +15,15 @@ import styles from "./workshop.module.css";
 export function InventoryAssetCard({ asset, now, onOpen, compact = false }: { asset: WorkshopAsset; now: string; onOpen: () => void; compact?: boolean }) {
   const { currentLang } = useLanguage(), c = workshopCopy(currentLang), { state } = useWorkshopDemo();
   const value = availability(state, asset, now), request = state.custody.handovers.find(h => h.assetId === asset.id && h.status === "pending");
-  if (compact && asset.kind === "fleet") {
+  if (compact) {
     const placement = [asset.holder, asset.placement?.siteName].filter(Boolean).join(" · ") || asset.location;
-    return <article className={`${styles.fleetCard} rounded-2xl border bg-card`} data-testid="fleet-asset-card">
-      <DemoPhoto kind="asset" target={asset.id} alt={`${asset.name} · ${assetIdentity(asset)}`} className={styles.fleetPhoto}><WorkshopAssetArt id={asset.id} name={asset.name} animate={Boolean(activeJob(state, asset.id))} className="h-full w-full" /></DemoPhoto>
+    return <article className={`${styles.fleetCard} rounded-2xl border bg-card`} data-testid={asset.kind === "fleet" ? "fleet-asset-card" : "inventory-asset-card"}>
+      <DemoPhoto kind="asset" target={asset.id} alt={`${asset.name} · ${assetIdentity(asset)}`} className={styles.fleetPhoto}><WorkshopAssetArt id={asset.id} name={asset.name} category={asset.details?.category} animate={Boolean(activeJob(state, asset.id))} className="h-full w-full" /></DemoPhoto>
       <div className={styles.fleetBody}>
         <div className={styles.fleetStatus}><Status tone={value === "available" ? "green" : value === "issued" ? "blue" : "amber"}>{c[value === "inspection" ? "inspectionDue" : value]}</Status>{request && <span title={c.pending}><Clock3 className="size-3" /><span className="sr-only">{c.pending}</span></span>}</div>
         <h2 className={styles.fleetName}>{asset.name}</h2><p className={styles.fleetPlate}>{assetIdentity(asset)}</p>
         <p className={styles.fleetPlacement} title={placement}>{asset.holder ? <UserRound /> : <MapPin />}<span>{placement}</span></p>
-        <div className={styles.fleetBottom}><FleetInspectionLights plate={assetPlate(asset)} now={now} /><Button variant="ghost" className="size-11 shrink-0 rounded-full p-0" aria-label={c.details} title={`${c.details}: ${asset.name}`} onClick={onOpen}><ArrowRight className="size-4" /></Button></div>
+        <div className={styles.fleetBottom}>{asset.kind === "fleet" ? <FleetInspectionLights plate={assetPlate(asset)} now={now} /> : <Barcode className="size-4 text-muted-foreground" aria-hidden="true" />}<Button variant="ghost" className="size-11 shrink-0 rounded-full p-0" aria-label={c.details} title={`${c.details}: ${asset.name}`} onClick={onOpen}><ArrowRight className="size-4" /></Button></div>
       </div>
     </article>;
   }

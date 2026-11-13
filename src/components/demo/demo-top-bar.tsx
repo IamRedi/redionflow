@@ -20,6 +20,7 @@ import { DemoDashboardLaunch } from "./workshop/demo-dashboard-launch";
 import { DemoBrand } from "./workshop/demo-brand";
 import { DemoNavigationLink } from "./workshop/demo-navigation-link";
 import { woodCopy } from "@/lib/workshop/wood-copy";
+import { DemoOfficeEntry } from "./offices/office-entry";
 
 /** Compact round navigation reuses the one scoped forest crystal material. */
 const navIcon="baum-nav-icon inline-flex size-11 shrink-0 items-center justify-center rounded-full text-foreground/80 transition focus-visible:ring-2 focus-visible:ring-ring";
@@ -50,6 +51,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
         <nav data-demo-navigation aria-label="Demo" className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5 [&>*]:shrink-0">
           <DemoNavigationLink href="/demo/workzone" label={workzoneName} className={navIcon}><Home className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink href="/demo/control" label={n.panel} className={navIcon}><Settings2 className="size-4" /></DemoNavigationLink>
+          <DemoOfficeEntry className={navIcon}/>
           <DemoDashboardLaunch href="/demo/tv?view=dashboard" label={n.tv} className={navIcon}><Monitor className="size-4" /></DemoDashboardLaunch>
           <DemoNavigationLink href="/demo/wood" label={wood.title} className={navIcon}><TreePine className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink href="/demo/workshop" label={c.title} className={navIcon}><Wrench className="size-4" /></DemoNavigationLink>

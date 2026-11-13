@@ -10,6 +10,7 @@ import { WorkshopOverview } from "@/components/demo/workshop/workshop-overview";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoSiteKey } from "@/lib/workshop/shared-store";
 import { WoodOverview } from "@/components/demo/workshop/wood-overview";
+import { restoreOfficeSites } from "@/lib/workshop/offices/restore-sites";
 
 const workzoneName="Workzone";
 
@@ -30,6 +31,7 @@ export async function DemoWorkzoneContent({ monitor = false }: { monitor?: boole
   const currentLang = await resolveRequestLanguage();
   const mode = await getCompanyMode();
   const workshopEnabled = isBaumdienstWorkshopDemoEnabled(mode);
+  if (workshopEnabled) await restoreOfficeSites(company.id);
   const [baustellen, coneMoves] = await Promise.all([
     prisma.baustelle.findMany({
       where: { companyProfileId: company.id },

@@ -1,0 +1,29 @@
+.workspace { min-width:0; display:grid; gap:16px; }
+.heading { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:12px 14px; border:1px solid hsl(var(--border)); border-radius:18px; background:var(--baum-glass); box-shadow:var(--baum-shadow); backdrop-filter:blur(var(--baum-blur)); }
+.nav { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:8px 12px; border:1px solid hsl(var(--border)); border-radius:16px; background:var(--baum-glass); font-size:13px; font-weight:600; }
+.persona { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+.reception { position:relative; min-height:clamp(410px,58vh,660px); }
+.wallBrand { position:absolute; top:8%; left:10%; width:100px; filter:drop-shadow(0 3px 12px #15372a26); }
+.wallBrand img { width:100px; height:100px; object-fit:contain; }
+.doors { position:absolute; top:34%; left:36%; right:2%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; align-items:start; }
+.door { min-width:0; min-height:112px; padding:12px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; border:1px solid var(--baum-edge); border-radius:13px; background:var(--baum-glass); backdrop-filter:blur(9px); text-align:center; box-shadow:0 3px 15px #103b2b17; }
+.door strong { font-size:13px; line-height:1.35; overflow-wrap:anywhere; }
+.door span { font-size:11px; color:hsl(var(--muted-foreground)); overflow-wrap:anywhere; }
+.receptionDesk { position:absolute; left:8%; bottom:17%; display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:9px 15px; border:1px solid var(--baum-edge); border-radius:14px; background:var(--baum-glass); backdrop-filter:blur(9px); font-weight:600; font-size:13px; }
+.room { position:relative; min-height:clamp(430px,58vh,720px); display:flex; flex-direction:column; justify-content:space-between; gap:32px; padding:12px 0; }
+.deskIdentity { align-self:flex-start; max-width:420px; padding:12px 16px; border-radius:16px; background:var(--baum-glass); border:1px solid var(--baum-edge); backdrop-filter:blur(10px); }
+.deskIdentity span { color:hsl(var(--primary)); font-size:11px; font-weight:650; text-transform:uppercase; letter-spacing:.1em; }
+.deskIdentity h2 { margin-top:4px; font-size:23px; font-weight:650; }
+.deskIdentity p { margin-top:4px; font-size:13px; }
+.objects { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-self:flex-end; width:min(100%,780px); gap:10px; padding-top:100px; }
+.object { min-width:0; min-height:58px; display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--baum-glass); border:1px solid hsl(var(--border)); border-radius:15px; box-shadow:var(--baum-shadow); backdrop-filter:blur(var(--baum-blur)); font-size:13px; font-weight:600; text-align:left; }
+.object span { min-width:0; flex:1; overflow-wrap:anywhere; }
+.object svg { flex-shrink:0; }
+.object svg:first-child { color:hsl(var(--primary)); }
+.nav:focus-visible,.door:focus-visible,.receptionDesk:focus-visible,.object:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:3px; }
+@media (hover:hover) { .nav:hover,.door:hover,.receptionDesk:hover,.object:hover { border-color:hsl(var(--primary)/.6); } }
+@media (max-width:900px) { .doors { left:29%; gap:8px; } .objects { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:600px) { .heading { gap:10px; padding:12px; } .heading h1 { font-size:21px; } .persona { justify-content:flex-start; } .reception { min-height:540px; } .wallBrand { top:6%; left:4%; width:76px; } .wallBrand img { width:76px; height:76px; } .doors { position:relative; top:auto; left:auto; right:auto; grid-template-columns:repeat(2,minmax(0,1fr)); padding-top:155px; gap:10px; } .door { min-height:119px; } .receptionDesk { left:0; right:0; bottom:0; } .room { min-height:500px; } .objects { padding-top:140px; } .object { min-height:62px; padding:9px; font-size:12px; gap:7px; } }
+@media (max-height:480px) and (min-width:601px) { .reception { min-height:340px; } .room { min-height:300px; } .objects { padding-top:30px; } }
+@media (prefers-reduced-transparency:reduce), (forced-colors:active) { .heading,.nav,.door,.receptionDesk,.deskIdentity,.object { background:hsl(var(--card)); backdrop-filter:none; box-shadow:none; } }
+@media print { .heading,.nav,.door,.receptionDesk,.deskIdentity,.object { background:white; color:black; box-shadow:none; backdrop-filter:none; } }
