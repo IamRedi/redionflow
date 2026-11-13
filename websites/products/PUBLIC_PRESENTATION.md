@@ -1,5 +1,25 @@
 # Public presentation maintenance
 
+## Personal task journal · 13 November 2026 · candidate copy
+
+App PR191 is published at `3b327f80132328ff3a69a2d689b3c49bb28fac04`.
+Only the office task paragraph changes in SQ/EN/DE/IT and its five generated
+BauFlow HTML editions. It describes personal cards and opt-in reminders, with
+explicit device/network conditions. Images, layouts, tokens, scripts, legal
+links, company sign-in and BaumdienstFlow remain byte-identical after LF
+normalization. Existing captures and their displayed review date remain the
+accepted 12 November media; no new screenshot is claimed by this text update.
+
+Generator, syntax, unchanged asset/link structure and four source editions were
+checked locally. Desktop/390px SQ/EN/DE have browser render checks without
+horizontal overflow. Chrome auto-translated Italian to SQ; original Italian
+render is NOT_VERIFIED, while its source translation is checked. No browser
+preference was modified. The private local output holds exact evidence and
+before/after views. No customer data or private screenshot is included.
+Public copy is a companion candidate; merge/static publication and public
+readback await separate owner approval. The personal scheduled iPhone delivery
+check remains distinct from the already established bell self-test.
+
 The product websites are `https://www.baumdienstflow.de/` and `/bauflow/`, with four native `/about/{de,en,it,sq}.html` editions per product. Keep separate administrator, worker PIN and fictitious-data demo entries. The shared parent is `https://flow.redioncekrezi.de/`. Preserve forest/green BaumdienstFlow; BauFlow follows the owner-accepted warm stone, copper and clear crystal office/site identity, using Manrope and automatic/light/dark appearance. Public demos do not establish real GPS, invoice or hardware acceptance. AI and connected services depend on each company's configuration and authorization. These static websites are deployed separately; a website change must not push or deploy the Railway-connected app.
 
 After every app work session, assess this native information page and the affected first-page portfolio card/directory. A material accepted user-facing milestone updates the native description, status, languages, entry points and relevant genuine media in the same delivery cycle, alongside the public showcase README/About where affected. Internal work records a justified `NO_CONTENT_CHANGE` with the reviewed revision; an existing stale or missing page stays open. Reuse the existing project records and portfolio work plan rather than creating another registry or schedule.
