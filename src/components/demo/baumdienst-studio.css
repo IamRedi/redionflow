@@ -122,19 +122,19 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-envi
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/wood-factory-night.webp');
 }
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="repair"])) {
-  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/repair-workshop-day.webp');
+  --baum-page-backdrop: url('/baumdienst-studio-v1/repair-workshop-day.webp');
 }
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="repair"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/repair-workshop-night.webp');
 }
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="inventory"])) {
-  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/tool-warehouse-day.webp');
+  --baum-page-backdrop: url('/baumdienst-studio-v1/tool-warehouse-day.webp');
 }
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="inventory"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/tool-warehouse-night.webp');
 }
 body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="fleet"])) {
-  --baum-page-backdrop: linear-gradient(120deg, #f6f5e52b, #e2f0e31a 48%, #f3ebdc33), url('/baumdienst-studio-v1/fleet-yard-day.webp');
+  --baum-page-backdrop: url('/baumdienst-studio-v1/fleet-yard-day.webp');
 }
 html.dark body:has([data-baum-studio="forest-crystal-v1"] :where([data-baum-environment="fleet"])) {
   --baum-page-backdrop: linear-gradient(120deg, #101d242b, #10291f26 48%, #0c1b2938), url('/baumdienst-studio-v1/fleet-yard-night.webp');

@@ -24,5 +24,5 @@ export function DemoNavigationLink({ href, label, children, className, preserveW
   const target = new URLSearchParams(query);
   if (preserveWorkshopScope && pathname === "/demo/workshop") for (const key of ["asset", "site", "worker"]) { const value = params.get(key); if (value) target.set(key, value); }
   const scopedHref = target.size ? `${path}?${target}` : path;
-  return <Link ref={link} href={scopedHref} aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>{children}</Link>;
+  return <Link ref={link} href={scopedHref} transitionTypes={["baum-scene"]} aria-label={label} title={label} aria-current={active ? "page" : undefined} className={className}>{children}</Link>;
 }

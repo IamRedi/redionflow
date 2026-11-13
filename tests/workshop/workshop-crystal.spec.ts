@@ -13,10 +13,16 @@ test("one forest material spans the workspace, with reachable navigation and no 
   for (const theme of ["light", "dark"]) for (const width of [1440, 390]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
     await page.setViewportSize({ width, height: 900 });
-    for (const route of ["/demo/control", "/demo/wood", "/demo/workshop?tab=tools", "/demo/dashboard", "/demo/workzone"]) {
+    for (const route of ["/demo/control", "/demo/wood", "/demo/workshop?tab=tools", "/demo/workshop?tab=fleet", "/demo/workshop", "/demo/dashboard", "/demo/workzone"]) {
       await page.goto(route);
       const shell = page.locator('[data-baum-studio="forest-crystal-v1"]');
       await expect(shell).toBeVisible();
+      const environment = route === "/demo/workshop" ? "repair-workshop" : route.includes("tab=tools") ? "tool-warehouse" : route.includes("tab=fleet") ? "fleet-yard" : null;
+      if (environment) {
+        const background = await shell.evaluate(el => getComputedStyle(el).backgroundImage);
+        expect(background).toContain(`${environment}-${theme === "dark" ? "night" : "day"}.webp`);
+        if (theme === "light") expect(background).not.toContain("linear-gradient");
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const surface = shell.locator('main [data-ui-surface="card"],main :is(section,article,div,details,button)[class~="border"][class*="bg-card"],[data-testid="muster-site-card"]').first();
       await expect(surface).toBeVisible();

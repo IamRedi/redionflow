@@ -26,11 +26,11 @@ export function OfficeReception({ actor, logo, lang }: { actor?: OfficeRole; log
         <strong>BaumdienstFlow</strong><span>Musterfirma</span>
       </div>
       <nav aria-label={c.visitors} className={s.doors}>
-        {officeRoles.filter(r => r !== "reception").map((role, index) => <Link key={role} href={`/demo/offices/${role}`} className={`${s.door} ${s[`door${index}`]}`} data-office-door={role} aria-label={`${names[role]} ${officePeople[role]}`}>
+        {officeRoles.filter(r => r !== "reception").map((role, index) => <Link transitionTypes={["baum-scene"]} key={role} href={`/demo/offices/${role}`} className={`${s.door} ${s[`door${index}`]}`} data-office-door={role} aria-label={`${names[role]} ${officePeople[role]}`}>
           <span className={s.doorEtching}><strong>{officePeople[role]}</strong><small>{names[role]}</small>{actor === role && <span>{c.myOffice}</span>}</span>
         </Link>)}
       </nav>
-      <Link href="/demo/offices/reception" className={s.receptionDesk} aria-label={c.reception}><span>{c.reception}</span><small>{officePeople.reception}</small></Link>
+      <Link transitionTypes={["baum-scene"]} href="/demo/offices/reception" className={s.receptionDesk} aria-label={c.reception}><span>{c.reception}</span><small>{officePeople.reception}</small></Link>
     </div>
     <span className={s.panHint}><MoveHorizontal size={15} aria-hidden="true" />{c.swipe}</span>
   </div>;
@@ -51,7 +51,7 @@ export function OfficeRoom({ room, own, lang, open }: { room: OfficeRole; own: b
       <div className={s.wallIdentity}><span>BaumdienstFlow · Musterfirma</span><h1>{officePeople[room]}</h1><p>{names[room]}</p></div>
       <div className={s.artFrame} aria-hidden="true"><Image src="/api/demo/baumdienst/art/tree-oak" alt="" fill unoptimized sizes="240px" /></div>
       {own && <>
-        <Link href="/demo/plan" className={`${s.object} ${s.calendar}`} aria-label={c.plan} data-office-object="calendar"><CalendarPaper lang={lang} /></Link>
+        <Link transitionTypes={["baum-scene"]} href="/demo/plan" className={`${s.object} ${s.calendar}`} aria-label={c.plan} data-office-object="calendar"><CalendarPaper lang={lang} /></Link>
         <button type="button" className={`${s.object} ${s.taskBook}`} onClick={() => open("tasks")} aria-label={c.tasks} data-office-object="tasks" data-office-action="tasks"><span className={s.clip} aria-hidden="true" /><ClipboardCheck size={21} strokeWidth={1.3} aria-hidden="true" /><strong>{c.taskObject}</strong><span className={s.paperLines} aria-hidden="true" /></button>
         <button type="button" className={`${s.object} ${s.monitor}`} onClick={() => open("assistant")} aria-label={c.assistant} data-office-object="assistant" data-office-action="assistant"><MessageSquareText size={24} strokeWidth={1.3} aria-hidden="true" /><strong>{c.assistantObject}</strong><small>{c.assistantOpen}</small></button>
         <button type="button" className={`${s.object} ${s.envelope}`} onClick={() => open("email")} aria-label={c.email} data-office-object="mail"><Mail size={17} strokeWidth={1.3} aria-hidden="true" /><strong>{c.mailObject}</strong></button>

@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
+import { ViewTransition, type ReactNode } from "react";
 import type { Viewport } from "next";
 import { notFound } from "next/navigation";
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import "@/components/demo/baumdienst-studio.css";
 import "@/components/demo/workshop/workzone-scene.css";
+import "@/components/demo/scene-transitions.css";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
 import { DemoWorkspace } from "@/components/demo/demo-workspace";
 import { DemoHeaderOffset } from "@/components/demo/demo-header-offset";
@@ -74,7 +75,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   // Mirrors the real Workzone layout: theme background, dark green only in dark mode.
   const pageTone = mode === "baumdienst" && !workshopEnabled ? "dark:bg-[#10211a]" : "";
 
-  return (
+  const shell = (
     <div data-demo-shell={workshopEnabled ? "muster" : undefined} data-baum-studio={workshopEnabled ? "forest-crystal-v1" : undefined} className={`${workshopEnabled ? shellStyles.shell : "min-h-dvh overflow-x-hidden"} bg-background text-foreground ${pageTone}`}>
       <header className={workshopEnabled ? `${shellStyles.header} relative z-10 bg-transparent print:hidden` : `sticky top-0 z-10 bg-background/90 backdrop-blur print:hidden ${pageTone}`}>
         {workshopEnabled ? <DemoHeaderOffset /> : null}
@@ -109,4 +110,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
       </div>}
     </div>
   );
+  // Only deliberate Muster navigation/appearance changes animate. Refreshes,
+  // polling, saves and same-room panels keep the normal immediate behavior.
+  return workshopEnabled ? <ViewTransition default="none" update={{ "baum-scene": "baum-diffuse", "baum-theme": "baum-diffuse", default: "none" }}>{shell}</ViewTransition> : shell;
 }

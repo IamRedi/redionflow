@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Bot, BookOpenCheck, Home, LayoutDashboard, Monitor, Package, Settings2, UserRound, TreePine, Truck, Wrench } from "lucide-react";
-import { cookies } from "next/headers";
 
 import { AppBrand } from "@/components/branding/AppBrand";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -43,7 +42,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
   const kidraht = kidrahtDemoUrl(mode);
 
   if (mode === "baumdienst" && workshopEnabled) {
-    const c = workshopCopy(currentLang); const dark = (await cookies()).get("bk_theme")?.value === "dark";
+    const c = workshopCopy(currentLang);
     const wood=woodCopy(currentLang), n=navigationCopy(currentLang);
     return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5" data-testid="baum-demo-topbar">
       <div data-demo-teamrow className="relative flex min-w-0 items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><div className="min-w-0 flex-1"><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} /></div><DemoActorBar mode="notifications"/><details data-demo-profile className="relative shrink-0"><summary aria-label={c.profile} title={c.profile} className={`${navIcon} cursor-pointer list-none`}><UserRound className="size-4" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><LanguageSwitcher/></div></details></div>
@@ -58,7 +57,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=tools" label={c.tools} className={navIcon}><Package className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=fleet" label={c.fleet} className={navIcon}><Truck className="size-4" /></DemoNavigationLink>
         </nav>
-        <div data-demo-utilities className="flex shrink-0 items-center gap-1">{kidraht?<Link href="/demo/kidraht" aria-label={t("demo.kidrahtTitle",currentLang)} title={t("demo.kidrahtTitle",currentLang)} className={navIcon}><BookOpenCheck className="size-4"/></Link>:null}<DemoThemeButton dark={dark} label={t("admin.themeToggle",currentLang)}/></div>
+        <div data-demo-utilities className="flex shrink-0 items-center gap-1">{kidraht?<Link href="/demo/kidraht" aria-label={t("demo.kidrahtTitle",currentLang)} title={t("demo.kidrahtTitle",currentLang)} className={navIcon}><BookOpenCheck className="size-4"/></Link>:null}<DemoThemeButton label={t("admin.themeToggle",currentLang)} errorLabel={c.error}/></div>
       </div>
     </div>;
   }
