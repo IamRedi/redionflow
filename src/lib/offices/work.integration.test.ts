@@ -14,6 +14,12 @@ let companyId:string,otherCompanyId:string,megi:string,almet:string,outsider:str
 const role='office_work_rls_probe';
 function as(id:string){auth.company.mockResolvedValue(companyId);auth.admin.mockResolvedValue({id,companyProfileId:companyId});auth.worker.mockResolvedValue(null);}
 const draft=()=>({id:randomUUID(),version:0,kind:'PERSONAL',title:'Synthetic private task',body:'Private notes',status:'TODO',priority:'NORMAL',ownerId:megi,categoryId:null,dueDate:'2026-11-20'});
+async function reminderTest(fn:()=>Promise<void>){
+ const previous={OFFICE_TASK_REMINDERS_ENABLED:process.env.OFFICE_TASK_REMINDERS_ENABLED,VIRTUAL_OFFICE_ENABLED:process.env.VIRTUAL_OFFICE_ENABLED,INSTALLATION_COMPANY_ID:process.env.INSTALLATION_COMPANY_ID};
+ vi.stubEnv('OFFICE_TASK_REMINDERS_ENABLED','true');vi.stubEnv('VIRTUAL_OFFICE_ENABLED','true');vi.stubEnv('INSTALLATION_COMPANY_ID',companyId);
+ await prisma.officeTaskReminder.deleteMany({where:{companyProfileId:companyId}});
+ try{await fn();}finally{await prisma.officeTaskReminder.deleteMany({where:{companyProfileId:companyId}});for(const [key,value]of Object.entries(previous))vi.stubEnv(key,value);}
+}
 function mail(options:{id?:string;thread?:string;to?:string;body?:string;file?:File}={}){const f=new FormData();for(const[k,v]of Object.entries({requestId:options.id??randomUUID(),threadId:options.thread??'',recipientId:options.to??almet,subject:'Synthetic office conversation',body:options.body??'Private test message'}))f.set(k,v);if(options.file)f.set('files',options.file);return f;}
 beforeAll(async()=>{
   const c=await prisma.companyProfile.create({data:{displayName:'Office test DEMO',legalName:'Synthetic only'}});companyId=c.id;
@@ -261,3 +267,79 @@ it('filters office resources, protects workbook access and isolates personal ass
   auth.admin.mockResolvedValue(null);auth.worker.mockResolvedValue({id:staff.id,companyProfileId:companyId});await expect(officeWorkbooks('2026-11')).rejects.toThrow('DENIED');
  }finally{as(megi);await prisma.siteFile.deleteMany({where:{baustelleId:permitted.id}});await prisma.baustelle.deleteMany({where:{id:{in:[permitted.id,denied.id]}}});vi.stubEnv('VIRTUAL_OFFICE_TEAM_ENABLED','false');}
 });
+
+
+it('stores one private reminder per reader, without leaking it to the other manager',async()=>reminderTest(async()=>{
+ const task={...draft(),kind:'COMPANY',categoryId:'OTHER',reminderAt:new Date(Date.now()+3600_000).toISOString()};
+ await saveOfficeTask(task);
+ let snapshot=await officeWorkSnapshot();const first=snapshot.tasks.find(t=>t.id===task.id)!;
+ expect(first.reminders).toHaveLength(1);expect(snapshot.remindersEnabled).toBe(true);
+ as(almet);snapshot=await officeWorkSnapshot();expect(snapshot.tasks.find(t=>t.id===task.id)!.reminders).toEqual([]);
+ await saveOfficeTask({...task,version:first.version,reminderAt:new Date(Date.now()+7200_000).toISOString()});
+ expect(await prisma.officeTaskReminder.count({where:{companyProfileId:companyId,taskId:task.id}})).toBe(2);
+ as(megi);expect((await officeWorkSnapshot()).tasks.find(t=>t.id===task.id)!.reminders).toHaveLength(1);
+ await expect(saveOfficeTask({...task,version:0})).rejects.toThrow('CONFLICT');
+ expect(await prisma.officeTaskReminder.count({where:{companyProfileId:companyId,taskId:task.id}})).toBe(2);
+}));
+it('rejects invalid reminder time atomically and keeps old clients compatible',async()=>reminderTest(async()=>{
+ const task=draft();await expect(saveOfficeTask({...task,reminderAt:new Date(Date.now()-60_000).toISOString()})).rejects.toThrow('INVALID');
+ expect(await prisma.officeTask.count({where:{id:task.id}})).toBe(0);
+ await saveOfficeTask({...task,reminderAt:new Date(Date.now()+3600_000).toISOString()});
+ await saveOfficeTask({...task,version:1,title:'Edited with old client'});
+ expect((await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}})).status).toBe('PENDING');
+ vi.stubEnv('OFFICE_TASK_REMINDERS_ENABLED','false');
+ await expect(saveOfficeTask({...draft(),reminderAt:new Date(Date.now()+3600_000).toISOString()})).rejects.toThrow('INVALID');
+}));
+it('cancels reminders on completion and archive; reopening does not silently schedule them again',async()=>reminderTest(async()=>{
+ const {dispatchOfficeReminders}=await import('./task-reminders');const deliver=vi.fn(async()=>({sent:1,failed:0}));
+ const task=draft(),when=new Date(Date.now()+3600_000);await saveOfficeTask({...task,reminderAt:when.toISOString()});
+ await saveOfficeTask({...task,version:1,status:'DONE'});
+ expect((await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}})).status).toBe('CANCELLED');
+ await saveOfficeTask({...task,version:2,status:'TODO'});await dispatchOfficeReminders(new Date(when.getTime()+1000),deliver);expect(deliver).not.toHaveBeenCalled();
+ await saveOfficeTask({...task,version:3,reminderAt:new Date(Date.now()+7200_000).toISOString()});
+ await archiveOfficeTask({id:task.id,version:4,restore:false});expect((await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}})).status).toBe('CANCELLED');
+}));
+it('claims a due reminder once across workers and sends no task title, private body or foreign recipient',async()=>reminderTest(async()=>{
+ const {dispatchOfficeReminders}=await import('./task-reminders');const when=new Date(Date.now()+3600_000),task=draft();
+ await saveOfficeTask({...task,reminderAt:when.toISOString()});const deliver=vi.fn(async()=>({sent:1,failed:0}));
+ await Promise.all([dispatchOfficeReminders(new Date(when.getTime()+1000),deliver),dispatchOfficeReminders(new Date(when.getTime()+1000),deliver)]);
+ expect(deliver).toHaveBeenCalledTimes(1);const [company,payload]=deliver.mock.calls[0] as unknown as [string,{userIds:string[];title:string;body:string;url:string}];
+ expect(company).toBe(companyId);expect(payload.userIds.sort()).toEqual([megi,workerId].sort());expect(payload.url).toBe(`/workzone/offices/me/tasks?task=${task.id}`);
+ expect(payload.body).not.toContain(task.body);expect(payload.title).not.toContain(task.title);expect(payload.userIds).not.toContain(almet);expect(payload.userIds).not.toContain(foreign);
+ expect((await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}})).status).toBe('SENT');
+}));
+it('recovers expired claims, bounds retry attempts and reports no-device without claiming delivery',async()=>reminderTest(async()=>{
+ const {dispatchOfficeReminders}=await import('./task-reminders');const task=draft(),when=new Date(Date.now()+3600_000);
+ await saveOfficeTask({...task,reminderAt:when.toISOString()});
+ await prisma.officeTaskReminder.updateMany({where:{taskId:task.id},data:{claimId:randomUUID(),leaseUntil:new Date(when.getTime()-1000),attempts:1}});
+ const deliver=vi.fn(async()=>({sent:0,failed:1}));await dispatchOfficeReminders(when,deliver);
+ let r=await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}});expect(r.status).toBe('PENDING');expect(r.attempts).toBe(2);
+ await dispatchOfficeReminders(new Date(when.getTime()+300_001),deliver);r=await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}});expect(r.status).toBe('FAILED');expect(r.attempts).toBe(3);
+ await dispatchOfficeReminders(new Date(when.getTime()+900_000),deliver);expect(deliver).toHaveBeenCalledTimes(2);
+ const other=draft();await saveOfficeTask({...other,reminderAt:when.toISOString()});await dispatchOfficeReminders(when,async()=>({sent:0,failed:0}));
+ expect((await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:other.id}})).status).toBe('NO_DEVICE');
+}));
+it('serializes completion with its delivery without blocking unrelated office tasks',async()=>reminderTest(async()=>{
+ const {dispatchOfficeReminders}=await import('./task-reminders');const task=draft(),when=new Date(Date.now()+3600_000);
+ await saveOfficeTask({...task,reminderAt:when.toISOString()});
+ let release!:()=>void,started!:()=>void;
+ const waiting=new Promise<void>(resolve=>{release=resolve;}),entered=new Promise<void>(resolve=>{started=resolve;});
+ const sending=dispatchOfficeReminders(when,async()=>{started();await waiting;return {sent:1,failed:0};});
+ await entered;
+ try {
+  // A slow device must not hold the company-wide task lock.
+  const unrelated=draft();await saveOfficeTask(unrelated);expect(await prisma.officeTask.count({where:{id:unrelated.id}})).toBe(1);
+  let completed=false;const finish=saveOfficeTask({...task,version:1,status:'DONE'}).then(()=>{completed=true;});
+  await new Promise(resolve=>setTimeout(resolve,50));expect(completed).toBe(false);
+  release();await Promise.all([sending,finish]);
+  expect((await prisma.officeTask.findUniqueOrThrow({where:{id:task.id}})).status).toBe('DONE');
+ }finally{release();await sending;}
+}));
+it('revocation cancels delivery and tenant RLS hides a reminder belonging to another company',async()=>reminderTest(async()=>{
+ const {dispatchOfficeReminders}=await import('./task-reminders');const task=draft(),when=new Date(Date.now()+3600_000);await saveOfficeTask({...task,reminderAt:when.toISOString()});
+ await prisma.$executeRawUnsafe(`GRANT SELECT ON "OfficeTaskReminder" TO ${role}`);
+ await prisma.$transaction(async tx=>{await tx.$executeRawUnsafe(`SET LOCAL ROLE ${role}`);await tx.$executeRaw`SELECT set_config('app.current_tenant_id',${otherCompanyId},true)`;expect(await tx.officeTaskReminder.count({where:{taskId:task.id}})).toBe(0);});
+ const deliver=vi.fn(async()=>({sent:1,failed:0}));await prisma.user.update({where:{id:megi},data:{isActive:false}});
+ try{await dispatchOfficeReminders(when,deliver);expect(deliver).not.toHaveBeenCalled();expect((await prisma.officeTaskReminder.findFirstOrThrow({where:{taskId:task.id}})).status).toBe('CANCELLED');}
+ finally{await prisma.user.update({where:{id:megi},data:{isActive:true}});}
+}));

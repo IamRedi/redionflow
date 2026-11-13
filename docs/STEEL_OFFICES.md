@@ -1,5 +1,69 @@
 # Company offices — reception and Megi's office
 
+## Task journal and personal reminders — 13 November 2026 candidate
+
+The personal task drawer uses compact crystal cards, a simple title/status/
+importance composer and optional notes. Open work precedes completed work;
+within each group high importance comes first, followed by stable creation
+order. Editing does not move a card to a newer creation date. A card opens its
+detail with Done/Reopen, Edit and reversible Archive. Existing notes, shared
+categories, assignees and deliberate private-to-company sharing remain available
+under Sharing and due date. Their server authorization is unchanged.
+
+An optional reminder belongs to the signed-in office member, not everyone who
+can read a shared task. The additive `OfficeTaskReminder` table has composite
+tenant/task/member foreign keys and tenant RLS. The snapshot returns only that
+reader's reminder metadata. Task and reminder save in one transaction; stale
+versions or invalid times roll back both. Local date/clock controls convert
+explicit Europe/Tirane time to an absolute UTC instant using the existing
+business-clock converter. New schedules require a future time within 366 days.
+
+The opt-in Node worker uses `src/instrumentation.ts`, alongside `src/app`.
+The pre-existing root instrumentation helper is not the framework entry in this
+layout and remains unchanged. A production build must contain
+`.next/server/instrumentation.js`; helper unit tests alone are insufficient.
+`OFFICE_TASK_REMINDERS_ENABLED=true` activates the loop only when the configured
+installation and office company agree. It stays off in the restricted RLS
+rollout. No HTTP cron endpoint, browser-open requirement, paid provider, new
+credential, attendance write or operational task change is introduced.
+
+Every 30 seconds the worker claims at most ten due reminders, with a two-minute
+durable lease and at most three attempts. Transient failures retry after five
+minutes. Fresh task visibility, current account and office membership are
+checked at delivery. Only that task is serialized with completion/archive;
+unrelated office tasks do not wait for its network request. Completion/archive
+cancel pending reminders; reopening/restoring does not silently reschedule them.
+The existing push transport filters active identities in the installed company.
+Configured director admin/PIN identities represent the same authorized person.
+
+Lock-screen copy is generic: no private title or note. The notification opens
+`/workzone/offices/me/tasks?task=<id>` and the normal office gate still applies.
+Provider acceptance is not a read receipt. Missing devices and failed delivery
+are shown honestly; network/OS delivery is best effort, with a stable tag to
+reduce duplicate visible alerts after a crash. Users still enable notification
+permission themselves; iPhone requires the installed Home Screen app.
+
+Production remains unchanged until the owner approves the exact PR/revision,
+the additive migration and activation flag. Before publication, recheck the
+current production branch and fresh encrypted backup/restore evidence. Existing
+roles, official documents, factory/site progress, inventory, service/GPS/fuel
+and attendance calculations are outside this change.
+
+Evidence is retained in the private local task output
+`outputs/steel-office-journal-20261113`: unit/integration/build logs, synthetic
+restore, before/after browser captures and the runtime reminder check. Browser
+viewport checks are distinct from physical iPhone acceptance. The standalone
+Playwright scenario is updated for the new flow and normal fixture login;
+its execution status is recorded separately, not inferred from compilation.
+The company-day operational audit is read-only, with private details kept out
+of GitHub/public media. A bounded HTTP log sample is not a complete-day error
+guarantee; the legacy structured request-error hook is not currently wired.
+
+Public presentation/portfolio still describe the last accepted live release.
+The unaccepted reminder candidate is not advertised as live; reassess the
+bounded content/media delta after acceptance, respecting the owner's existing
+deferral of routine presentation packages.
+
 ## Office work surface correction — 13 November 2026
 
 The manager's employee-view plan, documents, tasks and workbooks use the same

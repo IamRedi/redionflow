@@ -1,14 +1,20 @@
 import { expect,test,type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { hashPassword } from '../../src/lib/auth/password';
-import { createSessionCookie } from '../../src/lib/auth/session-cookie';
 import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 
 test.use({actionTimeout:30_000});
-const companyId='office-e2e-company',baseURL='http://127.0.0.1:3230';
+const companyId='office-e2e-company',baseURL=process.env.PLAYWRIGHT_BASE_URL??'http://127.0.0.1:3230';
 async function login(context:BrowserContext,id:string){
-  const account=await prisma.user.findUniqueOrThrow({where:{id},select:{sessionEpoch:true}});
-  await context.clearCookies();await context.addCookies([{name:'bk_admin_id',value:await createSessionCookie('admin',id,account.sessionEpoch),url:baseURL},{name:'bk_lang',value:'sq',url:baseURL}]);
+  const page=context.pages()[0]??await context.newPage();
+  // Use the real synthetic-account login. The managed server owns its signing
+  // key, so tests must not mint cookies with a different process's secret.
+  await context.clearCookies();await context.addCookies([{name:'bk_lang',value:'sq',url:baseURL}]);
+  await page.goto('/login');
+  await page.locator('input[name=email]').fill(`${id}@example.test`);
+  await page.locator('input[name=password]').fill('synthetic-only-unused');
+  await page.locator('form button[type=submit]').click();
+  await page.waitForURL('**/app/dashboard');
 }
 test('private office work, mail and predictable return routes on desktop and phone',async({page,context})=>{
   test.setTimeout(300_000);assertE2ETestDatabase(process.env);
@@ -21,8 +27,47 @@ test('private office work, mail and predictable return routes on desktop and pho
   await login(context,'office-e2e-megi');await page.setViewportSize({width:1440,height:1000});
   await page.goto('/workzone/offices/me/tasks');const work=page.getByTestId('office-work');await expect(work).toBeVisible();
   await work.getByText('Kategoritë e punës',{exact:true}).click();await work.getByRole('button',{name:'Vendos kategoritë fillestare'}).click();await expect(work.getByRole('status')).toHaveText('U ruajt.',{timeout:30_000});
-  await work.getByRole('button',{name:'Shto',exact:true}).click();await work.getByLabel('Titulli',{exact:true}).fill('Kontrollo ofertën · DEMO');await work.getByLabel('Përshkrimi').fill('Shënim personal për provën lokale.');await work.getByRole('button',{name:'Ruaj',exact:true}).click();await expect(work.getByRole('button',{name:/^Kontrollo ofertën · DEMO/})).toBeVisible();
-  await work.getByRole('button',{name:'Shto',exact:true}).click();await work.getByLabel('Titulli',{exact:true}).fill('Dosja e ofertës · DEMO');await work.getByLabel('Lloji').selectOption('NOTE');await work.getByRole('button',{name:'Ruaj',exact:true}).click();await work.getByRole('button',{name:/^Dosja e ofertës/}).click();await work.getByLabel('Lloji').selectOption('COMPANY');await work.getByRole('combobox',{name:'Kategoria',exact:true}).selectOption({label:'Modelim · Për oferta'});await work.getByLabel('Përgjegjësi').selectOption('office-e2e-almet');await expect(work.getByRole('button',{name:'Ruaj',exact:true})).toBeDisabled();await work.getByRole('checkbox').check();await page.setViewportSize({width:390,height:844});await page.screenshot({path:`${output}/task-sharing-light-390.png`});await work.getByRole('button',{name:'Ruaj',exact:true}).click();await expect(work.getByRole('button',{name:/^Dosja e ofertës/})).toBeVisible();
+  const composer=page.getByTestId('task-composer');
+  const detail=page.getByTestId('task-detail');
+  await work.getByRole('button',{name:'Shto',exact:true}).click();
+  await composer.getByLabel('Emri i detyrës',{exact:true}).fill('Kontrollo ofertën · DEMO');
+  await composer.getByRole('button',{name:'Duke u bërë',exact:true}).click();
+  await composer.getByRole('button',{name:'Rëndësi e lartë',exact:true}).click();
+  await composer.getByRole('button',{name:'Shto shënim',exact:true}).click();
+  await composer.getByLabel('Shënim',{exact:true}).fill('Shënim personal për provën lokale.');
+  await composer.getByRole('button',{name:'Shto kujtesë',exact:true}).click();
+  await composer.getByLabel('Data',{exact:true}).fill('2027-01-15');
+  await composer.getByLabel('Ora',{exact:true}).selectOption('12');
+  await composer.getByLabel('Minuta',{exact:true}).selectOption('30');
+  await composer.getByRole('button',{name:'Shto',exact:true}).click();
+  await expect(detail.getByRole('heading',{name:'Kontrollo ofertën · DEMO'})).toBeVisible();
+  await expect(detail.getByText('Kujtesë e planifikuar',{exact:true})).toBeVisible();
+  const reminder=await prisma.officeTaskReminder.findFirstOrThrow({where:{companyProfileId:companyId,memberId:'office-e2e-megi'}});
+  expect(reminder.remindAt.toISOString()).toBe('2027-01-15T11:30:00.000Z');
+  await detail.getByRole('button',{name:'U krye',exact:true}).click();
+  await expect(detail.getByRole('button',{name:'Hape sërish'})).toBeVisible();
+  expect((await prisma.officeTaskReminder.findUniqueOrThrow({where:{id:reminder.id}})).status).toBe('CANCELLED');
+  await detail.getByRole('button',{name:'Kthehu te ditari'}).click();
+  await expect(work.getByRole('button',{name:/^Hap detyrën: Kontrollo ofertën/})).toBeVisible();
+  await work.getByRole('button',{name:'Shto',exact:true}).click();
+  await composer.getByLabel('Emri i detyrës',{exact:true}).fill('Dosja e ofertës · DEMO');
+  await composer.getByText('Ndarja dhe afati',{exact:true}).click();
+  await composer.getByLabel('Lloji',{exact:true}).selectOption('NOTE');
+  await composer.getByRole('button',{name:'Shto',exact:true}).click();
+  await expect(detail.getByRole('heading',{name:'Dosja e ofertës · DEMO'})).toBeVisible();
+  await detail.getByRole('button',{name:'Ndrysho',exact:true}).click();
+  await composer.getByText('Ndarja dhe afati',{exact:true}).click();
+  await composer.getByLabel('Lloji',{exact:true}).selectOption('COMPANY');
+  await composer.getByRole('combobox',{name:'Kategoria',exact:true}).selectOption({label:'Modelim · Për oferta'});
+  await composer.getByLabel('Përgjegjësi',{exact:true}).selectOption('office-e2e-almet');
+  await expect(composer.getByRole('button',{name:'Ruaj',exact:true})).toBeDisabled();
+  await composer.getByRole('checkbox').check();
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:`${output}/task-sharing-light-390.png`});
+  await composer.getByRole('button',{name:'Ruaj',exact:true}).click();
+  await expect(detail.getByRole('heading',{name:'Dosja e ofertës · DEMO'})).toBeVisible();
+  await detail.getByRole('button',{name:'Kthehu te ditari'}).click();
+  await expect(work.getByRole('button',{name:/^Hap detyrën: Dosja e ofertës/})).toBeVisible();
   for(const theme of ['light','dark']){
     await context.addCookies([{name:'bk_theme',value:theme,url:baseURL}]);
     for(const[width,height]of[[1440,1000],[390,844],[320,740],[760,360]]){

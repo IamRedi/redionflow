@@ -257,6 +257,7 @@ model CompanyProfile {
   officeMembers OfficeMember[]
   officeCategories OfficeCategory[]
   officeTasks OfficeTask[]
+  officeTaskReminders OfficeTaskReminder[]
   officeThreads OfficeThread[]
   officeMessages OfficeMessage[]
   officeAttachments OfficeAttachment[]
@@ -372,6 +373,7 @@ model OfficeMember {
   officeSentThreads OfficeThread[] @relation("OfficeThreadSender")
   officeReceivedThreads OfficeThread[] @relation("OfficeThreadRecipient")
   officeMessages OfficeMessage[] @relation("OfficeMessageSender")
+  taskReminders OfficeTaskReminder[]
   @@unique([companyProfileId,id])
   @@unique([companyProfileId,userId])
   @@unique([companyProfileId,workerId])
@@ -439,8 +441,30 @@ model OfficeTask {
   updatedAt DateTime @updatedAt
   version Int @default(1)
   archivedAt DateTime?
+  reminders OfficeTaskReminder[]
   @@unique([companyProfileId,id])
   @@index([companyProfileId,ownerId,archivedAt])
+}
+
+/// Personal opt-in reminder. Sharing a task never shares a member's reminder.
+model OfficeTaskReminder {
+  id String @id @default(uuid())
+  companyProfileId String
+  companyProfile CompanyProfile @relation(fields:[companyProfileId], references:[id], onDelete:Cascade, map:"OfficeTaskReminder_company_fkey")
+  taskId String
+  task OfficeTask @relation(fields:[companyProfileId,taskId], references:[companyProfileId,id], onDelete:Cascade, map:"OfficeTaskReminder_task_fkey")
+  memberId String
+  member OfficeMember @relation(fields:[companyProfileId,memberId], references:[companyProfileId,id], onDelete:Cascade, map:"OfficeTaskReminder_member_fkey")
+  remindAt DateTime
+  status String @default("PENDING")
+  attempts Int @default(0)
+  nextAttemptAt DateTime
+  claimId String?
+  leaseUntil DateTime?
+  sentAt DateTime?
+  updatedAt DateTime @default(now()) @updatedAt
+  @@unique([companyProfileId,taskId,memberId])
+  @@index([companyProfileId,status,nextAttemptAt])
 }
 
 model OfficeThread {

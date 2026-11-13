@@ -4,6 +4,7 @@ import { getMessaging } from "firebase-admin/messaging";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { isSaasMode } from "@/lib/saas-config";
+import { isRlsEnforced } from '@/lib/db/tenant-context';
 import { decodeBrowserSubscription, deliverBrowserPush, isBrowserSubscription } from './web-push';
 import {
   deleteNotificationSubscriptions,
@@ -43,12 +44,23 @@ function adminApp() {
   return null;
 }
 
-export async function sendNotification({ userIds, title, body, url = "/workzone", preference, tag, onlyToken }: SendNotificationInput) {
+export async function sendNotification(input:SendNotificationInput) {
+  const companyId=isSaasMode?await getCurrentCompanyId():null;
+  if(isSaasMode&&!companyId)return {sent:0,failed:0};
+  return sendScopedNotification(companyId,input);
+}
+
+/** Server scheduler only: no caller-supplied tenant override or request impersonation. */
+export async function sendInstalledNotification(companyId:string,input:SendNotificationInput) {
+  if(!isSaasMode||isRlsEnforced()||!companyId||process.env.INSTALLATION_COMPANY_ID!==companyId)return {sent:0,failed:0};
+  return sendScopedNotification(companyId,input);
+}
+
+async function sendScopedNotification(companyProfileId:string|null,{ userIds, title, body, url = "/workzone", preference, tag, onlyToken }: SendNotificationInput) {
   let uniqueUserIds = [...new Set(userIds.filter(Boolean))];
   if (uniqueUserIds.length === 0) return { sent: 0, failed: 0 };
 
   if (isSaasMode) {
-    const companyProfileId = await getCurrentCompanyId();
     if (!companyProfileId) return { sent: 0, failed: 0 };
     const [admins, workers] = await Promise.all([
       prisma.user.findMany({where:{id:{in:uniqueUserIds},companyProfileId,role:"ADMIN",isActive:true},select:{id:true}}),

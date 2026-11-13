@@ -8,6 +8,9 @@ export const officeTaskInput = z.object({
   ownerId:z.string().min(1).max(128), categoryId:z.union([z.uuid(),z.literal('OTHER')]).nullable(),
   status:z.enum(taskStatuses), priority:z.enum(['NORMAL','HIGH']),
   dueDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v).nullable(),
+  // Absolute instant only. The client converts the explicit company timezone.
+  // Omitted preserves this caller's existing reminder; null cancels it.
+  reminderAt:z.iso.datetime({offset:true}).nullable().optional(),
 }).strict().superRefine((v,ctx)=>{
   if(v.kind==='COMPANY'&&!v.categoryId)ctx.addIssue({code:'custom',message:'Category required'});
   if(v.kind!=='COMPANY'&&v.categoryId)ctx.addIssue({code:'custom',message:'Private work has no shared category'});
