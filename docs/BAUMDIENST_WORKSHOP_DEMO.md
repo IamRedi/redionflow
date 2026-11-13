@@ -1,6 +1,20 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-## AKTUALE — 13.11.2026 / Zyrat si ambient 2.5D në një ekran
+## AKTUALE — 13.11.2026 / Asistenti pranë monitorit dhe logoja origjinale
+
+Vetëm Musterfirma BaumdienstFlow. Asistenti hapet në një panel crystal të ngushtë pranë monitorit, sipas modelit të AL Steel të lexuar vetëm në burimin ffcfc3f. Nuk ndryshon asnjë kod, konfigurim, të dhënë apo punë aktive e pilotit. Paneli ka titull/rol/mbyllje kompakte, kuotën ekzistuese, pyetjet dhe përgjigjet si mesazhe të dallueshme, një zonë scroll për historikun dhe fushën e shkrimit gjithmonë poshtë. Burimet dhe shpjegimi i plotë i privatësisë janë në disclosure-in OpenAI, pa hequr tekstin ekzistues. Biseda mbetet private e rolit dhe e ruajtur në të njëjtin namespace/API.
+
+Vendosja përdor drejtkëndëshin real të monitorit: në desktop, maksimum 420×680px, 16px pranë ekranit kur ka hapësirë; përndryshe qendrohet brenda viewport-it. Në telefon ka 12px hapësirë në anë dhe lart/poshtë. Eventet resize/scroll të visualViewport-it rillogarisin gjerësinë, lartësinë dhe offset-in kur hapësira ndryshon. Kontrollet kryesore janë 44px; teksti përdor rem dhe fusha bazë 1rem. Escape/mbyllja rikthejnë fokusin te monitori kur ende është në DOM. Historia shkon poshtë kur shtohet ose përfundon një kërkesë; një rifreskim me të njëjtat ID/status nuk ndryshon pozicionin e leximit. Reduced motion/transparency dhe forced colors kanë fallback. Dialogët e tjerë dhe skena pa scroll të zyrave ruhen.
+
+Composer-i çaktivizon dërgimin bosh, gjatë kërkesës, kur AI është jashtë funksionit ose kuota ka mbaruar. Fusha çaktivizohet gjatë kërkesës që teksti i ri të mos humbasë kur përfundon përgjigjja. Dështimi tregon gabimin e serverit dhe ruan pyetjen; Rifresko lexon gjendjen dhe nuk dërgon një kërkesë tjetër me pagesë. Controller-i ekzistues ruan UUID/revision/intent-et e pasigurta. Nuk ndryshojnë modeli, provider-i, guard-et, kuotat 20 tekst/ditë dhe 20 imazhe/ditë, ruajtja ose logjika e backend-it. Nuk nevojitet pyetje e re reale për testimin e këtij ndryshimi.
+
+Vetëm te /demo/workzone, logoja lart përdor sërish markën origjinale /branding/logo-256.webp, pa badge AI ose zëvendësim automatik nga figura AI e galerisë. Navigimi, madhësia kompakte dhe lidhja Workzone ruhen. Header-at e moduleve të tjera dhe recepsioni ruajnë zgjedhjet e tyre ekzistuese; nuk fshihet foto/figurë, preferencë ose histori medie. Nuk preken AppBrand i përbashkët, AL Steel, demot e tjera ose portofoli.
+
+Verifikimi/publikimi i këtij ndryshimi: PENDING. Baza lokale/GitHub d74eaf2; runtime para ndryshimit 13ff185 / e6e88997-e914-4953-ad89-ac9bcbe6a2f8. Provat përdorin vetëm fixture-in sintetik të job-it baum-officechat-studio-20261113 në mini-PC. Efektet e AI-së në testin e UI-së simulohen në rrjet; nuk ka thirrje te provider-i. Ruajtja e historikut dhe origjinaleve krahasohet para/pas. Telefoni fizik/tastiera reale mbeten veçmas nga provat responsive.
+
+Prezantimi/public showcase/portofoli mbeten OWNER_HOLD/PENDING_PUBLICATION; ky korrigjim UI nuk shton aftësi biznesi dhe nuk mbyll detyrimet e mëparshme të publikimit. Specifikimi dhe Google Doc-i ekzistues përditësohen në vend, pa humbje historie ose tabelash.
+
+## HISTORIKE — 13.11.2026 / Zyrat si ambient 2.5D në një ekran
 
 Vetëm Musterfirma BaumdienstFlow. Referenca e pronarit është zyra 2.5D e AL Steel; burimi më i ri ffcfc3f u lexua vetëm për modelin e ndërveprimit, pa ndryshuar checkout-in aktiv të pilotit, të dhënat ose konfigurimin e tij. Ambienti i Baumdienst ruan lisin, drurin, gjelbërimin, identitetin fiktiv dhe materialet crystal të veta. Katër figura të reja japin të njëjtat mobilie Day/Night në kompozim desktop dhe kompozim vertikal telefoni. Të pesë rolet ndajnë këtë ambient të qëndrueshëm; emri, funksioni, të drejtat dhe të dhënat personalizohen nga roli, jo nga llogari ose inventar i dytë.
 

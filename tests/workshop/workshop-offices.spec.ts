@@ -118,8 +118,7 @@ test("compact inventory and 2.5D Day/Night offices preserve physical controls, p
     const cards = page.getByTestId("inventory-asset-card"); expect(await cards.count()).toBeGreaterThanOrEqual(2);
     const allCards = page.locator('[data-testid="inventory-asset-card"], [data-testid="fleet-asset-card"]');
     await expect(allCards).toHaveCount(before.state.assets.length);
-    await expect.poll(async () => Math.abs((await allCards.nth(0).boundingBox())!.y - (await allCards.nth(1).boundingBox())!.y)).toBeLessThan(2);
-    const a = (await allCards.nth(0).boundingBox())!, b = (await allCards.nth(1).boundingBox())!;
+    const [a, b] = await allCards.evaluateAll(es => es.slice(0, 2).map(e => { const r = e.getBoundingClientRect(); return { x:r.x, y:r.y, width:r.width, height:r.height }; }));
     expect(a.width).toBeLessThanOrEqual(221); expect(Math.abs(a.y - b.y)).toBeLessThan(2);
     expect((await cards.nth(0).boundingBox())!.width).toBeLessThanOrEqual(221);
     await cards.nth(0).getByRole("button", { name: "Details öffnen", exact: true }).click(); await expect(page.getByRole("dialog")).toBeVisible(); await page.keyboard.press("Escape");
