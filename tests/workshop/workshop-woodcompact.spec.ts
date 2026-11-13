@@ -43,6 +43,7 @@ test("plain workspace labels leave the scenery clear; wood lists and opened card
       await list.focus(); await page.keyboard.press("Control+End");
       await expect(page.getByRole("link", { name: "by RediON", exact: true })).toBeInViewport();
       await expect(page.getByRole("link", { name: "by RediON", exact: true })).toHaveCount(1);
+      if (!(await page.getByRole("searchbox", { name: c.label, exact: true }).count())) await page.getByRole("button", { name: c.label, exact: true }).click();
       await page.getByRole("searchbox", { name: c.label, exact: true }).fill("DEMO-NO-MATCH-476194");
       await expect(list.getByText(c.empty, { exact: true })).toBeVisible();
       expect(await list.getByText(c.empty, { exact: true }).evaluate(el => getComputedStyle(el).backgroundColor)).toBe("rgba(0, 0, 0, 0)");

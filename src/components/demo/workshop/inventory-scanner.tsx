@@ -11,9 +11,9 @@ import { action, control, Field, WorkshopDialog } from "./workshop-ui";
 
 type Reader = { scan(options: { signal: AbortSignal }): Promise<void>; onreading: ((e: { message?: { records: { recordType: string; encoding?: string; data?: BufferSource }[] } }) => void) | null; onreadingerror: (() => void) | null };
 const exampleInventoryCode = "WG-102";
-export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose, onUnknown }: { assets: WorkshopAsset[]; lang: string; closeLabel: string; onFound: (asset: WorkshopAsset) => void; onClose: () => void; onUnknown?: (code: string) => void }) {
+export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose, onUnknown, initialMode = "manual", returnFocus }: { assets: WorkshopAsset[]; lang: string; closeLabel: string; onFound: (asset: WorkshopAsset) => void; onClose: () => void; onUnknown?: (code: string) => void; initialMode?: "manual" | "camera" | "nfc"; returnFocus?: { readonly current: HTMLElement | null } }) {
   const c = inventoryCopy(lang);
-  const [code, setCode] = useState(""), [mode, setMode] = useState<"manual" | "camera" | "nfc">("manual"), [error, setError] = useState("");
+  const [code, setCode] = useState(""), [mode, setMode] = useState<"manual" | "camera" | "nfc">(initialMode === "camera" ? "camera" : "manual"), [error, setError] = useState("");
   const video = useRef<HTMLVideoElement>(null), abort = useRef<AbortController | null>(null);
   const found = useRef(false), detect = useRef<(value: string) => void>(() => {});
   const stopNfc = useCallback(() => { abort.current?.abort(); abort.current = null; }, []);
@@ -47,7 +47,7 @@ export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose, o
     })();
     return () => { cancelled = true; controls?.stop(); };
   }, [mode, c.scanError]);
-  async function startNfc() {
+  const startNfc = useCallback(async () => {
     stopNfc(); setError(""); setMode("nfc");
     const Ctor = (window as Window & { NDEFReader?: new () => Reader }).NDEFReader;
     if (!Ctor) { setError(c.nfcUnsupported); setMode("manual"); return; }
@@ -65,8 +65,9 @@ export function InventoryScanner({ assets, lang, closeLabel, onFound, onClose, o
       reader.onreadingerror = () => { if (!controller.signal.aborted) { setError(c.scanError); stopNfc(); setMode("manual"); } };
       await reader.scan({ signal: controller.signal });
     } catch { if (!controller.signal.aborted) { setError(c.scanError); stopNfc(); setMode("manual"); } }
-  }
-  return <WorkshopDialog open title={c.scanTitle} description={c.tagHint} closeLabel={closeLabel} onClose={onClose}>
+  }, [stopNfc, c.nfcUnsupported, c.unknownCode, c.scanError]);
+  useEffect(() => { if (initialMode === "nfc") void startNfc(); }, [initialMode, startNfc]);
+  return <WorkshopDialog returnFocus={returnFocus} open title={c.scanTitle} description={c.tagHint} closeLabel={closeLabel} onClose={onClose}>
     <div className="space-y-4">
       {mode === "camera" && <video ref={video} muted playsInline className="aspect-[4/3] w-full rounded-xl border bg-black object-cover" />}
       {mode === "nfc" && <p role="status" className="rounded-xl border bg-muted/30 p-4 text-sm">{c.nfcReady}</p>}

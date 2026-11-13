@@ -11,10 +11,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { PackagePlus, Printer, Settings2, Pencil, ArrowRight, Camera, ChevronDown, CheckCircle2, ClipboardCheck, ClipboardList, CloudCheck, Download, FileText, History, LoaderCircle, Package, Plus, RefreshCw, Search, ScanLine, ShieldCheck, Truck, Wrench } from "lucide-react";
+import { PackagePlus, Printer, Settings2, Pencil, ArrowRight, Camera, ChevronDown, CheckCircle2, ClipboardCheck, CloudCheck, Download, FileText, History, LoaderCircle, Package, Plus, RefreshCw, ScanLine, ShieldCheck, Wrench } from "lucide-react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
-import { activeJob, availability, workshopDay, workshopTabs, type WorkshopAsset, type WorkshopDocument, type WorkshopJob, type WorkshopTab } from "@/lib/workshop/demo-model";
+import { activeJob, availability, workshopDay, type WorkshopAsset, type WorkshopDocument, type WorkshopJob, type WorkshopTab } from "@/lib/workshop/demo-model";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { fileUrl } from "@/lib/workshop/shared-contract";
 import { useWorkshopDemo, type DemoInventoryCommand } from "./use-workshop-demo";
@@ -25,13 +25,14 @@ import { canUploadDemoFile, inventoryHistory, siteInventory, workerInventory } f
 import { action, control, Field, Status, WorkshopDialog } from "./workshop-ui";
 import { WorkshopAssetArt } from "./workshop-art";
 import { EquipmentReference } from "./equipment-reference";
-import { StudioIcon } from "./studio-art";
 import { WorkshopProcess } from "./workshop-process";
 import { DemoPhoto } from "./demo-photo";
 import styles from "./workshop.module.css";
+import { WorkspaceSearch } from "./workspace-search";
+import { InventoryKindFilter } from "./inventory-kind-filter";
+import { RegistrationEntry } from "./registration-entry";
 
 type Modal = { type: "receive" | "asset" | "inspection"; id?: string } | { type: "job"; id: string } | null;
-const icons = Object.fromEntries((["orders","fleet","tools","parts","documents","history"] as const).map(kind=>[kind,({className}: {className?: string})=><StudioIcon kind={kind} className={className} />])) as Record<WorkshopTab, React.ComponentType<{className?:string}>>;
 function download(name: string, blob: Blob) { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
 function legacyDocument(doc: WorkshopDocument) { return new Blob([doc.mime === "text/plain" ? doc.data ?? "" : Uint8Array.from(atob(doc.data ?? ""), c => c.charCodeAt(0))], { type: doc.mime }); }
 
@@ -43,10 +44,11 @@ export function WorkshopDemo({ tab, initialAsset = "", initialSite = "", initial
   const { state, actor, directory, photos, revision, updatedAt, status, pending, hydrated, dispatch, upload, refresh } = useWorkshopDemo();
   const [query, setQuery] = useState(""), [assetFilter, setAssetFilter] = useState(initialAsset), [modal, setModal] = useState<Modal>(showDetail && initialAsset ? { type: "asset", id: initialAsset } : null);
   const [registering, setRegistering] = useState<{code?: string; asset?: WorkshopAsset} | null>(null), [scanned, setScanned] = useState(false);
-  const [scanning, setScanning] = useState(false), [kindFilter, setKindFilter] = useState("");
+  const [scanning, setScanning] = useState<"manual" | "camera" | "nfc" | null>(null), [kindFilter, setKindFilter] = useState("");
+  const [registrationEntry, setRegistrationEntry] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [documentAsset, setDocumentAsset] = useState(initialAsset || state.assets[0].id), [documentJob, setDocumentJob] = useState("");
-  const fileInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null), registrationTrigger = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null), informationRef = useRef<HTMLDetailsElement>(null), policyRef = useRef<HTMLDetailsElement>(null);
   // Preserve the control panel's existing deep link after grouping secondary
   // information. Expand the disclosures and scroll only the working list.
@@ -77,7 +79,6 @@ export function WorkshopDemo({ tab, initialAsset = "", initialSite = "", initial
   const selectedJob = modal?.type === "job" ? state.jobs.find(j => j.id === modal.id) : null;
   const historical = tab === "history" || tab === "documents";
   const inScope = (asset: WorkshopAsset) => (!initialSite || (historical ? inventoryHistory(state, "site", initialSite) : siteInventory(state, initialSite)).some(a => a.id === asset.id)) && (!initialWorker || (historical ? inventoryHistory(state, "worker", initialWorker) : workerInventory(state, initialWorker)).some(a => a.id === asset.id));
-  const scopeQuery = `${initialSite ? `&site=${encodeURIComponent(initialSite)}` : ""}${initialWorker ? `&worker=${encodeURIComponent(initialWorker)}` : ""}`;
   const matchAsset = (asset: WorkshopAsset) => inScope(asset) && `${asset.name} ${identityTokens(asset).join(" ")}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()) && (!assetFilter || asset.id === assetFilter);
   const matchJob = (job: WorkshopJob) => (!initialSite || job.origin?.placement?.siteKey === initialSite || assetFor(job.assetId).placement?.siteKey === initialSite) && (!initialWorker || job.origin?.placement?.workerKey === initialWorker || assetFor(job.assetId).placement?.workerKey === initialWorker) && (!assetFilter || job.assetId === assetFilter) && `${assetFor(job.assetId).name} ${assetFor(job.assetId).code} ${job.problem} ${job.id}`.toLocaleLowerCase().includes(query.toLocaleLowerCase());
   function open(value: Modal, fromScan = false) { setMessage(null); setScanned(fromScan); setModal(value); }
@@ -126,23 +127,17 @@ export function WorkshopDemo({ tab, initialAsset = "", initialSite = "", initial
           </dl>
         </div>
         <div className={styles.commands}>
-          {actor.role === "admin" && <Button className={`${action} ${heroIcon}`} disabled={disabled} aria-label={tab === "tools" || tab === "fleet" ? c.register : c.newJob} title={tab === "tools" || tab === "fleet" ? c.register : c.newJob} onClick={() => tab === "tools" || tab === "fleet" ? setRegistering({}) : open({ type: "receive" })}>{tab === "tools" || tab === "fleet" ? <PackagePlus /> : <Plus />}<span className="hidden sm:inline">{tab === "tools" || tab === "fleet" ? c.register : c.newJob}</span></Button>}
-          <Button variant="outline" className={`${action} ${heroIcon}`} disabled={disabled} aria-label={c.scan} title={c.scan} onClick={() => setScanning(true)}><ScanLine /><span className="hidden sm:inline">{c.scan}</span></Button>
-          <Button variant="outline" className={`${action} size-11 shrink-0 rounded-full p-0`} aria-label={c.refresh} title={c.refresh} onClick={() => void refresh()} disabled={pending}><RefreshCw className={status === "loading" ? "motion-safe:animate-spin" : ""} /></Button>
-        </div>
-      </div>
-      <div className={styles.navigationRow}>
-        <nav aria-label={c.filters} className={styles.tabs}>{workshopTabs.map(key => { const Icon = icons[key]; return <Link key={key} data-ui-control="button" data-ui-variant={tab === key ? "default" : "outline"} href={`/demo/workshop?tab=${key}${assetFilter ? `&asset=${encodeURIComponent(assetFilter)}` : ""}${scopeQuery}`} aria-label={c[key]} title={c[key]} aria-current={tab === key ? "page" : undefined} className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tab === key ? "bg-primary text-primary-foreground dark:text-black" : "text-muted-foreground hover:bg-muted"}`}><Icon className="size-4 shrink-0" /><span>{c[key]}</span></Link>; })}</nav>
-        <div className={styles.filters}>
-          <label className={styles.search}><Search aria-hidden="true" /><input aria-label={c.search} placeholder={c.search} value={query} onChange={e => setQuery(e.target.value)} className={`${control} pl-9`} /></label>
-          {tab === "tools" && <select aria-label={c.allEquipment} className={`${control} ${styles.kindFilter}`} value={kindFilter} onChange={e => setKindFilter(e.target.value)}><option value="">{c.allEquipment}</option><option value="fleet">{c.onlyFleet}</option><option value="tool">{c.onlyTools}</option></select>}
-          {assetFilter && <Button className={action} variant="outline" onClick={() => setAssetFilter("")}>{c.all}</Button>}
+          {actor.role === "admin" && <Button ref={registrationTrigger} className={`${action} ${heroIcon}`} disabled={disabled} aria-label={tab === "tools" || tab === "fleet" ? c.register : c.newJob} title={tab === "tools" || tab === "fleet" ? c.register : c.newJob} onClick={() => tab === "tools" || tab === "fleet" ? setRegistrationEntry(true) : open({ type: "receive" })}>{tab === "tools" || tab === "fleet" ? <PackagePlus /> : <Plus />}<span className="hidden sm:inline">{tab === "tools" || tab === "fleet" ? c.register : c.newJob}</span></Button>}
+          {(actor.role !== "admin" || (tab !== "tools" && tab !== "fleet")) && <Button variant="outline" className="size-11 shrink-0 rounded-full p-0" disabled={disabled} aria-label={c.scan} title={c.scan} onClick={() => setScanning("manual")}><ScanLine /></Button>}
+          <WorkspaceSearch label={c.search} closeLabel={c.close} value={query} onChange={setQuery} />
+          {tab === "tools" && <InventoryKindFilter labels={c} value={kindFilter} onChange={setKindFilter} />}
+          {assetFilter && <Button className={action} variant="outline" onClick={() => { setAssetFilter(""); const q = new URLSearchParams(window.location.search); q.delete("asset"); q.delete("detail"); router.replace(`/demo/workshop?${q}`, { scroll: false }); }}>{c.all}</Button>}
         </div>
       </div>
     </header>
     <div ref={listRef} className={styles.list} data-testid="workshop-scroll-region" tabIndex={0} role="region" aria-label={tab === "orders" ? c.title : c[tab]}>
     <div className={styles.listContent}>
-    {status !== "ready" && <p role="status" className="flex items-start gap-2 rounded-xl border bg-card p-3 text-sm">{status === "loading" ? <LoaderCircle className="size-5 shrink-0 motion-safe:animate-spin" /> : <RefreshCw className="size-5 shrink-0" />}{c[status]}</p>}
+    {status !== "ready" && <div role="status" className="flex items-center gap-2 text-sm"><LoaderCircle className={status === "loading" ? "size-5 shrink-0 motion-safe:animate-spin" : "hidden"} />{c[status]}{status === "connection" && <Button variant="outline" className="size-11 rounded-full p-0" aria-label={c.refresh} onClick={() => void refresh()}><RefreshCw className="size-4" /></Button>}</div>}
     {(initialSite || initialWorker) && <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-primary"><p>{directory.sites.find(s => s.key === initialSite)?.name ?? directory.workers.find(w => w.key === initialWorker)?.name}</p><Link href="/demo/workshop?tab=tools" className="inline-flex min-h-11 items-center gap-2 px-2 underline underline-offset-4">{c.allEquipment}</Link></div>}
     {!modal && <div role={message?.error ? "alert" : "status"} aria-live="polite" className={message ? `rounded-xl border px-4 py-3 text-sm ${message.error ? "border-amber-600 bg-amber-500/10" : "border-primary/25 bg-card"}` : "sr-only"}>{message?.text}</div>}
     {hydrated && <div key={tab} className={styles.arrive}>
@@ -162,8 +157,9 @@ export function WorkshopDemo({ tab, initialAsset = "", initialSite = "", initial
     {footer}
     </div>
     </div>
-    {registering && <AssetRegister open code={registering.code} asset={registering.asset} onClose={() => setRegistering(null)} onSaved={id => { setRegistering(null); open({type: "asset", id}); }} />}
-    {scanning && <InventoryScanner assets={state.assets} lang={currentLang} closeLabel={c.close} onClose={() => setScanning(false)} onFound={asset => { setScanning(false); open({ type: "asset", id: asset.id }, true); }} onUnknown={actor.role === "admin" ? code => { setScanning(false); setRegistering({code}); } : undefined} />}
+    {registrationEntry && actor.role === "admin" && <RegistrationEntry lang={currentLang} onClose={() => setRegistrationEntry(false)} onManual={() => { setRegistrationEntry(false); setRegistering({}); }} onScan={mode => { setRegistrationEntry(false); setScanning(mode); }} />}
+    {registering && <AssetRegister returnFocus={registrationTrigger} open code={registering.code} asset={registering.asset} onClose={() => setRegistering(null)} onSaved={id => { setRegistering(null); open({type: "asset", id}); }} />}
+    {scanning && <InventoryScanner returnFocus={registrationTrigger} initialMode={scanning} assets={state.assets} lang={currentLang} closeLabel={c.close} onClose={() => setScanning(null)} onFound={asset => { setScanning(null); open({ type: "asset", id: asset.id }, true); }} onUnknown={actor.role === "admin" ? code => { setScanning(null); setRegistering({code}); } : undefined} />}
     <WorkshopDialog open={modal !== null} onClose={() => setModal(null)} closeLabel={c.close} title={selectedJob ? `${assetFor(selectedJob.assetId).name} · ${assetIdentity(assetFor(selectedJob.assetId))}` : modal?.type === "receive" ? c.newJob : selectedAsset ? `${selectedAsset.name} · ${assetIdentity(selectedAsset)}` : c.title} description={c.shared}>
       {message && <p role={message.error ? "alert" : "status"} className={`mb-4 rounded-xl border p-3 text-sm ${message.error ? "border-amber-600" : "border-primary/25"}`}>{message.text}</p>}
       {pending && <p role="status" className="mb-4 flex items-center gap-2 text-sm"><LoaderCircle className="size-4 motion-safe:animate-spin" />{c.saving}</p>}

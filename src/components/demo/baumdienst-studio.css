@@ -77,6 +77,14 @@ html.dark body:has([data-baum-studio="forest-crystal-v1"]) {
 [data-baum-studio="forest-crystal-v1"] {
   background: var(--baum-page-backdrop), hsl(var(--background));
 }
+/* The optional machine quick view lives in More, not as a second fleet launcher. */
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside { position: relative; inset: auto; display: flex; flex-direction: row; align-items: start; gap: 0; }
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside > button:first-child { display: none; }
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside > div:first-of-type { overflow: visible; padding: 0; max-height: none; }
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside > div:first-of-type > div { flex-direction: row; flex-wrap: wrap; }
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside > div:nth-of-type(2) { position: fixed; inset: auto 12px auto auto; top: 50%; transform: translateY(-50%); width: min(26rem, calc(100vw - 24px)); max-height: calc(100dvh - 24px); display: flex; flex-direction: column; }
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside > div:nth-of-type(2) > div:first-child { flex-shrink: 0; }
+[data-baum-studio="forest-crystal-v1"] [data-demo-fleet="embedded"] > aside > div:nth-of-type(2) > div:last-child { min-height: 0; max-height: none; overflow-y: auto; }
 /* A route-specific environment, with the same crystal material family. The
    server marker survives loading/errors and also scopes the existing portals. */
 body:has([data-baum-studio="forest-crystal-v1"] :where(:is([data-baum-environment="wood"], [data-baum-environment="repair"], [data-baum-environment="inventory"], [data-baum-environment="fleet"], [data-baum-environment="control"], [data-baum-environment="monitor"], [data-baum-environment="reception"]))) {
@@ -263,6 +271,9 @@ body:has([data-baum-studio="forest-crystal-v1"]) :is(input:not([type="checkbox"]
   border-radius: var(--baum-radius);
   color: hsl(var(--foreground));
 }
+body:has([data-baum-studio="forest-crystal-v1"]) select { color-scheme: light; }
+html.dark body:has([data-baum-studio="forest-crystal-v1"]) select { color-scheme: dark; }
+body:has([data-baum-studio="forest-crystal-v1"]) select option { background: hsl(var(--card)); color: hsl(var(--foreground)); }
 body:has([data-baum-studio="forest-crystal-v1"]) .baum-nav-icon[aria-current="page"] {
   color: hsl(var(--primary));
   border-color: hsl(var(--primary) / .7);

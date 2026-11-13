@@ -10,7 +10,7 @@ import { DemoPhoto, demoCoverUrl } from "./demo-photo";
 import { WorkshopAssetArt } from "./workshop-art";
 
 /** Shared fictional availability; never writes operational machines. */
-export function WorkshopFleet({ machines, now }: { machines: DemoMachine[]; now: string }) {
+export function WorkshopFleet({ machines, now, embedded = false }: { machines: DemoMachine[]; now: string; embedded?: boolean }) {
   const { state, photos, illustrations, mediaPreferences } = useWorkshopDemo(); const { currentLang } = useLanguage();
   // Recomputed only when fleet data or its media change, not on every demo render.
   const { fleet, links, assetByMachine } = useMemo(() => {
@@ -30,5 +30,5 @@ export function WorkshopFleet({ machines, now }: { machines: DemoMachine[]; now:
     return { fleet, links, assetByMachine };
   }, [machines, now, currentLang, state, photos, illustrations, mediaPreferences]);
   const renderPhoto = useCallback((machine: DemoMachine) => { const asset = assetByMachine.get(machine.id); return asset ? <DemoPhoto kind="asset" target={asset.id} alt={`${asset.name} · ${assetIdentity(asset)}`} readOnly className="size-full"><WorkshopAssetArt id={asset.id} name={asset.name} category={asset.details?.category} className="mx-auto h-full" /></DemoPhoto> : null; }, [assetByMachine]);
-  return <div data-demo-fleet className="pointer-events-none fixed inset-0 z-20 hidden lg:block [&_aside]:pointer-events-auto"><DemoMachineRail machines={fleet} initiallyOpen={false} workshopLinks={links} renderPhoto={renderPhoto} /></div>;
+  return <div data-demo-fleet={embedded ? "embedded" : "floating"} className={embedded ? "min-w-0" : "pointer-events-none fixed inset-0 z-20 hidden lg:block [&_aside]:pointer-events-auto"}><DemoMachineRail machines={fleet} initiallyOpen={embedded} workshopLinks={links} renderPhoto={renderPhoto} /></div>;
 }

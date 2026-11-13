@@ -1,3 +1,4 @@
+import { openRegistration } from "./workspace-actions";
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { resetWorkshopFixture } from "./shared-fixture";
@@ -54,7 +55,7 @@ test("vehicles use plates, optional additional tags print only after explicit as
 
 test("vehicle registration and optional label editing preserve one record through the touch form",async({page,request})=>{
   await page.setViewportSize({width:390,height:844});await page.goto("/demo/workshop?tab=fleet");
-  await page.getByRole("button",{name:"Gerät erfassen",exact:true}).click();const d=page.getByRole("dialog");
+  await openRegistration(page);const d=page.getByRole("dialog");
   await d.getByLabel("Bezeichnung",{exact:true}).fill("DEMO · Fahrzeug ohne Etikett");await d.locator('select[name="category"]').selectOption("vehicle");
   await d.getByLabel("Kennzeichen",{exact:true}).fill("MU-TEST 76");await d.getByLabel("Nächste Prüfung",{exact:true}).fill("2027-11-05");
   await d.getByRole("button",{name:"Gerät erfassen",exact:true}).click();await expect(d).toHaveAccessibleName("DEMO · Fahrzeug ohne Etikett · MU-TEST 76");

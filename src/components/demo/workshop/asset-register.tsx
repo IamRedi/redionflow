@@ -13,7 +13,7 @@ import { assetPlate, optionalAssetCode } from "@/lib/workshop/asset-identity";
 import { navigationCopy } from "@/lib/workshop/navigation-copy";
 import { studioCopy } from "@/lib/workshop/studio-copy";
 
-export function AssetRegister({ open, onClose, code = "", asset, onSaved }: { open: boolean; onClose: () => void; code?: string; asset?: WorkshopAsset; onSaved?: (id: string) => void }) {
+export function AssetRegister({ open, onClose, code = "", asset, onSaved, returnFocus }: { open: boolean; onClose: () => void; code?: string; asset?: WorkshopAsset; onSaved?: (id: string) => void; returnFocus?: { readonly current: HTMLElement | null } }) {
   const { dispatch, pending, actor, upload, generateImage, imageGenerationEnabled } = useWorkshopDemo();
   const { currentLang } = useLanguage(), c = workshopCopy(currentLang), studio = studioCopy(currentLang);
   const n = navigationCopy(currentLang);
@@ -40,7 +40,7 @@ export function AssetRegister({ open, onClose, code = "", asset, onSaved }: { op
       if (onSaved) onSaved(assetId); else onClose();
     } catch (e) { setMessage(e instanceof Error && e.message === "duplicate" ? c.codeUsed : flowError(e, c)); }
   }
-  return <WorkshopDialog open={open && actor.role === "admin"} title={asset ? c.edit : c.register} description={c.generated} closeLabel={c.close} onClose={onClose}>
+  return <WorkshopDialog returnFocus={returnFocus} open={open && actor.role === "admin"} title={asset ? c.edit : c.register} description={c.generated} closeLabel={c.close} onClose={onClose}>
     <form className="space-y-4" onSubmit={e => void submit(e)}><fieldset disabled={registered} className="space-y-4 disabled:opacity-60">
       <Field label={c.name}><input className={control} name="name" required maxLength={120} defaultValue={asset?.name} autoComplete="off" /></Field>
       <div className="grid gap-4 sm:grid-cols-2"><Field label={c.category}><select className={control} name="category" value={category} onChange={e => setCategory(e.target.value as typeof category)}><option value="tool">{c.tool}</option><option value="vehicle">{c.vehicle}</option><option value="ppe">{c.ppe}</option><option value="equipment">{c.equipment}</option></select></Field>{!asset && <Field label={c.inspection}><input className={control} type="date" name="inspection" required /></Field>}</div>

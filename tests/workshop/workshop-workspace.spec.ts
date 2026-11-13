@@ -28,7 +28,8 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
       const signature = page.getByRole("link", { name: "by RediON", exact: true });
       await expect(signature).toHaveCount(1);
       const footer = (await signature.boundingBox())!;
-      expect(Math.abs(footer.x + footer.width / 2 - size.width / 2)).toBeLessThan(2);
+      const footerRow = (await page.getByTestId("baumdienst-demo-footer").boundingBox())!;
+      expect(Math.abs(footerRow.x + footerRow.width / 2 - size.width / 2)).toBeLessThan(2);
       expect((await workspace.boundingBox())!.height).toBeGreaterThan(120);
       const dimensions = await workspace.evaluate(el => ({ width: el.getBoundingClientRect().width, outer: document.documentElement.scrollHeight, viewport: innerHeight, wide: document.documentElement.scrollWidth <= innerWidth }));
       expect(dimensions.width).toBeGreaterThan(size.width - 24);
@@ -54,9 +55,9 @@ test("fixed workshop keeps its controls, scrolls the natural legal footer, and p
           expect(await toolbar.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
           expect((await toolbar.boundingBox())!.height).toBeLessThan(size.width > 1000 ? 140 : 180);
         }
-        await expect(toolbar.getByRole("navigation").locator("a,button")).toHaveCount(wood ? 4 : 6);
+        await expect(toolbar.getByRole("navigation").locator("a,button")).toHaveCount(wood ? 4 : 0);
         if (!wood) await expect(page.getByTestId("workshop-status-line").locator("dd")).toHaveCount(3);
-        const targets = await toolbar.getByRole("navigation").locator("a,button").evaluateAll(els => els.map(el => el.getBoundingClientRect().height));
+        const targets = await page.locator("[data-demo-navigation]").locator("a,button").evaluateAll(els => els.map(el => el.getBoundingClientRect().height));
         expect(targets.every(height => height >= 44)).toBe(true);
         expect((await scroller.boundingBox())!.height).toBeGreaterThan(55);
       }

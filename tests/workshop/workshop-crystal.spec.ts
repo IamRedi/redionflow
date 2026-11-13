@@ -51,6 +51,7 @@ test("dialog portals retain the identity, focus and primary touch targets in bot
     expect((await register.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     const material = await page.getByTestId("workshop-demo").locator("article").first().evaluate(el => getComputedStyle(el).backgroundImage);
     await register.click();
+    await page.getByRole("dialog").getByRole("button", { name: "Name / neuer Barcode", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     expect(await dialog.evaluate(el => Boolean(el.closest('[data-baum-studio]')))).toBe(false);

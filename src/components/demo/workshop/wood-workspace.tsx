@@ -2,7 +2,7 @@
 import { useRef,useState,type ReactNode } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight,BookOpen,ChevronDown,CloudCheck,Package,PenLine,Plus,Search } from "lucide-react";
+import { ArrowRight,BookOpen,ChevronDown,CloudCheck,Package,PenLine,Plus } from "lucide-react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
 import { batchState } from "@/lib/factory/production";
@@ -15,6 +15,7 @@ import { WoodJobDetail,WoodPhaseMedia,WoodPhotoButton,WoodVisual } from "./wood-
 import { WoodMediaActions } from "./wood-media-actions";
 import { WoodIconArt } from "./wood-art";
 import styles from "./workshop.module.css";
+import { WorkspaceSearch } from "./workspace-search";
 
 type View="production"|"intakes"|"stock"|"catalog";
 type Modal={type:"intake"}|{type:"job";sourceId?:string}|{type:"definition";definition?:WorkDefinition}|{type:"detail";id:string}|{type:"media";id:string}|{type:"dispatch";id:string}|{type:"intake-detail";id:string};
@@ -41,7 +42,7 @@ export function WoodWorkspace({footer}:{footer?:ReactNode}){
       </div>
       <div className={styles.navigationRow}>
         <nav className={styles.tabs} aria-label={c.title}>{(["production","intakes","stock","catalog"] as const).map(tab=><button key={tab} data-ui-control="button" data-ui-variant="outline" type="button" aria-label={c[tab]} title={c[tab]} aria-current={view===tab?"page":undefined} className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${view===tab?"border-primary/40 bg-primary/10 text-primary":"bg-card"}`} onClick={()=>selectView(tab)}>{tab==="catalog"?<BookOpen className="size-4"/>:tab==="stock"?<Package className="size-4"/>:<WoodIconArt kind={tab==="production"?"split":"logs"} className="size-4"/>}<span>{c[tab]}</span></button>)}</nav>
-        <div className={styles.filters}><label className={styles.search}><Search aria-hidden="true"/><input aria-label={c.label} type="search" value={search} onChange={e=>setSearch(e.target.value)} className={`${control} pl-9`} placeholder={c.label}/></label>{(view==="catalog"||view==="production")&&<label className={styles.archiveToggle}><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)} className="size-5"/>{c.archived}</label>}</div>
+        <div className={styles.compactFilters}><WorkspaceSearch label={c.label} closeLabel={c.close} value={search} onChange={setSearch}/>{(view==="catalog"||view==="production")&&<label className={styles.archiveToggle}><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)} className="size-5"/>{c.archived}</label>}</div>
       </div>
     </header>
     <div ref={listRef} className={styles.list} data-testid="wood-scroll-region" tabIndex={0} role="region" aria-label={c[view]}>

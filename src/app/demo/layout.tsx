@@ -82,6 +82,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
           <DemoTopBar
             mode={mode}
             workshopEnabled={workshopEnabled}
+            fleetQuickView={workshopEnabled && features.machines ? <WorkshopFleet machines={machines} now={new Date().toISOString()} embedded /> : undefined}
             workers={workers.map((worker) => ({
               id: worker.id,
               firstName: worker.firstName,
@@ -101,7 +102,7 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
           ) : null}
         </div>
       </header>
-      {features.machines ? workshopEnabled ? <WorkshopFleet machines={machines} now={new Date().toISOString()} /> : <DemoMachineRail machines={machines} /> : null}
+      {features.machines && !workshopEnabled ? <DemoMachineRail machines={machines} /> : null}
       <LiveRefreshListener enabled />
       {workshopEnabled ? <FleetInspectionProvider rows={machines.map(m => ({ plate: m.targe ?? "", hu: m.tuvDate?.toISOString() ?? null, sp: m.spDate?.toISOString() ?? null, uvv: m.uvvDate?.toISOString() ?? null }))}><DemoWorkspace footer={<BaumdienstDemoFooter lang={demoLanguage} />}>{children}</DemoWorkspace></FleetInspectionProvider> : <div className="mx-auto max-w-6xl lg:pr-20">
         <main className="px-5 pb-24 pt-4 lg:pb-6 print:max-w-none print:px-0 print:py-0">{children}</main>

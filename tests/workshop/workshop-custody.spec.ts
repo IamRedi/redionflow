@@ -1,3 +1,4 @@
+import { openRegistration, openScanner } from "./workspace-actions";
 import { switchDemoRole } from "./demo-role";
 import { expect, test } from "@playwright/test";
 import { randomUUID } from "node:crypto";
@@ -8,15 +9,15 @@ const api="/api/demo/baumdienst/workshop";
 test.beforeEach(async ({context},info)=>{await resetWorkshopFixture(); await context.addCookies([{name:"bk_lang",value:"de",url:String(info.project.use.baseURL)}]); await context.route("https://*.tile.openstreetmap.org/**",r=>r.abort());});
 
 test("register once with photo, scan stable identity, printable label, metadata and duplicate protection",async({page,request},info)=>{
-  await page.setViewportSize({width:390,height:844}); await page.goto("/demo/workshop?tab=tools"); await page.getByRole("button",{name:"Gerät erfassen",exact:true}).click();
+  await page.setViewportSize({width:390,height:844}); await page.goto("/demo/workshop?tab=tools"); await openRegistration(page);
   const d=page.getByRole("dialog"); expect(await d.getByLabel("Kennzeichen / Inventarnummer",{exact:true}).evaluate(el=>{const pattern=new RegExp(`^(?:${(el as HTMLInputElement).pattern})$`,"v"); return pattern.test("DEMO/42") && !pattern.test("bad_code");})).toBe(true); await d.getByLabel("Bezeichnung",{exact:true}).fill("DEMO · Akku-Freischneider"); await d.getByLabel("Nächste Prüfung",{exact:true}).fill("2027-11-05");
   await d.getByText("Technische Angaben",{exact:true}).click(); await d.getByLabel("Seriennummer",{exact:true}).fill("DEMO-SERIAL-42");
   const png=await sharp({create:{width:200,height:150,channels:3,background:"#315c46"}}).png().toBuffer(); await d.locator('input[name="photo"]').setInputFiles({name:"DEMO-tool.png",mimeType:"image/png",buffer:png});
   await d.getByRole("button",{name:"Gerät erfassen",exact:true}).click(); await expect(d).toContainText("Firmenlager");
   let s=await (await request.get(api)).json() as WorkshopSnapshot; const asset=s.state.assets.find(a=>a.name==="DEMO · Akku-Freischneider")!; expect(asset.id).toMatch(/^[\da-f-]{36}$/); expect(asset.code).toMatch(/^BF-/); expect(s.photos.some(p=>p.target===asset.id)).toBe(true); expect(s.state.custody.fileEvents[0].actor.key).toBe("admin");
   await d.getByText(`Barcode · ${asset.code}`,{exact:false}).click(); const print=d.getByRole("link",{name:"Etikett drucken",exact:true}); await expect(print).toHaveAttribute("href",`/demo/inventory/print?asset=${asset.id}`); await page.goto(await print.getAttribute("href") as string); await expect(page.locator('[data-label-print]')).toContainText(asset.code); await expect(page.locator('[data-label-print]')).toContainText("DEMO-SERIAL-42");
-  await page.goto("/demo/workshop?tab=tools"); await page.getByRole("button",{name:"Scannen",exact:true}).click(); await page.getByLabel("Barcode / NFC-Code").fill(asset.code); await page.getByRole("button",{name:"Gerät öffnen",exact:true}).click(); await expect(d).toHaveAccessibleName(`${asset.name} · ${asset.code}`);
-  await d.getByRole("button",{name:"Schließen",exact:true}).click(); await page.getByRole("button",{name:"Gerät erfassen",exact:true}).click(); await d.getByLabel("Bezeichnung",{exact:true}).fill("DEMO duplicate"); await d.getByLabel("Nächste Prüfung",{exact:true}).fill("2027-11-05"); await d.getByLabel("Kennzeichen / Inventarnummer",{exact:true}).fill(asset.code); await d.getByRole("button",{name:"Gerät erfassen",exact:true}).click(); await expect(d.getByRole("alert")).toContainText("bereits registriert");
+  await page.goto("/demo/workshop?tab=tools"); await openScanner(page); await page.getByLabel("Barcode / NFC-Code").fill(asset.code); await page.getByRole("button",{name:"Gerät öffnen",exact:true}).click(); await expect(d).toHaveAccessibleName(`${asset.name} · ${asset.code}`);
+  await d.getByRole("button",{name:"Schließen",exact:true}).click(); await openRegistration(page); await d.getByLabel("Bezeichnung",{exact:true}).fill("DEMO duplicate"); await d.getByLabel("Nächste Prüfung",{exact:true}).fill("2027-11-05"); await d.getByLabel("Kennzeichen / Inventarnummer",{exact:true}).fill(asset.code); await d.getByRole("button",{name:"Gerät erfassen",exact:true}).click(); await expect(d.getByRole("alert")).toContainText("bereits registriert");
   s=await (await request.get(api)).json() as WorkshopSnapshot; expect(s.state.assets.filter(a=>a.code===asset.code)).toHaveLength(1);
   await page.screenshot({path:info.outputPath("registration-phone.png")});
 });
