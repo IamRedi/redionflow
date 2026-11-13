@@ -2,8 +2,6 @@
 
 import { useMapOperationalStatuses, useWorkzoneMapMode } from './workzone-map-fleet';
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type RefObject } from "react";
 import * as Dialog from '@radix-ui/react-dialog';
 import Link from "next/link";
@@ -12,6 +10,7 @@ import { mapsLink } from "@/lib/fleet/location-link";
 import { fleetCopy } from "@/lib/fleet/copy";
 import { fleetTime } from "@/lib/fleet/format";
 import { AssetPhoto } from "@/components/asset-photo";
+import { AssetThumbnail } from '@/components/asset-thumbnail';
 import { createPortal } from "react-dom";
 import { AlertTriangle, Ban, Lock, LockOpen, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, PenLine, Wrench, X } from "lucide-react";
 import { FleetDock } from '@/components/company-assets/fleet-dock';
@@ -377,7 +376,7 @@ export function MachineSidebar({
                   )}
                 >
                   {machine.imageUrl ? (
-                    <img src={machine.imageUrl} alt={label} className="size-full object-cover" />
+                    <AssetThumbnail src={machine.imageUrl} shape="4x3" sizes="64px" alt={label} className="size-full object-cover" />
                   ) : (
                     <MachineArt kind={machineKind(machine)} animate={false} className="size-full p-0.5" />
                   )}

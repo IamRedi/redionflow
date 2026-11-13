@@ -4,6 +4,7 @@ import { Check, HardHat, Loader2, MapPin, Pencil, Search, Truck, X } from "lucid
 import { useMemo, useState, useTransition } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
+import { AssetThumbnail } from '@/components/asset-thumbnail';
 import { AssetOperationalStatusBadge } from '@/components/company-assets/shared';
 import { assetCopy } from '@/components/company-assets/copy';
 import { useMapOperationalStatuses } from './workzone-map-fleet';
@@ -25,8 +26,7 @@ type DraggableWorker = { id: string; name: string; licenses: string | null; avai
 /** Small vehicle photo for the plan (the one from Flota); a truck icon when there is none. */
 function MachineThumb({ src, className }: { src?: string | null; className: string }) {
   return src
-    // eslint-disable-next-line @next/next/no-img-element
-    ? <img src={src} alt="" loading="lazy" className={`${className} shrink-0 rounded-lg border bg-muted object-cover`} />
+    ? <AssetThumbnail src={src} sizes="48px" alt="" className={`${className} shrink-0 rounded-lg border bg-muted object-cover`} />
     : <span className={`${className} grid shrink-0 place-items-center rounded-lg border bg-muted text-sky-600 dark:text-sky-400`} aria-hidden><Truck className="size-4" /></span>;
 }
 
