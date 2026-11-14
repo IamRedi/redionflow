@@ -11,6 +11,7 @@ import { adminGetSitePhaseDocuments, adminGetSitePhaseDocumentReceipts, phaseDoc
 import type { createDocumentResolution } from './document-resolution';
 import { adminGetWorkforceStatus, workforceStatusInput } from './workforce-status';
 import type { WorkforceIntent } from './workforce-answer';
+import { adminGetSteelDailyReport } from './daily-report';
 
 // An empty search string means "no filter" (models sometimes send query: "").
 const text = z.string().trim().max(180);
@@ -81,8 +82,13 @@ export function companyAssistantTools(requester: RequesterContext, steel = false
   };
 }
 
-export function steelAssistantTools(requester: RequesterContext, turn: Turn, documents: ReturnType<typeof createDocumentResolution>): ToolSet {
+export function steelAssistantTools(requester: RequesterContext, turn: Turn, documents: ReturnType<typeof createDocumentResolution>, globalDailyReport = false): ToolSet {
   return {
+    adminGetSteelDailyReport: {
+      description: 'Steel daily report: recorded hours/worker counts, confirmations by list/process, projects and selected phases. Not trees or checker productivity. date YYYY-MM-DD; optional workerId from worker search for a personal report, including bounded workbook notes/sessions. Exact totals are separate from detail pages; historical unclosed hours stay unknown.',
+      inputSchema: z.object({ date: date.optional(), workerId: id.optional() }),
+      execute: input => adminGetSteelDailyReport(requester, { date: globalDailyReport ? turn.singleDate ?? turn.today : assistantToolDate(turn, input.date) ?? turn.today, ...(!globalDailyReport && input.workerId ? { workerId: input.workerId } : {}) }),
+    },
     adminGetSitePhaseDocuments: {
       description: 'Which documents does a steel site have? Use exact projectName or discovered projectId; duplicate names require selection. Lists six-phase document metadata, exact filtered counts and version-specific receipt counts. Defaults current unarchived versions; includeArchived only for requested history. Optional title/filename query and phase filter; bounded cursor pages. Does not read file contents or general site files.',
       inputSchema: phaseDocumentListInput,

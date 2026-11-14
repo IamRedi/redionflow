@@ -33,6 +33,8 @@ const state = vi.hoisted(() => ({
   assetSourceCall: null as { toolName: 'adminSearchCompanyAssets' | 'adminGetCompanyWorkshop' | 'adminGetWorkforceStatus'; input: Record<string, unknown> } | null,
   assetResult: null as unknown,
   documentResult: null as unknown,
+  dailyResult: null as unknown,
+  dailySourceCall: false,
   documentReceipts: vi.fn(),
 }));
 // Access per person is covered by access.integration.test.ts.
@@ -78,6 +80,7 @@ vi.mock('ai', async original => ({ ...await original<typeof import('ai')>(), str
     if (state.assetSourceCall) {
       await options.tools[state.assetSourceCall.toolName].execute(state.assetSourceCall.input, { toolCallId: 'synthetic-asset', messages: [] });
     }
+    if (state.dailySourceCall) await options.tools.adminGetSteelDailyReport.execute({ workerId: 'model-invented-filter', date: '2020-01-01' }, { toolCallId: 'synthetic-daily', messages: [] });
     yield { type: 'start-step' };
     if (state.streamFailure) {
       yield { type: 'text-delta', text: 'Partial synthetic answer' };
@@ -110,6 +113,7 @@ vi.mock('@/lib/assistant/steel-tools', () => Object.fromEntries([
 vi.mock('@/lib/assistant/company-tools', () => Object.fromEntries([
   'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory',
 ].map(name => [name, async (...args: unknown[]) => { state.toolCalls.push({ name, args }); return { ok: true, rows: [] }; }])));
+vi.mock('@/lib/assistant/daily-report', () => ({ adminGetSteelDailyReport: async (...args: unknown[]) => { state.toolCalls.push({ name: 'adminGetSteelDailyReport', args }); return state.dailyResult ?? { ok: false }; } }));
 vi.mock('@/lib/assistant/project-activity', () => ({ adminGetStartedSteelProjects: async (...args: unknown[]) => { state.toolCalls.push({ name: 'adminGetStartedSteelProjects', args }); return { ok: true, totalMatches: 2, projects: [{ name: 'Synthetic site' }] }; } }));
 vi.mock('@/lib/assistant/asset-tools', () => Object.fromEntries([
   'adminSearchCompanyAssets', 'adminGetCompanyWorkshop',
@@ -138,6 +142,7 @@ beforeEach(() => {
   state.summaryResult = null; state.sourceCall = null;
   state.assetResult = null; state.assetSourceCall = null; state.workforceResult = null;
   state.documentResult = null;
+  state.dailyResult = null; state.dailySourceCall = false;
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
 
@@ -204,7 +209,8 @@ it('uses the real steel registry while omitting legacy tree/calculation/dashboar
   const registered = Object.keys(options().tools);
   expect(registered).not.toContain('getAssistantCapabilities');
   for (const name of ['adminSearchSteelProjects', 'adminSearchSteelElements', 'adminGetSteelElement', 'adminGetSteelProductionSummary', 'adminGetSteelProductionEvidence', 'adminGetSteelProjectBatches', 'adminSearchCompanyWorkers', 'adminSearchCompanyFleet', 'adminGetCompanyFuelReceipts', 'adminSearchCompanyInventory', 'adminSearchCompanyAssets', 'adminGetCompanyWorkshop']) expect(registered).toContain(name);
-  for (const name of ['getEquipmentStatus', 'adminGetDashboardSnapshot', 'adminListBaustellenOverview', 'adminListProjects', 'getMyDailyReport']) expect(registered).not.toContain(name);
+  for (const name of ['getEquipmentStatus', 'adminGetDashboardSnapshot', 'adminListBaustellenOverview', 'adminListProjects', 'getMyDailyReport', 'adminGetTeamDailyReport', 'adminGetWorkerDailyReport', 'adminGetOwnDailyReport']) expect(registered).not.toContain(name);
+  expect(registered).toContain('adminGetSteelDailyReport');
   expect(options().system).toContain('AL STEEL DATA ROUTING'); expect(options().temperature).toBe(0);
   expect(state.generationFinish).toHaveBeenCalledWith({ finishReason: 'stop', totalUsage: { totalTokens: 321 } });
   expect(state.settle).toHaveBeenCalledExactlyOnceWith(321);
@@ -216,6 +222,29 @@ it('retains legacy operational tools for a general company and does not register
   for (const name of ['adminGetDashboardSnapshot', 'adminListBaustellenOverview', 'adminListProjects', 'getEquipmentStatus']) expect(options().tools).toHaveProperty(name);
   expect(options().tools).not.toHaveProperty('adminSearchSteelProjects'); expect(options().tools).not.toHaveProperty('getAssistantCapabilities'); expect(options().system).toContain('GENERAL DASHBOARD ROUTING');
   expect(options().tools).not.toHaveProperty('adminSearchCompanyAssets'); expect(options().tools).not.toHaveProperty('adminGetCompanyWorkshop');
+  expect(options().tools).toHaveProperty('adminGetTeamDailyReport'); expect(options().tools).not.toHaveProperty('adminGetSteelDailyReport');
+});
+
+it('forces a broad dated report through steel facts, discards invented narrowing and archives the same canonical answer', async () => {
+  state.dailySourceCall = true; state.responseText = '**4 trees**, 6.25 hours';
+  state.dailyResult = { ok: true, date: '2026-10-31', worker: null, source: { readOnly: true, snapshot: 'repeatable-read' },
+    attendance: { recordedWorkers: 3, sessionRows: 3, closedRows: 3, openRows: 0, totalHours: 23.5, complete: true, workers: [], workersComplete: false },
+    production: { checks: 0, projectCount: 0, projects: [], projectsComplete: true, processCount: 0, processes: [], processesComplete: true }, selectedPhasesConfirmed: 4 };
+  const response = await POST(request('Me jep nje raport per dje')), answer = await response.text();
+  expect(options().prepareStep({ stepNumber: 0 }).toolChoice).toEqual({ type: 'tool', toolName: 'adminGetSteelDailyReport' });
+  expect(state.toolCalls).toContainEqual({ name: 'adminGetSteelDailyReport', args: [expect.objectContaining({ adminId: 'admin-demo', companyId: 'company-demo' }), { date: '2026-10-31' }] });
+  expect(answer).toContain('23,5'); expect(answer).not.toMatch(/trees|6[.,]25|\*\*/u);
+  expect(state.historyFinish).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ answer, diagnostics: expect.objectContaining({ canonicalDailyReport: { canonicalDailyReportApplied: true, canonicalDailyReportVerified: true } }) }));
+});
+it('does not pass a made-up daily report through when the new source fails', async () => {
+  state.dailySourceCall = true; state.responseText = 'Everything is complete, 999 trees';
+  const answer = await (await POST(request('Me jep nje raport per dje'))).text();
+  expect(answer).toContain('Nuk mund ta konfirmoj'); expect(answer).not.toContain('999');
+});
+it('does not let the provider invent a historical date for an undated company report', async () => {
+  state.dailySourceCall = true;
+  await (await POST(request('Raporti ditor'))).text();
+  expect(state.toolCalls).toContainEqual({ name: 'adminGetSteelDailyReport', args: [expect.anything(), { date: '2026-11-01' }] });
 });
 it.each([
   ['Kujt i është dorëzuar trapan Bosch?', 'adminSearchCompanyAssets'],

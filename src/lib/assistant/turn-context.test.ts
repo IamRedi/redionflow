@@ -68,6 +68,10 @@ describe('company-calendar grounding', () => {
   it('does not inherit an old date into a new standalone question', () => {
     expect(turn('Sa kg më 2025-01-01?', 'Cilët punëtorë janë aktivë?').singleDate).toBeNull();
   });
+  it.each(['Me jep detaje', 'details', 'more details', 'dammi dettagli', 'arata detalii', 'pokaz szczegoly'])('keeps the requested day for a details-only follow-up: %s', question => {
+    expect(turn('Me jep nje raport per dje', question)).toMatchObject({ shortFollowUp: true, singleDate: '2026-10-31' });
+    expect(turn('Me jep nje raport per dje', `${question} te nje projekt i ri`).singleDate).toBeNull();
+  });
   it('does not carry a previous historical day into a current-month follow-up', () => {
     expect(turn('Sa kg më 2025-01-01?', 'po këtë muaj?')).toMatchObject({ currentMonthRequested: true, currentMonth: '2026-11', singleDate: null });
     expect(turn('Sa kg më 2025-01-01?', 'po këtë muaj?', 'edhe te Agroni?')).toMatchObject({ currentMonthRequested: true, singleDate: null });
