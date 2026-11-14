@@ -57,8 +57,8 @@ export function ScanGatewayDialog({open,title,description,value,onDetected,onCan
   }
   return <Dialog.Root open={open} onOpenChange={next=>{if(!next)cancel();}}>
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-[1700] bg-black/50"/>
-      <Dialog.Content aria-describedby={description?descriptionId:undefined} onOpenAutoFocus={()=>{opener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;}} onCloseAutoFocus={event=>{event.preventDefault();if(opener.current?.isConnected)opener.current.focus({preventScroll:true});}} className="fixed inset-x-3 top-1/2 z-[1701] flex max-h-[calc(100dvh-1.5rem)] -translate-y-1/2 flex-col overflow-hidden rounded-2xl border bg-background text-foreground shadow-xl sm:inset-x-auto sm:left-1/2 sm:w-[min(32rem,calc(100vw-1.5rem))] sm:-translate-x-1/2">
+      <Dialog.Overlay data-studio-scan-overlay className="fixed inset-0 z-[1700] bg-black/50"/>
+      <Dialog.Content data-studio-scan-dialog aria-describedby={description?descriptionId:undefined} onOpenAutoFocus={()=>{opener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;}} onCloseAutoFocus={event=>{event.preventDefault();if(opener.current?.isConnected)opener.current.focus({preventScroll:true});}} className="fixed inset-x-3 top-1/2 z-[1701] flex max-h-[calc(100dvh-1.5rem)] -translate-y-1/2 flex-col overflow-hidden rounded-2xl border bg-background text-foreground shadow-xl sm:inset-x-auto sm:left-1/2 sm:w-[min(32rem,calc(100vw-1.5rem))] sm:-translate-x-1/2">
         <div className="flex shrink-0 items-center gap-3 px-4 py-2"><Dialog.Title className="min-w-0 flex-1 text-base font-semibold">{title}</Dialog.Title><button type="button" className={button} aria-label={t('common.close',currentLang)} onClick={cancel}><X size={18}/></button></div>
         <div className="no-scrollbar min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">
           {description?<Dialog.Description id={descriptionId} className="mb-3 text-sm text-muted-foreground">{description}</Dialog.Description>:null}

@@ -1,0 +1,59 @@
+{
+  "tool": "built-in image_gen",
+  "mode": "generate",
+  "model": "Not exposed by built-in tool",
+  "sourceDocumentation": "https://developers.openai.com/api/docs/guides/image-generation",
+  "style": "Accepted BauFlow Musterfirma fleet, graphite/copper transparent product photographs",
+  "assets": [
+    {
+      "key": "akku-schlagschrauber",
+      "prompt": "Use case: product-mockup. A single original photorealistic premium catalogue photograph for the fictional BauFlow Musterfirma steel-construction equipment inventory. Realistic professional industrial object, physically credible parts. Consistent family style: graphite and warm charcoal body, small brushed copper-orange accents, satin metal hardware, gentle warm-neutral studio light from upper left, precise material textures, clean three-quarter view slightly from above. Entire item clearly visible with generous 10 percent margin on every edge, centered, filling about 75 percent of a 4:3 landscape frame. Truly transparent background alpha, only a subtle soft contact shadow underneath. No environment, no platform, no colored rectangle, no people or hands, no text, no logos, no brands, no label, no watermark, no AI badge. This is an illustrative generic sample, not a real branded product. Subject: one compact cordless impact wrench with mounted rectangular battery, black rubber pistol grip, metal short square-drive anvil facing toward the left; no loose additional batteries or accessories.",
+      "file": "akku-schlagschrauber.webp",
+      "width": 896,
+      "height": 672,
+      "originalSHA256": "11e7e0b8e94c387743b0a1b553619367b657e7978a873393dd8000d815fb503b",
+      "sha256": "70d83290905d1b3bcb7261b9ba06b6f83bdc02f9b9d700626f09710c10f1ec56",
+      "bytes": 52744
+    },
+    {
+      "key": "winkelschleifer",
+      "prompt": "Use case: product-mockup. A single original photorealistic premium catalogue photograph for the fictional BauFlow Musterfirma steel-construction equipment inventory. Realistic professional industrial object, physically credible parts. Consistent family style: graphite and warm charcoal body, small brushed copper-orange accents, satin metal hardware, gentle warm-neutral studio light from upper left, precise material textures, clean three-quarter view slightly from above. Entire item clearly visible with generous 10 percent margin on every edge, centered, filling about 75 percent of a 4:3 landscape frame. Truly transparent background alpha, only a subtle soft contact shadow underneath. No environment, no platform, no colored rectangle, no people or hands, no text, no logos, no brands, no label, no watermark, no AI badge. This is an illustrative generic sample, not a real branded product. Subject: one professional angle grinder, round grinding disc with proper safety guard and perpendicular auxiliary grip, complete body and short folded electrical cord neatly visible; no sparks, no detached accessories.",
+      "file": "winkelschleifer.webp",
+      "width": 896,
+      "height": 672,
+      "originalSHA256": "b106c513fe24bf0e629b85d7daab7692a1cd3b7cf125b42932cd28c1ae00fe69",
+      "sha256": "9558f1536868dfdc3dfb2be41a80afe2ba90a978e8bd24ab3274e5950baf0e36",
+      "bytes": 102820
+    },
+    {
+      "key": "rotationslaser",
+      "prompt": "Use case: product-mockup. A single original photorealistic premium catalogue photograph for the fictional BauFlow Musterfirma steel-construction equipment inventory. Realistic professional industrial object, physically credible parts. Consistent family style: graphite and warm charcoal body, small brushed copper-orange accents, satin metal hardware, gentle warm-neutral studio light from upper left, precise material textures, clean three-quarter view slightly from above. Entire item clearly visible with generous 10 percent margin on every edge, centered, filling about 75 percent of a 4:3 landscape frame. Truly transparent background alpha, only a subtle soft contact shadow underneath. No environment, no platform, no colored rectangle, no people or hands, no text, no logos, no brands, no label, no watermark, no AI badge. This is an illustrative generic sample, not a real branded product. Subject: one precision rotary construction laser level, compact cube-shaped instrument on a sturdy short three-leg adjustable metal survey tripod, complete tripod visible, small protected optical head and control buttons with no readable text; no projected laser lines or beams.",
+      "file": "rotationslaser.webp",
+      "width": 896,
+      "height": 672,
+      "originalSHA256": "6b3072b4e68eee2efa302b69472a0b4cd27d5eeb5c847b9b1e83bfcc71a62d65",
+      "sha256": "a0faf80f32c8f5256ad8d98f330650e7b50524813c13dab9c8132ea6b14f4c0b",
+      "bytes": 59110
+    },
+    {
+      "key": "schweissgeraet",
+      "prompt": "Use case: product-mockup. A single original photorealistic premium catalogue photograph for the fictional BauFlow Musterfirma steel-construction equipment inventory. Realistic professional industrial object, physically credible parts. Consistent family style: graphite and warm charcoal body, small brushed copper-orange accents, satin metal hardware, gentle warm-neutral studio light from upper left, precise material textures, clean three-quarter view slightly from above. Entire item clearly visible with generous 10 percent margin on every edge, centered, filling about 75 percent of a 4:3 landscape frame. Truly transparent background alpha, only a subtle soft contact shadow underneath. No environment, no platform, no colored rectangle, no people or hands, no text, no logos, no brands, no label, no watermark, no AI badge. This is an illustrative generic sample, not a real branded product. Subject: one professional compact wheeled MIG/MAG welding machine, graphite steel enclosure with top handle, two small dials, neat front ventilation slots, copper-orange corner accents, short neatly coiled welding torch lead with black torch and separate ground clamp. Complete machine and connected leads clearly visible, no gas cylinder, no welding activity or sparks.",
+      "file": "schweissgeraet.webp",
+      "width": 896,
+      "height": 672,
+      "originalSHA256": "6814487b83541aacb170063b2f6a6e22d87db8f316c59250b52b12e6bda7d8f2",
+      "sha256": "57031a7e157dcc56de6de3e5345be15c434346338991759a0956797d1c02ceb3",
+      "bytes": 103248
+    },
+    {
+      "key": "drehmomentschluessel",
+      "prompt": "Use case: product-mockup. A single original photorealistic premium catalogue photograph for the fictional BauFlow Musterfirma steel-construction equipment inventory. Realistic professional industrial object, physically credible parts. Consistent family style: graphite and warm charcoal body, small brushed copper-orange accents, satin metal hardware, gentle warm-neutral studio light from upper left, precise material textures, clean three-quarter view slightly from above. Entire item clearly visible with generous 10 percent margin on every edge, centered, filling about 75 percent of a 4:3 landscape frame. Truly transparent background alpha, only a subtle soft contact shadow underneath. No environment, no platform, no colored rectangle, no people or hands, no text, no logos, no brands, no label, no watermark, no AI badge. This is an illustrative generic sample, not a real branded product. Subject: one long professional click-type torque wrench, polished brushed steel shaft, clearly articulated ratchet head and square drive, textured graphite rubber handle with a small copper-orange adjustment collar, lying diagonally in a shallow three-quarter view. One wrench only, no sockets, no case, no readable scales or text.",
+      "file": "drehmomentschluessel.webp",
+      "width": 896,
+      "height": 672,
+      "originalSHA256": "66ea5e857663a19cb3a3ca0aa2ac88aa6baa8a516c6f90c83258000a60e64ada",
+      "sha256": "6e290d23dc7bf9a64a5446f9b35531b23d6378b5f42f049653053eae771d0451",
+      "bytes": 47268
+    }
+  ]
+}
