@@ -105,6 +105,7 @@ test('steel workspace uses the screen, compact calendar, quiet footer and compan
     if (!baseline) {
       await page.setViewportSize({ width: 1440, height: 950 });
       await page.goto('/app/admin#machines');
+      await page.getByTestId('staff-tab-fleet').click();
       await page.getByRole('link', { name: 'Karburanti', exact: true }).click();
       await expect(page).toHaveURL(/\/app\/machines\/fuel$/);
       await expect(page.locator('input[type="file"]')).toHaveCount(0);
