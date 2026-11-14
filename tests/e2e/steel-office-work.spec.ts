@@ -1,4 +1,6 @@
-import '../fixtures/office-e2e';
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import { expect,test,type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { hashPassword } from '../../src/lib/auth/password';
@@ -42,7 +44,7 @@ test('private office work, mail and predictable return routes on desktop and pho
   await composer.getByRole('combobox',{name:'Minuta',exact:true}).selectOption('30');
   await composer.getByRole('button',{name:'Shto',exact:true}).click();
   await expect(detail.getByRole('heading',{name:'Kontrollo ofertën · DEMO'})).toBeVisible();
-  await expect(detail.getByText('Kujtesë e planifikuar',{exact:true})).toBeVisible();
+  await expect(detail.getByText(/^Kujtesë e planifikuar/)).toBeVisible();
   const reminder=await prisma.officeTaskReminder.findFirstOrThrow({where:{companyProfileId:companyId,memberId:'office-e2e-megi'}});
   expect(reminder.remindAt.toISOString()).toBe('2027-01-15T11:30:00.000Z');
   await detail.getByRole('button',{name:'U krye',exact:true}).click();

@@ -1,4 +1,6 @@
-import '../fixtures/office-e2e';
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import { expect, test, type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { createSessionCookie } from '../../src/lib/auth/session-cookie';

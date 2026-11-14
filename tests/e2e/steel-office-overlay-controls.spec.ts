@@ -1,5 +1,7 @@
 import { expect, test, type Locator } from '@playwright/test';
-import '../fixtures/office-e2e';
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import { writeFile, mkdir } from 'node:fs/promises';
 import { prisma } from '../../src/lib/db/prisma';
 import { createSessionCookie } from '../../src/lib/auth/session-cookie';

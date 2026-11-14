@@ -1,4 +1,6 @@
-import '../fixtures/office-e2e';
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import { expect, test, type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { hashPassword } from '../../src/lib/auth/password';
@@ -75,10 +77,10 @@ test('office reception, private visit, access and responsive shell', async ({ pa
   await page.setViewportSize({width:390,height:844});
   await page.goto('/workzone');
   await expect(page.getByTestId('office-entry')).toHaveCount(0);
-  await page.getByTestId('office-header-entry').click();
+  await page.getByTestId('office-header-entry').filter({visible:true}).click();
   await expect(page.getByTestId('office-interior')).toBeVisible();
   await page.goto('/app/dashboard');
-  await expect(page.getByTestId('office-header-entry')).toBeVisible();
+  await expect(page.getByTestId('office-header-entry').filter({visible:true})).toBeVisible();
   // Almet can enter reception, but sees no Megi desktop links/private payload.
   await login(context,'office-e2e-almet');
   await page.goto('/workzone/offices/megi');
