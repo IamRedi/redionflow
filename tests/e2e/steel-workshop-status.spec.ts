@@ -189,6 +189,8 @@ test('current phase stays consistent across map, fleet, detail and return; faile
     await machine.getByRole('button', { name: c.workshop, exact: true }).click();
     await expect(detail(page)).toBeVisible();
     await expect(status(detail(page))).toHaveAttribute('data-phase', 'reported');
+    // The vehicle service entry is the compact summary; open its current job.
+    await detail(page).getByRole('button', { name: c.openRepair, exact: true }).click();
     await detail(page).getByRole('button', { name: c.receive, exact: true }).click();
     await expect(status(detail(page))).toHaveAttribute('data-phase', 'received');
     await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
