@@ -24,22 +24,25 @@ test("site opens over the same Workzone, trees expand on demand and nested detai
     await link.click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toHaveAccessibleName(title);
-    await expect(dialog.getByRole("button", { name: /^Bäume/ })).toHaveAttribute("aria-expanded", "false");
+    await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", "overview");
+    await expect(dialog.getByTestId("muster-site-overview")).toBeVisible();
     await expect(dialog.getByTestId("muster-tree-grid")).toHaveCount(0);
     await expect(page).toHaveURL(/\/demo\/workzone$/);
     await expect(canvas).toHaveAttribute("data-preservation-proof", "same-mounted-canvas");
     expect(await dialog.evaluate(element => { const r = element.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight && element.scrollWidth <= element.clientWidth; })).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1)).toBe(true);
-    await page.screenshot({ path: info.outputPath(`site-${theme}-${size.width}-${size.height}.png`) });
+    await page.screenshot({ animations: "disabled", path: info.outputPath(`site-${theme}-${size.width}-${size.height}.png`) });
     const toggle = dialog.getByRole("button", { name: /^Bäume/ });
-    await toggle.click(); await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await toggle.click(); await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", "trees");
+    await expect(dialog.getByTestId("muster-site-overview")).toHaveCount(0);
     const grid = dialog.getByTestId("muster-tree-grid"); await expect(grid).toBeVisible();
     await grid.locator("article").last().scrollIntoViewIfNeeded();
     await expect(grid.locator("article").last()).toBeInViewport();
     const details = grid.getByRole("button", { name: /^Baumdetails/ }).last();
     await details.click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Sicherheitsmaterial", exact: true })).toBeVisible();
     await page.keyboard.press("Escape"); await expect(details).toBeFocused();
-    await toggle.click(); await expect(grid).toHaveCount(0);
+    await dialog.getByRole("button", { name: "Zurück zur Baustelle", exact: true }).click(); await expect(grid).toHaveCount(0);
+    await expect(toggle).toBeFocused();
     await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(link).toBeFocused();
     const afterBox = await card.boundingBox(); expect(afterBox?.x).toBeCloseTo(box!.x, 0); expect(afterBox?.y).toBeCloseTo(box!.y, 0);
@@ -61,7 +64,7 @@ test("deep links, retry, keyboard and enlarged text keep site controls reachable
   const dialog = page.getByRole("dialog");
   expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   const trees = dialog.getByRole("button", { name: /^Bäume/ });
-  await trees.press("Enter"); await expect(trees).toHaveAttribute("aria-expanded", "true");
+  await trees.press("Enter"); await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", "trees");
   const grid = dialog.getByTestId("muster-tree-grid");
   expect(await grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(1);
   expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
@@ -77,4 +80,50 @@ test("deep links, retry, keyboard and enlarged text keep site controls reachable
   const missing = await request.get("/api/demo/baumdienst/sites/not-owned"); expect(missing.status()).toBe(404);
   expect((await request.get("/api/demo/baumdienst/sites/invalid%21")).status()).toBe(400);
   expect((await request.post(`/api/demo/baumdienst/sites/${site.id}`, { data: {} })).status()).toBe(405);
+});
+
+
+test("tree filters share one clean card and map while the species studio and site sections remain reachable", async ({ page, context, request }, info) => {
+  const before = await (await request.get("/api/demo/baumdienst/workshop")).json();
+  const site = before.directory.sites.find((entry: { name: string }) => entry.name.includes("Lindenallee"));
+  const detail = await (await request.get(`/api/demo/baumdienst/sites/${site.id}`)).json();
+  const done = detail.trees.filter((tree: { treeId: string; status: string }) => (before.state.custody.trees[`${site.key}:${tree.treeId}`]?.status || tree.status) === "done").length;
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 }); await page.goto(`/demo/baustellen/${site.id}`);
+    const dialog = page.getByRole("dialog");
+    expect(await dialog.getByRole("heading", { name: site.name, exact: true }).evaluate(element => getComputedStyle(element.parentElement!.parentElement!).textAlign)).toBe("center");
+    await dialog.getByRole("button", { name: "Bäume", exact: true }).click();
+    const grid = dialog.getByTestId("muster-tree-grid"); await expect(grid.locator("article")).toHaveCount(detail.trees.length);
+    const completed = dialog.locator('[data-tree-filter="done"]'); await completed.click(); await expect(completed).toHaveAttribute("aria-pressed", "true");
+    await expect(grid.locator("article")).toHaveCount(done); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") === "done"))).toBe(true);
+    await dialog.getByRole("button", { name: "Karte", exact: true }).click(); await expect(grid).toHaveCount(0); await expect(dialog.getByTestId("muster-tree-map")).toBeVisible();
+    const doneCodes = new Set(detail.trees.filter((tree: { treeId: string; status: string }) => (before.state.custody.trees[`${site.key}:${tree.treeId}`]?.status || tree.status) === "done").map((tree: { treeId: string }) => tree.treeId));
+    await expect(dialog.locator(".leaflet-marker-icon")).toHaveCount(detail.points.filter((point: { treeId: string }) => doneCodes.has(point.treeId)).length);
+    await dialog.locator(".leaflet-marker-icon").first().focus(); await page.keyboard.press("Enter"); await dialog.getByRole("button", { name: "Baumdetails", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Sicherheitsmaterial", exact: true })).toBeVisible(); await expect(page.getByRole("dialog").getByRole("button", { name: "Artenkarte öffnen", exact: true })).toBeFocused(); await expect(page.getByRole("dialog")).toHaveCSS("pointer-events", "auto"); await page.keyboard.press("Escape"); await expect(dialog.getByRole("heading", { name: "Bäume", exact: true })).toBeVisible();
+    await dialog.locator('[data-tree-filter="todo"]').click();
+    await dialog.getByRole("button", { name: "Baumkarten", exact: true }).click(); await expect(dialog.getByTestId("muster-tree-map")).toHaveCount(0);
+    await expect(grid.locator("article")).toHaveCount(detail.trees.length - done); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") !== "done"))).toBe(true);
+    await dialog.getByRole("button", { name: "Artenstudio", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Hecken", exact: true })).toBeVisible(); await page.keyboard.press("Escape");
+    await dialog.locator('[data-tree-filter="all"]').click(); await expect(grid.locator("article")).toHaveCount(detail.trees.length);
+    await page.screenshot({ animations: "disabled", path: info.outputPath(`tree-workspace-${width}.png`) });
+    await dialog.getByRole("button", { name: "Zurück zur Baustelle", exact: true }).click();
+    for (const section of ["team", "safety", "inventory", "documents", "instructions", "photos", "work"]) {
+      const entry = dialog.locator(`[data-site-entry="${section}"]`); await entry.click(); await expect(dialog.getByTestId("muster-site-overview")).toHaveCount(0); await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", section);
+      expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+      await dialog.getByRole("button", { name: "Zurück zur Baustelle", exact: true }).click(); await expect(entry).toBeFocused();
+    }
+    await page.keyboard.press("Escape");
+  }
+  await context.addCookies([{ name: "bk_lang", value: "sq", url: String(info.project.use.baseURL) }]);
+  for (const theme of ["light", "dark"]) for (const width of [1440, 390]) {
+    await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
+    await page.setViewportSize({ width, height: 900 }); await page.goto(`/demo/baustellen/${site.id}`);
+    const dialog = page.getByRole("dialog"); await expect(dialog.getByRole("button", { name: "Pemët", exact: true })).toBeVisible();
+    await page.screenshot({ animations: "disabled", path: info.outputPath(`site-sq-${theme}-${width}.png`) });
+    await dialog.getByRole("button", { name: "Pemët", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: /^Për t’u bërë/ })).toBeVisible();
+    expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await page.screenshot({ animations: "disabled", path: info.outputPath(`trees-sq-${theme}-${width}.png`) });
+  }
+  const after = await (await request.get("/api/demo/baumdienst/workshop")).json(); expect(after.state).toEqual(before.state); expect(after.revision).toBe(before.revision);
 });
