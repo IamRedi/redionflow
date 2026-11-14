@@ -1,0 +1,59 @@
+{
+  "profile": "BauFlow Musterbau · DEMO",
+  "status": "LOCAL_REVIEW_CANDIDATE_NOT_PUBLISHED",
+  "runtimeRevision": "d7ac5e425acb1eaad93aca9ac664126efc633869",
+  "date": "2026-11-14",
+  "captured": "2026-11-14T19:06:38Z",
+  "sourcePR": "https://github.com/IamRedi/redionflow/pull/206",
+  "captureMethod": "Actual production-build Chromium render; fictional tenant only",
+  "data": "Synthetic; not AL-Steel customer records",
+  "routes": [
+    "/workzone",
+    "/workzone/offices/me"
+  ],
+  "viewports": [
+    [
+      1440,
+      900
+    ],
+    [
+      390,
+      844
+    ]
+  ],
+  "browserCases": 36,
+  "pageErrors": 0,
+  "unitTests": 1253,
+  "runtimeFilesMatchedToCommit": 17,
+  "physicalDeviceAcceptance": "NOT_RUN",
+  "publicDeployment": "NOT_DEPLOYED",
+  "previews": [
+    {
+      "file": "bauflow-muster-workzone-light-desktop.webp",
+      "originalCapture": "workzone-light-desktop.png",
+      "originalCaptureSha256": "4a790ac34d2d4ae6cd13131544ca17666c68c8f720c9f07d388871b36c36b5f3",
+      "sha256": "d8f5e8dc2d8feb439a73e825f988f6865d279987224a141e28e4a239f5528dc3",
+      "width": 1440,
+      "height": 900,
+      "changes": "WebP encoding only; no UI alteration"
+    },
+    {
+      "file": "bauflow-muster-workzone-dark-desktop.webp",
+      "originalCapture": "workzone-dark-desktop.png",
+      "originalCaptureSha256": "f15aeea604abfc813744da432294bab1a792b960f1e7dcdbd1e8f7e787c6a8b1",
+      "sha256": "c8cb6800017327b1f6458426ceb74e052bf246a0b2e76855e066b5d3110dfd81",
+      "width": 1440,
+      "height": 900,
+      "changes": "WebP encoding only; no UI alteration"
+    },
+    {
+      "file": "bauflow-muster-office-light-phone.webp",
+      "originalCapture": "office-light-phone.png",
+      "originalCaptureSha256": "07d5862a12d98ec2d47bc7d84707802fa5298cdffd7b159babde445c6e282c45",
+      "sha256": "04f6ed1dfd1c930667545f7261432b5d34e8e3f52b26cb8dafc81aa0cb3c23c0",
+      "width": 390,
+      "height": 844,
+      "changes": "WebP encoding only; no UI alteration"
+    }
+  ]
+}

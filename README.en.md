@@ -11,7 +11,7 @@
 
 **[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
-## Local BauFlow sample company
+## Local BauFlow sample company · 14.11.2026
 
 The separate **BauFlow Musterbau · DEMO** profile candidate reuses the existing
 steel workflows with twelve fictional employees, five offices, three sites,
@@ -20,6 +20,14 @@ Day/Night campus illustrations give it its own identity. No customer data is
 copied. This candidate does not replace the public fibre-optic demo and has not
 been deployed to the AL-Steel pilot.
 [Preparation, data logic and current verification](docs/BAUFLOW_MUSTER_TEMPLATE.md).
+
+Actual local Muster candidate captures; not publicly deployed.
+
+![BauFlow Musterbau · Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
+
+![BauFlow Musterbau · Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau · local office on a narrow touch screen" width="260">
 
 ## In review: production dashboard for steel operations
 

@@ -60,9 +60,19 @@ OfficeMember ID is the canonical owner account ID, as required by office tasks.
   calculations remain unchanged; successive production stages are not added
   together as one steel amount. Only the fully processed first assembly is
   released from the factory.
+- Each site selects ten actual catalog phases: foundation, the six production
+  processes, column mounting, beam mounting and touch-up. Linked phases derive
+  progress from their real element evidence. They are not duplicate manual
+  counters or an empty 0/0 checklist. All thirty selections have tenant-bound
+  definitions, correct site trees and stable positions.
 - The daily plan links each worker to one workplace. Closed sessions cover
   five past weekdays; current synthetic field/factory sessions show the crew
   on its project. Office history uses the existing explicit OFFICE workplace.
+  Seven unique assignments are published as four workplace rows and one
+  immutable snapshot on the existing Berlin business-day key. Both the owner
+  and ordinary office workers can see the saved plan through existing access
+  rules; workers retain the read-only plan. UTC midnight is not substituted
+  for the platform's business-day boundary.
 - Four machines and five tools each have one canonical operational asset.
   Licensed vehicles use their fictional plate; tools have tenant-scoped codes.
   One hydraulic inspection demonstrates a received repair. Inventory, fleet
@@ -76,7 +86,8 @@ OfficeMember ID is the canonical owner account ID, as required by office tasks.
 Keep the existing warm stone/copper/graphite crystal UI, Manrope, compact
 controls and the original office scenes. An explicitly scoped body marker only
 replaces the shared steel workspace atmosphere with the matching clear
-Day/Night campus. Fixed office rooms retain their own existing scenes.
+Day/Night campus, including Inventory, Workshop and phone planning surfaces.
+Fixed office rooms retain their own existing scenes.
 There is no white veil, extra mock dashboard or generated UI. The map, plan,
 worker strip, project actions and all ordinary controls keep their actual code.
 
@@ -111,8 +122,32 @@ tests in141 files, full ESLint, Next production build, application TypeScript
 and a separate typecheck of the seed all pass. The original lockfile is
 unchanged. The existing `unpdf` webpack warning remains; no dependency was
 upgraded to hide it. Earlier failing preparation/type/harness logs are retained.
-The final database/browser acceptance is still in progress at this source
-checkpoint; a successful build is not visual acceptance.
+The final application/fixture revision is `d7ac5e4` (PR206); subsequent changes
+only add documentation and genuine review captures. Final-delta checks rebuild
+the production app, typecheck/lint the seed, scan changed source with Gitleaks,
+and validate the recreated synthetic database. Six activation tests are part
+of the unit suite. Browser checks cover eight routes at 1440×900 and 390×844 in
+both themes, plus four accounting-worker views: 36 cases, no page errors or
+horizontal document overflow. They assert the actual Day/Night app background,
+readable phone inventory controls and the four saved plan rows for both roles.
+Fixture checks cover all thirty phases, UUID task IDs, normalized tool codes,
+bounded steel quantities, one workplace per worker, business-day publication,
+one plan version, rerun preservation and refusal of another installation.
+
+Actual before/after captures were reviewed for Workzone, reception, offices,
+site phases, planning, inventory and workshop. The narrow warehouse search and
+category tabs were corrected only inside the Muster marker; existing companies
+keep their original CSS. The inherited office German fallback contains some
+English labels; this delivery does not claim a complete six-language audit.
+Physical phones, NFC/printing and installed-PWA update checks remain NOT_RUN.
+Existing report-only legacy CSP eval notices and the unpdf build warning are
+retained as upstream observations, not hidden by weaker checks.
+
+This source is LOCAL_READY for review, not a public demo release. PR206 targets
+a non-deploying baseline branch pinned to the inspected AL-Steel source. No
+Actions run, pilot/main merge, Railway/Vercel app publication, new hosted
+service or customer-database write is part of this delivery. The disposable
+preview/database are task-owned verification resources, not a new live URL.
 
 The five original images and prompts are also preserved in the existing BauFlow
 Drive media folder as DRAFT archive `1xDjjSg8Oxn2zzT8qVyNxP1usfGdz45oZ`.
@@ -125,5 +160,11 @@ candidate's real captures and public delivery have been reviewed.
 
 The prior website correction PR204 is independently owner-approved and
 published; it does not authorize replacing any demo with this new profile.
-Native/portfolio media must use reviewed real captures of this template once
-verified. Do not present the older Mira DEMO or generated UI as this profile.
+README media in this PR uses real captures of this local Muster candidate,
+clearly labelled as unpublished. Its source/route/theme/size and capture hashes
+are in `docs/assets/screenshots/bauflow-muster-captures.json`. No portfolio
+Production or native website claim is changed to imply a live steel demo.
+The current native information page and portfolio entry still describe their
+accepted releases and existing app/demo links: NO_CONTENT_CHANGE for those
+public claims; new-profile publication/media promotion stays PENDING_PUBLICATION.
+Do not present the older Mira DEMO or generated UI as this profile.
