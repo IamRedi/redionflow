@@ -1,3 +1,4 @@
+import {applyGeoMarkets} from './geo-markets.mjs';
 // Builds the two separate product websites into websites/products:
 //   BaumdienstFlow  → /about/{lang}.html  + /index.html (German)
 //   BauFlow         → /bauflow/about/{lang}.html + /bauflow/index.html (German)
@@ -98,14 +99,18 @@ for (const p of [baum, bau]) {
   await copyFile(here('./site.css'), resolve(assets, 'site.css'));
   if (p.key === 'baum') for (const name of ['baumflow.css', 'baumflow-theme.js']) await copyFile(here(`./${name}`), resolve(assets, name));
   if (p.buyerInfo) await copyFile(here('./buyer-info.css'), resolve(assets, 'buyer-info.css'));
-  if (p.key === 'bau') for (const name of ['bauflow.css', 'bauflow-theme.js']) await copyFile(here(`./${name}`), resolve(assets, name));
+  if (p.key === 'bau') for (const name of ['bauflow.css', 'bauflow-theme.js', 'bauflow-buyer-info.css']) await copyFile(here(`./${name}`), resolve(assets, name));
   if (p.reference) await copyFile(here('./reference.css'), resolve(assets, 'reference.css'));
   await copyFile(resolve(root, 'assets/manrope-variable.ttf'), resolve(assets, 'manrope-variable.ttf'));
   await copyFile(resolve(root, 'fonts/Manrope-OFL.txt'), resolve(assets, 'Manrope-OFL.txt'));
   if (p.key === 'baum') await copyFile(resolve(root, 'assets/logo-256.webp'), resolve(assets, 'logo.webp'));
   else await copyFile(resolve(root, 'bauflow/assets/bauflow-mark.svg'), resolve(assets, 'mark.svg'));
-  for (const lang of locales) await writeFile(resolve(dir, `${lang}.html`), render(p, lang, false));
-  await writeFile(resolve(root, p.home.slice(1), 'index.html'), render(p, 'de', true));
+  for (const lang of locales) {
+    const html = render(p, lang, false);
+    await writeFile(resolve(dir, `${lang}.html`), p.key === 'bau' ? applyGeoMarkets(html, p.key, lang, false) : html);
+  }
+  const index = render(p, 'de', true);
+  await writeFile(resolve(root, p.home.slice(1), 'index.html'), p.key === 'bau' ? applyGeoMarkets(index, p.key, 'de', true) : index);
   const size = Math.max(...(await Promise.all(locales.map(async (l) => (await readFile(resolve(dir, `${l}.html`))).length))));
   console.log(`${p.name}: ${locales.length} locales + index, largest page ${size} bytes.`);
 }
