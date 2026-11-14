@@ -10,7 +10,7 @@ test.beforeEach(async ({ context }, info) => {
 test("site opens over the same Workzone, trees expand on demand and nested details return focus", async ({ page, context, request }, info) => {
   const before = await (await request.get("/api/demo/baumdienst/workshop")).json();
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
-  for (const theme of ["light", "dark"]) for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 320, height: 600 }]) {
+  for (const theme of ["light", "dark"]) for (const size of [{ width: 1440, height: 900 }, { width: 1280, height: 528 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 320, height: 600 }]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
     await page.setViewportSize(size); await page.goto("/demo/workzone");
     const canvas = page.getByTestId("workzone-canvas");
@@ -31,6 +31,9 @@ test("site opens over the same Workzone, trees expand on demand and nested detai
     await expect(canvas).toHaveAttribute("data-preservation-proof", "same-mounted-canvas");
     expect(await dialog.evaluate(element => { const r = element.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight && element.scrollWidth <= element.clientWidth; })).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight + 1)).toBe(true);
+    expect(await dialog.evaluate(element => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+    await expect.poll(() => dialog.getByTestId("muster-site-detail").evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
+    for (const entry of await dialog.locator("[data-site-entry]").all()) await expect(entry).toBeInViewport({ ratio: 1 });
     await page.screenshot({ animations: "disabled", path: info.outputPath(`site-${theme}-${size.width}-${size.height}.png`) });
     const toggle = dialog.getByRole("button", { name: /^Bäume/ });
     await toggle.click(); await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", "trees");
@@ -38,6 +41,9 @@ test("site opens over the same Workzone, trees expand on demand and nested detai
     const grid = dialog.getByTestId("muster-tree-grid"); await expect(grid).toBeVisible();
     await grid.locator("article").last().scrollIntoViewIfNeeded();
     await expect(grid.locator("article").last()).toBeInViewport();
+    expect(await grid.evaluate(element => element.scrollTop > 0 && element.scrollHeight > element.clientHeight)).toBe(true);
+    expect(await dialog.evaluate(element => element.scrollTop === 0 && element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+    await expect(dialog.locator(".baum-tree-toolbar")).toBeInViewport({ ratio: 1 });
     const details = grid.getByRole("button", { name: /^Baumdetails/ }).last();
     await details.click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Sicherheitsmaterial", exact: true })).toBeVisible();
     await page.keyboard.press("Escape"); await expect(details).toBeFocused();

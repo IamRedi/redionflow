@@ -329,6 +329,92 @@ body:has([data-baum-studio="forest-crystal-v1"]):has(.baum-site-detail) [role="d
   .baum-tree-tools select { flex: 1; min-width: 0; width: 72px; }
   .baum-tree-view-toggle { margin-left: auto; }
 }
+/* Keep the site shell in the viewport; only the tree collection scrolls. */
+.baum-site-dialog {
+  --site-gap: clamp(8px, 1.6dvh, 16px);
+  display: flex; flex-direction: column; gap: var(--site-gap);
+  height: min(760px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px);
+  width: calc(100% - 24px); max-width: 56rem;
+  padding: clamp(12px, 2.4dvh, 24px); overflow: hidden;
+}
+.baum-site-dialog--trees, .baum-site-dialog--map { max-width: 68rem; }
+.baum-site-dialog .baum-dialog-heading { flex: none; margin: 0; padding: 4px 48px 0; }
+.baum-site-dialog .baum-dialog-heading h2 { font-size: clamp(1.35rem, 4dvh, 2.2rem); }
+.baum-site-dialog .baum-dialog-heading [id] + p { margin-top: 6px; }
+.baum-site-dialog .baum-dialog-eyebrow { margin-bottom: 6px; }
+.baum-site-dialog .baum-site-detail { flex: 1; min-height: 0; }
+.baum-site-dialog .baum-site-panel { height: 100%; min-height: 0; }
+.baum-site-dialog--overview .baum-site-overview {
+  height: 100%; min-height: 0; display: grid;
+  grid-template-rows: auto minmax(100px, .75fr) minmax(150px, 1fr); gap: var(--site-gap);
+}
+.baum-site-dialog--overview .baum-site-introduction p { font-size: 13px; line-height: 1.5; }
+.baum-site-dialog--overview .baum-site-introduction > span { margin-top: 4px; }
+.baum-site-dialog--overview .baum-site-tree-entry { min-height: 0; padding: 12px 20px; }
+.baum-site-dialog--overview .baum-site-tree-copy { gap: clamp(5px, 1.2dvh, 11px); }
+.baum-site-dialog--overview .baum-site-tree-art { height: 100%; max-height: 148px; min-height: 76px; }
+.baum-site-dialog--overview .baum-site-tree-illustration { height: 100%; max-height: 160px; width: 150px; }
+.baum-site-dialog--overview .baum-site-entries { min-height: 0; grid-template-columns: repeat(4,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); gap: var(--site-gap); }
+.baum-site-dialog--overview .baum-site-entry { min-height: 44px; gap: 6px; padding: 8px; border-radius: 18px; }
+.baum-site-dialog--overview .baum-site-entry-symbol { width: 28px; height: 28px; }
+.baum-site-dialog--overview .baum-site-entry-symbol svg { width: 24px; height: 24px; }
+.baum-site-dialog--overview .baum-site-entry-label { gap: 3px; }
+.baum-site-dialog--overview .baum-site-entry-count { top: 6px; right: 9px; }
+.baum-site-dialog--trees .baum-site-panel, .baum-site-dialog--map .baum-site-panel { display: flex; }
+.baum-site-dialog .baum-tree-workspace { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; gap: 10px; }
+.baum-site-dialog .baum-tree-workspace > * { margin-block: 0; }
+.baum-site-dialog .baum-tree-toolbar { position: static; flex: none; padding: 0 0 10px; }
+.baum-site-dialog [data-testid="muster-tree-grid"] { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; grid-auto-rows: max-content; padding: 4px; scrollbar-gutter: stable; }
+.baum-site-dialog .baum-tree-map { flex: 1; height: auto; min-height: 0; }
+/* Other tools retain their own readable content region rather than scrolling the shell. */
+.baum-site-dialog:not(.baum-site-dialog--overview):not(.baum-site-dialog--trees):not(.baum-site-dialog--map) .baum-site-detail { overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width:600px) {
+  .baum-site-dialog .baum-dialog-heading { padding: 38px 0 0; }
+  .baum-site-dialog--overview .baum-site-overview { grid-template-rows: auto minmax(96px,.5fr) minmax(240px,1fr); }
+  .baum-site-dialog--overview .baum-site-entries { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(4,minmax(0,1fr)); }
+  .baum-site-dialog--overview .baum-site-entry { flex-direction: row; justify-content: flex-start; text-align: left; gap: 8px; padding: 8px 10px; }
+  .baum-site-dialog--overview .baum-site-entry-symbol { flex: 0 0 24px; }
+  .baum-site-dialog--overview .baum-site-entry-label strong { font-size: 12px; }
+  .baum-site-dialog--overview .baum-site-entry-label small { display: none; }
+  .baum-site-dialog--overview .baum-site-tree-entry { grid-template-columns: minmax(0,1fr) 96px; padding: 10px 14px; }
+  .baum-site-dialog--overview .baum-site-tree-copy > strong { font-size: 24px; }
+  .baum-site-dialog--overview .baum-site-tree-illustration { width: 124px; }
+}
+@media (max-height:650px) {
+  .baum-site-dialog { --site-gap: 8px; padding: 12px; }
+  .baum-site-dialog .baum-dialog-heading h2 { font-size: clamp(1.25rem, 4dvh, 1.65rem); }
+  .baum-site-dialog .baum-dialog-heading [id] + p { margin-top: 4px; font-size: 12px; }
+  .baum-site-dialog--overview .baum-site-introduction p { font-size: 12px; line-height: 1.4; }
+  .baum-site-dialog--overview .baum-site-overview { grid-template-rows: auto minmax(88px,.6fr) minmax(132px,1fr); }
+  .baum-site-dialog--overview .baum-site-entry-label small { display: none; }
+  .baum-site-dialog--overview .baum-site-tree-copy { gap: 4px; }
+  .baum-site-dialog--overview .baum-site-tree-copy > strong { font-size: 23px; }
+  .baum-site-dialog--overview .baum-site-tree-art { max-height: 104px; }
+  .baum-site-dialog--overview .baum-site-kicker { font-size: 11px; }
+}
+@media (max-width:600px) and (max-height:650px) {
+  .baum-site-dialog--overview .baum-site-tree-entry { grid-template-columns: minmax(0,1fr) 72px; }
+  .baum-site-dialog--overview .baum-site-kicker { display: none; }
+  .baum-site-dialog--overview .baum-site-tree-count { font-size: 11px; }
+  .baum-site-dialog--overview .baum-site-overview { grid-template-rows: auto 112px minmax(208px,1fr); }
+  .baum-site-dialog--overview .baum-site-entry-symbol svg { width: 20px; height: 20px; }
+  .baum-site-dialog--overview .baum-site-entry { padding: 6px 8px; gap: 6px; }
+}
+@media (min-width:601px) and (max-height:500px) {
+  .baum-site-dialog--overview .baum-site-overview { grid-template-columns: minmax(0,.7fr) minmax(0,1.3fr); grid-template-rows: auto minmax(132px,1fr); }
+  .baum-site-dialog--overview .baum-site-introduction { grid-column: 1/-1; max-width: none; }
+  .baum-site-dialog--overview .baum-site-introduction > span { display: inline; margin-left: 8px; }
+  .baum-site-dialog--overview .baum-site-introduction p { display: inline; }
+  .baum-site-dialog--overview .baum-site-tree-entry { grid-template-columns: minmax(0,1fr) 70px; padding: 10px 12px; }
+  .baum-site-dialog--overview .baum-site-tree-illustration { width: 100px; }
+  .baum-site-dialog--overview .baum-site-entries { gap: 6px; }
+  .baum-site-dialog--overview .baum-site-entry { gap: 2px; padding: 5px; }
+  .baum-site-dialog--overview .baum-site-entry-label strong { font-size: 11px; }
+  .baum-site-dialog .baum-tree-toolbar { gap: 6px; padding-bottom: 6px; }
+  .baum-site-dialog .baum-tree-workspace { gap: 6px; }
+}
+/* Preserve access if text enlargement or exceptional content exceeds the compact grid. */
+.baum-site-dialog--overview .baum-site-detail { overflow-y: auto; overscroll-behavior: contain; }
 @media (prefers-reduced-motion:reduce) { .baum-site-panel { animation: none; } .baum-site-entry,.baum-site-tree-entry { transition: none; transform: none; } }
 @media (forced-colors:active) {
   .baum-site-entry,.baum-site-tree-entry,.baum-site-person,.baum-site-safety-card,.baum-tree-toolbar { background: Canvas; color: CanvasText; border: 1px solid ButtonText; box-shadow: none; }

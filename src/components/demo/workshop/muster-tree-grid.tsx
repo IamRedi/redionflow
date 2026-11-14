@@ -52,7 +52,7 @@ export function MusterTreeGrid({ items, siteKey, points = [], initialView = "lis
     <Button className={`${action} flex-1`} disabled={disabled || (tree.status === "blocked" && actor.role !== "admin")} onClick={() => void change({ type: "tree", siteKey, treeCode: tree.treeId, action: tree.status === "done" || tree.status === "blocked" ? "reopen" : "done", note: "" })}>{tree.status === "todo" ? <Check /> : <RotateCcw />}{tree.status === "todo" ? c.done : c.reopen}</Button>
     <Button variant="outline" className={`${action} flex-1`} disabled={disabled} onClick={() => open(tree.treeId, "report")}><AlertTriangle />{c.report}</Button>
   </div>;
-  return <section className="space-y-4" aria-label={c.trees}>
+  return <section className="baum-tree-workspace space-y-4" aria-label={c.trees}>
     <div className="baum-tree-toolbar">
       <div className="baum-tree-topline"><div className="baum-tree-filters" role="group" aria-label={c.status}>{([ ["all", copy.all, rows.length, Leaf], ["todo", copy.todo, rows.length - done, Clock3], ["done", copy.done, done, CheckCircle2] ] as const).map(([value, label, count, Icon]) => <Button key={value} ref={filter === value ? filterFocus : undefined} type="button" variant="outline" aria-pressed={filter === value} data-tree-filter={value} onClick={() => setFilter(value)}><Icon className="size-4 shrink-0" /><span>{label}</span><span className="baum-filter-count">{count}</span></Button>)}</div>
       </div>
