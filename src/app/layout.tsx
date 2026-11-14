@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { FooterBrandProvider } from '@/components/branding/FooterBrand';
 import { SessionKeepAlive } from '@/components/auth/SessionKeepAlive';
 import { installationBrand } from '@/lib/installation-brand';
+import { isBauflowMusterCompany } from '@/lib/demo/bauflow-muster';
+import '@/components/steel/bauflow-muster.css';
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Home, LayoutDashboard } from "lucide-react";
@@ -94,7 +96,7 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
+      <body data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
           <ProductionHeaderActionsProvider>

@@ -11,6 +11,16 @@
 
 **[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
+## Local BauFlow sample company
+
+The separate **BauFlow Musterbau · DEMO** profile candidate reuses the existing
+steel workflows with twelve fictional employees, five offices, three sites,
+one factory and nine linked assets. The original BauFlow logo and matching
+Day/Night campus illustrations give it its own identity. No customer data is
+copied. This candidate does not replace the public fibre-optic demo and has not
+been deployed to the AL-Steel pilot.
+[Preparation, data logic and current verification](docs/BAUFLOW_MUSTER_TEMPLATE.md).
+
 ## In review: production dashboard for steel operations
 
 A calendar shows confirmed kg by day and project: parts cutting, assembly

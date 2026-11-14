@@ -11,6 +11,16 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Lokaler BauFlow-Musterbetrieb
+
+Der eigenständige Profilkandidat **BauFlow Musterbau · DEMO** verwendet die
+bestehenden Stahlbau-Abläufe mit zwölf erfundenen Mitarbeitenden, fünf Büros,
+drei Baustellen, einer Werkhalle und neun verbundenen Geräten. Das originale
+BauFlow-Logo und passende Day/Night-Campusbilder geben ihm eine eigene Identität.
+Es werden keine Kundendaten übernommen. Der Profilkandidat ist nicht die
+öffentliche Glasfaser-Demo und wurde nicht in den AL-Steel-Piloten eingespielt.
+[Vorbereitung, Datenlogik und aktueller Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md).
+
 ## In Prüfung: Produktionspanel für Stahlbetriebe
 
 Ein Kalender zeigt bestätigte kg pro Tag und Projekt: Teileschnitt,

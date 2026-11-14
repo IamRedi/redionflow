@@ -1,0 +1,26 @@
+/* Only the explicitly configured fictional installation; original steel UI stays intact. */
+body[data-bauflow-muster] {
+  --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-day.webp');
+}
+html.dark body[data-bauflow-muster] {
+  --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-night.webp');
+}
+body[data-bauflow-muster] .steelStudioWorkspace,
+body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
+body[data-bauflow-muster] [data-phone-fullscreen][data-studio-planning] {
+  background: var(--bauflow-muster-scene) center / cover no-repeat !important;
+}
+body[data-bauflow-muster] [data-studio-home] [data-studio-board] > .steelStudioPhoto {
+  background: transparent !important;
+}
+body[data-bauflow-muster] [data-studio-home] [data-studio-board] {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+@media print {
+  body[data-bauflow-muster] .steelStudioWorkspace,
+  body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
+  body[data-bauflow-muster] [data-phone-fullscreen][data-studio-planning] {
+    background: white !important;
+  }
+}

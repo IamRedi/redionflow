@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-14",
+  "tool": "built-in image_gen",
+  "model_selection": "not exposed",
+  "assets": [
+    {
+      "name": "workzone-campus-day",
+      "prompt": "Create one original premium architectural 2.5D scene for the Workzone background of BauFlow, a construction and steel fabrication company operations app. Wide 16:9 landscape composition, extremely clean high-detail studio realism, crisp clear atmosphere without haze. A believable prosperous fictional construction firm's connected campus: elegant warm stone and timber administrative office with clear glass on the left, a tidy open steel fabrication hall with organized beams and safe machinery to the right, a construction site with a structural steel building frame visible in the background, a paved equipment/logistics yard tying the spaces together. Eye-level slightly elevated architectural perspective, fill the entire composition, no floating island. Restrained fine copper-gold digital light paths connect office, fabrication and site along the ground; subtle, sophisticated, almost architectural, never a sci-fi hologram. Soft bright daylight, real window light, beautiful warm limestone, muted olive/petrol graphite, clear glass, copper and pale amber highlights, natural material detail. The upper and central scene must remain calm and visually legible behind transparent glass app cards; strong composition with useful quiet areas, no large foreground machinery blocking UI. No interface, screens, dashboard, card mockups, labels, words, lettering, numbers, logos, watermark, smoke or white veil. No recognizable real company, person, branded machinery or client data. This is original illustrative atmosphere for an explicitly fictional Musterfirma, not a product screenshot. Make it polished, realistic, coherent, warm and inviting, matching a high-end European digital work studio.",
+      "kind": "AI_CONCEPT_ILLUSTRATION",
+      "original_sha256": "65e347d7765e5df457f55e42d1c9f58d7e386fc378e43087cbab9c6b5bee7ede",
+      "file": "workzone-campus-day.webp",
+      "sha256": "df0f732c90e2897f0d57e7cffb63dc046affda2501dee9e99b2a473ab704c431",
+      "not_product_screenshot": true,
+      "not_engineering_evidence": true
+    },
+    {
+      "name": "workzone-campus-night",
+      "prompt": "Edit this BauFlow Workzone campus illustration into the matching NIGHT version. Preserve the exact architecture, materials, camera, framing, office on the left, steel fabrication hall on the right, central building frame, crane, yard, landscaping, proportions and all scene objects. Change only lighting and time of day: beautiful clear blue-hour evening moving into night, deep clean petrol/graphite sky, warm realistic amber office windows and pendant lights, warm artificial industrial task lighting in the fabrication hall, restrained copper-gold path lights and bollard lights. Sophisticated warm/cool contrast, legible detailed shadows, premium clear glass reflections; no crushed black, no fog, no smoke, no white veil. Keep this a believable European construction firm's calm organized digital work campus. No words, numbers, logo, labels, UI, screen mockups, watermarks, new objects, people, changed geometry or exaggerated neon. Wide landscape unchanged.",
+      "kind": "AI_CONCEPT_ILLUSTRATION",
+      "original_sha256": "d7438ef5cd0b045ed9c6b72a5e08f1499ba4a55777620be71a97c8e88495f716",
+      "file": "workzone-campus-night.webp",
+      "sha256": "a82cdffbed9b84456727d0899d18ef670172794a2fcfd13cc7bb8d8ca2bd6df6",
+      "not_product_screenshot": true,
+      "not_engineering_evidence": true
+    },
+    {
+      "name": "site-nordpark",
+      "prompt": "Original premium realistic architectural illustration, wide 16:9 hero photograph-style image for a fictional German steel-construction project card in BauFlow. A beautifully organized modern logistics hall under construction, graphite-grey steel columns and beams with part of the clean silver roof and warm timber-clad service wing, an orderly paved forecourt, one orange mobile lifting platform safely parked, soft clear afternoon daylight, crisp realistic details. Cohesive warm stone / copper / graphite / muted petrol palette matching a high-end construction company digital studio. Camera slightly elevated at a three-quarter angle showing the hall's shape clearly; fill the full image, strong legible silhouette at thumbnail size, real believable scale. Clean site, subtle landscaping, no clutter or haze. No words, labels, numbers, real company logos, people, UI, mockups, watermark, smoke, blur or white fog. The subject is the building and its steel frame. Clearly original fictitious project artwork, no claim of a measured building plan or a real client site.",
+      "kind": "AI_CONCEPT_ILLUSTRATION",
+      "original_sha256": "1afdf8690425b7a231f36faa03f4e36e90a661978a683e8c7718842efae82266",
+      "file": "site-nordpark.webp",
+      "sha256": "d286bce52edbef56ab49677329577f5e57bf5f89c23cd03d6efc3547418c1b6e",
+      "not_product_screenshot": true,
+      "not_engineering_evidence": true
+    },
+    {
+      "name": "site-westtor",
+      "prompt": "Create one original wide 16:9 premium realistic architectural illustration for the project cover of a fictitious German steel construction company. Project: a tasteful extension to an existing medium-sized industrial workshop, with a new graphite steel portal frame being assembled alongside the finished warm grey workshop, neatly stacked steel sections on timber supports and a safely parked small orange crane truck. Show the two joined building volumes from a clear three-quarter angle. Soft bright morning light, crisp clean atmosphere, believable materials and proportions, warm limestone/copper/graphite/muted petrol palette, restrained landscaping around the paved yard, beautiful polished architectural photography style consistent with a premium digital work studio. Make the composition distinct from a logistics hall: closer viewpoint, smaller scale, visible connection between old and new workshops. No text, numbers, company logos, real clients, people, UI, watermarks, smoke, haze, white fog, clutter or implausible machinery. Illustrative fictional project, not technical CAD or evidence of a real building.",
+      "kind": "AI_CONCEPT_ILLUSTRATION",
+      "original_sha256": "ec962a6fb44a91f603b6bdb8604ce9257562307e2418e5ee64eeadc4365975c6",
+      "file": "site-westtor.webp",
+      "sha256": "a24bfa07849e3e6e716e4ade7e75dca713c6a4a116082d1f7d1373e24d68df33",
+      "not_product_screenshot": true,
+      "not_engineering_evidence": true
+    },
+    {
+      "name": "site-hafenblick",
+      "prompt": "Original wide 16:9 premium realistic architectural illustration for a fictional BauFlow steel-construction project called Hafenblick: a compact elegant three-storey commercial office structure being built beside a quiet European business-park waterfront. Graphite steel frame clearly visible on the upper storey, lower storeys partly finished in warm limestone, natural timber and crystal glass, an orderly clean paved forecourt and sparse planted grasses. One small orange lifting platform parked safely; no people. Beautiful clear late-afternoon window light, crisp blue sky, warm copper highlights and restrained petrol/graphite tones, refined studio architectural photography, realistic proportions and high material detail. Distinct from a factory/logistics hall: vertical office architecture, glass facade, waterfront glimpse in the distance. Main building occupies the center and reads clearly as a small card thumbnail. No UI, mockups, words, numbers, lettering, logos, watermarks, haze, fog, smoke, floating objects or invented technical annotations. This is illustrative fictitious project artwork, not a real customer photo or a certified engineering drawing.",
+      "kind": "AI_CONCEPT_ILLUSTRATION",
+      "original_sha256": "0c3361494fc1c028e50b9f094d1322d409857d1b2e39d7442e07eda459674efb",
+      "file": "site-hafenblick.webp",
+      "sha256": "16c2acefebbe98c8b3fa471ec83da88d7f2a94fbba9516c95fec77d171a10d02",
+      "not_product_screenshot": true,
+      "not_engineering_evidence": true
+    }
+  ],
+  "brand": {
+    "source": "Owner-approved BauFlow Brand Kit v1, issue194",
+    "kit_sha256": "256844da4d60cc21b5aaa6a1e655bc1ef0d9fc62fe9ea48b6ed9c01d6cc0d928",
+    "original_profile_sha256": "d304e3e6251957e1af83e328ef96c0045cb388a33cea14b1d15a95b3bd7ee5a5",
+    "redrawn": false,
+    "profile_derivative": "brand-profile.webp"
+  }
+}
