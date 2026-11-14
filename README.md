@@ -11,24 +11,15 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
-## Lokaler BauFlow-Musterbetrieb · 14.11.2026
+## BauFlow-Musterbetrieb ist online · 14.11.2026
 
-Der eigenständige Profilkandidat **BauFlow Musterbau · DEMO** verwendet die
-bestehenden Stahlbau-Abläufe mit zwölf erfundenen Mitarbeitenden, fünf Büros,
-drei Baustellen, einer Werkhalle und neun verbundenen Geräten. Das originale
-BauFlow-Logo und passende Day/Night-Campusbilder geben ihm eine eigene Identität.
-Es werden keine Kundendaten übernommen. Die vom Inhaber freigegebene
-Veröffentlichung ersetzt den ausgemusterten Glasfaser-Musterbetrieb auf dessen
-eigenem Demo-Dienst. Der AL-Steel-Pilot behält sein eigenes Deployment.
-[Vorbereitung, Datenlogik und aktueller Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md).
+Der eigenständige **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** nutzt die aktuelle Stahlbau-Anwendung mit der eigenen originalen BauFlow-Identität. Am Eingang stehen Geschäftsführung, Buchhaltung, Baustelle, Werkhalle und Werkstatt zur Wahl. Zwölf erfundene Mitarbeitende, fünf Büros, drei Baustellen, eine Werkhalle und neun Geräte sind miteinander verbunden. Änderungen bleiben gespeichert und sind für andere Testende sichtbar; bitte nur Testdaten verwenden. AL-Steel und BaumdienstFlow behalten ihre unabhängigen Deployments.
 
-Echte Aufnahmen des lokalen Musterkandidaten; noch nicht veröffentlicht.
+[Veröffentlichung, Zugang und Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md). PR206 läuft unter `67cd096`; 1.265 Unit-Tests und 45 Browserfälle bestanden. Die folgenden echten Online-Aufnahmen vom 14. November enthalten fiktive Daten. Die Handyansicht ist responsiv/emuliert, keine Abnahme auf einem physischen Gerät.
 
-![BauFlow Musterbau · Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
+![BauFlow Musterbau · echte Online-Workzone](docs/assets/screenshots/bauflow-muster-online-workzone.webp)
 
-![BauFlow Musterbau · Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
-
-<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau · local office on a narrow touch screen" width="260">
+<img src="docs/assets/screenshots/bauflow-muster-online-phone.webp" alt="BauFlow Musterbau · echte Online-Workzone auf schmalem Touch-Display" width="260">
 
 ## In Prüfung: Produktionspanel für Stahlbetriebe
 

@@ -232,7 +232,35 @@ The new database restore passed at the actual online target with94 migrations,
 cleared under the existing tenant context and audit constraints; public role
 entry reads the new session epoch. No local test credential is needed online.
 
-Current release state: VERIFIED_FOR_PUBLICATION; merge, Railway publication and
-online readback are recorded separately when completed. The earlier
-LOCAL_READY record above describes the first review checkpoint, not a claim
-that this later approved publication has already happened.
+Current release state: PUBLISHED / ONLINE_PASS. PR206 merged as
+`67cd096f597a3c3dc6022a36d91e32c1fed038e2`; the release branch is pinned to this
+merge. Railway deployment `dcf275b9-704e-4bb0-b3dd-acf0f690dac6` succeeded at
+<https://bauflow-production-1344.up.railway.app/demo>. The earlier LOCAL_READY
+record above remains the first review checkpoint.
+
+Actual online desktop/narrow and Day/Night review passed for the public entry,
+all five roles, Workzone, the saved daily plan, reception, personal offices,
+site phases, inventory/asset detail and workshop. Accounting sees the same four
+plan rows read-only. No page errors or horizontal overflow were observed.
+Physical-device, PWA update, camera/NFC and printing acceptance remains NOT_RUN.
+The capture manifest distinguishes actual online PNGs from older local reviews;
+the JPEG-to-PNG normalization changes only file encoding, not UI content.
+
+The dedicated runtime role remains non-superuser and does not bypass RLS.
+Its database-scoped default tenant context is `bauflow-muster-steel`; real role
+login, company reads and a rollback-only LoginAttempt write were verified.
+The old Glasfaser schema was removed only after independent archive restoration
+and online Muster checks; its old app deployment is REMOVED. The obsolete
+`bauflow-reset` service is OFFLINE, with no active deployment, source or cron.
+Permanent service deletion was twice refused by Railway's approval layer even
+after explicit owner confirmation, so the empty disabled service remains.
+No running Glasfaser workload or attached volume remains on that service.
+The Postgres capacity now serving Musterfirma is retained.
+
+Publication changed only the independent BauFlow app and its former Glasfaser
+sample database/reset. AL-Steel and Baumdienst app/database/reset were not
+mutated. A concurrent Baumdienst release from another task was observed;
+its independent source/deployment is not claimed as unchanged by this task.
+Portfolio/native presentation assessment is separate from this app release:
+the existing BauFlow URL remains valid; new real media/content are prepared
+through bounded companion PRs, without portfolio Production publication.
