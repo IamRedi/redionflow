@@ -102,7 +102,7 @@ for (const p of [baum, bau]) {
   if (p.reference) await copyFile(here('./reference.css'), resolve(assets, 'reference.css'));
   await copyFile(resolve(root, 'assets/manrope-variable.ttf'), resolve(assets, 'manrope-variable.ttf'));
   await copyFile(resolve(root, 'fonts/Manrope-OFL.txt'), resolve(assets, 'Manrope-OFL.txt'));
-  if (p.key === 'baum') await copyFile(resolve(shots, 'brand-mark-rgb-v1.webp'), resolve(assets, 'logo.webp'));
+  if (p.key === 'baum') await copyFile(resolve(root, 'assets/logo-256.webp'), resolve(assets, 'logo.webp'));
   else await copyFile(resolve(root, 'bauflow/assets/bauflow-mark.svg'), resolve(assets, 'mark.svg'));
   for (const lang of locales) await writeFile(resolve(dir, `${lang}.html`), render(p, lang, false));
   await writeFile(resolve(root, p.home.slice(1), 'index.html'), render(p, 'de', true));
