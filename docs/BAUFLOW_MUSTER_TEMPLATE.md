@@ -281,7 +281,9 @@ so production CSS optimization retains Chromium's actual blur.
 Only the `data-bauflow-muster` installation marker activates these CSS rules,
 including the existing Radix portals. Other firms retain the same shared
 components and original appearance. The shared component changes are inert
-overlay data attributes for the picker and vehicle detail. No framework, dependency, schema or theme setting
+overlay data attributes for the picker and vehicle detail, plus an explicit
+return-focus reference to the original fleet button. Reopening the picker from
+a vehicle no longer captures the closing card as its final focus destination. No framework, dependency, schema or theme setting
 is changed.
 
 The catalogue contains Montage-Transporter, LKW 7,5 t, Teleskopstapler,

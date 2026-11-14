@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Search } from 'lucide-react';
 import { MachineArt, machineKind } from '@/components/steel/machine-art';
 import type { MachineSideItem } from '@/app/(workzone)/workzone/machine-sidebar';
@@ -21,10 +21,11 @@ function FleetThumbnail({ machine }: { machine: MachineSideItem }) {
   return machine.imageUrl && failed !== machine.imageUrl ? <AssetThumbnail src={machine.imageUrl} shape="4x3" sizes="(max-width:640px) 30vw, 160px" alt="" className="h-full w-full object-cover" onError={() => setFailed(machine.imageUrl)} /> : <MachineArt kind={machineKind(machine)} animate={false} className="h-full w-full p-1.5" />;
 }
 
-export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId, statusFor }: {
+export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId, statusFor, returnFocusRef }: {
   open: boolean; onOpenChange: (open: boolean) => void; machines: MachineSideItem[]; onSelect: (id: string) => void;
   title: string; searchLabel: string; emptyLabel: string; focusMachineId?: string | null;
   statusFor?: (id: string) => AssetOperationalStatus | null | undefined;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const { currentLang } = useLanguage();
   const c = assetCopy(currentLang);
@@ -45,7 +46,7 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
     });
     return () => cancelAnimationFrame(frame);
   }, [open, focusMachineId]);
-  return <AssetWorkspaceDialog open={open} onOpenChange={onOpenChange} title={title}>
+  return <AssetWorkspaceDialog open={open} onOpenChange={onOpenChange} title={title} returnFocusRef={returnFocusRef}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="fleet-picker">
       <div className="flex shrink-0 items-center gap-2 px-3 pb-3 sm:px-5">
         <label className="relative block w-full min-w-0 flex-1">
