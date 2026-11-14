@@ -345,3 +345,65 @@ source PNG hashes are in `docs/assets/screenshots/bauflow-muster-fleet-online.js
 The archive upload/readback SHA256 is
 `588fc82fd039206917d06ebfb4d5b81d445103f6908a41bb489e6e2b6410a44e`.
 No main/AL-Steel/Baumdienst or Portfolio Production deployment was performed.
+
+## Inventory crystal and equipment photographs, 15 November 2026
+
+Identity lock: the owner-approved fleet refinement PR211 supplies the existing
+Light/Night crystal tokens, graphite/copper photography, typography and compact
+controls. This inventory change is limited to the `data-bauflow-muster` marker.
+Stock, labels, scans, handover confirmations, assignment, permissions, files and
+workshop commands retain their existing implementation. Main content keeps its
+one primary scroll region and natural footer; detail and scan dialogs keep
+their own bounded scroll. Tool cards use two phone columns and full uncropped
+images. Search is bounded, scan text remains accessible inside a compact icon
+control, and detail/registration/scan surfaces share the same glass family.
+The only shared JSX change adds inert scan-dialog/overlay attributes.
+
+Five original built-in image_gen illustrations represent Akku-Schlagschrauber,
+Winkelschleifer, Rotationslaser, Schweißgerät MIG/MAG and Drehmomentschlüssel.
+They retain transparent alpha in 896×672 WebP files (about 47–104KB each), with
+full prompts and original/derivative hashes in
+`public/bauflow-muster-v1/inventory/provenance.json`. Exact model selection is
+not exposed by the built-in tool. App AI/provider settings and limits are not
+changed; no navigation-time generation or external customer media is used.
+
+`scripts/augment-bauflow-muster-inventory.ts` is separate explicit maintenance,
+not a startup/reset hook. Its own inventory opt-in reuses the exact existing
+Muster origin/profile/database/user fence; local calls also enforce the strict
+disposable E2E target. Inside one transaction it rechecks the fictional company
+and each original name/code/category, takes the normal upload's per-asset lock
+and base-row lock, then checks identity again. Existing cover/photo files have
+priority. Missing images become canonical CompanyAssetFile covers plus normal
+cover-added events/revision increments, so warehouse, item details and workshop
+read the same persistent image. No new item or barcode is created. Reruns add
+nothing; a failure rolls back all additions. The fresh disposable seed shares
+the same five-entry catalogue/helper. Existing uploaded files, identity, custody,
+scanned labels, vehicle records and repair history must remain unchanged.
+The required file actor FK references the existing fictional installation owner;
+the system marker/name identifies catalogue maintenance. No owner account or
+schema constraint is added, changed or bypassed.
+
+PR212 verification: full lint and 1,293 units in 144 files passed; application
+production build passed at final UI revision32b4c2f, with maintenance TypeScript
+and changed-helper lint at1af1c9b. The upload-priority fixture preserved one
+original file exactly, filled four missing covers and proved a repeated call
+changes no records/history. Inventory IDs/barcodes/state, fleet, repairs and
+scan labels match their original snapshots. The file-shape constraint caught
+the missing actor during the fixture and was preserved; the helper now uses
+the existing owner FK. An earlier OCR environment failure was corrected with
+the retained local tool/language data, without changing tests or application.
+Six baseline and six final browser cases cover desktop, phone,320px, short
+landscape and both themes, with full loaded images, bounded dialogs, internal
+scroll, search, detail/back, focus, manual barcode lookup and registration
+open/cancel. Fourteen changed source/asset/document files match the executor.
+Physical phone, camera/NFC and printing acceptance remains NOT_RUN.
+Publication and actual online readback are recorded separately in PR212 and
+the existing project record; this source chapter does not claim deployment.
+Public module/capability claims, links and
+readiness remain accurate: presentation NO_CONTENT_CHANGE for this bounded
+inventory material/photo repair; companion PR209/PR91 record verified provenance
+after acceptance. AL-Steel, BaumdienstFlow, other demos and Portfolio Production
+remain outside this change.
+
+
+Inventory publication receipt: PR212 is merged only into the independent release branch, at `6ffa4d94a3093d014198824ed648c7cadf998602`. Railway deployment `9762e2e7-d4f6-4f74-a508-cde26cef33d7` is SUCCESS. The live one-time command added five missing covers and five audit events without new items. Encrypted before/after snapshots prove original inventory IDs/barcodes/custody, fleet and repair history EXACT_MATCH. Actual online desktop/emulated-phone Light/Night, code search, item detail/back/focus and the last card/footer were reviewed. Eight genuine online before/after captures and the five original images/prompts are archived at https://drive.google.com/file/d/1oQKNtTzQfkmy_8CZNOoUjEEXfm7Sg_y0/view (SHA256 `ceaad533c9552d22a5e51f1399394bef1d7b00a5c1168c3361e1d19c27f0b89e`, upload/readback verified). Physical-device acceptance is not claimed. This showcase PR does not deploy any runtime or Portfolio Production.

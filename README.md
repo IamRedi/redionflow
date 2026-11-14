@@ -29,6 +29,12 @@ Echte Online-Oberfläche mit fiktiven Daten und illustrativen Fahrzeugbildern ·
 
 <img src="docs/assets/screenshots/bauflow-muster-fleet-online-phone.webp" alt="BauFlow Musterfirma · Fleet on an emulated phone" width="260">
 
+Auch das Lager nutzt jetzt dieselben kompakten Day/Night-Glaskarten mit fünf bebilderten Werkzeugen. PR212 ist nur in der eigenständigen Musterfirma-Demo veröffentlicht; IDs, Barcodes, Übergaben und die bestehende Reparatur bleiben erhalten.
+
+![BauFlow Musterfirma · Inventory glass](docs/assets/screenshots/bauflow-muster-inventory-online.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-inventory-online-phone.webp" alt="BauFlow Musterfirma · Inventory on an emulated phone" width="260">
+
 ## In Prüfung: Produktionspanel für Stahlbetriebe
 
 Ein Kalender zeigt bestätigte kg pro Tag und Projekt: Teileschnitt,

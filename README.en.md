@@ -29,6 +29,12 @@ Actual online UI with fictional data and illustrative vehicle images · 14 Novem
 
 <img src="docs/assets/screenshots/bauflow-muster-fleet-online-phone.webp" alt="BauFlow Musterfirma · Fleet on an emulated phone" width="260">
 
+The inventory now shares the compact Day/Night glass cards with five illustrated tools. PR212 is live only on the separate Musterfirma demo; identities, barcodes, custody and the existing repair are preserved.
+
+![BauFlow Musterfirma · Inventory glass](docs/assets/screenshots/bauflow-muster-inventory-online.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-inventory-online-phone.webp" alt="BauFlow Musterfirma · Inventory on an emulated phone" width="260">
+
 ## In review: production dashboard for steel operations
 
 A calendar shows confirmed kg by day and project: parts cutting, assembly
