@@ -17,6 +17,15 @@ body[data-bauflow-muster] [data-studio-home] [data-studio-board] {
   background-image: none !important;
   background-color: transparent !important;
 }
+@media (max-width: 767px) {
+  body[data-bauflow-muster] [data-studio-warehouse] label:has(> input[type='search']) {
+    flex-basis: 100%;
+  }
+  body[data-bauflow-muster] [data-studio-warehouse] [role='tab'] {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+}
 @media print {
   body[data-bauflow-muster] .steelStudioWorkspace,
   body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
