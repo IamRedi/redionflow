@@ -346,7 +346,7 @@ The only shared JSX change adds inert scan-dialog/overlay attributes.
 
 Five original built-in image_gen illustrations represent Akku-Schlagschrauber,
 Winkelschleifer, Rotationslaser, Schweißgerät MIG/MAG and Drehmomentschlüssel.
-They retain transparent alpha in 896×672 WebP files (about47–104KB each), with
+They retain transparent alpha in 896×672 WebP files (about 47–104KB each), with
 full prompts and original/derivative hashes in
 `public/bauflow-muster-v1/inventory/provenance.json`. Exact model selection is
 not exposed by the built-in tool. App AI/provider settings and limits are not
@@ -364,11 +364,27 @@ read the same persistent image. No new item or barcode is created. Reruns add
 nothing; a failure rolls back all additions. The fresh disposable seed shares
 the same five-entry catalogue/helper. Existing uploaded files, identity, custody,
 scanned labels, vehicle records and repair history must remain unchanged.
+The required file actor FK references the existing fictional installation owner;
+the system marker/name identifies catalogue maintenance. No owner account or
+schema constraint is added, changed or bypassed.
 
-PR212 candidate: source3d2501b. Six baseline desktop/phone/small/landscape renders
-passed and13 changed application/asset files match the mini-PC executor exactly.
-Final checks/publication/online readback are pending the bounded executor; this
-chapter does not claim deployment. Public module/capability claims, links and
+PR212 verification: full lint and 1,293 units in 144 files passed; application
+production build passed at final UI revision32b4c2f, with maintenance TypeScript
+and changed-helper lint at1af1c9b. The upload-priority fixture preserved one
+original file exactly, filled four missing covers and proved a repeated call
+changes no records/history. Inventory IDs/barcodes/state, fleet, repairs and
+scan labels match their original snapshots. The file-shape constraint caught
+the missing actor during the fixture and was preserved; the helper now uses
+the existing owner FK. An earlier OCR environment failure was corrected with
+the retained local tool/language data, without changing tests or application.
+Six baseline and six final browser cases cover desktop, phone,320px, short
+landscape and both themes, with full loaded images, bounded dialogs, internal
+scroll, search, detail/back, focus, manual barcode lookup and registration
+open/cancel. Fourteen changed source/asset/document files match the executor.
+Physical phone, camera/NFC and printing acceptance remains NOT_RUN.
+Publication and actual online readback are recorded separately in PR212 and
+the existing project record; this source chapter does not claim deployment.
+Public module/capability claims, links and
 readiness remain accurate: presentation NO_CONTENT_CHANGE for this bounded
 inventory material/photo repair; companion PR209/PR91 record verified provenance
 after acceptance. AL-Steel, BaumdienstFlow, other demos and Portfolio Production
