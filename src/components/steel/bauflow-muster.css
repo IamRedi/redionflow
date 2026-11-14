@@ -5,7 +5,7 @@ body[data-bauflow-muster] {
 html.dark body[data-bauflow-muster] {
   --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-night.webp');
 }
-body[data-bauflow-muster] .steelStudioWorkspace:has([data-studio-home]) {
+body[data-bauflow-muster] .steelStudioWorkspace {
   background: var(--bauflow-muster-scene) center / cover no-repeat !important;
 }
 body[data-bauflow-muster] [data-studio-home] [data-studio-board] > .steelStudioPhoto {
@@ -16,5 +16,5 @@ body[data-bauflow-muster] [data-studio-home] [data-studio-board] {
   background-color: transparent !important;
 }
 @media print {
-  body[data-bauflow-muster] .steelStudioWorkspace:has([data-studio-home]) { background: white !important; }
+  body[data-bauflow-muster] .steelStudioWorkspace { background: white !important; }
 }

@@ -75,7 +75,8 @@ OfficeMember ID is the canonical owner account ID, as required by office tasks.
 
 Keep the existing warm stone/copper/graphite crystal UI, Manrope, compact
 controls and the original office scenes. An explicitly scoped body marker only
-replaces the Workzone atmosphere with the matching clear Day/Night campus.
+replaces the shared steel workspace atmosphere with the matching clear
+Day/Night campus. Fixed office rooms retain their own existing scenes.
 There is no white veil, extra mock dashboard or generated UI. The map, plan,
 worker strip, project actions and all ordinary controls keep their actual code.
 
