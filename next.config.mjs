@@ -1,3 +1,4 @@
+import {PUBLIC_DEMO_INDEXING_HEADERS} from './config/public-demo-indexing.mjs';
 /**
  * BDF-P8-007 baseline security headers.
  *
@@ -91,6 +92,7 @@ const nextConfig = {
         source: "/:path*",
         headers: SECURITY_HEADERS,
       },
+      ...PUBLIC_DEMO_INDEXING_HEADERS,
     ];
   },
 };

@@ -1,5 +1,6 @@
+import {publicDemoMetadata} from '@/lib/public-demo-seo';
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import Link from "next/link";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
@@ -15,7 +16,7 @@ import "./globals.css";
 
 const rootTitle = isSaasMode ? `${saasAppName}${saasAppSuffix}` : `${appName} ${appSuffix}`;
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: rootTitle,
   description: "Clean operational flow platform for field work and office control.",
   appleWebApp: {
@@ -28,6 +29,10 @@ export const metadata: Metadata = {
     apple: brandAppleIconSrc,
   },
 };
+export async function generateMetadata(): Promise<Metadata> {
+ return publicDemoMetadata((await headers()).get('host'),baseMetadata);
+}
+
 
 export default async function RootLayout({
   children,
