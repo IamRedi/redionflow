@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-14",
+  "kind": "AI_CONCEPT_ILLUSTRATIONS",
+  "scope": "BauFlow Musterfirma only",
+  "tool": "built-in image_gen",
+  "model": "not exposed; no Images API credentials/provider activation",
+  "prompts": {
+    "common": "Use case: product-mockup. Create one original, extremely realistic premium vehicle catalogue image for BauFlow's fictional steel-construction company fleet. One vehicle only. Clean studio-quality 3/4 front-left view, front to the left, entire vehicle visible including wheels, carefully centered with comfortable 8% margin, landscape 4:3 composition. True transparent background and subtle soft contact shadow only; no ground plane or scene. Refined warm graphite and brushed warm-grey materials, restrained copper/amber safety accents, realistic glass, rubber and metal, crisp detail and coherent soft daylight from upper left. A believable European professional fleet; no actual brand, logo, lettering, numbers, watermark, UI, people or readable license plate. No white fog, haze, exaggerated neon, cropped parts or cartoon styling. Preserve practical proportions, no fanciful machinery. This is illustrative fictional product photography, not operational evidence. Subject: ",
+    "subjects": [
+      [
+        "montage-transporter",
+        "A modern medium-size European high-roof installation-team panel van, warm graphite body with a single restrained copper detail, ordinary practical roof ladder rack, closed side/rear doors, clean working vehicle."
+      ],
+      [
+        "lkw-75t",
+        "A realistic European 7.5-ton two-axle flatbed work truck. Warm light-grey cab, graphite flatbed with low metal side panels, empty and organized, subtle amber/copper safety details. No crane on this truck."
+      ],
+      [
+        "teleskopstapler",
+        "A compact rough-terrain telescopic handler, large four rubber tires, graphite-grey chassis, copper-orange telescopic boom lowered nearly horizontal, realistic forks lowered just above ground, safe parked configuration, clean industrial design."
+      ],
+      [
+        "scherenbuehne",
+        "A realistic compact self-propelled electric 12-meter scissor lift in fully lowered parked position, closed and coherent scissor mechanism visible under a neat guardrail basket, graphite base, copper-orange rails and safety accents, small four rubber tires."
+      ],
+      [
+        "kran-lkw",
+        "A European two-axle flatbed construction delivery truck with a compact knuckle-boom loading crane correctly folded directly behind its warm light-grey cab. Graphite flatbed empty, graphite chassis, restrained copper-orange crane boom, outriggers stowed. Clean practical steel contractor vehicle."
+      ],
+      [
+        "bauleiter-kombi",
+        "An elegant practical European estate station wagon used by a construction site manager, graphite metallic paint, restrained copper detail, realistic five-door proportions, clear windows, roof rails, clean professional appearance, no sport modifications."
+      ]
+    ],
+    "mode": "built-in image_gen; model selection not exposed",
+    "reference": "https://developers.openai.com/api/docs/guides/image-generation",
+    "scope": "BauFlow Musterfirma only"
+  },
+  "assets": [
+    {
+      "key": "montage-transporter",
+      "file": "montage-transporter.webp",
+      "originalSha256": "de5e382a6213f1d5b2ea726a638f84981df918519a09f0afea0c6f8d7d51be44",
+      "sha256": "d4f83158591f9c39e38c82303de0132695fe3695af491df5fd6b59e1d8646587",
+      "width": 896,
+      "height": 672,
+      "alpha": true,
+      "bytes": 92850
+    },
+    {
+      "key": "lkw-75t",
+      "file": "lkw-75t.webp",
+      "originalSha256": "b4118837b8219915e43dfd5df2653398d7b0ab58ff5f0c9283cbcb462940c404",
+      "sha256": "2bb59c731aaae226dfbe4fe07f956d1c2dbc06a264107b1ad991b89988a8dbf7",
+      "width": 896,
+      "height": 672,
+      "alpha": true,
+      "bytes": 92860
+    },
+    {
+      "key": "teleskopstapler",
+      "file": "teleskopstapler.webp",
+      "originalSha256": "11617b9f36ac423559984a033cbb500a0852a24cdff2e7c55c0ab19226b6e720",
+      "sha256": "4ef8ed147d1a3f9f5871b145e2ed02ed7f1bab898676ca82a8a70f624d0591da",
+      "width": 896,
+      "height": 672,
+      "alpha": true,
+      "bytes": 108622
+    },
+    {
+      "key": "scherenbuehne",
+      "file": "scherenbuehne.webp",
+      "originalSha256": "26079f5ead3dd7a56957165f273e3bf8a8e78c7b809178e842fe636d4e68efd1",
+      "sha256": "a12758643af1051e21554f1960494f7f6bee18af24a49190ae396824c7c4ac56",
+      "width": 896,
+      "height": 672,
+      "alpha": true,
+      "bytes": 141286
+    },
+    {
+      "key": "kran-lkw",
+      "file": "kran-lkw.webp",
+      "originalSha256": "52a101f20a0175391dc1d84c8eec4b33e3207fbfb679be0255c425b0685fb7ad",
+      "sha256": "12a439bb20e593c328437ba0bb411f50704b5137d2d7be5bb740eed2157e9262",
+      "width": 896,
+      "height": 672,
+      "alpha": true,
+      "bytes": 94140
+    },
+    {
+      "key": "bauleiter-kombi",
+      "file": "bauleiter-kombi.webp",
+      "originalSha256": "2cb8e079b6c5b73d35bceb9947c15d74e650bcfb83fb31445fd7079b91a35b51",
+      "sha256": "b2dd9be6c012cf0ed44bdbf0438d47a401473bf51ab434966a4c889458ff9fbc",
+      "width": 896,
+      "height": 672,
+      "alpha": true,
+      "bytes": 93670
+    }
+  ],
+  "notOperationalEvidence": true,
+  "transform": "Format/size optimization only; transparent alpha preserved"
+}
