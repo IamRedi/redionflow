@@ -163,3 +163,6 @@ no SaaS core, tenant data or pilot deployment changes are included.
 The [RediOnFlow website](https://flow.redioncekrezi.de/en.html) is now public: four languages and clearly labelled Office/Admin, worker/PIN and demo entrances for BauFlow and BaumdienstFlow. Existing product websites, SaaS services and demo data are preserved.
 
 Verified packet `76f8b3eac1cf`; portfolio PR29/main `a12ab96`. This source PR remains separate from a Railway-connected application merge.
+
+
+Public website update ·14November2026: quote/setup and demo-boundary clarification is live in four languages; [bounded GeoFindbar before/after evidence](docs/BAUMDIENST_BUYER_CYCLE_20261114.md). Application release scope is unchanged.

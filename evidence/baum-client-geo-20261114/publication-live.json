@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-11-14T00:34:54.503475+00:00",
+  "websiteSource": "de4b41b8c76a956008a89388e60f04523224e875",
+  "actualPublicationArtifactSha256": "5a07df9ed61592417ece1046a4237ab6423f7e0e3b50fbb4168ae85d62d1d565",
+  "deploymentId": "085ac0a7-6e12-4761-b5d1-fa8ce1161a45",
+  "deploymentUrl": "https://085ac0a7.baumdienstflow.pages.dev",
+  "previousDeployment": "2ecc9f5f-c728-4f12-bccd-93155191a525",
+  "allFivePublishedPagesMatch": true,
+  "currentOtherFilesPreserved": 111,
+  "totalPublishedAssetsVerified": 117,
+  "approvedCopyUnchanged": true,
+  "assemblyCorrection": "Same exact owner-approved website source/5HTML and same target;replace only packaging baseline to preserve actual116file currentdeployment. No new product/code/price/feature permission inferred. Originalb15archive preserved untouched.",
+  "status": "PUBLISHED_LIVE_RECHECK_COMPLETE",
+  "supersededCandidateArtifactSha256": "b15ee41a33952e67b19ec43f798ef585c5eef90e995fdede3a705cc83b1db5c3",
+  "supersededCandidatePublished": false,
+  "nativeBefore": "e730618c-c93d-4dc4-b387-442b22bc0ea8",
+  "nativeAfter": "7fd9b0de-5921-48ab-8dec-8cfa543039dc",
+  "reviewPrompts": [
+    5,
+    3
+  ],
+  "agentBefore": [
+    2,
+    4,
+    2
+  ],
+  "agentAfter": [
+    5,
+    1,
+    2
+  ],
+  "originalEvidenceFilesPreserved": 1008,
+  "originalTableCount": 32,
+  "originalRowsKeysConfigFinancePreserved": true,
+  "postBackup": {
+    "createdAt": "2026-11-14T00:39:34.416Z",
+    "filename": "baum-client-geo-after-20261114.dump",
+    "bytes": 1021387,
+    "sha256": "4701c563dfd9d9a0ec9f374062ba0fa272f14fc022cd57d0c5e3a515f98be31e",
+    "archiveReadback": "PASS",
+    "independentRestore": "NOT_RUN",
+    "includesOneNativeAuditAndThreePrivateParseRuns": true,
+    "privateOnAuthorizedHost": true
+  },
+  "paidApiCalls": 0,
+  "noMainPilotMergeOrRailwayDeployment": true
+}

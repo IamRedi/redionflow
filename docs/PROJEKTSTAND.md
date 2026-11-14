@@ -1,6 +1,6 @@
 # Projektstand
 
-> 14.11.2026 · Public BaumdienstFlow cost/setup copy: **CANDIDATE_READY / PUBLICATION_PENDING**. Static website branch only; no application/Railway/customer data change. [Protocol, preserved evidence and observed GeoFindbar5→3rule limitation](BAUMDIENST_BUYER_CYCLE_20261114.md). Exact Cloudflare approval/current-provider readback and one new native after audit remain. Logo/PWAissue194 and Musterfirma work remain separate.
+> 14.11.2026 · Public BaumdienstFlow cost/setup website PUBLISHED; native GeoFindbar live5→3 with DE/EN recognition disagreement preserved. Exact source de4b41b; Cloudflare085ac0a7; no main/pilot or Railway deployment. [Receipt](BAUMDIENST_BUYER_CYCLE_20261114.md).
 
 
 **Stand: 27. Oktober 2026**

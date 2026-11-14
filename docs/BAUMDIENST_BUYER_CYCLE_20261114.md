@@ -1,3 +1,17 @@
+# BaumdienstFlow client copy through GeoFindbar — published
+
+14 November 2026. Owner-approved website source de4b41b was published unchanged to the existing Cloudflare Pages project baumdienstflow: deployment085ac0a7-6e12-4761-b5d1-fa8ce1161a45, success. The four-language copy clarifies quote/setup scope and the public-demo boundary without invented prices or activation deadlines. No main/pilot merge or Railway/app/customer database deployment.
+
+The provider check caught an obsolete archive baseline before upload: candidateb15ee41a3395 was NEVER published. Packaging alone was rebuilt from the actual116-asset deployment, preserving all111othercurrentassets/currentheaders and using the exact approved fiveHTML plus oneCSS. Actual uploaded artifact SHA2565a07df9ed61592417ece1046a4237ab6423f7e0e3b50fbb4168ae85d62d1d565,6057408bytes. All117publishedassets and allfivecustomdomainpages match; previousdeployment2ecc9f5f is retained for rollback.
+
+Frozen engine4904/v2/profilev2/eightDE-SQquestions: native beforee730618c → native liveafter7fd9b0de,5→3cost/setupreviewprompts,10pages/partial. The three root/DE/ENprompts repeat one natural-negation recognition limitation; the model-assisted agent finds the explicit boundary in source. Preserved disagreement,not threeconfirmedbusinessdefects or tuning for zero. Agentanswers2supports/4partial/2unverified→5/1/2. Numericalpricing remainspartial,independentdiscoveryunverified. Known-client case-informed work,not held-out/human/API visibility measurement. Basic12/12checks cover onlytwo rootpages,not wholeGEOscore.
+
+1008historicalevidencefiles and originalrows across32tables,keys/config/financialstate preserved. Three private reportversions parsed/retrieved with alleightquestionIDs,externalprocessing/publicationfalse. Pre/postprivateDBarchives readbackPASS; independentrestoreNOT_RUN. PaidAPI activation/calls0. Public UI readback1280/390and844×390,FAQpointer/Enter,existingtheme/footer/signature passed;physicaldevice/textzoom/fullownerUATNOT_VERIFIED.
+
+Authorized website/client-cycle scope DONE. Future semantic DE/ENcalibration is recorded,not started. Logo/PWAissue194 and concurrentMusterfirma are separate. Showcase/About/portfoliocards/Beta70 remainaccurate: NO_CONTENT_CHANGE for those surfaces;no new clientmedia publication. Technical documentation PRs remain reviewable;deployedsource staysde4b41b.
+
+## Historical candidate protocol — superseded by live result above
+
 # BaumdienstFlow — kostoja dhe konfigurimi: para / kandidat
 
 14 nëntor 2026. Teksti kandidat dhe verifikimi lokal janë përfunduar; website-i publik ende nuk është ndryshuar. API me pagesë nuk u aktivizua ose përdor. Publikimi kërkon miratim të paketës konkrete vetëm në Cloudflare Pages,pa bashkim në main/pilot ose deploy të Railway/Musterfirma-s.
