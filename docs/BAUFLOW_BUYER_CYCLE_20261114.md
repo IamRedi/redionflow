@@ -1,3 +1,15 @@
+# BauFlow client copy — published and rechecked
+
+14 November 2026. Owner-approved static PR196/source c508ed539dfddb1a08c61c7939e5c55b00fa2d21 and artifact f1af3512515387b37c46b0baf293d9200dd633660fa7c83018f1bcbeef576844 are published unchanged to existing CloudflarePagesbaumdienstflow, deployment261bad18-0879-46c6-9997-d2a37f8266d6. All118liveassets/fiveBauFlowpages byte-match;112othercurrentassets/headers/fiveBaum siblingpages unchanged;old085rollbackretained. No main/pilotmerge,Railway/app/ALSteelDBchange or paidAPIactivation/call.
+
+Actual frozen GeoFindbar a816/v3 persistent-worker before/after:0→0reviews,with BauFlowcost checks5not_applicable→5explicit_signal_observed. Same8DE/SQquestions,agent2supports/4partial/2unverified→4/2/2,numericalquote partial/independentdiscovery unverified. Nativeafter0c04bce6,10pages/partial. The missing-topic applicability gap and same-origin fiveBau/fiveBaum sample remain documented real engine limits,not tuned away. This is a known-client source-based test,not visibility uplift or business-completeness proof.
+
+Three private reportversions parsed/retrieved/all8IDs/noexternalpublication. Original1158evidencefiles/original32tablerows/keys/config/finances preserved;only1newsoftwareprofile,2nativeauditjobs and3privateparsejobs added. Originalalsteel.al business profile/history unchanged. Freshpre/postprivatebackuparchive-readbackPASS,independentrestoreNOT_RUN.21previewcases+5freshliveviewportlocale/theme/FAQchecksPASS;physicaldevice/textzoom/fullUATNOT_VERIFIED. Candidatepacket/screenshots retained separately;newlivecaptures labelled accurately.
+
+Authorized client cycleDONE. No dependencies/schema/providerchange,Actions,contactsubmission,actualcompanyprovisioning or automatic successor/schedule. Nativecapabilities/portfolio/About/readinessNO_CONTENT_CHANGE;technical receipts only,no newpublicmedia. Logo/PWA194/Musterfirma/iPhone remainseparate. Publishedsource staysc508ed5;laterdoccommits do not imply another deployment.
+
+## Candidate protocol — historical, superseded above
+
 # BauFlow buyer enquiry and GEO client candidate
 
 14 November 2026. BauFlow is the software product;AL-Steel is the public user reference. This candidate adds three FAQ and a price/setup enquiry in DE/EN/IT/SQ,without invented charges,packages or activation deadlines. It separates setup/ongoing-use quote scope,aggregate first-contact details and presentation/reference versus real company provisioning. No app,client-company data or existing AL-Steel business-profile change.
