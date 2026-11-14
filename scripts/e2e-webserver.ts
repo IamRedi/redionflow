@@ -122,6 +122,9 @@ async function main() {
   env.LOGIN_GUARD_SALT = randomBytes(32).toString("hex");
   // WanWay tests are explicit and synthetic. Never inherit real GPS keys or
   // make live provider requests from the ordinary disposable browser suite.
+  // Synthetic linked workspace; browser tests abort this reserved domain.
+  env.KIDRAHT_URL = "https://kidraht.example.test";
+  env.KIDRAHT_SETUP_TOKEN = "";
   env.WANWAY_GPS_ENABLED = "false";
   env.WANWAY_ACTIVE_KEY_ID = "";
   env.WANWAY_ENCRYPTION_KEYS = "";

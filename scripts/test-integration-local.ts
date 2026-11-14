@@ -24,7 +24,8 @@ const containerName = `${CONTAINER_PREFIX}-${runId}`;
 
 const dbUser = "int";
 const dbPassword = randomBytes(12).toString("hex");
-const dbName = "baumkalk_integration";
+const workshop = process.argv.includes("--workshop");
+const dbName = workshop ? "baumdemo_test" : "baumkalk_integration";
 
 let cleanedUp = false;
 let child: ChildProcess | undefined;
@@ -220,7 +221,16 @@ async function main() {
   assertDockerAvailable();
   installSignalHandlers();
 
-  const hostPort = await allocateFreePort();
+  // Keep the workshop's existing strict fixture guard. Never reuse its port.
+  let hostPort = await allocateFreePort();
+  if (workshop) {
+    const probe = createServer();
+    await new Promise<void>((resolve, reject) => {
+      probe.once("error", () => reject(new Error("Dedicated workshop fixture port occupied; existing service untouched.")));
+      probe.listen(55435, "127.0.0.1", () => probe.close(() => resolve()));
+    });
+    hostPort = 55435;
+  }
   log(`allocated host port ${hostPort} for disposable postgres`);
   log(`disposable DATABASE_URL: ${redactedUrl(hostPort)}`);
 
@@ -228,12 +238,27 @@ async function main() {
   await waitForReady();
 
   const env = buildChildEnv(hostPort);
+  if (workshop) { env.APP_ENV = "demo"; env.SAAS_MODE = "false"; env.RLS_ENFORCE = "false"; env.DEMO_PROFILE = "baumdienst-workshop"; env.SESSION_SIGNING_SECRET = "synthetic-disposable-workshop-key-not-for-production"; }
+
 
   log("applying prisma migrations");
   const migrateExit = await runCommand("npx", ["prisma", "migrate", "deploy"], env);
   if (migrateExit !== 0) {
     warn(`prisma migrate deploy failed (exit ${migrateExit})`);
     process.exit(migrateExit);
+  }
+
+  const workshopFiles = [
+    "src/lib/workshop/image-store.integration.test.ts",
+    "src/lib/workshop/media-store.integration.test.ts",
+    "src/lib/workshop/wood-store.integration.test.ts",
+    "src/lib/workshop/offices/assistant.integration.test.ts",
+  ];
+  if (workshop) {
+    const seeded = await runCommand("npx", ["tsx", "scripts/seed-workshop-fixture.ts"], env);
+    if (seeded !== 0) process.exit(seeded);
+    const exit = await runCommand("npm", ["run", "test:integration", "--", ...workshopFiles], env);
+    process.exit(exit);
   }
 
   env.TENANT_DATABASE_URL = await provisionLocalPilotRole(env.DATABASE_URL!);
@@ -243,9 +268,11 @@ async function main() {
   log("running vitest integration suite");
   // Delegate to the same `test:integration` npm script that CI uses so the
   // exact command under test never diverges between local and CI.
-  const testExit = await runCommand("npm", ["run", "test:integration"], env);
+  const testExit = await runCommand("npm", ["run", "test:integration", "--", ...workshopFiles.flatMap(file => ["--exclude", file])], env);
   log(`integration exit ${testExit}`);
-  process.exit(testExit);
+  cleanupContainerSync();
+  const workshopExit = await runCommand("npx", ["tsx", "scripts/test-integration-local.ts", "--workshop"], env);
+  process.exit(testExit || workshopExit);
 }
 
 main().catch((err) => {
