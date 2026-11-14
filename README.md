@@ -1,3 +1,9 @@
+## Static identity update published - 14 November 2026
+
+PR200 static package is live in the existing Cloudflare Pages project: deployment45e82802,source028ea43,ZIPdfa4c04a. All118public assets match;GeoFindbar live rechecks checked6pages per product with zero static findings and explicit partial coverage. [Publication,rollback and limits](docs/PR200_STATIC_LIVE_20261114.md). No main/pilot merge or Railway application deployment. Application repair/testing continues separately in PR202.
+
+## Earlier candidate and gate history
+
 ## Product identity correction candidate · 14 November 2026
 
 Full application gates have now been executed on isolated exact-source candidates: [results and release holds](docs/DEMO_FULL_QA_20261114.md). BauFlow regression suite passed; pinned BaumdienstFlow reproduces existing baseline failures and remains on release hold. No application or static deployment occurred.
