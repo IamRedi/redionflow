@@ -12,6 +12,8 @@ import { dateKey, dayRange } from '../src/lib/workzone/date-utils';
 import { assertE2ETestDatabase } from './lib/e2e-target';
 import { BAUFLOW_MUSTER_COMPANY_ID as companyId, BAUFLOW_MUSTER_OWNER_ID as ownerId, bauflowMusterConfigured } from '../src/lib/demo/bauflow-muster';
 import { BAUFLOW_MUSTER_FLEET, musterFleetPhoto } from '../src/lib/demo/bauflow-muster-fleet';
+import { BAUFLOW_MUSTER_INVENTORY } from '../src/lib/demo/bauflow-muster-inventory';
+import { addMusterInventoryCovers } from './lib/muster-inventory-photos';
 
 // Deliberately separate from ordinary seed/reset. Never imports customer data,
 // resets an installation, changes existing profiles or calls an external API.
@@ -140,13 +142,13 @@ async function main() {
         await tx.companyAssetEvent.create({ data: { companyProfileId: companyId, assetId: asset.id, type: 'registered', actorKey: 'muster-seed-v1', actorName: 'Musterfirma', note: 'Fiktiver Anfangsbestand des Templates.' } });
         if (index === 2) await tx.companyAssetRepair.create({ data: { companyProfileId: companyId, assetId: asset.id, phase: 'received', problem: 'Hydraulikleitung prüfen · Musterfall', reportedByKey: 'muster-seed-v1', reportedByName: 'Emma Schulz' } });
       }
-      for (const [index, name] of ['Akku-Schlagschrauber', 'Winkelschleifer', 'Rotationslaser', 'Schweißgerät MIG/MAG', 'Drehmomentschlüssel'].entries()) {
-        const code = `BF-MU-${String(index + 1).padStart(3, '0')}`;
+      for (const { name, code } of BAUFLOW_MUSTER_INVENTORY) {
         const item = await tx.companyInventoryItem.create({ data: { companyProfileId: companyId, category: 'WORK_TOOL', itemCode: code, barcode: code, name } });
         const asset = await tx.companyOperationalAsset.create({ data: { companyProfileId: companyId, inventoryItemId: item.id } });
         await tx.companyAssetCode.create({ data: { companyProfileId: companyId, assetId: asset.id, kind: 'label', value: code, matchValue: scanCodeKey(code), createdByKey: 'muster-seed-v1', createdByName: 'Musterfirma' } });
         await tx.companyAssetEvent.create({ data: { companyProfileId: companyId, assetId: asset.id, type: 'registered', actorKey: 'muster-seed-v1', actorName: 'Musterfirma', note: 'Fiktiver Anfangsbestand des Templates.' } });
       }
+      await addMusterInventoryCovers(tx);
       await tx.workzoneAnnouncement.create({ data: { companyProfileId: companyId, message: 'Musterfirma: Alle Personen, Projekte und Geschäftsdaten sind frei erfunden. Bilder sind illustrative Entwürfe.', createdByName: 'BauFlow' } });
     }, { timeout: 30_000 });
     console.log('BauFlow Muster template created: 12 employees, 5 offices, 3 sites, 1 factory, 11 linked assets. No existing installation changed.');

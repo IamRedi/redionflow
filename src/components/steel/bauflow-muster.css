@@ -165,6 +165,118 @@ body[data-bauflow-muster] [data-testid='fleet-picker'] .text-muted-foreground {
     backdrop-filter: none;
   }
 }
+/* Inventory keeps the accepted fleet crystal family and the original stock flow.
+   Every selector is fenced by the standalone fictional installation marker. */
+body[data-bauflow-muster] [data-testid='asset-warehouse'] {
+  gap: 12px;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] > div:first-child h1 {
+  flex: 0 0 auto;
+  margin-right: auto;
+  text-shadow: 0 1px 3px #ffffffe6;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] > div:first-child > button:has(> .lucide-scan-line) {
+  width: 44px;
+  padding-inline: 0;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] > div:first-child > button:has(> .lucide-scan-line) > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html.dark body[data-bauflow-muster] [data-testid='asset-warehouse'] > div:first-child h1 {
+  text-shadow: 0 1px 4px #000;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] label:has(> input[type='search']) {
+  flex: 0 1 380px;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] :is(input:not([type='checkbox']), select, textarea),
+body[data-bauflow-muster] [data-studio-item-detail] :is(input:not([type='checkbox']), select, textarea) {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+  color: hsl(var(--foreground));
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] input::placeholder {
+  color: hsl(var(--foreground) / .75);
+  opacity: 1;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+  box-shadow: 0 4px 14px #102c2014, inset 0 1px 0 #ffffff66;
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  backdrop-filter: blur(16px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button > span:first-child {
+  aspect-ratio: 4 / 3;
+  background: radial-gradient(ellipse at 50% 90%, #ffffff40, transparent 70%);
+  border-color: var(--muster-fleet-edge);
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button > span:last-child {
+  padding: 10px 12px 12px;
+  gap: 6px;
+}
+body[data-bauflow-muster] :is(#warehouse-items, [data-studio-item-photo]) img {
+  object-fit: contain;
+  padding: 8px;
+}
+body[data-bauflow-muster] [data-studio-dialog]:has([data-studio-item-detail]) {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(100% - 2rem), 1000px);
+  height: auto;
+  max-height: calc(100dvh - 2rem);
+  border: 1px solid var(--muster-fleet-edge);
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--muster-fleet-glass);
+  box-shadow: 0 24px 72px #071c2033, inset 0 1px 0 #ffffff70;
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-studio-dialog-overlay]:has(~ [data-studio-dialog] [data-studio-item-detail]) {
+  background: #0c201c26;
+}
+body[data-bauflow-muster] [data-studio-item-detail] :is([data-studio-item-header], [data-studio-item-photo], .bg-card) {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+}
+body[data-bauflow-muster] :is([data-testid='asset-warehouse'], [data-studio-item-detail]) .text-muted-foreground {
+  color: hsl(var(--foreground) / .8);
+}
+@media (max-width: 479px) {
+  body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button > span:last-child {
+    padding: 8px;
+  }
+  body[data-bauflow-muster] [data-studio-dialog]:has([data-studio-item-detail]) {
+    width: calc(100% - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 20px;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button,
+  body[data-bauflow-muster] [data-studio-dialog]:has([data-studio-item-detail]),
+  body[data-bauflow-muster] [data-studio-item-detail] :is([data-studio-item-header], [data-studio-item-photo], .bg-card) {
+    background: hsl(var(--background));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
 @media print {
   body[data-bauflow-muster] .steelStudioWorkspace,
   body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
