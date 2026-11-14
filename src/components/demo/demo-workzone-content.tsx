@@ -9,6 +9,7 @@ import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
 import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
 import { isBaumdienstWorkshopDemoEnabled } from "@/lib/public-demo";
 import { demoSiteKey } from "@/lib/workshop/shared-store";
+import type { MusterSiteData } from "@/lib/workshop/site-detail";
 
 import { restoreOfficeSites } from "@/lib/workshop/offices/restore-sites";
 
@@ -26,7 +27,7 @@ function materialIndicators(
   ].filter(Boolean) as Array<{ key: string; label: string; icon: string; qty: number }>;
 }
 
-export async function DemoWorkzoneContent({ monitor = false }: { monitor?: boolean }) {
+export async function DemoWorkzoneContent({ monitor = false, initialSite }: { monitor?: boolean; initialSite?: MusterSiteData }) {
   const company = await getOrCreateDefaultCompany();
   const currentLang = await resolveRequestLanguage();
   const mode = await getCompanyMode();
@@ -150,7 +151,7 @@ export async function DemoWorkzoneContent({ monitor = false }: { monitor?: boole
         <h1 className="mt-1 text-xl font-semibold">{workzoneName}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("demo.workzoneDescription", currentLang)}</p>
       </div>}
-      {workshopEnabled ? <MusterWorkzone footer={<BaumdienstDemoFooter lang={currentLang}/>} monitor={monitor} now={new Date().toISOString()} missions={missionItems} defaultAddress={defaultAddress} sites={baustellen.map(b=>({id:b.id,key:demoSiteKey(b),trees:b.treeItems}))} /> : <WorkzoneMissionControl
+      {workshopEnabled ? <MusterWorkzone initialSite={initialSite} footer={<BaumdienstDemoFooter lang={currentLang}/>} monitor={monitor} now={new Date().toISOString()} missions={missionItems} defaultAddress={defaultAddress} sites={baustellen.map(b=>({id:b.id,key:demoSiteKey(b),trees:b.treeItems}))} /> : <WorkzoneMissionControl
         items={liveMission}
         archive={archivedMission}
         defaultAddress={defaultAddress}

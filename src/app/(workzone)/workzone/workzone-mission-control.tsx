@@ -295,6 +295,7 @@ export function WorkzoneMissionControl({
   canEditPhotos = false,
   demoPhotoReadOnly = false,
   musterScene = false,
+  onOpenSite,
 }: {
   items: MissionItem[];
   archive: MissionItem[];
@@ -311,6 +312,7 @@ export function WorkzoneMissionControl({
   canEditPhotos?: boolean;
   demoPhotoReadOnly?: boolean;
   musterScene?: boolean;
+  onOpenSite?: (id: string) => void;
 }) {
   const { currentLang } = useLanguage();
   const muster = allItems.some(item => item.demoPhotoKey) || archive.some(item => item.demoPhotoKey);
@@ -660,7 +662,7 @@ export function WorkzoneMissionControl({
                 <div data-site-actions className="mt-2 flex items-center gap-1">
                   {allowDetailNavigation ? (
                     <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? "h-8 px-2.5" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>
-                      <Link href={`${detailHrefBase}/${item.id}`} aria-label={immersive ? `${t("common.open",currentLang)}: ${item.name}` : undefined} title={immersive ? `${t("common.open",currentLang)}: ${item.name}` : undefined}>{immersive ? <ArrowUpRight className="size-4"/> : t("common.open", currentLang)}</Link>
+                      <Link href={`${detailHrefBase}/${item.id}`} onClick={event => { if (onOpenSite && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenSite(item.id); } }} aria-haspopup={onOpenSite ? "dialog" : undefined} aria-label={immersive ? `${t("common.open",currentLang)}: ${item.name}` : undefined} title={immersive ? `${t("common.open",currentLang)}: ${item.name}` : undefined}>{immersive ? <ArrowUpRight className="size-4"/> : t("common.open", currentLang)}</Link>
                     </Button>
                   ) : null}
                   <Button asChild size="sm" variant="outline" className={`text-[11px] ${item.demoPhotoKey ? isCompactCanvas ? "h-8 w-8 px-0" : "h-8 px-2.5" : isCompactCanvas ? "h-6 px-1.5" : "h-7 px-2"}`}>

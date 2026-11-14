@@ -9,7 +9,7 @@ test.beforeEach(async({context},info)=>{await resetWorkshopFixture();await conte
 test("botanical studio keeps six/two columns, characteristic leaves, seasons and hedges read-only",async({page,request},info)=>{
   const s=await(await request.get("/api/demo/baumdienst/workshop")).json() as WorkshopSnapshot,site=s.directory.sites[0];
   for(const width of [1440,390]){
-    await page.setViewportSize({width,height:900});await page.goto(`/demo/baustellen/${site.id}`);
+    await page.setViewportSize({width,height:900});await page.goto(`/demo/baustellen/${site.id}`);await page.getByRole("button",{name:/^Bäume/}).click();
     const grid=page.getByTestId("muster-tree-grid");expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(width===390 ? 2:6);
     await page.getByRole("combobox",{name:"Sommer · Herbst",exact:true}).selectOption("autumn");
     const art=grid.locator("svg[data-botanical-kind]").first();expect(await art.locator("linearGradient stop").first().getAttribute("stop-color")).toBeTruthy();
