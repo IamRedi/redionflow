@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Prisma } from '../../src/generated/prisma/client';
-import { BAUFLOW_MUSTER_COMPANY_ID as companyId } from '../../src/lib/demo/bauflow-muster';
+import { BAUFLOW_MUSTER_COMPANY_ID as companyId, BAUFLOW_MUSTER_OWNER_ID as ownerId } from '../../src/lib/demo/bauflow-muster';
 import { BAUFLOW_MUSTER_INVENTORY } from '../../src/lib/demo/bauflow-muster-inventory';
 
 /** Add missing canonical covers under the same locks used by normal uploads. */
 export async function addMusterInventoryCovers(tx: Prisma.TransactionClient) {
+  // Canonical files require one real FK actor; this is the existing fictional
+  // installation owner, never a new user or a customer identity.
+  const owner = await tx.user.findFirstOrThrow({ where: { id: ownerId, companyProfileId: companyId }, select: { id: true } });
   let photographed = 0, preserved = 0;
   for (const item of BAUFLOW_MUSTER_INVENTORY) {
     const matches = await tx.companyInventoryItem.findMany({ where: { companyProfileId: companyId,
@@ -31,7 +34,8 @@ export async function addMusterInventoryCovers(tx: Prisma.TransactionClient) {
     await tx.companyAssetFile.create({ data: {
       id: `bauflow-muster-inventory-cover-${item.key}`, companyProfileId: companyId, assetId: asset.id,
       kind: 'cover', mime: 'image/webp', name: `${item.key}-MUSTER.webp`, size: bytes.length,
-      dataBytes: bytes, sha256: createHash('sha256').update(bytes).digest('hex'), uploadedByName: 'Musterfirma · illustrative Katalogaufnahme',
+      dataBytes: bytes, sha256: createHash('sha256').update(bytes).digest('hex'),
+      uploadedByUserId: owner.id, uploadedByName: 'Musterfirma · illustrative Katalogaufnahme',
     } });
     await tx.companyOperationalAsset.update({ where: { id: asset.id, companyProfileId: companyId }, data: { revision: { increment: 1 } } });
     await tx.companyAssetEvent.create({ data: { companyProfileId: companyId, assetId: asset.id, type: 'cover-added',
