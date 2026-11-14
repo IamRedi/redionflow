@@ -13,6 +13,17 @@ Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionfl
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
+## BauFlow sample company is online · 14.11.2026
+
+The separate **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** runs the current steel application with its own original BauFlow identity. Choose owner, accounting, site, factory or workshop at entry. Twelve fictional employees, five offices, three sites, one factory and nine assets share the same connected workflows. Changes persist and are visible to other testers; use test data only. AL-Steel and BaumdienstFlow keep their independent deployments.
+
+[Release, access and verification](docs/BAUFLOW_MUSTER_TEMPLATE.md). PR206 is published at `67cd096`; 1,265 unit tests and 45 browser cases passed. The following are actual online captures from 14 November, with fictional data. Phone views are responsive/emulated, not physical-device acceptance.
+
+![BauFlow Musterbau · actual online Workzone](docs/assets/screenshots/bauflow-muster-online-workzone.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-online-phone.webp" alt="BauFlow Musterbau · actual online Workzone on a narrow touch screen" width="260">
+
+
 ## Product websites and live demos
 
 | Product | Website | Demo | Fictitious company |

@@ -11,6 +11,17 @@ Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redi
 
 **[English version](README.en.md)** · **BauFlow geprüft: 12. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## BauFlow-Musterbetrieb ist online · 14.11.2026
+
+Der eigenständige **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** nutzt die aktuelle Stahlbau-Anwendung mit der eigenen originalen BauFlow-Identität. Am Eingang stehen Geschäftsführung, Buchhaltung, Baustelle, Werkhalle und Werkstatt zur Wahl. Zwölf erfundene Mitarbeitende, fünf Büros, drei Baustellen, eine Werkhalle und neun Geräte sind miteinander verbunden. Änderungen bleiben gespeichert und sind für andere Testende sichtbar; bitte nur Testdaten verwenden. AL-Steel und BaumdienstFlow behalten ihre unabhängigen Deployments.
+
+[Veröffentlichung, Zugang und Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md). PR206 läuft unter `67cd096`; 1.265 Unit-Tests und 45 Browserfälle bestanden. Die folgenden echten Online-Aufnahmen vom 14. November enthalten fiktive Daten. Die Handyansicht ist responsiv/emuliert, keine Abnahme auf einem physischen Gerät.
+
+![BauFlow Musterbau · echte Online-Workzone](docs/assets/screenshots/bauflow-muster-online-workzone.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-online-phone.webp" alt="BauFlow Musterbau · echte Online-Workzone auf schmalem Touch-Display" width="260">
+
+
 ## Websites und Live-Demos
 
 | Produkt | Website | Demo | Fiktive Firma |

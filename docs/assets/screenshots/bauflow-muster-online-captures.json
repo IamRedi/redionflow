@@ -1,0 +1,86 @@
+{
+  "kind": "ACTUAL_ONLINE_APPLICATION_CAPTURES",
+  "date": "2026-11-14",
+  "revision": "67cd096f597a3c3dc6022a36d91e32c1fed038e2",
+  "deployment": "dcf275b9-704e-4bb0-b3dd-acf0f690dac6",
+  "url": "https://bauflow-production-1344.up.railway.app/demo",
+  "data": "Fictional Musterfirma only; real current application UI",
+  "phone": "Responsive/emulated; physical device NOT_RUN",
+  "exclusions": [
+    "workshop-night-desktop.png is an intermediate viewport-transition artifact, not desktop acceptance"
+  ],
+  "captures": [
+    {
+      "file": "entry-light-desktop.png",
+      "width": 1440,
+      "height": 875,
+      "sha256": "08772ea85b7624572da9ec903ae4273c409d15e6f4fb40a332c961a998c2aa8a"
+    },
+    {
+      "file": "workzone-light-desktop.png",
+      "width": 1440,
+      "height": 875,
+      "sha256": "b0703f8354ded206ac002fe7242f507e5b8939387ef5830ef82e76243037e9e4"
+    },
+    {
+      "file": "workzone-light-phone.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "ae9f50f227d8f0fee0766c3427d69ed64f49fa62d938cc8fb30ef3915b151f3e"
+    },
+    {
+      "file": "workzone-night-desktop.png",
+      "width": 1440,
+      "height": 875,
+      "sha256": "beefe83b317f7d612499aa42f66a836567fb73cf7c63f92b4d794cf21adb1410"
+    },
+    {
+      "file": "accounting-office-night-phone.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "ca66ddccb0364999987cfd61257c50ac788a4b355b502f7a9a84d24739e53e37"
+    },
+    {
+      "file": "accounting-plan-night-phone.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "a53f4293c5f40d44185a95b09f27f2b2b1679507fd9cce0337ea9f3339c95325"
+    },
+    {
+      "file": "inventory-night-phone.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "a98898315d8ff6c163b5c787b971e7c5de832e48e5a5c5d8d0ec7469c43c6dbe"
+    },
+    {
+      "file": "asset-detail-night-phone.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "e36f9428c4cfacba6ef3b2805fe11f8707d3416a946f831c13a2769aff183e52"
+    },
+    {
+      "file": "site-night-desktop.png",
+      "width": 1440,
+      "height": 875,
+      "sha256": "d4c15a361dc2d9b89a1e0ac32d2ecc2f6a2f8723e97ec7c8b89407b24e746c44"
+    },
+    {
+      "file": "owner-office-night-desktop.png",
+      "width": 1440,
+      "height": 875,
+      "sha256": "f1ba5b20d467088e301f7d755d4b44375723ff9e5a4a034485b300ec071f0d2b"
+    },
+    {
+      "file": "reception-night-desktop.png",
+      "width": 1440,
+      "height": 875,
+      "sha256": "10defe82cd6236cc4b603dd077dc641c62d7e8d3d110ec3a209a4d842f83eea1"
+    },
+    {
+      "file": "workshop-night-phone.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "8f09b9b3683a4676278f40e1f4d0dfb857792cdd2b8801b1e315032dfcb97697"
+    }
+  ]
+}
