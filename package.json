@@ -36,7 +36,8 @@
     "test:e2e:wanway:local": "tsx scripts/test-wanway-e2e-local.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:local": "tsx scripts/test-integration-local.ts",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "demo:steel:seed": "tsx scripts/seed-bauflow-muster.ts"
   },
   "keywords": [],
   "author": "Redion Cekrezi",

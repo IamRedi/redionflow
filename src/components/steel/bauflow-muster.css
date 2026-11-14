@@ -1,0 +1,49 @@
+/* Only the explicitly configured fictional installation; original steel UI stays intact. */
+.bauflowMusterEntry {
+  background: url('/bauflow-muster-v1/workzone-campus-day.webp') center / cover no-repeat;
+}
+html.dark .bauflowMusterEntry {
+  background-image: url('/bauflow-muster-v1/workzone-campus-night.webp');
+}
+.bauflowMusterEntryPanel {
+  background: var(--steel-glass);
+  border-color: var(--steel-edge);
+  box-shadow: var(--steel-shadow);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+.bauflowMusterEntry header button { min-width: 44px; min-height: 44px; }
+body:has([data-testid='muster-entry']) [data-testid='flow-global-tools'] { display: none; }
+body[data-bauflow-muster] {
+  --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-day.webp');
+}
+html.dark body[data-bauflow-muster] {
+  --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-night.webp');
+}
+body[data-bauflow-muster] .steelStudioWorkspace,
+body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
+body[data-bauflow-muster] [data-phone-fullscreen][data-studio-planning] {
+  background: var(--bauflow-muster-scene) center / cover no-repeat !important;
+}
+body[data-bauflow-muster] [data-studio-home] [data-studio-board] > .steelStudioPhoto {
+  background: transparent !important;
+}
+body[data-bauflow-muster] [data-studio-home] [data-studio-board] {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+@media (max-width: 767px) {
+  body[data-bauflow-muster] [data-studio-warehouse] label:has(> input[type='search']) {
+    flex-basis: 100%;
+  }
+  body[data-bauflow-muster] [data-studio-warehouse] [role='tab'] {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+}
+@media print {
+  body[data-bauflow-muster] .steelStudioWorkspace,
+  body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
+  body[data-bauflow-muster] [data-phone-fullscreen][data-studio-planning] {
+    background: white !important;
+  }
+}

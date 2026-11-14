@@ -32,6 +32,8 @@ export const CLEANUP_INTERVAL_MS = 60 * 1000;
 export const RETENTION_MS = 24 * 60 * 60 * 1000;
 
 export const LIMITS = {
+  // Synthetic-demo role entry; successes consume this independent bucket.
+  demo: 30,
   admin: 6,
   display: 6,
   worker: 8,

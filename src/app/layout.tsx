@@ -2,9 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { FooterBrandProvider } from '@/components/branding/FooterBrand';
 import { SessionKeepAlive } from '@/components/auth/SessionKeepAlive';
 import { installationBrand } from '@/lib/installation-brand';
+import { bauflowMusterPublicDemoConfigured, isBauflowMusterCompany } from '@/lib/demo/bauflow-muster';
+import '@/components/steel/bauflow-muster.css';
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Home, LayoutDashboard } from "lucide-react";
+import { Home, LayoutDashboard, UsersRound } from "lucide-react";
 
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
@@ -94,7 +96,7 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
+      <body data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
           <ProductionHeaderActionsProvider>
@@ -104,6 +106,7 @@ export default async function RootLayout({
             navigation={<>
               <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
               {admin && <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>}
+              {isBauflowMusterCompany(companyId) && bauflowMusterPublicDemoConfigured() ? <Link href="/muster" aria-label={t('admin.publicDemo', initialLang)} title={t('admin.publicDemo', initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><UsersRound className="size-4" /></Link> : null}
             </>}
             alerts={admin || worker ? <>
               {admin ? <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px] bg-transparent shadow-none" /> : null}

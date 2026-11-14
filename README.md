@@ -11,6 +11,25 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Lokaler BauFlow-Musterbetrieb · 14.11.2026
+
+Der eigenständige Profilkandidat **BauFlow Musterbau · DEMO** verwendet die
+bestehenden Stahlbau-Abläufe mit zwölf erfundenen Mitarbeitenden, fünf Büros,
+drei Baustellen, einer Werkhalle und neun verbundenen Geräten. Das originale
+BauFlow-Logo und passende Day/Night-Campusbilder geben ihm eine eigene Identität.
+Es werden keine Kundendaten übernommen. Die vom Inhaber freigegebene
+Veröffentlichung ersetzt den ausgemusterten Glasfaser-Musterbetrieb auf dessen
+eigenem Demo-Dienst. Der AL-Steel-Pilot behält sein eigenes Deployment.
+[Vorbereitung, Datenlogik und aktueller Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md).
+
+Echte Aufnahmen des lokalen Musterkandidaten; noch nicht veröffentlicht.
+
+![BauFlow Musterbau · Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
+
+![BauFlow Musterbau · Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau · local office on a narrow touch screen" width="260">
+
 ## In Prüfung: Produktionspanel für Stahlbetriebe
 
 Ein Kalender zeigt bestätigte kg pro Tag und Projekt: Teileschnitt,
@@ -54,9 +73,9 @@ zeigen ausschließlich synthetische Daten aus dem lokalen Review-Kandidaten.
 | Produkt | Website | Demo | Fiktive Firma |
 |---|---|---|---|
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 Mitarbeitende, 3 Baustellen, 152 Bäume, 5 Maschinen |
-| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 Mitarbeitende, 4 Glasfaser-Baustellen, 114 Arbeiten, 8 Maschinen, Werkzeuginventar |
+| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | BauFlow Musterbau: 12 Mitarbeitende, 5 Büros, 3 Stahlbau-Baustellen, eine Werkhalle, 30 Baustellenphasen, 9 verbundene Geräte |
 
-Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Alle Namen, Adressen, Kennzeichen und Firmen sind erfunden. Beide Demos werden jede Nacht um 02:00 UTC auf den Ausgangsstand zurückgesetzt. Einen Admin-Zugang zum Ausprobieren gibt es auf Anfrage.
+Beide öffentlichen Einstiege verwenden erfundene Firmendaten. BauFlow öffnet die reguläre Stahlbau-Anwendung über fünf ausdrücklich gewählte Musterrollen; Änderungen sind gemeinsam sichtbar und bleiben gespeichert. Es gibt keinen nächtlichen Reset. Der bestehende BaumdienstFlow-Einstieg bleibt unabhängig. Bitte nur Testdaten verwenden.
 
 Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten** derselben fiktiven Firma verknüpft: Ein Knopf „Firmenwissen“ in der oberen Leiste und eine Unterweisungskarte auf jeder Baustelle öffnen die vom Chef freigegebenen Regeln und die Sicherheitsunterweisung für diese Baustelle. Mitarbeitende melden sich dort mit einer PIN an.
 
