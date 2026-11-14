@@ -251,6 +251,23 @@ body[data-bauflow-muster] [data-studio-item-detail] :is([data-studio-item-header
   background: var(--muster-fleet-card);
   border-color: var(--muster-fleet-edge);
 }
+body[data-bauflow-muster] [data-testid='asset-warehouse'] :is(form, details) {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  backdrop-filter: blur(16px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-studio-scan-overlay] { background: #0c201c26; }
+body[data-bauflow-muster] [data-studio-scan-dialog] {
+  background: var(--muster-fleet-glass);
+  border-color: var(--muster-fleet-edge);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-studio-scan-dialog] :is(input, button) {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+}
 body[data-bauflow-muster] :is([data-testid='asset-warehouse'], [data-studio-item-detail]) .text-muted-foreground {
   color: hsl(var(--foreground) / .8);
 }
@@ -270,6 +287,8 @@ body[data-bauflow-muster] :is([data-testid='asset-warehouse'], [data-studio-item
 }
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
   body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button,
+  body[data-bauflow-muster] [data-testid='asset-warehouse'] :is(form, details),
+  body[data-bauflow-muster] [data-studio-scan-dialog],
   body[data-bauflow-muster] [data-studio-dialog]:has([data-studio-item-detail]),
   body[data-bauflow-muster] [data-studio-item-detail] :is([data-studio-item-header], [data-studio-item-photo], .bg-card) {
     background: hsl(var(--background));
