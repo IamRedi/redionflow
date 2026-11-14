@@ -469,21 +469,21 @@ test.describe("SaaS authenticated smoke", () => {
     const ownerCookies = await context.cookies();
     const date = todayKey();
     await page.goto(`/workzone/plan?date=${date}`);
-    const column = page.getByRole("heading", { name: siteName, exact: true }).locator("..").locator("..");
+    const column = page.getByTestId("plan-site").filter({has:page.getByRole("heading", { name: siteName, exact: true })});
     await page.getByRole("button", { name: workerName, exact: true }).click();
     await page.getByRole("heading", { name: siteName, exact: true }).click();
-    await expect(column.getByText(`👷 ${workerName}`, { exact: true })).toBeVisible();
-    await column.getByRole("button", { name: /^(Notiz|Note|Nota|Shenim)$/i }).click();
-    const dialog = page.getByRole("heading", { name: new RegExp(`^(Notiz|Note|Nota|Shenim): ${siteName}$`) }).locator("..").locator("..");
+    await expect(column.getByText(workerName, { exact: true })).toBeVisible();
+    await column.getByRole("button", { name: /^(Notiz|Note|Nota|Shënim):/i }).click();
+    const dialog = page.getByRole("dialog").filter({has:page.getByRole("heading", {name:new RegExp(`^(Notiz|Note|Nota|Shënim): ${siteName}$`)})});
     await dialog.locator("textarea").fill(note);
     const updated = page.waitForResponse(response => response.request().method() === "POST" && response.url().includes("/workzone/plan"));
     await dialog.getByRole("button", { name: /Speichern|Save|Salva|Ruaj/i }).click();
     expect((await updated).ok()).toBe(true);
     await page.getByRole("button", { name: /^(Plan speichern|Save plan|Salva piano|Ruaj planin)$/i }).click();
-    await expect(page.getByText(/Tag gespeichert|Day saved|Giornata salvata|Dita u ruajt/i)).toBeVisible();
+    await expect(page.getByTestId("plan-status")).toContainText(/Gespeichert|Saved|Salvato|Ruajtur/i);
     await page.reload();
-    await expect(column.getByText(`👷 ${workerName}`, { exact: true })).toBeVisible();
-    await expect(column.getByRole("button", { name: /^(Notiz|Note|Nota|Shenim)$/i })).toHaveAttribute("title", new RegExp(note));
+    await expect(column.getByText(workerName, { exact: true })).toBeVisible();
+    await expect(column.getByText(note,{exact:true})).toBeVisible();
     await context.clearCookies(); await signUpTenant(page, "bau");
     await page.goto(`/workzone/plan?date=${date}`);
     await expect(page.getByText(siteName)).toHaveCount(0);
@@ -491,9 +491,10 @@ test.describe("SaaS authenticated smoke", () => {
     await expect(page.getByText(note)).toHaveCount(0);
     await context.clearCookies(); await context.addCookies(ownerCookies);
     await page.goto(`/workzone/plan?date=${date}`);
-    await expect(column.getByText(`👷 ${workerName}`, { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: /^(Alles leeren|Clear all|Svuota tutto|Pastro te gjitha)$/i }).click();
-    await expect(column.getByText(`👷 ${workerName}`, { exact: true })).toHaveCount(0);
+    await expect(column.getByText(workerName, { exact: true })).toBeVisible();
+    await page.getByTestId("plan-actions").getByRole("button", { name: /^(Leeren|Clear|Svuota|Pastro)$/i }).click();
+    await page.getByRole("dialog").getByRole("button", {name:/^(Leeren|Clear|Svuota|Pastro)$/i}).click();
+    await expect(column.getByText(workerName, { exact: true })).toHaveCount(0);
   });
 
 
