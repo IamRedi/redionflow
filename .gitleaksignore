@@ -1,0 +1,4 @@
+# Reviewed false positive: historical English test title, not a credential.
+# Current source already has a line-local gitleaks:allow annotation.
+# Keep all other files, rules, revisions and secret checks active.
+bcacb47a8baa333eeaff43b4f50aec4c454b221d:src/lib/db/runtime-pilot.integration.test.ts:generic-api-key:81
