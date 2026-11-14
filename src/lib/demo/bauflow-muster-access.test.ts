@@ -24,7 +24,7 @@ describe('Muster entry database boundary', () => {
   it('uses the ordinary worker identity for accounting', async () => {
     db.worker.findFirst.mockResolvedValue({ id: 'bauflow-muster-finance', sessionEpoch: 2 });
     expect((await getBauflowDemoAccount('office'))?.kind).toBe('worker');
-    expect(db.worker.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'bauflow-muster-finance', companyProfileId: 'bauflow-muster-steel', role: 'OFFICE', status: 'active' } }));
+    expect(db.worker.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'bauflow-muster-finance', companyProfileId: 'bauflow-muster-steel', crewRole: 'OFFICE', status: 'active' } }));
     expect(db.user.findFirst).not.toHaveBeenCalled();
   });
   it('does not touch the database when public access is disabled', async () => {

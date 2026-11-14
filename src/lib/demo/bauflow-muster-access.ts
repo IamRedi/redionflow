@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db/prisma';
+import type { Prisma } from '@/generated/prisma/client';
 import { BAUFLOW_MUSTER_COMPANY_ID, bauflowDemoSubject } from './bauflow-muster';
 
 /** Never selects an arbitrary user, first tenant or a client-provided account ID. */
@@ -17,8 +18,12 @@ export async function getBauflowDemoAccount(role: string) {
     });
     return account ? { ...account, kind: subject.kind } : null;
   }
+  const workerWhere = {
+    id: subject.id, companyProfileId: BAUFLOW_MUSTER_COMPANY_ID,
+    crewRole: subject.role, status: 'active',
+  } satisfies Prisma.WorkerWhereInput;
   const account = await prisma.worker.findFirst({
-    where: { id: subject.id, companyProfileId: BAUFLOW_MUSTER_COMPANY_ID, role: subject.role, status: 'active' },
+    where: workerWhere,
     select: { id: true, sessionEpoch: true },
   });
   return account ? { ...account, kind: subject.kind } : null;
