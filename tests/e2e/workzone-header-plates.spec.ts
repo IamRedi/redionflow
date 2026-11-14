@@ -44,9 +44,10 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
           const root = document.querySelector('[data-testid="workzone-topbar"]')!, strip = document.querySelector('[data-testid="flow-team-strip"]')!;
           const logo = document.querySelector('button[aria-label="Hap asistentin admin"]')!.getBoundingClientRect();
           const crew = strip.querySelector('button')!.getBoundingClientRect();
+          const stripBox = strip.getBoundingClientRect(), tools = document.querySelector('[data-testid="flow-global-tools"]')!.getBoundingClientRect();
           const bell = document.querySelector('[data-testid="notification-bell"]')!.getBoundingClientRect();
           const kidraht = document.querySelector('a[href="/workzone/kidraht"]')!.getBoundingClientRect();
-          return { rootBg: getComputedStyle(root).backgroundColor, stripBg: getComputedStyle(strip).backgroundColor, stripBorder: getComputedStyle(strip).borderTopWidth, crewLogoY: Math.abs(crew.y + crew.height / 2 - logo.y - logo.height / 2), crewAfterLogo: crew.left >= logo.right, bellKidrahtY: Math.abs(bell.y + bell.height / 2 - kidraht.y - kidraht.height / 2), noOverflow: document.documentElement.scrollWidth <= innerWidth };
+          return { rootBg: getComputedStyle(root).backgroundColor, stripBg: getComputedStyle(strip).backgroundColor, stripBorder: getComputedStyle(strip).borderTopWidth, crewLogoY: Math.abs(crew.y + crew.height / 2 - logo.y - logo.height / 2), logoHeaderY: Math.abs(logo.y + logo.height / 2 - (stripBox.top + tools.bottom) / 2), workersClearTools: stripBox.bottom + 3 <= tools.top, crewAfterLogo: crew.left >= logo.right, bellKidrahtY: Math.abs(bell.y + bell.height / 2 - kidraht.y - kidraht.height / 2), noOverflow: document.documentElement.scrollWidth <= innerWidth };
         });
         console.log('HEADER_STATE', JSON.stringify({ theme, width, ...header }));
         await page.screenshot({ path: info.outputPath(`workzone-header-${theme}-${width}.png`) });
@@ -63,7 +64,9 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await expect(message).toHaveCount(0);
         await expect(announcement).toBeFocused();
         if (header.stripBg !== 'rgba(0, 0, 0, 0)' || header.stripBorder !== '0px' || header.rootBg !== 'rgba(0, 0, 0, 0)') issues.push(`${theme}/${width}: header shell`);
-        if (header.crewLogoY > 18 || !header.crewAfterLogo) issues.push(`${theme}/${width}: crew/logo alignment`);
+        // Accepted desktop layout centers the logo across team + controls rows;
+        // on touch it stays beside the team. Do not restore the retired one-row layout.
+        if ((width >= 1024 ? header.logoHeaderY : header.crewLogoY) > 18 || !header.crewAfterLogo || !header.workersClearTools) issues.push(`${theme}/${width}: crew/logo alignment`);
         if (width < 1024 && header.bellKidrahtY > 2) issues.push(`${theme}/${width}: bell/KiDraht alignment`);
         if (!header.noOverflow) issues.push(`${theme}/${width}: page overflow`);
         const worker = page.getByTestId('flow-team-strip').getByRole('button').first();
