@@ -11,6 +11,16 @@ Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redi
 
 **[English version](README.en.md)** · **BauFlow geprüft: 12. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Musterfirma: Baustellen als Glaskarten · 14. November 2026
+
+Die öffentliche BaumdienstFlow-Musterfirma öffnet Baustellen jetzt als Glaskarte über der bestehenden Workzone: Name, Adresse und Angaben in einer ruhigen Übersicht. Eine illustrierte Baumkarte öffnet die eigene Baumansicht mit **Alle / Zu erledigen / Erledigt**, Karte und Artenstudio. Geräte, Team, Absicherung, Fotos, Prozesse, Dokumente und Unterweisung öffnen getrennte Ansichten.
+
+[Baustellenkarte live öffnen](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). Die Aufnahmen zeigen die echte öffentliche Musterfirma mit ausschließlich fiktiven Daten; sie ändern keine Firmenzugänge anderer Produkte. Die bestehenden Daten und Dateien wurden bei der Veröffentlichung unverändert erhalten. Quelle: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
+
+![Glaskarte der Musterfirma-Baustelle über Workzone](docs/assets/screenshots/baum-site-glass-live-20261114.jpg)
+
+<img src="docs/assets/screenshots/baum-tree-cards-phone-live-20261114.jpg" alt="Musterfirma am Telefon: Baumkarten mit Statusfiltern, Karte und Artenstudio" width="320">
+
 ## Websites und Live-Demos
 
 | Produkt | Website | Demo | Fiktive Firma |
@@ -18,7 +28,7 @@ Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redi
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 Mitarbeitende, 3 Baustellen, 152 Bäume, 5 Maschinen |
 | BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 Mitarbeitende, 4 Glasfaser-Baustellen, 114 Arbeiten, 8 Maschinen, Werkzeuginventar |
 
-Die `/demo`-Seiten sind schreibgeschützt und brauchen kein Login. Alle Namen, Adressen, Kennzeichen und Firmen sind erfunden. Beide Demos werden jede Nacht um 02:00 UTC auf den Ausgangsstand zurückgesetzt. Einen Admin-Zugang zum Ausprobieren gibt es auf Anfrage.
+Die öffentlichen Demos brauchen kein Login und enthalten ausschließlich fiktive Daten. In der Musterfirma lassen sich die vorhandenen gemeinsamen Demo-Abläufe ausprobieren; Änderungen bleiben im Demo-Kontext. Die getrennte ältere BauFlow-Glasfaser-Demo bleibt schreibgeschützt. Echte Firmenzugänge werden getrennt eingerichtet.
 
 Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten** derselben fiktiven Firma verknüpft: Ein Knopf „Firmenwissen“ in der oberen Leiste und eine Unterweisungskarte auf jeder Baustelle öffnen die vom Chef freigegebenen Regeln und die Sicherheitsunterweisung für diese Baustelle. Mitarbeitende melden sich dort mit einer PIN an.
 

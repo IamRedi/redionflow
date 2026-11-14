@@ -13,6 +13,16 @@ Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionfl
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
+## Musterfirma: glass worksite cards · 14 November 2026
+
+The public BaumdienstFlow Musterfirma demo now opens worksites as glass cards over the existing Workzone, with a centered name, address and site information. An illustrated tree card opens a dedicated view with **All / To do / Completed**, map and species studio. Equipment, crew, safety, photos, processes, documents and instructions open separate views.
+
+[Open the live worksite card](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). These are actual public Musterfirma captures with fictional data. This release preserves the existing records/files and does not change other products' company access. Source: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
+
+![Musterfirma glass worksite information card over Workzone](docs/assets/screenshots/baum-site-glass-live-20261114.jpg)
+
+<img src="docs/assets/screenshots/baum-tree-cards-phone-live-20261114.jpg" alt="Musterfirma tree cards on a phone with status filters, map and species studio" width="320">
+
 ## Product websites and live demos
 
 | Product | Website | Demo | Fictitious company |
@@ -20,7 +30,7 @@ The user interface, the demo data and most documents are in German, because the 
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 employees, 3 job sites, 152 trees, 5 machines |
 | BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
 
-The `/demo` pages are read-only and need no login. All names, addresses, licence plates and companies are made up. Both demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
+The public demos need no login and contain fictional data only. Musterfirma supports the existing shared demo workflows; changes stay within the demo context. The separate older BauFlow fibre-construction demo remains read-only. Real company access is set up separately.
 
 Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
 
