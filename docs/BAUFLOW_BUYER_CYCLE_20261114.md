@@ -1,0 +1,25 @@
+# BauFlow client cycle — published and rechecked
+
+14 November 2026. The approved PR196 source c508ed539dfddb1a08c61c7939e5c55b00fa2d21 and ZIP f1af3512515387b37c46b0baf293d9200dd633660fa7c83018f1bcbeef576844 were published unchanged to the existing Cloudflare Pages project baumdienstflow, deployment 261bad18-0879-46c6-9997-d2a37f8266d6. All 118 live assets match the approved package; 112 other assets, headers and the five BaumdienstFlow sibling pages remain unchanged. Previous deployment 085ac0a7 is retained for rollback.
+
+The frozen GeoFindbar a816/v3 worker returned 0 → 0 review prompts. Five BauFlow cost checks moved from not_applicable to explicit_signal_observed. The same eight DE/SQ questions improved from 2 supported / 4 partial / 2 unverified agent answers to 4 / 2 / 2. Numerical pricing still needs a real quote; independent discovery remains unverified. Missing-topic applicability and the five-BauFlow / five-BaumdienstFlow crawl sample remain recorded engine limits. This is a source-based known-client test, with no visibility or readiness uplift claimed and no rule tuning during the cycle.
+
+The real native after audit is 0c04bce6-99ef-469f-ad1c-6f7bb816f614, ten pages / partial. Three private report versions were parsed and retrieved with all eight question IDs and external processing / publication disabled. The original 1,158 evidence files, original rows in 32 tables, keys, configuration and financial data are preserved. The original alsteel.al business profile is unchanged; BauFlow has a separate software profile. Fresh private pre/post backups passed archive readback; independent restore was not run.
+
+Static checks, 21 preview cases and five fresh live viewport / locale / theme / FAQ cases passed. Physical devices, OS keyboard, text zoom and full owner UAT remain NOT_VERIFIED. Candidate screenshots and packets are retained separately from new live captures. No main/pilot merge, Railway/app/AL-Steel operational DB change, paid API activation/call, contact submission or company provisioning occurred. PR196 remains open; later documentation commits do not change deployed source c508ed5.
+
+The authorized cycle is complete. Native capability claims, portfolio cards/About/readiness and public media remain unchanged; companion PRs record technical evidence only. Logo/PWA194, Musterfirma and iPhone follow-up are separate. No automatic successor or schedule was started.
+
+## Candidate protocol — historical, superseded above
+
+# BauFlow buyer enquiry and GEO client candidate
+
+14 November 2026. BauFlow is the software product;AL-Steel is the public user reference. This candidate adds three FAQ and a price/setup enquiry in DE/EN/IT/SQ,without invented charges,packages or activation deadlines. It separates setup/ongoing-use quote scope,aggregate first-contact details and presentation/reference versus real company provisioning. No app,client-company data or existing AL-Steel business-profile change.
+
+Frozen GeoFindbar a8160f1/v3,confirmed BauFlow software profile and eightDE/SQquestions: nativebefore0reviews,but allfiveBauFlow cost/enquiry checks not_applicable. Candidate0reviews with fiveexplicitcost/activation signals. Model-assisted source answers2supports/4partial/2unverified→4/2/2;numericalprice remainspartial,independentdiscoveryunverified. Known-client/source-informed case,not held-out or visibility study. Same-origin crawl includes fiveBaum sibling pages;semantic review uses onlyBauFlow. Both engine limits are retained as real calibration evidence,not retuned during the client cycle.
+
+Provider currentProduction085ac0a7/117assets confirmed in UI;published archive5a07 and accepted117assetproof reused for this exact immutabledeployment,with10freshHTMLbytechecks. Optional repeated pages.dev download returned403;no bypass or claim of117newdownloads. OnlyfiveBauHTML+oneCSS change;112othercurrentassets/headers/Baum/legal/screens/fonts/themeJS/styles remain byte-identical. CandidateZIP6061277bytes,SHA256f1af3512515387b37c46b0baf293d9200dd633660fa7c83018f1bcbeef576844. No publication performed.
+
+Dedicated static generation/syntax/assets and21Chrome baseline/candidate Light/Dark/responsive/locale/FAQkeyboard cases PASS on bounded local executor. Existing materials preserved. Physicaldevice/textzoom/fullownerUATNOT_VERIFIED;appNext/DB suites NOT_RUN for this static-only change. Original1158evidencefiles/original32table rows/keys/config/finances preserved;privatebackupreadbackPASS,independentrestoreNOT_RUN. Two private reportversions parsed/retrieved,all8IDs/noexternalprocessing/publication. PaidAPIactivation/calls0. No dependencies/schema/provider change or Actions.
+
+Exact static Cloudflare publication requires owner approval;then oneactualnativeafter+agentafterreport. Never merge this website branch into Railway-connected main/pilot as a sideeffect. Existing public capability/card/About/maturity statements remainaccurate;technical companion receipts only,no newpublicmedia. Logo/PWAissue194 and concurrentALSteel/Musterfirma work are separate.

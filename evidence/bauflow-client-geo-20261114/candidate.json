@@ -1,0 +1,42 @@
+{
+  "status": "CANDIDATE_NOT_PUBLISHED",
+  "baselineDeployment": "085ac0a7-6e12-4761-b5d1-fa8ce1161a45",
+  "baselineArchiveSha256": "5a07df9ed61592417ece1046a4237ab6423f7e0e3b50fbb4168ae85d62d1d565",
+  "acceptedImmutableAssetProofReused": 117,
+  "freshCurrentHTMLByteVerified": 10,
+  "changedExistingFiles": [
+    "bauflow/index.html",
+    "bauflow/about/de.html",
+    "bauflow/about/en.html",
+    "bauflow/about/it.html",
+    "bauflow/about/sq.html"
+  ],
+  "newFile": "bauflow/about/assets/bauflow-buyer-info.css",
+  "preservedCurrentUploadedAssets": 112,
+  "headersUnchanged": true,
+  "candidateAssets": 118,
+  "archiveEntries": 119,
+  "localAssetReferencesChecked": 225,
+  "artifact": "BauFlow_Kosto_Konfigurimi_Kandidat_20261114.zip",
+  "bytes": 6061277,
+  "sha256": "f1af3512515387b37c46b0baf293d9200dd633660fa7c83018f1bcbeef576844",
+  "productionMutationPerformed": false,
+  "paidApiCalls": 0,
+  "engineSource": "a8160f1095dae17aed8ac399258c6e46c59c1ca9",
+  "originalEvidenceFilesPreserved": 1158,
+  "originalRowsKeysConfigFinancePreserved": true,
+  "AIbefore": [
+    2,
+    4,
+    2
+  ],
+  "AIcandidate": [
+    4,
+    2,
+    2
+  ],
+  "BauCostCheckBefore": "not_applicable",
+  "BauCostCheckCandidate": "explicit_signal_observed",
+  "visualCases": 21,
+  "publication": "PENDING_OWNER_APPROVAL"
+}
