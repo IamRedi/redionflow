@@ -8,6 +8,7 @@ import { companyLogoDataUrl } from '../src/lib/company-logo';
 import { scanCodeKey } from '../src/lib/inventory/scan-code';
 import { compactPhoto } from '../src/lib/asset-photos/image';
 import { ensureSteelWorkCatalog } from '../src/lib/steel-work/catalog';
+import { dateKey, dayRange } from '../src/lib/workzone/date-utils';
 import { assertE2ETestDatabase } from './lib/e2e-target';
 import { BAUFLOW_MUSTER_COMPANY_ID as companyId, BAUFLOW_MUSTER_OWNER_ID as ownerId, bauflowMusterConfigured } from '../src/lib/demo/bauflow-muster';
 
@@ -34,7 +35,8 @@ async function main() {
       }
       throw new Error('Refusing seed: database contains another installation.');
     }
-    const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+    const todayKey = dateKey(new Date());
+    const today = new Date(`${todayKey}T00:00:00.000Z`);
     const past = (days: number, hour = 9) => new Date(today.getTime() - days * 86_400_000 + hour * 3_600_000);
     const workday = (days: number, hour: number) => {
       const date = new Date(today);
@@ -114,15 +116,19 @@ async function main() {
         const definition = await tx.steelWorkDefinition.findUniqueOrThrow({ where: { companyProfileId_key: { companyProfileId: companyId, key } } });
         await tx.steelSiteTask.update({ where: { companyProfileId_baustelleId_definitionId: { companyProfileId: companyId, baustelleId: site.id, definitionId: definition.id } }, data: { position: position + 1 } });
       }
-      const plan = await tx.dailyWorkPlan.create({ data: { companyProfileId: companyId, planDate: today, createdByAdminId: ownerId } });
+      const plan = await tx.dailyWorkPlan.create({ data: { companyProfileId: companyId, planDate: dayRange(todayKey).start, createdByAdminId: ownerId } });
+      const savedRows: Array<{ workerNames: string; machineNames: string; baustelleName: string; sortOrder: number }> = [];
       for (const [index, site] of [factory, ...sites].entries()) {
         const crew = (index === 0 ? ['factory-chief', 'factory-a', 'factory-b'] : index === 1 ? ['site-chief', 'site-a'] : index === 2 ? ['site-b'] : ['site-c']).map(key => workers.get(key)!);
         await tx.dailyWorkPlanColumn.create({ data: { planId: plan.id, baustelleId: site.id, title: site.name, sortOrder: index, assignments: { create: crew.map((w, n) => ({ kind: 'WORKER' as const, workerId: w.id, labelSnapshot: w.name, sortOrder: n })) } } });
+        savedRows.push({ workerNames: crew.map(w => w.name).join(', '), machineNames: '', baustelleName: site.name, sortOrder: index });
         for (const worker of crew) {
           for (let day = 1; day <= 5; day++) await tx.workSession.create({ data: { workerId: worker.id, baustelleId: site.id, startTime: workday(day, 7), endTime: workday(day, 15), totalHours: 7.5, breakMinutes: 30 } });
           await tx.workSession.create({ data: { workerId: worker.id, baustelleId: site.id, startTime: new Date(Date.now() - 45 * 60_000), isLive: true } });
         }
       }
+      await tx.dailyWorkPlanSavedRow.createMany({ data: savedRows.map(row => ({ ...row, planId: plan.id })) });
+      await tx.dailyWorkPlanSnapshot.create({ data: { planId: plan.id, versionNumber: 1, createdByAdminId: ownerId, rows: { create: savedRows } } });
       for (const key of ['finance', 'projects', 'clients', 'buying']) {
         const worker = workers.get(key)!;
         for (let day = 1; day <= 5; day++) await tx.workSession.create({ data: { workerId: worker.id, workplace: 'OFFICE', startTime: workday(day, 7), endTime: workday(day, 15), totalHours: 7.5, breakMinutes: 30 } });
