@@ -9,11 +9,11 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[Deutsche Version](README.md)** Â· **As of 4 November 2026** Â· **[Project status and history](docs/PROJEKTSTAND.md)** (German) Â· **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
-## Local BauFlow sample company Â· 14.11.2026
+## Local BauFlow sample company · 14.11.2026
 
-The separate **BauFlow Musterbau Â· DEMO** profile candidate reuses the existing
+The separate **BauFlow Musterbau · DEMO** profile candidate reuses the existing
 steel workflows with twelve fictional employees, five offices, three sites,
 one factory and nine linked assets. The original BauFlow logo and matching
 Day/Night campus illustrations give it its own identity. No customer data is
@@ -23,11 +23,11 @@ existing isolated demo service. The AL-Steel pilot keeps its own deployment.
 
 Actual local Muster candidate captures; not publicly deployed.
 
-![BauFlow Musterbau Â· Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
+![BauFlow Musterbau · Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
 
-![BauFlow Musterbau Â· Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
+![BauFlow Musterbau · Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
 
-<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau Â· local office on a narrow touch screen" width="260">
+<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau · local office on a narrow touch screen" width="260">
 
 ## In review: production dashboard for steel operations
 
@@ -56,7 +56,7 @@ Photos stay private to the company.
 
 The baseline passed 559 unit, 301 PostgreSQL and 28 Chromium tests. Only new
 focused checks were run for photos; the earlier full tests were not repeated at
-the ownerâ€™s request. Real-device and real-receipt acceptance remain separate.
+the owner’s request. Real-device and real-receipt acceptance remain separate.
 [Workflow, limits and release gate](docs/FLEET_MAP_FUEL.md). These captures contain
 only synthetic data from the local review candidate.
 
@@ -182,16 +182,16 @@ Redion Cekrezi has worked as an arborist and team lead at a tree care company in
 
 Of interest to tree care, construction, civil works and fibre-optic companies that want to run their job sites digitally, and to partners who want to accompany a pilot. A walkthrough or admin access to the demo is available on request via the **[portfolio](https://www.redioncekrezi.de)** or [GitHub](https://github.com/IamRedi).
 
-**Redion Cekrezi Â· Full-Stack & Applied AI Developer Â· Produced by RediON**
+**Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
 
 ## License
 
 Source-available, all rights reserved. The code may be read and run locally for evaluation, but not used commercially. Details in [LICENSE](LICENSE).
 
-## Office interface Â· 12 November 2026
+## Office interface · 12 November 2026
 
 [PR175](https://github.com/IamRedi/redionflow/pull/175) is live in the real-company deployment: lettering and small line icons belong to the drawers and mail envelope. Compact crystal work windows keep their existing action colors. The two configured office admins open their existing company assistant beside the monitor instead of from the company logo; private conversation archives and access checks are preserved. Deployment readback confirmed unchanged original photos and permissions. These screenshots contain fictional data only.
 
-![Office Studio DEMO Â· office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
+![Office Studio DEMO · office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
 
-![Office Studio DEMO Â· private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)
+![Office Studio DEMO · private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)
