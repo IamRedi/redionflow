@@ -71,6 +71,18 @@ body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker'])
 body[data-bauflow-muster] [data-studio-dialog-overlay]:has(~ [data-studio-dialog] [data-testid='fleet-picker']) {
   background: #0c201c26;
 }
+body[data-bauflow-muster] [data-studio-vehicle-overlay] {
+  background: transparent;
+}
+body[data-bauflow-muster] [data-testid='fleet-machine-card'][data-studio-dialog] {
+  background: var(--muster-fleet-glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-testid='fleet-machine-card'] :is(.bg-gradient-to-br, [data-studio-vehicle-fact]) {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+}
 body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']) > div:first-child {
   margin-bottom: 0;
   border: 0;
@@ -146,7 +158,8 @@ body[data-bauflow-muster] [data-testid='fleet-picker'] .text-muted-foreground {
   }
 }
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']) {
+  body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']),
+  body[data-bauflow-muster] [data-testid='fleet-machine-card'][data-studio-dialog] {
     background: hsl(var(--background));
     -webkit-backdrop-filter: none;
     backdrop-filter: none;

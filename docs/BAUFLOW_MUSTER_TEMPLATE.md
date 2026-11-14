@@ -232,7 +232,99 @@ The new database restore passed at the actual online target with94 migrations,
 cleared under the existing tenant context and audit constraints; public role
 entry reads the new session epoch. No local test credential is needed online.
 
-Current release state: VERIFIED_FOR_PUBLICATION; merge, Railway publication and
-online readback are recorded separately when completed. The earlier
-LOCAL_READY record above describes the first review checkpoint, not a claim
-that this later approved publication has already happened.
+Current release state: PUBLISHED / ONLINE_PASS. PR206 merged as
+`67cd096f597a3c3dc6022a36d91e32c1fed038e2`; the release branch is pinned to this
+merge. Railway deployment `dcf275b9-704e-4bb0-b3dd-acf0f690dac6` succeeded at
+<https://bauflow-production-1344.up.railway.app/demo>. The earlier LOCAL_READY
+record above remains the first review checkpoint.
+
+Actual online desktop/narrow and Day/Night review passed for the public entry,
+all five roles, Workzone, the saved daily plan, reception, personal offices,
+site phases, inventory/asset detail and workshop. Accounting sees the same four
+plan rows read-only. No page errors or horizontal overflow were observed.
+Physical-device, PWA update, camera/NFC and printing acceptance remains NOT_RUN.
+The capture manifest distinguishes actual online PNGs from older local reviews;
+the JPEG-to-PNG normalization changes only file encoding, not UI content.
+
+The dedicated runtime role remains non-superuser and does not bypass RLS.
+Its database-scoped default tenant context is `bauflow-muster-steel`; real role
+login, company reads and a rollback-only LoginAttempt write were verified.
+The old Glasfaser schema was removed only after independent archive restoration
+and online Muster checks; its old app deployment is REMOVED. The obsolete
+`bauflow-reset` service is OFFLINE, with no active deployment, source or cron.
+Permanent service deletion was twice refused by Railway's approval layer even
+after explicit owner confirmation, so the empty disabled service remains.
+No running Glasfaser workload or attached volume remains on that service.
+The Postgres capacity now serving Musterfirma is retained.
+
+Publication changed only the independent BauFlow app and its former Glasfaser
+sample database/reset. AL-Steel and Baumdienst app/database/reset were not
+mutated. A concurrent Baumdienst release from another task was observed;
+its independent source/deployment is not claimed as unchanged by this task.
+Portfolio/native presentation assessment is separate from this app release:
+the existing BauFlow URL remains valid; new real media/content are prepared
+through bounded companion PRs, without portfolio Production publication.
+
+
+## Fleet glass and catalogue refinement, 14 November 2026
+
+The fleet picker and its vehicle detail receive clearer warm ice glass in Light and deep green
+crystal glass in Night, with a size derived from its content and the viewport.
+Six compact vehicle cards fit one desktop row and two phone columns. The list
+retains its own scroll area on short screens; search, close, keyboard focus and
+return focus remain reachable. Translucent borders, compact text and full
+uncropped transparent vehicle images retain the BauFlow identity. Reduced
+transparency and forced-colour preferences retain a solid accessible variant.
+The standard backdrop-filter declaration must follow its prefixed counterpart
+so production CSS optimization retains Chromium's actual blur.
+
+Only the `data-bauflow-muster` installation marker activates these CSS rules,
+including the existing Radix portals. Other firms retain the same shared
+components and original appearance. The shared component changes are inert
+overlay data attributes for the picker and vehicle detail. No framework, dependency, schema or theme setting
+is changed.
+
+The catalogue contains Montage-Transporter, LKW 7,5 t, Teleskopstapler,
+Scherenbühne 12 m, Kran-LKW and Bauleiter-Kombi. The last two are additional
+fictional vehicles with deterministic sample IDs, plates MU BF 103/104, canonical
+operational-asset records and registration history. Four existing IDs, plates,
+rates, assignments and the received hydraulic repair are preserved. Road
+vehicles use their plates; no barcode is invented for this update.
+
+Six original illustrative product images were created with built-in image_gen;
+its exact model selection is not exposed. Transparent alpha is retained in
+896×672 WebP files, about 90–140KB each. No actual vehicle brand/customer photo
+is represented. Prompt/source/derivative hashes are in
+`public/bauflow-muster-v1/fleet/provenance.json`. Originals remain in the task's
+existing private outputs. No API credential/provider activation, navigation-time
+generation or change to either product's generation limits is involved.
+
+Fresh local seeds use the six-entry catalogue. Existing Muster data uses the
+separate explicit `scripts/augment-bauflow-muster-fleet.ts` command, never app
+startup or reset. It requires profile/installation/local-or-demo gates and an
+explicit fleet-apply opt-in. A live call additionally verifies the exact public
+Muster origin and its dedicated database/user/host; local calls still require
+the original disposable loopback E2E database guard. The transaction rechecks
+the exact sole fictional company, refuses ambiguous/missing original identities
+and creates only the two additions. Reruns keep stable IDs and registration
+history. An existing image URL, uploaded AssetPhoto, cover timestamp or cover
+file prevents replacement; a conditional update also preserves a concurrent
+upload. Added illustrative covers receive an existing cover-added audit event.
+
+Source gates: full ESLint, 1,280 unit tests in143 files, production build and
+application/seed/maintenance TypeScript passed. Real before/after browser
+captures cover desktop, phone, 320px and short landscape in both themes.
+Database fixture checks prove upload preservation, repeat calls without
+duplicates and unchanged original IDs/plates/repair. Failed harness observations
+(port conflict, unit-test origin/OCR environment and timestamp decoding) remain
+recorded; assertions were retained and the correct executor/fixture restored.
+The production-only CSS blur omission was fixed and rechecked in real renders.
+Physical-phone acceptance remains NOT_RUN.
+
+A scoped encrypted rollback snapshot of the actual live Muster fleet was saved
+and successfully decrypted/hash-checked before the additive update. Final live
+publication and online readback are recorded separately; this chapter by itself
+is not a claim that the candidate was published. Native/portfolio capability
+claims and links remain accurate for this bounded material/sample-data repair;
+the existing showcase companion PR209 is updated rather than creating another
+public presentation or changing Portfolio Production.
