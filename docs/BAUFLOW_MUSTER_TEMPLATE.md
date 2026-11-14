@@ -330,3 +330,46 @@ is not a claim that the candidate was published. Native/portfolio capability
 claims and links remain accurate for this bounded material/sample-data repair;
 the existing showcase companion PR209 is updated rather than creating another
 public presentation or changing Portfolio Production.
+
+## Inventory crystal and equipment photographs, 15 November 2026
+
+Identity lock: the owner-approved fleet refinement PR211 supplies the existing
+Light/Night crystal tokens, graphite/copper photography, typography and compact
+controls. This inventory change is limited to the `data-bauflow-muster` marker.
+Stock, labels, scans, handover confirmations, assignment, permissions, files and
+workshop commands retain their existing implementation. Main content keeps its
+one primary scroll region and natural footer; detail and scan dialogs keep
+their own bounded scroll. Tool cards use two phone columns and full uncropped
+images. Search is bounded, scan text remains accessible inside a compact icon
+control, and detail/registration/scan surfaces share the same glass family.
+The only shared JSX change adds inert scan-dialog/overlay attributes.
+
+Five original built-in image_gen illustrations represent Akku-Schlagschrauber,
+Winkelschleifer, Rotationslaser, Schweißgerät MIG/MAG and Drehmomentschlüssel.
+They retain transparent alpha in 896×672 WebP files (about47–104KB each), with
+full prompts and original/derivative hashes in
+`public/bauflow-muster-v1/inventory/provenance.json`. Exact model selection is
+not exposed by the built-in tool. App AI/provider settings and limits are not
+changed; no navigation-time generation or external customer media is used.
+
+`scripts/augment-bauflow-muster-inventory.ts` is separate explicit maintenance,
+not a startup/reset hook. Its own inventory opt-in reuses the exact existing
+Muster origin/profile/database/user fence; local calls also enforce the strict
+disposable E2E target. Inside one transaction it rechecks the fictional company
+and each original name/code/category, takes the normal upload's per-asset lock
+and base-row lock, then checks identity again. Existing cover/photo files have
+priority. Missing images become canonical CompanyAssetFile covers plus normal
+cover-added events/revision increments, so warehouse, item details and workshop
+read the same persistent image. No new item or barcode is created. Reruns add
+nothing; a failure rolls back all additions. The fresh disposable seed shares
+the same five-entry catalogue/helper. Existing uploaded files, identity, custody,
+scanned labels, vehicle records and repair history must remain unchanged.
+
+PR212 candidate: source3d2501b. Six baseline desktop/phone/small/landscape renders
+passed and13 changed application/asset files match the mini-PC executor exactly.
+Final checks/publication/online readback are pending the bounded executor; this
+chapter does not claim deployment. Public module/capability claims, links and
+readiness remain accurate: presentation NO_CONTENT_CHANGE for this bounded
+inventory material/photo repair; companion PR209/PR91 record verified provenance
+after acceptance. AL-Steel, BaumdienstFlow, other demos and Portfolio Production
+remain outside this change.
