@@ -1,5 +1,6 @@
+import {publicDemoMetadata} from '@/lib/public-demo-seo';
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { LandingPage } from "@/components/landing/LandingPage";
 import { landingContent } from "@/components/landing/landing-content";
@@ -7,10 +8,14 @@ import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/publ
 import { isSaasMode } from "@/lib/saas-config";
 import { getCompanyMode } from "@/lib/db/company";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: landingContent.de.meta.title,
   description: landingContent.de.meta.description,
 };
+export async function generateMetadata(): Promise<Metadata> {
+ return publicDemoMetadata((await headers()).get('host'),baseMetadata);
+}
+
 
 export default async function HomePage() {
   const jar = await cookies();

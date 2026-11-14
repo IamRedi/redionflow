@@ -29,3 +29,5 @@ At repository creation, add this policy and a reference in the repository's agen
 At each continuation, read the repository instructions and this policy, identify the execution host and current branch, and confirm that the active work branch has adopted the policy before pushing. If it predates the policy, reconcile only the policy/workflow delta into that branch without overwriting newer tests, unrelated work or another agent's changes. Do not assume a default-branch update changed existing PR branches or another host's unpushed checkout.
 
 RediON Connect owns the reusable workflow rule; this repository owns its executable test commands and technical evidence. Drive records the owner decision and rollout state, not duplicate source code or secret values.
+
+Workspace setup, bounded execution and safe task closure follow the single [RediON workspace lifecycle](https://github.com/IamRedi/redion-connect/blob/plugin-source/plugin/skills/work-synchronization/references/workspace-lifecycle.md). Preserve other active jobs and unique evidence.
