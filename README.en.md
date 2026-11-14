@@ -9,25 +9,25 @@
 
 [![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
 
-**[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** Â· **As of 4 November 2026** Â· **[Project status and history](docs/PROJEKTSTAND.md)** (German) Â· **[Verification record](EVIDENCE.md)** (German)
 
-## Local BauFlow sample company · 14.11.2026
+## Local BauFlow sample company Â· 14.11.2026
 
-The separate **BauFlow Musterbau · DEMO** profile candidate reuses the existing
+The separate **BauFlow Musterbau Â· DEMO** profile candidate reuses the existing
 steel workflows with twelve fictional employees, five offices, three sites,
 one factory and nine linked assets. The original BauFlow logo and matching
 Day/Night campus illustrations give it its own identity. No customer data is
-copied. This candidate does not replace the public fibre-optic demo and has not
-been deployed to the AL-Steel pilot.
+copied. Owner-approved publication replaces the retired fibre-optic sample on its
+existing isolated demo service. The AL-Steel pilot keeps its own deployment.
 [Preparation, data logic and current verification](docs/BAUFLOW_MUSTER_TEMPLATE.md).
 
 Actual local Muster candidate captures; not publicly deployed.
 
-![BauFlow Musterbau · Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
+![BauFlow Musterbau Â· Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
 
-![BauFlow Musterbau · Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
+![BauFlow Musterbau Â· Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
 
-<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau · local office on a narrow touch screen" width="260">
+<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau Â· local office on a narrow touch screen" width="260">
 
 ## In review: production dashboard for steel operations
 
@@ -56,7 +56,7 @@ Photos stay private to the company.
 
 The baseline passed 559 unit, 301 PostgreSQL and 28 Chromium tests. Only new
 focused checks were run for photos; the earlier full tests were not repeated at
-the owner’s request. Real-device and real-receipt acceptance remain separate.
+the ownerâ€™s request. Real-device and real-receipt acceptance remain separate.
 [Workflow, limits and release gate](docs/FLEET_MAP_FUEL.md). These captures contain
 only synthetic data from the local review candidate.
 
@@ -73,9 +73,9 @@ The user interface, the demo data and most documents are in German, because the 
 | Product | Website | Demo | Fictitious company |
 |---|---|---|---|
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 employees, 3 job sites, 152 trees, 5 machines |
-| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
+| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | BauFlow Musterbau: 12 employees, 5 offices, 3 steel assembly sites, one factory, 30 site phases, 9 linked assets |
 
-The `/demo` pages are read-only and need no login. All names, addresses, licence plates and companies are made up. Both demos reset to their initial state every night at 02:00 UTC. Admin access for evaluation is available on request.
+Both public entries use fictitious company data. BauFlow opens the ordinary steel application through five explicit sample roles; changes are shared with other testers and persist. It has no nightly reset. The existing BaumdienstFlow entry remains independent. Use test data only.
 
 Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
 
@@ -182,16 +182,16 @@ Redion Cekrezi has worked as an arborist and team lead at a tree care company in
 
 Of interest to tree care, construction, civil works and fibre-optic companies that want to run their job sites digitally, and to partners who want to accompany a pilot. A walkthrough or admin access to the demo is available on request via the **[portfolio](https://www.redioncekrezi.de)** or [GitHub](https://github.com/IamRedi).
 
-**Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
+**Redion Cekrezi Â· Full-Stack & Applied AI Developer Â· Produced by RediON**
 
 ## License
 
 Source-available, all rights reserved. The code may be read and run locally for evaluation, but not used commercially. Details in [LICENSE](LICENSE).
 
-## Office interface · 12 November 2026
+## Office interface Â· 12 November 2026
 
 [PR175](https://github.com/IamRedi/redionflow/pull/175) is live in the real-company deployment: lettering and small line icons belong to the drawers and mail envelope. Compact crystal work windows keep their existing action colors. The two configured office admins open their existing company assistant beside the monitor instead of from the company logo; private conversation archives and access checks are preserved. Deployment readback confirmed unchanged original photos and permissions. These screenshots contain fictional data only.
 
-![Office Studio DEMO · office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
+![Office Studio DEMO Â· office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
 
-![Office Studio DEMO · private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)
+![Office Studio DEMO Â· private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)

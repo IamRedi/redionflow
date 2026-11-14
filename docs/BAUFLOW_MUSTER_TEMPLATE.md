@@ -168,3 +168,71 @@ The current native information page and portfolio entry still describe their
 accepted releases and existing app/demo links: NO_CONTENT_CHANGE for those
 public claims; new-profile publication/media promotion stays PENDING_PUBLICATION.
 Do not present the older Mira DEMO or generated UI as this profile.
+
+
+## Owner-approved public-demo release, 14 November 2026
+
+The owner explicitly approved PR206 as a separate public Muster demo and the
+retirement of the former Glasfaser sample. Release preparation reuses the
+existing isolated BauFlow service and URL, separate from AL-Steel and
+BaumdienstFlow. The shared AL-Steel baseline was reread at `4c2c963`; it has not
+advanced since the first Muster review. The ordinary app workflows are reused,
+not recreated in older read-only `/demo` screens.
+
+Public entry is a separate opt-in: `BAUFLOW_MUSTER_PUBLIC_DEMO=true` and
+`DEMO_MODE=true` in addition to the original profile/installation gates.
+`/` and `/demo` lead to `/muster` only there. The entry offers five fixed sample
+roles: owner, accounting, field worker, factory worker and mechanic. A role
+cannot supply a user/tenant ID. Each POST rechecks the sole exact Muster
+company, its fictional identity, active account, role and session epoch, then
+uses the existing signed HttpOnly/SameSite/Secure session cookies and clears
+the other identities. Existing authorization remains authoritative after entry.
+Next Server Actions retain their same-origin protection. An independent durable
+`demo` limiter counts all entries: 30 per 10-minute window, with the existing
+15-minute lock. It does not consume real admin/worker login buckets.
+
+The five-role public demo is intentionally editable and shared. Changes remain
+stored between browsers/devices; no reset cron is added. Its entry identifies
+all business records as fictional and requests test data only. AI, external
+email, GPS and provider credentials remain off/unconfigured. Built-in images
+are pre-generated assets, without a generation on navigation/refresh.
+
+The website privacy link is explicitly labelled as applying to the information
+website. It is not represented as a formal privacy policy for application
+processing. Dedicated app-policy/legal acceptance remains outside this
+engineering acceptance; no compliance claim is made.
+
+Provisioning preserves the seed's strict loopback-E2E guard. A fresh synthetic
+local fixture is exported and restored only into the new empty
+`bauflow_muster` database with its own non-superuser/non-createdb role. The
+existing isolated Postgres capacity is reused, without another database
+process. The old Glasfaser database is archived before retirement; independent
+PostgreSQL18 restore succeeded with all constraints, one fictional company,
+ten workers and four sites. Archive SHA256:
+`704de0a2c824633ad6d9822630b84626be11c252e842c12d9450f41aa9828b34`.
+Original app variables have a private encrypted recovery copy; no credentials
+are committed or copied from the AL-Steel or Baumdienst services.
+
+The live start command migrates and starts Next only; it must not call the
+ordinary `prisma/seed.ts` or demo reset. Release source is pinned to the approved
+PR merge, with one sleeping replica. Only after public desktop/narrow/theme and
+role checks pass is the disabled `bauflow-reset` service retired and the old
+Glasfaser schema removed. Baumdienst's app/database/reset and AL-Steel's
+app/database/backup service remain outside the mutation set.
+
+Release verification: 1,265 unit tests in142 files, full lint, application/seed
+types and production build passed at `5743aec`. The final pre-optimized logo
+flag at `88d07f5` passed another production build and 45 real browser cases,
+including all five public roles, opposite-cookie removal, readable narrow
+controls, both themes and a loaded original logo. Runtime files were compared
+to the exact committed source. Earlier failed lint/worker-role/logo observations
+were corrected before publication; the original assertions were preserved.
+The new database restore passed at the actual online target with94 migrations,
+30 selected phases and4 published plan rows. Seeded password/PIN hashes were
+cleared under the existing tenant context and audit constraints; public role
+entry reads the new session epoch. No local test credential is needed online.
+
+Current release state: VERIFIED_FOR_PUBLICATION; merge, Railway publication and
+online readback are recorded separately when completed. The earlier
+LOCAL_READY record above describes the first review checkpoint, not a claim
+that this later approved publication has already happened.
