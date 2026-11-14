@@ -5,7 +5,9 @@ body[data-bauflow-muster] {
 html.dark body[data-bauflow-muster] {
   --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-night.webp');
 }
-body[data-bauflow-muster] .steelStudioWorkspace {
+body[data-bauflow-muster] .steelStudioWorkspace,
+body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
+body[data-bauflow-muster] [data-phone-fullscreen][data-studio-planning] {
   background: var(--bauflow-muster-scene) center / cover no-repeat !important;
 }
 body[data-bauflow-muster] [data-studio-home] [data-studio-board] > .steelStudioPhoto {
@@ -16,5 +18,9 @@ body[data-bauflow-muster] [data-studio-home] [data-studio-board] {
   background-color: transparent !important;
 }
 @media print {
-  body[data-bauflow-muster] .steelStudioWorkspace { background: white !important; }
+  body[data-bauflow-muster] .steelStudioWorkspace,
+  body[data-bauflow-muster] [data-testid='app-workspace-scroll'],
+  body[data-bauflow-muster] [data-phone-fullscreen][data-studio-planning] {
+    background: white !important;
+  }
 }
