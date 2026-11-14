@@ -11,6 +11,8 @@ import { enterBauflowDemo } from './actions';
 import '@/components/steel/steel-studio.css';
 
 export const metadata: Metadata = { title: 'BauFlow · Musterfirma', robots: { index: false, follow: false } };
+const productName = 'BauFlow';
+const profileName = 'BauFlow · Musterfirma';
 
 const copy = {
   de: { title: 'Ein Betrieb. Ein gemeinsamer Ablauf.', intro: 'Büro, Fertigung und Baustelle im selben BauFlow-System.', note: 'Öffentliche Musterfirma mit erfundenen Daten. Änderungen sind für andere Tester sichtbar. Bitte nur Testdaten verwenden.', owner: 'Geschäftsführung', office: 'Buchhaltung', field: 'Baustelle', factory: 'Fertigung', workshop: 'Werkstatt', theme: 'Tag / Nacht', busy: 'Bitte kurz warten und später erneut öffnen.', legal: 'Impressum', privacy: 'Datenschutz' },
@@ -41,8 +43,8 @@ export default async function MusterPage({ searchParams }: { searchParams: Promi
     </header>
     <main className="flex flex-1 items-center justify-center py-4">
       <section data-studio-home className="bauflowMusterEntryPanel w-full max-w-md rounded-3xl border p-5 sm:p-7">
-        <Image src="/bauflow-muster-v1/brand-profile.webp" width={76} height={76} alt="BauFlow" className="mb-4 rounded-full" priority />
-        <p className="text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">BauFlow · Musterfirma</p>
+        <Image src="/bauflow-muster-v1/brand-profile.webp" width={76} height={76} alt={productName} className="mb-4 rounded-full" priority />
+        <p className="text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">{profileName}</p>
         <h1 className="mt-2 text-2xl font-semibold leading-tight">{c.title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{c.intro}</p>
         <div className="mt-5 grid gap-2">

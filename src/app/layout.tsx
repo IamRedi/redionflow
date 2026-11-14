@@ -106,7 +106,7 @@ export default async function RootLayout({
             navigation={<>
               <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
               {admin && <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>}
-              {isBauflowMusterCompany(companyId) && bauflowMusterPublicDemoConfigured() ? <Link href="/muster" aria-label="Demo" title="Demo" className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><UsersRound className="size-4" /></Link> : null}
+              {isBauflowMusterCompany(companyId) && bauflowMusterPublicDemoConfigured() ? <Link href="/muster" aria-label={t('admin.publicDemo', initialLang)} title={t('admin.publicDemo', initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><UsersRound className="size-4" /></Link> : null}
             </>}
             alerts={admin || worker ? <>
               {admin ? <TopbarAnnouncementButton message={announcement?.message ?? null} className="size-[44px] bg-transparent shadow-none" /> : null}
