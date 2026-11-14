@@ -1,4 +1,18 @@
 /* Only the explicitly configured fictional installation; original steel UI stays intact. */
+.bauflowMusterEntry {
+  background: url('/bauflow-muster-v1/workzone-campus-day.webp') center / cover no-repeat;
+}
+html.dark .bauflowMusterEntry {
+  background-image: url('/bauflow-muster-v1/workzone-campus-night.webp');
+}
+.bauflowMusterEntryPanel {
+  background: var(--steel-glass);
+  border-color: var(--steel-edge);
+  box-shadow: var(--steel-shadow);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+.bauflowMusterEntry header button { min-width: 44px; min-height: 44px; }
+body:has([data-testid='muster-entry']) [data-testid='flow-global-tools'] { display: none; }
 body[data-bauflow-muster] {
   --bauflow-muster-scene: url('/bauflow-muster-v1/workzone-campus-day.webp');
 }

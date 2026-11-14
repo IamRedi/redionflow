@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { bauflowMusterPublicDemoConfigured } from '@/lib/demo/bauflow-muster';
 
 import { DemoTopBar } from "@/components/demo/demo-top-bar";
 import { DemoMachineRail } from "@/components/demo/demo-machine-rail";
@@ -12,6 +13,8 @@ import { getMachineSidebarData } from "@/lib/workzone/machine-sidebar-data";
 import { isPublicDemoEnabled } from "@/lib/public-demo";
 
 export default async function DemoLayout({ children }: { children: ReactNode }) {
+  // Dedicated Muster uses the actual steel app after explicit demo-role entry.
+  if (bauflowMusterPublicDemoConfigured()) redirect('/muster');
   // No login on these pages: never serve them outside a demo/local instance.
   if (!isPublicDemoEnabled()) notFound();
   const company = await getOrCreateDefaultCompany();
