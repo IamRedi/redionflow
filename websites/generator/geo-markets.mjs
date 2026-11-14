@@ -1,3 +1,4 @@
+import {applyProductIdentity} from './product-identity.mjs';
 import copy from './geo-markets-copy.mjs';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function applyGeoMarkets(html,product,lang,isIndex=false){
@@ -17,5 +18,5 @@ export function applyGeoMarkets(html,product,lang,isIndex=false){
  // Google site names are domain/subdomain scoped. BauFlow remains a distinct software entity in a subdirectory.
  if(product==='baum'&&isIndex)graph.push({'@type':'WebSite','@id':home+'#website',url:home,name:'BaumdienstFlow'});
  const json=JSON.stringify({'@context':'https://schema.org','@graph':graph}).replace(/</g,'\\u003c');
- return html.replace('</head>',`<meta property="og:site_name" content="BaumdienstFlow"><script type="application/ld+json">${json}</script></head>`);
+ return applyProductIdentity(html.replace('</head>',`<meta property="og:site_name" content="BaumdienstFlow"><script type="application/ld+json">${json}</script></head>`),product,lang);
 }

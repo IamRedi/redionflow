@@ -1,3 +1,15 @@
+## Static identity update published - 14 November 2026
+
+PR200 static package is live in the existing Cloudflare Pages project: deployment45e82802,source028ea43,ZIPdfa4c04a. All118public assets match;GeoFindbar live rechecks checked6pages per product with zero static findings and explicit partial coverage. [Publication,rollback and limits](docs/PR200_STATIC_LIVE_20261114.md). No main/pilot merge or Railway application deployment. Application repair/testing continues separately in PR202.
+
+## Earlier candidate and gate history
+
+## Product identity correction candidate · 14 November 2026
+
+Full application gates have now been executed on isolated exact-source candidates: [results and release holds](docs/DEMO_FULL_QA_20261114.md). BauFlow regression suite passed; pinned BaumdienstFlow reproduces existing baseline failures and remains on release hold. No application or static deployment occurred.
+
+Prepared explicit BauFlow/BaumdienstFlow distinction in four languages and separately guarded demo indexing/metadata patches. [Scope,tests and release boundaries](docs/PUBLIC_IDENTITY_PREPARATION_20261114.md). Static candidate verified;app patches require full application gates before release;info migration requires ownership/TLS verification. Nothing in this candidate is published.
+
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: eine Codebasis, zwei Produkte. BaumdienstFlow für Baumpflege, BauFlow für Bau und Tiefbau." width="100%"></p>
 
 ## Static website publication · 5 November 2026

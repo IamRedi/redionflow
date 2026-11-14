@@ -1,0 +1,51 @@
+{
+  "scope": "Prepared source patches only;NOT wired into an active app branch/build. No deployment. Full real-application lint/typecheck/tests/build/E2E required on applied exact branches before release.",
+  "targets": [
+    {
+      "product": "baum",
+      "base": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+      "files": {
+        "next.config.mjs": {
+          "beforeSha256": "93fdcf6aeae6124198a2616fc693da1039b1e469787b2c704446cd1cfa0472e1",
+          "afterSha256": "42d7cd619365087e3e07109a16fbe1908fef22ed6b96d391e566df77bd5cf44d"
+        },
+        "src/app/layout.tsx": {
+          "beforeSha256": "15252c0974122bfbcfab8dfb231f9fa4deee5375d2d38ba3c891fa616220d2be",
+          "afterSha256": "af3133ff065be17c9c277f4518191b97e145bd7638e9974ded8e9ae277dba05c"
+        },
+        "src/app/page.tsx": {
+          "beforeSha256": "b54ff79f6659414011c504286900f0a90ae626d487f4e0a9efbd9f4af4406b15",
+          "afterSha256": "530e3ffba889e1c8ba32a90c59c64090816374b70e8b7787f62036654fd89b96"
+        }
+      },
+      "patch": "baum-exact-source.patch"
+    },
+    {
+      "product": "bau",
+      "base": "9d2ead529ed36705753456321ebe2db2cb0321d2",
+      "files": {
+        "next.config.mjs": {
+          "beforeSha256": "d77d36a52eca658c6a381e0282da18624d9913ad177f82183f2a5ad04f2f3798",
+          "afterSha256": "52ba1cb818d8a848a72041cd8aed35848a155d81dc715a5af9f55089d7f9ece3"
+        },
+        "src/app/layout.tsx": {
+          "beforeSha256": "b6d55b152bbb1bfac240fc35a33fd9b9d76a663082fe763f8af3f93f9bff1d00",
+          "afterSha256": "573b69720ecff0490e805c65b06c72b3d712e8aba30fd36903aca85ea2ad5667"
+        },
+        "src/app/page.tsx": {
+          "beforeSha256": "457ce485ab22b124059288385f48293a6d3d775768bf99fd8257afa3a768db9d",
+          "afterSha256": "ae97414a29f544e2ef72b5e0db2dd2abfc5ab0a6e5ae1c8a68440a7312275eb9"
+        }
+      },
+      "patch": "bau-exact-source.patch"
+    }
+  ],
+  "excluded": [
+    ".info until ownership/TLS/routes verified",
+    "marketing.de",
+    "realALSteelapp",
+    "privatecompanydata",
+    "DNS/provider settings"
+  ],
+  "paidApi": 0
+}

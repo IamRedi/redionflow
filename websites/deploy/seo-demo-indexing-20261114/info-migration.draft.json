@@ -1,0 +1,60 @@
+{
+  "status": "DRAFT_NOT_APPLIED",
+  "historicalRole": "RepoApril25:Railway demo/test host forBaumdienstFlow;notcurrent two-demo customdomain",
+  "observedDns": {
+    "Name": "www.baumdienstflow.info",
+    "Type": 5,
+    "NameHost": "j0btby07.up.railway.app"
+  },
+  "TLS": {
+    "at": "2026-11-14T13:53:02.998472+00:00",
+    "host": "www.baumdienstflow.info",
+    "method": "default certificate verification;no bypass",
+    "verifiedTLS": false,
+    "exception": "SSLCertVerificationError",
+    "reason": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.baumdienstflow.info'. (_ssl.c:1032)"
+  },
+  "ownerAndDnsEditAccess": "NOT_VERIFIED;info absent from inspected Cloudflareaccount;otheraccounts/registrarsnotinferred",
+  "prerequisites": [
+    "verify currentregistrar/authoritativeDNS owner and zone access",
+    "archive DNS/certificate/provider state beforechange",
+    "verify oldroot publicmarketing and routecontracts",
+    "TLS mustvalidate normally;no bypass",
+    "separate exactDNS/redirect approval;no purchase/renewal/paidplan authority"
+  ],
+  "proposedMapping": [
+    {
+      "host": "www.baumdienstflow.info",
+      "path": "/",
+      "target": "https://www.baumdienstflow.de/",
+      "status": 301,
+      "gate": "ownership/TLS/publicroot contract"
+    },
+    {
+      "host": "www.baumdienstflow.info",
+      "path": "/demo",
+      "target": "https://redionflow-production.up.railway.app/demo",
+      "status": 302,
+      "gate": "publicdemo contract"
+    },
+    {
+      "host": "www.baumdienstflow.info",
+      "path": "/demo/dashboard",
+      "target": "https://redionflow-production.up.railway.app/demo/dashboard",
+      "status": 302,
+      "gate": "publicroute contract"
+    },
+    {
+      "host": "www.baumdienstflow.info",
+      "path": "/demo/workzone",
+      "target": "https://redionflow-production.up.railway.app/demo/workzone",
+      "status": 302,
+      "gate": "publicroute contract"
+    }
+  ],
+  "unknownPrivateOrRecordRoutes": "NO_AUTOMATIC_REDIRECT;review individually.No wildcardrule/login/admin/API/companymigration.",
+  "apex": "Traffic/AAAA/ownershipnotfullyverified;no automatic newdomain/catchall",
+  "rollback": "Restore individuallycapturedprior DNS/redirect/certificate settings;demo sources remainpinned;no oldapp redeploy",
+  "writes": false,
+  "paidApi": 0
+}
