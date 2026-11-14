@@ -50,7 +50,7 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         });
         console.log('HEADER_STATE', JSON.stringify({ theme, width, ...header }));
         await page.screenshot({ path: info.outputPath(`workzone-header-${theme}-${width}.png`) });
-        const announcement = page.getByTestId('topbar-announcement-trigger');
+        const announcement = page.getByTestId('flow-header-alerts').getByRole('button').first();
         await announcement.click();
         const message = page.locator('textarea[name="message"]');
         await expect(message).toBeVisible();
