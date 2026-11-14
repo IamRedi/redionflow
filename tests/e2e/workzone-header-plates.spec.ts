@@ -37,17 +37,21 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await page.setViewportSize({ width, height: 900 });
         await page.goto('/workzone');
         await expect(page.getByTestId('flow-team-strip').getByRole('button').first()).toBeVisible();
+        // Header tools mount into their portal after the server-rendered strip.
+        await expect(page.getByTestId('notification-bell')).toBeVisible();
+        await expect(page.getByTestId('flow-global-tools').locator('a[href="/workzone/kidraht"]')).toBeVisible();
         const header = await page.evaluate(() => {
           const root = document.querySelector('[data-testid="workzone-topbar"]')!, strip = document.querySelector('[data-testid="flow-team-strip"]')!;
           const logo = document.querySelector('button[aria-label="Hap asistentin admin"]')!.getBoundingClientRect();
           const crew = strip.querySelector('button')!.getBoundingClientRect();
-          const bell = [...document.querySelectorAll('[aria-label="Njofto ekipin"]')].find(el => el.getClientRects().length)!.getBoundingClientRect();
+          const stripBox = strip.getBoundingClientRect(), tools = document.querySelector('[data-testid="flow-global-tools"]')!.getBoundingClientRect();
+          const bell = document.querySelector('[data-testid="notification-bell"]')!.getBoundingClientRect();
           const kidraht = document.querySelector('a[href="/workzone/kidraht"]')!.getBoundingClientRect();
-          return { rootBg: getComputedStyle(root).backgroundColor, stripBg: getComputedStyle(strip).backgroundColor, stripBorder: getComputedStyle(strip).borderTopWidth, crewLogoY: Math.abs(crew.y + crew.height / 2 - logo.y - logo.height / 2), crewAfterLogo: crew.left >= logo.right, bellKidrahtY: Math.abs(bell.y + bell.height / 2 - kidraht.y - kidraht.height / 2), noOverflow: document.documentElement.scrollWidth <= innerWidth };
+          return { rootBg: getComputedStyle(root).backgroundColor, stripBg: getComputedStyle(strip).backgroundColor, stripBorder: getComputedStyle(strip).borderTopWidth, crewLogoY: Math.abs(crew.y + crew.height / 2 - logo.y - logo.height / 2), logoHeaderY: Math.abs(logo.y + logo.height / 2 - (stripBox.top + tools.bottom) / 2), workersClearTools: stripBox.bottom + 3 <= tools.top, crewAfterLogo: crew.left >= logo.right, bellKidrahtY: Math.abs(bell.y + bell.height / 2 - kidraht.y - kidraht.height / 2), noOverflow: document.documentElement.scrollWidth <= innerWidth };
         });
         console.log('HEADER_STATE', JSON.stringify({ theme, width, ...header }));
         await page.screenshot({ path: info.outputPath(`workzone-header-${theme}-${width}.png`) });
-        const announcement = page.getByRole('button', { name: 'Shkruaj nje njoftim te shkurter per ekipin', exact: true });
+        const announcement = page.getByTestId('flow-header-alerts').getByRole('button').first();
         await announcement.click();
         const message = page.locator('textarea[name="message"]');
         await expect(message).toBeVisible();
@@ -60,7 +64,9 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await expect(message).toHaveCount(0);
         await expect(announcement).toBeFocused();
         if (header.stripBg !== 'rgba(0, 0, 0, 0)' || header.stripBorder !== '0px' || header.rootBg !== 'rgba(0, 0, 0, 0)') issues.push(`${theme}/${width}: header shell`);
-        if (header.crewLogoY > 18 || !header.crewAfterLogo) issues.push(`${theme}/${width}: crew/logo alignment`);
+        // Accepted desktop layout centers the logo across team + controls rows;
+        // on touch it stays beside the team. Do not restore the retired one-row layout.
+        if ((width >= 1024 ? header.logoHeaderY : header.crewLogoY) > 18 || !header.crewAfterLogo || !header.workersClearTools) issues.push(`${theme}/${width}: crew/logo alignment`);
         if (width < 1024 && header.bellKidrahtY > 2) issues.push(`${theme}/${width}: bell/KiDraht alignment`);
         if (!header.noOverflow) issues.push(`${theme}/${width}: page overflow`);
         const worker = page.getByTestId('flow-team-strip').getByRole('button').first();
@@ -83,7 +89,7 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await expect(index.getByRole('link', { name: 'Vendndodhja: Kamioni demo · DEMO-01', exact: true })).toHaveAttribute('href', /query=52\.4900000,13\.3800000/);
         await zoom.focus();
         await page.keyboard.press('Enter');
-        await expect.poll(async () => page.evaluate(() => {const a=document.querySelector('.leaflet-marker-icon[title="Makinat: DEMO-01"]')!.getBoundingClientRect(),b=document.querySelector('[data-testid="workzone-map-frame"] .leaflet-container')!.getBoundingClientRect();return Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2);})).toBeLessThan(8);
+        await expect.poll(async () => page.evaluate(() => {const a=document.querySelector('.leaflet-marker-icon[title$="DEMO-01"]')!.getBoundingClientRect(),b=document.querySelector('[data-testid="workzone-map-frame"] .leaflet-container')!.getBoundingClientRect();return Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2);})).toBeLessThan(8);
         const scrollbar = await index.evaluate(el => ({ list: getComputedStyle(el).scrollbarWidth, page: getComputedStyle(document.documentElement).scrollbarWidth }));
         if (scrollbar.list !== 'none') issues.push(`${theme}/${width}: visible map scrollbar`);
         await page.getByTestId('workzone-map-frame').scrollIntoViewIfNeeded();

@@ -473,3 +473,18 @@ body:has([data-steel-studio]) [data-workshop-search-empty] {display:block;}
 @media(max-width:1023.98px){body:has([data-steel-studio]) [data-testid=workshop-active-bays]>section>div {padding-top:0;}}
 body:has([data-steel-studio]) [data-testid=workshop-workspace]>div>nav .steelStudioAssetButton>span:first-child {white-space:normal;text-overflow:clip;overflow:visible;line-height:1.2;text-align:left;}
 @media(prefers-reduced-transparency:reduce),(forced-colors:active){body:has([data-steel-studio]) [data-testid=workshop-workspace] input:not([type=checkbox]):not([type=radio]) {backdrop-filter:none;-webkit-backdrop-filter:none;}}
+
+/* Keep the standard declaration in its own support block: the current CSS
+   minifier coalesces adjacent prefixed/unprefixed declarations to WebKit only.
+   Safari retains the existing fallback; Chromium gets the same accepted glass. */
+@supports (backdrop-filter:blur(0)) {
+ body:has([data-steel-studio]) [data-studio-site-card] [data-testid=site-card-open] {backdrop-filter:blur(16px) saturate(1.2);}
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-studio-workshop-phase][class~="border"][class~="bg-card"] {backdrop-filter:none;}
+ body:has([data-steel-studio]) [data-testid=workshop-workspace] :is([data-studio-workshop-phase]>h2,[data-testid=workshop-history-heading]>h2,header h1,.steelStudioAssetButton,[data-testid=workshop-repair-card],input:not([type=checkbox]):not([type=radio])) {backdrop-filter:blur(2px) var(--workshop-ice-light);}
+ @media(prefers-reduced-transparency:reduce),(forced-colors:active) {
+  body:has([data-steel-studio]) [data-studio-site-card] [data-testid=site-card-open],body:has([data-steel-studio]) [data-testid=workshop-workspace] :is([data-studio-workshop-phase]>h2,[data-testid=workshop-history-heading]>h2,header h1,.steelStudioAssetButton,[data-testid=workshop-repair-card],input) {backdrop-filter:none;}
+ }
+}
+/* Reuse the notebook's accessible copper ink for small operational labels. */
+body:has([data-steel-studio]) [data-testid=asset-operational-status][class~="text-orange-800"] {color:#7e350a;}
+html.dark body:has([data-steel-studio]) [data-testid=asset-operational-status][class~="text-orange-800"] {color:#ffcb92;}

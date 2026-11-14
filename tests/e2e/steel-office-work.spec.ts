@@ -1,3 +1,6 @@
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import { expect,test,type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { hashPassword } from '../../src/lib/auth/password';
@@ -29,7 +32,7 @@ test('private office work, mail and predictable return routes on desktop and pho
   await work.getByText('Kategoritë e punës',{exact:true}).click();await work.getByRole('button',{name:'Vendos kategoritë fillestare'}).click();await expect(work.getByRole('status')).toHaveText('U ruajt.',{timeout:30_000});
   const composer=page.getByTestId('task-composer');
   const detail=page.getByTestId('task-detail');
-  await work.getByRole('button',{name:'Shto',exact:true}).click();
+  await work.getByRole('button',{name:'Shto',exact:true}).first().click();
   await composer.getByLabel('Emri i detyrës',{exact:true}).fill('Kontrollo ofertën · DEMO');
   await composer.getByRole('button',{name:'Duke u bërë',exact:true}).click();
   await composer.getByRole('button',{name:'Rëndësi e lartë',exact:true}).click();
@@ -37,11 +40,11 @@ test('private office work, mail and predictable return routes on desktop and pho
   await composer.getByLabel('Shënim',{exact:true}).fill('Shënim personal për provën lokale.');
   await composer.getByRole('button',{name:'Shto kujtesë',exact:true}).click();
   await composer.getByLabel('Data',{exact:true}).fill('2027-01-15');
-  await composer.getByLabel('Ora',{exact:true}).selectOption('12');
-  await composer.getByLabel('Minuta',{exact:true}).selectOption('30');
+  await composer.getByRole('combobox',{name:'Ora',exact:true}).selectOption('12');
+  await composer.getByRole('combobox',{name:'Minuta',exact:true}).selectOption('30');
   await composer.getByRole('button',{name:'Shto',exact:true}).click();
   await expect(detail.getByRole('heading',{name:'Kontrollo ofertën · DEMO'})).toBeVisible();
-  await expect(detail.getByText('Kujtesë e planifikuar',{exact:true})).toBeVisible();
+  await expect(detail.getByText(/^Kujtesë e planifikuar/)).toBeVisible();
   const reminder=await prisma.officeTaskReminder.findFirstOrThrow({where:{companyProfileId:companyId,memberId:'office-e2e-megi'}});
   expect(reminder.remindAt.toISOString()).toBe('2027-01-15T11:30:00.000Z');
   await detail.getByRole('button',{name:'U krye',exact:true}).click();
@@ -49,17 +52,17 @@ test('private office work, mail and predictable return routes on desktop and pho
   expect((await prisma.officeTaskReminder.findUniqueOrThrow({where:{id:reminder.id}})).status).toBe('CANCELLED');
   await detail.getByRole('button',{name:'Kthehu te ditari'}).click();
   await expect(work.getByRole('button',{name:/^Hap detyrën: Kontrollo ofertën/})).toBeVisible();
-  await work.getByRole('button',{name:'Shto',exact:true}).click();
+  await work.getByRole('button',{name:'Shto',exact:true}).first().click();
   await composer.getByLabel('Emri i detyrës',{exact:true}).fill('Dosja e ofertës · DEMO');
   await composer.getByText('Ndarja dhe afati',{exact:true}).click();
-  await composer.getByLabel('Lloji',{exact:true}).selectOption('NOTE');
+  await composer.getByRole('combobox',{name:'Lloji',exact:true}).selectOption('NOTE');
   await composer.getByRole('button',{name:'Shto',exact:true}).click();
   await expect(detail.getByRole('heading',{name:'Dosja e ofertës · DEMO'})).toBeVisible();
   await detail.getByRole('button',{name:'Ndrysho',exact:true}).click();
   await composer.getByText('Ndarja dhe afati',{exact:true}).click();
-  await composer.getByLabel('Lloji',{exact:true}).selectOption('COMPANY');
+  await composer.getByRole('combobox',{name:'Lloji',exact:true}).selectOption('COMPANY');
   await composer.getByRole('combobox',{name:'Kategoria',exact:true}).selectOption({label:'Modelim · Për oferta'});
-  await composer.getByLabel('Përgjegjësi',{exact:true}).selectOption('office-e2e-almet');
+  await composer.getByRole('combobox',{name:'Përgjegjësi',exact:true}).selectOption('office-e2e-almet');
   await expect(composer.getByRole('button',{name:'Ruaj',exact:true})).toBeDisabled();
   await composer.getByRole('checkbox').check();
   await page.setViewportSize({width:390,height:844});

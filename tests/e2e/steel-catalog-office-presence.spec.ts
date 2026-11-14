@@ -1,3 +1,6 @@
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import { expect, test, type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { createSessionCookie } from '../../src/lib/auth/session-cookie';
@@ -27,7 +30,7 @@ test('catalog photos stay inside their thumbnails and office start records the c
   await page.getByRole('button',{name:'Shto detyrë',exact:true}).first().click();
   const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
   await expect.poll(()=>dialog.locator('[data-steel-work-visual]').count()).toBeGreaterThan(0);
-  const previews=dialog.locator('[data-studio-process]');await expect.poll(()=>previews.count()).toBeGreaterThan(0);
+  const previews=dialog.locator('[data-steel-work-visual]');await expect.poll(()=>previews.count()).toBeGreaterThan(0);
   const boxes=await previews.evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),sprite=n.firstElementChild!.getBoundingClientRect();return {w:r.width,h:r.height,sw:sprite.width,position:getComputedStyle(n).position};}));
   for(const b of boxes){expect(b.w).toBeLessThanOrEqual(130);expect(b.h).toBeLessThanOrEqual(100);expect(b.sw).toBeLessThanOrEqual(b.w+1);expect(b.position).toBe('relative');}
   await page.screenshot({path:`${out}/catalog-${theme}-${width}.png`});await dialog.getByRole('button',{name:'Mbyll',exact:true}).click();await expect(dialog).toHaveCount(0);
@@ -36,11 +39,11 @@ test('catalog photos stay inside their thumbnails and office start records the c
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.screenshot({path:`${out}/office-${theme}-${width}.png`});
  }
- await page.getByTestId('office-work-button').click();await expect(page.getByTestId('office-work-button')).toHaveText('Në zyrë');
- await page.reload();await expect(page.getByTestId('office-work-button')).toHaveText('Në zyrë');
+ await page.getByTestId('office-work-button').click();await expect(page.getByTestId('office-work-button')).toHaveAccessibleName('Ndalo punën në zyrë');
+ await page.reload();await expect(page.getByTestId('office-work-button')).toHaveAccessibleName('Ndalo punën në zyrë');
  const live=await prisma.workSession.findMany({where:{workerId,isLive:true}});expect(live).toHaveLength(1);expect(live[0].workplace).toBe('OFFICE');expect(live[0].baustelleId).toBeNull();
  // Manager preview must not allow starting another person's attendance.
  await page.goto(`/workzone/offices/people/${member.id}`);await expect(page.getByTestId('office-work-button')).toHaveCount(0);
- await login(context,base,'worker',workerId);await page.goto('/workzone/offices/me');await expect(page.getByTestId('office-work-button')).toHaveText('Në zyrë');
+ await login(context,base,'worker',workerId);await page.goto('/workzone/offices/me');await expect(page.getByTestId('office-work-button')).toHaveAccessibleName('Ndalo punën në zyrë');
  expect(errors).toEqual([]);
 });

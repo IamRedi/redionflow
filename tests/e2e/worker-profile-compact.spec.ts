@@ -63,7 +63,7 @@ test('worker profile keeps summaries compact and documents available on demand',
     await page.getByTestId('worker-documents-open').click();
     await expect(documents.getByRole('link', { name: /Synthetic profile/ })).toBeVisible();
     await documents.getByRole('button', { name: 'Fshi dokumentin', exact: true }).click();
-    await documents.getByRole('button', { name: 'Fshi', exact: true }).click();
+    await page.getByRole('dialog').last().getByRole('button', { name: 'Fshi', exact: true }).click();
     await expect(documents.getByRole('link')).toHaveCount(0);
     expect((await prisma.worker.findUniqueOrThrow({ where: { id: seed.worker.id } })).documents).toEqual([]);
     await page.keyboard.press('Escape');

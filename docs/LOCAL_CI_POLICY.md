@@ -18,6 +18,31 @@ Verification-only workflows use explicit `workflow_dispatch` rather than automat
 
 ## Evidence and merge/release gates
 
+### Managed browser fixtures
+
+`npm run test:e2e` is shell-portable; Playwright's configuration supplies SaaS
+test mode, one ephemeral signing key shared with its owned Next child, the
+synthetic office configuration and evidence directories. It never reuses the
+operator's application signing secret, office tenant or AI key. The managed
+server still validates the loopback target and disposable database before
+starting services, clears provider credentials and owns its mock storage.
+Office prerequisites are seeded before each scenario, not inherited from a
+previous file. The suite runs serially because those historical scenarios share
+one explicitly synthetic office tenant. Use the current configured origin,
+accessible actions and authorization matrix when testing routes; retired UI
+labels and hidden legacy shortcuts are not product requirements. Preserve the
+corresponding data/privacy/permission assertions at the supported entry point.
+
+This fixture contract is test-only. It does not activate office features, AI,
+notifications, permissions or credentials in a deployed environment.
+
+Web Push registration uses ephemeral synthetic VAPID keys. The owned server
+preloads a local-only delivery transport; it cannot send a real push. Native
+PostgreSQL substitutes must use UTC, matching the official disposable image:
+`now()::timestamp` fixtures otherwise differ from Prisma's UTC timestamps and
+can accidentally exercise the five-second undo path. Keep the original undo
+and concurrency assertions; correct the executor timezone instead.
+
 Record the exact commit, relevant dirty-tree/diff identity, host alias, commands, outcomes, skips and artifact references. Keep local verification, GitHub CI, independent review, owner acceptance and deployment separate. A changed source revision invalidates the affected earlier evidence. Missing or failed mandatory checks block acceptance; never report them as passed or create a synthetic green/skip check.
 
 Preserve existing branch protections, required checks and reviewer/owner approval rules. A `workflow_dispatch` run may not satisfy an Actions check required by a PR/ruleset. If that applies, retain the protection and stop the merge: use an authorized compatible PR-event cloud verification or a separately reviewed trusted local-evidence integration. Do not delete a required check, loosen a ruleset, use admin bypass or mark an unexecuted job successful to make the policy fit.

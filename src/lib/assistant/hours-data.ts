@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { effectiveSessionHours } from '@/lib/workzone/session-rules';
 import type { RequesterContext } from './requester';
+import type { Prisma } from '@/generated/prisma/client';
 
 /** Aggregate all closed rows in PostgreSQL; only open sessions need JS time math. */
 export async function assistantHoursData(requester: RequesterContext, input: { from: Date; to: Date; now?: Date }) {
@@ -9,6 +10,14 @@ export async function assistantHoursData(requester: RequesterContext, input: { f
   const now = input.now ?? new Date();
   return prisma.$transaction(async tx => {
   await tx.$executeRaw`SELECT set_config('app.current_tenant_id', ${requester.companyId}, true)`;
+  return assistantHoursSnapshot(tx, requester, { ...input, now });
+  }, { isolationLevel: 'RepeatableRead' });
+}
+
+/** Reuse the same hours projection inside an authorized report snapshot. */
+export async function assistantHoursSnapshot(tx: Prisma.TransactionClient, requester: RequesterContext, input: { from: Date; to: Date; now: Date }) {
+  if (requester.kind !== 'admin' || !requester.companyId || input.from >= input.to) return null;
+  const now = input.now;
   const actor = await tx.user.findFirst({ where: { id: requester.adminId, companyProfileId: requester.companyId, role: 'ADMIN', isActive: true }, select: { id: true } });
   if (!actor) return null;
   const where = { worker: { companyProfileId: requester.companyId }, startTime: { gte: input.from, lt: input.to } };
@@ -32,5 +41,4 @@ export async function assistantHoursData(requester: RequesterContext, input: { f
   const names = new Map(profiles.map(worker => [worker.id, `${worker.firstName} ${worker.lastName}`.trim()]));
   const workers = [...totals].map(([workerId, total]) => ({ workerId, worker: names.get(workerId) ?? '', hours: Math.round(total.hours * 100) / 100, sessionRows: total.sessionRows })).sort((a,b) => b.hours-a.hours || a.workerId.localeCompare(b.workerId));
   return { complete: true as const, asOf: now.toISOString(), timeZone: requester.timeZone ?? 'Europe/Berlin', sessionRows: workers.reduce((sum,w) => sum+w.sessionRows,0), totalHours: Math.round([...totals.values()].reduce((sum,w) => sum+w.hours,0)*100)/100, workers };
-  }, { isolationLevel: 'RepeatableRead' });
 }

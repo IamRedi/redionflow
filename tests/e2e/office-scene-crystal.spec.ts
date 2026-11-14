@@ -1,3 +1,6 @@
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+// Register per file: imported modules are cached across Playwright files.
+test.beforeEach(seedOfficeE2E);
 import {expect,test} from '@playwright/test';
 import {existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {prisma} from '../../src/lib/db/prisma';
@@ -60,13 +63,17 @@ test('office scene lettering, work surfaces and company assistant retain identit
   // The long editor scrolls inside the office; its actions remain reachable.
   for(const [width,height] of [[390,844],[760,390]] as const){
    await page.setViewportSize({width,height});await page.goto('/workzone/offices/me/tasks');
-   await page.getByRole('button',{name:'Shto',exact:true}).click();
-   await page.getByRole('button',{name:'Ruaj',exact:true}).scrollIntoViewIfNeeded();
-   await expect(page.getByRole('button',{name:'Ruaj',exact:true})).toBeInViewport();
+   await page.getByTestId('office-work').getByRole('button',{name:'Shto',exact:true}).first().click();
+   const composer=page.getByTestId('task-composer');await composer.getByLabel('Emri i detyrës',{exact:true}).fill('Editor · DEMO');
+   await composer.getByRole('button',{name:'Shto',exact:true}).scrollIntoViewIfNeeded();
+   await expect(composer.getByRole('button',{name:'Shto',exact:true})).toBeInViewport();
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
    expect(await page.evaluate(()=>document.scrollingElement!.scrollTop)).toBe(0);
+   await composer.getByRole('button',{name:'Kthehu te ditari',exact:true}).click();
    const credit=page.locator('[data-office-scroll] a[aria-label="by RediON"]');await credit.scrollIntoViewIfNeeded();await expect(credit).toBeInViewport();
-   expect(await page.locator('[data-office-scroll]').evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
+   const scroll=await page.locator('[data-office-scroll]').evaluate(e=>({top:e.scrollTop,overflow:e.scrollHeight>e.clientHeight+1}));
+   if(scroll.overflow)expect(scroll.top).toBeGreaterThan(0);else expect(scroll.top).toBe(0);
+   expect(await page.evaluate(()=>document.scrollingElement!.scrollTop)).toBe(0);
    await page.screenshot({path:`${out}/after-task-editor-${width}.png`});
   }
   await page.goto('/workzone/plan?office=desk');await expect(page.getByTestId('plan-close')).toHaveAccessibleName('Zyra ime');await expect(page.getByTestId('plan-close')).toBeVisible();await page.screenshot({path:`${out}/after-plan-760-dark.png`});

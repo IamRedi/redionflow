@@ -46,7 +46,7 @@ test('photorealistic steel workspace preserves sites, factory, photos, fleet and
     expect(await page.locator('[data-studio-board]>.steelStudioPhoto').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('/office-studio-v1/connected-work-artwork.webp');
     expect(await page.locator('.steelStudioWorkspace').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('/office-studio-v1/connected-work-artwork.webp');
     const action=await page.getByTestId('site-card-open').first().evaluate(e=>getComputedStyle(e).backgroundImage);expect(action).toContain('linear-gradient');expect(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--primary').trim())).toBe(theme==='light'?'21 90% 40%':'27 96% 62%');
-    expect(action.split('linear-gradient').length).toBeGreaterThanOrEqual(3);expect(await page.getByTestId('site-card-open').first().evaluate(e=>getComputedStyle(e).backdropFilter)).toContain('blur');
+    expect(action.split('linear-gradient').length).toBeGreaterThanOrEqual(3);await expect.poll(()=>page.getByTestId('site-card-open').first().evaluate(e=>getComputedStyle(e).backdropFilter)).toContain('blur');
     await expect.poll(()=>page.locator('[data-studio-site-card]').evaluateAll(cards=>{const r=cards.map(c=>c.getBoundingClientRect());return r.every((a,i)=>r.every((b,j)=>i===j||a.right<=b.x||b.right<=a.x||a.bottom<=b.y||b.bottom<=a.y));})).toBe(true);
     const targets=await page.getByTestId('site-card-open').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {w:r.width,h:r.height};}));expect(targets.every(r=>r.w>=44&&r.h>=44)).toBe(true);
    }

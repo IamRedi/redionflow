@@ -234,6 +234,6 @@ export function legacyAssistantTools(requester: RequesterContext, turn: ReturnTy
       },
   };
   const workerOnly = ['getMyOperationalSnapshot','getMyHoursSummary','getMyDailyReport','getMyMonthlyTimesheet','getMyVacationSummary'];
-  const legacySteel = ['getEquipmentStatus','adminGetDashboardSnapshot','adminListBaustellenOverview','adminListProjects'];
+  const legacySteel = ['getEquipmentStatus','adminGetDashboardSnapshot','adminListBaustellenOverview','adminListProjects','adminGetTeamDailyReport','adminGetWorkerDailyReport','adminGetOwnDailyReport'];
   return Object.fromEntries(Object.entries(tools).filter(([name]) => !workerOnly.includes(name) && !(steel && legacySteel.includes(name))));
 }

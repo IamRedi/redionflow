@@ -1,9 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 import { OWNED_E2E_READY_PATTERN } from "./scripts/lib/e2e-readiness";
 import { DEFAULT_E2E_BASE_URL, validateE2ETarget } from "./scripts/lib/e2e-target";
+import { configureE2EEnvironment } from "./scripts/lib/e2e-environment";
 
 // Also guard direct Playwright invocation, before any server or browser starts.
 const target = validateE2ETarget(process.env.PLAYWRIGHT_BASE_URL ?? DEFAULT_E2E_BASE_URL);
+configureE2EEnvironment();
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -12,7 +14,10 @@ export default defineConfig({
     timeout: 10_000,
   },
   retries: 0,
-  fullyParallel: true,
+  // Historical office scenarios share the explicitly synthetic office tenant.
+  // Run them deterministically; never race fixture resets across files.
+  fullyParallel: false,
+  workers: 1,
   reporter: [["list"]],
   use: {
     baseURL: target.baseURL,

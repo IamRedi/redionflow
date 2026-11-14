@@ -28,7 +28,7 @@ test('steel card counts the visible task and the existing bell enables/tests a d
    await page.screenshot({path:evidence(`${baseline?'before':'after'}-progress-${theme}-${width}.png`)});
    if(!baseline) {
     await page.getByTestId('notification-bell').click(); await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByRole('button',{name:'Provo për ekipin',exact:true})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Provo te të gjithë',exact:true})).toBeVisible();
     await page.screenshot({path:evidence(`after-bell-${theme}-${width}.png`)});
     await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0); await expect(page.getByTestId('notification-bell')).toBeFocused();
    }

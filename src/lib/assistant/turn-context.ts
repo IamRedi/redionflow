@@ -35,6 +35,7 @@ const relativePatterns = [
 function shortFollowUp(value: string) {
   const text = value.normalize('NFD').replace(/\p{M}/gu, '').trim();
   if (!text || text.length > 80) return false;
+  if (/^(?:(?:me jep|trego|dua|give me|show|more|mehr|dammi|mostra|arata|pokaz)\s+)?(?:detaje(?:t)?|hollësi|hollesi|details?|breakdown|dettagli|detalii|szczegoly)(?:\s+please)?[\s?!.]*$/iu.test(text)) return true;
   return /^(po|edhe|dhe|p[eë]r|te|tek|kurse|nd[eë]rsa|und|auch|f[uü]r|and|also|what about|e|anche|ma|per|[sș]i|dar|pentru|a|i|tak)\b/iu.test(text)
     || /^(sot|dje|nes[eë]r|heute|gestern|morgen|today|yesterday|tomorrow|oggi|ieri|domani|ast[aă]zi|m[aâ]ine|dzisiaj|wczoraj|jutro)[\s?!.]*$/iu.test(text);
 }

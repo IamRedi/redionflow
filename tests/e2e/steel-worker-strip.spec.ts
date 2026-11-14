@@ -47,13 +47,13 @@ test('steel admin team stays in its shell row without covering scrolled charts',
         await page.screenshot({ path: info.outputPath(`steel-team-${theme}-${device}-top.png`) });
         if (device === 'desktop' || device === 'phone') {
           await strip.getByRole('button', { name: /^Demo01 Crew01/ }).click();
-          await expect(header.getByRole('button', { name: 'Profili', exact: true })).toBeVisible();
+          await expect(page.getByRole('button', { name: 'Profili', exact: true })).toBeVisible();
         }
         const headerTop = (await header.boundingBox())!.y;
         await page.getByTestId('app-workspace-scroll').evaluate(el => { el.scrollTop = 850; });
         expect(Math.abs((await header.boundingBox())!.y - headerTop)).toBeLessThan(1);
         expect(await page.evaluate(() => window.scrollY)).toBe(0);
-        await expect(header.getByRole('button', { name: 'Profili', exact: true })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Profili', exact: true })).toHaveCount(0);
         const chart = page.locator('svg[role="img"]').first();
         await chart.scrollIntoViewIfNeeded();
         expect(await chart.evaluate(el => {

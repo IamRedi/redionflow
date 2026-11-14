@@ -48,6 +48,28 @@ the application's non-null optional schema. See the official
 
 ## AL Steel production
 
+Steel day reports use `adminGetSteelDailyReport`, not the legacy tree reports.
+One repeatable-read snapshot revalidates the active administrator and reads
+complete company hours, recorded worker counts, steel confirmation aggregates
+and enabled selected-phase checks. Worker-specific reports resolve an actual
+worker ID and filter production by credited team IDs, never the checker.
+Company hours are not a single employee's row; phase checks are not trees or
+individual production. The old team, worker and own-admin daily tree-report
+tools remain available only to non-steel companies. Monthly timesheets and
+the separate Worker Helper keep their existing boundaries.
+
+A narrow company-wide daily-report intent forces this source and prevents
+model-invented employee filters. A canonical plain-text answer replaces model
+prose before delivery and archival, preserving the exact day, complete totals,
+separate process quantities, approximate legacy weights and unknown weights.
+Missing/failed/mismatched sources produce an unavailable answer. Historical
+unclosed sessions make historical hours unknown rather than projecting them
+to the current instant. Detail lists state shown/total coverage; a source above
+the report bound is explicitly unavailable. Specific people/projects and other
+domains retain their specialized routing. Previous incorrect transcripts are
+preserved as history, never reused as factual evidence. No business records,
+attendance calculations, access grants, model or quotas change.
+
 Current workforce questions use `adminGetWorkforceStatus`: one fresh,
 repeatable-read tenant snapshot after revalidating the active administrator.
 It distinguishes explicit OFFICE and WORKSHOP (service workshop), recorded

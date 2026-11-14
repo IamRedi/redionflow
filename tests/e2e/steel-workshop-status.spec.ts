@@ -69,6 +69,7 @@ async function readableStatus(badge: Locator, theme: string, surface: string) {
     return (Math.max(foreground, behind) + 0.05) / (Math.min(foreground, behind) + 0.05);
   });
   console.log('WORKSHOP_STATUS_CONTRAST', JSON.stringify({ theme, surface, ratio }));
+  if(ratio<4.5)console.log('WORKSHOP_STATUS_LAYERS',await badge.evaluate(el=>{const rows=[];for(let e:Element|null=el;e;e=e.parentElement){const s=getComputedStyle(e);rows.push({tag:e.tagName,color:s.color,bg:s.backgroundColor,image:s.backgroundImage,filter:s.backdropFilter});}return rows;}));
   expect(ratio).toBeGreaterThanOrEqual(4.5);
 }
 
@@ -86,8 +87,11 @@ test('compact workshop handles many reports, search and completed history in bot
       await page.getByTestId('workshop-dock-open').click();
       const workshop = page.getByTestId('workshop-workspace');
       await expect(dialog(page).getByRole('heading', { name: c.workshop, exact: true })).toHaveCount(1);
-      const reported = workshop.locator('#workshop-phase-reported');
-      await expect(reported.getByTestId('workshop-repair-card')).toHaveCount(7);
+      const reported = workshop.locator('[data-studio-workshop-phase=reported]');
+      await expect(reported.getByTestId('workshop-repair-card')).toHaveCount(6);
+      await reported.getByRole('button',{name:`${c.showMore} · 7`,exact:true}).click();
+      await expect(dialog(page).getByTestId('workshop-repair-card')).toHaveCount(7);
+      await dialog(page).getByRole('button',{name:c.close,exact:true}).click();
       const card = reported.getByTestId('workshop-repair-card').filter({ hasText: seed.machines[11].targe! });
       await expect(card).toBeVisible();
       const box = await card.boundingBox(); expect(box!.height).toBeLessThanOrEqual(250);
@@ -95,11 +99,11 @@ test('compact workshop handles many reports, search and completed history in bot
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.screenshot({ path: info.outputPath(`after-workshop-${theme}-${width}.png`) });
       if (width === 1440) {
-        const receivedBox = await workshop.locator('#workshop-phase-received').boundingBox();
+        const receivedBox = await workshop.locator('[data-studio-workshop-phase=received]').boundingBox();
         const reportedBox = await reported.boundingBox();
-        expect(receivedBox!.height + 100).toBeLessThan(reportedBox!.height);
+        expect(receivedBox!.height).toBeLessThan(reportedBox!.height);
       } else {
-        await touch(workshop.locator('[aria-controls="workshop-phase-ready"]'), width, height);
+        await touch(workshop.getByRole('button',{name:c.openHistory,exact:true}), width, height);
       }
       await touch(card, width, height);
       await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
@@ -108,13 +112,14 @@ test('compact workshop handles many reports, search and completed history in bot
     await page.setViewportSize({ width: 844, height: 390 });
     const zoom = await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
     await page.getByTestId('workshop-dock-open').click();
+    await page.getByTestId('workshop-workspace').locator('[data-studio-workshop-phase=reported]').getByRole('button',{name:`${c.showMore} · 7`,exact:true}).click();
     expect(await dialog(page).evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     await touch(dialog(page).getByRole('button', { name: c.close, exact: true }), 844, 390);
     for (const target of [seed.machines[11], seed.machines[0]]) {
-      const row = page.getByTestId('workshop-workspace').locator('#workshop-phase-reported').getByTestId('workshop-repair-card').filter({ hasText: target.targe! });
+      const row = dialog(page).getByTestId('workshop-repair-card').filter({ hasText: target.targe! });
       await row.scrollIntoViewIfNeeded();
       const visible = await row.evaluate(element => {
-        const row = element.getBoundingClientRect(), scroll = element.closest('[data-testid="workshop-scroll"]')!.getBoundingClientRect();
+        const row = element.getBoundingClientRect(), scroll = element.closest('[role="dialog"]')!.getBoundingClientRect();
         return { height: Math.min(row.bottom, scroll.bottom, innerHeight) - Math.max(row.top, scroll.top, 0), width: Math.min(row.right, scroll.right, innerWidth) - Math.max(row.left, scroll.left, 0) };
       });
       console.log('WORKSHOP_ZOOM_REACHABILITY', JSON.stringify({ plate: target.targe, ...visible }));
@@ -127,20 +132,22 @@ test('compact workshop handles many reports, search and completed history in bot
     }
     await page.screenshot({ path: info.outputPath('after-workshop-landscape-text-zoom.png') });
     await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
+    await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
     await zoom.evaluate(element => element.remove());
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByTestId('workshop-dock-open').click();
     const workshop = page.getByTestId('workshop-workspace');
     await workshop.getByRole('searchbox', { name: c.search, exact: true }).fill('hydraulic');
     await expect(workshop.getByTestId('workshop-repair-card')).toHaveCount(1);
-    await expect(workshop.locator('#workshop-phase-repairing')).toBeVisible();
+    await expect(workshop.locator('[data-studio-workshop-phase=repairing]')).toBeVisible();
     await expect(workshop.getByTestId('workshop-repair-card')).toContainText(c.external);
     await workshop.getByRole('searchbox', { name: c.search, exact: true }).fill('');
-    await workshop.locator('[aria-controls="workshop-phase-ready"]').click();
-    await expect(workshop.locator('#workshop-phase-ready')).toContainText(c.history);
-    await workshop.locator('#workshop-phase-ready').getByTestId('workshop-repair-card').filter({ hasText: seed.machines[0].targe! }).click();
+    await workshop.getByRole('button',{name:c.openHistory,exact:true}).click();
+    await expect(dialog(page).getByTestId('workshop-repair-card')).toHaveCount(3);
+    await dialog(page).getByTestId('workshop-repair-card').filter({ hasText: seed.machines[0].targe! }).click();
     await expect(status(detail(page))).toHaveAttribute('data-phase', 'reported');
     await expect(status(detail(page))).not.toHaveAttribute('data-status-key', 'available');
+    await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
     await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
     await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
   } finally { if (companyId) await cleanupSteelAssetsWorkshop(companyId); }
@@ -182,14 +189,17 @@ test('current phase stays consistent across map, fleet, detail and return; faile
     await machine.getByRole('button', { name: c.workshop, exact: true }).click();
     await expect(detail(page)).toBeVisible();
     await expect(status(detail(page))).toHaveAttribute('data-phase', 'reported');
+    // The vehicle service entry is the compact summary; open its current job.
+    await detail(page).getByRole('button', { name: c.openRepair, exact: true }).click();
     await detail(page).getByRole('button', { name: c.receive, exact: true }).click();
     await expect(status(detail(page))).toHaveAttribute('data-phase', 'received');
-    await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
-    await expect(page.getByTestId('workshop-workspace').locator('#workshop-phase-received')).toContainText(seed.machines[0].targe!);
     await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
     await expect(status(machine)).toHaveAttribute('data-phase', 'received');
     await page.keyboard.press('Escape');
     await expect(status(mapRow)).toHaveAttribute('data-phase', 'received');
+    await page.getByTestId('workshop-dock-open').click();
+    await expect(page.getByTestId('workshop-workspace').locator('[data-studio-workshop-phase=received]')).toContainText(seed.machines[0].targe!);
+    await dialog(page).getByRole('button', { name: c.close, exact: true }).click();
     await page.getByTestId('fleet-dock-open').click();
     const picker = page.getByTestId('fleet-picker');
     const fleetRow = picker.locator(`[data-machine-id="${seed.machines[0].id}"]`);
