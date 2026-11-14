@@ -1,6 +1,16 @@
 # BaumdienstFlow: Werkstatt-Demo und UX-Abgleich
 
-## Kandidat — 14.11.2026 / Kartë informative glass dhe pamje e veçantë e pemëve
+## AKTUALE — 14.11.2026 / Kartë brenda ekranit, scroll vetëm në listën e pemëve
+
+Korrigjim i pronarit mbi versionin live a7093cf: përmbledhja e kantierit duhet të shfaqë emrin, adresën, përshkrimin, hyrjen e pemëve dhe tetë hyrjet e tjera pa scroll në ekranet normale. Lartësitë fikse u zëvendësuan me flex/grid të lidhur me dynamic viewport; ekrani i ulët përdor dendësi më kompakte, telefoni ka dy kolona dhe landscape i shkurtër ndan pemët nga hyrjet. Paleta, glass, Manrope, TreeArt/Lucide dhe funksionet ekzistuese ruhen. Titulli dhe toolbar-i qëndrojnë jashtë scroll-it; vetëm grid-i i pemëve lëviz, me rreshta në lartësi natyrale. Harta mbush hapësirën e mbetur. Përmbajtja e jashtëzakonshme/teksti i zmadhuar ruan një fallback të arritshëm, pa fshehur informacion; lexuesit e veglave të tjera ruajnë rajonin e tyre të përmbajtjes, jo scroll të dialogut.
+
+Baseline live:1280×720, dialog687px / përmbajtje764px — overflow i riprodhuar. Prova ekzistuese u forcua me kontroll që përmbledhja/dialogu të mos kenë overflow vertikal, çdo hyrje të jetë plotësisht në viewport, dhe pas scroll-it të pemës së fundit grid-i të ketë scrollTop>0 ndërsa shell/toolbar qëndrojnë në vend. Light/Dark në1440×900,1280×528,390×844,844×390,320×600; deep-link/retry/keyboard/200% dhe filtra/hartë/studio/sektione të tjera ruhen. Preview i izoluar dhe kapje të build-it real desktop/telefon/landscape u krahasuan vizualisht. Një kontroll fillestar lexonte 160ms animacion hyrës para stabilizimit; i njëjti assertion pret gjendjen përfundimtare, pa tolerancë të re ose heqje assertion-esh. Diagnostika e log-ut ruhet.
+
+Verifikim lokal në mini-PC me runner4CPU/4GiB:726 unit dhe19 integrime workshop/office me provider të simuluar PASS; lint/types/build PASS. Tri provat e kartës përfshijnë assertion-et e reja të scroll-it dhe arritshmërisë, pa mutacione të demos reale. Regresioni i plotë58 browser dhe tri profile izolimi PASS. Runtime-i/provat e ndryshuara përputhen me hash në laptop/mini-PC; build final dhe verifikimi i plotë përfunduan me exit0, peak2.9GiB. Source/diff i provuar ruhet me hash.
+
+Rregullim i vogël responsive, pa funksion të ri ose ndryshim të disponueshmërisë: native presentation, README/About dhe karta/case-study i portofolit NO_CONTENT_CHANGE. Companion PR207/208/portfolio90 nga milestone-i i mëparshëm mbeten PENDING_PUBLICATION veçmas. Nuk ka merge main/pilot, schema/migrime, varësi, provider, paid API, reset/seed real ose ndryshim të klientëve. Kontrolli read-only para publikimit:62 tabela/449 rreshta identikë me backup-in ekzistues të enkriptuar e të rikthyer veçmas;32 variabla të verifikuara vetëm si hash. Verifikimi dhe source/deployment final dokumentohen në PR-në e këtij korrigjimi dhe në READ_FIRST.
+
+## HISTORIKE — 14.11.2026 / Kartë informative glass dhe pamje e veçantë e pemëve
 
 Korrigjimi estetik i pronarit: kantieri hapet si kartë informative mbi Workzone, me emrin Manrope në qendër, adresën dhe përshkrimin. Hyrja e pemëve është një kartë e ilustruar me progres; tetë hyrjet për inventarin, ekipin, sigurinë, fotot, hartën, proceset, dokumentet dhe udhëzimin përdorin ikona Lucide dhe të njëjtat sipërfaqe forest-crystal-v1. Nuk ka tabelë ose seksione të gjata të hapura bashkë. Çdo hyrje hap vetëm përmbajtjen e vet; kthimi rikthen fokusin dhe pozicionin e përmbledhjes. Fusha e Workzone mbetet e montuar. Lidhjet direkte, Ctrl/Meta-click, Escape, gabimi/retry dhe lejet ruhen.
 
