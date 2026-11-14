@@ -1,5 +1,7 @@
 ## Product identity correction candidate · 14 November 2026
 
+Full application gates have now been executed on isolated exact-source candidates: [results and release holds](docs/DEMO_FULL_QA_20261114.md). BauFlow regression suite passed; pinned BaumdienstFlow reproduces existing baseline failures and remains on release hold. No application or static deployment occurred.
+
 Prepared explicit BauFlow/BaumdienstFlow distinction in four languages and separately guarded demo indexing/metadata patches. [Scope,tests and release boundaries](docs/PUBLIC_IDENTITY_PREPARATION_20261114.md). Static candidate verified;app patches require full application gates before release;info migration requires ownership/TLS verification. Nothing in this candidate is published.
 
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: eine Codebasis, zwei Produkte. BaumdienstFlow für Baumpflege, BauFlow für Bau und Tiefbau." width="100%"></p>
