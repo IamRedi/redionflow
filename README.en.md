@@ -1,3 +1,7 @@
+## Static GEO publication · 14 November 2026
+
+BauFlow and BaumdienstFlow now explicitly describe Germany/Essen/NRW and Albania/Tirana as software target markets in four languages. Owner-approved PR198/sourceec885ec is live on Cloudflarecb482761:118asset byte checks,26live Chrome checks and two native GeoFindbar audits (6pages each,0findings). [Publication evidence and limits](docs/GEO_MARKETS_LIVE_20261114.md). No ranking/AI uplift,main/pilot merge,operational app/DB,Ads or paid API change. The November5receipt below is historical.
+
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: one codebase, two products. BaumdienstFlow for tree care, BauFlow for construction and civil works." width="100%"></p>
 
 ## Static website publication · 5 November 2026
