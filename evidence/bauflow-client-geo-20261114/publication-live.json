@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-11-14T09:09:24.316744+00:00",
+  "websiteSource": "c508ed539dfddb1a08c61c7939e5c55b00fa2d21",
+  "actualPublicationArtifactSha256": "f1af3512515387b37c46b0baf293d9200dd633660fa7c83018f1bcbeef576844",
+  "deploymentId": "261bad18-0879-46c6-9997-d2a37f8266d6",
+  "deploymentUrl": "https://261bad18.baumdienstflow.pages.dev",
+  "previousDeployment": "085ac0a7-6e12-4761-b5d1-fa8ce1161a45",
+  "allFivePublishedPagesMatch": true,
+  "currentOtherFilesPreserved": 112,
+  "totalPublishedAssetsVerified": 118,
+  "verificationTransport": "fresh enduser canonicalHTTPSdomain;providerUI binds alias to new immutable261bad18",
+  "headersUnchanged": true,
+  "sourceMainPilotMerge": false,
+  "RailwayAppDatabaseChanges": false,
+  "paidApiCalls": 0
+}
