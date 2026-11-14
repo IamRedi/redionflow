@@ -120,7 +120,7 @@ async function loginWorker(page: Page, fullName: string, loginCode: string) {
 async function startWorkOnSite(page: Page) {
   await page.getByRole("button", { name: /Hier arbeiten|Work here|Lavora qui|Puno ketu/i }).click();
   await expect(page.getByText(/Wann hast du|When did|Quando hai|Kur e/i)).toBeVisible();
-  await page.getByRole("button", { name: /gewählte Uhrzeit|selected time|orario selezionato|ora e zgjedhur/i }).click();
+  await page.getByRole("button", { name: /gewählte (?:Uhrzeit|Zeit)|selected time|orario selezionato|ora e zgjedhur/i }).click();
   await expect(page.getByRole("button", { name: /Arbeit stoppen|Stop work|Ferma lavoro|Ndalo punen/i })).toBeEnabled();
 }
 
