@@ -1,0 +1,102 @@
+{
+  "frozenAt": "2026-11-13T23:53:03.268092+00:00",
+  "sourceRepo": "IamRedi/redionflow",
+  "websiteBase": "45760f5b28f693c564c2eee14ac9510a39b74159",
+  "websiteBranch": "fix/baum-buyer-cost-20261114",
+  "engineSource": "4904a734a1636e90290a3c25d26820019ba7efeb",
+  "nativeBeforeRun": "e730618c-c93d-4dc4-b387-442b22bc0ea8",
+  "nativeBeforeMethod": "explicit_buyer_signals_v2",
+  "nativeBeforeBuyerReviews": 5,
+  "nativeBeforePages": 10,
+  "nativeBeforePartial": true,
+  "existingQuestionsSha256": "b3fede2b892fa8fa95ce431afc38388ae5c65d6756bebe9b66c940446cd26021",
+  "questionsUnchangedFromFrozenCase": true,
+  "sameBytesAsNativeBefore": 10,
+  "captures": [
+    {
+      "url": "https://www.baumdienstflow.de/",
+      "finalUrl": "https://www.baumdienstflow.de/",
+      "status": 200,
+      "sha256": "2589d22d4f13d4c674e7ed4b9f2cdcd27954b3f0c45ea5794ac297a25a0ddf62",
+      "file": "before-page-0.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/bauflow/",
+      "finalUrl": "https://www.baumdienstflow.de/bauflow/",
+      "status": 200,
+      "sha256": "973d98459be807aae5835131702a539e4e5d2c9835dc5ae3bb6d89b473773af4",
+      "file": "before-page-1.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/about/de",
+      "finalUrl": "https://www.baumdienstflow.de/about/de",
+      "status": 200,
+      "sha256": "fad0473db6555877ed163ae70104530dc818bfa3ff26525407afa62482897b93",
+      "file": "before-page-2.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/about/en",
+      "finalUrl": "https://www.baumdienstflow.de/about/en",
+      "status": 200,
+      "sha256": "7ebd04d545be2d377bd6e60b44cca67dba6b5946479bfab3544767e217dc9709",
+      "file": "before-page-3.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/about/it",
+      "finalUrl": "https://www.baumdienstflow.de/about/it",
+      "status": 200,
+      "sha256": "4cf1f213b9768e050db408b36fd1da2d2e61a7807c60516873a1db6a8e22eb9c",
+      "file": "before-page-4.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/about/sq",
+      "finalUrl": "https://www.baumdienstflow.de/about/sq",
+      "status": 200,
+      "sha256": "2882ed815e00c4629123dbb3f73ca6f7b2915a6f56c203ef3ef7bafa1573ab8b",
+      "file": "before-page-5.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/bauflow/about/de",
+      "finalUrl": "https://www.baumdienstflow.de/bauflow/about/de",
+      "status": 200,
+      "sha256": "bf129ebf461f61ed7da9e1921cdd46debf8e92e605772e473e2ddcf7bdf0c439",
+      "file": "before-page-6.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/bauflow/about/en",
+      "finalUrl": "https://www.baumdienstflow.de/bauflow/about/en",
+      "status": 200,
+      "sha256": "06b852b71489f5134cd574d980fea52f6652570bb8bbc4f2ea2e2c249dc7127d",
+      "file": "before-page-7.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/bauflow/about/it",
+      "finalUrl": "https://www.baumdienstflow.de/bauflow/about/it",
+      "status": 200,
+      "sha256": "969c8859824c5e0e910f9f429cdc4ce7f0671d9ca311ad6897deb4f689610a14",
+      "file": "before-page-8.html",
+      "sameBytesAsNativeBefore": true
+    },
+    {
+      "url": "https://www.baumdienstflow.de/bauflow/about/sq",
+      "finalUrl": "https://www.baumdienstflow.de/bauflow/about/sq",
+      "status": 200,
+      "sha256": "1b799ad5d931b0a5579a579dcf06d0ddb8d960c71fd0bfc1a7a1bcc9d741bc8e",
+      "file": "before-page-9.html",
+      "sameBytesAsNativeBefore": true
+    }
+  ],
+  "historicalEvidenceFilesProtected": 1008,
+  "baselineStaticArchiveSha256": "ce5517e16f1057875381e1eacd17f5027a20d15dd7108d1d8ada8bd0c714add2",
+  "rubric": "Original8DE/SQ questions unchanged. Model-assisted known-client source-grounded answers, not independent search demand or held-out accuracy. Native static before/candidate/after kept separate. Same engine/profile/maxPages; no retuning to client copy. No invented numeric prices, billing terms, availability guarantees or onboarding timing. Contact path is an enquiry, not an activated company.",
+  "allowedScope": "BaumdienstFlow public cost/setup/demo text in DE/EN/IT/SQ and root. No BauFlow copy, app/demo/customer database, logo/PWA cross-project sweep, provider activation, profile edits, messages or schedules. Combined Cloudflare artifact must preserve sibling/legal/assets/config unchanged. Logoissue194 remains separate/open.",
+  "paidApiCalls": 0
+}

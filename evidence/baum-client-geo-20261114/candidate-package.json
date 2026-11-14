@@ -1,0 +1,64 @@
+{
+  "status": "CANDIDATE_NOT_PUBLISHED",
+  "baselineArchiveSha256": "ce5517e16f1057875381e1eacd17f5027a20d15dd7108d1d8ada8bd0c714add2",
+  "candidateArchiveSha256": "b15ee41a33952e67b19ec43f798ef585c5eef90e995fdede3a705cc83b1db5c3",
+  "candidateArchiveBytes": 4961708,
+  "baselineFiles": 100,
+  "preservedBaselineFiles": 95,
+  "changedExistingFiles": [
+    "index.html",
+    "about/de.html",
+    "about/en.html",
+    "about/it.html",
+    "about/sq.html"
+  ],
+  "newFiles": [
+    "about/assets/buyer-info.css"
+  ],
+  "allBauFlowLegalAssetsHeadersPreserved": true,
+  "checks": [
+    {
+      "file": "index.html",
+      "lang": "de",
+      "faq": 3,
+      "localLinksAssets": "PASS",
+      "bytes": 19301,
+      "sha256": "0bbb818dd54b201c2de851ae8edd43230d62b21f78f59159a125863cb3395005"
+    },
+    {
+      "file": "about/de.html",
+      "lang": "de",
+      "faq": 3,
+      "localLinksAssets": "PASS",
+      "bytes": 19187,
+      "sha256": "0ec16028d1a943b926cf480274ed95d37924a9c39018a5dca80a16db2cf759fa"
+    },
+    {
+      "file": "about/en.html",
+      "lang": "en",
+      "faq": 3,
+      "localLinksAssets": "PASS",
+      "bytes": 18761,
+      "sha256": "f604331951ea7bdb8e7021ea648975640bc4c2c214a8508978871c49a5ae4db4"
+    },
+    {
+      "file": "about/it.html",
+      "lang": "it",
+      "faq": 3,
+      "localLinksAssets": "PASS",
+      "bytes": 19391,
+      "sha256": "f3111d38ae75d5a6584da59f76975b0b731b472ad1c42c75918d60f4b5e4f75e"
+    },
+    {
+      "file": "about/sq.html",
+      "lang": "sq",
+      "faq": 3,
+      "localLinksAssets": "PASS",
+      "bytes": 19113,
+      "sha256": "3b7ed46cfae18f4c62e885f0d7e976cced21433bf81371a254137fe899f1e65d"
+    }
+  ],
+  "appDatabaseMigrationsProviderChanges": false,
+  "paidApiCalls": 0,
+  "approval": "Exact static Cloudflare publication required;no Railway/main merge"
+}

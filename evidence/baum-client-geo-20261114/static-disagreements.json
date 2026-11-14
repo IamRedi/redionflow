@@ -1,0 +1,15 @@
+{
+  "engineSource": "4904a734a1636e90290a3c25d26820019ba7efeb",
+  "changed": false,
+  "beforeReviewPrompts": 5,
+  "candidateReviewPrompts": 3,
+  "candidateReviewedUrls": [
+    "https://www.baumdienstflow.de/",
+    "https://www.baumdienstflow.de/about/de",
+    "https://www.baumdienstflow.de/about/en"
+  ],
+  "actualRule": "buyer_cost_activation_review",
+  "observedLimit": "v2 nonActivation regex requires adjacent negation/activation wording;DE aktiviert keinen Dienst andEN does not create..., import... or activate a service are not recognized. Italian/SQ negatives are recognized. Public copy is kept natural and engine/profile/rubric unchanged.",
+  "semanticAssessment": "The model-assisted reviewer finds the explicit non-activation statement in all4locales. Exact numerical pricing/actual quote remains unresolved. Static0/3counts are not business completeness or visibility metrics.",
+  "followUp": "Preserved real regression candidate for separately scoped engine calibration;do not silently retune during client cycle."
+}

@@ -1,0 +1,61 @@
+{
+  "status": "LOCAL_CANDIDATE_CHECKED",
+  "checks": [
+    {
+      "docWidth": 375,
+      "footer": "static",
+      "lang": "en",
+      "minimumTarget": 56,
+      "summaryCount": 3,
+      "title": "Pricing and company setup.",
+      "width": 390
+    },
+    {
+      "docWidth": 375,
+      "footer": "static",
+      "lang": "it",
+      "minimumTarget": 56,
+      "summaryCount": 3,
+      "title": "Costi e configurazione aziendale.",
+      "width": 390
+    },
+    {
+      "docWidth": 1265,
+      "lang": "en",
+      "minimumTarget": 58.39583587646485,
+      "summaryCount": 3,
+      "width": 1280
+    },
+    {
+      "docWidth": 1265,
+      "lang": "it",
+      "minimumTarget": 58.39583587646485,
+      "summaryCount": 3,
+      "width": 1280
+    },
+    {
+      "docWidth": 1265,
+      "lang": "sq",
+      "minimumTarget": 58.39583587646485,
+      "summaryCount": 3,
+      "width": 1280
+    },
+    {
+      "docWidth": 829,
+      "footer": "static",
+      "height": 390,
+      "lang": "sq",
+      "lastLinkVisible": true,
+      "signatureCount": 1,
+      "width": 844
+    }
+  ],
+  "baseline": "desktop1280/mobile390DE captured before edit",
+  "candidate": "DE/EN/IT/SQ desktop1280/mobile390;short844x390;native FAQ mouse+Enter open/close;touch>=56px;nohorizontaloverflow;staticnaturalfooter;oneauthorlink;existingdarktheme/materialpreserved",
+  "notVerified": [
+    "Physical device",
+    "OS keyboard",
+    "Browser text zoom",
+    "New public deployment"
+  ]
+}

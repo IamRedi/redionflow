@@ -78,3 +78,8 @@ Validation: generator build; ten HTML editions; 250 local image/link targets; re
 
 Final branding package: `deploy/baumdienstflow-bauflow-branding-cache-2026-11-08.zip`
 SHA-256: `ce5517e16f1057875381e1eacd17f5027a20d15dd7108d1d8ada8bd0c714add2`. Supersedes the package above only to add a stylesheet-content-hash URL in ten pages. Runtime inspection found a four-hour browser CSS cache; the hash forces the matching stylesheet for returning visitors, without changing cache policy or infrastructure. Generator and all ten hash references PASS. Same owner-approved branding publication scope.
+
+
+## BaumdienstFlow buyer cost/setup candidate ·14November2026
+
+BAUM_CLIENT_COPY_CANDIDATE_READY. Four-language public-only clarification with threeFAQ and a labelled price/setup enquiry. No fixed prices or activation deadlines invented. Controlled GeoFindbarv2 replay5→3;DE/ENnegation recognition disagreement retained,not tuned away. [Protocol and evidence limits](../docs/BAUMDIENST_BUYER_CYCLE_20261114.md). Exact static Cloudflare publication remains pending;never merge this source work into Railway-connected main/pilot as a website side effect. BauFlow/legal/assets/headers preserved. Logo/PWAissue194 and Musterfirma are separate.
