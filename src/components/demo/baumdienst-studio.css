@@ -236,6 +236,22 @@ body:has([data-baum-studio="forest-crystal-v1"]) [role="dialog"] {
   -webkit-backdrop-filter: blur(var(--baum-overlay-blur));
   backdrop-filter: blur(var(--baum-overlay-blur));
 }
+/* Site cards stay over the forest and share the workshop's ice-glass material.
+   One dialog scrolls; the mounted Workzone keeps its layout and page. */
+body:has([data-baum-studio="forest-crystal-v1"]) [role="dialog"]:has(.baum-site-detail) {
+  background: var(--baum-glass);
+  -webkit-backdrop-filter: blur(var(--baum-overlay-blur)) saturate(1.08);
+  backdrop-filter: blur(var(--baum-overlay-blur)) saturate(1.08);
+  font-weight: 500;
+  overscroll-behavior: contain;
+}
+.baum-site-detail summary { border-radius: 12px; }
+.baum-site-detail summary:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+.baum-site-detail progress { color: hsl(var(--primary)); }
+.baum-site-detail :is(h2, summary > span, a) { min-width: 0; overflow-wrap: anywhere; }
+.baum-site-detail :is(h2, summary > span) > svg { flex-shrink: 0; }
+.baum-site-detail a { flex-wrap: wrap; }
+.baum-site-detail [data-testid="muster-tree-grid"] { grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr)); }
 body:has([data-baum-studio="forest-crystal-v1"]) :is(
   [data-ui-control="button"][data-ui-variant="outline"],
   [data-ui-control="button"][data-ui-variant="secondary"],
