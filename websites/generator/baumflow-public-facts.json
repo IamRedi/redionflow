@@ -1,0 +1,318 @@
+{
+  "root": {
+    "title": "BaumdienstFlow · Software für Baumpflege in Essen/NRW",
+    "description": "Baumkataster, Teams und Tagesberichte für Baumpflegebetriebe in Deutschland und Albanien. Fokus Essen/NRW und Tirana. Demo und Angebot anfragen.",
+    "marketQuestion": "Für welche Betriebe und Regionen ist das Produkt gedacht?",
+    "marketAnswer": "BaumdienstFlow richtet sich an Baumdienst- und Baumpflegebetriebe, die Büro, Baumdaten, Kolonnen, Arbeitszeiten und Tagesberichte verbinden möchten. Zielmärkte sind Deutschland, besonders Essen und Nordrhein-Westfalen (NRW), sowie Albanien mit Schwerpunkt Tirana. Es handelt sich um Betriebssoftware, nicht um einen örtlichen Baumfäll- oder Baumpflegedienst.",
+    "schema": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.baumdienstflow.de/#software",
+          "name": "BaumdienstFlow",
+          "url": "https://www.baumdienstflow.de/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web browser",
+          "description": "BaumdienstFlow richtet sich an Baumdienst- und Baumpflegebetriebe, die Büro, Baumdaten, Kolonnen, Arbeitszeiten und Tagesberichte verbinden möchten. Zielmärkte sind Deutschland, besonders Essen und Nordrhein-Westfalen (NRW), sowie Albanien mit Schwerpunkt Tirana. Es handelt sich um Betriebssoftware, nicht um einen örtlichen Baumfäll- oder Baumpflegedienst.",
+          "inLanguage": [
+            "de",
+            "sq",
+            "en",
+            "it"
+          ],
+          "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Tree-service and tree-care businesses",
+            "geographicArea": [
+              {
+                "@type": "Country",
+                "name": "Germany"
+              },
+              {
+                "@type": "City",
+                "name": "Essen"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "North Rhine-Westphalia"
+              },
+              {
+                "@type": "Country",
+                "name": "Albania"
+              },
+              {
+                "@type": "City",
+                "name": "Tirana"
+              }
+            ]
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://www.baumdienstflow.de/#webpage",
+          "url": "https://www.baumdienstflow.de/",
+          "name": "BaumdienstFlow · Software für Baumpflege in Essen/NRW",
+          "inLanguage": "de",
+          "mainEntity": {
+            "@id": "https://www.baumdienstflow.de/#software"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.baumdienstflow.de/#website",
+          "url": "https://www.baumdienstflow.de/",
+          "name": "BaumdienstFlow"
+        }
+      ]
+    }
+  },
+  "de": {
+    "title": "BaumdienstFlow · Software für Baumpflege in Essen/NRW",
+    "description": "Baumkataster, Teams und Tagesberichte für Baumpflegebetriebe in Deutschland und Albanien. Fokus Essen/NRW und Tirana. Demo und Angebot anfragen.",
+    "marketQuestion": "Für welche Betriebe und Regionen ist das Produkt gedacht?",
+    "marketAnswer": "BaumdienstFlow richtet sich an Baumdienst- und Baumpflegebetriebe, die Büro, Baumdaten, Kolonnen, Arbeitszeiten und Tagesberichte verbinden möchten. Zielmärkte sind Deutschland, besonders Essen und Nordrhein-Westfalen (NRW), sowie Albanien mit Schwerpunkt Tirana. Es handelt sich um Betriebssoftware, nicht um einen örtlichen Baumfäll- oder Baumpflegedienst.",
+    "schema": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.baumdienstflow.de/#software",
+          "name": "BaumdienstFlow",
+          "url": "https://www.baumdienstflow.de/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web browser",
+          "description": "BaumdienstFlow richtet sich an Baumdienst- und Baumpflegebetriebe, die Büro, Baumdaten, Kolonnen, Arbeitszeiten und Tagesberichte verbinden möchten. Zielmärkte sind Deutschland, besonders Essen und Nordrhein-Westfalen (NRW), sowie Albanien mit Schwerpunkt Tirana. Es handelt sich um Betriebssoftware, nicht um einen örtlichen Baumfäll- oder Baumpflegedienst.",
+          "inLanguage": [
+            "de",
+            "sq",
+            "en",
+            "it"
+          ],
+          "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Tree-service and tree-care businesses",
+            "geographicArea": [
+              {
+                "@type": "Country",
+                "name": "Germany"
+              },
+              {
+                "@type": "City",
+                "name": "Essen"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "North Rhine-Westphalia"
+              },
+              {
+                "@type": "Country",
+                "name": "Albania"
+              },
+              {
+                "@type": "City",
+                "name": "Tirana"
+              }
+            ]
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://www.baumdienstflow.de/#webpage",
+          "url": "https://www.baumdienstflow.de/",
+          "name": "BaumdienstFlow · Software für Baumpflege in Essen/NRW",
+          "inLanguage": "de",
+          "mainEntity": {
+            "@id": "https://www.baumdienstflow.de/#software"
+          }
+        }
+      ]
+    }
+  },
+  "en": {
+    "title": "BaumdienstFlow · Tree-care software for Germany and Albania",
+    "description": "Tree records, crews and daily reports for tree-care businesses in Germany and Albania. Focus Essen/NRW and Tirana. Request a demo and quote.",
+    "marketQuestion": "Which businesses and markets is this product intended for?",
+    "marketAnswer": "BaumdienstFlow is intended for tree-service and tree-care businesses connecting office work, tree records, crews, working time and daily reports. Target markets are Germany, especially Essen and North Rhine-Westphalia (NRW), and Albania, with a focus on Tirana. It is business software, not a local tree-felling or tree-care contractor.",
+    "schema": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.baumdienstflow.de/#software",
+          "name": "BaumdienstFlow",
+          "url": "https://www.baumdienstflow.de/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web browser",
+          "description": "BaumdienstFlow is intended for tree-service and tree-care businesses connecting office work, tree records, crews, working time and daily reports. Target markets are Germany, especially Essen and North Rhine-Westphalia (NRW), and Albania, with a focus on Tirana. It is business software, not a local tree-felling or tree-care contractor.",
+          "inLanguage": [
+            "de",
+            "sq",
+            "en",
+            "it"
+          ],
+          "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Tree-service and tree-care businesses",
+            "geographicArea": [
+              {
+                "@type": "Country",
+                "name": "Germany"
+              },
+              {
+                "@type": "City",
+                "name": "Essen"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "North Rhine-Westphalia"
+              },
+              {
+                "@type": "Country",
+                "name": "Albania"
+              },
+              {
+                "@type": "City",
+                "name": "Tirana"
+              }
+            ]
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://www.baumdienstflow.de/about/en#webpage",
+          "url": "https://www.baumdienstflow.de/about/en",
+          "name": "BaumdienstFlow · Tree-care software for Germany and Albania",
+          "inLanguage": "en",
+          "mainEntity": {
+            "@id": "https://www.baumdienstflow.de/#software"
+          }
+        }
+      ]
+    }
+  },
+  "sq": {
+    "title": "BaumdienstFlow · Softuer për firmat e kujdesit të pemëve",
+    "description": "Pemët, ekipet dhe raportet ditore në një softuer për firma në Shqipëri dhe Gjermani. Fokus Tiranë dhe Essen/NRW. Kërko demonstrim dhe ofertë.",
+    "marketQuestion": "Për cilat firma dhe tregje është menduar produkti?",
+    "marketAnswer": "BaumdienstFlow u drejtohet firmave të kujdesit për pemët dhe gjelbërimin që duan të lidhin zyrën, të dhënat e pemëve, ekipet, orarin dhe raportet ditore. Tregjet e synuara janë Gjermania, sidomos Essen dhe Nordrhein-Westfalen (NRW), dhe Shqipëria, kryesisht Tirana. Është softuer pune për firma, jo shërbim lokal për prerjen ose kujdesin e pemëve.",
+    "schema": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.baumdienstflow.de/#software",
+          "name": "BaumdienstFlow",
+          "url": "https://www.baumdienstflow.de/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web browser",
+          "description": "BaumdienstFlow u drejtohet firmave të kujdesit për pemët dhe gjelbërimin që duan të lidhin zyrën, të dhënat e pemëve, ekipet, orarin dhe raportet ditore. Tregjet e synuara janë Gjermania, sidomos Essen dhe Nordrhein-Westfalen (NRW), dhe Shqipëria, kryesisht Tirana. Është softuer pune për firma, jo shërbim lokal për prerjen ose kujdesin e pemëve.",
+          "inLanguage": [
+            "de",
+            "sq",
+            "en",
+            "it"
+          ],
+          "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Tree-service and tree-care businesses",
+            "geographicArea": [
+              {
+                "@type": "Country",
+                "name": "Germany"
+              },
+              {
+                "@type": "City",
+                "name": "Essen"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "North Rhine-Westphalia"
+              },
+              {
+                "@type": "Country",
+                "name": "Albania"
+              },
+              {
+                "@type": "City",
+                "name": "Tirana"
+              }
+            ]
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://www.baumdienstflow.de/about/sq#webpage",
+          "url": "https://www.baumdienstflow.de/about/sq",
+          "name": "BaumdienstFlow · Softuer për firmat e kujdesit të pemëve",
+          "inLanguage": "sq",
+          "mainEntity": {
+            "@id": "https://www.baumdienstflow.de/#software"
+          }
+        }
+      ]
+    }
+  },
+  "it": {
+    "title": "BaumdienstFlow · Software arboricolo per Germania e Albania",
+    "description": "Dati degli alberi, squadre e rapporti per imprese arboricole in Germania e Albania. Focus Essen/NRW e Tirana. Richiedi demo e preventivo.",
+    "marketQuestion": "A quali aziende e mercati si rivolge il prodotto?",
+    "marketAnswer": "BaumdienstFlow si rivolge alle imprese di arboricoltura e cura degli alberi che vogliono collegare ufficio, dati degli alberi, squadre, orari e rapporti giornalieri. I mercati di riferimento sono la Germania, soprattutto Essen e la Renania Settentrionale-Vestfalia (NRW), e l’Albania, principalmente Tirana. È un software aziendale, non un servizio locale di abbattimento o cura degli alberi.",
+    "schema": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.baumdienstflow.de/#software",
+          "name": "BaumdienstFlow",
+          "url": "https://www.baumdienstflow.de/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web browser",
+          "description": "BaumdienstFlow si rivolge alle imprese di arboricoltura e cura degli alberi che vogliono collegare ufficio, dati degli alberi, squadre, orari e rapporti giornalieri. I mercati di riferimento sono la Germania, soprattutto Essen e la Renania Settentrionale-Vestfalia (NRW), e l’Albania, principalmente Tirana. È un software aziendale, non un servizio locale di abbattimento o cura degli alberi.",
+          "inLanguage": [
+            "de",
+            "sq",
+            "en",
+            "it"
+          ],
+          "audience": {
+            "@type": "BusinessAudience",
+            "audienceType": "Tree-service and tree-care businesses",
+            "geographicArea": [
+              {
+                "@type": "Country",
+                "name": "Germany"
+              },
+              {
+                "@type": "City",
+                "name": "Essen"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "North Rhine-Westphalia"
+              },
+              {
+                "@type": "Country",
+                "name": "Albania"
+              },
+              {
+                "@type": "City",
+                "name": "Tirana"
+              }
+            ]
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://www.baumdienstflow.de/about/it#webpage",
+          "url": "https://www.baumdienstflow.de/about/it",
+          "name": "BaumdienstFlow · Software arboricolo per Germania e Albania",
+          "inLanguage": "it",
+          "mainEntity": {
+            "@id": "https://www.baumdienstflow.de/#software"
+          }
+        }
+      ]
+    }
+  }
+}
