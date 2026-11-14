@@ -119,3 +119,12 @@ NO_CONTENT_CHANGE for app capabilities, readiness, public showcase README/About
 and portfolio content; no extra portfolio release or duplicate media is needed.
 Owner approval remains specific to the next candidate; the previous PR203/PR53
 approval and publication stay complete and historical.
+
+
+## 14 November 2026 — Musterfirma glass worksite cards
+
+The app release a7093cf57599ccc319a5520fdb92e18c99ece0a4 is live only on the BaumdienstFlow Musterfirma service (Railway0490c048-911b-4916-9262-6fcd8641a06f SUCCESS). This companion updates the existing Workzone capability paragraph in SQ/EN/DE/IT and the German root page: focused glass worksite information, dedicated tree cards, status filters, map and species studio. It adds no new layout, illustration, provider, price or access promise.
+
+The native site candidate is based on the already published compact-footer source75e41f2. The BauFlow output-preservation check now compares against that accepted release; its previous ce2d341 comparison failed even on the unchanged75e41f2 source because it predated the accepted BauFlow footer/hero changes. All assertions remain, and the independent buyer/setup-copy pin remains ce2d341. Current check:5pages,4locales,200local targets,metadata/access/buyer copy and unchanged BauFlow PASS. Local before/after desktop and narrow SQ views plus narrow EN text were inspected; no horizontal overflow. Native public HTTP retrieval returned403 in this session, so no new online presentation acceptance is claimed.
+
+PENDING_PUBLICATION: this is a companion PR only. The owner's deployment instruction covered the Musterfirma app; this change does not publish Cloudflare Pages, merge main/pilot, or change the separate BauFlow website. Portfolio and public README companions use genuine14November live demo captures with fictitious data.
