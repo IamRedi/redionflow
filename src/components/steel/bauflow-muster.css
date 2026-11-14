@@ -170,6 +170,9 @@ body[data-bauflow-muster] [data-testid='fleet-picker'] .text-muted-foreground {
 body[data-bauflow-muster] [data-testid='asset-warehouse'] {
   gap: 12px;
 }
+body[data-bauflow-muster] [data-testid='asset-warehouse'] > div:first-child {
+  gap: 6px;
+}
 body[data-bauflow-muster] [data-testid='asset-warehouse'] > div:first-child h1 {
   flex: 0 0 auto;
   margin-right: auto;
@@ -203,6 +206,15 @@ body[data-bauflow-muster] [data-studio-item-detail] :is(input:not([type='checkbo
 body[data-bauflow-muster] [data-testid='asset-warehouse'] input::placeholder {
   color: hsl(var(--foreground) / .75);
   opacity: 1;
+}
+body[data-bauflow-muster] [data-testid='asset-warehouse'] label:has(> input[type='checkbox']) {
+  padding-inline: 10px;
+  border: 1px solid var(--muster-fleet-edge);
+  border-radius: 12px;
+  background: var(--muster-fleet-card);
+  font-weight: 500;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -288,6 +300,7 @@ body[data-bauflow-muster] :is([data-testid='asset-warehouse'], [data-studio-item
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
   body[data-bauflow-muster] [data-testid='asset-warehouse'] #warehouse-items > .grid > button,
   body[data-bauflow-muster] [data-testid='asset-warehouse'] :is(form, details),
+  body[data-bauflow-muster] [data-testid='asset-warehouse'] label:has(> input[type='checkbox']),
   body[data-bauflow-muster] [data-studio-scan-dialog],
   body[data-bauflow-muster] [data-studio-dialog]:has([data-studio-item-detail]),
   body[data-bauflow-muster] [data-studio-item-detail] :is([data-studio-item-header], [data-studio-item-photo], .bg-card) {
