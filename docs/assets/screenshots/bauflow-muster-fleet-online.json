@@ -1,0 +1,27 @@
+{
+  "kind": "ACTUAL_ONLINE_CAPTURE",
+  "date": "2026-11-14",
+  "url": "https://bauflow-production-1344.up.railway.app/workzone",
+  "revision": "60e90ddfff9b15adc671d811dbcf9ebfef0db84d",
+  "pr": 211,
+  "data": "Fictional Musterfirma; six illustrative vehicle images inside the real UI",
+  "physicalDevices": "NOT_RUN; responsive/emulated phone",
+  "captures": [
+    {
+      "file": "bauflow-muster-fleet-online.webp",
+      "width": 1280,
+      "height": 720,
+      "sha256": "cb81ede013755e99c66fb9c07e70353bb039ad7c557357ab227d27afa76e14e4",
+      "originalPngSha256": "fbea95cdca8123be24c143db57313b330dfac3b86e8b2ae00201dfca38bfdd88"
+    },
+    {
+      "file": "bauflow-muster-fleet-online-phone.webp",
+      "width": 390,
+      "height": 844,
+      "sha256": "9f8a1bda3421b8547d45de747ab0a1beb84624a06d90ba3d0bb6d981cfc226e6",
+      "originalPngSha256": "3c182094ff6e21e6d8793099e9dc930ccd261cb0a11fd164139078de62950dc8"
+    }
+  ],
+  "originalsArchive": "1pblELRb4TY7FO6z5hoJ26QSGL4e_KWqY",
+  "archiveSha256": "588fc82fd039206917d06ebfb4d5b81d445103f6908a41bb489e6e2b6410a44e"
+}
