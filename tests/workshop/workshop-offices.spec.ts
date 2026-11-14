@@ -76,7 +76,7 @@ test("private office originals become explicit worksite links without duplicatio
   await role(request, origin, "finance");
   expect((await command(request, origin, { type: "archive", kind: "document", id: sharedId, archived: true })).response.status()).toBe(200);
   expect((await request.get(`${api}/files/${sharedId}?site=${result.ref}`)).status()).toBe(200);
-  await page.goto(`/demo/baustellen/${result.ref}`); await page.locator("summary").filter({ hasText: "Ordner & Archiv" }).click();
+  await page.goto(`/demo/baustellen/${result.ref}`); await page.getByRole("button", { name: "Ordner & Archiv", exact: true }).click();
   await expect(page.getByRole("link", { name: "DEMO-site.txt", exact: true })).toHaveAttribute("href", `${api}/files/${sharedId}?site=${result.ref}`);
   const after = await (await request.get("/api/demo/baumdienst/workshop")).json(); expect(after.state).toEqual(before.state); expect(after.revision).toBe(before.revision);
 });
