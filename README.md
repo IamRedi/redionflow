@@ -1,5 +1,11 @@
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: eine Codebasis, zwei Produkte. BaumdienstFlow für Baumpflege, BauFlow für Bau und Tiefbau." width="100%"></p>
 
+## BaumdienstFlow Musterfirma · Präsentation vom 14. November 2026
+
+Die aktuelle fiktive Musterfirma verbindet 2.5D-Workzone und persönliche Büros mit Baustellen, bestätigten Geräteübergaben, Inventar, Fuhrpark und Reparaturen. Die separate Holzwerkstatt führt vom Holzeingang durch eigene Phasen bis zu Verpackung und Bestand. Öffentliche Bilder zeigen nur Musterdaten; Konzeptkunst ist ausdrücklich gekennzeichnet. Der Büroassistent ist in dieser Demo begrenzt aktiviert, die Firmen-E-Mail-Anbindung ist geplant. Produktvorstellung und Portfolio werden gemeinsam aktualisiert; Veröffentlichung dieses Kandidaten steht noch aus. Die bestehenden AL-Steel-/BauFlow-Veröffentlichungen bleiben unverändert.
+
+[BaumdienstFlow](https://www.baumdienstflow.de/) · [Musterfirma demo](https://redionflow-production.up.railway.app/demo) · [Presentation evidence](websites/products/BAUM_RENEWAL_20261114.md)
+
 ## Static website publication · 5 November 2026
 
 PR48 merged only into the existing website branch as f2fed3b. Existing Cloudflare Pages Production 2df8d623-baf6-427d-accd-42153479f54e; eight localized product pages match source. ZIP SHA256 babf812c30048089919d2b0b61bb38ac1750cdd417db455941464f5cbef24df4. Existing November-3 German websites/assets retained. Parent published by portfolio PR40/006ba5f and final host configuration in PR41/97ddb4a; four source-matching pages, font and assets verified. Office/admin, worker PIN and existing read-only demos retained. Do not merge PR33 or website source into Railway-connected main: default-branch README integration remains with a separately scoped app release to avoid triggering pilot/demo/reset deployments. About points to the verified parent; stage/readiness unchanged.

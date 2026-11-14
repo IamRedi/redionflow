@@ -1,0 +1,349 @@
+{
+  "project_id": "baumdienstflow",
+  "prepared_at": "2026-11-14",
+  "publication": "PENDING_OWNER_APPROVAL",
+  "native_source_base": "ce2d341d55742c3364df38f4d02521e55b142d3c",
+  "records": [
+    {
+      "id": "baumdienstflow/2026-11-14/connected-campus-1600-8e288c58",
+      "type": "AI_CONCEPT_ILLUSTRATION",
+      "source": {
+        "tool": "built-in image_gen",
+        "date": "2026-11-14",
+        "original": "exec-7df073bb-c158-4680-b09b-eac6a9d9fd37.png",
+        "not_product_screenshot": true
+      },
+      "source_sha256": "412c7f3f8b12ff5efefdb0f58555c783efe9c0212dde5d92f588622f6432508f",
+      "file": "connected-campus-1600.webp",
+      "sha256": "8e288c58857effcfe48ab5439fe1f7a46e1f2adefe3f0ee7f98f612ded3dba7c",
+      "width": 1600,
+      "height": 900,
+      "bytes": 489256,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/connected-campus-800-80ebb273",
+      "type": "AI_CONCEPT_ILLUSTRATION",
+      "source": {
+        "tool": "built-in image_gen",
+        "date": "2026-11-14",
+        "original": "exec-7df073bb-c158-4680-b09b-eac6a9d9fd37.png",
+        "not_product_screenshot": true
+      },
+      "source_sha256": "412c7f3f8b12ff5efefdb0f58555c783efe9c0212dde5d92f588622f6432508f",
+      "file": "connected-campus-800.webp",
+      "sha256": "80ebb27343dfd7fd347551ffbcd4f6303f23308127edfdab14d8ce2a0040131e",
+      "width": 800,
+      "height": 450,
+      "bytes": 151156,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/office-evening-1600-86a41657",
+      "type": "AI_CONCEPT_ILLUSTRATION",
+      "source": {
+        "tool": "built-in image_gen",
+        "date": "2026-11-14",
+        "original": "exec-57413754-b9ef-45fc-9042-41b32013b411.png",
+        "not_product_screenshot": true
+      },
+      "source_sha256": "abdecfb96f327c2e7ccd430ae4b058fd064cc292ecace17b7a2b7b2aa730f014",
+      "file": "office-evening-1600.webp",
+      "sha256": "86a41657f80bab8d52392661c2af0fda9933f3659c2ff9b564a6e30ce6ef52a5",
+      "width": 1600,
+      "height": 900,
+      "bytes": 249448,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/office-evening-800-c51d67dc",
+      "type": "AI_CONCEPT_ILLUSTRATION",
+      "source": {
+        "tool": "built-in image_gen",
+        "date": "2026-11-14",
+        "original": "exec-57413754-b9ef-45fc-9042-41b32013b411.png",
+        "not_product_screenshot": true
+      },
+      "source_sha256": "abdecfb96f327c2e7ccd430ae4b058fd064cc292ecace17b7a2b7b2aa730f014",
+      "file": "office-evening-800.webp",
+      "sha256": "c51d67dc028215d52b4f18e55cf8d8fecd1c41457e87387187e9158d54fb2105",
+      "width": 800,
+      "height": 450,
+      "bytes": 81552,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-workzone-desktop-4bd7c5ce",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "c5970da6869d09cfbd23b152a91b015b592fe1b9",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-clear-online-workzone-desktop-light.jpg",
+        "captured_at": "2026-11-13T22:20:36.731Z"
+      },
+      "source_sha256": "cf17f3545b9fba68310f97cfd8631817a54fadb9deb155b17dd53b7ffac80922",
+      "file": "current-workzone-desktop.webp",
+      "sha256": "4bd7c5ce0fb0d5bedbc80861aa3bcdd919ad82d607bf8c942199953e8822f8a7",
+      "width": 1440,
+      "height": 900,
+      "bytes": 313004,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-workzone-phone-9bdd009d",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "c5970da6869d09cfbd23b152a91b015b592fe1b9",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-clear-online-workzone-phone-light.jpg",
+        "captured_at": "2026-11-13T22:19:35.243Z"
+      },
+      "source_sha256": "9bc443d2109607421a0218c63e67abdc395797fc3d3da426cbe7535e04e07e6a",
+      "file": "current-workzone-phone.webp",
+      "sha256": "9bdd009d45b530ffc5b7145828c6e220d645e95256b802ad9dcfb1599fbedef5",
+      "width": 390,
+      "height": 844,
+      "bytes": 88668,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-wood-desktop-e61c1429",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "c5970da6869d09cfbd23b152a91b015b592fe1b9",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-clear-online-wood-desktop-light.jpg",
+        "captured_at": "2026-11-13T22:20:25.241Z"
+      },
+      "source_sha256": "c0b5e8e9bceb3dd6208ab4ec95c3f4341f3439333c7f7aa091442ffafe7623fd",
+      "file": "current-wood-desktop.webp",
+      "sha256": "e61c1429e5b68f5c4687fa5bb89d9746a9717d1f9646f7bad73a3462dba2b420",
+      "width": 1440,
+      "height": 900,
+      "bytes": 199370,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-wood-phone-9eb08e3a",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "c5970da6869d09cfbd23b152a91b015b592fe1b9",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-clear-online-wood-phone-light.jpg",
+        "captured_at": "2026-11-13T22:19:45.744Z"
+      },
+      "source_sha256": "b7109fe5ae1cb379fa593ae37b13a8019d61c8714fa78282ad2da5867bfc5799",
+      "file": "current-wood-phone.webp",
+      "sha256": "9eb08e3a2a51056e3f984d1e1339440cc8576fecb3ea68e3face4c6367d6c995",
+      "width": 390,
+      "height": 844,
+      "bytes": 57410,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-repair-desktop-0455691c",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-repair-desktop-light.jpg",
+        "captured_at": "2026-11-13T23:07:00.249Z"
+      },
+      "source_sha256": "f183a0551842875f048f359dd56a6255f7db33b5c9ae6806c33d1b7e1bf00114",
+      "file": "current-repair-desktop.webp",
+      "sha256": "0455691c0a25d37f4f16619f7c66eb54137ede3220b618c59e9e6de10b3bf5be",
+      "width": 1440,
+      "height": 900,
+      "bytes": 210584,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-repair-phone-509277ba",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-repair-phone-light.jpg",
+        "captured_at": "2026-11-13T23:06:24.786Z"
+      },
+      "source_sha256": "3fbecf590b25dddc9ca862c8d1a460b70f095a852841b859a96b707cd3c45116",
+      "file": "current-repair-phone.webp",
+      "sha256": "509277ba11a766d63074cde9edd3e1f9cfb2b2481c2c6d87519ce570b7a4514f",
+      "width": 390,
+      "height": 844,
+      "bytes": 56642,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-inventory-desktop-7e6c63a4",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-inventory-desktop-light.jpg",
+        "captured_at": "2026-11-13T23:06:55.933Z"
+      },
+      "source_sha256": "06f1b4a13f286b8171b53f95b1fb32f09538c87dfbcc0407b080607f32046243",
+      "file": "current-inventory-desktop.webp",
+      "sha256": "7e6c63a4700f0beecaa8532d4b155df945862b3e815e8a7727920f8f1b41aebe",
+      "width": 1440,
+      "height": 900,
+      "bytes": 190402,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-inventory-phone-a9702df6",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-inventory-phone-light.jpg",
+        "captured_at": "2026-11-13T23:06:29.174Z"
+      },
+      "source_sha256": "64ccb8c00cefd1ab77f264d9aa6d73f7d9d57d216d8a45949df97a7057645a2d",
+      "file": "current-inventory-phone.webp",
+      "sha256": "a9702df693ff31ffe35af727b646c7383cb16c2b90ba8ac44034bab5f184c878",
+      "width": 390,
+      "height": 844,
+      "bytes": 55726,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-fleet-desktop-860d9eaf",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-fleet-desktop-light.jpg",
+        "captured_at": "2026-11-13T23:06:52.559Z"
+      },
+      "source_sha256": "08cd2585144b22ca5e938e01ed676fe1ca1573fe3ee163c7e21f68c9721c1147",
+      "file": "current-fleet-desktop.webp",
+      "sha256": "860d9eaf935541d77485d0860983c9c4095a0f45500cb3c3193a069ffc1179c9",
+      "width": 1440,
+      "height": 900,
+      "bytes": 288940,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-fleet-phone-048aa055",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-fleet-phone-light.jpg",
+        "captured_at": "2026-11-13T23:06:33.496Z"
+      },
+      "source_sha256": "11062eece2e574024a743a60c08cf60a65c9439afc48a105defd1b674e68fbae",
+      "file": "current-fleet-phone.webp",
+      "sha256": "048aa05514c4c44ed8945ae66918422fcf6b35d372ea20c3d39be8db5b606b75",
+      "width": 390,
+      "height": 844,
+      "bytes": 78382,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-office-desktop-2c0c527a",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-office-desktop.jpg",
+        "captured_at": "2026-11-13T23:10:17.005Z"
+      },
+      "source_sha256": "e371787bd8877d36671c2b62aebc964041e39ac28c61f820584c1aaeb83f60e1",
+      "file": "current-office-desktop.webp",
+      "sha256": "2c0c527a640cf4d1ea77e1fb33308fd3f422208f90f45a06a04d1fafa37f5d25",
+      "width": 1440,
+      "height": 900,
+      "bytes": 115066,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-office-phone-0b705ded",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-office-phone.jpg",
+        "captured_at": "2026-11-13T23:11:27.450Z"
+      },
+      "source_sha256": "29c8ddbb0d6f8daff7b8b7139bb2d19b56727142209bd5d34d0281d8efee1a9f",
+      "file": "current-office-phone.webp",
+      "sha256": "0b705dedb0b7a4833d37962bba757d628f2bc296824d5afb3b953b26a837c645",
+      "width": 390,
+      "height": 844,
+      "bytes": 36060,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/current-reception-desktop-085d21a3",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "71213a3e394ddf8e21b4e9279e7b258b527b1f5d",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-soft-online-reception-desktop.jpg",
+        "captured_at": "2026-11-13T23:10:05.416Z"
+      },
+      "source_sha256": "dd4d716e154cc0433f9630a5a31f87db5bc36bc923ab71cc3579f3d7fecff6ad",
+      "file": "current-reception-desktop.webp",
+      "sha256": "085d21a38d5eb94bedb30eed009981dc8b4cf229be20c9d4043446aee77f884f",
+      "width": 1440,
+      "height": 900,
+      "bytes": 178880,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-14/dashboard-057652cc",
+      "type": "ACTUAL_DEMO_CAPTURE",
+      "source": {
+        "commit": "22ff3b8dfffc5237749d581bf8e33ae1d9ac186f",
+        "environment": "BaumdienstFlow Musterfirma online",
+        "file": "baum-compact-online-tv-day-desktop.jpg",
+        "captured_at": "2026-11-13T09:41:47.241Z"
+      },
+      "file": "current-dashboard-desktop.webp",
+      "sha256": "057652cc40a5549728a4bdc114e2ac000424ab4e5acf6e00a13194c47ea7da9a",
+      "width": 1440,
+      "height": 900,
+      "bytes": 88608,
+      "access": "public-synthetic",
+      "status": "DRAFT",
+      "owner_approval": null
+    }
+  ]
+}
