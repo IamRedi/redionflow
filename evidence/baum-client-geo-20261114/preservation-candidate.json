@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-11-14T00:08:49.492Z",
+  "engineSource": "4904a734a1636e90290a3c25d26820019ba7efeb",
+  "originalTableCount": 32,
+  "runtimeMatchesExpected": true,
+  "allOriginalRowsPreserved": true,
+  "encryptedKeysUnchanged": true,
+  "protectedFilesUnchanged": true,
+  "financialUnchanged": true,
+  "activeJobs": [],
+  "privacy": "Public summary only;table names/counts and protected-artifact details remain private"
+}

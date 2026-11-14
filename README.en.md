@@ -1,5 +1,11 @@
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: one codebase, two products. BaumdienstFlow for tree care, BauFlow for construction and civil works." width="100%"></p>
 
+## BaumdienstFlow Musterfirma · Presentation reviewed 14 November 2026
+
+The current fictional Musterfirma connects 2.5D Workzone and personal offices with sites, confirmed equipment handovers, inventory, fleet and repairs. The separate wood workshop follows timber intake through configurable phases to packaging and stock. Public captures contain sample data only; concept art is explicitly labelled. The office assistant is enabled with demo limits; company-email integration is planned. Native presentation and portfolio are updated together; this candidate is not published yet. Existing AL-Steel/BauFlow releases remain unchanged.
+
+[BaumdienstFlow](https://www.baumdienstflow.de/) · [Musterfirma demo](https://redionflow-production.up.railway.app/demo) · [Presentation evidence](websites/products/BAUM_RENEWAL_20261114.md)
+
 ## Static website publication · 5 November 2026
 
 PR48 merged only into the existing website branch as f2fed3b. Existing Cloudflare Pages Production 2df8d623-baf6-427d-accd-42153479f54e; eight localized product pages match source. ZIP SHA256 babf812c30048089919d2b0b61bb38ac1750cdd417db455941464f5cbef24df4. Existing November-3 German websites/assets retained. Parent published by portfolio PR40/006ba5f and final host configuration in PR41/97ddb4a; four source-matching pages, font and assets verified. Office/admin, worker PIN and existing read-only demos retained. Do not merge PR33 or website source into Railway-connected main: default-branch README integration remains with a separately scoped app release to avoid triggering pilot/demo/reset deployments. About points to the verified parent; stage/readiness unchanged.
@@ -163,3 +169,6 @@ no SaaS core, tenant data or pilot deployment changes are included.
 The [RediOnFlow website](https://flow.redioncekrezi.de/en.html) is now public: four languages and clearly labelled Office/Admin, worker/PIN and demo entrances for BauFlow and BaumdienstFlow. Existing product websites, SaaS services and demo data are preserved.
 
 Verified packet `76f8b3eac1cf`; portfolio PR29/main `a12ab96`. This source PR remains separate from a Railway-connected application merge.
+
+
+Public website update ·14November2026: quote/setup and demo-boundary clarification is live in four languages; [bounded GeoFindbar before/after evidence](docs/BAUMDIENST_BUYER_CYCLE_20261114.md). Application release scope is unchanged.

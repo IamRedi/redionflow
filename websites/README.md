@@ -78,3 +78,16 @@ Validation: generator build; ten HTML editions; 250 local image/link targets; re
 
 Final branding package: `deploy/baumdienstflow-bauflow-branding-cache-2026-11-08.zip`
 SHA-256: `ce5517e16f1057875381e1eacd17f5027a20d15dd7108d1d8ada8bd0c714add2`. Supersedes the package above only to add a stylesheet-content-hash URL in ten pages. Runtime inspection found a four-hour browser CSS cache; the hash forces the matching stylesheet for returning visitors, without changing cache policy or infrastructure. Generator and all ten hash references PASS. Same owner-approved branding publication scope.
+
+
+## BaumdienstFlow public cost/setup release · 14 November 2026
+
+14 November 2026. Owner-approved website source de4b41b was published unchanged to the existing Cloudflare Pages project baumdienstflow: deployment085ac0a7-6e12-4761-b5d1-fa8ce1161a45, success. The four-language copy clarifies quote/setup scope and the public-demo boundary without invented prices or activation deadlines. No main/pilot merge or Railway/app/customer database deployment.
+
+The provider check caught an obsolete archive baseline before upload: candidateb15ee41a3395 was NEVER published. Packaging alone was rebuilt from the actual116-asset deployment, preserving all111othercurrentassets/currentheaders and using the exact approved fiveHTML plus oneCSS. Actual uploaded artifact SHA2565a07df9ed61592417ece1046a4237ab6423f7e0e3b50fbb4168ae85d62d1d565,6057408bytes. All117publishedassets and allfivecustomdomainpages match; previousdeployment2ecc9f5f is retained for rollback.
+
+Frozen engine4904/v2/profilev2/eightDE-SQquestions: native beforee730618c → native liveafter7fd9b0de,5→3cost/setupreviewprompts,10pages/partial. The three root/DE/ENprompts repeat one natural-negation recognition limitation; the model-assisted agent finds the explicit boundary in source. Preserved disagreement,not threeconfirmedbusinessdefects or tuning for zero. Agentanswers2supports/4partial/2unverified→5/1/2. Numericalpricing remainspartial,independentdiscoveryunverified. Known-client case-informed work,not held-out/human/API visibility measurement. Basic12/12checks cover onlytwo rootpages,not wholeGEOscore.
+
+1008historicalevidencefiles and originalrows across32tables,keys/config/financialstate preserved. Three private reportversions parsed/retrieved with alleightquestionIDs,externalprocessing/publicationfalse. Pre/postprivateDBarchives readbackPASS; independentrestoreNOT_RUN. PaidAPI activation/calls0. Public UI readback1280/390and844×390,FAQpointer/Enter,existingtheme/footer/signature passed;physicaldevice/textzoom/fullownerUATNOT_VERIFIED.
+
+Authorized website/client-cycle scope DONE. Future semantic DE/ENcalibration is recorded,not started. Logo/PWAissue194 and concurrentMusterfirma are separate. Showcase/About/portfoliocards/Beta70 remainaccurate: NO_CONTENT_CHANGE for those surfaces;no new clientmedia publication. Technical documentation PRs remain reviewable;deployedsource staysde4b41b.

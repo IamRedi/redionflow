@@ -15,7 +15,7 @@ const editions = {
   accessTitle:'Një sistem. Akses sipas punës.',accessText:'Pronarët dhe administratorët menaxhojnë firmën. Inxhinierët punojnë sipas rolit dhe lejeve të kantierit; punonjësit e zyrës dhe terrenit shohin funksionet e autorizuara.',
   limits:'BauFlow përdoret në punë reale te AL-Steel. Pamjet këtu janë demonstrime fiktive; hyrja operative kërkon llogari të firmës. AI, GPS dhe njoftimet varen nga konfigurimi dhe lejet e pajisjes.',
   captions:{office:'Zyra personale',reception:'Recepsioni dhe zyrat e ekipit',tasks:'Detyrat e zyrës',workzone:'Workzone — ekipi dhe projektet',site:'Proceset dhe materialet e kantierit',dashboard:'Paneli dhe kalendari i prodhimit',workshop:'Oficina',inventory:'Magazina'},
-  footer:'Zhvilluar për rrjedhën reale të punës.',review:'Pamjet dhe përmbajtja: 12 nëntor 2026',theme:'Pamja',auto:'Automatike',light:'E çelët',dark:'E errët',menu:'Menu',portfolio:'Portfolio',privacy:'Privatësia',imprint:'Informacion ligjor',top:'Lart',reference:'Në përdorim real'
+  footer:'Zhvilluar për rrjedhën reale të punës.',review:'Pamjet: 12.11.2026 · Teksti: 14.11.2026',theme:'Pamja',auto:'Automatike',light:'E çelët',dark:'E errët',menu:'Menu',portfolio:'Portfolio',privacy:'Privatësia',imprint:'Informacion ligjor',top:'Lart',reference:'Në përdorim real'
  },
  en: {
   title:'BauFlow — Office, factory and site in one workflow',description:'Personal offices, documents, planning and steel production. BauFlow connects the team with the factory, construction sites, warehouse and fleet.',
@@ -30,7 +30,7 @@ const editions = {
   accessTitle:'One system. Access that follows the work.',accessText:'Owners and administrators manage the company. Engineers work within their role and site permissions; office and field staff see the functions they are authorized to use.',
   limits:'BauFlow is in real operational use at AL-Steel. Screens here use fictitious data; operational access requires a company account. AI, GPS and notifications depend on configuration and device permissions.',
   captions:{office:'Your personal office',reception:'Reception and team offices',tasks:'Office tasks',workzone:'Workzone — people and projects',site:'Site processes and materials',dashboard:'Production dashboard and calendar',workshop:'Vehicle workshop',inventory:'Warehouse'},
-  footer:'Built around real work.',review:'Screens and content reviewed: 12 November 2026',theme:'Appearance',auto:'Automatic',light:'Light',dark:'Dark',menu:'Menu',portfolio:'Portfolio',privacy:'Privacy',imprint:'Legal notice',top:'Back to top',reference:'In real operational use'
+  footer:'Built around real work.',review:'Screens: 12.11.2026 · Copy: 14.11.2026',theme:'Appearance',auto:'Automatic',light:'Light',dark:'Dark',menu:'Menu',portfolio:'Portfolio',privacy:'Privacy',imprint:'Legal notice',top:'Back to top',reference:'In real operational use'
  },
  de: {
   title:'BauFlow — Büro, Fertigung und Baustelle in einem Ablauf',description:'Persönliche Büros, Dokumente, Planung und Stahlfertigung. BauFlow verbindet das Team mit Fertigung, Baustelle, Lager und Fuhrpark.',
@@ -45,7 +45,7 @@ const editions = {
   accessTitle:'Ein System. Rechte passend zur Arbeit.',accessText:'Inhaber und Administratoren verwalten das Unternehmen. Ingenieure arbeiten nach Rolle und Baustellenrechten; Büro- und Außenteams sehen ihre freigegebenen Funktionen.',
   limits:'BauFlow ist bei AL-Steel im realen Betrieb. Die Ansichten hier zeigen fiktive Daten; der operative Zugang erfordert ein Firmenkonto. KI, GPS und Benachrichtigungen hängen von Konfiguration und Gerätefreigaben ab.',
   captions:{office:'Das persönliche Büro',reception:'Empfang und Teambüros',tasks:'Aufgaben im Büro',workzone:'Workzone — Team und Projekte',site:'Baustellenprozesse und Material',dashboard:'Produktionsübersicht und Kalender',workshop:'Fahrzeugwerkstatt',inventory:'Lager'},
-  footer:'Für echte Arbeitsabläufe entwickelt.',review:'Ansichten und Inhalte geprüft: 12. November 2026',theme:'Darstellung',auto:'Automatisch',light:'Hell',dark:'Dunkel',menu:'Menü',portfolio:'Portfolio',privacy:'Datenschutz',imprint:'Impressum',top:'Nach oben',reference:'Im realen Einsatz'
+  footer:'Für echte Arbeitsabläufe entwickelt.',review:'Ansichten: 12.11.2026 · Text: 14.11.2026',theme:'Darstellung',auto:'Automatisch',light:'Hell',dark:'Dunkel',menu:'Menü',portfolio:'Portfolio',privacy:'Datenschutz',imprint:'Impressum',top:'Nach oben',reference:'Im realen Einsatz'
  },
  it: {
   title:'BauFlow — Ufficio, produzione e cantiere in un unico flusso',description:'Uffici personali, documenti, pianificazione e produzione in acciaio. BauFlow collega il team a fabbrica, cantieri, magazzino e flotta.',
@@ -60,7 +60,7 @@ const editions = {
   accessTitle:'Un sistema. Accessi in base al lavoro.',accessText:'Titolari e amministratori gestiscono l’azienda. Gli ingegneri lavorano secondo ruolo e permessi del cantiere; ufficio e squadre vedono le funzioni autorizzate.',
   limits:'BauFlow è utilizzato nel lavoro reale da AL-Steel. Le schermate mostrano dati fittizi; l’accesso operativo richiede un account aziendale. IA, GPS e notifiche dipendono da configurazione e permessi del dispositivo.',
   captions:{office:'Il tuo ufficio personale',reception:'Reception e uffici del team',tasks:'Attività dell’ufficio',workzone:'Workzone — persone e progetti',site:'Processi e materiali del cantiere',dashboard:'Pannello e calendario di produzione',workshop:'Officina veicoli',inventory:'Magazzino'},
-  footer:'Progettato attorno al lavoro reale.',review:'Schermate e contenuti verificati: 12 novembre 2026',theme:'Aspetto',auto:'Automatico',light:'Chiaro',dark:'Scuro',menu:'Menu',portfolio:'Portfolio',privacy:'Privacy',imprint:'Note legali',top:'Torna su',reference:'In uso operativo reale'
+  footer:'Progettato attorno al lavoro reale.',review:'Schermate: 12.11.2026 · Testo: 14.11.2026',theme:'Aspetto',auto:'Automatico',light:'Chiaro',dark:'Scuro',menu:'Menu',portfolio:'Portfolio',privacy:'Privacy',imprint:'Note legali',top:'Torna su',reference:'In uso operativo reale'
  }
 };
 export default editions;

@@ -1,0 +1,9 @@
+.buyer-info .head{max-width:850px}
+.buyer-faq{margin:28px 0 24px;border-top:1px solid var(--line)}
+.buyer-faq details{border-bottom:1px solid var(--line)}
+.buyer-faq summary{min-height:56px;padding:16px 4px;font-weight:700;cursor:pointer;color:var(--text)}
+.buyer-faq summary::marker{color:var(--acc)}
+.buyer-faq details[open] summary{padding-bottom:8px}
+.buyer-faq details p{max-width:78ch;margin:0;padding:0 24px 20px;color:var(--muted)}
+.buyer-info .btn{white-space:normal;text-align:center}
+@media(max-width:600px){.buyer-faq summary{padding:14px 2px}.buyer-faq details p{padding-right:4px;padding-left:18px}}

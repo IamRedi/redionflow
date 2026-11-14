@@ -1,5 +1,8 @@
 # Projektstand
 
+> 14.11.2026 · Public BaumdienstFlow cost/setup website PUBLISHED; native GeoFindbar live5→3 with DE/EN recognition disagreement preserved. Exact source de4b41b; Cloudflare085ac0a7; no main/pilot or Railway deployment. [Receipt](BAUMDIENST_BUYER_CYCLE_20261114.md).
+
+
 **Stand: 27. Oktober 2026**
 
 ## Kurz gesagt

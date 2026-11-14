@@ -106,6 +106,47 @@ export const baum = {
   aboutDir: 'about',
   themeColor: '#262624',
   ogImage: 'b-desk-wz',
+  start: {
+    ...common.start,
+    title: l('Nga demonstrimi te firma jote.', 'From the demo to your own company.', 'Von der Demo zum eigenen Betrieb.', 'Dalla demo alla tua azienda.'),
+    steps: [
+      [l('Shiko demonstrimin', 'Explore the demo', 'Demo ansehen', 'Esplora la demo'), l('Njihu me proceset në firmën shembull fiktive. Demoja nuk hap firmën tënde.', 'Explore the workflows in a fictitious sample company. The demo does not create your company.', 'Lernen Sie die Abläufe in einer fiktiven Musterfirma kennen. Die Demo legt Ihre Firma nicht an.', 'Scopri i processi in un’azienda di esempio fittizia. La demo non crea la tua azienda.')],
+      [l('Qartëso ofertën dhe konfigurimin', 'Agree the quote and setup', 'Angebot und Einrichtung klären', 'Chiarisci preventivo e configurazione'), l('Para nisjes, qartëso çmimin, shërbimet e përfshira, marrjen e të dhënave dhe afatin e konfigurimit.', 'Before starting, confirm the price, included services, data import and setup timing.', 'Klären Sie vor dem Start Preis, Leistungsumfang, Datenübernahme und Einrichtungstermin.', 'Prima di iniziare, chiarisci prezzo, servizi inclusi, importazione dei dati e tempi di configurazione.')],
+      [l('Nis me firmën e konfiguruar', 'Start with your configured company', 'Mit eingerichteter Firma starten', 'Inizia con l’azienda configurata'), l('Pas konfigurimit të veçantë dhe konfirmimit të kushteve, zyra përdor hyrjen e firmës dhe ekipi PIN-et personale.', 'After separate setup and confirmation of the terms, the office uses the company account and the crew uses personal PINs.', 'Nach separater Einrichtung und Bestätigung der Konditionen nutzt das Büro den Firmenzugang und das Team persönliche PINs.', 'Dopo la configurazione separata e la conferma delle condizioni, l’ufficio usa l’account aziendale e la squadra i PIN personali.')],
+    ],
+    contact: l('Kërko çmimin dhe konfigurimin', 'Request pricing and setup', 'Preis und Einrichtung anfragen', 'Richiedi prezzo e configurazione'),
+  },
+  buyerInfo: {
+    eyebrow: l('Para nisjes', 'Before you start', 'Vor dem Einstieg', 'Prima di iniziare'),
+    title: l('Kostoja dhe konfigurimi i firmës.', 'Pricing and company setup.', 'Kosten und Firmeneinrichtung.', 'Costi e configurazione aziendale.'),
+    lead: l(
+      'Nuk publikojmë çmime fikse në këtë faqe. Kërko ofertë për përdorimin e BaumdienstFlow dhe konfigurimin e firmës; çmimi dhe shërbimet duhen konfirmuar para nisjes.',
+      'No fixed price is published on this page. Request a quote for BaumdienstFlow use and company setup; confirm the price and included services before starting.',
+      'Auf dieser Seite ist kein Festpreis veröffentlicht. Fragen Sie ein Angebot für die Nutzung von BaumdienstFlow und die Firmeneinrichtung an; bestätigen Sie Preis und Leistungsumfang vor dem Start.',
+      'Non pubblichiamo prezzi fissi su questa pagina. Richiedi un preventivo per l’uso di BaumdienstFlow e la configurazione aziendale; conferma prezzo e servizi inclusi prima di iniziare.',
+    ),
+    questions: [
+      [l('Çfarë duhet të qartësojë oferta?', 'What should the quote clarify?', 'Was sollte das Angebot klären?', 'Che cosa deve chiarire il preventivo?'), l(
+        'Kërko të ndahen konfigurimi fillestar dhe përdorimi i mëtejshëm: çmimi, periudha e faturimit, modulet e përfshira, marrja e listave ekzistuese dhe mbështetja. Ky website nuk përcakton tarifë ose paketë të detyrueshme.',
+        'Ask for initial setup and ongoing use to be set out separately: price, billing period, included modules, import of existing lists and support. This website does not set a binding tariff or package.',
+        'Lassen Sie Ersteinrichtung und laufende Nutzung getrennt aufführen: Preis, Abrechnungszeitraum, enthaltene Module, Übernahme vorhandener Listen und Support. Diese Website legt keinen verbindlichen Tarif oder Leistungsumfang fest.',
+        'Chiedi di distinguere configurazione iniziale e uso successivo: prezzo, periodo di fatturazione, moduli inclusi, importazione degli elenchi esistenti e assistenza. Questo sito non stabilisce una tariffa o un pacchetto vincolante.',
+      )],
+      [l('Çfarë të dërgoj në kërkesën e parë?', 'What should I include in my first enquiry?', 'Welche Angaben braucht die erste Anfrage?', 'Quali informazioni servono nella prima richiesta?'), l(
+        'Përshkruaj firmën, vendin, madhësinë e ekipit, mjetet dhe kantieret, gjuhët dhe proceset që dëshiron të organizosh. Fillimisht mjaftojnë numrat e përgjithshëm; mënyra dhe përmbajtja e marrjes së listave të firmës qartësohen veçmas. Afati i konfigurimit përcaktohet sipas kërkesës.',
+        'Describe your company, country, team size, vehicles and sites, languages and the workflows you want to organise. Aggregate counts are enough initially; agree the method and scope of importing company lists separately. Setup timing depends on the agreed scope.',
+        'Beschreiben Sie Betrieb, Land, Teamgröße, Fahrzeuge und Baustellen, Sprachen und gewünschte Abläufe. Für die erste Anfrage genügen Gesamtzahlen; Weg und Umfang der Übernahme von Firmenlisten werden separat geklärt. Der Einrichtungstermin richtet sich nach dem vereinbarten Umfang.',
+        'Descrivi azienda, paese, dimensioni della squadra, mezzi e cantieri, lingue e processi desiderati. Inizialmente bastano i numeri complessivi; modalità e contenuto dell’importazione degli elenchi aziendali si concordano separatamente. I tempi dipendono dall’ambito concordato.',
+      )],
+      [l('A e hap demoja firmën time?', 'Does the demo create my company?', 'Legt die Demo meine Firma an?', 'La demo crea la mia azienda?'), l(
+        'Jo. Demoja publike paraqet një firmë shembull me të dhëna fiktive. Hapja e saj ose dërgimi i një kërkese nuk krijon llogari produktive, nuk importon të dhënat e firmës dhe nuk aktivizon shërbim. Hyrja reale dhe konfigurimi qartësohen veçmas; demoja nuk është pranimi operacional i firmës tënde.',
+        'No. The public demo shows a sample company with fictitious data. Opening it or sending an enquiry does not create a production account, import company data or activate a service. Real access and setup are agreed separately; the demo is not operational acceptance for your company.',
+        'Nein. Die öffentliche Demo zeigt eine Musterfirma mit erfundenen Daten. Das Öffnen der Demo oder eine Anfrage legt kein produktives Firmenkonto an, übernimmt keine Firmendaten und aktiviert keinen Dienst. Echter Zugang und Einrichtung werden separat abgestimmt; die Demo ist keine betriebliche Abnahme für Ihre Firma.',
+        'No. La demo pubblica mostra un’azienda di esempio con dati fittizi. Aprirla o inviare una richiesta non crea un account produttivo, non importa dati aziendali e non attiva un servizio. Accesso reale e configurazione si concordano separatamente; la demo non è il collaudo operativo della tua azienda.',
+      )],
+    ],
+    updated: l('Përditësuar më 14.11.2026', 'Updated 14 Nov 2026', 'Aktualisiert am 14.11.2026', 'Aggiornato il 14.11.2026'),
+  },
   sister: { name: 'BauFlow', href: (lang) => `/bauflow/about/${lang}.html`, label: l('Për ndërtime çeliku: BauFlow', 'For steel construction: BauFlow', 'Für Stahlbau: BauFlow', 'Per costruzioni in acciaio: BauFlow') },
   title: l('BaumdienstFlow · Softueri për kujdesin e pemëve', 'BaumdienstFlow · Software for tree care companies', 'BaumdienstFlow · Software für Baumdienste und Baumpflege', 'BaumdienstFlow · Software per la cura degli alberi'),
   description: l(

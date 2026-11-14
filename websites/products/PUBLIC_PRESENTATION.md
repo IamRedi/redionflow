@@ -68,3 +68,54 @@ Existing PRs are consolidated, not duplicated: redionflow155 (native website), r
 Local evidence: `outputs/bauflow-web-renewal-20261112`. Generator/syntax, static link/asset/locale/metadata checks; 32 native locale/viewport/theme cases plus theme persistence/Auto/reflow; portfolio lint/typecheck/content/native/public-site tests, production build/SSR checks and 48 portfolio UI/link observations. Genuine application capture had zero browser errors, and its dedicated synthetic tenant was removed. Owned app preview/PostgreSQL were stopped. No paid API, AI generation or GitHub Actions were used.
 
 Gates: CONTENT/LOCALE/UI/SEO_ASSETS/SYNC local PASS for the stated scope; application sign-in links are the existing company entrances. The command-line native read returned HTTP403, but an anonymous desktop browser resolved both the native root and SQ edition with HTTP200 and the expected existing titles; the portfolio SQ homepage also resolved correctly. Candidate publication/readback is still pending; source/local previews do not establish published PASS. Exact candidate publication, owner editorial acceptance, physical iPhone/Safari and measured Lighthouse scores are not claimed. Publication requires owner approval on the reviewed source/media/targets. Existing public reference rights and product licenses are preserved.
+
+
+## Compact website footers and Workzone hero · 14 November 2026 · READY / PENDING_PUBLICATION
+
+The owner's current correction supersedes the older two-row footer instruction
+for these two public product websites: all footer items share one compact,
+centered desktop row, including the legal links and one by RediON signature.
+Narrow screens wrap naturally, keeping the legal links and signature together.
+There is no footer shell, fixed position or reserved branding row. Existing
+product palettes, Manrope, author colors, legal destinations and 44px link hit
+areas are retained. BauFlow's media/copy dates use a legible compact format;
+the source revision remains in the existing media-provenance JSON rather than
+being repeated as an opaque hash in the visible footer.
+
+The first BauFlow image and OG image use the existing genuine Workzone capture
+from the synthetic Mira Steel DEMO, SHA256
+e0f430acfad23c6c17cece21d0d6691e35316c25628fb92ff4a839f95da526f8.
+The hero is eager-loaded; other gallery images remain lazy-loaded. Its duplicate
+floating office label is removed. Office content and all other sections remain.
+No illustration was generated and no paid AI/API was called.
+
+Freshness reconciliation was necessary: this website branch predated BauFlow's
+already-published buyer/market/family-identity copy. The existing sources were
+reconciled from dd206753908ad6660dd169f3b9b58ff599a79d20; all ten generated HTML
+pages matched deployment 4b5b07a5-6a0a-4254-8313-95f2f450406b exactly before the
+UI edits. The published sitemap and buyer stylesheet are preserved. Baumdienst's
+approved current renderer remains intact; no older design or metadata is restored.
+
+Local verification: generator, all generator module syntax, diff check, ten
+localized HTML pages and 495 local asset/link/anchor/srcset targets PASS.
+Comparison with the published package proves only twelve runtime files change:
+ten HTML pages and the two product CSS files. All other published files are
+byte-identical; HTML outside footers and the BauFlow hero/OG image/CSS hashes is
+unchanged. The browser matrix passes 40 locale/theme/size cases, including
+1440x900, 390x844, 320x740 and 844x390; no horizontal overflow, static natural
+footer, exactly one signature, legal/signature in the same row and all footer
+links at least 44px high. Desktop footer height is approximately 63px, reduced
+from BauFlow's 224px. Actual desktop/narrow Light and Night views were inspected.
+Physical phone and true browser text zoom remain NOT_VERIFIED.
+
+The reviewed overlay has twelve files / 66,203 ZIP bytes, SHA256
+40916377d0afe4ad2739e8e446796c4c43f2dc214c76a601f8c24573f83ba135.
+Publish only this overlay over a freshly read current Pages tree, preserving
+all other files, headers, legal pages and product assets. Do not publish the
+repository directory wholesale or merge into the Railway-connected main.
+No application, customer/pilot data, environment, secrets, Actions, dependency
+or infrastructure change. This is a small presentation correction:
+NO_CONTENT_CHANGE for app capabilities, readiness, public showcase README/About
+and portfolio content; no extra portfolio release or duplicate media is needed.
+Owner approval remains specific to the next candidate; the previous PR203/PR53
+approval and publication stay complete and historical.
