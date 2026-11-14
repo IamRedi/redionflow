@@ -173,3 +173,6 @@ am SaaS-Piloten oder an Firmendaten. Details: `websites/README.md`.
 Die [RediOnFlow-Website](https://flow.redioncekrezi.de/de.html) ist jetzt öffentlich: vier Sprachen und getrennt beschriftete Büro/Admin-, Mitarbeiter/PIN- und Demo-Einstiege für BauFlow und BaumdienstFlow. Die bestehenden Produktwebsites, SaaS-Dienste und Demodaten bleiben unverändert.
 
 Verified packet `76f8b3eac1cf`; portfolio PR29/main `a12ab96`. This source PR remains separate from a Railway-connected application merge.
+
+
+BauFlow public buyer-information candidate ·14November2026:four-language quote/setup and demo/reference clarification is prepared,publication pending. [Scoped client-cycle evidence and limits](docs/BAUFLOW_BUYER_CYCLE_20261114.md). No application deployment or new readiness claim.

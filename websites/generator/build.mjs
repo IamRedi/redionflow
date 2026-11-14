@@ -91,7 +91,7 @@ for (const p of [baum, bau]) {
   if (p.key === 'bau') for (const f of await readdir(resolve(shots, 'art'))) await copyFile(resolve(shots, 'art', f), resolve(assets, 'art', f));
   else await rm(resolve(assets, 'art'), { recursive: true });
   await copyFile(here('./site.css'), resolve(assets, 'site.css'));
-  if (p.key === 'bau') for (const name of ['bauflow.css', 'bauflow-theme.js']) await copyFile(here(`./${name}`), resolve(assets, name));
+  if (p.key === 'bau') for (const name of ['bauflow.css', 'bauflow-theme.js', 'bauflow-buyer-info.css']) await copyFile(here(`./${name}`), resolve(assets, name));
   if (p.reference) await copyFile(here('./reference.css'), resolve(assets, 'reference.css'));
   await copyFile(resolve(root, 'assets/manrope-variable.ttf'), resolve(assets, 'manrope-variable.ttf'));
   await copyFile(resolve(root, 'fonts/Manrope-OFL.txt'), resolve(assets, 'Manrope-OFL.txt'));

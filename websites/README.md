@@ -78,3 +78,16 @@ Validation: generator build; ten HTML editions; 250 local image/link targets; re
 
 Final branding package: `deploy/baumdienstflow-bauflow-branding-cache-2026-11-08.zip`
 SHA-256: `ce5517e16f1057875381e1eacd17f5027a20d15dd7108d1d8ada8bd0c714add2`. Supersedes the package above only to add a stylesheet-content-hash URL in ten pages. Runtime inspection found a four-hour browser CSS cache; the hash forces the matching stylesheet for returning visitors, without changing cache policy or infrastructure. Generator and all ten hash references PASS. Same owner-approved branding publication scope.
+
+
+## BauFlow buyer-information candidate ·14November2026
+
+14 November 2026. BauFlow is the software product;AL-Steel is the public user reference. This candidate adds three FAQ and a price/setup enquiry in DE/EN/IT/SQ,without invented charges,packages or activation deadlines. It separates setup/ongoing-use quote scope,aggregate first-contact details and presentation/reference versus real company provisioning. No app,client-company data or existing AL-Steel business-profile change.
+
+Frozen GeoFindbar a8160f1/v3,confirmed BauFlow software profile and eightDE/SQquestions: nativebefore0reviews,but allfiveBauFlow cost/enquiry checks not_applicable. Candidate0reviews with fiveexplicitcost/activation signals. Model-assisted source answers2supports/4partial/2unverified→4/2/2;numericalprice remainspartial,independentdiscoveryunverified. Known-client/source-informed case,not held-out or visibility study. Same-origin crawl includes fiveBaum sibling pages;semantic review uses onlyBauFlow. Both engine limits are retained as real calibration evidence,not retuned during the client cycle.
+
+Provider currentProduction085ac0a7/117assets confirmed in UI;published archive5a07 and accepted117assetproof reused for this exact immutabledeployment,with10freshHTMLbytechecks. Optional repeated pages.dev download returned403;no bypass or claim of117newdownloads. OnlyfiveBauHTML+oneCSS change;112othercurrentassets/headers/Baum/legal/screens/fonts/themeJS/styles remain byte-identical. CandidateZIP6061277bytes,SHA256f1af3512515387b37c46b0baf293d9200dd633660fa7c83018f1bcbeef576844. No publication performed.
+
+Dedicated static generation/syntax/assets and21Chrome baseline/candidate Light/Dark/responsive/locale/FAQkeyboard cases PASS on bounded local executor. Existing materials preserved. Physicaldevice/textzoom/fullownerUATNOT_VERIFIED;appNext/DB suites NOT_RUN for this static-only change. Original1158evidencefiles/original32table rows/keys/config/finances preserved;privatebackupreadbackPASS,independentrestoreNOT_RUN. Two private reportversions parsed/retrieved,all8IDs/noexternalprocessing/publication. PaidAPIactivation/calls0. No dependencies/schema/provider change or Actions.
+
+Exact static Cloudflare publication requires owner approval;then oneactualnativeafter+agentafterreport. Never merge this website branch into Railway-connected main/pilot as a sideeffect. Existing public capability/card/About/maturity statements remainaccurate;technical companion receipts only,no newpublicmedia. Logo/PWAissue194 and concurrentALSteel/Musterfirma work are separate.
