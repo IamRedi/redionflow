@@ -1,3 +1,7 @@
+## Product identity correction candidate · 14 November 2026
+
+Prepared explicit BauFlow/BaumdienstFlow distinction in four languages and separately guarded demo indexing/metadata patches. [Scope,tests and release boundaries](docs/PUBLIC_IDENTITY_PREPARATION_20261114.md). Static candidate verified;app patches require full application gates before release;info migration requires ownership/TLS verification. Nothing in this candidate is published.
+
 <p align="center"><img src="docs/assets/hero.png" alt="RediOnFlow: eine Codebasis, zwei Produkte. BaumdienstFlow für Baumpflege, BauFlow für Bau und Tiefbau." width="100%"></p>
 
 ## Static website publication · 5 November 2026
