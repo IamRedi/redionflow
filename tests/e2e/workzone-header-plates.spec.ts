@@ -37,6 +37,9 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await page.setViewportSize({ width, height: 900 });
         await page.goto('/workzone');
         await expect(page.getByTestId('flow-team-strip').getByRole('button').first()).toBeVisible();
+        // Header tools mount into their portal after the server-rendered strip.
+        await expect(page.getByTestId('notification-bell')).toBeVisible();
+        await expect(page.getByTestId('flow-global-tools').locator('a[href="/workzone/kidraht"]')).toBeVisible();
         const header = await page.evaluate(() => {
           const root = document.querySelector('[data-testid="workzone-topbar"]')!, strip = document.querySelector('[data-testid="flow-team-strip"]')!;
           const logo = document.querySelector('button[aria-label="Hap asistentin admin"]')!.getBoundingClientRect();
@@ -47,7 +50,7 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         });
         console.log('HEADER_STATE', JSON.stringify({ theme, width, ...header }));
         await page.screenshot({ path: info.outputPath(`workzone-header-${theme}-${width}.png`) });
-        const announcement = page.getByRole('button', { name: 'Shkruaj nje njoftim te shkurter per ekipin', exact: true });
+        const announcement = page.getByTestId('topbar-announcement-trigger');
         await announcement.click();
         const message = page.locator('textarea[name="message"]');
         await expect(message).toBeVisible();
@@ -83,7 +86,7 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
         await expect(index.getByRole('link', { name: 'Vendndodhja: Kamioni demo · DEMO-01', exact: true })).toHaveAttribute('href', /query=52\.4900000,13\.3800000/);
         await zoom.focus();
         await page.keyboard.press('Enter');
-        await expect.poll(async () => page.evaluate(() => {const a=document.querySelector('.leaflet-marker-icon[title="Makinat: DEMO-01"]')!.getBoundingClientRect(),b=document.querySelector('[data-testid="workzone-map-frame"] .leaflet-container')!.getBoundingClientRect();return Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2);})).toBeLessThan(8);
+        await expect.poll(async () => page.evaluate(() => {const a=document.querySelector('.leaflet-marker-icon[title$="DEMO-01"]')!.getBoundingClientRect(),b=document.querySelector('[data-testid="workzone-map-frame"] .leaflet-container')!.getBoundingClientRect();return Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2);})).toBeLessThan(8);
         const scrollbar = await index.evaluate(el => ({ list: getComputedStyle(el).scrollbarWidth, page: getComputedStyle(document.documentElement).scrollbarWidth }));
         if (scrollbar.list !== 'none') issues.push(`${theme}/${width}: visible map scrollbar`);
         await page.getByTestId('workzone-map-frame').scrollIntoViewIfNeeded();
