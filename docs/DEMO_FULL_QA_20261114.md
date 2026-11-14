@@ -1,0 +1,11 @@
+# Demo identity verification - 14 November 2026
+
+PR200 remains a tested static-only identity candidate, not published. Its deployable ZIP is unchanged (SHA256 dfa4c04a60fb1da92adf7822edf43fe53a5d828f931b2a3a7325d6ca6ed03cc6); source028ea43 adds the full application gate record without altering the static payload. Germany/Essen/NRW and Albania/Tirana copy remain. No ranking uplift is claimed.
+
+Exact-source application candidates are isolated: [PR201](https://github.com/IamRedi/redionflow/pull/201), BauFlow source13406a2, and [PR202](https://github.com/IamRedi/redionflow/pull/202), pinned BaumdienstFlow source55996a4, both DRAFT. BauFlow passed lint/typecheck/build,437unit,263integration and25E2E tests. BaumdienstFlow passed lint/typecheck/build but retains1unit,15integration and1E2E failures, with5integration/2E2E skips; an independently installed original source reproduced the same failures. Its release remains HOLD. Each candidate passed20actual Next HTTP host/path identity/indexing/header cases. Earlier resource-limited attempts and invalid shared-dependency baseline attempts remain diagnostics, not accepted checks.
+
+Chrome live Workzone/detail/dashboard views and narrow390px Workzone observations were recorded; the live BauFlow document title remains the old Baumdienst identity because no patch was deployed. No horizontal document overflow was seen in the two narrow Workzone samples. No app release or complete visual/device acceptance is claimed. Full gitleaks/Compose checks remain NOT_RUN; seed-demo UAT stays separate from the SaaS suite.
+
+All1534 pre-existing evidence files and original candidate/proof archives remain byte-identical. Tests used independently capped disposable PostgreSQL, no real DB or paid provider keys; owned containers stopped. Runtime deployment IDs unchanged, no pending deploy work. No merge/main/pilot retarget, app/DNS/DB/billing/paid API change. `.info` ownership/TLS/route gates remain open.
+
+Native information page, public showcase About and portfolio first-page cards: NO_CONTENT_CHANGE, because this is verification/preparation rather than a published behavior change. Readiness, public media and accepted website baseline remain unchanged. Existing companion PRs carry technical receipts only. Separate client-source evidence remains private and is not a contracted-client endorsement.
