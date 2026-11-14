@@ -115,11 +115,17 @@ async function main() {
     TENANT_DATABASE_URL: process.env.TENANT_DATABASE_URL ?? "",
     SAAS_MODE: "true", APP_ENV: "saas", DEMO_MODE: "false", DEMO_RESET_ALLOWED: "false" };
   // Ephemeral test-only signing key; never inherit a provider key for this mock runner.
-  env.SESSION_SIGNING_SECRET = randomBytes(32).toString("hex");
+  // Playwright owns this ephemeral test-only key. Cookie fixtures and Next
+  // must sign with the same key; never inherit an operator's durable key.
+  env.SESSION_SIGNING_SECRET = /^[a-f0-9]{64}$/.test(process.env.BAUMKALK_E2E_SESSION_KEY ?? '')
+    ? process.env.BAUMKALK_E2E_SESSION_KEY! : randomBytes(32).toString("hex");
 
   // BDF-P1-003: SaaS requires a valid salt. Own a fresh test-only value rather
   // than inheriting an operator's durable secret into this managed test app.
   env.LOGIN_GUARD_SALT = randomBytes(32).toString("hex");
+  // Exercise registration with ephemeral VAPID keys, while preventing every
+  // Web Push delivery from contacting a real external push service.
+  env.NODE_OPTIONS = `${env.NODE_OPTIONS ?? ""} --require=${JSON.stringify(resolve('tests/fixtures/web-push-transport.cjs'))}`.trim();
   // WanWay tests are explicit and synthetic. Never inherit real GPS keys or
   // make live provider requests from the ordinary disposable browser suite.
   env.WANWAY_GPS_ENABLED = "false";

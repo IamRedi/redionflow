@@ -1,3 +1,4 @@
+import '../fixtures/office-e2e';
 import { expect, test, type BrowserContext } from '@playwright/test';
 import { prisma } from '../../src/lib/db/prisma';
 import { hashPassword } from '../../src/lib/auth/password';
@@ -5,7 +6,7 @@ import { createSessionCookie } from '../../src/lib/auth/session-cookie';
 import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 
 const companyId = 'office-e2e-company';
-const baseURL = 'http://127.0.0.1:3230';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3101';
 test.use({ actionTimeout: 30_000 });
 async function login(context: BrowserContext, id: string, kind: 'admin' | 'worker' = 'admin') {
   // Database security triggers can advance epochs when a repeated fixture is reactivated.
@@ -56,17 +57,15 @@ test('office reception, private visit, access and responsive shell', async ({ pa
         continue;
       }
       await page.goto('/workzone/offices');
-      await expect(page.getByRole('heading',{name:'Mirë se erdhët në zyrë.'})).toBeVisible({timeout:30_000});
-      await expect(page.getByTestId('fleet-dock-open')).toBeVisible({timeout:30_000});
+      await expect(page.getByTestId('office-hallway')).toBeVisible({timeout:30_000});
+      await expect(page.getByTestId('office-floating-nav')).toBeVisible();
       await page.screenshot({path:`${output}/reception-${theme}-${width}.png`});
-      await page.getByTestId('office-door').click();
-      await expect(page.getByRole('heading',{name:'Zyra e Megit'})).toBeVisible({timeout:30_000});
+      await page.getByRole('link',{name:'Zyra ime',exact:true}).click();
+      await expect(page.getByTestId('office-interior')).toBeVisible({timeout:30_000});
       await page.screenshot({path:`${output}/desk-${theme}-${width}.png`});
       expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      const scroller = page.getByTestId('app-workspace-scroll');
-      await scroller.evaluate(el=>{el.scrollTop=el.scrollHeight;});
-      await expect(page.getByRole('link',{name:'by RediON',exact:true})).toBeVisible();
-      const profile = page.getByTestId('office-space').getByRole('link',{name:'Profili im',exact:true});
+      await expect(page.getByTestId('office-native-scene')).toBeVisible();
+      const profile = page.getByTestId('office-floating-nav').getByRole('link',{name:'Recepsioni',exact:true});
       await expect(profile).toBeVisible();
       await profile.focus();
       await expect(profile).toBeFocused();
@@ -75,14 +74,16 @@ test('office reception, private visit, access and responsive shell', async ({ pa
   if (baseline) { expect(errors).toEqual([]); return; }
   await page.setViewportSize({width:390,height:844});
   await page.goto('/workzone');
-  await page.getByTestId('office-entry').click();
-  await expect(page.getByTestId('office-door')).toBeVisible();
+  await expect(page.getByTestId('office-entry')).toHaveCount(0);
+  await page.getByTestId('office-header-entry').click();
+  await expect(page.getByTestId('office-interior')).toBeVisible();
   await page.goto('/app/dashboard');
-  await expect(page.getByTestId('office-entry')).toBeVisible();
+  await expect(page.getByTestId('office-header-entry')).toBeVisible();
   // Almet can enter reception, but sees no Megi desktop links/private payload.
   await login(context,'office-e2e-almet');
   await page.goto('/workzone/offices/megi');
-  await expect(page.getByText(/Puna dhe shënimet personale/)).toBeVisible();
+  await expect(page.getByTestId('office-interior')).toBeVisible();
+  await expect(page.getByTestId('office-space').locator('a[href$="/mail"],a[href$="/tasks"]')).toHaveCount(0);
   await expect(page.getByTestId('office-space').getByRole('link',{name:'Profili im',exact:true})).toHaveCount(0);
   await page.screenshot({path:`${output}/visitor-mobile.png`});
   // Every direct route is guarded, including other administrators/owners and tenant.

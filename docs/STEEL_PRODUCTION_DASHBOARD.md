@@ -466,3 +466,12 @@ Worker profiles and their daily/monthly report routes reuse the accepted warm cr
 Factory-list process cards reuse `SteelWorkVisual` and its existing company-photo-first fallback. The factory grid adapts to available width; field-list rendering and all stage selection, quantities, permissions and confirmations stay on their existing paths. Office navigation has a more specific border-free rule so the legacy native navigation border cannot draw a line across the room.
 
 Focused evidence: `tests/e2e/steel-profile-notebook-crystal.spec.ts`, existing worker-profile/document/photo and factory-sync/Workzone regressions. Before/after synthetic renders cover desktop, narrow/touch and short landscape, light/dark, text zoom, office navigation and report print. Local acceptance and owner production acceptance remain separate.
+
+### Browser compatibility repair — 14 November 2026
+
+Keep the approved warm crystal identity. Separate standard `backdrop-filter`
+support rules preserve the existing site-action glass and clear workshop panes
+when the current CSS minifier coalesces adjacent WebKit/standard declarations.
+Reduced-transparency and forced-colors fallbacks remain explicit. Small steel
+operational labels reuse the notebook's darker copper ink for readable contrast
+on warm vehicle surfaces; other tenants, layout and all operations are unchanged.

@@ -38,6 +38,12 @@ test('workshop empty bays stay compact, populated jobs stay usable and records d
           await expect(empty).toHaveCount(mode === 'empty-bays' ? 3 : 1);
           for (const bay of await empty.all()) expect(await bay.evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(56);
           for (const message of await space.getByText(c.noRepair, { exact: true }).all()) await expect(message).not.toBeVisible();
+          console.log('WORKSHOP_GLASS_RULES',await space.locator('[data-studio-workshop-phase=ready]').evaluate(el=>{
+            const matched:string[]=[];
+            const inspect=(rules:CSSRuleList)=>{for(const rule of rules){if(rule instanceof CSSStyleRule&&rule.style.backdropFilter&&el.matches(rule.selectorText))matched.push(rule.cssText);else if('cssRules' in rule)inspect((rule as CSSGroupingRule).cssRules);}};
+            for(const sheet of document.styleSheets)try{inspect(sheet.cssRules);}catch{}
+            return {steel:document.querySelectorAll('[data-steel-studio]').length,matches:el.matches('body:has([data-steel-studio]) [data-testid=workshop-workspace] [data-studio-workshop-phase][class~="border"][class~="bg-card"]'),matched};
+          }));
           await expect(space.locator('[data-studio-workshop-phase=ready]')).toHaveCSS('backdrop-filter', 'none');
           if (width < 1024) await expect(space.getByRole('navigation').getByRole('button').nth(1).locator('span').first()).toHaveCSS('white-space', 'normal');
         }

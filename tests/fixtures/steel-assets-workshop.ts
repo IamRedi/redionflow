@@ -51,6 +51,17 @@ export async function cleanupSteelAssetsWorkshop(companyId: string) {
   await prisma.companyAssetCommandReceipt.deleteMany({where});
   await prisma.companyAssetRepair.deleteMany({where});
   await prisma.companyOperationalAsset.deleteMany({where});
+  // Synthetic owner scenarios enter the real office-aware shell. Remove its
+  // dependent private fixtures in FK order before deleting their user rows.
+  await prisma.officeAttachment.deleteMany({where});
+  await prisma.officeMessage.deleteMany({where});
+  await prisma.officeThread.deleteMany({where});
+  await prisma.officeTaskReminder.deleteMany({where});
+  await prisma.officeTask.deleteMany({where});
+  await prisma.officeAssistantTurn.deleteMany({where});
+  await prisma.officeArtwork.deleteMany({where});
+  await prisma.officeMember.deleteMany({where});
+  await prisma.officeCategory.deleteMany({where});
   await prisma.user.deleteMany({where});
   await prisma.companyProfile.delete({where:{id:companyId}});
 }

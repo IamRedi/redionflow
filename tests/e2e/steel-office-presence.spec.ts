@@ -1,3 +1,4 @@
+import '../fixtures/office-e2e';
 import {expect,test,type BrowserContext} from '@playwright/test';
 import {prisma} from '../../src/lib/db/prisma';
 import {createSessionCookie} from '../../src/lib/auth/session-cookie';

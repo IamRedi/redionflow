@@ -1,12 +1,13 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { writeFile } from 'node:fs/promises';
+import '../fixtures/office-e2e';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { prisma } from '../../src/lib/db/prisma';
 import { createSessionCookie } from '../../src/lib/auth/session-cookie';
 import { assertE2ETestDatabase, validateE2ETarget } from '../../scripts/lib/e2e-target';
 import { seedSteelAssetsWorkshop, cleanupSteelAssetsWorkshop } from '../fixtures/steel-assets-workshop';
 
 const baseline = process.env.OFFICE_OVERLAY_BASELINE === 'true';
-const companyId = 'office-overlay-company', adminId = 'office-overlay-megi';
+const companyId = 'office-e2e-company', adminId = 'office-e2e-megi';
 test.use({ actionTimeout: 10000 });
 test('office routes and nested controls stay above the team and inside the viewport', async ({ page, context, baseURL }, info) => {
   test.setTimeout(240000); assertE2ETestDatabase(process.env);
@@ -14,14 +15,14 @@ test('office routes and nested controls stay above the team and inside the viewp
   const errors: string[] = [], receipts: object[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await context.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
-  // Dedicated disposable tenant; never reuse an existing office fixture or hosted database.
-  expect(await prisma.companyProfile.count({ where: { id: companyId } })).toBe(0);
-  await prisma.companyProfile.create({ data: { id: companyId, displayName: 'Synthetic Assets · DEMO', legalName: 'Synthetic only', mode: 'bau', country: 'AL' } });
+  // The configured synthetic manager owns this fixture; no hosted data is used.
+  await mkdir(out, { recursive: true });
+  await prisma.companyProfile.update({ where: { id: companyId }, data: { displayName: 'Synthetic Assets · DEMO' } });
   try {
-    await prisma.user.create({ data: { id: adminId, name: 'Chief · DEMO', email: 'office-overlay@example.test', companyProfileId: companyId, role: 'ADMIN', isActive: true } });
+    await prisma.user.upsert({ where:{id:adminId}, update:{}, create: { id: adminId, name: 'Chief · DEMO', email: 'office-overlay@example.test', companyProfileId: companyId, role: 'ADMIN', isActive: true } });
     const seed = await seedSteelAssetsWorkshop(companyId, 'office-overlay');
     await prisma.worker.createMany({ data: Array.from({ length: 14 }, (_, i) => ({ companyProfileId: companyId, firstName: `Person ${i}`, lastName: 'Synthetic' })) });
-    await prisma.officeMember.create({ data: { id: 'office-overlay-chief', userId: adminId, companyProfileId: companyId, title: 'Administration · DEMO', enabled: true, workbooksEnabled: true } });
+    await prisma.officeMember.upsert({ where: { companyProfileId_userId: { companyProfileId: companyId, userId: adminId } }, update: { title: 'Administration · DEMO', enabled: true, workbooksEnabled: true }, create: { id: 'office-overlay-chief', userId: adminId, companyProfileId: companyId, title: 'Administration · DEMO', enabled: true, workbooksEnabled: true } });
     await prisma.siteFile.create({ data: { companyProfileId: companyId, baustelleId: seed.site.id, kind: 'document', fileName: 'Synthetic-office-document.pdf', mime: 'application/pdf', size: 20, data: Buffer.from('%PDF-1.4\nDEMO\n%%EOF'), uploadedByName: 'Synthetic Chief' } });
     const user = await prisma.user.findUniqueOrThrow({ where: { id: adminId } });
     await context.addCookies([{ name: 'bk_admin_id', value: await createSessionCookie('admin', adminId, user.sessionEpoch), url: origin }, { name: 'bk_lang', value: 'sq', url: origin }]);
@@ -51,9 +52,9 @@ test('office routes and nested controls stay above the team and inside the viewp
           expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
         }
         if (view === 'tasks') {
-          await page.getByRole('button', { name: 'Shto', exact: true }).click({ force: baseline });
-          await check(page.getByRole('button', { name: 'Kthehu', exact: true }), `task-editor-${theme}-${width}`);
-          await page.getByRole('button', { name: 'Kthehu', exact: true }).click({ force: baseline });
+          await page.getByRole('button', { name: 'Shto', exact: true }).first().click({ force: baseline });
+          await check(page.getByRole('button', { name: 'Kthehu te ditari', exact: true }), `task-editor-${theme}-${width}`);
+          await page.getByRole('button', { name: 'Kthehu te ditari', exact: true }).click({ force: baseline });
         }
         if (view === 'mail') {
           await page.getByRole('button', { name: 'Shkruaj', exact: true }).click({ force: baseline });
@@ -98,12 +99,12 @@ test('office routes and nested controls stay above the team and inside the viewp
       await check(page.locator('[data-office-view] nav a').first(), 'text-zoom-return');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
-      await page.getByRole('button', { name: 'Shto', exact: true }).click();
+      await page.getByRole('button', { name: 'Shto', exact: true }).first().click();
       // Short visual area with a focused form approximates keyboard-constrained space.
       await page.setViewportSize({ width: 390, height: 430 });
-      await page.getByLabel('Titulli', { exact: true }).focus();
-      await check(page.getByRole('button', { name: 'Kthehu', exact: true }), 'short-form-return');
-      await check(page.getByRole('button', { name: 'Anulo', exact: true }), 'short-form-cancel');
+      await page.getByLabel('Emri i detyrës', { exact: true }).focus();
+      await check(page.getByRole('button', { name: 'Kthehu te ditari', exact: true }), 'short-form-return');
+      await check(page.getByTestId('task-composer').getByRole('button', { name: 'Shto', exact: true }), 'short-form-save');
     }
     expect(await records()).toBe(before); expect(errors).toEqual([]);
   } finally {

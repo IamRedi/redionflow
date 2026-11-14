@@ -1,8 +1,22 @@
+import sharp from 'sharp';
 import { expect, type Page, test } from "@playwright/test";
+import { randomInt } from 'node:crypto';
+import { prisma } from '../../src/lib/db/prisma';
+import { isLoginCodeTaken } from '../../src/lib/auth/login-code';
+import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 
 type ProductMode = "baumdienst" | "bau";
 
 const password = "SmokeTest123!";
+
+async function unusedWorkerCode() {
+  assertE2ETestDatabase(process.env);
+  for(let attempt=0;attempt<50;attempt++) {
+    const code=String(randomInt(100000,1000000));
+    if(!await isLoginCodeTaken(prisma,code))return code;
+  }
+  throw new Error('No unused synthetic login code available');
+}
 
 function uniqueId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -289,7 +303,7 @@ test.describe("SaaS authenticated smoke", () => {
 
   test("real Server Actions transport rejects foreign Origin and worker authority",async({page,context})=>{
     await signUpTenant(page,"bau");
-    const firstName=`Role${Date.now()}`,lastName="Synthetic",code="362814";
+    const firstName=`Role${Date.now()}`,lastName="Synthetic",code=await unusedWorkerCode();
     await createWorker(page,firstName,lastName,{loginCode:code,temporary:false});
     await page.goto("/app/machines");
     const machineForm=page.locator("form").filter({has:page.locator('input[name="nickname"]:not([type="hidden"])')}).first();
@@ -322,14 +336,15 @@ test.describe("SaaS authenticated smoke", () => {
   });
 
   test("worker photo and document use authenticated body access and remain private across tenants",async({page,context,playwright})=>{
-    await signUpTenant(page,"bau");const firstName=`Asset${Date.now()}`,lastName="Synthetic",code="637214";
+    await signUpTenant(page,"bau");const firstName=`Asset${Date.now()}`,lastName="Synthetic",code=await unusedWorkerCode();
     await createWorker(page,firstName,lastName,{loginCode:code,temporary:false});
     await context.clearCookies();await loginWorker(page,`${firstName} ${lastName}`,code);
-    const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aM1sAAAAASUVORK5CYII=","base64");
-    await page.locator('input[type="file"][accept="image/*"]').setInputFiles({name:"synthetic.png",mimeType:"image/png",buffer:png});
-    const image=page.locator('img[src*="/api/private-files?"]').first();
-    await expect(image).toBeVisible();await expect.poll(()=>image.evaluate(el=>(el as HTMLImageElement).naturalWidth)).toBe(1);
+    const png=await sharp({create:{width:12,height:8,channels:3,background:'#467e69'}}).png().toBuffer();
+    await page.locator('input[data-photo-input="upload"]').setInputFiles({name:"synthetic.png",mimeType:"image/png",buffer:png});
+    const image=page.locator('img[src*="/api/asset-photos/worker/"]').first();
+    await expect(image).toBeVisible();await expect.poll(()=>image.evaluate(el=>(el as HTMLImageElement).naturalWidth)).toBe(12);
     const photo=await image.getAttribute("src");expect(photo).toBeTruthy();
+    await page.getByTestId('worker-documents-open').click();
     await page.locator('input[type="file"][accept*=".pdf"]').setInputFiles({name:"synthetic-worker.pdf",mimeType:"application/pdf",buffer:Buffer.from("%PDF-1.4\nsynthetic-worker-document\n%%EOF")});
     const document=page.locator('a[href*="/api/private-files?"]').first();await expect(document).toBeVisible();
     const url=await document.getAttribute("href");expect(url).toBeTruthy();
@@ -338,14 +353,14 @@ test.describe("SaaS authenticated smoke", () => {
     await context.clearCookies();await signUpTenant(page,"bau");
     expect((await read(url!)).status).toBe(404);expect((await read(photo!)).status).toBe(404);
     const anon=await playwright.request.newContext();
-    try{for(const href of [photo!,url!])expect((await anon.get(new URL(href,page.url()).toString())).status()).toBe(401);}finally{await anon.dispose();}
+    try{expect((await anon.get(new URL(photo!,page.url()).toString())).status()).toBe(404);expect((await anon.get(new URL(url!,page.url()).toString())).status()).toBe(401);}finally{await anon.dispose();}
   });
 
   test("BauFlow worker login can start site work and open the daily report", async ({ page, context }) => {
     const siteName = `Worker day ${uniqueId()}`;
     const firstName = `Worker${Date.now()}`;
     const lastName = "Smoke";
-    const loginCode = String(Math.floor(100000 + Math.random() * 900000));
+    const loginCode = await unusedWorkerCode();
     await signUpTenant(page, "bau");
 
     await createSiteWithInitialWork(page, siteName, "Tagesarbeit pruefen", "1");

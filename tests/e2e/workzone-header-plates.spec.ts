@@ -41,7 +41,7 @@ test('Workzone keeps a transparent inline team header and distinguishes vehicle 
           const root = document.querySelector('[data-testid="workzone-topbar"]')!, strip = document.querySelector('[data-testid="flow-team-strip"]')!;
           const logo = document.querySelector('button[aria-label="Hap asistentin admin"]')!.getBoundingClientRect();
           const crew = strip.querySelector('button')!.getBoundingClientRect();
-          const bell = [...document.querySelectorAll('[aria-label="Njofto ekipin"]')].find(el => el.getClientRects().length)!.getBoundingClientRect();
+          const bell = document.querySelector('[data-testid="notification-bell"]')!.getBoundingClientRect();
           const kidraht = document.querySelector('a[href="/workzone/kidraht"]')!.getBoundingClientRect();
           return { rootBg: getComputedStyle(root).backgroundColor, stripBg: getComputedStyle(strip).backgroundColor, stripBorder: getComputedStyle(strip).borderTopWidth, crewLogoY: Math.abs(crew.y + crew.height / 2 - logo.y - logo.height / 2), crewAfterLogo: crew.left >= logo.right, bellKidrahtY: Math.abs(bell.y + bell.height / 2 - kidraht.y - kidraht.height / 2), noOverflow: document.documentElement.scrollWidth <= innerWidth };
         });

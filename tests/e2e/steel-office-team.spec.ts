@@ -1,8 +1,9 @@
+import '../fixtures/office-e2e';
 import {expect,test,type BrowserContext,type Page} from '@playwright/test';
 import {prisma} from '../../src/lib/db/prisma';
 import {createSessionCookie} from '../../src/lib/auth/session-cookie';
 import {assertE2ETestDatabase} from '../../scripts/lib/e2e-target';
-const companyId='office-e2e-company',baseURL='http://127.0.0.1:3230';
+const companyId='office-e2e-company',baseURL=process.env.PLAYWRIGHT_BASE_URL??'http://127.0.0.1:3101';
 async function login(context:BrowserContext,kind:'admin'|'worker',id:string){
  const account=kind==='admin'?await prisma.user.findUniqueOrThrow({where:{id}}):await prisma.worker.findUniqueOrThrow({where:{id}});
  await context.clearCookies();await context.addCookies([{name:kind==='admin'?'bk_admin_id':'bk_worker_id',value:await createSessionCookie(kind,id,account.sessionEpoch),url:baseURL},{name:'bk_lang',value:'sq',url:baseURL}]);
@@ -36,9 +37,10 @@ test('team offices reuse login, categories and private work with physical room c
  await page.getByRole('link',{name:'Recepsioni',exact:true}).click();await page.getByRole('link',{name:/^Lea Demo/}).click();
  if(process.env.OFFICE_BASELINE!=='true')await expect(page.getByTestId('office-preview-notice')).toBeVisible();
  await page.goto(`/workzone/offices/me/mail?compose=1&to=${member.id}`);await expect(page.locator('select[name=recipientId]')).toHaveValue(member.id);
- await page.goto('/workzone/offices/me/tasks');await page.getByRole('button',{name:'Shto',exact:true}).click();
- await page.getByLabel('Titulli',{exact:true}).fill('Përgatit dosjen · TEAM DEMO');await page.getByLabel('Lloji').selectOption('COMPANY');await page.getByRole('combobox',{name:'Kategoria',exact:true}).selectOption({label:'Tjetër'});await page.getByLabel('Përgjegjësi').selectOption(member.id);await page.getByRole('button',{name:'Ruaj',exact:true}).click();await expect(page.getByRole('button',{name:/^Përgatit dosjen · TEAM DEMO/})).toBeVisible();
- await login(context,'worker',worker.id);await page.goto('/workzone/offices/me/tasks');await expect(page.getByRole('button',{name:/^Përgatit dosjen · TEAM DEMO/})).toBeVisible();
+ await page.goto('/workzone/offices/me/tasks');await page.getByRole('button',{name:'Shto',exact:true}).first().click();
+ const composer=page.getByTestId('task-composer');
+ await composer.getByLabel('Emri i detyrës',{exact:true}).fill('Përgatit dosjen · TEAM DEMO');await composer.getByText('Ndarja dhe afati',{exact:true}).click();await composer.getByLabel('Lloji').selectOption('COMPANY');await composer.getByRole('combobox',{name:'Kategoria',exact:true}).selectOption({label:'Tjetër'});await composer.getByLabel('Përgjegjësi').selectOption(member.id);await composer.getByRole('button',{name:'Shto',exact:true}).click();await page.getByRole('button',{name:'Kthehu te ditari',exact:true}).click();await expect(page.getByRole('button',{name:/^Hap detyrën: Përgatit dosjen · TEAM DEMO/})).toBeVisible();
+ await login(context,'worker',worker.id);await page.goto('/workzone/offices/me/tasks');await expect(page.getByRole('button',{name:/^Hap detyrën: Përgatit dosjen · TEAM DEMO/})).toBeVisible();
  await page.goto('/workzone/offices/me');await expect(page.getByTestId('office-space')).toBeVisible();
  for(const theme of ['light','dark']){await context.addCookies([{name:'bk_theme',value:theme,url:baseURL}]);for(const [width,height] of [[1440,1000],[390,844],[320,740],[760,360],[640,360]]){await page.setViewportSize({width,height});await page.reload();await expect(page.getByTestId('office-space')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await verifyRoomTargets(page,width,height);await page.screenshot({path:`${process.env.OFFICE_EVIDENCE_DIR}/room-${theme}-${width}.png`});}}
  await page.setViewportSize({width:390,height:844});await page.getByTestId('office-space').getByRole('link',{name:'Plani ditor',exact:true}).click();await expect(page.getByTestId('plan-close')).toHaveAttribute('href','/workzone/offices/me');await page.getByTestId('plan-close').click();
@@ -104,6 +106,8 @@ test('purchasing office opens project folders and a separate personal offer assi
  test.setTimeout(120000);assertE2ETestDatabase(process.env);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  const workerId='office-team-demo-worker',siteId='office-drawer-site';
  const member=await prisma.officeMember.update({where:{companyProfileId_workerId:{companyProfileId:companyId,workerId}},data:{enabled:true,workProfile:'PURCHASING',assistantEnabled:true,workbooksEnabled:true}});
+ await prisma.baustelle.upsert({where:{id:siteId},update:{},create:{id:siteId,companyProfileId:companyId,name:'Dosja e fabrikës · DEMO',documents:[],type:'STEEL_ASSEMBLY'}});
+ await prisma.accessGrant.upsert({where:{companyProfileId_place_scopeId_workerId:{companyProfileId:companyId,place:'site',scopeId:siteId,workerId}},update:{level:'act'},create:{companyProfileId:companyId,place:'site',scopeId:siteId,workerId,level:'act'}});
  await prisma.siteFile.deleteMany({where:{companyProfileId:companyId,baustelleId:siteId,fileName:'Offer-DEMO.csv'}});
  const csv=Buffer.from('Material,Quantity,Price\nSteel,10,25\n');const file=await prisma.siteFile.create({data:{companyProfileId:companyId,baustelleId:siteId,kind:'document',fileName:'Offer-DEMO.csv',mime:'text/csv',size:csv.length,data:csv}});
  await prisma.worker.update({where:{id:workerId},data:{firstName:'Saoirse Alexandria',lastName:'Demo'}});

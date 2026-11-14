@@ -58,7 +58,8 @@ test('steel workspace uses the screen, compact calendar, quiet footer and compan
           expect(state.footerBg).toBe('rgba(0, 0, 0, 0)');
           expect(state.creditOffset).toBeLessThan(1);
           await expect(page.getByTestId('flow-global-tools')).not.toContainText('Bau');
-          await expect(page.getByRole('link', { name: 'by RediON', exact: true }).locator('..')).toContainText('Bau');
+          await expect(page.getByRole('link', { name: 'by RediON', exact: true })).toHaveCount(1);
+          await expect(page.getByRole('link', { name: 'by RediON', exact: true }).locator('..')).toHaveText('byRediON');
           await expect(page.getByTestId('steel-dashboard')).not.toContainText(/0[1-4] \/ /);
           const scroll = page.getByTestId('app-workspace-scroll');
           await scroll.evaluate(el => { el.scrollTop = el.scrollHeight; });
