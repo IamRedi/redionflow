@@ -43,7 +43,7 @@ export default async function MusterPage({ searchParams }: { searchParams: Promi
     </header>
     <main className="flex flex-1 items-center justify-center py-4">
       <section data-studio-home className="bauflowMusterEntryPanel w-full max-w-md rounded-3xl border p-5 sm:p-7">
-        <Image src="/bauflow-muster-v1/brand-profile.webp" width={76} height={76} alt={productName} className="mb-4 rounded-full" priority />
+        <Image src="/bauflow-muster-v1/brand-profile.webp" width={76} height={76} alt={productName} className="mb-4 rounded-full" priority unoptimized />
         <p className="text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">{profileName}</p>
         <h1 className="mt-2 text-2xl font-semibold leading-tight">{c.title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{c.intro}</p>
