@@ -11,6 +11,7 @@ import { ensureSteelWorkCatalog } from '../src/lib/steel-work/catalog';
 import { dateKey, dayRange } from '../src/lib/workzone/date-utils';
 import { assertE2ETestDatabase } from './lib/e2e-target';
 import { BAUFLOW_MUSTER_COMPANY_ID as companyId, BAUFLOW_MUSTER_OWNER_ID as ownerId, bauflowMusterConfigured } from '../src/lib/demo/bauflow-muster';
+import { BAUFLOW_MUSTER_FLEET, musterFleetPhoto } from '../src/lib/demo/bauflow-muster-fleet';
 
 // Deliberately separate from ordinary seed/reset. Never imports customer data,
 // resets an installation, changes existing profiles or calls an external API.
@@ -133,8 +134,8 @@ async function main() {
         const worker = workers.get(key)!;
         for (let day = 1; day <= 5; day++) await tx.workSession.create({ data: { workerId: worker.id, workplace: 'OFFICE', startTime: workday(day, 7), endTime: workday(day, 15), totalHours: 7.5, breakMinutes: 30 } });
       }
-      for (const [index, name] of ['Montage-Transporter', 'LKW 7,5 t', 'Teleskopstapler', 'Scherenbühne 12 m'].entries()) {
-        const machine = await tx.machine.create({ data: { companyProfileId: companyId, name, category: index < 2 ? 'TRUCK' : 'OTHER', targe: index < 2 ? `MU BF ${101 + index}` : null, hourlyRateCents: 3500 + index * 500, isActive: true } });
+      for (const [index, item] of BAUFLOW_MUSTER_FLEET.entries()) {
+        const machine = await tx.machine.create({ data: { id: `bauflow-muster-fleet-${item.key}`, companyProfileId: companyId, name: item.name, category: item.category, targe: item.plate, hourlyRateCents: item.hourlyRateCents, imageUrl: musterFleetPhoto(item.key), isActive: true } });
         const asset = await tx.companyOperationalAsset.create({ data: { companyProfileId: companyId, machineId: machine.id } });
         await tx.companyAssetEvent.create({ data: { companyProfileId: companyId, assetId: asset.id, type: 'registered', actorKey: 'muster-seed-v1', actorName: 'Musterfirma', note: 'Fiktiver Anfangsbestand des Templates.' } });
         if (index === 2) await tx.companyAssetRepair.create({ data: { companyProfileId: companyId, assetId: asset.id, phase: 'received', problem: 'Hydraulikleitung prüfen · Musterfall', reportedByKey: 'muster-seed-v1', reportedByName: 'Emma Schulz' } });
@@ -148,7 +149,7 @@ async function main() {
       }
       await tx.workzoneAnnouncement.create({ data: { companyProfileId: companyId, message: 'Musterfirma: Alle Personen, Projekte und Geschäftsdaten sind frei erfunden. Bilder sind illustrative Entwürfe.', createdByName: 'BauFlow' } });
     }, { timeout: 30_000 });
-    console.log('BauFlow Muster template created: 12 employees, 5 offices, 3 sites, 1 factory, 9 linked assets. No existing installation changed.');
+    console.log('BauFlow Muster template created: 12 employees, 5 offices, 3 sites, 1 factory, 11 linked assets. No existing installation changed.');
   } finally { await prisma.$disconnect(); }
 }
 main().catch(error => { console.error(error instanceof Error ? error.message : 'Muster seed failed.'); process.exitCode = 1; });

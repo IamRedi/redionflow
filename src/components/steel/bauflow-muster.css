@@ -40,6 +40,131 @@ body[data-bauflow-muster] [data-studio-home] [data-studio-board] {
     max-width: 100%;
   }
 }
+/* Crystal fleet workspace: transparent photographs and the same warm studio glass.
+   The installation marker also covers Radix portals without affecting client firms. */
+body[data-bauflow-muster] {
+  --muster-fleet-glass: linear-gradient(135deg, #f7fcf5a8, #d5e3d080);
+  --muster-fleet-card: linear-gradient(145deg, #ffffff94, #eff6eb70);
+  --muster-fleet-edge: #ffffffb8;
+}
+html.dark body[data-bauflow-muster] {
+  --muster-fleet-glass: linear-gradient(135deg, #18372dba, #102721ad);
+  --muster-fleet-card: linear-gradient(145deg, #38524980, #142d2466);
+  --muster-fleet-edge: #e3efd14d;
+}
+body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']) {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(100% - 2rem), 1280px);
+  height: auto;
+  max-height: calc(100dvh - 2rem);
+  border: 1px solid var(--muster-fleet-edge);
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--muster-fleet-glass);
+  box-shadow: 0 24px 72px #071c2033, inset 0 1px 0 #ffffff70;
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-studio-dialog-overlay]:has(~ [data-studio-dialog] [data-testid='fleet-picker']) {
+  background: #0c201c26;
+}
+body[data-bauflow-muster] [data-studio-vehicle-overlay] {
+  background: transparent;
+}
+body[data-bauflow-muster] [data-testid='fleet-machine-card'][data-studio-dialog] {
+  background: var(--muster-fleet-glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+body[data-bauflow-muster] [data-testid='fleet-machine-card'] :is(.bg-gradient-to-br, [data-studio-vehicle-fact]) {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+}
+body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']) > div:first-child {
+  margin-bottom: 0;
+  border: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'],
+body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']) > div:last-child {
+  flex: 0 1 auto;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] > div:first-child > label {
+  flex: 0 1 380px;
+}
+body[data-bauflow-muster] [data-testid='fleet-search'] {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+  font-size: 14px;
+  box-shadow: inset 0 1px 0 #ffffff45;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] input[data-testid='fleet-search']:focus-visible {
+  outline: 2px solid var(--steel-copper);
+  outline-offset: 2px;
+  border-color: transparent;
+  box-shadow: none;
+}
+body[data-bauflow-muster] [data-testid='fleet-card-grid'] {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] {
+  background: var(--muster-fleet-card);
+  border-color: var(--muster-fleet-edge);
+  box-shadow: 0 4px 14px #102c2014, inset 0 1px 0 #ffffff66;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] > span:first-child {
+  background: radial-gradient(ellipse at 50% 90%, #ffffff40, transparent 70%);
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] img {
+  object-fit: contain;
+  padding: 8px;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] > span:last-child {
+  gap: 6px;
+  padding: 10px 12px 12px;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] > span:last-child > span:first-child {
+  min-height: 0;
+  font-size: 14px;
+  line-height: 1.3;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] > span:last-child > :last-child {
+  align-self: flex-start;
+  max-width: 100%;
+}
+body[data-bauflow-muster] [data-testid='fleet-picker'] .text-muted-foreground {
+  color: hsl(var(--foreground) / .8);
+}
+@media (max-width: 479px) {
+  body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']) {
+    width: calc(100% - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 20px;
+  }
+  body[data-bauflow-muster] [data-testid='fleet-card-grid'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  body[data-bauflow-muster] [data-testid='fleet-picker'] [data-machine-id] > span:last-child {
+    padding: 8px;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  body[data-bauflow-muster] [data-studio-dialog]:has([data-testid='fleet-picker']),
+  body[data-bauflow-muster] [data-testid='fleet-machine-card'][data-studio-dialog] {
+    background: hsl(var(--background));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
 @media print {
   body[data-bauflow-muster] .steelStudioWorkspace,
   body[data-bauflow-muster] [data-testid='app-workspace-scroll'],

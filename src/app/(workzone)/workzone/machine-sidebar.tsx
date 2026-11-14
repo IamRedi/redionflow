@@ -173,7 +173,7 @@ function MachineCardSurface({ enhanced, title, onClose, returnFocusRef, children
   if (!enhanced) return createPortal(<div role="dialog" aria-modal="true" aria-label={title} className="fixed inset-0 z-[1200] flex h-dvh flex-col bg-background">{children}</div>, document.body);
   return <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-[1399] bg-background" />
+      <Dialog.Overlay data-studio-vehicle-overlay className="fixed inset-0 z-[1399] bg-background" />
       <Dialog.Content data-testid="fleet-machine-card" data-studio-dialog data-studio-vehicle className="fixed inset-0 z-[1400] flex h-dvh min-h-0 min-w-0 flex-col bg-background text-foreground outline-none"
         onOpenAutoFocus={() => { opener.current = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null; }}
         onCloseAutoFocus={event => { event.preventDefault(); const target = opener.current?.isConnected ? opener.current : returnFocusRef.current; target?.focus({ preventScroll: true }); }}>
@@ -396,7 +396,7 @@ export function MachineSidebar({
       </>}
 
       {enhancedOperations ? <>
-        <FleetPicker open={pickerOpen} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} />
+        <FleetPicker open={pickerOpen} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} returnFocusRef={fleetButton} />
         <AssetWorkspaceDialog open={workshopOpen} onOpenChange={open => { setWorkshopOpen(open); if (!open) void reloadStatuses(); }} title={assets.workshop} fullScreen><WorkshopWorkspace embedded /></AssetWorkspaceDialog>
         {editMachine && selected ? <MachineEditor machine={selected} country={country} onClose={() => { setEditMachine(false); void reloadStatuses(); }}/> : null}
         <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} mode="service" onClose={() => { setDetail(null); void reloadStatuses(); }} />

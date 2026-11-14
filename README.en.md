@@ -11,23 +11,15 @@
 
 **[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
-## Local BauFlow sample company · 14.11.2026
+## BauFlow sample company is online · 14.11.2026
 
-The separate **BauFlow Musterbau · DEMO** profile candidate reuses the existing
-steel workflows with twelve fictional employees, five offices, three sites,
-one factory and nine linked assets. The original BauFlow logo and matching
-Day/Night campus illustrations give it its own identity. No customer data is
-copied. Owner-approved publication replaces the retired fibre-optic sample on its
-existing isolated demo service. The AL-Steel pilot keeps its own deployment.
-[Preparation, data logic and current verification](docs/BAUFLOW_MUSTER_TEMPLATE.md).
+The separate **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** runs the current steel application with its own original BauFlow identity. Choose owner, accounting, site, factory or workshop at entry. Twelve fictional employees, five offices, three sites, one factory and eleven assets (six vehicles and five tools) share the same connected workflows. Changes persist and are visible to other testers; use test data only. AL-Steel and BaumdienstFlow keep their independent deployments.
 
-Actual local Muster candidate captures; not publicly deployed.
+[Release, access and verification](docs/BAUFLOW_MUSTER_TEMPLATE.md). PR206 is published at `67cd096`; 1,265 unit tests and 45 browser cases passed. The following are actual online captures from 14 November, with fictional data. Phone views are responsive/emulated, not physical-device acceptance.
 
-![BauFlow Musterbau · Workzone Day](docs/assets/screenshots/bauflow-muster-workzone-light-desktop.webp)
+![BauFlow Musterbau · actual online Workzone](docs/assets/screenshots/bauflow-muster-online-workzone.webp)
 
-![BauFlow Musterbau · Workzone Night](docs/assets/screenshots/bauflow-muster-workzone-dark-desktop.webp)
-
-<img src="docs/assets/screenshots/bauflow-muster-office-light-phone.webp" alt="BauFlow Musterbau · local office on a narrow touch screen" width="260">
+<img src="docs/assets/screenshots/bauflow-muster-online-phone.webp" alt="BauFlow Musterbau · actual online Workzone on a narrow touch screen" width="260">
 
 ## In review: production dashboard for steel operations
 
