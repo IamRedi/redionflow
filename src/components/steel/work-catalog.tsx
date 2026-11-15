@@ -29,6 +29,7 @@ function withProcessLink(editor:Editor):Editor {
 }
 
 type CatalogProps = {
+  factoryEnabled?: boolean;
   open: boolean; onOpenChange: (open: boolean) => void; kind: Kind; siteId?: string; definitions?: SteelWorkDefinitionView[];
   canManage?: boolean; initialDefinitionId?: string | null; onChanged?: () => void;
   /** Site tasks: the window (Punime b/a, Prodhimi, Montimi) the catalog was opened from. */
@@ -63,7 +64,7 @@ export function SteelWorkCatalog(props: CatalogProps) {
   return props.open ? <SteelWorkCatalogSession {...props} /> : null;
 }
 
-function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions = [], canManage = true, initialDefinitionId, onChanged, returnFocusRef, group = null }: CatalogProps) {
+function SteelWorkCatalogSession({ factoryEnabled = true, open, onOpenChange, kind, siteId, definitions = [], canManage = true, initialDefinitionId, onChanged, returnFocusRef, group = null }: CatalogProps) {
   const { currentLang: lang } = useLanguage();
   const c = workCatalogCopy(lang);
   const [items, setItems] = useState(definitions);
@@ -236,7 +237,7 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
             </div>
             <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.name}</span><input autoFocus required maxLength={80} value={editor.label} disabled={pending || !canManage} onChange={(event) => setEditor(kind === "site" ? withProcessLink({ ...editor, label: event.target.value }) : { ...editor, label: event.target.value })} className={input} /></label>
             <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.description}</span><textarea maxLength={500} rows={2} value={editor.description} disabled={pending || !canManage} onChange={(event) => setEditor({ ...editor, description: event.target.value })} className={`${input} resize-y py-2`} /></label>
-            {kind === "site" ? <label className="block space-y-1.5"><span className="text-sm font-semibold">{t("steel.groupLabel", lang)}</span><select value={editor.phaseGroup} disabled={pending || !canManage} onChange={(event) => setEditor(withProcessLink({ ...editor, phaseGroup: steelPhaseGroup(event.target.value) }))} className={input}>{STEEL_PHASE_GROUPS.map((key) => <option key={key} value={key}>{t(key === "concrete" ? "steel.groupConcrete" : key === "production" ? "steel.groupProduction" : "steel.groupAssembly", lang)}</option>)}</select></label> : null}
+            {kind === "site" ? <label className="block space-y-1.5"><span className="text-sm font-semibold">{t("steel.groupLabel", lang)}</span><select value={editor.phaseGroup} disabled={pending || !canManage} onChange={(event) => setEditor(withProcessLink({ ...editor, phaseGroup: steelPhaseGroup(event.target.value) }))} className={input}>{STEEL_PHASE_GROUPS.filter(key => factoryEnabled || key !== "production").map((key) => <option key={key} value={key}>{t(key === "concrete" ? "steel.groupConcrete" : key === "production" ? "steel.groupProduction" : "steel.groupAssembly", lang)}</option>)}</select></label> : null}
             {kind === "site" ? <div className="space-y-3 border-t pt-4">
               <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.link}</span><select value={editor.linkedProcessKey} disabled={pending || !canManage || Boolean(automaticProduction)} onChange={(event) => setEditor({ ...editor, linkedProcessKey: event.target.value, linkedList: sideOfStage(event.target.value) === "field" ? "assembly" : editor.linkedList })} className={input}><option value="">{c.manual}</option>{availableStages.map((stage) => <option key={stage} value={stage}>{c.automatic} · {linkedProcessLabel(stage)}</option>)}</select></label>
               {editor.linkedProcessKey ? <><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><label className="block space-y-1.5"><span className="text-sm font-semibold">{c.list}</span><select value={editor.linkedList} disabled={pending || !canManage || isField || Boolean(automaticProduction)} onChange={(event) => setEditor({ ...editor, linkedList: event.target.value as "assembly" | "part" | "all" })} className={input}>{!isField ? <option value="all">{c.allLists}</option> : null}<option value="assembly">{c.assembly}</option>{!isField ? <option value="part">{c.part}</option> : null}</select></label><label className="block space-y-1.5"><span className="text-sm font-semibold">{c.kind}</span><select value={editor.linkedKind} disabled={pending || !canManage} onChange={(event) => setEditor({ ...editor, linkedKind: event.target.value })} className={input}><option value="">{c.allKinds}</option><option value="BEAM">{c.beam}</option><option value="COLUMN">{c.column}</option>{editor.linkedKind && !["BEAM", "COLUMN"].includes(editor.linkedKind) ? <option value={editor.linkedKind}>{editor.linkedKind}</option> : null}</select></label></div><p className="text-xs text-muted-foreground">{c.linkHint}</p></> : null}

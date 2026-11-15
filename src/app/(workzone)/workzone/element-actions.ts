@@ -334,7 +334,7 @@ export async function setElementProcessesAction(input: unknown): Promise<Element
   const actor = await currentCompanyActor(companyId);
   const { siteId, side, expectedRevisions } = parsed.data;
   const here = actor?.at(siteId);
-  if (!actor || !here || !(here.office || here.siteSteps || here.factorySteps)) return { ok: false, code: "ACCESS_DENIED", message: tr("elementCheckOnlyEngineer") };
+  if (!actor || !here || (side === "factory" && actor.factoryEnabled === false) || !(here.office || here.siteSteps || here.factorySteps)) return { ok: false, code: "ACCESS_DENIED", message: tr("elementCheckOnlyEngineer") };
   const ids = [...new Set(parsed.data.elementIds)].sort(), stages = [...new Set(parsed.data.stages)];
   if (stages.some(stage => sideOfStage(stage) !== side)
     || expectedRevisions && (ids.some(id => !Object.hasOwn(expectedRevisions, id)) || Object.keys(expectedRevisions).some(id => !ids.includes(id))))

@@ -46,7 +46,7 @@ export async function createProductionBatchAction(input: unknown): Promise<Actio
   if (!companyId) return { ok: false, message: tr("notSignedIn") };
   const actor = await currentActor(companyId);
   const { baustelleId, title, quantity, unit } = parsed.data;
-  if (!actor?.at(baustelleId).office) return { ok: false, message: tr("accessDenied") };
+  if (!actor?.at(baustelleId).office || !actor.allows('factory.steps', baustelleId)) return { ok: false, message: tr("accessDenied") };
   const created = await withTenantContext(companyId, async (tx) => {
     const site = await tx.baustelle.findFirst({ where: { id: baustelleId, companyProfileId: companyId }, select: { id: true, type: true } });
     if (!site || site.type === "STEEL_WORKSHOP") return null;

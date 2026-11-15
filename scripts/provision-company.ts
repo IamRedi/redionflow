@@ -14,9 +14,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { resolveDatabaseConnectionString } from "../src/lib/db/connection-string";
 import { hashPassword } from "../src/lib/auth/password";
-import { safeCompanyLogo } from "../src/lib/company-logo";
-import { regionConfig } from "../src/lib/region";
 import { parseProvisionInput } from "../src/lib/provision/company-input";
+import { createCompanyRecords } from "../src/lib/provision/create-company";
 import { runRosterImport } from "./import-roster";
 import { runPilotSamples } from "./pilot-samples";
 import { runAssistantAccess } from "./assistant-access";
@@ -58,83 +57,7 @@ async function main() {
     const ownerTaken = await prisma.user.findUnique({ where: { email: c.owner.email }, select: { id: true } });
     if (ownerTaken) throw new Error(`Owner e-mail ${c.owner.email} is already used by another account.`);
 
-    const region = regionConfig(c.country);
-    const language = region.defaultLanguage === "sq" ? "SQ" : "DE";
-    const plan = await prisma.plan.findUnique({ where: { tier: c.plan }, select: { id: true } });
-
-    const created = await prisma.$transaction(async (tx) => {
-      const company = await tx.companyProfile.create({
-        data: {
-          displayName: c.displayName,
-          legalName: c.legalName,
-          mode: c.mode,
-          country: c.country,
-          vatId: c.vatId,
-          phone: c.phone,
-          email: c.email,
-          street: c.street,
-          zip: c.zip,
-          city: c.city,
-          logoDataUrl: safeCompanyLogo(c.logoDataUrl),
-          overheadSettings: {
-            create: {
-              bgkPct: 0.18,
-              agkPct: 0.1,
-              riskPct: 0.03,
-              profitPct: 0.06,
-              vatPct: region.defaultVatPct / 100,
-              bgkBase: "EK_TOTAL",
-              riskProfitMode: "SEPARATE",
-              applyVatByDefault: true,
-            },
-          },
-        },
-        select: { id: true },
-      });
-      const owner = await tx.user.create({
-        data: {
-          email: c.owner.email,
-          name: c.owner.name,
-          role: "ADMIN",
-          isOwner: true,
-          isActive: true,
-          passwordHash: hashPassword(ownerPassword),
-          preferredLanguage: language,
-          motherTongue: language,
-          companyProfileId: company.id,
-        },
-        select: { id: true },
-      });
-      await tx.subscription.create({
-        data: { companyProfileId: company.id, planId: plan?.id ?? null, status: "active" },
-      });
-      for (const site of c.sites) {
-        await tx.baustelle.create({
-          data: {
-            companyProfileId: company.id,
-            name: site.name,
-            type: site.type,
-            status: site.status,
-            address: site.address,
-            description: site.description,
-          },
-        });
-      }
-      for (const entry of c.knowledge) {
-        await tx.companyKnowledge.create({
-          data: { companyProfileId: company.id, key: entry.key, language: entry.language, title: entry.title, content: entry.content, tags: entry.tags },
-        });
-      }
-      await tx.auditLog.create({
-        data: {
-          companyProfileId: company.id,
-          actorType: "SYSTEM",
-          action: "company.provisioned",
-          payload: { ownerUserId: owner.id, plan: c.plan, sites: c.sites.length, knowledge: c.knowledge.length },
-        },
-      });
-      return company;
-    });
+    const created = await prisma.$transaction(tx => createCompanyRecords(tx, c, hashPassword(ownerPassword)));
     console.log(`[provision] created ${c.displayName} (${created.id}) with owner ${c.owner.email} and ${c.sites.length} sites.`);
   } finally {
     await prisma.$disconnect();

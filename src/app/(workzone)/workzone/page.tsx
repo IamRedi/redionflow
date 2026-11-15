@@ -1,3 +1,4 @@
+import { companyFactoryEnabled } from "@/lib/provision/company-profile";
 import { batchQuantity, currentMaySeeWeights, withoutWeights } from "@/lib/steel-work/weight-visibility";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { plannedSiteNotes } from "@/lib/workzone/plan-site";
@@ -71,7 +72,8 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   const currentLang = await resolveRequestLanguage();
   // One access rule source; for Bazë workers sites have no "Open" and vehicle GPS stays hidden.
   const accessActor = worker || admin ? await currentCompanyActor(company.id) : null;
-  const allows = (action: AccessAction, scopeId = "") => !worker || Boolean(accessActor?.allows(action, scopeId));
+  const factoryEnabled = accessActor?.factoryEnabled ?? await withTenantContext(company.id, tx => companyFactoryEnabled(tx, company.id));
+  const allows = (action: AccessAction, scopeId = "") => !(action.startsWith("factory.") && !factoryEnabled) && (!worker || Boolean(accessActor?.allows(action, scopeId)));
   const fleetLocations = (admin || worker) && allows("fleet_gps.view") ? await readFleetLocations() : [];
   const liveSession = worker ? await withTenantContext(company.id, tx => tx.workSession.findFirst({ where: { workerId: worker.id, isLive: true, endTime: null }, select: { startTime: true, baustelleId: true } })) : null;
   const cardWork = worker ? {
@@ -171,10 +173,10 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
 
   // The factory (a STEEL_WORKSHOP entry) is not a construction site: it gets its
   // own production panel below the board and never appears as a site card.
-  const factorySite = allSites.find((site) => site.type === "STEEL_WORKSHOP") ?? null;
+  const factorySite = factoryEnabled ? allSites.find((site) => site.type === "STEEL_WORKSHOP") ?? null : null;
   const baustellen = allSites.filter((site) => site.type !== "STEEL_WORKSHOP");
   // Production progress (what the factory made, per site): admins and whoever checks factory elements.
-  const seeProduction = Boolean(admin && !worker) || Boolean(worker && accessActor && (accessActor.allows("factory.steps") || baustellen.some((site) => accessActor.allows("factory.steps", site.id))));
+  const seeProduction = factoryEnabled && (Boolean(admin && !worker) || Boolean(worker && accessActor && (accessActor.allows("factory.steps") || baustellen.some((site) => accessActor.allows("factory.steps", site.id)))));
   const selectedTaskProgress = await loadSteelTaskProgress(company.id, allSites.filter(site => isSteelSiteType(site.type)).map(site => site.id));
   const workCatalog = allSites.some(site => isSteelSiteType(site.type)) ? await getSteelWorkCatalogAction({}) : null;
   const factoryDefinitions = workCatalog?.ok ? (workCatalog.definitions ?? []).filter(definition => definition.kind === 'factory') : [];

@@ -6,7 +6,7 @@
  */
 import { FACTORY_STEP_KEYS } from "@/lib/factory/production";
 
-import { doneQty, pieces, routeClosed, routeStages, stagePieces, stagesFor, type ElementState } from "./stages";
+import { readProcessRoutes, doneQty, pieces, routeClosed, routeStages, stagePieces, stagesFor, type ElementState } from "./stages";
 
 export type OutputRow = {
   baustelleId: string;
@@ -49,6 +49,7 @@ const emptyStage = (): StageOutput => ({ marks: 0, pieces: 0, eligibleMarks: 0, 
 export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name: string }>): SiteFactoryOutput[] {
   const bySite = new Map<string, SiteFactoryOutput>();
   for (const row of rows) {
+    if (readProcessRoutes(row.processRoutes)?.supply === "external") continue;
     const site = sites.find((entry) => entry.id === row.baustelleId);
     if (!site) continue;
     const entry =

@@ -1,4 +1,5 @@
 import { withTenantContext } from '@/lib/db/tenant-context';
+import { companyFactoryEnabled } from '@/lib/provision/company-profile';
 import { fuelTimeZone } from '@/lib/fleet/fuel/time';
 import { addMetric, calendarMetrics, dayKey, emptyMetric, emptyMetrics, measure, midnight, monthDays, monthKey, nextDay, projectProgress, seriesFor, shiftMonth, STEEL_TYPES, type Metric } from './steel-metrics';
 export type SteelParams = {
@@ -13,6 +14,7 @@ export async function steelDashboardData(company: {
     country: string;
     displayName: string;
 }, params: SteelParams, readOnly: boolean, now = new Date(), options: { piecesOnly?: boolean } = {}) {
+    if (!await withTenantContext(company.id, tx => companyFactoryEnabled(tx, company.id))) throw new Error('FACTORY_MODULE_DISABLED');
     const zone = fuelTimeZone(company.country), today = dayKey(now, zone), month = monthKey(params.month, today);
     const day = monthDays(month).includes(params.day ?? '') ? params.day! : today.startsWith(month) ? today : `${month}-01`;
     const projects = await withTenantContext(company.id, tx => tx.baustelle.findMany({

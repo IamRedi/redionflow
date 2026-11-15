@@ -1,3 +1,5 @@
+import { productionAudience } from "@/lib/dashboard/steel-access";
+import { withTenantContext } from "@/lib/db/tenant-context";
 import { prisma } from "@/lib/db/prisma";
 import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
@@ -18,7 +20,10 @@ function materialIndicators(
 }
 
 export default async function DisplayWorkzonePage() {
-  const company = await getOrCreateDefaultCompany();
+  const audience = await productionAudience(true);
+  const company = audience ? await withTenantContext(audience.company.id, tx => tx.companyProfile.findUniqueOrThrow({
+    where: { id: audience.company.id }, select: { id: true, street: true, zip: true, city: true },
+  })) : await getOrCreateDefaultCompany();
   const currentLang = await resolveRequestLanguage();
   const [baustellen, coneMoves] = await Promise.all([
     prisma.baustelle.findMany({

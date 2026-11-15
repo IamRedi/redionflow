@@ -9,7 +9,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentDisplayUser } from '@/lib/auth/display-session';
 import { isSaasMode } from '@/lib/saas-config';
 import { SteelDashboard } from "@/components/dashboard/steel-dashboard";
-import { isSteelCompany, productionAudience } from "@/lib/dashboard/steel-access";
+import { isSteelProductionCompany, productionAudience } from "@/lib/dashboard/steel-access";
 import { steelDashboardData, type SteelParams } from "@/lib/dashboard/steel-data";
 import { getDashboardSnapshotForWeek } from "@/lib/dashboard/dashboard-snapshot";
 import { t } from "@/lib/i18n";
@@ -291,7 +291,7 @@ export default async function DisplayDashboardPage({ searchParams }: { searchPar
   const params = await searchParams;
   const audience = await productionAudience(true);
   if (!audience && (isSaasMode || !await getCurrentDisplayUser())) redirect('/display-login');
-  if (audience && audience.company.mode === 'bau' && await isSteelCompany(audience.company.id)) {
+  if (audience && audience.company.mode === 'bau' && await isSteelProductionCompany(audience.company.id)) {
     const lang = await resolveRequestLanguage();
     const data = await steelDashboardData(audience.company, params, true, undefined, { piecesOnly: !(await currentMaySeeWeights()) }).catch(error => { if (error instanceof Error && error.message === 'PRODUCTION_PROJECT_NOT_FOUND') notFound(); throw error; });
     return <SteelDashboard data={data} lang={lang} />;

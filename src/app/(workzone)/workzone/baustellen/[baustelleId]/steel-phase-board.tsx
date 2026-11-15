@@ -82,6 +82,7 @@ function phaseHint(item: SteelPhaseView, lang: string) {
 }
 
 export function SteelPhaseBoard({
+  factoryEnabled = true,
   phases,
   canEdit,
   canManage = false,
@@ -89,6 +90,7 @@ export function SteelPhaseBoard({
   baustelleId,
   definitions = [],
 }: {
+  factoryEnabled?: boolean;
   phases: SteelPhaseView[];
   /** Field engineer or office: finish, reopen, note. */
   canEdit: boolean;
@@ -213,8 +215,8 @@ export function SteelPhaseBoard({
             <h2 className="text-base font-semibold">{t("steel.phasesTitle", currentLang)}</h2>
             {canManage ? <button ref={catalogTrigger} type="button" onClick={() => { setCatalogInitialId(null); setCatalogOpen(true); }} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border bg-card px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"><Plus className="size-4" />{t("steel.addTask", currentLang)}</button> : null}
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-            {STEEL_PHASE_GROUPS.map((key) => {
+          <div className={`grid grid-cols-1 gap-3 sm:gap-4 ${factoryEnabled ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+            {STEEL_PHASE_GROUPS.filter(key => factoryEnabled || key !== "production").map((key) => {
               const stats = groupStats(key);
               return (
                 <button key={key} type="button" data-studio-phase-group data-testid={`phase-group-${key}`} onClick={() => { setGroup(key); setOpenId(null); }}
@@ -328,7 +330,7 @@ export function SteelPhaseBoard({
       </>
       )}
 
-      <SteelWorkCatalog open={catalogOpen} onOpenChange={setCatalogOpen} kind="site" group={group} siteId={baustelleId} definitions={definitions} canManage={canManage} initialDefinitionId={catalogInitialId} onChanged={() => router.refresh()} returnFocusRef={catalogTrigger} />
+      <SteelWorkCatalog factoryEnabled={factoryEnabled} open={catalogOpen} onOpenChange={setCatalogOpen} kind="site" group={group} siteId={baustelleId} definitions={definitions} canManage={canManage} initialDefinitionId={catalogInitialId} onChanged={() => router.refresh()} returnFocusRef={catalogTrigger} />
 
       {typeof document !== "undefined"
         ? createPortal(

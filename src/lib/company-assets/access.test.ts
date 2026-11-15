@@ -1,5 +1,5 @@
 import {beforeEach,expect,it,vi} from 'vitest';
-const mocks=vi.hoisted(()=>({admin:vi.fn(),worker:vi.fn(),company:vi.fn(),steel:vi.fn(),tx:{user:{findFirst:vi.fn()},worker:{findFirst:vi.fn()}}}));
+const mocks=vi.hoisted(()=>({admin:vi.fn(),worker:vi.fn(),company:vi.fn(),steel:vi.fn(),tx:{companyProfile:{findUnique:vi.fn()},user:{findFirst:vi.fn()},worker:{findFirst:vi.fn()}}}));
 vi.mock('@/lib/auth/admin-session',()=>({getCurrentAdmin:mocks.admin}));
 vi.mock('@/lib/workzone/worker-session',()=>({getCurrentWorker:mocks.worker}));
 vi.mock('@/lib/db/tenant',()=>({getCurrentCompanyId:mocks.company}));
@@ -8,7 +8,7 @@ vi.mock('@/lib/db/tenant-context',()=>({withTenantContext:async(_id:string,fn:(t
 import {assetActor} from './access';
 import {assetMutationSchema} from './validation';
 const freshWorker=(crewRole='FIELD_WORKER',level?:string)=>({id:'worker-fixture',firstName:'Fictional',lastName:'Operator',status:'active',crewRole,accessLevel:null,accessGrants:level?[{place:'warehouse',scopeId:'',level}]:[],siteDocumentGrants:[]});
-beforeEach(()=>{vi.resetAllMocks();mocks.company.mockResolvedValue('company-fixture');mocks.steel.mockResolvedValue(true);mocks.worker.mockResolvedValue({id:'worker-fixture'});mocks.tx.worker.findFirst.mockResolvedValue(freshWorker());});
+beforeEach(()=>{vi.resetAllMocks();mocks.tx.companyProfile.findUnique.mockResolvedValue({mode:'bau',setupProfile:null});mocks.company.mockResolvedValue('company-fixture');mocks.steel.mockResolvedValue(true);mocks.worker.mockResolvedValue({id:'worker-fixture'});mocks.tx.worker.findFirst.mockResolvedValue(freshWorker());});
 it('denies anonymous, mixed identities and non-steel companies before returning permissions',async()=>{
  mocks.worker.mockResolvedValueOnce(null);await expect(assetActor()).rejects.toMatchObject({code:'DENIED'});
  mocks.admin.mockResolvedValueOnce({id:'admin-fixture'});await expect(assetActor()).rejects.toMatchObject({code:'DENIED'});

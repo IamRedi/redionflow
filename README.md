@@ -13,6 +13,9 @@
 
 ## BauFlow-Musterbetrieb ist online · 14.11.2026
 
+Interne Weiterentwicklung: [versionierte Firmenprofile und sauberes Onboarding](docs/COMPANY_BLUEPRINTS.md).
+Die Vorbereitung verändert keine bestehende Kundeninstallation und ist kein bereits veröffentlichter Self-Service.
+
 Der eigenständige **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** nutzt die aktuelle Stahlbau-Anwendung mit der eigenen originalen BauFlow-Identität. Am Eingang stehen Geschäftsführung, Buchhaltung, Baustelle, Werkhalle und Werkstatt zur Wahl. Zwölf erfundene Mitarbeitende, fünf Büros, drei Baustellen, eine Werkhalle und elf Betriebsmittel (sechs Fahrzeuge und fünf Werkzeuge) sind miteinander verbunden. Änderungen bleiben gespeichert und sind für andere Testende sichtbar; bitte nur Testdaten verwenden. AL-Steel und BaumdienstFlow behalten ihre unabhängigen Deployments.
 
 [Veröffentlichung, Zugang und Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md). PR206 läuft unter `67cd096`; 1.265 Unit-Tests und 45 Browserfälle bestanden. Die folgenden echten Online-Aufnahmen vom 14. November enthalten fiktive Daten. Die Handyansicht ist responsiv/emuliert, keine Abnahme auf einem physischen Gerät.

@@ -7,6 +7,8 @@ import { FACTORY_STEP_KEYS } from '@/lib/factory/production';
 import { FIELD_STAGES } from '@/lib/elements/stages';
 import { readSteelPhaseMeta, steelPhasesFor } from '@/lib/workzone/steel-phases';
 import { canManageSteelCatalog, steelPhaseGroup, type SteelWorkDefinitionView, type SteelWorkKind } from './types';
+import { companyFactoryEnabled } from '@/lib/provision/company-profile';
+import { isFactoryDefinition } from '@/lib/provision/factory-policy';
 
 type Tx = Prisma.TransactionClient;
 const stableId = (value: string) => createHash('md5').update(value).digest('hex');
@@ -21,14 +23,16 @@ const audit = (tx: Tx, companyId: string, actor: CompanyActor, action: string, p
 export async function ensureSteelWorkCatalog(companyId: string, transaction?: Tx): Promise<number> {
   const run = async (tx: Tx) => {
     await lock(tx, companyId);
+    const factory = await companyFactoryEnabled(tx, companyId);
     const choices = [
       ...siteKeys.map((key, sortOrder) => ({ key, kind: 'site', sortOrder })),
       ...FACTORY_STEP_KEYS.map((key, sortOrder) => ({ key, kind: 'factory', sortOrder })),
       ...FIELD_STAGES.map((key, sortOrder) => ({ key, kind: 'field', sortOrder })),
     ];
-    await tx.steelWorkDefinition.createMany({ data: choices.map(choice => ({ ...choice, id: stableId(`steeldef:${companyId}:${choice.key}`), companyProfileId: companyId })), skipDuplicates: true });
+    await tx.steelWorkDefinition.createMany({ data: choices.filter(choice => factory || !isFactoryDefinition(choice)).map(choice => ({ ...choice, id: stableId(`steeldef:${companyId}:${choice.key}`), companyProfileId: companyId })), skipDuplicates: true });
     const legacy = await tx.treeItem.findMany({ where: { baustelle: { companyProfileId: companyId, type: { in: ['STEEL_ASSEMBLY', 'STEEL_WORKSHOP'] } }, steelTask: null, OR: [{ treeId: { in: siteKeys } }, { treeId: { startsWith: 'steel-task-' } }] }, select: { id: true, baustelleId: true, treeId: true, notes: true } });
     for (const item of legacy) {
+      if (!factory && isFactoryDefinition({ kind: 'site', key: item.treeId })) continue;
       const definition = await tx.steelWorkDefinition.upsert({ where: { companyProfileId_key: { companyProfileId: companyId, key: item.treeId } }, update: {}, create: { id: stableId(`steeldef:${companyId}:${item.treeId}`), companyProfileId: companyId, kind: 'site', key: item.treeId, label: item.treeId.startsWith('steel-task-') ? readSteelPhaseMeta(item.notes).label || 'Task' : '', sortOrder: 100 } });
       await tx.steelSiteTask.createMany({ data: [{ id: stableId(`steeltask:${item.id}`), companyProfileId: companyId, baustelleId: item.baustelleId, definitionId: definition.id, treeItemId: item.id }], skipDuplicates: true });
     }
@@ -42,7 +46,8 @@ export async function readSteelWorkCatalog(companyId: string, siteId?: string): 
     await ensureSteelWorkCatalog(companyId, tx);
     if (siteId && !await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: { in: ['STEEL_ASSEMBLY', 'STEEL_WORKSHOP'] } }, select: { id: true } })) fail('NOT_FOUND');
     const rows = await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId }, orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }, { id: 'asc' }], include: { siteTasks: { where: { companyProfileId: companyId, ...(siteId ? { baustelleId: siteId } : { baustelleId: '__none__' }) }, take: 1 } } });
-    return rows.map(({ siteTasks, ...row }) => ({ ...row, ...(row.kind==='site'?effectiveTaskProcessLink(row):{}), kind: row.kind as SteelWorkKind, linkedList: (row.kind==='site'?effectiveTaskProcessLink(row).linkedList:row.linkedList) as 'assembly' | 'part' | null, archivedAt: row.archivedAt?.toISOString() ?? null, visualUpdatedAt: row.visualUpdatedAt?.toISOString() ?? null, ...(siteId ? { enabled: siteTasks[0]?.enabled ?? false, selectionPosition: siteTasks[0]?.enabled ? siteTasks[0].position : null, phaseItemId: siteTasks[0]?.treeItemId ?? null, ...(siteTasks[0] ? { selectionRevision: siteTasks[0].revision } : {}) } : {}) }));
+    const factory = await companyFactoryEnabled(tx, companyId);
+    return rows.filter(row => factory || !isFactoryDefinition(row)).map(({ siteTasks, ...row }) => ({ ...row, ...(row.kind==='site'?effectiveTaskProcessLink(row):{}), kind: row.kind as SteelWorkKind, linkedList: (row.kind==='site'?effectiveTaskProcessLink(row).linkedList:row.linkedList) as 'assembly' | 'part' | null, archivedAt: row.archivedAt?.toISOString() ?? null, visualUpdatedAt: row.visualUpdatedAt?.toISOString() ?? null, ...(siteId ? { enabled: siteTasks[0]?.enabled ?? false, selectionPosition: siteTasks[0]?.enabled ? siteTasks[0].position : null, phaseItemId: siteTasks[0]?.treeItemId ?? null, ...(siteTasks[0] ? { selectionRevision: siteTasks[0].revision } : {}) } : {}) }));
   });
 }
 
@@ -60,6 +65,7 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     const linkedProcessKey = input.kind === 'site' ? link.linkedProcessKey : null;
     const linkedList = linkedProcessKey ? link.linkedList : null;
     const linkedKind = linkedProcessKey ? link.linkedKind : null;
+    if (!await companyFactoryEnabled(tx, companyId) && isFactoryDefinition({ ...input, key: existing?.key, phaseGroup, linkedProcessKey })) fail('MODULE_DISABLED');
     if (linkedProcessKey) {
       const process = await tx.steelWorkDefinition.findFirst({ where: { companyProfileId: companyId, key: linkedProcessKey, kind: { in: ['factory', 'field'] } }, select: { kind: true, archivedAt: true } });
       const unchangedLink = !!input.id && existing?.linkedProcessKey === linkedProcessKey && existing.linkedList === linkedList && existing.linkedKind === linkedKind;
@@ -100,6 +106,7 @@ async function selectTask(tx: Tx, companyId: string, siteId: string, definitionI
   const site = await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: { in: ['STEEL_ASSEMBLY', 'STEEL_WORKSHOP'] } }, select: { id: true } });
   const definition = await tx.steelWorkDefinition.findFirst({ where: { id: definitionId, companyProfileId: companyId, kind: 'site' } });
   if (!site || !definition || enabled && definition.archivedAt) fail('NOT_FOUND');
+  if (definition && !await companyFactoryEnabled(tx, companyId) && isFactoryDefinition(definition)) fail('MODULE_DISABLED');
   const existing = await tx.steelSiteTask.findUnique({ where: { companyProfileId_baustelleId_definitionId: { companyProfileId: companyId, baustelleId: siteId, definitionId } } });
   if (existing) {
     if (requireRevision && revision === undefined) fail('CONFLICT');
