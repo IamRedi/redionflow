@@ -1,5 +1,5 @@
 /* Reusable company visual profile. No client name, permissions or process logic in CSS. */
-body[data-company-ui='crane-red-blue-v1'] {
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) {
   --background: 215 30% 94% !important;
   --foreground: 219 60% 12% !important;
   --card: 214 50% 98% !important;
@@ -31,7 +31,7 @@ body[data-company-ui='crane-red-blue-v1'] {
   --muster-fleet-edge: var(--steel-edge) !important;
   --bauflow-muster-scene: url('/company-studio/crane-red-blue-v1/yard-day.webp') !important;
 }
-html.dark body[data-company-ui='crane-red-blue-v1'] {
+html.dark body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) {
   --background: 219 44% 10% !important;
   --foreground: 212 38% 96% !important;
   --card: 220 40% 14% !important;
@@ -60,37 +60,39 @@ html.dark body[data-company-ui='crane-red-blue-v1'] {
   --muster-fleet-card: linear-gradient(145deg,#284b7480,#142e4d80) !important;
   --bauflow-muster-scene: url('/company-studio/crane-red-blue-v1/yard-night.webp') !important;
 }
-body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-board] {
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])):has([data-steel-studio]) [data-studio-board] {
   background: transparent !important;
 }
-body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-board] > .steelStudioPhoto {
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])):has([data-steel-studio]) [data-studio-board] > .steelStudioPhoto {
   background: transparent !important;
 }
-body[data-company-ui='crane-red-blue-v1'] [data-studio-dialog]:has([data-testid='fleet-picker'][data-fleet-count='2']) {
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-studio-dialog]:has([data-testid='fleet-picker'][data-fleet-count='2']) {
   width: min(calc(100% - 2rem), 470px);
 }
-body[data-company-ui='crane-red-blue-v1'] [data-studio-dialog]:has([data-testid='fleet-picker'][data-fleet-count='2']) [data-testid='fleet-card-grid'] {
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-studio-dialog]:has([data-testid='fleet-picker'][data-fleet-count='2']) [data-testid='fleet-card-grid'] {
   grid-template-columns: repeat(2,minmax(0,1fr));
 }
-body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-hero-shade] {
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])):has([data-steel-studio]) [data-studio-hero-shade] {
   background: linear-gradient(90deg,#eff6ffe8,#eff6ff8c 35%,transparent 75%);
 }
-html.dark body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-hero-shade] {
+html.dark body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])):has([data-steel-studio]) [data-studio-hero-shade] {
   background: linear-gradient(90deg,#11233ce8,#11233c80 35%,transparent 75%);
 }
-body[data-company-ui='crane-red-blue-v1'] [data-studio-phase-board] > div > .grid { display: flex; flex-wrap: wrap; }
-body[data-company-ui='crane-red-blue-v1'] [data-studio-phase-group] { width: 280px; max-width: 100%; }
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-studio-phase-board] > div > .grid { display: flex; flex-wrap: wrap; }
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-studio-phase-group] { width: 280px; max-width: 100%; }
 /* A single TV workspace owns vertical scrolling; tables remain horizontally usable. */
-body[data-company-ui='crane-red-blue-v1']:has([data-company-display]) [data-testid='flow-global-tools'],
-body[data-company-ui='crane-red-blue-v1']:has([data-company-display]) [data-testid='production-header-tools'] { display: none; }
-body[data-company-ui='crane-red-blue-v1'] [data-company-display] [class~='h-[340px]'] { height: auto; overflow: visible; }
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])):has([data-company-display]) [data-testid='flow-global-tools'],
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])):has([data-company-display]) [data-testid='production-header-tools'] { display: none; }
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-company-display] [class~='h-[340px]'] { height: auto; overflow: visible; }
 @media (prefers-reduced-motion: no-preference) {
-  body[data-company-ui='crane-red-blue-v1'] :is(button,a) { transition-duration: 160ms; }
+  body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) :is(button,a) { transition-duration: 160ms; }
 }
 /* Quiet chrome, same real scrolling and focus reveal. Never hide required content. */
-body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll'] { scrollbar-width: none; }
-body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll']::-webkit-scrollbar { width: 0; height: 0; }
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-testid='app-workspace-scroll'] { scrollbar-width: none; }
+body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-testid='app-workspace-scroll']::-webkit-scrollbar { width: 0; height: 0; }
 @media (forced-colors: active) {
-  body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll'] { scrollbar-width: auto; }
-  body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll']::-webkit-scrollbar { width: auto; height: auto; }
+  body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-testid='app-workspace-scroll'] { scrollbar-width: auto; }
+  body:is([data-company-ui='crane-red-blue-v1'],:has([data-crane-muster-entry])) [data-testid='app-workspace-scroll']::-webkit-scrollbar { width: auto; height: auto; }
 }
+
+.craneMusterEntry { background: var(--bauflow-muster-scene) center / cover no-repeat; }

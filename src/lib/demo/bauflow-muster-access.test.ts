@@ -6,12 +6,40 @@ const db = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/db/prisma', () => ({ prisma: db }));
 import { getBauflowDemoAccount } from './bauflow-muster-access';
+import { resolveBlueprint } from '@/lib/provision/blueprints';
 
 beforeEach(() => {
   vi.resetAllMocks();
   for (const [key, value] of Object.entries({ APP_ENV: 'demo', SAAS_MODE: 'false', DEMO_MODE: 'true', BAUFLOW_MUSTER_PROFILE: 'steel-v1', BAUFLOW_MUSTER_PUBLIC_DEMO: 'true', INSTALLATION_COMPANY_ID: 'bauflow-muster-steel' })) vi.stubEnv(key, value);
   db.companyProfile.count.mockResolvedValue(1);
   db.companyProfile.findUnique.mockResolvedValue({ mode: 'bau', legalName: 'BauFlow Musterbau GmbH · Fiktive Demofirma' });
+});
+
+describe('crane demo account boundary',()=>{
+  function configure(){
+    vi.stubEnv('INSTALLATION_COMPANY_ID','company-rheinruhr-kran-muster');
+    vi.stubEnv('CRANE_MUSTER_PUBLIC_DEMO','true');
+    vi.stubEnv('CRANE_MUSTER_OWNER_ID','synthetic-crane-owner');
+    db.companyProfile.findUnique.mockResolvedValue({mode:'bau',legalName:'RheinRuhr Kranservice Muster GmbH · Fiktive Demofirma',uiIdentity:'crane-red-blue-v1',setupProfile:resolveBlueprint({id:'steel-assembly',version:1})});
+  }
+  it('uses only the configured owner in the exact fictional crane firm',async()=>{
+    configure();db.user.findFirst.mockResolvedValue({id:'synthetic-crane-owner',sessionEpoch:2});
+    expect((await getBauflowDemoAccount('owner'))?.id).toBe('synthetic-crane-owner');
+    expect(db.user.findFirst).toHaveBeenCalledWith(expect.objectContaining({where:{id:'synthetic-crane-owner',companyProfileId:'company-rheinruhr-kran-muster',role:'ADMIN',isOwner:true,isActive:true}}));
+  });
+  it('resolves the fixed dispatcher worker and refuses the factory role',async()=>{
+    configure();db.worker.findFirst.mockResolvedValue({id:'crane-muster-dispo',sessionEpoch:1});
+    expect((await getBauflowDemoAccount('disposition'))?.kind).toBe('worker');
+    expect(await getBauflowDemoAccount('factory')).toBeNull();
+  });
+  it.each([null,'malformed',{factory:false},resolveBlueprint({id:'steel-assembly',version:1,factory:true})])('fails closed on a missing or incompatible factory profile %s',async setupProfile=>{
+    configure();db.companyProfile.findUnique.mockResolvedValue({mode:'bau',legalName:'RheinRuhr Kranservice Muster GmbH · Fiktive Demofirma',uiIdentity:'crane-red-blue-v1',setupProfile});
+    expect(await getBauflowDemoAccount('owner')).toBeNull();expect(db.user.findFirst).not.toHaveBeenCalled();
+  });
+  it('refuses another company even when demo flags are present',async()=>{
+    configure();db.companyProfile.findUnique.mockResolvedValue({mode:'bau',legalName:'Real client',uiIdentity:'crane-red-blue-v1'});
+    expect(await getBauflowDemoAccount('owner')).toBeNull();expect(db.user.findFirst).not.toHaveBeenCalled();
+  });
 });
 afterEach(() => vi.unstubAllEnvs());
 

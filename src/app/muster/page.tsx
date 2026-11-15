@@ -7,12 +7,13 @@ import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { RediOnFooter } from '@/components/branding/RediOnFooter';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { getBauflowDemoAccount } from '@/lib/demo/bauflow-muster-access';
+import { publicMusterProfile } from '@/lib/demo/public-muster';
 import { enterBauflowDemo } from './actions';
 import '@/components/steel/steel-studio.css';
 
-export const metadata: Metadata = { title: 'BauFlow · Musterfirma', robots: { index: false, follow: false } };
-const productName = 'BauFlow';
-const profileName = 'BauFlow · Musterfirma';
+export function generateMetadata():Metadata { return { title:publicMusterProfile()?.title??'BauFlow · Musterfirma',robots:{index:false,follow:false} }; }
+const craneIntro={de:'Büro, Hebeeinsatz, Geräte und Werkstatt. Ohne eigene Fertigung.',sq:'Zyra, puna me vinça, pajisjet dhe oficina. Pa fabrikë.',en:'Office, lifting jobs, equipment and workshop. No factory.',it:'Ufficio, sollevamenti, attrezzature e officina. Senza fabbrica.',pl:'Biuro, prace dźwigowe, sprzęt i warsztat. Bez fabryki.',ro:'Birou, lucrări cu macara, echipamente și atelier. Fără fabrică.'};
+const dispositionLabel={de:'Disposition & Kunden',sq:'Organizimi & klientët',en:'Dispatch & clients',it:'Organizzazione e clienti',pl:'Dyspozycja i klienci',ro:'Dispecerat și clienți'};
 
 const copy = {
   de: { title: 'Ein Betrieb. Ein gemeinsamer Ablauf.', intro: 'Büro, Fertigung und Baustelle im selben BauFlow-System.', note: 'Öffentliche Musterfirma mit erfundenen Daten. Änderungen sind für andere Tester sichtbar. Bitte nur Testdaten verwenden.', owner: 'Geschäftsführung', office: 'Buchhaltung', field: 'Baustelle', factory: 'Fertigung', workshop: 'Werkstatt', theme: 'Tag / Nacht', busy: 'Bitte kurz warten und später erneut öffnen.', legal: 'Impressum', privacy: 'Datenschutz Website' },
@@ -30,28 +31,36 @@ const roles = [
   { role: 'factory', name: 'Deniz Yilmaz', icon: Factory },
   { role: 'workshop', name: 'Emma Schulz', icon: Wrench },
 ] as const;
+const craneRoles=[
+  {role:'owner',name:'Clara Winter',icon:UserRound},
+  {role:'disposition',name:'Lena Hartmann',icon:BriefcaseBusiness},
+  {role:'office',name:'David Keller',icon:BriefcaseBusiness},
+  {role:'field',name:'Milan Vogel',icon:HardHat},
+  {role:'workshop',name:'Eva Sommer',icon:Wrench},
+] as const;
 
 export default async function MusterPage({ searchParams }: { searchParams: Promise<{ busy?: string }> }) {
-  if (!await getBauflowDemoAccount('owner')) notFound();
+  const profile=publicMusterProfile();
+  if (!profile || !await getBauflowDemoAccount('owner')) notFound();
   const lang = await resolveRequestLanguage();
   const c = copy[lang];
   const busy = (await searchParams).busy === '1';
-  return <div data-steel-studio className="bauflowMusterEntry flex min-h-dvh min-w-0 flex-col p-3 sm:p-6" data-testid="muster-entry">
+  return <div data-steel-studio data-crane-muster-entry={profile.crane||undefined} className={`${profile.crane?'craneMusterEntry':'bauflowMusterEntry'} flex min-h-dvh min-w-0 flex-col p-3 sm:p-6`} data-testid="muster-entry">
     <header className="flex items-center justify-end gap-2">
       <LanguageSwitcher />
       <form method="post" action="/app/toggle-theme"><Button type="submit" variant="outline" className="size-11 rounded-full p-0" aria-label={c.theme} title={c.theme}><SunMoon /></Button></form>
     </header>
     <main className="flex flex-1 items-center justify-center py-4">
       <section data-studio-home className="bauflowMusterEntryPanel w-full max-w-md rounded-3xl border p-5 sm:p-7">
-        <Image src="/bauflow-muster-v1/brand-profile.webp" width={76} height={76} alt={productName} className="mb-4 rounded-full" priority unoptimized />
-        <p className="text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">{profileName}</p>
+        <Image src={profile.logo} width={76} height={76} alt={profile.title} className="mb-4 rounded-full" priority unoptimized />
+        <p className="text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">{profile.title}</p>
         <h1 className="mt-2 text-2xl font-semibold leading-tight">{c.title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{c.intro}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{profile.crane?craneIntro[lang]:c.intro}</p>
         <div className="mt-5 grid gap-2">
-          {roles.map(({ role, name, icon: Icon }) => <form action={enterBauflowDemo} key={role}>
+          {(profile.crane?craneRoles:roles).map(({ role, name, icon: Icon }) => <form action={enterBauflowDemo} key={role}>
             <input type="hidden" name="role" value={role} />
             <Button type="submit" variant={role === 'owner' ? 'default' : 'outline'} data-demo-role={role} className="h-auto min-h-14 w-full justify-start rounded-xl px-3 py-2 text-left">
-              <Icon className="size-5" /><span className="min-w-0 flex-1 whitespace-normal"><strong className="block text-sm">{c[role]}</strong><span className="block text-xs opacity-80">{name}</span></span><ArrowRight />
+              <Icon className="size-5" /><span className="min-w-0 flex-1 whitespace-normal"><strong className="block text-sm">{role==='disposition'?dispositionLabel[lang]:c[role]}</strong><span className="block text-xs opacity-80">{name}</span></span><ArrowRight />
             </Button>
           </form>)}
         </div>

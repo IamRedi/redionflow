@@ -1,25 +1,31 @@
 import { prisma } from '@/lib/db/prisma';
 import type { Prisma } from '@/generated/prisma/client';
-import { BAUFLOW_MUSTER_COMPANY_ID, bauflowDemoSubject } from './bauflow-muster';
+import { publicMusterProfile, publicMusterSubject } from './public-muster';
+import { readBlueprint } from '@/lib/provision/blueprints';
 
 /** Never selects an arbitrary user, first tenant or a client-provided account ID. */
 export async function getBauflowDemoAccount(role: string) {
-  const subject = bauflowDemoSubject(role);
-  if (!subject || await prisma.companyProfile.count() !== 1) return null;
+  const profile = publicMusterProfile();
+  const subject = publicMusterSubject(role);
+  if (!profile || !subject || await prisma.companyProfile.count() !== 1) return null;
   const company = await prisma.companyProfile.findUnique({
-    where: { id: BAUFLOW_MUSTER_COMPANY_ID },
-    select: { mode: true, legalName: true },
+    where: { id: profile.companyId },
+    select: { mode: true, legalName: true, uiIdentity: true, setupProfile: true },
   });
-  if (company?.mode !== 'bau' || company.legalName !== 'BauFlow Musterbau GmbH · Fiktive Demofirma') return null;
+  if (company?.mode !== 'bau' || company.legalName !== profile.legalName) return null;
+  if(profile.crane) {
+    try { if(company.uiIdentity!=='crane-red-blue-v1'||readBlueprint(company.setupProfile)?.factory!==false)return null; }
+    catch { return null; }
+  }
   if (subject.kind === 'admin') {
     const account = await prisma.user.findFirst({
-      where: { id: subject.id, companyProfileId: BAUFLOW_MUSTER_COMPANY_ID, role: 'ADMIN', isOwner: true, isActive: true },
+      where: { id: subject.id, companyProfileId: profile.companyId, role: 'ADMIN', isOwner: true, isActive: true },
       select: { id: true, sessionEpoch: true },
     });
     return account ? { ...account, kind: subject.kind } : null;
   }
   const workerWhere = {
-    id: subject.id, companyProfileId: BAUFLOW_MUSTER_COMPANY_ID,
+    id: subject.id, companyProfileId: profile.companyId,
     crewRole: subject.role, status: 'active',
   } satisfies Prisma.WorkerWhereInput;
   const account = await prisma.worker.findFirst({
