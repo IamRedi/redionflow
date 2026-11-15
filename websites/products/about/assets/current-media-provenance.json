@@ -1,7 +1,7 @@
 {
   "project_id": "baumdienstflow",
   "prepared_at": "2026-11-14",
-  "publication": "PENDING_OWNER_APPROVAL",
+  "publication": "OWNER_AUTHORIZED_FOR_PUBLICATION",
   "native_source_base": "ce2d341d55742c3364df38f4d02521e55b142d3c",
   "records": [
     {
@@ -363,6 +363,39 @@
       "note": "Actual UI capture. Botanical pictures inside the app are generated species references, not photos of individual site trees.",
       "status": "DRAFT",
       "owner_approval": "Musterfirma runtime approved; companion website publication pending"
+    },
+    {
+      "id": "baumdienstflow/2026-11-15/site-card-photoreal-20261115",
+      "type": "APP_UI_CAPTURE",
+      "source": {
+        "commit": "99c69eee4f902f0b3d7ed3071921e75dd5e9f8ee",
+        "date": "2026-11-15",
+        "environment": "Musterfirma live, read only"
+      },
+      "file": "site-card-photoreal-20261115.jpg",
+      "sha256": "811c0847c2703ad754cef7261a7ffe7c400e54946f4b8dc683753c58f6f3658d",
+      "width": 1279,
+      "height": 585,
+      "bytes": 62569,
+      "access": "public-synthetic",
+      "status": "APPROVED_FOR_PUBLICATION"
+    },
+    {
+      "id": "baumdienstflow/2026-11-15/tree-cards-photoreal-phone-20261115",
+      "type": "ACTUAL_COMPONENT_CAPTURE",
+      "source": {
+        "commit": "99c69eee4f902f0b3d7ed3071921e75dd5e9f8ee",
+        "date": "2026-11-15",
+        "environment": "current component with 56 synthetic read-only trees"
+      },
+      "file": "tree-cards-photoreal-phone-20261115.jpg",
+      "sha256": "ae68d9186c2275056e990dd302b2cf6ae540ac946bc818f5f478a8c8e4ce2ef6",
+      "width": 390,
+      "height": 844,
+      "bytes": 52559,
+      "access": "public-synthetic",
+      "status": "APPROVED_FOR_PUBLICATION"
     }
-  ]
+  ],
+  "current_media_reviewed": "2026-11-15"
 }
