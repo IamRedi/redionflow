@@ -329,47 +329,55 @@ body:has([data-baum-studio="forest-crystal-v1"]):has(.baum-site-detail) [role="d
   .baum-tree-tools select { flex: 1; min-width: 0; width: 72px; }
   .baum-tree-view-toggle { margin-left: auto; }
 }
-/* A tree opens in its own glass card, inside the one scrolling collection. */
-.baum-tree-card { position: relative; min-width: 0; align-self: start; overflow: hidden; border: 1px solid hsl(var(--border) / .8); border-top-color: var(--baum-edge); border-radius: 20px; background: var(--baum-glass); box-shadow: var(--baum-shadow); color: hsl(var(--foreground)); transition: border-color 160ms, box-shadow 160ms; }
-.baum-tree-card[data-tree-status="done"] { border-color: hsl(var(--primary) / .4); border-top-color: var(--baum-edge); }
-.baum-tree-card[data-tree-status="blocked"] { border-color: #b78032a6; }
-.baum-tree-card[data-tree-card-mode] { border-color: hsl(var(--primary) / .65); background: var(--baum-overlay); }
-.baum-tree-trigger { display: flex; width: 100%; min-width: 0; min-height: 244px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 30px 10px 18px; text-align: center; touch-action: pan-y; }
+/* Fixed tree slots: two glass faces rotate without reflowing the collection. */
+.baum-site-dialog--trees .baum-site-panel,.baum-site-dialog--map .baum-site-panel { animation: none; }
+.baum-tree-card { position: relative; height: 17rem; min-width: 0; align-self: start; perspective: 1000px; color: hsl(var(--foreground)); }
+.baum-tree-turner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 280ms cubic-bezier(.2,.65,.25,1); }
+.baum-tree-card[data-tree-card-mode] .baum-tree-turner { transform: rotateY(180deg); }
+.baum-tree-face { position: absolute; inset: 0; min-width: 0; overflow: hidden; border: 1px solid hsl(var(--border) / .8); border-top-color: var(--baum-edge); border-radius: 20px; background: var(--baum-glass); box-shadow: var(--baum-shadow); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.baum-tree-face--back { transform: rotateY(180deg); background: var(--baum-overlay); border-color: hsl(var(--primary) / .65); }
+.baum-tree-card[data-tree-status="done"] .baum-tree-face--front { border-color: hsl(var(--primary) / .4); border-top-color: var(--baum-edge); }
+.baum-tree-card[data-tree-status="blocked"] .baum-tree-face--front { border-color: #b78032a6; }
+.baum-tree-trigger { display: flex; width: 100%; height: 100%; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 36px 10px 18px; text-align: center; touch-action: pan-y; }
 .baum-tree-trigger > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 36px; max-width: 100%; font-size: 14px; font-weight: 650; line-height: 1.3; overflow-wrap: anywhere; }
 .baum-tree-illustration { width: 176px; height: 136px; max-width: 100%; flex: none; }
 .baum-tree-code { font-size: 11px; letter-spacing: .06em; color: hsl(var(--muted-foreground)); }
-.baum-tree-state-symbol { position: absolute; top: 12px; left: 12px; pointer-events: none; color: hsl(var(--primary)); }
+.baum-tree-state-symbol { position: absolute; top: 13px; left: 10px; pointer-events: none; color: hsl(var(--primary)); }
 .baum-tree-state-symbol svg { width: 17px; height: 17px; }
 .baum-tree-card[data-tree-status="blocked"] .baum-tree-state-symbol { color: #a96818; }
 html.dark .baum-tree-card[data-tree-status="blocked"] .baum-tree-state-symbol { color: #f0bc67; }
-.baum-tree-more { position: absolute; right: 0; top: 0; display: grid; width: 44px; height: 44px; place-items: center; border-radius: 14px; color: hsl(var(--muted-foreground)); }
-.baum-tree-more[hidden] { display: none; }
+.baum-tree-more,.baum-tree-inspect-front { position: absolute; right: 0; top: 0; display: grid; width: 44px; height: 44px; place-items: center; border-radius: 14px; color: hsl(var(--muted-foreground)); }
+.baum-tree-inspect-front { right: 44px; color: hsl(var(--primary)); }
 .baum-tree-more svg { width: 18px; height: 18px; }
-.baum-tree-card[data-tree-card-mode] .baum-tree-trigger { min-height: 0; padding: 42px 10px 10px; gap: 4px; }
-.baum-tree-card[data-tree-card-mode] .baum-tree-trigger > strong { min-height: 0; }
-.baum-tree-card[data-tree-card-mode] .baum-tree-illustration { height: 78px; width: 110px; }
-.baum-tree-card-tools { position: absolute; top: 0; right: 0; display: flex; }
-.baum-tree-card-tools [data-ui-control="button"] { border-radius: 12px; }
-.baum-tree-inline { min-width: 0; padding: 0 10px 10px; outline: none; }
-.baum-tree-inline-body { display: grid; min-width: 0; gap: 10px; }
-.baum-tree-card-meta { display: grid; justify-items: center; gap: 5px; text-align: center; }
+.baum-tree-inline { height: 100%; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 10px 10px; outline: none; }
+.baum-tree-inline-body { display: flex; min-height: 100%; min-width: 0; flex-direction: column; gap: 8px; }
+.baum-tree-card-tools { display: grid; grid-template-columns: 44px minmax(0,1fr) 44px; align-items: center; flex: none; margin-inline: -10px; }
+.baum-tree-back-code { min-width: 0; text-align: center; color: hsl(var(--muted-foreground)); font-size: 10px; letter-spacing: .03em; }
+.baum-tree-card-meta { display: grid; justify-items: center; flex: none; gap: 5px; text-align: center; }
 .baum-tree-card-meta > p { font-size: 11px; line-height: 1.45; color: hsl(var(--muted-foreground)); }
 .baum-tree-card-meta > span { font-size: 10px; }
 .baum-tree-actions, .baum-tree-card-form { display: grid; min-width: 0; gap: 7px; }
+.baum-tree-card[data-tree-card-mode="quick"] .baum-tree-actions { margin-block: auto; }
 .baum-tree-inline :is(p,strong,label,span,summary) { overflow-wrap: anywhere; }
 .baum-tree-inline [data-ui-control="button"] { width: 100%; min-width: 0; min-height: 44px; height: auto; padding: 10px 8px; gap: 6px; border-radius: 12px; white-space: normal; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
 .baum-tree-inline [data-ui-control="button"] > svg { width: 16px; height: 16px; flex-shrink: 0; }
 .baum-tree-inline .baum-tree-card-tools [data-ui-control="button"] { width: 44px; height: 44px; }
+.baum-tree-card .baum-tree-inspect-icon,.baum-tree-inline .baum-tree-card-tools .baum-tree-inspect-icon { width: 24px; height: 24px; }
 .baum-tree-card-form :is(input:not([type="checkbox"]),textarea) { width: 100%; max-width: 100%; min-width: 0; border-radius: 12px; font-size: 13px; }
 .baum-tree-card-form textarea { resize: vertical; }
+.baum-tree-card[data-tree-card-mode="report"] .baum-tree-inline-body { height: 100%; min-height: 0; }
+.baum-tree-card[data-tree-card-mode="report"] .baum-tree-card-form { display: flex; flex: 1 0 auto; min-height: 0; flex-direction: column; }
+.baum-tree-card[data-tree-card-mode="report"] .baum-tree-card-form > label { display: flex; flex: 1 0 auto; min-height: 0; flex-direction: column; font-size: 12px; }
+.baum-tree-card[data-tree-card-mode="report"] textarea { flex: 1 0 auto; min-height: 48px; height: auto; resize: none; }
+.baum-tree-card[data-tree-card-mode="report"] [role="alert"] { flex: none; padding: 6px; font-size: 11px; line-height: 1.35; }
 .baum-tree-inline details > summary { font-size: 12px; }
 .baum-tree-inline .baum-tree-equipment-summary > div { min-width: 0; padding: 10px 4px; }
 .baum-tree-card :is(button,input,textarea,summary):focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -3px; }
+.baum-tree-inline:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -3px; border-radius: 20px; }
 .baum-tree-card :is(button):disabled { opacity: .55; cursor: wait; }
-@media (min-width:601px) { .baum-tree-card:is([data-tree-card-mode="detail"],[data-tree-card-mode="edit"],[data-tree-card-mode="equipment"]) { grid-column: span 2; } }
-@media (max-width:600px) { .baum-tree-card:is([data-tree-card-mode="detail"],[data-tree-card-mode="edit"],[data-tree-card-mode="equipment"]) { grid-column: 1/-1; } }
-@media (prefers-reduced-motion:reduce) { .baum-tree-card { transition: none; } }
-@media (forced-colors:active) { .baum-tree-card,.baum-tree-card[data-tree-card-mode] { background: Canvas; color: CanvasText; border: 1px solid ButtonText; box-shadow: none; } }
+@media (prefers-reduced-motion:reduce) { .baum-tree-turner { transition: none; } }
+@media print { .baum-tree-turner { transition: none; } }
+@media (forced-colors:active) { .baum-tree-face { background: Canvas; color: CanvasText; border: 1px solid ButtonText; box-shadow: none; } }
 /* Keep the site shell in the viewport; only the tree collection scrolls. */
 .baum-site-dialog {
   --site-gap: clamp(8px, 1.6dvh, 16px);

@@ -135,7 +135,7 @@ test("tree filters share one clean card and map while the species studio and sit
 });
 
 
-test("tree actions and report retry stay in their own glass card without a second dialog", async ({ page, context, request }, info) => {
+test("tree cards flip without moving any slot; tree-lens reader and report retry preserve behavior", async ({ page, context, request }, info) => {
   const before = await (await request.get("/api/demo/baumdienst/workshop")).json();
   const site = before.directory.sites.find((entry: { name: string }) => entry.name.includes("Lindenallee"));
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
@@ -146,12 +146,25 @@ test("tree actions and report retry stay in their own glass card without a secon
     await page.getByRole("button", { name: "Bäume", exact: true }).click();
     const grid = page.getByTestId("muster-tree-grid"), card = grid.locator('article[data-tree-status="todo"]').first();
     code = (await card.getAttribute("data-tree-code"))!;
-    const trigger = card.locator(".baum-tree-trigger"), width = (await card.boundingBox())!.width;
-    await trigger.click();
+    const trigger = card.locator(".baum-tree-trigger");
+    const inspect = card.getByRole("button", { name: `Artenkarte öffnen · ${code}`, exact: true });
+    await expect(inspect.locator("svg[data-tree-inspection-icon]")).toHaveCount(1);
+    await inspect.click(); await expect(page.locator('[role="dialog"]')).toHaveCount(2);
+    await expect(page.getByRole("dialog").getByTestId("species-reference")).toBeVisible();
+    await page.getByRole("dialog").getByRole("button", { name: "Schließen", exact: true }).click();
+    await expect(inspect).toBeFocused(); await expect(card.getByTestId("muster-tree-inline")).toHaveCount(0);
+    await trigger.scrollIntoViewIfNeeded();
+    const slots = () => grid.evaluate(element => { const g = element.getBoundingClientRect(); return [...element.querySelectorAll("article[data-tree-code]")].map(card => { const r = card.getBoundingClientRect(); return [card.getAttribute("data-tree-code"), ...[r.left - g.left, r.top - g.top + element.scrollTop, r.width, r.height].map(n => Number(n.toFixed(2)))]; }); });
+    const beforeSlots = await slots(), beforeScroll = await grid.evaluate(element => element.scrollTop), boxBefore = (await card.boundingBox())!;
+    const point = await trigger.evaluate(element => { const r = element.getBoundingClientRect(), g = element.closest('[data-testid="muster-tree-grid"]')!.getBoundingClientRect(); return { x: Math.max(r.left,g.left) + Math.min(r.width,40), y: (Math.max(r.top,g.top) + Math.min(r.bottom,g.bottom))/2 }; });
+    await page.mouse.click(point.x, point.y);
+    expect(await slots()).toEqual(beforeSlots);
+    await expect.poll(() => card.locator(".baum-tree-turner").evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m11)).toBeLessThan(-.99);
+    expect(await slots()).toEqual(beforeSlots); expect(await grid.evaluate(element => element.scrollTop)).toBe(beforeScroll);
     const inline = card.getByTestId("muster-tree-inline"); await expect(inline).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(1);
     await expect(inline.getByRole("button", { name: "Erledigt", exact: true })).toBeVisible();
-    expect((await card.boundingBox())!.width).toBeCloseTo(width, 0);
+    expect((await card.boundingBox())!.width).toBeCloseTo(boxBefore.width, 0); expect((await card.boundingBox())!.height).toBeCloseTo(boxBefore.height, 0);
     for (const label of ["Erledigt", "Problem melden"]) {
       const box = await inline.getByRole("button", { name: label, exact: true }).boundingBox();
       expect(box!.width).toBeGreaterThanOrEqual(44); expect(box!.height).toBeGreaterThanOrEqual(44);
@@ -162,13 +175,20 @@ test("tree actions and report retry stay in their own glass card without a secon
     await inline.getByRole("button", { name: "Problem melden", exact: true }).click();
     await inline.getByLabel("Was muss geprüft werden?").fill("DEMO · temporary unsent note");
     await expect(inline.getByLabel("Was muss geprüft werden?")).toBeFocused();
+    expect(await slots()).toEqual(beforeSlots);
     await page.screenshot({ animations: "disabled", path: info.outputPath(`report-${theme}-${size.width}.png`) });
     await page.keyboard.press("Escape"); await expect(inline).toHaveCount(0);
     await expect(trigger).toBeFocused(); await expect(page.getByRole("dialog")).toHaveCount(1);
+    expect(await slots()).toEqual(beforeSlots);
     await trigger.press("Enter"); await expect(card.getByTestId("muster-tree-inline")).toBeVisible();
     await card.getByRole("button", { name: `Schließen · ${code}`, exact: true }).click();
     await expect(trigger).toBeFocused();
   }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const reducedCard = page.locator(`article[data-tree-code="${code}"]`);
+  await reducedCard.locator(".baum-tree-trigger").press("Enter");
+  await expect(reducedCard.locator(".baum-tree-turner")).toHaveCSS("transition-duration", "0s");
+  await page.keyboard.press("Escape"); await page.emulateMedia({ reducedMotion: "no-preference" });
   const readOnly = await (await request.get("/api/demo/baumdienst/workshop")).json();
   expect(readOnly.state).toEqual(before.state); expect(readOnly.revision).toBe(before.revision);
   const card = page.locator(`article[data-tree-code="${code}"]`);

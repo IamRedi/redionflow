@@ -17,7 +17,7 @@ test("botanical studio keeps six/two columns, characteristic leaves, seasons and
     await expect(d.getByTestId("species-reference")).toContainText("Gerippt, doppelt gesägt"); await d.getByText("Mehr über diese Art",{exact:true}).click();await expect(d.locator('svg[data-botanical-form="hedge"]')).toHaveCount(1);await expect(d.getByTestId("atlas-plate").locator("img")).toBeVisible(); await d.getByRole("button",{name:/^Blatt \/ Nadeln/}).click(); await expect(d.getByTestId("atlas-plate")).toHaveAttribute("data-area","leaf");
     expect(await d.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);await page.screenshot({path:info.outputPath(`studio-hedge-${width}.png`)});
     await d.getByRole("button",{name:"Schließen",exact:true}).click();
-    await grid.locator('article > button').first().click();
+    await grid.locator('.baum-tree-trigger').first().click();
     const magnifier=page.getByRole("button",{name:"Artenkarte öffnen",exact:true});
     const box=await magnifier.boundingBox();expect(box?.width).toBeGreaterThanOrEqual(44);expect(box?.height).toBeGreaterThanOrEqual(44);
     await magnifier.click();const atlas=page.getByRole("dialog").last();await expect(atlas.getByTestId("species-reference")).toBeVisible();
