@@ -4,8 +4,11 @@ import { can as decide, type AccessAction, type AccessSubject } from "@/lib/acce
 import { withTenantContext } from "@/lib/db/tenant-context";
 import type { CrewPermissions } from "@/lib/workzone/crew-roles";
 import { getCurrentWorker } from "@/lib/workzone/worker-session";
+import { companyFactoryEnabled } from '@/lib/provision/company-profile';
+import { withPilotDbContext } from '@/lib/db/tenant-runtime';
 
 export type CompanyActor = {
+  factoryEnabled?: boolean;
   name: string;
   workerId: string | null;
   userId: string | null;
@@ -19,8 +22,6 @@ export type CompanyActor = {
   /** Single access check (src/lib/access/rules.ts). */
   allows: (action: AccessAction, scopeId?: string) => boolean;
 };
-
-const ADMIN: AccessSubject = { kind: "admin" };
 
 /** Old permission shape from the new rules; identical for workers whose level is not set yet. */
 export function permissionsAt(subject: AccessSubject, siteId = ""): CrewPermissions {
@@ -42,6 +43,7 @@ export async function currentCompanyActor(companyId: string): Promise<CompanyAct
     if (!subject) return null;
     const can = permissionsAt(subject);
     return {
+      factoryEnabled: subject.factoryEnabled,
       name: `${worker.firstName} ${worker.lastName}`.trim(),
       workerId: worker.id,
       userId: null,
@@ -53,8 +55,10 @@ export async function currentCompanyActor(companyId: string): Promise<CompanyAct
     };
   }
   if (admin && admin.companyProfileId === companyId) {
-    const can = permissionsAt(ADMIN);
-    return { name: (admin.name ?? admin.email ?? "Admin").trim(), workerId: null, userId: admin.id, isAdmin: true, canAdvance: true, can, at: () => can, allows: () => true };
+    const factoryEnabled = await withPilotDbContext(companyId, tx => companyFactoryEnabled(tx, companyId), 'admin');
+    const subject: AccessSubject = { kind: 'admin', factoryEnabled };
+    const can = permissionsAt(subject);
+    return { factoryEnabled, name: (admin.name ?? admin.email ?? "Admin").trim(), workerId: null, userId: admin.id, isAdmin: true, canAdvance: can.factorySteps, can, at: () => can, allows: (action, scopeId = '') => decide(subject, action, scopeId) };
   }
   return null;
 }

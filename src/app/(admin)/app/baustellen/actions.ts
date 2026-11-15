@@ -14,6 +14,7 @@ import { createBaustelleSchema, updateBaustelleCanvasPositionSchema, updateBaust
 import { checkLimit, overLimitMessage } from "@/lib/billing/limits";
 import { getPilotAdminCompanyId as getCurrentCompanyId } from "@/lib/auth/pilot-session";
 import { isOwnedByCurrentCompany } from "@/lib/db/tenant";
+import { companyFactoryEnabled } from "@/lib/provision/company-profile";
 
 function sanitizeFileName(value: string) {
   return value
@@ -47,6 +48,7 @@ export async function createBaustelleAction(input: unknown): Promise<ActionResul
   const v = parsed.data;
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId || currentCompanyId !== v.companyId) return { ok: false, message: tr("checkInputs") };
+  if (v.type === "STEEL_WORKSHOP" && !await withPilotDbContext(currentCompanyId, tx => companyFactoryEnabled(tx, currentCompanyId), "admin")) return { ok: false, message: tr("checkInputs") };
   const requestLang = await resolveRequestLanguage();
   const description = v.description?.trim() ? v.description.trim() : null;
   const address = v.address?.trim() ? v.address.trim() : null;
@@ -112,6 +114,7 @@ export async function createBaustelleWithDocumentsAction(formData: FormData): Pr
   const v = parsed.data;
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId || currentCompanyId !== v.companyId) return { ok: false, message: tr("checkInputs") };
+  if (v.type === "STEEL_WORKSHOP" && !await withPilotDbContext(currentCompanyId, tx => companyFactoryEnabled(tx, currentCompanyId), "admin")) return { ok: false, message: tr("checkInputs") };
   const requestLang = await resolveRequestLanguage();
   const description = v.description?.trim() ? v.description.trim() : null;
   const address = v.address?.trim() ? v.address.trim() : null;
@@ -238,6 +241,8 @@ export async function updateBaustelleMetaAction(formData: FormData): Promise<voi
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return;
   const updated = await withPilotDbContext(currentCompanyId, async tx => {
+    if (v.type === 'STEEL_WORKSHOP' && !await companyFactoryEnabled(tx, currentCompanyId)) return null;
+
     const existing = await tx.baustelle.findUnique({
       where: { id: v.baustelleId },
       select: { id: true, companyProfileId: true },

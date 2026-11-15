@@ -21,7 +21,7 @@ export type ElementList = "assembly" | "part";
 export const FIELD_STAGES = ["received", "mounted", "bolted", "touchup"] as const;
 export const ALL_STAGES: readonly string[] = [...FACTORY_STEP_KEYS, ...FIELD_STAGES];
 
-export type ElementProcessRoutes = { v: 1; factory: string[] | null; field: string[] | null };
+export type ElementProcessRoutes = { v: 1; factory: string[] | null; field: string[] | null; supply?: 'external' };
 export const isCustomStage = (stage: string) => /^(?:fp|sp)-[a-f0-9]{24}$/.test(stage);
 
 /** Null sides retain the original, inferred route. Empty sides never release pieces. */
@@ -36,7 +36,8 @@ export function readProcessRoutes(value: unknown): ElementProcessRoutes | null {
     return [...new Set(raw as string[])];
   };
   const factory = read("factory"), field = read("field");
-  return factory === undefined || field === undefined ? null : { v: 1, factory, field };
+  if (item.supply !== undefined && (item.supply !== 'external' || !Array.isArray(factory) || factory.length !== 0)) return null;
+  return factory === undefined || field === undefined ? null : { v: 1, factory, field, ...(item.supply === 'external' ? { supply: 'external' as const } : {}) };
 }
 
 export function stagesFor(side: ElementSide, list: ElementList, processRoutes?: unknown): readonly string[] {
@@ -123,6 +124,8 @@ export function routeClosed(element: ElementState, side: ElementSide) {
  * route. In the factory they go to the field list, the rest stays.
  */
 export function doneQty(element: ElementState, side: ElementSide): number {
+  // Externally supplied assemblies can enter receiving without inventing factory work or timestamps.
+  if (side === 'factory' && readProcessRoutes(element.processRoutes)?.supply === 'external') return pieces(element);
   if (!routeClosed(element, side)) return 0;
   const route = routeStages(element, side);
   if (route.length === 0) return 0;

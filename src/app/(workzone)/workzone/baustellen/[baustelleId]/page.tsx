@@ -238,7 +238,7 @@ export default async function BaustelleDetailPage({
     const canAdvance = can.factorySteps;
     const adminLogin = Boolean(currentAdmin && !currentWorker);
     // Production progress (how much the factory made): admins and whoever checks factory elements here.
-    const seeProduction = adminLogin || can.factorySteps;
+    const seeProduction = actor?.factoryEnabled !== false && (adminLogin || can.factorySteps);
     const documentAccess=await withTenantContext(currentCompanyId,tx=>siteDocumentAccess(tx,{companyId:currentCompanyId,userId:currentAdmin&&!currentWorker?currentAdmin.id:null,workerId:currentWorker?.id??null},baustelle.id));
     const [batchRows, fileRows, elementRows, workerRows] = await withTenantContext(currentCompanyId, (tx) =>
       Promise.all([
@@ -381,10 +381,11 @@ export default async function BaustelleDetailPage({
             </div>
             {baustelle.type !== "STEEL_WORKSHOP" ? (
               <ElementListButtons
+                factoryEnabled={actor?.factoryEnabled !== false}
                 site={{ id: baustelle.id, name: baustelle.name }}
                 elements={elements}
                 workers={elementWorkers}
-                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload, deleteSource: mayDeleteElementList(actor?.name, Boolean(documentAccess.upload) || can.factorySteps), seeFactory: isAdmin || Boolean(actor?.allows("factory.view", baustelle.id)), seeField: isAdmin || Boolean(actor?.allows("field.view", baustelle.id)) }}
+                can={{ factory: can.factorySteps, field: can.siteSteps, office: isAdmin,upload:documentAccess.upload, deleteSource: mayDeleteElementList(actor?.name, Boolean(documentAccess.upload) || can.factorySteps), seeFactory: actor?.factoryEnabled !== false && (isAdmin || Boolean(actor?.allows("factory.view", baustelle.id))), seeField: isAdmin || Boolean(actor?.allows("field.view", baustelle.id)) }}
                 definitions={definitions}
               />
             ) : null}
@@ -395,7 +396,7 @@ export default async function BaustelleDetailPage({
             Engineers who move between sites get the small start/stop toggle in the header. */}
 
         <div data-studio-site-columns className={`grid min-w-0 gap-4 lg:items-start ${seeProduction && (factoryView || batches.length > 0) ? "lg:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
-          <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
+          <SteelPhaseBoard factoryEnabled={actor?.factoryEnabled !== false} phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
             {/* The factory here is only to look at: what it produced for this site, per process. */}
             {!seeProduction ? null : factoryView ? (

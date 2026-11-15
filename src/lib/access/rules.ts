@@ -53,7 +53,7 @@ const EVERYONE_VIEWS: ReadonlySet<AccessPlace> = new Set(["daily_plan"]);
 
 export type AccessGrantRow = { place: AccessPlace; scopeId: string; level: GrantLevel };
 
-export type AccessSubject =
+export type AccessSubject = { factoryEnabled?: boolean } & (
   | { kind: "admin" }
   | {
       kind: "worker";
@@ -64,7 +64,7 @@ export type AccessSubject =
       grants: AccessGrantRow[];
       /** Sites where today's document-engineer grant exists (legacy, kept until migration). */
       legacySiteGrants?: ReadonlySet<string>;
-    };
+    });
 
 export function effectiveLevel(subject: Extract<AccessSubject, { kind: "worker" }>): AccessLevel {
   if (subject.accessLevel) return subject.accessLevel;
@@ -98,6 +98,8 @@ export function legacyActions(crewRole: string | null, legacySiteGrants: Readonl
  * beats one for the whole place, which beats the level.
  */
 export function can(subject: AccessSubject, action: AccessAction, scopeId = "", options: { legacy?: boolean } = {}): boolean {
+  // Company capabilities are an upper bound, including for owners/admins.
+  if (placeOf(action) === 'factory' && subject.factoryEnabled === false) return false;
   if (subject.kind === "admin") return true;
   if (!subject.active) return false;
   const place = placeOf(action);

@@ -7,13 +7,14 @@ import {officeActor,OfficeError} from './work-access';
 import {effectiveSessionHours,isReportableSession} from '@/lib/workzone/session-rules';
 import {monthRange,dateKey,formatReportDay} from '@/lib/workzone/date-utils';
 import {officePreviewTarget} from './preview';
+import {companyFactoryEnabled} from '@/lib/provision/company-profile';
 
 export const officeMonth=z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).refine(v=>Number(v.slice(0,4))>=2000&&Number(v.slice(0,4))<=2100);
 export async function officeResourceAccess(previewId?:string){
  const preview=previewId?await officePreviewTarget(previewId):null;
  const actor=preview?.actor??await officeActor();
  return withTenantContext(actor.companyId,async tx=>{
-  const subject:AccessSubject|null=preview?await loadWorkerAccess(tx,actor.companyId,preview.member.workerId!):actor.kind==='admin'?{kind:'admin'}:await loadWorkerAccess(tx,actor.companyId,actor.id);
+  const subject:AccessSubject|null=preview?await loadWorkerAccess(tx,actor.companyId,preview.member.workerId!):actor.kind==='admin'?{kind:'admin',factoryEnabled:await companyFactoryEnabled(tx,actor.companyId)}:await loadWorkerAccess(tx,actor.companyId,actor.id);
   if(!subject)throw new OfficeError('DENIED');
   const membership=preview?.member??await tx.officeMember.findFirst({where:{id:actor.principalId,companyProfileId:actor.companyId},select:{workbooksEnabled:true,workProfile:true,assistantEnabled:true}});
   const staffDenied=subject.kind==='worker'&&subject.grants.some(g=>g.place==='staff'&&g.scopeId===''&&g.level==='none');

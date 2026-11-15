@@ -28,14 +28,16 @@ export function CreateBaustelleForm({
   companyId,
   currentLang,
   companyMode,
+  factoryEnabled = true,
 }: {
   companyId: string;
   currentLang: Language;
   companyMode: CompanyMode;
+  factoryEnabled?: boolean;
 }) {
   const router = useRouter();
   const tx = (path: string) => t(path, currentLang, companyMode);
-  const typeOptions = baustelleTypeOptionsForMode(companyMode);
+  const typeOptions = baustelleTypeOptionsForMode(companyMode).filter(option => factoryEnabled || option.value !== 'STEEL_WORKSHOP');
   const docsRef = useRef<HTMLInputElement>(null);
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const [docNames, setDocNames] = useState<string[]>([]);

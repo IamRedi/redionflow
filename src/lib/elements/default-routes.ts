@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { FACTORY_STEP_KEYS } from "../factory/production";
 
 import { FIELD_STAGES, type ElementList, type ElementProcessRoutes } from "./stages";
+import { companyFactoryEnabled } from '@/lib/provision/company-profile';
 
 type Tx = Prisma.TransactionClient;
 export type DefaultElementRoutes = Record<ElementList, ElementProcessRoutes>;
@@ -23,6 +24,10 @@ export async function defaultElementRoutes(tx: Tx, companyId: string): Promise<D
   const factory = rows.filter(row => row.kind === "factory").map(row => row.key);
   const field = rows.filter(row => row.kind === "field").map(row => row.key);
   const assemblyFactory = factory.length ? factory : [...FACTORY_STEP_KEYS];
+  if (!await companyFactoryEnabled(tx, companyId)) return {
+    assembly: { v: 1, factory: [], field: field.length ? field : [...FIELD_STAGES], supply: 'external' },
+    part: { v: 1, factory: [], field: [], supply: 'external' },
+  };
   return {
     assembly: { v: 1, factory: assemblyFactory, field: field.length ? field : [...FIELD_STAGES] },
     part: { v: 1, factory: assemblyFactory.includes("cutting") ? ["cutting"] : [], field: [] },

@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { logger } from "@/lib/observability/logger";
+import { companyFactoryEnabled } from '@/lib/provision/company-profile';
 
 import { ACCESS_PLACES, can, isGrantLevel, type AccessAction, type AccessGrantRow, type AccessLevel, type AccessPlace, type AccessSubject } from "./rules";
 
@@ -25,6 +26,7 @@ export async function loadWorkerAccess(tx: Tx, companyId: string, workerId: stri
     if (place && isGrantLevel(place, grant.level)) grants.push({ place, scopeId: grant.scopeId, level: grant.level });
   }
   return {
+    factoryEnabled: await companyFactoryEnabled(tx, companyId),
     kind: "worker",
     active: worker.status === "active",
     accessLevel: readLevel(worker.accessLevel),

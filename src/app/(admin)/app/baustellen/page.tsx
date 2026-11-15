@@ -1,3 +1,4 @@
+import { companyFactoryEnabled } from "@/lib/provision/company-profile";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import {
   ArrowUpRight,
@@ -67,7 +68,8 @@ export default async function BaustellenAdminPage() {
     },
     take: 200,
   }), "admin");
-  const typeOptions = baustelleTypeOptionsForMode(mode);
+  const factoryEnabled = await withPilotDbContext(company.id, tx => companyFactoryEnabled(tx, company.id));
+  const typeOptions = baustelleTypeOptionsForMode(mode).filter(option => factoryEnabled || option.value !== "STEEL_WORKSHOP");
   const ids = baustellen.map((b) => b.id);
   const selectedTaskProgress = await loadSteelTaskProgress(company.id, baustellen.filter(site => isSteelSiteType(site.type)).map(site => site.id));
   const doneRows = ids.length
@@ -113,7 +115,7 @@ export default async function BaustellenAdminPage() {
           <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180" />
         </summary>
         <div className="border-t p-2">
-          <CreateBaustelleForm companyId={company.id} currentLang={currentLang} companyMode={mode} />
+          <CreateBaustelleForm factoryEnabled={factoryEnabled} companyId={company.id} currentLang={currentLang} companyMode={mode} />
         </div>
       </details>
 

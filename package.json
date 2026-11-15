@@ -37,7 +37,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:local": "tsx scripts/test-integration-local.ts",
     "test:watch": "vitest",
-    "demo:steel:seed": "tsx scripts/seed-bauflow-muster.ts"
+    "demo:steel:seed": "tsx scripts/seed-bauflow-muster.ts",
+    "company:plan": "tsx scripts/onboard-company.ts"
   },
   "keywords": [],
   "author": "Redion Cekrezi",
