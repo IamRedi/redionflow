@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, MoreHorizontal } from "lucide-react";
-import { TreeInspectionIcon } from "./tree-inspection-icon";
+import { AlertTriangle, CheckCircle2, Clock3, MoreHorizontal, BookOpenCheck } from "lucide-react";
 import { TreeArt } from "./tree-art";
 import type { BotanicalSeason } from "@/lib/workshop/botanical";
 
@@ -50,7 +49,7 @@ export function MusterTreeCard({ row, season, mode, busy, labels, children, onOp
       <strong id={`${id}-name`}>{row.species || labels.species}</strong><span className="baum-tree-code">{row.treeId}</span>
     </button>
     <span className="baum-tree-state-symbol" aria-hidden="true"><Icon /></span>
-    <button type="button" className="baum-tree-inspect-front" aria-label={`${inspectLabel} · ${row.treeId}`} title={inspectLabel} onClick={onInspect}><TreeInspectionIcon className="baum-tree-inspect-icon" /></button>
+    <button type="button" className="baum-tree-inspect-front" aria-label={`${inspectLabel} · ${row.treeId}`} title={inspectLabel} onClick={onInspect}><BookOpenCheck className="baum-tree-inspect-icon" data-tree-species-logo /></button>
     {<button type="button" className="baum-tree-more" aria-label={`${labels.treeDetails} · ${row.treeId}`} disabled={busy} onClick={() => onOpen("detail")}><MoreHorizontal /></button>}
     </div>
     <div className="baum-tree-face baum-tree-face--back" inert={!mode} aria-hidden={!mode}>

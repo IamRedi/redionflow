@@ -148,7 +148,7 @@ test("tree cards flip without moving any slot; tree-lens reader and report retry
     code = (await card.getAttribute("data-tree-code"))!;
     const trigger = card.locator(".baum-tree-trigger");
     const inspect = card.getByRole("button", { name: `Artenkarte öffnen · ${code}`, exact: true });
-    await expect(inspect.locator("svg[data-tree-inspection-icon]")).toHaveCount(1);
+    await expect(inspect.locator("svg[data-tree-species-logo].lucide-book-open-check")).toHaveCount(1);
     await inspect.click(); await expect(page.locator('[role="dialog"]')).toHaveCount(2);
     await expect(page.getByRole("dialog").getByTestId("species-reference")).toBeVisible();
     await page.getByRole("dialog").getByRole("button", { name: "Schließen", exact: true }).click();
@@ -164,6 +164,11 @@ test("tree cards flip without moving any slot; tree-lens reader and report retry
     const inline = card.getByTestId("muster-tree-inline"); await expect(inline).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(1);
     await expect(inline.getByRole("button", { name: "Erledigt", exact: true })).toBeVisible();
+    await expect(inline.getByRole("heading", { name: await card.locator(".baum-tree-trigger strong").textContent() || "" })).toBeVisible();
+    for (const label of ["Baumdetails", "Angaben bearbeiten"]) { const action = inline.getByRole("button", { name: label, exact: true }); await expect(action).toBeVisible(); expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44); }
+    expect(await inline.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+    const doneFace = grid.locator('article[data-tree-status="done"] .baum-tree-face--front').first();
+    expect(await doneFace.evaluate(el => getComputedStyle(el).backgroundImage)).not.toEqual(await card.locator(".baum-tree-face--front").evaluate(el => getComputedStyle(el).backgroundImage));
     expect((await card.boundingBox())!.width).toBeCloseTo(boxBefore.width, 0); expect((await card.boundingBox())!.height).toBeCloseTo(boxBefore.height, 0);
     for (const label of ["Erledigt", "Problem melden"]) {
       const box = await inline.getByRole("button", { name: label, exact: true }).boundingBox();
@@ -172,6 +177,11 @@ test("tree cards flip without moving any slot; tree-lens reader and report retry
     expect(await page.getByRole("dialog").evaluate(element => element.scrollHeight <= element.clientHeight + 1 && element.scrollWidth <= element.clientWidth)).toBe(true);
     expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     await page.screenshot({ animations: "disabled", path: info.outputPath(`inline-${theme}-${size.width}.png`) });
+    await inline.getByRole("button", { name: "Baumdetails", exact: true }).click();
+    await expect(inline.getByRole("button", { name: "Angaben bearbeiten", exact: true })).toBeVisible(); expect(await slots()).toEqual(beforeSlots);
+    await inline.getByRole("button", { name: "Angaben bearbeiten", exact: true }).click();
+    await expect(inline.getByLabel("Baumart")).toBeVisible(); expect(await slots()).toEqual(beforeSlots);
+    await page.keyboard.press("Escape"); await expect(trigger).toBeFocused(); await trigger.press("Enter");
     await inline.getByRole("button", { name: "Problem melden", exact: true }).click();
     await inline.getByLabel("Was muss geprüft werden?").fill("DEMO · temporary unsent note");
     await expect(inline.getByLabel("Was muss geprüft werden?")).toBeFocused();
