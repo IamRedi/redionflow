@@ -4,6 +4,8 @@ import { SessionKeepAlive } from '@/components/auth/SessionKeepAlive';
 import { installationBrand } from '@/lib/installation-brand';
 import { bauflowMusterPublicDemoConfigured, isBauflowMusterCompany } from '@/lib/demo/bauflow-muster';
 import '@/components/steel/bauflow-muster.css';
+import '@/components/steel/company-ui.css';
+import { companyUiIdentity } from '@/lib/provision/company-ui';
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Home, LayoutDashboard, UsersRound } from "lucide-react";
@@ -64,6 +66,7 @@ export default async function RootLayout({
   const companyMode = await getCompanyMode();
   const worker = admin ? null : await getCurrentWorker();
   const companyId = admin || worker ? await getCurrentCompanyId() : null;
+  const uiIdentity = await companyUiIdentity(companyId);
   const kidraht = await kidrahtAvailable(companyId);
   const production = companyMode === "bau" && companyId !== null && await isSteelCompany(companyId);
   const announcement = production && admin ? await prisma.workzoneAnnouncement.findFirst({ where: { companyProfileId: companyId!, isActive: true }, select: { message: true }, orderBy: { createdAt: "desc" } }) : null;
@@ -96,7 +99,7 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
+      <body data-company-ui={uiIdentity ?? undefined} data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} data-studio-compact-catalog={isBauflowMusterCompany(companyId) || uiIdentity !== null || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
           <ProductionHeaderActionsProvider>

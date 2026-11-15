@@ -16,6 +16,7 @@ export async function createCompanyRecords(tx: Prisma.TransactionClient, c: Prov
     displayName: c.displayName, legalName: c.legalName, mode: c.mode, country: c.country,
     vatId: c.vatId, phone: c.phone, email: c.email, street: c.street, zip: c.zip, city: c.city,
     logoDataUrl: safeCompanyLogo(c.logoDataUrl),
+    uiIdentity: c.uiIdentity,
     ...(setup ? { trialEndsAt } : {}),
     overheadSettings: { create: { bgkPct: 0.18, agkPct: 0.1, riskPct: 0.03, profitPct: 0.06,
       vatPct: region.defaultVatPct / 100, bgkBase: 'EK_TOTAL', riskProfitMode: 'SEPARATE', applyVatByDefault: true } },

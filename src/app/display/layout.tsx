@@ -7,6 +7,8 @@ import { getCurrentDisplayUser } from "@/lib/auth/display-session";
 import { getOrCreateDefaultCompany } from "@/lib/db/company";
 import { prisma } from "@/lib/db/prisma";
 import { isSteelCompany, productionAudience } from "@/lib/dashboard/steel-access";
+import { companyUiIdentity } from "@/lib/provision/company-ui";
+import '@/components/steel/steel-studio.css';
 
 export const metadata = { robots: { index: false, follow: false } };
 
@@ -15,6 +17,9 @@ export default async function DisplayLayout({ children }: { children: ReactNode 
   const audience = await productionAudience(true);
   if (displayUser?.companyProfileId && !audience) redirect('/display-login');
   if (audience && audience.company.mode === 'bau' && await isSteelCompany(audience.company.id)) {
+    if (await companyUiIdentity(audience.company.id)) {
+      return <div data-steel-studio data-company-display className="h-dvh min-h-0 overflow-hidden"><main tabIndex={-1} data-testid="app-workspace-scroll" className="h-full min-h-0 overflow-auto p-3 sm:p-5">{children}<RediOnFooter /></main></div>;
+    }
     return <div className="min-h-dvh bg-[#f2f6f9] dark:bg-[#111b26]"><main className="w-full">{children}</main><RediOnFooter /></div>;
   }
   if (!displayUser) redirect("/display-login");

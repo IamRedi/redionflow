@@ -47,7 +47,7 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
     return () => cancelAnimationFrame(frame);
   }, [open, focusMachineId]);
   return <AssetWorkspaceDialog open={open} onOpenChange={onOpenChange} title={title} returnFocusRef={returnFocusRef}>
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="fleet-picker">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="fleet-picker" data-fleet-count={Math.min(machines.length, 3)}>
       <div className="flex shrink-0 items-center gap-2 px-3 pb-3 sm:px-5">
         <label className="relative block w-full min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" />

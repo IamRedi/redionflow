@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { companyUiIdentitySchema } from './ui-identity';
 
 /**
  * Shape of one real customer company, handed to the platform by the
@@ -17,6 +18,7 @@ export const provisionCompanySchema = z.object({
   zip: z.string().trim().max(20).optional(),
   city: z.string().trim().max(120).optional(),
   logoDataUrl: z.string().max(220_000).optional(),
+  uiIdentity: companyUiIdentitySchema.optional(),
   plan: z.enum(["starter", "pro", "enterprise"]).default("enterprise"),
   owner: z.object({
     name: z.string().trim().min(2).max(120),

@@ -1,4 +1,6 @@
 import { companyFactoryEnabled } from "@/lib/provision/company-profile";
+import { companyUiSiteLabel } from '@/lib/provision/ui-identity';
+import { companyUiIdentity } from '@/lib/provision/company-ui';
 import { batchQuantity, currentMaySeeWeights, withoutWeights } from "@/lib/steel-work/weight-visibility";
 import { withPilotDbContext } from "@/lib/db/tenant-runtime";
 import { plannedSiteNotes } from "@/lib/workzone/plan-site";
@@ -73,6 +75,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
   // One access rule source; for Bazë workers sites have no "Open" and vehicle GPS stays hidden.
   const accessActor = worker || admin ? await currentCompanyActor(company.id) : null;
   const factoryEnabled = accessActor?.factoryEnabled ?? await withTenantContext(company.id, tx => companyFactoryEnabled(tx, company.id));
+  const siteDisplayLabel = companyUiSiteLabel(await companyUiIdentity(company.id), currentLang);
   const allows = (action: AccessAction, scopeId = "") => !(action.startsWith("factory.") && !factoryEnabled) && (!worker || Boolean(accessActor?.allows(action, scopeId)));
   const fleetLocations = (admin || worker) && allows("fleet_gps.view") ? await readFleetLocations() : [];
   const liveSession = worker ? await withTenantContext(company.id, tx => tx.workSession.findFirst({ where: { workerId: worker.id, isLive: true, endTime: null }, select: { startTime: true, baustelleId: true } })) : null;
@@ -335,6 +338,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
       canOpen: allows("site.view", b.id),
       status: b.status,
       type: b.type,
+      typeLabel: b.type === 'STEEL_ASSEMBLY' ? siteDisplayLabel ?? undefined : undefined,
       pct,
       done,
       total,
@@ -371,6 +375,7 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         gpsSyncAvailable={wanwayEnabled() && Boolean(admin || worker)}
         items={liveMission}
         archive={archivedMission}
+        showArchiveWhenEmpty={factoryEnabled}
         defaultAddress={defaultAddress}
         mode={mode}
         canEditPhotos={photoPermissions.office||photoPermissions.siteSteps}
@@ -453,9 +458,9 @@ export default async function WorkzoneHomePage({ searchParams }: { searchParams?
         />
       ) : null}
 
-      {/* With a factory panel the sites live on the board above only; the list would repeat them. */}
-      <div className={`grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 ${factorySite ? "hidden" : ""}`}>
-        {(factorySite ? [] : baustellen).map((b) => {
+      {/* The studio already displays its sites, with or without a factory. */}
+      <div className={`grid w-full min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3 ${realisticWorkspace ? "hidden" : ""}`}>
+        {(realisticWorkspace ? [] : baustellen).map((b) => {
           const selected = selectedTaskProgress.get(b.id);
           const total = selected?.total ?? b.treeItems.length;
           const done = selected?.done ?? b.treeItems.filter((t) => t.status === "done").length;
