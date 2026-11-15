@@ -9,6 +9,7 @@ import { getAdminCompanyId } from '@/lib/auth/authorization';
 import { BriefcaseBusiness, ChevronLeft, ChevronRight, HardHat, MapPinned, Wrench } from "lucide-react";
 
 import { DashboardRefreshControls } from "./dashboard-refresh-controls";
+import { companyUiIdentity } from '@/lib/provision/company-ui';
 import { WorkerHoursToggleChart } from "./worker-hours-toggle-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCompanyMode, getOrCreateDefaultCompany } from "@/lib/db/company";
@@ -393,7 +394,7 @@ export default async function DashboardPage({
                 {t("admin.dashboardSubtitle", currentLang, mode)}
               </p>
             </div>
-            <DashboardRefreshControls generatedAt={snapshot.generatedAt} />
+            <DashboardRefreshControls generatedAt={snapshot.generatedAt} generatedAtLabel={await companyUiIdentity(company.id) === 'crane-red-blue-v1' ? new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(snapshot.generatedAt)) : undefined} />
           </div>
         </div>
       </div>

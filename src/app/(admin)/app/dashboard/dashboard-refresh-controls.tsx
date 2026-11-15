@@ -11,6 +11,7 @@ import { refreshDashboardSnapshotAction } from "./actions";
 
 type DashboardRefreshControlsProps = {
   generatedAt: string;
+  generatedAtLabel?: string;
 };
 
 function timestampLabel(value: string) {
@@ -21,11 +22,11 @@ function timestampLabel(value: string) {
   });
 }
 
-export function DashboardRefreshControls({ generatedAt }: DashboardRefreshControlsProps) {
+export function DashboardRefreshControls({ generatedAt, generatedAtLabel }: DashboardRefreshControlsProps) {
   const { currentLang } = useLanguage();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const lastUpdated = timestampLabel(generatedAt);
+  const lastUpdated = generatedAtLabel ?? timestampLabel(generatedAt);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
