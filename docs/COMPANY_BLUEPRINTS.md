@@ -66,7 +66,9 @@ Apply requires `DATABASE_URL`/`DIRECT_URL`, an explicit matching
 `ONBOARDING_DATABASE_NAME`, a private `PROVISION_OWNER_PASSWORD` (12–256
 characters) and the unchanged plan digest. An existing dedicated installation ID
 must match the intended new company. No secrets go in command arguments or
-committed files. Target authorization, database backup and deployment approval
+committed files. Dedicated mode also refuses a database containing another
+company; shared onboarding requires explicitly configured `SAAS_MODE=true`.
+Target authorization, database backup and deployment approval
 remain separate; this command cannot infer them from a plan.
 
 An input has a unique operator-chosen `key`, `blueprint: {id, version, factory?}`

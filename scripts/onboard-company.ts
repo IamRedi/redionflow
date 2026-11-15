@@ -24,6 +24,9 @@ async function main() {
   try {
     const [target] = await db.$queryRaw<Array<{ name: string }>>`SELECT current_database() AS name`;
     if (target?.name !== databaseName) throw new Error('DATABASE_TARGET_MISMATCH');
+    // Dedicated is the safe default. A shared database needs an explicit SaaS mode.
+    if (process.env.SAAS_MODE !== 'true' && await db.companyProfile.count({ where: { id: { not: `company-${plan.input.key}` } } }) > 0)
+      throw new Error('DEDICATED_DATABASE_NOT_EMPTY');
     console.log(JSON.stringify(await applyCompanySetup(db, raw, digest!, hashPassword(password))));
   } finally { await db.$disconnect(); }
 }

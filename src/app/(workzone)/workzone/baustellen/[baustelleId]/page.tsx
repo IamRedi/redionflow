@@ -381,6 +381,7 @@ export default async function BaustelleDetailPage({
             </div>
             {baustelle.type !== "STEEL_WORKSHOP" ? (
               <ElementListButtons
+                factoryEnabled={actor?.factoryEnabled !== false}
                 site={{ id: baustelle.id, name: baustelle.name }}
                 elements={elements}
                 workers={elementWorkers}

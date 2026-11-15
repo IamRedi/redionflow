@@ -101,12 +101,14 @@ export function ElementListButtons({
   elements,
   workers,
   can,
+  factoryEnabled = true,
   definitions = [],
 }: {
   site: { id: string; name: string };
   elements: ElementView[];
   workers: ElementWorkerOption[];
   can: { factory: boolean; field: boolean; office: boolean;upload?:boolean; deleteSource?: boolean; seeFactory?: boolean; seeField?: boolean };
+  factoryEnabled?: boolean;
   definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang: lang } = useLanguage();
@@ -137,7 +139,7 @@ export function ElementListButtons({
     {
       side: "field",
       label: t("elements.fieldList", lang),
-      sub: assemblies.length ? fill(t("elements.fieldButton", lang), { done: fieldDone, total: factoryDone, waiting: allPieces - factoryDone }) : t("elements.noList", lang),
+      sub: assemblies.length ? (factoryEnabled ? fill(t("elements.fieldButton", lang), { done: fieldDone, total: factoryDone, waiting: allPieces - factoryDone }) : fill(t("elements.doneOf", lang), { done: fieldDone, total: allPieces })) : t("elements.noList", lang),
       pct: allPieces ? (fieldDone / allPieces) * 100 : 0,
       icon: <HardHat className="size-6" />,
     },
