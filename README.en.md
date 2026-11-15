@@ -27,11 +27,13 @@ Long tree lists mount a bounded visible window. Large inventory and timber colle
 
 The public BaumdienstFlow Musterfirma demo now opens worksites as glass cards over the existing Workzone, with a centered name, address and site information. An illustrated tree card opens a dedicated view with **All / To do / Completed**, map and species studio. Equipment, crew, safety, photos, processes, documents and instructions open separate views.
 
-[Open the live worksite card](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). These are actual public Musterfirma captures with fictional data. This release preserves the existing records/files and does not change other products' company access. Source: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
+[Open the live worksite card](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). The current captures below show the demo interface with fictional data. This release preserves the existing records/files and does not change other products' company access. Source: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
 
-![Musterfirma glass worksite information card over Workzone](docs/assets/screenshots/baum-site-glass-live-20261114.jpg)
+Current views from 15 November 2026 use photoreal tree references and the same glass style. The phone capture uses fictional, read-only demo data.
 
-<img src="docs/assets/screenshots/baum-tree-cards-phone-live-20261114.jpg" alt="Musterfirma tree cards on a phone with status filters, map and species studio" width="320">
+![Musterfirma glass worksite information card over Workzone](docs/assets/screenshots/site-card-photoreal-20261115.jpg)
+
+<img src="docs/assets/screenshots/tree-cards-photoreal-phone-20261115.jpg" alt="Musterfirma tree cards on a phone with status filters, map and species studio" width="320">
 
 ## Product websites and live demos
 
