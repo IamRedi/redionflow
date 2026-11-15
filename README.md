@@ -25,11 +25,13 @@ Lange Baumlisten montieren nur das sichtbare Fenster mit kleinem Puffer. Inventa
 
 Die öffentliche BaumdienstFlow-Musterfirma öffnet Baustellen jetzt als Glaskarte über der bestehenden Workzone: Name, Adresse und Angaben in einer ruhigen Übersicht. Eine illustrierte Baumkarte öffnet die eigene Baumansicht mit **Alle / Zu erledigen / Erledigt**, Karte und Artenstudio. Geräte, Team, Absicherung, Fotos, Prozesse, Dokumente und Unterweisung öffnen getrennte Ansichten.
 
-[Baustellenkarte live öffnen](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). Die Aufnahmen zeigen die echte öffentliche Musterfirma mit ausschließlich fiktiven Daten; sie ändern keine Firmenzugänge anderer Produkte. Die bestehenden Daten und Dateien wurden bei der Veröffentlichung unverändert erhalten. Quelle: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
+[Baustellenkarte live öffnen](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). Die folgenden Ansichten zeigen die aktuelle Demo-Oberfläche mit ausschließlich fiktiven Daten; sie ändern keine Firmenzugänge anderer Produkte. Die bestehenden Daten und Dateien wurden bei der Veröffentlichung unverändert erhalten. Quelle: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
 
-![Glaskarte der Musterfirma-Baustelle über Workzone](docs/assets/screenshots/baum-site-glass-live-20261114.jpg)
+Aktuelle Ansichten vom 15. November 2026: fotorealistische Baumreferenzen und derselbe Glasstil. Die Telefonansicht nutzt fiktive, schreibgeschützte Demodaten.
 
-<img src="docs/assets/screenshots/baum-tree-cards-phone-live-20261114.jpg" alt="Musterfirma am Telefon: Baumkarten mit Statusfiltern, Karte und Artenstudio" width="320">
+![Glaskarte der Musterfirma-Baustelle über Workzone](docs/assets/screenshots/site-card-photoreal-20261115.jpg)
+
+<img src="docs/assets/screenshots/tree-cards-photoreal-phone-20261115.jpg" alt="Musterfirma am Telefon: Baumkarten mit Statusfiltern, Karte und Artenstudio" width="320">
 
 ## Websites und Live-Demos
 
