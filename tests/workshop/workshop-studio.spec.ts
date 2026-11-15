@@ -19,6 +19,7 @@ test("botanical studio keeps six/two columns, characteristic leaves, seasons and
     await d.getByRole("button",{name:"Schließen",exact:true}).click();
     await grid.locator('.baum-tree-trigger').first().click();
     const magnifier=page.getByRole("button",{name:"Artenkarte öffnen",exact:true});
+    await expect.poll(() => grid.locator(".baum-tree-turner").first().evaluate(el => new DOMMatrixReadOnly(getComputedStyle(el).transform).m11)).toBe(-1);
     const box=await magnifier.boundingBox();expect(box?.width).toBeGreaterThanOrEqual(44);expect(box?.height).toBeGreaterThanOrEqual(44);
     await magnifier.click();const atlas=page.getByRole("dialog").last();await expect(atlas.getByTestId("species-reference")).toBeVisible();
     await atlas.getByRole("button",{name:/^Rinde/}).click();await expect(atlas.getByTestId("atlas-plate")).toHaveAttribute("data-area","bark");

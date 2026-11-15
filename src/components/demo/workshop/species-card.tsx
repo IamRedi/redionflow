@@ -13,14 +13,16 @@ import { studioCopy } from "@/lib/workshop/studio-copy";
 import { studioMediaUrl, type StudioMediaId } from "@/lib/workshop/studio-media";
 import { workshopCopy } from "@/lib/workshop/copy";
 import { action, WorkshopDialog } from "./workshop-ui";
+import { ReaderText } from "./reader-pages";
 import { StudioIcon } from "./studio-art";
 import { LeafArt, TreeArt } from "./tree-art";
 
 type Area = "overview" | "habit" | "leaf" | "bark" | "reproduction";
 /** CSS zoom keeps the original plate intact; no separate requests or generated variants. */
-function BotanicalPlate({ id, area, alt }: { id: StudioMediaId; area: Area; alt: string }) {
+function BotanicalPlate({ id, area, alt, fit = false }: { id: StudioMediaId; area: Area; alt: string; fit?: boolean }) {
   const [failed, setFailed] = useState(false);
   const crop = atlasCrop(id,area);
+  if (fit) return failed ? <div className="baum-atlas-fallback" role="status"><LeafArt species={alt} /></div> : <svg className="baum-atlas-fitted-plate" viewBox={`${crop.x} ${crop.y} ${crop.w} ${crop.h}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={alt} data-testid="atlas-plate" data-area={area}><title>{alt}</title><image href={studioMediaUrl(id)} width="1536" height="1024" onError={() => setFailed(true)} /></svg>;
   return <div style={{aspectRatio:`${crop.w}/${crop.h}`}} className={`relative isolate overflow-hidden rounded-xl border bg-[#0c2b35] ${area === "habit" ? "mx-auto max-w-lg" : ""}`} data-testid="atlas-plate" data-area={area}>
     {!failed && <Image src={studioMediaUrl(id)} alt={alt} width={1536} height={1024} unoptimized onError={() => setFailed(true)} className="absolute max-w-none" style={{width:`${1536/crop.w*100}%`,height:`${1024/crop.h*100}%`,left:`${-crop.x/crop.w*100}%`,top:`${-crop.y/crop.h*100}%`}} />}
     {failed && <div role="status" className="flex h-full items-center justify-center text-white"><LeafArt species={alt} className="h-40 w-32" /></div>}
@@ -44,7 +46,26 @@ export function SpeciesReference({ species }: { species: string }) {
   </div>;
 }
 
-export function SpeciesCard({ species, open, onClose }: { species: string; open: boolean; onClose: () => void }) {
-  const { currentLang }=useLanguage(), a=atlasCopy(currentLang), c=workshopCopy(currentLang);
-  return <WorkshopDialog open={open} onClose={onClose} closeLabel={c.close} wide title={species || a.title} description={a.title}>{open && <SpeciesReference key={species} species={species} />}</WorkshopDialog>;
+function FixedSpeciesReference({ species }: { species: string }) {
+  const { currentLang } = useLanguage(), a = atlasCopy(currentLang), s = studioCopy(currentLang);
+  const reference = resolveAtlas(species), identity = botanicalIdentity(species);
+  const [area, setArea] = useState<Area>("overview"), [more, setMore] = useState(false);
+  if (!reference) return <div className="baum-atlas-fixed" data-testid="atlas-unknown"><TreeArt species={species} className="baum-atlas-unknown-art" /><ReaderText text={a.unknown} /></div>;
+  const { profile, representative } = reference;
+  const panels = [["habit", "tree", atlasFact(profile.habit, currentLang)], ["leaf", "leaf", profile.leaf ? atlasFact(profile.leaf, currentLang) : s[profile.kind]], ["bark", "bark", atlasFact(profile.bark, currentLang)], ["reproduction", "flower", atlasFact(profile.reproduction, currentLang)]] as const;
+  const fact = panels.find(([key]) => key === area) || panels[0];
+  const text = [a.attention, atlasNote(profile.id, currentLang), a.compare, ...(identity.hedge ? [a.hedge] : []), a.report].join("\n\n");
+  return <div className="baum-atlas-fixed" data-testid="species-reference">
+    <div className="baum-atlas-toolbar"><p>{profile.latin}</p><Button type="button" variant={area === "overview" && !more ? "default" : "outline"} aria-pressed={area === "overview" && !more} onClick={() => { setArea("overview"); setMore(false); }}><Search />{a.overview}</Button><Button type="button" variant={more ? "default" : "outline"} aria-pressed={more} onClick={() => setMore(value => !value)}><BookOpen />{a.more}</Button></div>
+    {representative && <p className="baum-atlas-representative">{a.representative}</p>}
+    <div className="baum-atlas-layout">
+      {more ? <section className="baum-atlas-notes"><ReaderText text={text} /><a href={profile.source} target="_blank" rel="noopener noreferrer">{a.sources}<ExternalLink /></a></section> : <figure className="baum-atlas-figure"><div className="baum-atlas-image"><BotanicalPlate id={profile.id} area={area} alt={`${species} · ${profile.latin} · ${a[area === "overview" ? "title" : area]}`} fit /></div><figcaption>{a.illustration}</figcaption></figure>}
+      <div className="baum-atlas-facts"><div role="group" aria-label={a.title} className="baum-atlas-fact-buttons">{panels.map(([key, icon, value]) => <button key={key} type="button" aria-pressed={area === key && !more} aria-label={`${a[key]} ${value}`} onClick={() => { setArea(key); setMore(false); }}><StudioIcon kind={icon} /><strong>{a[key]}</strong><span className="baum-atlas-fact-copy">{value}</span></button>)}</div><p className="baum-atlas-current-fact"><strong>{a[fact[0]]}</strong> · {fact[2]}</p></div>
+    </div>
+  </div>;
+}
+
+export function SpeciesCard({ species, open, onClose, fixed = false }: { species: string; open: boolean; onClose: () => void; fixed?: boolean }) {
+  const { currentLang } = useLanguage(), a = atlasCopy(currentLang), c = workshopCopy(currentLang);
+  return <WorkshopDialog open={open} onClose={onClose} closeLabel={c.close} wide centered={fixed} className={fixed ? "baum-reader-dialog baum-species-dialog" : undefined} title={species || a.title} description={a.title}>{open && (fixed ? <FixedSpeciesReference key={species} species={species} /> : <SpeciesReference key={species} species={species} />)}</WorkshopDialog>;
 }
