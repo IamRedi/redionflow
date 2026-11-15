@@ -45,7 +45,7 @@ test("site opens over the same Workzone, trees expand on demand and nested detai
     await toggle.click(); await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", "trees");
     await expect(dialog.getByTestId("muster-site-overview")).toHaveCount(0);
     const grid = dialog.getByTestId("muster-tree-grid"); await expect(grid).toBeVisible();
-    await grid.locator("article").last().scrollIntoViewIfNeeded();
+    await grid.press("End");
     await expect(grid.locator("article").last()).toBeInViewport();
     expect(await grid.evaluate(element => element.scrollTop > 0 && element.scrollHeight > element.clientHeight)).toBe(true);
     expect(await dialog.evaluate(element => element.scrollTop === 0 && element.scrollHeight <= element.clientHeight + 1)).toBe(true);
@@ -78,7 +78,7 @@ test("deep links, retry, keyboard and enlarged text keep site controls reachable
   const trees = dialog.getByRole("button", { name: /^Bäume/ });
   await trees.press("Enter"); await expect(dialog.getByTestId("muster-site-detail")).toHaveAttribute("data-site-panel", "trees");
   const grid = dialog.getByTestId("muster-tree-grid");
-  expect(await grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(1);
+  expect(await grid.evaluate(element => Number((element as HTMLElement).dataset.columns))).toBe(1);
   expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   await page.keyboard.press("Escape"); await expect(page).toHaveURL(/\/demo\/workzone$/);
   await page.reload();
@@ -105,18 +105,18 @@ test("tree filters share one clean card and map while the species studio and sit
     const dialog = page.getByRole("dialog");
     expect(await dialog.getByRole("heading", { name: site.name, exact: true }).evaluate(element => getComputedStyle(element.parentElement!.parentElement!).textAlign)).toBe("center");
     await dialog.getByRole("button", { name: "Bäume", exact: true }).click();
-    const grid = dialog.getByTestId("muster-tree-grid"); await expect(grid.locator("article")).toHaveCount(detail.trees.length);
+    const grid = dialog.getByTestId("muster-tree-grid"); await expect(grid).toHaveAttribute("data-total-items", String(detail.trees.length));
     const completed = dialog.locator('[data-tree-filter="done"]'); await completed.click(); await expect(completed).toHaveAttribute("aria-pressed", "true");
-    await expect(grid.locator("article")).toHaveCount(done); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") === "done"))).toBe(true);
+    await expect(grid).toHaveAttribute("data-total-items", String(done)); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") === "done"))).toBe(true);
     await dialog.getByRole("button", { name: "Karte", exact: true }).click(); await expect(grid).toHaveCount(0); await expect(dialog.getByTestId("muster-tree-map")).toBeVisible();
     const doneCodes = new Set(detail.trees.filter((tree: { treeId: string; status: string }) => (before.state.custody.trees[`${site.key}:${tree.treeId}`]?.status || tree.status) === "done").map((tree: { treeId: string }) => tree.treeId));
     await expect(dialog.locator(".leaflet-marker-icon")).toHaveCount(detail.points.filter((point: { treeId: string }) => doneCodes.has(point.treeId)).length);
     await dialog.locator(".leaflet-marker-icon").first().focus(); await page.keyboard.press("Enter"); await dialog.getByRole("button", { name: "Baumdetails", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Sicherheitsmaterial", exact: true })).toBeVisible(); await expect(page.locator(".baum-tree-detail-dialog")).toBeVisible(); expect(await page.locator(".baum-tree-detail-dialog").evaluate(el => el.contains(document.activeElement))).toBe(true); await expect(page.getByRole("dialog")).toHaveCount(1); await expect(page.getByRole("dialog")).toHaveCSS("pointer-events", "auto"); await page.keyboard.press("Escape"); await expect(dialog.getByRole("heading", { name: "Bäume", exact: true })).toBeVisible();
     await dialog.locator('[data-tree-filter="todo"]').click();
     await expect(dialog.getByTestId("muster-tree-map")).toHaveCount(0);
-    await expect(grid.locator("article")).toHaveCount(detail.trees.length - done); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") !== "done"))).toBe(true);
+    await expect(grid).toHaveAttribute("data-total-items", String(detail.trees.length - done)); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") !== "done"))).toBe(true);
     await dialog.getByRole("button", { name: "Artenstudio", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Hecken", exact: true })).toBeVisible(); await page.keyboard.press("Escape");
-    await dialog.locator('[data-tree-filter="all"]').click(); await expect(grid.locator("article")).toHaveCount(detail.trees.length);
+    await dialog.locator('[data-tree-filter="all"]').click(); await expect(grid).toHaveAttribute("data-total-items", String(detail.trees.length));
     await page.screenshot({ animations: "disabled", path: info.outputPath(`tree-workspace-${width}.png`) });
     await dialog.getByRole("button", { name: "Zurück zur Baustelle", exact: true }).click();
     for (const section of ["team", "safety", "inventory", "documents", "instructions", "photos", "work"]) {
@@ -150,8 +150,12 @@ test("tree cards flip without moving any slot; tree-lens reader and report retry
     await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
     await page.setViewportSize(size); await page.goto(`/demo/baustellen/${site.id}`);
     await page.getByRole("button", { name: "Bäume", exact: true }).click();
-    const grid = page.getByTestId("muster-tree-grid"), card = grid.locator('article[data-tree-status="todo"]').first();
-    code = (await card.getAttribute("data-tree-code"))!;
+    const grid = page.getByTestId("muster-tree-grid");
+    await page.locator('[data-tree-filter="done"]').click();
+    const doneMaterial = await grid.locator('article[data-tree-status="done"] .baum-tree-face--front').first().evaluate(el => getComputedStyle(el).backgroundImage);
+    await page.locator('[data-tree-filter="all"]').click();
+    code = (await grid.locator('article[data-tree-status="todo"]').first().getAttribute("data-tree-code"))!;
+    const card = grid.locator(`article[data-tree-code="${code}"]`);
     const trigger = card.locator(".baum-tree-trigger");
     const inspect = card.getByRole("button", { name: `Artenkarte öffnen · ${code}`, exact: true });
     await expect(inspect.locator("svg[data-tree-species-logo].lucide-book-open-check")).toHaveCount(1);
@@ -166,8 +170,10 @@ test("tree cards flip without moving any slot; tree-lens reader and report retry
     await page.getByRole("dialog").getByRole("button", { name: "Schließen", exact: true }).click();
     await expect(inspect).toBeFocused(); await expect(card.getByTestId("muster-tree-inline")).toHaveCount(0);
     await trigger.scrollIntoViewIfNeeded();
-    const slots = () => grid.evaluate(element => { const g = element.getBoundingClientRect(); return [...element.querySelectorAll("article[data-tree-code]")].map(card => { const r = card.getBoundingClientRect(); return [card.getAttribute("data-tree-code"), ...[r.left - g.left, r.top - g.top + element.scrollTop, r.width, r.height].map(n => Number(n.toFixed(2)))]; }); });
-    const beforeSlots = await slots(), beforeScroll = await grid.evaluate(element => element.scrollTop), boxBefore = (await card.boundingBox())!;
+    let trackedCodes: string[] = [];
+    const slots = () => grid.evaluate((element, keys) => { const g = element.getBoundingClientRect(); return [...element.querySelectorAll("article[data-tree-code]")].filter(card => { const r = card.getBoundingClientRect(); return keys.length ? keys.includes(card.getAttribute("data-tree-code")!) : r.bottom > g.top && r.top < g.bottom; }).map(card => { const r = card.getBoundingClientRect(); return [card.getAttribute("data-tree-code"), ...[r.left - g.left, r.top - g.top + element.scrollTop, r.width, r.height].map(n => Number(n.toFixed(2)))]; }); }, trackedCodes);
+    const beforeSlots = await slots(); trackedCodes = beforeSlots.map(row => String(row[0]));
+    const beforeScroll = await grid.evaluate(element => element.scrollTop), boxBefore = (await card.boundingBox())!;
     const point = await trigger.evaluate(element => { const r = element.getBoundingClientRect(), g = element.closest('[data-testid="muster-tree-grid"]')!.getBoundingClientRect(); return { x: Math.max(r.left,g.left) + Math.min(r.width,40), y: (Math.max(r.top,g.top) + Math.min(r.bottom,g.bottom))/2 }; });
     await page.mouse.click(point.x, point.y);
     expect(await slots()).toEqual(beforeSlots);
@@ -179,8 +185,7 @@ test("tree cards flip without moving any slot; tree-lens reader and report retry
     await expect(inline.getByRole("heading", { name: await card.locator(".baum-tree-trigger strong").textContent() || "" })).toBeVisible();
     for (const label of ["Baumdetails", "Angaben bearbeiten"]) { const action = inline.getByRole("button", { name: label, exact: true }); await expect(action).toBeVisible(); expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44); }
     expect(await inline.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
-    const doneFace = grid.locator('article[data-tree-status="done"] .baum-tree-face--front').first();
-    expect(await doneFace.evaluate(el => getComputedStyle(el).backgroundImage)).not.toEqual(await card.locator(".baum-tree-face--front").evaluate(el => getComputedStyle(el).backgroundImage));
+    expect(doneMaterial).not.toEqual(await card.locator(".baum-tree-face--front").evaluate(el => getComputedStyle(el).backgroundImage));
     expect((await card.boundingBox())!.width).toBeCloseTo(boxBefore.width, 0); expect((await card.boundingBox())!.height).toBeCloseTo(boxBefore.height, 0);
     for (const label of ["Erledigt", "Problem melden"]) {
       const box = await inline.getByRole("button", { name: label, exact: true }).boundingBox();

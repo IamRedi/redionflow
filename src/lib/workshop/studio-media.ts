@@ -10,4 +10,4 @@ export function equipmentCatalogueId(kind: string): StudioMediaId | undefined {
   return isStudioMediaId(id) ? id : undefined;
 }
 export function isStudioMediaId(id: string): id is StudioMediaId { return (studioMediaIds as readonly string[]).includes(id); }
-export function studioMediaUrl(id: StudioMediaId) { return `/api/demo/baumdienst/art/${id}?v=1`; }
+export function studioMediaUrl(id: StudioMediaId, options?: { variant: "photoreal-v2"; size: "card" | "large" }) { return options ? `/api/demo/baumdienst/art/${id}?v=2&variant=${options.variant}&size=${options.size}` : `/api/demo/baumdienst/art/${id}?v=1`; }

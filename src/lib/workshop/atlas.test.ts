@@ -14,6 +14,11 @@ describe("Musterfirma field atlas",()=>{
     expect(resolveAtlas("Hainbuchenhecke")?.profile.id).toBe("tree-hornbeam");
     expect(resolveAtlas("Eberesche")?.profile.id).toBe("tree-rowan");
   });
+  it("ships bounded photoreal references for every catalogue species in all seasons",()=>{
+    const manifest=JSON.parse(readFileSync("assets/baumdienst-studio/photoreal-v2/manifest.json","utf8")) as {assets:{id:string;cardBytes:number;largeBytes:number;alpha:boolean;latin:string}[]};
+    expect(new Set(manifest.assets.map(a=>a.id))).toEqual(new Set(atlasProfiles.map(p=>p.id)));
+    for(const asset of manifest.assets){expect(asset.alpha).toBe(true);expect(asset.cardBytes).toBeLessThan(150000);expect(readFileSync(`assets/baumdienst-studio/photoreal-v2/${asset.id}-card.webp`).length).toBe(asset.cardBytes);expect(readFileSync(`assets/baumdienst-studio/photoreal-v2/${asset.id}-large.webp`).length).toBe(asset.largeBytes);}
+  });
   it("labels broad groups as examples and refuses unlisted or different exact species",()=>{
     expect(resolveAtlas("Linde")?.representative).toBe(true);
     expect(resolveAtlas("Winterlinde")?.representative).toBe(false);

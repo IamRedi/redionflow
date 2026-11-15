@@ -2,6 +2,8 @@
 
 import { useId } from "react";
 import { botanicalIdentity, botanicalPalette, type BotanicalKind, type BotanicalSeason } from "@/lib/workshop/botanical";
+import { resolveAtlas } from "@/lib/workshop/atlas";
+import { PhotorealPlate } from "./photoreal-plate";
 import styles from "./workshop.module.css";
 
 export function MusterMark({ x = 83, y = 82 }: { x?: number; y?: number }) {
@@ -29,7 +31,9 @@ function LeafShape({ kind, fill, vein }: { kind: BotanicalKind; fill: string; ve
 }
 
 export function LeafArt({ species, season="summer", className="" }: { species: string; season?: BotanicalSeason; className?: string }) {
+  const reference = resolveAtlas(species);
   const {kind,known} = botanicalIdentity(species), p=botanicalPalette(species,season);
+  if (reference) return <PhotorealPlate id={reference.profile.id} leaf className={className} />;
   return <svg viewBox="0 0 80 100" className={className} fill="none" aria-hidden="true">{known ? <LeafShape kind={kind} fill={p.leaf} vein={p.vein} /> : <path d="M40 86V50m0 0C10 49 12 17 40 10 68 17 70 49 40 50" stroke={p.mid} strokeWidth="2" strokeDasharray="4 4" />}</svg>;
 }
 
@@ -37,6 +41,8 @@ const fullCrown = [[44,46,20,17,-18],[65,33,23,21,0],[86,43,24,20,18],[29,61,20,
 /** Original botanical plates: crown structure, tapered branches, leaf inset and seasonal palette. */
 export function TreeArt({ species, season="summer", className="" }: { species: string; season?: BotanicalSeason; className?: string }) {
   const id = useId().replace(/:/g,""), identity=botanicalIdentity(species), {kind,hedge}=identity, p=botanicalPalette(species,season);
+  const reference = resolveAtlas(species);
+  if (reference) return <span className={`baum-photoreal-tree ${className}`} aria-hidden="true" data-botanical-kind={kind} data-botanical-form={hedge ? "hedge" : "tree"}><PhotorealPlate id={reference.profile.id} season={season} /></span>;
   const conifer=["spruce","fir","thuja","yew","larch"].includes(kind), birch=kind === "birch", willow=kind === "willow", pine=kind === "pine";
   const clusters = birch ? [[54,28,14,21,-10],[68,46,21,28,12],[42,56,15,27,-5],[77,70,20,21,10],[50,77,20,18,-8]] : willow ? [[32,66,18,31,-10],[56,48,24,28,0],[81,55,25,31,8],[99,78,14,31,12],[55,79,30,24,0]] : fullCrown;
   return <svg viewBox="0 0 180 150" className={`${styles.art} ${className}`} fill="none" aria-hidden="true" data-botanical-kind={kind} data-botanical-form={hedge ? "hedge" : "tree"}>

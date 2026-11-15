@@ -1,5 +1,5 @@
 export type BotanicalKind = "larch" | "oak" | "maple" | "plane" | "birch" | "beech" | "hornbeam" | "ash" | "lime" | "willow" | "fruit" | "spruce" | "fir" | "pine" | "yew" | "thuja" | "privet" | "box" | "photinia" | "chestnut" | "rowan" | "ginkgo" | "broadleaf";
-export type BotanicalSeason = "summer" | "autumn";
+export type BotanicalSeason = "summer" | "autumn" | "winter";
 const normalize = (s: string) => s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 /** Name-based reference families, never an AI identification of a living specimen. */
 export function botanicalIdentity(name: string) {

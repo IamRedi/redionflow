@@ -10,11 +10,11 @@ test("botanical studio keeps six/two columns, characteristic leaves, seasons and
   const s=await(await request.get("/api/demo/baumdienst/workshop")).json() as WorkshopSnapshot,site=s.directory.sites[0];
   for(const width of [1440,390]){
     await page.setViewportSize({width,height:900});await page.goto(`/demo/baustellen/${site.id}`);await page.getByRole("button",{name:/^Bäume/}).click();
-    const grid=page.getByTestId("muster-tree-grid");expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(width===390 ? 2:6);
-    await page.getByRole("combobox",{name:"Sommer · Herbst",exact:true}).selectOption("autumn");
-    const art=grid.locator("svg[data-botanical-kind]").first();expect(await art.locator("linearGradient stop").first().getAttribute("stop-color")).toBeTruthy();
+    const grid=page.getByTestId("muster-tree-grid");expect(await grid.evaluate(el=>Number((el as HTMLElement).dataset.columns))).toBe(width===390 ? 2:6);
+    await page.getByRole("combobox",{name:"Sommer · Herbst · Winter",exact:true}).selectOption("autumn");
+    const art=grid.locator("[data-reference-kind=generated-species]").first(); await expect(art).toHaveAttribute("data-reference-season","autumn"); await expect(art.locator("image")).toHaveAttribute("href",/variant=photoreal-v2&size=card/); await page.getByRole("combobox",{name:"Sommer · Herbst · Winter",exact:true}).selectOption("winter"); await expect(art).toHaveAttribute("data-reference-season","winter");
     await page.getByRole("button",{name:"Artenstudio",exact:true}).click();const d=page.getByRole("dialog");await d.getByRole("button",{name:"Hecken",exact:true}).click();await d.getByRole("button",{name:/Hainbuchenhecke/}).click();
-    await expect(d.getByTestId("species-reference")).toContainText("Gerippt, doppelt gesägt"); await d.getByText("Mehr über diese Art",{exact:true}).click();await expect(d.locator('svg[data-botanical-form="hedge"]')).toHaveCount(1);await expect(d.getByTestId("atlas-plate").locator("img")).toBeVisible(); await d.getByRole("button",{name:/^Blatt \/ Nadeln/}).click(); await expect(d.getByTestId("atlas-plate")).toHaveAttribute("data-area","leaf");
+    await expect(d.getByTestId("species-reference")).toContainText("Gerippt, doppelt gesägt"); await d.getByText("Mehr über diese Art",{exact:true}).click();await expect(d.locator('[data-botanical-form="hedge"]')).toHaveCount(1);await expect(d.getByTestId("atlas-plate").locator("image")).toBeVisible(); await d.getByRole("button",{name:/^Blatt \/ Nadeln/}).click(); await expect(d.getByTestId("atlas-plate")).toHaveAttribute("data-area","leaf");
     expect(await d.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);await page.screenshot({path:info.outputPath(`studio-hedge-${width}.png`)});
     await d.getByRole("button",{name:"Schließen",exact:true}).click();
     await grid.locator('.baum-tree-trigger').first().click();

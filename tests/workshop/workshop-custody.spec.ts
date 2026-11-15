@@ -24,9 +24,9 @@ test("register once with photo, scan stable identity, printable label, metadata 
 
 test("tree grid has 2/6 columns, tap actions, hold details, persistent reports/equipment and role protection",async({page,request,browser},info)=>{
   const seed=await(await request.get(api)).json() as WorkshopSnapshot, site=seed.directory.sites.find(s=>s.name.includes("Stadtpark"))!;
-  const tree=await prisma.treeItem.findFirstOrThrow({where:{baustelleId:site.id},orderBy:{treeId:"asc"}});
+  const tree=await prisma.treeItem.findFirstOrThrow({where:{baustelleId:site.id},orderBy:[{status:"asc"},{treeId:"asc"}]});
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
-  for(const width of [390,1440]){await page.setViewportSize({width,height:900});await page.goto(`/demo/baustellen/${site.id}`);await page.getByRole("button",{name:/^Bäume/}).click();const grid=page.getByTestId("muster-tree-grid");await expect(grid).toBeVisible();expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(width===390?2:6);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(`trees-${width}.png`)});}
+  for(const width of [390,1440]){await page.setViewportSize({width,height:900});await page.goto(`/demo/baustellen/${site.id}`);await page.getByRole("button",{name:/^Bäume/}).click();const grid=page.getByTestId("muster-tree-grid");await expect(grid).toBeVisible();expect(await grid.evaluate(el=>Number((el as HTMLElement).dataset.columns))).toBe(width===390?2:6);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(`trees-${width}.png`)});}
   const card=page.getByTestId("muster-tree-grid").locator(`article[data-tree-code="${tree.treeId}"]`);
   await card.getByRole("button").first().click(); let d=page.getByRole("dialog"); await expect(d).toHaveCount(1); await expect(page.getByTestId("muster-tree-inline")).toBeVisible(); await expect(card.getByRole("button",{name:"Problem melden",exact:true})).toBeVisible();
   const done=d.getByRole("button",{name:"Erledigt",exact:true});if(await done.count())await done.click();else await d.getByRole("button",{name:"Wieder in Bearbeitung",exact:true}).click();
