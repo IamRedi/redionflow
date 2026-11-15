@@ -11,6 +11,16 @@ Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redi
 
 **[English version](README.en.md)** · **BauFlow geprüft: 12. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Musterfirma: fotorealistische Baumreferenzen · 15. November 2026
+
+Die Baumkarten behalten ihre feste Größe und drehen sich für Erledigt/Problemmeldungen. Die Filter stehen frei ohne zusätzliche weiße Leiste; Scrollen bleibt mit ausgeblendeter Scrollbar möglich. Der Artenatlas und die Karten teilen 26 erzeugte fotorealistische Referenzen für Sommer, Herbst und Winter. Es sind Artenillustrationen, keine Fotos der konkreten Baustellenbäume.
+
+Lange Baumlisten montieren nur das sichtbare Fenster mit kleinem Puffer. Inventar und Holzansichten verwenden dieselbe Technik für große Sammlungen; bestehende Datenlimits und Funktionen bleiben erhalten. Quelle und Prüfstand: [PR217](https://github.com/IamRedi/redionflow/pull/217). Live nur in Musterfirma: Quelle `99c69ee`, Railway `53240831-27cb-4988-aed4-cd733ca44ec8`, SUCCESS/Online. 62 Browserabläufe verifiziert; 727 Unit-Tests und 19 simulierte Integrationsfälle bestanden. Daten und Konfiguration bleiben erhalten.
+
+![Fotorealistische Winterbäume und feste Glaskarten](docs/assets/screenshots/tree-photoreal-live-20261115.jpg)
+
+![Fotorealistischer Artenatlas der Musterfirma](docs/assets/screenshots/atlas-photoreal-live-20261115.jpg)
+
 ## Musterfirma: Baustellen als Glaskarten · 14. November 2026
 
 Die öffentliche BaumdienstFlow-Musterfirma öffnet Baustellen jetzt als Glaskarte über der bestehenden Workzone: Name, Adresse und Angaben in einer ruhigen Übersicht. Eine illustrierte Baumkarte öffnet die eigene Baumansicht mit **Alle / Zu erledigen / Erledigt**, Karte und Artenstudio. Geräte, Team, Absicherung, Fotos, Prozesse, Dokumente und Unterweisung öffnen getrennte Ansichten.

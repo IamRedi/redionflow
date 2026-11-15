@@ -13,6 +13,16 @@ Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionfl
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
 
+## Musterfirma: photoreal tree references · 15 November 2026
+
+Tree cards keep their fixed size and flip for completion/problem actions. Filters no longer share a decorative white band; scrolling remains available with hidden scrollbar chrome. Cards and the atlas share 26 generated photorealistic summer, autumn and winter species references. These are illustrations of a species, not photographs of individual site trees.
+
+Long tree lists mount a bounded visible window. Large inventory and timber collections use the same approach while retaining existing data limits and workflows. Source and verification: [PR217](https://github.com/IamRedi/redionflow/pull/217). Live on Musterfirma only: source `99c69ee`, Railway `53240831-27cb-4988-aed4-cd733ca44ec8`, SUCCESS/Online. 62 browser flows verified; 727 unit tests and 19 mocked integration cases passed. Existing data and configuration were preserved.
+
+![Photoreal winter trees and fixed glass cards](docs/assets/screenshots/tree-photoreal-live-20261115.jpg)
+
+![Musterfirma photoreal species atlas](docs/assets/screenshots/atlas-photoreal-live-20261115.jpg)
+
 ## Musterfirma: glass worksite cards · 14 November 2026
 
 The public BaumdienstFlow Musterfirma demo now opens worksites as glass cards over the existing Workzone, with a centered name, address and site information. An illustrated tree card opens a dedicated view with **All / To do / Completed**, map and species studio. Equipment, crew, safety, photos, processes, documents and instructions open separate views.
