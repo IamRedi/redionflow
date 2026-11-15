@@ -28,6 +28,7 @@ type MissionItem = {
   name: string;
   status: string;
   type: string;
+  typeLabel?: string;
   pct: number;
   done: number;
   total: number;
@@ -262,6 +263,7 @@ function typeLabel(type: string, lang: string) {
 export function WorkzoneMissionControl({
   items,
   archive,
+  showArchiveWhenEmpty = true,
   defaultAddress,
   toolbar,
   detailHrefBase = "/workzone/baustellen",
@@ -280,6 +282,7 @@ export function WorkzoneMissionControl({
   cardWork?: CardWork | null;
   items: MissionItem[];
   archive: MissionItem[];
+  showArchiveWhenEmpty?: boolean;
   defaultAddress: string;
   toolbar?: ReactNode;
   detailHrefBase?: string;
@@ -592,7 +595,7 @@ export function WorkzoneMissionControl({
                     {isSteelSiteType(item.type)?<SteelSiteArt type={item.type} shape={item.shape} pct={item.pct} live={item.activeLiveCount > 0} className="absolute inset-0 h-full w-full" />:<span/>}
                     </AssetPhoto>
                     <span className="absolute bottom-1.5 left-2 rounded-md bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                      {typeLabel(item.type, currentLang)}
+                      {item.typeLabel ?? typeLabel(item.type, currentLang)}
                     </span>
                   </div>
                 ) : null}
@@ -666,7 +669,7 @@ export function WorkzoneMissionControl({
         </div>
       )}
 
-      <div data-studio-surface className="min-w-0 rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]" data-testid="daily-archive">
+      {showArchiveWhenEmpty || archive.length > 0 ? <div data-studio-surface className="min-w-0 rounded-md border bg-card p-3 [content-visibility:auto] [contain-intrinsic-size:320px]" data-testid="daily-archive">
         <h3 className="text-sm font-semibold">{t("workzone.dailyArchive", currentLang)}</h3>
         <div className="mt-2 min-w-0">
           <table className="w-full table-fixed border-collapse border text-xs">
@@ -682,7 +685,7 @@ export function WorkzoneMissionControl({
                 <tr key={item.id}>
                   <td className="break-words border px-2 py-1 [overflow-wrap:anywhere]">{item.name}</td>
                   <td className="break-words border px-2 py-1 tabular-nums">{`${item.done}/${item.total} (100%)`}</td>
-                  <td className="break-words border px-2 py-1 [overflow-wrap:anywhere]">{typeLabel(item.type, currentLang)}</td>
+                  <td className="break-words border px-2 py-1 [overflow-wrap:anywhere]">{item.typeLabel ?? typeLabel(item.type, currentLang)}</td>
                 </tr>
               ))}
               {archive.length === 0 ? (
@@ -695,7 +698,7 @@ export function WorkzoneMissionControl({
             </tbody>
           </table>
         </div>
-      </div>
+      </div> : null}
     </div>
   );
 }

@@ -294,6 +294,8 @@ model CompanyProfile {
   country               String  @default("DE")
   /// Company logo as a data: URL (png, jpeg, webp or svg), shown in the top bar
   logoDataUrl           String?
+  /// Optional reusable visual identity; null retains the installation's established appearance.
+  uiIdentity            String?
   /// Immutable onboarding blueprint. Null preserves legacy companies; never copy client data into profiles.
   setupProfile          Json?
   /// Canonical reviewed setup digest, used for idempotent create-only onboarding.

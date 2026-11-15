@@ -16,7 +16,7 @@ export async function OfficePage({ room,personId,query={} }: { room: 'reception'
   const access = await currentOfficeAccess();
   if (!access) notFound();
   const [company, lang] = await Promise.all([
-    withPilotDbContext(access.companyId, tx => tx.companyProfile.findUnique({ where: { id: access.companyId }, select: { displayName: true, logoDataUrl: true } })),
+    withPilotDbContext(access.companyId, tx => tx.companyProfile.findUnique({ where: { id: access.companyId }, select: { displayName: true, logoDataUrl: true, uiIdentity: true } })),
     resolveRequestLanguage(),
   ]);
   if (!company) notFound();
@@ -25,6 +25,9 @@ export async function OfficePage({ room,personId,query={} }: { room: 'reception'
   // Only the current person's unread count enters the room payload, never a colleague's work.
   const directory=workEnabled?await officeDirectory():null;
   const occupant=directory?.people.find(p=>room==='me'?p.id===directory.self:room==='person'?p.id===personId:p.seat==='megi');
+  // Optional company presentation uses saved titles, never seat aliases or name matching.
+  const savedTitles=company.uiIdentity?await withPilotDbContext(access.companyId,tx=>tx.officeMember.findMany({where:{companyProfileId:access.companyId,enabled:true},select:{id:true,userId:true,title:true}})):[];
+  const titleFor=(id:string,fallback:string)=>savedTitles.find(member=>member.id===id||member.userId===id)?.title??fallback;
   if(room==='person'&&!occupant)notFound();
   const ownDesk=room==='me'||(occupant?occupant.id===directory?.self:access.seat==='megi');
   const presence=workEnabled&&ownDesk&&room!=='reception'?await ownOfficePresence().catch(e=>{if(e instanceof OfficeError)return null;throw e;}):null;
@@ -32,7 +35,7 @@ export async function OfficePage({ room,personId,query={} }: { room: 'reception'
   const resources=workEnabled&&(ownDesk||preview)&&room!=='reception'?await officeResources(preview?occupant!.id:undefined).catch(e=>{if(e instanceof OfficeError)notFound();throw e;}):null;
   const unread=workEnabled?await officeUnreadCount().catch(error=>{if(error instanceof OfficeError)return null;throw error;}):null;
   const artwork=workEnabled&&room!=='reception'?await officeArtworkState(occupant?.id).catch(e=>{if(e instanceof OfficeError)notFound();throw e;}):undefined;
-  return <><OfficeSpace presence={presence} companyLogo={safeCompanyLogo(company.logoDataUrl)} artwork={artwork} room={room==='reception'?'reception':'megi'} lang={lang} companyName={company.displayName} ownDesk={ownDesk} admin={access.kind === 'admin'} workEnabled={unread!==null} ownName={room!=='reception'?occupant?.name:undefined} workProfile={resources?.profile} assistantEnabled={resources?.assistant??false} planEnabled={resources?.plan??true} workbooksEnabled={resources?.workbooks??false} officeTitle={occupant?.title} visitorId={ownDesk?undefined:occupant?.id} unread={unread??0} previewBase={preview?`/workzone/offices/people/${occupant!.id}`:undefined} previewEnabled={occupant?.enabled} canManage={!!directory?.manager&&process.env.VIRTUAL_OFFICE_TEAM_ENABLED==='true'} doorPage={/^\d{1,3}$/.test(query.doors??'')?Number(query.doors):0} doors={directory?.people.map(p=>({...p,href:p.id===directory.self?'/workzone/offices/me':`/workzone/offices/people/${p.id}`}))??[{id:'megi',name:'Megi',title:'Administrata',enabled:true,href:'/workzone/offices/megi'}]}/>
+  return <><OfficeSpace sceneLanguage={company.uiIdentity?lang:undefined} presence={presence} companyLogo={safeCompanyLogo(company.logoDataUrl)} artwork={artwork} room={room==='reception'?'reception':'megi'} lang={lang} companyName={company.displayName} ownDesk={ownDesk} admin={access.kind === 'admin'} workEnabled={unread!==null} ownName={room!=='reception'?occupant?.name:undefined} workProfile={resources?.profile} assistantEnabled={resources?.assistant??false} planEnabled={resources?.plan??true} workbooksEnabled={resources?.workbooks??false} officeTitle={occupant?titleFor(occupant.id,occupant.title):undefined} visitorId={ownDesk?undefined:occupant?.id} unread={unread??0} previewBase={preview?`/workzone/offices/people/${occupant!.id}`:undefined} previewEnabled={occupant?.enabled} canManage={!!directory?.manager&&process.env.VIRTUAL_OFFICE_TEAM_ENABLED==='true'} doorPage={/^\d{1,3}$/.test(query.doors??'')?Number(query.doors):0} doors={directory?.people.map(p=>({...p,title:titleFor(p.id,p.title),href:p.id===directory.self?'/workzone/offices/me':`/workzone/offices/people/${p.id}`}))??[{id:'megi',name:'Megi',title:'Administrata',enabled:true,href:'/workzone/offices/megi'}]}/>
     {preview&&query.view&&<OfficePreviewPanel id={occupant!.id} name={occupant!.name} lang={lang} query={query}/>}
   </>;
 }

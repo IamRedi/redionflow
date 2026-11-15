@@ -3,6 +3,11 @@
 Owner decision: 15 November 2026. One application engine, versioned industry
 profiles and separate company data. A client installation is not the template.
 
+PR222 was released only to the existing BauFlow Muster on
+`4820fcf9ebd233f0fa14378623dda1e4fad58dbd`. The following crane-company rehearsal
+is separate local work, described in [CRANE_MUSTER.md](CRANE_MUSTER.md); it does
+not deploy or convert an existing installation.
+
 ## Source and boundaries
 
 The first supported base is the steel system at
@@ -78,6 +83,11 @@ sites and up to 50 own knowledge entries. Unknown top-level fields, unrecognized
 versions, incompatible product modes, duplicate site names/knowledge keys and
 factory sites in a factory-disabled plan are rejected. There is no source tenant
 ID, database-import flag or sample-data switch.
+
+An optional company-owned `uiIdentity` selects the bundled `crane-red-blue-v1`
+visual kit. It is not a module or a permission and does not alter frozen v1
+business defaults. The nullable column retains all existing appearances; the
+normal review digest includes an explicitly supplied visual choice.
 
 Apply creates `company-<key>` inside one tenant-bound transaction with a
 per-key advisory lock. Company, own owner, local 14-day trial subscription,

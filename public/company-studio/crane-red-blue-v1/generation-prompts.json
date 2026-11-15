@@ -1,0 +1,35 @@
+{
+  "tool": "built-in image_gen",
+  "exactModel": "not exposed",
+  "date": "2026-11-15",
+  "prompts": [
+    {
+      "asset": "yard-day",
+      "prompt": "Create a premium photorealistic panoramic 16:9 architectural visualization, extremely crisp natural 4K-style detail, an elegant German crane hire company campus in the Ruhr region. This is an ORIGINAL fictional company, no real company branding. Red crane booms with deep royal blue chassis, modern glass dispatch office at left, clean paved equipment courtyard center and right, one parked mobile telescopic crane and compact tracked mini crane, organized rigging racks, landscaped trees. Afternoon natural window light, soft clear blue sky, warm architectural timber and steel, beautiful calm blue red accents. Immersive 2.5D frontal perspective with spacious center suitable as the full background of an operational app. Realistic proportions and detailed materials, visual illustration only, no technical diagrams, no text or logos or numbers, no UI, no white haze, no decorative neon. Wide entire scene; no collage."
+    },
+    {
+      "asset": "mobile-crane",
+      "prompt": "Premium photorealistic product catalogue photograph of ONE original fictional European mobile telescopic crane truck, boom securely folded for transport, red boom and cabin accents, deep royal blue multi axle chassis, dark charcoal wheels and silver hardware. Clean three quarter front side view, complete vehicle including wheels and rear counterweight visible, centered, studio softbox lighting with realistic subtle contact shadow. No people, no text, no badges, no letters, no license numbers, no logos, no real manufacturer name. Transparent background true alpha. Landscape 4:3 framing, generous clear margins. Match a consistent high-end BauFlow equipment catalogue. Illustrative machine, no certified geometry."
+    },
+    {
+      "asset": "glass-robot",
+      "prompt": "Premium photorealistic product catalogue photograph of ONE original fictional compact tracked spider mini crane for glass installation, red compact boom and deep royal blue body, black rubber tracks, silver hydraulic details, boom safely folded transport position, outriggers retracted. Full machine centered in a complete three quarter front side view, studio softbox lighting and subtle contact shadow. No people, no text, no badges, no letters, no logos, no real manufacturer. Transparent background true alpha. Landscape 4:3 framing, generous margins, consistent premium realistic equipment photography. Illustrative machine, no certified geometry."
+    },
+    {
+      "asset": "site-glass",
+      "prompt": "Original premium photorealistic wide 16:9 cover image for a FICTIONAL German crane company's glass facade installation job. Modern small office building with large glass facade, one compact crawler glass handling robot in royal blue body and red boom, one pane being positioned by fictional operators in helmets and workwear. Entire contextual wide scene, balanced architectural composition, crisp daylight, realistic restrained Ruhr industrial surroundings. Premium BauFlow digital studio photographic style. No text, no logos, no brands, no numerical specifications. This is an illustrative project scene, no certified construction geometry. No UI, no collage, no vignette, no haze."
+    },
+    {
+      "asset": "site-roof",
+      "prompt": "Original premium photorealistic wide 16:9 cover image for a FICTIONAL German crane-company rooftop mechanical equipment lifting job. Royal blue multi axle mobile crane with red telescopic boom at side of a modern low industrial office, small air conditioning module suspended above flat rooftop, fictional ground crew wearing helmets, red blue company palette. Wide contextual full scene with negative space around subject, clear natural late afternoon, precise elegant architectural materials and calm realistic industrial yard. No text, logos, brands, or numerical specifications. No UI. Illustration, not a measured technical plan."
+    },
+    {
+      "asset": "site-steel",
+      "prompt": "Original premium photorealistic wide 16:9 cover image for a FICTIONAL German crane hire company's steel assembly job. Beautiful tidy logistics building under assembly, steel beam being placed using a royal blue mobile crane with red boom. Fictional operators wearing helmets, natural clean daylight, modern Ruhr industrial architecture with trees, steel blue structure and modest red accents. Entire contextual scene composed as a wide app cover, premium crisp architectural photograph. No text, logos, brands or numerical specifications. No UI, no collage. Illustrative scene, not construction or lifting instructions."
+    },
+    {
+      "asset": "yard-night",
+      "prompt": "Lighting-weather edit of original yard-day: preserve architecture, machinery, positions and composition; deep blue dusk, realistic warm window/workshop/garden lighting, crisp image with no haze, text or UI."
+    }
+  ]
+}

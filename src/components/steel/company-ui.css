@@ -1,0 +1,96 @@
+/* Reusable company visual profile. No client name, permissions or process logic in CSS. */
+body[data-company-ui='crane-red-blue-v1'] {
+  --background: 215 30% 94% !important;
+  --foreground: 219 60% 12% !important;
+  --card: 214 50% 98% !important;
+  --card-foreground: 219 60% 12% !important;
+  --popover: 215 45% 97% !important;
+  --popover-foreground: 219 60% 12% !important;
+  --primary: 215 73% 38% !important;
+  --primary-foreground: 0 0% 100% !important;
+  --ring: 215 73% 38% !important;
+  --secondary: 216 32% 88% !important;
+  --secondary-foreground: 219 60% 12% !important;
+  --muted: 215 28% 89% !important;
+  --muted-foreground: 218 30% 28% !important;
+  --accent: 355 55% 92% !important;
+  --accent-foreground: 355 70% 32% !important;
+  --border: 215 28% 66% !important;
+  --input: 215 28% 66% !important;
+  --steel-glass: linear-gradient(125deg,#f5faffad,#dceaff8c) !important;
+  --steel-edge: #f9fcffe6 !important;
+  --steel-shadow: 0 8px 28px #0e2b4926,inset 0 1px 0 #ffffffc2 !important;
+  --steel-copper: #a91e37 !important;
+  --steel-copper-soft: #c32a4433 !important;
+  --steel-surface: #e7f0ffc7 !important;
+  --steel-action-glass: linear-gradient(145deg,#f7fcffd9,#b9d8ffc2) !important;
+  --steel-action-ink: #112f60 !important;
+  --steel-action-edge: #ffffffed !important;
+  --muster-fleet-glass: var(--steel-glass) !important;
+  --muster-fleet-card: linear-gradient(145deg,#ffffffa8,#d5e7ff85) !important;
+  --muster-fleet-edge: var(--steel-edge) !important;
+  --bauflow-muster-scene: url('/company-studio/crane-red-blue-v1/yard-day.webp') !important;
+}
+html.dark body[data-company-ui='crane-red-blue-v1'] {
+  --background: 219 44% 10% !important;
+  --foreground: 212 38% 96% !important;
+  --card: 220 40% 14% !important;
+  --card-foreground: 212 38% 96% !important;
+  --popover: 219 42% 14% !important;
+  --popover-foreground: 212 38% 96% !important;
+  --primary: 212 90% 75% !important;
+  --primary-foreground: 220 58% 13% !important;
+  --ring: 212 90% 75% !important;
+  --secondary: 219 30% 23% !important;
+  --secondary-foreground: 212 38% 96% !important;
+  --muted: 219 30% 23% !important;
+  --muted-foreground: 215 30% 81% !important;
+  --accent: 350 35% 24% !important;
+  --accent-foreground: 350 80% 85% !important;
+  --border: 214 30% 43% !important;
+  --input: 214 30% 43% !important;
+  --steel-glass: linear-gradient(125deg,#172d4ed9,#10213ac9) !important;
+  --steel-edge: #daeaff5c !important;
+  --steel-shadow: 0 10px 30px #050e205c,inset 0 1px 0 #d8eaff40 !important;
+  --steel-copper: #ffb4c0 !important;
+  --steel-copper-soft: #a5233d55 !important;
+  --steel-surface: #112742db !important;
+  --steel-action-glass: linear-gradient(145deg,#365d8ebd,#142c4ce3) !important;
+  --steel-action-ink: #e5f0ff !important;
+  --muster-fleet-card: linear-gradient(145deg,#284b7480,#142e4d80) !important;
+  --bauflow-muster-scene: url('/company-studio/crane-red-blue-v1/yard-night.webp') !important;
+}
+body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-board] {
+  background: transparent !important;
+}
+body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-board] > .steelStudioPhoto {
+  background: transparent !important;
+}
+body[data-company-ui='crane-red-blue-v1'] [data-studio-dialog]:has([data-testid='fleet-picker'][data-fleet-count='2']) {
+  width: min(calc(100% - 2rem), 470px);
+}
+body[data-company-ui='crane-red-blue-v1'] [data-studio-dialog]:has([data-testid='fleet-picker'][data-fleet-count='2']) [data-testid='fleet-card-grid'] {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+}
+body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-hero-shade] {
+  background: linear-gradient(90deg,#eff6ffe8,#eff6ff8c 35%,transparent 75%);
+}
+html.dark body[data-company-ui='crane-red-blue-v1']:has([data-steel-studio]) [data-studio-hero-shade] {
+  background: linear-gradient(90deg,#11233ce8,#11233c80 35%,transparent 75%);
+}
+body[data-company-ui='crane-red-blue-v1'] [data-studio-phase-board] > div > .grid { display: flex; flex-wrap: wrap; }
+body[data-company-ui='crane-red-blue-v1'] [data-studio-phase-group] { width: 280px; max-width: 100%; }
+/* A single TV workspace owns vertical scrolling; tables remain horizontally usable. */
+body[data-company-ui='crane-red-blue-v1']:has([data-company-display]) [data-testid='flow-global-tools'],
+body[data-company-ui='crane-red-blue-v1']:has([data-company-display]) [data-testid='production-header-tools'] { display: none; }
+body[data-company-ui='crane-red-blue-v1'] [data-company-display] [class~='h-[340px]'] { height: auto; overflow: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  body[data-company-ui='crane-red-blue-v1'] :is(button,a) { transition-duration: 160ms; }
+}
+/* Quiet chrome, same real scrolling and focus reveal. Never hide required content. */
+body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll'] { scrollbar-width: none; }
+body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll']::-webkit-scrollbar { width: 0; height: 0; }
+@media (forced-colors: active) {
+  body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll'] { scrollbar-width: auto; }
+  body[data-company-ui='crane-red-blue-v1'] [data-testid='app-workspace-scroll']::-webkit-scrollbar { width: auto; height: auto; }
+}

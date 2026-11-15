@@ -56,6 +56,16 @@ it('creates only the reviewed tenant with its own owner and zero copied client r
   expect(await prisma.companyInventoryItem.count({ where: { companyProfileId: result.companyId } })).toBe(0);
   expect(await prisma.companyProfile.findUnique({ where: { id: tenants[0].company.id } })).toEqual(before);
 });
+it('saves a reviewed company visual profile without changing another firm or enabling manufacturing', async () => {
+  const base=input(),raw={...base,company:{...base.company,uiIdentity:'crane-red-blue-v1'}},plan=planCompanySetup(raw);
+  const before=await prisma.companyProfile.findUnique({where:{id:tenants[0].company.id}});
+  const result=await applyCompanySetup(prisma,raw,plan.digest,hashPassword(password));
+  const company=await prisma.companyProfile.findUniqueOrThrow({where:{id:result.companyId}});
+  expect(company.uiIdentity).toBe('crane-red-blue-v1');
+  expect(company.setupProfile).toMatchObject({id:'steel-assembly',factory:false});
+  expect(await prisma.companyProfile.findUnique({where:{id:tenants[0].company.id}})).toEqual(before);
+  await expect(prisma.companyProfile.update({where:{id:result.companyId},data:{uiIdentity:'unreviewed-css'}})).rejects.toThrow();
+});
 it('serializes retries and concurrent calls without duplicate tenants, audits or password resets', async () => {
   const raw = input(), { digest } = planCompanySetup(raw), hashed = hashPassword(password);
   const results = await Promise.all([applyCompanySetup(prisma, raw, digest, hashed), applyCompanySetup(prisma, raw, digest, hashed)]);

@@ -1,0 +1,26 @@
+{
+  "key": "rheinruhr-kran-muster",
+  "blueprint": { "id": "steel-assembly", "version": 1, "factory": false },
+  "company": {
+    "displayName": "RheinRuhr Kranservice · MUSTER",
+    "legalName": "RheinRuhr Kranservice Muster GmbH · Fiktive Demofirma",
+    "mode": "bau",
+    "country": "DE",
+    "uiIdentity": "crane-red-blue-v1",
+    "email": "disposition@rheinruhr-muster.example",
+    "street": "Musterhafen 12",
+    "zip": "00000",
+    "city": "Musterstadt · Ruhrgebiet",
+    "plan": "enterprise",
+    "owner": { "name": "Clara Winter", "email": "leitung@rheinruhr-muster.example" },
+    "sites": [
+      { "name": "Hafenforum · Glasmontage", "type": "STEEL_ASSEMBLY", "address": "Musterkai 4, 00000 Musterstadt", "description": "Fiktiver Auftrag: angelieferte Fassadenelemente mit Vakuumheber einsetzen. Keine echte Lastberechnung oder Einsatzfreigabe." },
+      { "name": "Westpark · Dachtechnik", "type": "STEEL_ASSEMBLY", "address": "Musterpark 8, 00000 Musterstadt", "description": "Fiktiver Auftrag: Hebeeinsatz für ein angeliefertes Dachgerät mit Mobilkran; Disposition, Absperrung, Hub und Übergabe." },
+      { "name": "Ruhrbogen · Stahlmontage", "type": "STEEL_ASSEMBLY", "address": "Musterbogen 6, 00000 Musterstadt", "description": "Fiktiver Auftrag: externe Stahlträger annehmen und mit dem Kran montieren. Keine eigene Fertigung." }
+    ],
+    "knowledge": [
+      { "key": "muster-grenze", "language": "DE", "title": "Musterbetrieb · keine Einsatzfreigabe", "content": "Alle Namen, Orte, Kennzeichen, Mengen und Preise sind erfunden. Bilder illustrieren Gerätearten; sie ersetzen keine Betriebsanleitung, Lasttabelle oder Prüfung. Hubplanung, Bodentragfähigkeit, Windgrenzen und Freigaben werden von qualifizierten Verantwortlichen außerhalb dieses Musterablaufs geprüft.", "tags": ["Muster", "Kranservice"] },
+      { "key": "muster-ablauf", "language": "DE", "title": "Vom Auftrag zum dokumentierten Einsatz", "content": "Disposition erfasst Auftrag und Dokumente. Tagesplan verbindet Baustelle, Team und verfügbares Gerät. Das Team dokumentiert Einsatzvorbereitung, Anlieferung, Hub oder Montage und Übergabe. Fremdgelieferte Elemente gehen direkt in Annahme/Montage. Defekte sperren das Betriebsmittel bis zur geprüften Werkstattfreigabe; jede Übergabe bleibt nachvollziehbar.", "tags": ["Disposition", "Werkstatt"] }
+    ]
+  }
+}

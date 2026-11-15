@@ -15,6 +15,7 @@ export function planCompanySetup(raw: unknown) {
   const input = onboardingSchema.parse(raw);
   const profile = resolveBlueprint(input.blueprint);
   if (input.company.mode !== profile.mode) throw new Error('BLUEPRINT_MODE_MISMATCH');
+  if (input.company.uiIdentity && input.company.mode !== 'bau') throw new Error('UI_IDENTITY_MODE_MISMATCH');
   if (!profile.factory && input.company.sites.some(site => site.type === 'STEEL_WORKSHOP')) throw new Error('FACTORY_SITE_DISABLED');
   const siteNames = input.company.sites.map(site => site.name.toLocaleLowerCase('en'));
   if (new Set(siteNames).size !== siteNames.length) throw new Error('DUPLICATE_SITE');

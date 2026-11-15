@@ -1,0 +1,71 @@
+{
+  "created": "2026-11-15",
+  "method": "built-in image_gen; exact model not exposed",
+  "purpose": "Original illustrative fictional crane-company assets, not measured or certified equipment geometry; no source-company media copied.",
+  "transform": "resize and WebP encoding only; alpha retained",
+  "assets": [
+    {
+      "file": "yard-day.webp",
+      "sha256": "d4ca6ac8c4777ae71fa3a1b142a68623b1424a3bcdd547f66411a52a5c511c05",
+      "sourceSha256": "82f54a8f8f7df85e8da9c5b562e3004bcd8d91b0432a537a7e53b1eff9381411",
+      "width": 1672,
+      "height": 941,
+      "alpha": false,
+      "bytes": 393980
+    },
+    {
+      "file": "yard-night.webp",
+      "sha256": "c42aae14dcb4226546d65cf950874c89183c59dd559ac0cc4cadb7243847e6d7",
+      "sourceSha256": "0c8a118e02cd6c94daa9472dd748cc8e42098d57723071aa3081958ba087bdb8",
+      "width": 1672,
+      "height": 941,
+      "alpha": false,
+      "bytes": 387884
+    },
+    {
+      "file": "mobile-crane.webp",
+      "sha256": "bc3ad8535b8934ef21374417d6fd56aff2c1896b7cc7ea0348fa34206ee917e5",
+      "sourceSha256": "5a4637f8f2c916f9f19e7844d6aee242066e9ca6f64897f9d64ee2d7e99f2d09",
+      "width": 1000,
+      "height": 750,
+      "alpha": true,
+      "bytes": 145946
+    },
+    {
+      "file": "glass-robot.webp",
+      "sha256": "3bca44c59b90aa759eb9810b7d4b907be2b9c6fdc2c800129871eaabdde33e54",
+      "sourceSha256": "b038becc4c2896f109071abae9aedb62a97ebbe58f46995859aca488e619b6f7",
+      "width": 1000,
+      "height": 750,
+      "alpha": true,
+      "bytes": 141256
+    },
+    {
+      "file": "site-glass.webp",
+      "sha256": "e0409aa7bcd8cf407a040dd1182007455dab05a415db6070e0347ae9ce42b2dd",
+      "sourceSha256": "17fbb57ae123505fbdcd986187c34942a359fa2ba512a3634dcb82b99f9d2f5a",
+      "width": 1000,
+      "height": 563,
+      "alpha": false,
+      "bytes": 171032
+    },
+    {
+      "file": "site-roof.webp",
+      "sha256": "4d0915f595a9e6f263daffdeb387cf0f2a500e5423dab9a731f465dbe7ca7c91",
+      "sourceSha256": "b0f7606f2f2932dca46f7877665b131bc1fbf7c7305948ab6bceb231cfc13ccc",
+      "width": 1000,
+      "height": 563,
+      "alpha": false,
+      "bytes": 105620
+    },
+    {
+      "file": "site-steel.webp",
+      "sha256": "9efffa3160db99db27998428aaf8fdab02a78a67d0e80de64e9fe4d9f8ef5a0b",
+      "sourceSha256": "43261bd399c58a739a8f6308bfbc7b53b0468ebac8d5de1e0ade878ec0ab5225",
+      "width": 1000,
+      "height": 563,
+      "alpha": false,
+      "bytes": 154972
+    }
+  ]
+}
