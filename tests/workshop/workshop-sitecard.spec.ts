@@ -105,9 +105,9 @@ test("tree filters share one clean card and map while the species studio and sit
     await dialog.getByRole("button", { name: "Karte", exact: true }).click(); await expect(grid).toHaveCount(0); await expect(dialog.getByTestId("muster-tree-map")).toBeVisible();
     const doneCodes = new Set(detail.trees.filter((tree: { treeId: string; status: string }) => (before.state.custody.trees[`${site.key}:${tree.treeId}`]?.status || tree.status) === "done").map((tree: { treeId: string }) => tree.treeId));
     await expect(dialog.locator(".leaflet-marker-icon")).toHaveCount(detail.points.filter((point: { treeId: string }) => doneCodes.has(point.treeId)).length);
-    await dialog.locator(".leaflet-marker-icon").first().focus(); await page.keyboard.press("Enter"); await dialog.getByRole("button", { name: "Baumdetails", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Sicherheitsmaterial", exact: true })).toBeVisible(); await expect(page.getByRole("dialog").getByRole("button", { name: "Artenkarte öffnen", exact: true })).toBeFocused(); await expect(page.getByRole("dialog")).toHaveCSS("pointer-events", "auto"); await page.keyboard.press("Escape"); await expect(dialog.getByRole("heading", { name: "Bäume", exact: true })).toBeVisible();
+    await dialog.locator(".leaflet-marker-icon").first().focus(); await page.keyboard.press("Enter"); await dialog.getByRole("button", { name: "Baumdetails", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Sicherheitsmaterial", exact: true })).toBeVisible(); await expect(dialog.getByTestId("muster-tree-inline")).toBeFocused(); await expect(page.getByRole("dialog")).toHaveCount(1); await expect(page.getByRole("dialog")).toHaveCSS("pointer-events", "auto"); await page.keyboard.press("Escape"); await expect(dialog.getByRole("heading", { name: "Bäume", exact: true })).toBeVisible();
     await dialog.locator('[data-tree-filter="todo"]').click();
-    await dialog.getByRole("button", { name: "Baumkarten", exact: true }).click(); await expect(dialog.getByTestId("muster-tree-map")).toHaveCount(0);
+    await expect(dialog.getByTestId("muster-tree-map")).toHaveCount(0);
     await expect(grid.locator("article")).toHaveCount(detail.trees.length - done); expect(await grid.locator("article").evaluateAll(elements => elements.every(element => element.getAttribute("data-tree-status") !== "done"))).toBe(true);
     await dialog.getByRole("button", { name: "Artenstudio", exact: true }).click(); await expect(page.getByRole("dialog").getByRole("button", { name: "Hecken", exact: true })).toBeVisible(); await page.keyboard.press("Escape");
     await dialog.locator('[data-tree-filter="all"]').click(); await expect(grid.locator("article")).toHaveCount(detail.trees.length);
@@ -132,4 +132,62 @@ test("tree filters share one clean card and map while the species studio and sit
     await page.screenshot({ animations: "disabled", path: info.outputPath(`trees-sq-${theme}-${width}.png`) });
   }
   const after = await (await request.get("/api/demo/baumdienst/workshop")).json(); expect(after.state).toEqual(before.state); expect(after.revision).toBe(before.revision);
+});
+
+
+test("tree actions and report retry stay in their own glass card without a second dialog", async ({ page, context, request }, info) => {
+  const before = await (await request.get("/api/demo/baumdienst/workshop")).json();
+  const site = before.directory.sites.find((entry: { name: string }) => entry.name.includes("Lindenallee"));
+  const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
+  let code = "";
+  for (const theme of ["light", "dark"]) for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 320, height: 600 }, { width: 844, height: 390 }]) {
+    await context.addCookies([{ name: "bk_theme", value: theme, url: String(info.project.use.baseURL) }]);
+    await page.setViewportSize(size); await page.goto(`/demo/baustellen/${site.id}`);
+    await page.getByRole("button", { name: "Bäume", exact: true }).click();
+    const grid = page.getByTestId("muster-tree-grid"), card = grid.locator('article[data-tree-status="todo"]').first();
+    code = (await card.getAttribute("data-tree-code"))!;
+    const trigger = card.locator(".baum-tree-trigger"), width = (await card.boundingBox())!.width;
+    await trigger.click();
+    const inline = card.getByTestId("muster-tree-inline"); await expect(inline).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(1);
+    await expect(inline.getByRole("button", { name: "Erledigt", exact: true })).toBeVisible();
+    expect((await card.boundingBox())!.width).toBeCloseTo(width, 0);
+    for (const label of ["Erledigt", "Problem melden"]) {
+      const box = await inline.getByRole("button", { name: label, exact: true }).boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(44); expect(box!.height).toBeGreaterThanOrEqual(44);
+    }
+    expect(await page.getByRole("dialog").evaluate(element => element.scrollHeight <= element.clientHeight + 1 && element.scrollWidth <= element.clientWidth)).toBe(true);
+    expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await page.screenshot({ animations: "disabled", path: info.outputPath(`inline-${theme}-${size.width}.png`) });
+    await inline.getByRole("button", { name: "Problem melden", exact: true }).click();
+    await inline.getByLabel("Was muss geprüft werden?").fill("DEMO · temporary unsent note");
+    await expect(inline.getByLabel("Was muss geprüft werden?")).toBeFocused();
+    await page.screenshot({ animations: "disabled", path: info.outputPath(`report-${theme}-${size.width}.png`) });
+    await page.keyboard.press("Escape"); await expect(inline).toHaveCount(0);
+    await expect(trigger).toBeFocused(); await expect(page.getByRole("dialog")).toHaveCount(1);
+    await trigger.press("Enter"); await expect(card.getByTestId("muster-tree-inline")).toBeVisible();
+    await card.getByRole("button", { name: `Schließen · ${code}`, exact: true }).click();
+    await expect(trigger).toBeFocused();
+  }
+  const readOnly = await (await request.get("/api/demo/baumdienst/workshop")).json();
+  expect(readOnly.state).toEqual(before.state); expect(readOnly.revision).toBe(before.revision);
+  const card = page.locator(`article[data-tree-code="${code}"]`);
+  await card.locator(".baum-tree-trigger").click();
+  await card.getByRole("button", { name: "Problem melden", exact: true }).click();
+  const draft = card.getByLabel("Was muss geprüft werden?"); await draft.fill("DEMO · branch above footpath, retained after retry");
+  const sent: string[] = [];
+  page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/demo/baumdienst/workshop") sent.push(request.postDataJSON().requestId); });
+  await page.route("**/api/demo/baumdienst/workshop", route => route.request().method() === "POST" ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "connection" }) }) : route.continue());
+  await card.getByRole("button", { name: "Problem melden", exact: true }).click();
+  await expect(card.getByRole("alert")).toBeVisible();
+  await expect(draft).toHaveValue("DEMO · branch above footpath, retained after retry");
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  await page.unroute("**/api/demo/baumdienst/workshop");
+  await card.getByRole("button", { name: "Problem melden", exact: true }).click();
+  await expect(card.getByTestId("muster-tree-inline")).toHaveCount(0);
+  await expect(card).toHaveAttribute("data-tree-status", "blocked");
+  await expect(card.locator(".baum-tree-trigger")).toBeFocused();
+  const after = await (await request.get("/api/demo/baumdienst/workshop")).json();
+  expect(after.state.custody.treeEvents).toHaveLength(before.state.custody.treeEvents.length + 1);
+  expect(sent).toHaveLength(2); expect(sent[0]).toBe(sent[1]); expect(errors).toEqual([]);
 });
