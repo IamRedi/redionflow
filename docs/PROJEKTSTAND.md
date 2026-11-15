@@ -1,5 +1,15 @@
 # Projektstand
 
+## Live-Ergänzung: Musterfirma-Baustellenkarten · 14. November 2026
+
+Nur die öffentliche BaumdienstFlow Musterfirma wurde mit ausdrücklicher Freigabe veröffentlicht: Branch `release/baumdienst-site-glass-20261114`, Source `a7093cf57599ccc319a5520fdb92e18c99ece0a4`, Railway Deployment `0490c048-911b-4916-9262-6fcd8641a06f` — SUCCESS / ONLINE_PASS. [Live-Baustellenkarte](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf), [Feature PR205](https://github.com/IamRedi/redionflow/pull/205). Die neuere SEO-/Testbasis `4159f230` bleibt erhalten; keine main-/Pilot-Zusammenführung.
+
+Baustellen öffnen als zentrierte Glass-Infokarte über der Workzone. Eine illustrierte Baumkarte führt zu einer eigenen Ansicht mit Alle / Offen / Erledigt, Karte und Artenstudio. Bestehende Bereiche öffnen fokussiert. Echte Live-Aufnahmen stehen im README. Desktop/Telefon, Hell/Dunkel, Filter, Karte und Artenstudio wurden online geprüft.
+
+Verifikation der kombinierten Quelle: 726 Unit-, 19 Integrationstests mit simuliertem Provider, 58 Browser- und drei Profil-Isolationstests; Build, TypeScript, Lint und Gitleaks PASS. 976 Laufzeit-/Test-/Konfigurationspfade stimmen mit der getesteten Quelle überein. Ein frisches verschlüsseltes Backup wurde separat ohne Netzwerk in PostgreSQL18 wiederhergestellt. Alle 62 Tabellen/449 Zeilen samt Datei-Fingerprints und alle 32 aufgelösten Variablenwerte stimmen vor/nach Veröffentlichung und Live-Prüfung überein. Keine neuen Schema-/Abhängigkeitsänderungen, kein realer Reset/Seed oder bezahlter API-Aufruf. Die fünf benachbarten Services blieben beim Rollout unverändert; später beobachtete separate BauFlow-Änderungen wurden nicht zurückgesetzt. Rückfallpunkt: Source `4159f230`, Deployment `75283054-9854-47ba-bde7-b86a3c9fdfc1`.
+
+README/Medien und native Produktbeschreibung werden separat per PR207/PR208 angeboten, ebenso die Portfolio-Begleitung. Diese Begleit-PRs sind PENDING_PUBLICATION; die App selbst ist bereits live. Die folgenden Angaben vom 27. Oktober sind historische Bestandsaufnahme, keine aktuelle Release-Prüfung.
+
 **Stand: 27. Oktober 2026**
 
 ## Kurz gesagt

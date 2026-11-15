@@ -1,0 +1,28 @@
+{
+  "product": "BaumdienstFlow Musterfirma",
+  "reviewDate": "2026-11-14",
+  "appSource": "a7093cf57599ccc319a5520fdb92e18c99ece0a4",
+  "deployment": "0490c048-911b-4916-9262-6fcd8641a06f",
+  "deploymentStatus": "SUCCESS",
+  "liveEntry": "https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf",
+  "captures": {
+    "baum-site-glass-live-20261114.jpg": {
+      "sha256": "76dc6c0f34a2f28e1df54aa11dd54be7837dece9866a3b5d1c4c2c2d2478da51",
+      "width": 1440,
+      "height": 875,
+      "format": "JPEG",
+      "interfaceLanguage": "sq",
+      "data": "Fictional Musterfirma public demo"
+    },
+    "baum-tree-cards-phone-live-20261114.jpg": {
+      "sha256": "ad606a79f8ded0e97c84dafc9591aed7363f9431d44c1674d9606f0bc33711d8",
+      "width": 390,
+      "height": 844,
+      "format": "JPEG",
+      "interfaceLanguage": "sq",
+      "data": "Fictional Musterfirma public demo"
+    }
+  },
+  "sourceAndLiveBoundary": "Musterfirma only; no main/pilot merge or other product activation",
+  "readinessChange": "None; demonstration UI release is distinct from company/device acceptance"
+}
