@@ -344,6 +344,25 @@
       "access": "public-synthetic",
       "status": "DRAFT",
       "owner_approval": null
+    },
+    {
+      "id": "baumdienstflow/2026-11-15/photoreal-atlas-live",
+      "type": "APP_UI_CAPTURE",
+      "source": {
+        "url": "https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf",
+        "commit": "99c69eee4f902f0b3d7ed3071921e75dd5e9f8ee",
+        "deployment": "53240831-27cb-4988-aed4-cd733ca44ec8",
+        "date": "2026-11-15"
+      },
+      "file": "current-atlas-live-20261115.jpg",
+      "sha256": "c3c6acb0f85d058e2944d3cd7012223ddc033aa0f740f8d55590cc9ff6a4eb67",
+      "width": 1280,
+      "height": 720,
+      "bytes": 93215,
+      "access": "public-synthetic",
+      "note": "Actual UI capture. Botanical pictures inside the app are generated species references, not photos of individual site trees.",
+      "status": "DRAFT",
+      "owner_approval": "Musterfirma runtime approved; companion website publication pending"
     }
   ]
 }

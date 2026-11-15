@@ -18,5 +18,6 @@ for(const [rel,lang]of [['index.html','de'],...locales.map(l=>['about/'+l+'.html
  }
  for(const [,sets]of html.matchAll(/srcset="([^"]+)"/g))for(const part of sets.split(',')){await stat(path.resolve(path.dirname(file),part.trim().split(' ')[0]));refs++;}
 }
-const changed=execFileSync('git',['diff','--name-only','ce2d341d55742c3364df38f4d02521e55b142d3c','--','websites/products/bauflow'],{cwd:root,encoding:'utf8'}).trim();assert.equal(changed,'','BauFlow output changed');
+// Preserve the accepted compact-footer release; buyer/setup copy above stays separately pinned.
+const changed=execFileSync('git',['diff','--name-only','75e41f20e9816dda5cff9edac663357989bbfede','--','websites/products/bauflow'],{cwd:root,encoding:'utf8'}).trim();assert.equal(changed,'','BauFlow output changed');
 console.log(JSON.stringify({pages:5,localTargets:refs,locales:4,buyerCopyPreserved:true,productionLinksPreserved:true,bauflowUnchanged:true}));
