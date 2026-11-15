@@ -1,0 +1,295 @@
+{
+  "version": "photoreal-v2",
+  "created": "2026-11-15",
+  "kind": "AI-generated species references; not photographs of individual site trees",
+  "provider": "OpenAI built-in image generation; model not exposed",
+  "layout": {
+    "summer": [
+      0,
+      0,
+      768,
+      512
+    ],
+    "autumn": [
+      768,
+      0,
+      768,
+      512
+    ],
+    "winter": [
+      0,
+      512,
+      768,
+      512
+    ],
+    "leaf": [
+      768,
+      512,
+      768,
+      512
+    ]
+  },
+  "processing": "Original plates preserved in generation output. Delivery copies only resized and encoded to WebP; no content retouching.",
+  "assets": [
+    {
+      "id": "tree-lime",
+      "latin": "Tilia cordata",
+      "originalSha256": "c4a2dd53d55861acdc4750800d0df1811fdc36f6b5cf75f416e1bdc9a8b1caa7",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 119766,
+      "largeBytes": 711860
+    },
+    {
+      "id": "tree-norway-maple",
+      "latin": "Acer platanoides (Norway maple / Spitzahorn)",
+      "originalSha256": "babcbfcd686edce5d38e27a5ed6928112f5f3e38fea7246d47c331aa20769daa",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 121200,
+      "largeBytes": 650734
+    },
+    {
+      "id": "tree-large-lime",
+      "latin": "Tilia platyphyllos (large-leaved lime / Sommerlinde)",
+      "originalSha256": "36a6b281dbbbac17c301a2a441c2a2ff4c86451bb0dbffb5dfa431a7ae467d92",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 128346,
+      "largeBytes": 722802
+    },
+    {
+      "id": "tree-copper-beech",
+      "latin": "Fagus sylvatica Purpurea Group (copper beech / Blutbuche)",
+      "originalSha256": "fff5c7473d978dbc07018879a73eb0e047f6637ab6d9b6374e0a7f3652af6520",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 124046,
+      "largeBytes": 732528
+    },
+    {
+      "id": "tree-hornbeam",
+      "latin": "Carpinus betulus (European hornbeam / Hainbuche)",
+      "originalSha256": "6bceaf92b77500ddca5b9a4f0348bc5f43c8c1f47e8a1ac339cb19010e2012b7",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 117008,
+      "largeBytes": 710426
+    },
+    {
+      "id": "tree-rowan",
+      "latin": "Sorbus aucuparia (rowan / Eberesche)",
+      "originalSha256": "24890b4ebc6001b3d3a9622b2d1e6fab44c927adfdd017864a78665a2c83d85e",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 114424,
+      "largeBytes": 617338
+    },
+    {
+      "id": "tree-oak",
+      "latin": "Quercus robur (English oak / Stieleiche)",
+      "originalSha256": "c3aad29dc9d979d49271ae65037960f8e92d8169b810369292e14c53563d50bf",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 142108,
+      "largeBytes": 813506
+    },
+    {
+      "id": "tree-maple",
+      "latin": "Acer pseudoplatanus (sycamore maple / Bergahorn)",
+      "originalSha256": "166d53fd55db84eae53cdda036a69578c19651b5c5c3e9112900c8a067dbc353",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 120652,
+      "largeBytes": 707940
+    },
+    {
+      "id": "tree-red-maple",
+      "latin": "Acer rubrum (red maple / Rotahorn)",
+      "originalSha256": "fdf66e8ac077c95400a0eac6c2f4fda6c8a12b256ab29386f65c312354f4a3c7",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 107600,
+      "largeBytes": 572324
+    },
+    {
+      "id": "tree-birch",
+      "latin": "Betula pendula (silver birch / Birke)",
+      "originalSha256": "6c6d3af1117d377e3d9c62a7f6c9b6e89103ef8c5aa24ff63237eaabed5c2c8c",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 98314,
+      "largeBytes": 541636
+    },
+    {
+      "id": "tree-beech",
+      "latin": "Fagus sylvatica (European beech / Rotbuche)",
+      "originalSha256": "eae1025977fcb82668a3170da4d38a277ba43d49ccb180b5d551860946b6e3e8",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 120108,
+      "largeBytes": 668280
+    },
+    {
+      "id": "tree-plane",
+      "latin": "Platanus x hispanica (London plane / Platane)",
+      "originalSha256": "1287b24fdf60f0666e9b52256c1396f6cb270670854af771fe01504950f3aa19",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 139060,
+      "largeBytes": 798220
+    },
+    {
+      "id": "tree-willow",
+      "latin": "Salix alba (white willow / Silberweide)",
+      "originalSha256": "26851fc1973250befb52bb677a7f6b9eb07b967486f1735f6e3d946b202804f0",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 126364,
+      "largeBytes": 751752
+    },
+    {
+      "id": "tree-ash",
+      "latin": "Fraxinus excelsior (European ash / Esche)",
+      "originalSha256": "02774cf49500a043012a76dea70f16afea949c2b9864eca5e66b5e59d6cf3984",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 126134,
+      "largeBytes": 719658
+    },
+    {
+      "id": "tree-fruit",
+      "latin": "Malus domestica (apple tree / Apfelbaum)",
+      "originalSha256": "26c435fc96faeac0c9c0921641a19500b02472de41adcfe0c27eb158a0847cd7",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 111402,
+      "largeBytes": 733654
+    },
+    {
+      "id": "tree-spruce",
+      "latin": "Picea abies (Norway spruce / Fichte)",
+      "originalSha256": "460b3a1eedd3563254a928dfa92bbaefc1fdf2ef9270bc80ac718f066f4e382f",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 83664,
+      "largeBytes": 452214
+    },
+    {
+      "id": "tree-chestnut",
+      "latin": "Aesculus hippocastanum (horse chestnut / Rosskastanie)",
+      "originalSha256": "8489195764a76d209e66d90a4021570407cd5084205b23a5e2dc92ecbbeea1cf",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 128750,
+      "largeBytes": 745212
+    },
+    {
+      "id": "tree-fir",
+      "latin": "Abies alba (silver fir / Tanne)",
+      "originalSha256": "d7906fc2f62832f0b61290d52c75ebb9b18f5d7ee6053cc42ec7735719b406f4",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 91526,
+      "largeBytes": 491452
+    },
+    {
+      "id": "tree-ginkgo",
+      "latin": "Ginkgo biloba (ginkgo / Ginkgo)",
+      "originalSha256": "51149abd84cb4a70cefead4a6b611dabf1c435edb5e775bb116109449ad17f64",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 117154,
+      "largeBytes": 617582
+    },
+    {
+      "id": "tree-larch",
+      "latin": "Larix decidua (European larch / Lärche)",
+      "originalSha256": "d9e5e42784d66a478b973ef19a085a35e2a2befaa576d76d3903c61ae795c8db",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 115778,
+      "largeBytes": 640226
+    },
+    {
+      "id": "tree-pine",
+      "latin": "Pinus sylvestris (Scots pine / Kiefer)",
+      "originalSha256": "6402a2fb18201d4d21be2c373a868629ee58aa5e3f459c6fe6831f54e1f09e19",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 127276,
+      "largeBytes": 707736
+    },
+    {
+      "id": "tree-yew",
+      "latin": "Taxus baccata (European yew / Eibe)",
+      "originalSha256": "05ca20005b8d46aced696ad63a6b7cb7597c54af197e6c7b985e4e8c8020d69e",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 110308,
+      "largeBytes": 609034
+    },
+    {
+      "id": "tree-thuja",
+      "latin": "Thuja occidentalis (northern white cedar / Thuja)",
+      "originalSha256": "a30c02a2e153619fefc83891d7e86312acc22b23324159053da114e5fcb27c7c",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 98918,
+      "largeBytes": 570110
+    },
+    {
+      "id": "tree-photinia",
+      "latin": "Photinia x fraseri (red-tip photinia / Glanzmispel)",
+      "originalSha256": "2c799f2398b9c606badc1b18bd5e380a4d7f3041f912149a78e183162a6649a6",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 112502,
+      "largeBytes": 614886
+    },
+    {
+      "id": "tree-privet",
+      "latin": "Ligustrum vulgare (common privet / Liguster)",
+      "originalSha256": "166d2cb32f518978b59006a87a9281f4e49b1a0047af009c0a1ae2ef2e57dc5a",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 141358,
+      "largeBytes": 788794
+    },
+    {
+      "id": "tree-box",
+      "latin": "Buxus sempervirens (common box / Buchsbaum)",
+      "originalSha256": "94afabf182da03ccc7ade58b36900759907b3f022121c4c03eee6a5f8f6d4552",
+      "width": 1536,
+      "height": 1024,
+      "alpha": true,
+      "cardBytes": 108534,
+      "largeBytes": 595806
+    }
+  ]
+}

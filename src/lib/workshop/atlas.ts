@@ -8,7 +8,7 @@ export function atlasCopy(lang: string) {
   return {
     open: l("Artenkarte öffnen|Hap kartën e llojit|Open species card|Apri scheda specie|Otwórz kartę gatunku|Deschide fișa speciei"),
     title: l("Artenatlas|Atlasi i pemëve|Tree atlas|Atlante degli alberi|Atlas drzew|Atlasul arborilor"),
-    overview: l("Blueprint|Blueprint|Blueprint|Blueprint|Blueprint|Blueprint"),
+    overview: l("Jahreszeiten|Stinët|Seasons|Stagioni|Pory roku|Anotimpuri"),
     habit: l("Wuchsform|Forma|Tree form|Portamento|Pokrój|Formă"),
     leaf: l("Blatt / Nadeln|Gjethja / halat|Leaf / needles|Foglia / aghi|Liść / igły|Frunză / ace"),
     bark: l("Rinde|Lëvorja|Bark|Corteccia|Kora|Scoarță"),

@@ -15,6 +15,7 @@ import { workshopCopy } from "@/lib/workshop/copy";
 import { action, WorkshopDialog } from "./workshop-ui";
 import { ReaderText } from "./reader-pages";
 import { StudioIcon } from "./studio-art";
+import { PhotorealPlate } from "./photoreal-plate";
 import { LeafArt, TreeArt } from "./tree-art";
 
 type Area = "overview" | "habit" | "leaf" | "bark" | "reproduction";
@@ -22,8 +23,9 @@ type Area = "overview" | "habit" | "leaf" | "bark" | "reproduction";
 function BotanicalPlate({ id, area, alt, fit = false }: { id: StudioMediaId; area: Area; alt: string; fit?: boolean }) {
   const [failed, setFailed] = useState(false);
   const crop = atlasCrop(id,area);
+  if (area === "overview" || area === "habit" || area === "leaf") return <div className={fit ? "baum-atlas-fitted-plate" : "baum-atlas-photo-reference"} data-testid="atlas-plate" data-area={area}><PhotorealPlate id={id} large overview={area === "overview"} leaf={area === "leaf"} label={alt} /></div>;
   if (fit) return failed ? <div className="baum-atlas-fallback" role="status"><LeafArt species={alt} /></div> : <svg className="baum-atlas-fitted-plate" viewBox={`${crop.x} ${crop.y} ${crop.w} ${crop.h}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={alt} data-testid="atlas-plate" data-area={area}><title>{alt}</title><image href={studioMediaUrl(id)} width="1536" height="1024" onError={() => setFailed(true)} /></svg>;
-  return <div style={{aspectRatio:`${crop.w}/${crop.h}`}} className={`relative isolate overflow-hidden rounded-xl border bg-[#0c2b35] ${area === "habit" ? "mx-auto max-w-lg" : ""}`} data-testid="atlas-plate" data-area={area}>
+  return <div style={{aspectRatio:`${crop.w}/${crop.h}`}} className={`relative isolate overflow-hidden rounded-xl border bg-[#0c2b35] `} data-testid="atlas-plate" data-area={area}>
     {!failed && <Image src={studioMediaUrl(id)} alt={alt} width={1536} height={1024} unoptimized onError={() => setFailed(true)} className="absolute max-w-none" style={{width:`${1536/crop.w*100}%`,height:`${1024/crop.h*100}%`,left:`${-crop.x/crop.w*100}%`,top:`${-crop.y/crop.h*100}%`}} />}
     {failed && <div role="status" className="flex h-full items-center justify-center text-white"><LeafArt species={alt} className="h-40 w-32" /></div>}
   </div>;

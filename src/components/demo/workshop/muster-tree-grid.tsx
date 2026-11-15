@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import localFont from "next/font/local";
-import { useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { AlertTriangle, Check, CheckCircle2, Clock3, Leaf, Pencil, RotateCcw, LayoutGrid, MapPin, X, Eye, BookOpenCheck } from "lucide-react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,12 @@ import { useWorkshopDemo, type DemoInventoryCommand } from "./use-workshop-demo"
 import { action, control, Field, Status } from "./workshop-ui";
 import { flowError } from "./custody-panels";
 import { MusterTreeCard, type TreeCardMode } from "./muster-tree-card";
-import { MusterTreeDetails, type TreeDetailMode } from "./muster-tree-details";
-import { BotanicalStudio } from "./botanical-studio";
+import type { TreeDetailMode } from "./muster-tree-details";
+const MusterTreeDetails = dynamic(() => import("./muster-tree-details").then(module => module.MusterTreeDetails));
+import { WindowedGrid } from "./windowed-grid";
+const BotanicalStudio = dynamic(() => import("./botanical-studio").then(module => module.BotanicalStudio));
 import type { BotanicalSeason } from "@/lib/workshop/botanical";
-import { SpeciesCard } from "./species-card";
+const SpeciesCard = dynamic(() => import("./species-card").then(module => module.SpeciesCard));
 import { atlasCopy } from "@/lib/workshop/atlas";
 import { siteCardCopy } from "@/lib/workshop/site-card-copy";
 import type { MusterTreePoint } from "./muster-tree-map";
@@ -37,14 +39,16 @@ export function MusterTreeGrid({ items, siteKey, points = [], initialView = "lis
   const [filter, setFilter] = useState<"all" | "todo" | "done">("all"), [viewMode, setViewMode] = useState(initialView);
   const filterFocus = useRef<HTMLButtonElement>(null), dialogReturnRef = useRef<HTMLElement | null>(null);
   const [detail, setDetail] = useState<{ code: string; mode: TreeDetailMode } | null>(null);
-  const [season, setSeason] = useState<BotanicalSeason>("summer"), [studioOpen, setStudioOpen] = useState(false), [atlasCode, setAtlasCode] = useState<string | null>(null);
+  const [season, setSeason] = useState<BotanicalSeason>("summer"), [studioOpen, setStudioOpen] = useState(false), [atlasCode, setAtlasTarget] = useState<string | null>(null);
+  const [studioLoaded, setStudioLoaded] = useState(false), [atlasLoaded, setAtlasLoaded] = useState(false);
+  function setAtlasCode(code: string | null) { if (code) setAtlasLoaded(true); setAtlasTarget(code); }
+  const [revealCode, setRevealCode] = useState<string | null>(null);
   const [selected, setSelected] = useState<{ code: string; mode: TreeCardMode } | null>(null), [message, setMessage] = useState("");
   const triggers = useRef(new Map<string, HTMLButtonElement>()), opener = useRef<HTMLElement | null>(null), restoreFocusRef = useRef<{ code: string; target: HTMLElement | null } | null>(null);
-  const view = (tree: TreeCardItem) => { const saved = state.custody.trees[treeIdentity(siteKey, tree.treeId)]; return { ...tree, ...(saved ? { status: saved.status, species: saved.species ?? tree.species, diameter: saved.diameter ?? tree.diameter } : {}), note: saved?.note ?? baseTreeNote(tree), equipment: saved?.equipment ?? baseEquipment(tree) }; };
-  const rows = items.map(view), done = rows.filter(t => t.status === "done").length;
-  const visibleRows = rows.filter(row => filter === "all" || (filter === "done" ? row.status === "done" : row.status !== "done"));
-  const visibleCodes = new Set(visibleRows.map(row => row.treeId));
-  const mapPoints = points.filter(point => visibleCodes.has(point.treeId)).map(point => ({ ...point, status: rows.find(row => row.treeId === point.treeId)?.status || point.status }));
+  const rows = useMemo(() => items.map(tree => { const saved = state.custody.trees[treeIdentity(siteKey, tree.treeId)]; return { ...tree, ...(saved ? { status: saved.status, species: saved.species ?? tree.species, diameter: saved.diameter ?? tree.diameter } : {}), note: saved?.note ?? baseTreeNote(tree), equipment: saved?.equipment ?? baseEquipment(tree) }; }), [items, siteKey, state.custody.trees]);
+  const done = useMemo(() => rows.filter(tree => tree.status === "done").length, [rows]);
+  const visibleRows = useMemo(() => rows.filter(row => filter === "all" || (filter === "done" ? row.status === "done" : row.status !== "done")), [rows, filter]);
+  const mapPoints = useMemo(() => { if (viewMode !== "map") return []; const lookup = new Map(visibleRows.map(row => [row.treeId, row.status])); return points.filter(point => lookup.has(point.treeId)).map(point => ({ ...point, status: lookup.get(point.treeId) || point.status })); }, [viewMode, visibleRows, points]);
   const tree = rows.find(t => t.treeId === (detail?.code || selected?.code)), disabled = !hydrated || pending || status !== "ready";
   function dismiss(code = selected?.code) {
     if (code) dialogReturnRef.current = triggers.current.get(code) || filterFocus.current;
@@ -58,14 +62,14 @@ export function MusterTreeGrid({ items, siteKey, points = [], initialView = "lis
       dialogReturnRef.current = focused instanceof HTMLElement && trigger?.closest("article")?.contains(focused) ? focused : trigger || filterFocus.current;
       if (selected?.code !== code) { setSelected(null); opener.current = dialogReturnRef.current; }
       setMessage(""); setDetail({ code, mode }); setAtlasCode(null); setViewMode("list");
-      if (viewMode === "map") requestAnimationFrame(() => triggers.current.get(code)?.scrollIntoView({ block: "nearest" }));
+      if (viewMode === "map") setRevealCode(code);
       return;
     }
     setDetail(null);
     if (selected?.code === code && mode === "quick") { dismiss(code); return; }
     if (selected?.code !== code) { const trigger = triggers.current.get(code), focused = document.activeElement; opener.current = focused instanceof HTMLElement && trigger?.closest("article")?.contains(focused) ? focused : trigger ?? null; }
     setMessage(""); setAtlasCode(null); setSelected({ code, mode }); setViewMode("list");
-    if (viewMode === "map") requestAnimationFrame(() => triggers.current.get(code)?.scrollIntoView({ block: "nearest" }));
+    if (viewMode === "map") setRevealCode(code);
   }
   async function change(command: DemoInventoryCommand) { setMessage(""); try { await dispatch(command); dismiss(command.type === "tree" ? command.treeCode : undefined); setMessage(c.saved); } catch (e) { setMessage(flowError(e, c)); } }
   function form(e: FormEvent<HTMLFormElement>, actionName: "report" | "edit" | "equipment") {
@@ -88,14 +92,14 @@ export function MusterTreeGrid({ items, siteKey, points = [], initialView = "lis
     <div className="baum-tree-toolbar">
       <div className="baum-tree-topline"><div className="baum-tree-filters" role="group" aria-label={c.status}>{([ ["all", copy.all, rows.length, Leaf], ["todo", copy.todo, rows.length - done, Clock3], ["done", copy.done, done, CheckCircle2] ] as const).map(([value, label, count, Icon]) => <Button key={value} ref={filter === value ? filterFocus : undefined} type="button" variant="outline" aria-pressed={filter === value} data-tree-filter={value} onClick={() => { setSelected(null); setMessage(""); setAtlasCode(null); setFilter(value); }}><Icon className="size-4 shrink-0" /><span>{label}</span><span className="baum-filter-count">{count}</span></Button>)}</div>
       </div>
-      <div className="baum-tree-tools"><Button type="button" variant="outline" className={action} onClick={() => setStudioOpen(true)}><Leaf className="size-4" />{studio.collection}</Button><select className="min-h-11 max-w-full rounded-xl border bg-card px-3 text-sm" aria-label={studio.seasonal} value={season} onChange={event => setSeason(event.target.value as BotanicalSeason)}><option value="summer">{studio.summer}</option><option value="autumn">{studio.autumn}</option></select><Button type="button" variant="outline" size="icon" className="baum-tree-view-toggle size-11 shrink-0" aria-label={viewMode === "list" ? copy.map : copy.list} title={viewMode === "list" ? copy.map : copy.list} onClick={() => { setSelected(null); setAtlasCode(null); setViewMode(value => value === "list" ? "map" : "list"); }}>{viewMode === "list" ? <MapPin className="size-4" /> : <LayoutGrid className="size-4" />}</Button><span className="sr-only">{done} / {items.length} {copy.progress}</span></div>
+      <div className="baum-tree-tools"><Button type="button" variant="outline" className={action} onClick={() => { setStudioLoaded(true); setStudioOpen(true); }}><Leaf className="size-4" />{studio.collection}</Button><select className="min-h-11 max-w-full rounded-xl border bg-card px-3 text-sm" aria-label={studio.seasonal} value={season} onChange={event => setSeason(event.target.value as BotanicalSeason)}><option value="summer">{studio.summer}</option><option value="autumn">{studio.autumn}</option><option value="winter">{studio.winter}</option></select><Button type="button" variant="outline" size="icon" className="baum-tree-view-toggle size-11 shrink-0" aria-label={viewMode === "list" ? copy.map : copy.list} title={viewMode === "list" ? copy.map : copy.list} onClick={() => { setSelected(null); setAtlasCode(null); setViewMode(value => value === "list" ? "map" : "list"); }}>{viewMode === "list" ? <MapPin className="size-4" /> : <LayoutGrid className="size-4" />}</Button><span className="sr-only">{done} / {items.length} {copy.progress}</span></div>
     </div>
-    <p className="text-center text-xs leading-relaxed text-muted-foreground">{c.treeHint}</p>
-    <BotanicalStudio open={studioOpen} onClose={()=>setStudioOpen(false)} />
+    <p className="baum-tree-reference-caption text-center text-xs leading-relaxed text-muted-foreground">{studio.guide}</p>
+    {studioLoaded && <BotanicalStudio open={studioOpen} onClose={()=>setStudioOpen(false)} />}
     {message && !selected && <p role="status" className="rounded-xl border bg-card p-3 text-sm">{message}</p>}
-    {viewMode === "map" ? <MusterTreeMap points={mapPoints} onOpenTree={code => open(code, "detail")} /> : !visibleRows.length ? <p role="status" className="baum-site-empty">{copy.empty}</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="muster-tree-grid">{visibleRows.map(row => <MusterTreeCard key={row.treeId} row={row} season={season} mode={selected?.code === row.treeId ? selected.mode : undefined} busy={pending} labels={c} restoreFocusRef={restoreFocusRef} inspectLabel={atlas.open} onInspect={() => setAtlasCode(row.treeId)} onOpen={mode => open(row.treeId, mode)} onTrigger={element => { if (element) { triggers.current.set(row.treeId, element); if (detail?.code === row.treeId && !dialogReturnRef.current?.isConnected) dialogReturnRef.current = element; } else triggers.current.delete(row.treeId); }}>{selected?.code === row.treeId ? inlineContent : null}</MusterTreeCard>)}</div>}
+    {viewMode === "map" ? <MusterTreeMap points={mapPoints} onOpenTree={code => open(code, "detail")} /> : !visibleRows.length ? <p role="status" className="baum-site-empty">{copy.empty}</p> : <WindowedGrid key={filter} items={visibleRows} itemKey={row => row.treeId} label={c.trees} testId="muster-tree-grid" onNavigate={() => { restoreFocusRef.current = null; }} pinnedKeys={[selected?.code, detail?.code, atlasCode].filter((key): key is string => Boolean(key))} revealKey={revealCode} renderItem={row => <MusterTreeCard key={row.treeId} row={row} season={season} mode={selected?.code === row.treeId ? selected.mode : undefined} busy={pending} labels={c} restoreFocusRef={restoreFocusRef} inspectLabel={atlas.open} onInspect={() => setAtlasCode(row.treeId)} onOpen={mode => open(row.treeId, mode)} onTrigger={element => { if (element) { triggers.current.set(row.treeId, element); if (detail?.code === row.treeId && !dialogReturnRef.current?.isConnected) dialogReturnRef.current = element; } else triggers.current.delete(row.treeId); }}>{selected?.code === row.treeId ? inlineContent : null}</MusterTreeCard>} />}
     {tree && detail && <MusterTreeDetails key={tree.treeId} tree={tree} mode={detail.mode} season={season} events={state.custody.treeEvents.filter(e => e.siteKey === siteKey && e.treeCode === tree.treeId)} role={actor.role} disabled={disabled} message={message} actions={mainActions} returnFocus={dialogReturnRef} onMode={mode => { setMessage(""); setDetail({ code: tree.treeId, mode }); }} onClose={() => { setDetail(null); setMessage(""); }} onInspect={() => setAtlasCode(tree.treeId)} onSubmit={form} />}
-    <SpeciesCard fixed species={rows.find(row => row.treeId === atlasCode)?.species || ""} open={Boolean(atlasCode)} onClose={()=>setAtlasCode(null)} />
+    {atlasLoaded && <SpeciesCard fixed species={rows.find(row => row.treeId === atlasCode)?.species || ""} open={Boolean(atlasCode)} onClose={()=>setAtlasCode(null)} />}
 
   </section>;
 }

@@ -22,7 +22,7 @@ export function BotanicalReference({ species, latin }: { species: string; latin?
     </div>
     {latin && <p className="text-sm italic text-muted-foreground">{latin}</p>}
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap gap-2" role="group" aria-label={s.seasonal}>{(["summer","autumn"] as const).map(value=><Button key={value} type="button" className={action} variant={season === value ? "default" : "outline"} aria-pressed={season === value} onClick={()=>setSeason(value)}>{s[value]}</Button>)}</div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={s.seasonal}>{(["summer","autumn","winter"] as const).map(value=><Button key={value} type="button" className={action} variant={season === value ? "default" : "outline"} aria-pressed={season === value} onClick={()=>setSeason(value)}>{s[value]}</Button>)}</div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground"><span aria-hidden="true" className="size-3 rounded-full" style={{background:summer.leaf}} /><span aria-hidden="true" className="size-3 rounded-full" style={{background:autumn.leaf}} />{identity.copper ? s.copper : identity.evergreen ? s.evergreen : s.seasonal}</div>
     </div>
     <p className="text-xs leading-relaxed text-muted-foreground">{s.guide}</p>
