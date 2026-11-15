@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import localFont from "next/font/local";
 import { useRef, useState, type FormEvent } from "react";
-import { AlertTriangle, Check, CheckCircle2, Clock3, Fence, Leaf, Pencil, RotateCcw, ShieldCheck, LayoutGrid, MapPin, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Clock3, Fence, Leaf, Pencil, RotateCcw, ShieldCheck, LayoutGrid, MapPin, X, Eye, BookOpenCheck } from "lucide-react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { Button } from "@/components/ui/button";
 import { workshopCopy } from "@/lib/workshop/copy";
@@ -10,7 +11,6 @@ import { treeIdentity } from "@/lib/workshop/identity-art";
 import { useWorkshopDemo, type DemoInventoryCommand } from "./use-workshop-demo";
 import { action, control, Field, Status } from "./workshop-ui";
 import { flowError } from "./custody-panels";
-import { TreeInspectionIcon } from "./tree-inspection-icon";
 import { MusterTreeCard, type TreeCardMode } from "./muster-tree-card";
 import { BotanicalReference, BotanicalStudio } from "./botanical-studio";
 import type { BotanicalSeason } from "@/lib/workshop/botanical";
@@ -20,6 +20,8 @@ import { siteCardCopy } from "@/lib/workshop/site-card-copy";
 import type { MusterTreePoint } from "./muster-tree-map";
 const MusterTreeMap = dynamic(() => import("./muster-tree-map").then(module => module.MusterTreeMap), { ssr: false });
 import { studioCopy } from "@/lib/workshop/studio-copy";
+
+const treeNameFont = localFont({ src: "../../branding/fonts/manrope-variable.ttf", weight: "200 800", display: "swap", preload: false, fallback: ["system-ui", "sans-serif"] });
 
 export type TreeCardItem = { id: string; treeId: string; species: string | null; diameter: number | null; status: string; notes: string | null; siteEquipmentStatus?: unknown };
 export function baseTreeNote(tree: TreeCardItem) { try { const p = JSON.parse(tree.notes || "{}"); return typeof p.note === "string" ? p.note : ""; } catch { return tree.notes || ""; } }
@@ -59,14 +61,14 @@ export function MusterTreeGrid({ items, siteKey, points = [], initialView = "lis
     void change({ type: "tree", siteKey, treeCode: tree.treeId, action: actionName, note: String(d.get("note") || ""), ...(actionName === "edit" ? { species: String(d.get("species")), diameter: Number(d.get("diameter")) } : {}), ...(actionName === "equipment" ? { equipment: { SIGN: Number(d.get("SIGN")), PLATE: Number(d.get("PLATE")), FENCE: Number(d.get("FENCE")), halt: d.get("halt") === "on" } } : {}) });
   }
   const mainActions = tree && <div className="baum-tree-actions">
-    <Button className={`${action} flex-1`} disabled={disabled || (tree.status === "blocked" && actor.role !== "admin")} onClick={() => void change({ type: "tree", siteKey, treeCode: tree.treeId, action: tree.status === "done" || tree.status === "blocked" ? "reopen" : "done", note: "" })}>{tree.status === "todo" ? <Check /> : <RotateCcw />}{tree.status === "todo" ? c.done : c.reopen}</Button>
-    <Button variant="outline" className={`${action} flex-1`} disabled={disabled} onClick={() => open(tree.treeId, "report")}><AlertTriangle />{c.report}</Button>
+    <Button className={`${action} flex-1`} disabled={disabled || (tree.status === "blocked" && actor.role !== "admin")} onClick={() => void change({ type: "tree", siteKey, treeCode: tree.treeId, action: tree.status === "done" || tree.status === "blocked" ? "reopen" : "done", note: "" })}>{tree.status === "todo" ? <Check /> : <RotateCcw />}<span>{tree.status === "todo" ? c.done : c.reopen}</span></Button>
+    <Button variant="outline" className={`${action} flex-1`} disabled={disabled} onClick={() => open(tree.treeId, "report")}><AlertTriangle /><span>{c.report}</span></Button>
   </div>;
   const inlineContent = tree && <div className="baum-tree-inline-body">
-        <div className="baum-tree-card-tools"><Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={atlas.open} title={atlas.open} onClick={() => setAtlasCode(tree.treeId)}><TreeInspectionIcon className="baum-tree-inspect-icon" /></Button><span className="baum-tree-back-code">{tree.treeId}</span><Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={`${c.close} · ${tree.treeId}`} title={c.close} data-tree-inline-close onClick={() => dismiss()}><X className="size-4" /></Button></div>
-        {selected?.mode !== "report" && <div className="baum-tree-card-meta"><Status tone={tree.status === "done" ? "green" : tree.status === "blocked" ? "amber" : "neutral"}>{tree.status === "done" ? c.done : tree.status === "blocked" ? c.openReport : c.ready}</Status>{tree.diameter !== null && <p>{c.diameter}: <strong>{tree.diameter}</strong></p>}</div>}
-        {tree.status === "blocked" && selected?.mode !== "report" && <p className="rounded-xl border border-amber-600/40 bg-amber-500/5 p-3 text-sm">{tree.note || c.blocked}</p>}
-        {selected?.mode === "quick" && mainActions}
+        <div className="baum-tree-card-tools"><Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={atlas.open} title={atlas.open} onClick={() => setAtlasCode(tree.treeId)}><BookOpenCheck className="baum-tree-inspect-icon" data-tree-species-logo /></Button><span className="baum-tree-back-code">{tree.treeId}</span><Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={`${c.close} · ${tree.treeId}`} title={c.close} data-tree-inline-close onClick={() => dismiss()}><X className="size-4" /></Button></div>
+        {selected?.mode !== "report" && <div className="baum-tree-card-meta"><h3 className={`baum-tree-back-name ${treeNameFont.className}`}>{tree.species || c.species}</h3><Status tone={tree.status === "done" ? "green" : tree.status === "blocked" ? "amber" : "neutral"}>{tree.status === "done" ? c.done : tree.status === "blocked" ? c.openReport : c.ready}</Status>{selected?.mode !== "quick" && tree.diameter !== null && <p>{c.diameter}: <strong>{tree.diameter}</strong></p>}</div>}
+        {tree.status === "blocked" && selected?.mode !== "report" && selected?.mode !== "quick" && <p className="rounded-xl border border-amber-600/40 bg-amber-500/5 p-3 text-sm">{tree.note || c.blocked}</p>}
+        {selected?.mode === "quick" && <>{mainActions}<div className="baum-tree-secondary-actions"><Button type="button" variant="outline" size="icon" aria-label={c.treeDetails} title={c.treeDetails} onClick={() => open(tree.treeId, "detail")}><Eye /></Button>{actor.role === "admin" && <Button type="button" variant="outline" size="icon" aria-label={c.edit} title={c.edit} onClick={() => open(tree.treeId, "edit")}><Pencil /></Button>}</div></>}
         {selected?.mode === "report" && <form className="baum-tree-card-form" onSubmit={e => form(e, "report")}><Field label={c.reportNote}><textarea className={`${control} h-28 py-3`} name="note" required maxLength={2000} /></Field><Button className={`${action} w-full`} disabled={disabled}><AlertTriangle />{c.report}</Button></form>}
         {selected?.mode === "edit" && <form className="baum-tree-card-form" onSubmit={e => form(e, "edit")}><Field label={c.species}><input name="species" className={control} maxLength={100} defaultValue={tree.species || ""} /></Field><Field label={c.diameter}><input type="number" min={0} max={1000} step="0.1" className={control} name="diameter" defaultValue={tree.diameter ?? 0} /></Field><Field label={c.note}><textarea name="note" className={`${control} h-24 py-3`} maxLength={2000} defaultValue={tree.note} /></Field><Button className={action} disabled={disabled}>{c.save}</Button></form>}
         {selected?.mode === "equipment" && <form className="baum-tree-card-form" onSubmit={e => form(e, "equipment")}>{([ ["SIGN",c.signs], ["PLATE",c.plates], ["FENCE",c.fences] ] as const).map(([key,label]) => <Field key={key} label={label}><input className={control} name={key} type="number" min={0} max={1000} step={1} required defaultValue={tree.equipment[key]} /></Field>)}<label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-5 accent-green-700" name="halt" defaultChecked={tree.equipment.halt} />{c.halt}</label><Button className={action} disabled={disabled}>{c.save}</Button></form>}
