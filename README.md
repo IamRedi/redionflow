@@ -11,6 +11,18 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Eigenständige Kran-Musterfirma ist online · 15.11.2026
+
+**[RheinRuhr Kranservice · MUSTER öffnen](https://rheinruhr-kran-muster-production.up.railway.app/muster)** — ein weiterer fiktiver Betrieb aus der BauFlow-Basis: sieben Mitarbeitende, drei Hebeeinsätze, zwei Maschinen, vier Werkzeuge und drei Büros. Die Fertigung ist deaktiviert. Geschäftsführung, Buchhaltung, Disposition, Außenteam und Werkstatt haben getrennte Zugänge mit den bestehenden Rollenrechten. Änderungen und Dokumente bleiben in der eigenen Datenbank gespeichert; bitte ausschließlich Testdaten eingeben.
+
+PR223 plus [Veröffentlichungsadapter PR224](https://github.com/IamRedi/redionflow/pull/224), Runtime `a2a5829`: 1.314 Unit-Tests, 36 lokale und 42 Online-Browserfälle bestanden. Ein hochgeladenes PDF blieb nach der erneuten Bereitstellung erhalten und wurde aus einer unabhängigen Mitarbeiter-Sitzung heruntergeladen. AL-Steel, BauFlow Musterbau und BaumdienstFlow behalten ihre bisherigen unabhängigen Deployments. AI, E-Mail, GPS und technische Hebeplanfreigaben sind hier nicht verbunden. [Veröffentlichung und genaue Grenzen](docs/CRANE_MUSTER.md).
+
+Echte Online-Aufnahmen mit fiktiven Daten · 15. November 2026. Die Handyansicht ist emuliert; Bilder sind illustrative Muster, keine technische Einsatzfreigabe.
+
+![RheinRuhr Kranservice Muster · Online-Workzone](docs/assets/screenshots/crane-muster-online-desktop.webp)
+
+<img src="docs/assets/screenshots/crane-muster-online-phone.webp" alt="RheinRuhr Kranservice Muster · Online-Workzone auf emuliertem Handy" width="260">
+
 ## BauFlow-Musterbetrieb ist online · 14.11.2026
 
 Der eigenständige **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** nutzt die aktuelle Stahlbau-Anwendung mit der eigenen originalen BauFlow-Identität. Am Eingang stehen Geschäftsführung, Buchhaltung, Baustelle, Werkhalle und Werkstatt zur Wahl. Zwölf erfundene Mitarbeitende, fünf Büros, drei Baustellen, eine Werkhalle und elf Betriebsmittel (sechs Fahrzeuge und fünf Werkzeuge) sind miteinander verbunden. Änderungen bleiben gespeichert und sind für andere Testende sichtbar; bitte nur Testdaten verwenden. AL-Steel und BaumdienstFlow behalten ihre unabhängigen Deployments.

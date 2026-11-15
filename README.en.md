@@ -11,6 +11,18 @@
 
 **[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
+## Separate crane sample company is online · 15.11.2026
+
+**[Open RheinRuhr Kranservice · MUSTER](https://rheinruhr-kran-muster-production.up.railway.app/muster)** — another fictional company from the BauFlow base: seven staff, three lifting jobs, two machines, four tools and three offices. Manufacturing is disabled. Owner, accounting, dispatch, field staff and workshop use distinct accounts and the existing permissions. Changes and documents persist in its own database; use test data only.
+
+PR223 plus [publication adapter PR224](https://github.com/IamRedi/redionflow/pull/224), runtime `a2a5829`: 1,314 unit tests, 36 local and 42 online browser cases passed. An uploaded PDF survived redeployment and was downloaded from an independent employee session. AL-Steel, BauFlow Musterbau and BaumdienstFlow retain their existing independent deployments. AI, email, GPS and engineering lifting-plan approval are not connected here. [Release and exact limits](docs/CRANE_MUSTER.md).
+
+Actual online captures with fictional data · 15 November 2026. The phone viewport is emulated; images are illustrative samples, not technical job approval.
+
+![RheinRuhr Kranservice Muster · online Workzone](docs/assets/screenshots/crane-muster-online-desktop.webp)
+
+<img src="docs/assets/screenshots/crane-muster-online-phone.webp" alt="RheinRuhr Kranservice Muster · online Workzone on an emulated phone" width="260">
+
 ## BauFlow sample company is online · 14.11.2026
 
 The separate **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** runs the current steel application with its own original BauFlow identity. Choose owner, accounting, site, factory or workshop at entry. Twelve fictional employees, five offices, three sites, one factory and eleven assets (six vehicles and five tools) share the same connected workflows. Changes persist and are visible to other testers; use test data only. AL-Steel and BaumdienstFlow keep their independent deployments.
