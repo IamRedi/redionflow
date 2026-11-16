@@ -1,4 +1,10 @@
 .shell{--wall:#e8e6e1;--background:210 18% 97%;--card:0 0% 100%;--foreground:207 24% 14%;--border:205 14% 80%;background:#161e20!important;color:hsl(var(--foreground))}
+@media(max-width:700px){
+ .nav:has([data-testid="office-control-panel"]){padding-inline:12px}
+ .nav:has([data-testid="office-control-panel"])>a{width:44px;padding:0;gap:0;font-size:0}
+ .nav:has([data-testid="office-control-panel"]) .officeWork .workButton:not([data-active="true"]){width:44px;min-width:44px;padding:0}
+ .nav:has([data-testid="office-control-panel"]) .workButton:not([data-active="true"])>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+}
 .workActiveLabel{display:grid;gap:2px;min-width:70px}.workActiveLabel small,.workActiveLabel strong{display:flex;align-items:center;justify-content:center;gap:5px}.workActiveLabel small{font-size:9px;font-weight:550;line-height:11px}.workActiveLabel strong{font-size:12px;line-height:15px;font-weight:650}
 .lobby>.directory{z-index:5}
 .doorEtching .doorPresence i{background:#a6f5be;box-shadow:0 0 5px #9becbf44}
