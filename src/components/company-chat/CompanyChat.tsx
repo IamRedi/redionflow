@@ -23,11 +23,17 @@ function createChatStore() {
 type ChatStore = ReturnType<typeof createChatStore>;
 const ChatContext = createContext<{ store: ChatStore; owner: string } | null>(null);
 const noChat = () => null, noSubscription = () => () => {};
-export function CompanyChatTrigger({ className = '' }: { className?: string }) {
+export function CompanyChatTrigger({ className = '', children, brandSource }: { className?: string; children?: ReactNode; brandSource?: string }) {
   const context = useContext(ChatContext);
+  const { currentLang } = useLanguage();
+  const copy = companyChatCopy(currentLang);
   const chat = useSyncExternalStore(context?.store.subscribe ?? noSubscription, context?.store.snapshot ?? noChat, noChat);
-  if (!chat || chat.owner !== context?.owner) return null;
-  return <button type="button" onClick={chat.open} className={`${s.trigger} ${className}`} title={chat.title} aria-label={`${chat.title}${chat.unread ? ` · ${chat.unread} ${chat.unreadLabel}` : ''}`} aria-expanded={chat.expanded} aria-haspopup="dialog" data-testid="company-chat-trigger"><MessageCircle size={19} aria-hidden="true" />{chat.unread > 0 && <span className={s.badge} aria-label={`${chat.unread} ${chat.unreadLabel}`} data-testid="company-chat-unread">{chat.unread > 99 ? '99+' : chat.unread}</span>}</button>;
+  const ready = chat?.owner === context?.owner ? chat : null;
+  if (!ready && !children) return null;
+  // The brand keeps its SSR space while the actor resolves. No layout jump or
+  // second chat controller: the same store still owns unread/read/focus state.
+  const title = ready?.title ?? copy.title;
+  return <button type="button" disabled={!ready} onClick={ready?.open} className={`${children ? s.brand : s.trigger} ${className}`} title={title} aria-label={`${title}${ready?.unread ? ` · ${ready.unread} ${ready.unreadLabel}` : ''}`} aria-expanded={ready?.expanded ?? false} aria-haspopup="dialog" data-testid="company-chat-trigger" data-company-chat-brand={children ? true : undefined} data-brand-source={brandSource}>{children ?? <MessageCircle size={19} aria-hidden="true" />}{Boolean(ready?.unread) && <span className={s.badge} aria-label={`${ready!.unread} ${ready!.unreadLabel}`} data-testid="company-chat-unread">{ready!.unread > 99 ? '99+' : ready!.unread}</span>}</button>;
 }
 
 export function CompanyChatProvider({ actor, children }: { actor: ChatPerson | null; children: ReactNode }) {

@@ -752,3 +752,6 @@ body:has([data-baum-studio="forest-crystal-v1"])::-webkit-scrollbar, body:has([d
 .baum-collection-row { position: absolute; inset: 0 0 auto; }
 
 .baum-photoreal-plate > svg { display: block; width: 100%; height: 100%; overflow: hidden; }
+
+/* The shared Muster utility geometry inherits the accepted forest crystal. */
+body:has([data-baum-studio="forest-crystal-v1"]) [data-testid="muster-header-utilities"] { --muster-control-ice:var(--baum-glass);--muster-ice-edge:var(--baum-edge);--muster-ice-shadow:inset 0 1px 0 var(--baum-edge); }

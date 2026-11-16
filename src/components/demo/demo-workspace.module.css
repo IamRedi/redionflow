@@ -28,10 +28,10 @@
 /* Touch dimensions stay in CSS pixels when text grows. Labels can grow/wrap,
    while the navigation never consumes the whole working viewport. */
 .header [data-demo-navigation] > a { min-height: 44px; padding-inline: 12px; }
-.header [data-demo-teamrow] button,
+.header [data-demo-teamrow] button:not([data-company-chat-brand]),
 .header [data-demo-teamrow] summary { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
-.header [data-demo-teamrow] > a img,
-.header [data-demo-teamrow] > a span { width: 56px !important; height: 56px !important; }
+.header [data-demo-teamrow] > [data-company-chat-brand] img,
+.header [data-demo-teamrow] > [data-company-chat-brand] > div { width: 56px !important; height: 56px !important; }
 .header [data-demo-teamrow] svg { width: 20px; height: 20px; }
 .workspace {
   position: relative;
@@ -49,7 +49,6 @@
 @media (max-height: 560px) {
   .header > div { padding-top: 0; }
   .header [data-testid="baum-demo-topbar"] { padding-top: 24px; padding-bottom: 4px; }
-  .header [data-demo-teamrow] > a { display: none; }
   .header [data-demo-teamrow] { grid-template-columns: minmax(0, 1fr) auto; }
   .header [data-demo-navigation] { margin-top: 0; max-width: 100%; min-height: 52px; flex-wrap: nowrap; overflow-x: auto; padding-block: 4px; scrollbar-width: thin; }
   .header [data-demo-navigation] > * { flex-shrink: 0; }

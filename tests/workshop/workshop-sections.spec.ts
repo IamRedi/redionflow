@@ -17,7 +17,8 @@ test("one folder per section, direct utilities, shared stock and legacy links ke
     await expect(nav.getByRole("link")).toHaveCount(6);
       await expect(nav.getByRole("link",{name:label,exact:true})).toHaveAttribute("aria-current","page");
       for(const name of ["Dokumente","Ersatzteile","Historie"]) await expect(nav.getByRole("link",{name,exact:true})).toHaveCount(0);
-      await expect(page.locator('[data-demo-utilities] a[href="/demo/kidraht"]')).toBeVisible();
+      const profile=page.getByTestId("muster-profile"); await profile.locator("summary").click();
+      await expect(profile.locator('a[href="/demo/kidraht"]')).toBeVisible(); await page.keyboard.press("Escape");
       await expect(page.locator('[data-demo-utilities]').getByRole("button",{name:"Hell/Dunkel",exact:true})).toBeVisible();
       await expect(page.getByLabel("Mehr",{exact:true})).toHaveCount(0);
       const folder=page.getByTestId("section-folder"); await folder.click();

@@ -4,6 +4,58 @@ Owner request, 16 November 2026. This is the first bounded shell-standardization
 step for the three fictional Muster installations. It is not activation on the
 AL Steel pilot, another company, another demo or the public portfolio.
 
+## Header refinement — 16 November 2026 candidate
+
+The three Muster shells now share one personal-utility contract. This refinement
+is prepared against the published chat releases, not enabled on AL Steel or any
+other installation. No database migration, provider/AI call, permission grant,
+new preference store, background or business-process change is required.
+
+- The original company logo opens the existing company chat. Its unread badge
+  uses the same server-backed per-person cursor. There is no additional chat
+  icon in the common header and no AI badge on this logo. During actor hydration
+  the mark keeps its space and is disabled until the correct controller exists.
+- Primary process links stay on the left of the second header row. They retain
+  each tenant's enabled processes and permissions. The team has the full first
+  row; narrow process navigation scrolls horizontally without an extra page
+  scrollbar or a wrapper surface covering the scene.
+- Right-side utilities have one order: own profile, Day/Night, language flag.
+  Theme is a direct one-tap toggle using the existing HttpOnly cookie/POST.
+  Locale cycles DE → EN → SQ → IT → PL → RO → DE through the existing language
+  provider, cookie and local preference. Flags are bundled SVGs, independent of
+  Windows emoji support. No popover, new translation claim or profile-preference
+  migration is introduced. Open chat drafts/forms stay mounted through refresh.
+- Personal notifications and KiDraht are under the own-profile disclosure.
+  Regular Muster also exposes its existing assistant route with unchanged
+  admin/worker authorization, settings, demo-role entry and sign-out. Baumdienst
+  retains its existing fictional persona switch, own worker-profile link and
+  custody-notification workflow; unread custody items mark the profile entry.
+  The previous standalone bell/chat/book buttons are absent from the header.
+- Native fullscreen office scenes keep their established local chat entry:
+  those scenes intentionally replace the common header. Private assistants and
+  own-admin management tools stay in their existing office locations. This is
+  a functional scene exception, not a duplicate button in the common header.
+
+Shared geometry and behavior live in `MusterPreferences.tsx`,
+`MusterProfileMenu.tsx`, `muster-header.module.css` and the existing chat trigger.
+The regular `MusterHeaderUtilities` and Baumdienst `DemoProfileMenu` adapt only
+the authenticated/simulated personal actions. Existing tenant/forest material
+tokens govern the ice-glass controls; artwork, palettes, typography, process
+permissions, chat API limits and read logic remain unchanged. Labels and focus
+remain accessible, with 44px touch targets, Escape/outside dismissal and bounded
+profile-panel scrolling for short windows. No shared policy is duplicated here;
+RediON Connect `plugin-source:/plugin/skills/ui-identity` and `ui-experience`
+remain the shared policy sources, subordinate to the owner's explicit one-tap
+Day/Night and flag request for these Muster headers.
+
+`tests/muster/header-controls.cjs` exercises the same guarded loopback contract
+for all three profiles. It checks logo/chat uniqueness, profile grouping, six
+locale changes without reload, unsent chat-draft retention, theme persistence,
+single-request error/retry, reachable compact controls and the profile panel at
+1440×900, 390×844, 320×640 and 760×360 in Light/Night. Existing two-person chat,
+read/unread, history, retry and office permission acceptance is retained.
+Local checks, owner acceptance and publication remain separate evidence axes.
+
 ## Navigation and visual identity
 
 Control panel and Dashboard view belong to the authenticated administrator's

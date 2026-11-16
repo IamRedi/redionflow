@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Bot, BookOpenCheck, Home, LayoutDashboard, Package, UserRound, TreePine, Truck, Wrench } from "lucide-react";
-import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
+import { Bot, Home, LayoutDashboard, Package, TreePine, Truck, Wrench } from "lucide-react";
+import { MusterPreferences } from '@/components/shell/MusterPreferences';
+import { DemoProfileMenu } from './workshop/demo-profile-menu';
+import header from '@/components/shell/muster-header.module.css';
 
 import { AppBrand } from "@/components/branding/AppBrand";
 import { WorkerIconStrip } from "@/app/(workzone)/workzone/worker-icon-strip";
@@ -11,9 +13,7 @@ import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { kidrahtDemoUrl } from "@/lib/kidraht-demo";
 import { KidrahtButton } from "@/components/kidraht/kidraht-button";
 import { DemoReadonlyBadge } from "./demo-readonly-badge";
-import { DemoThemeButton } from "./demo-theme-button";
 import { workshopCopy } from "@/lib/workshop/copy";
-import { DemoActorBar } from "./workshop/demo-actor-bar";
 import { DemoTeamStrip } from "./workshop/demo-team-strip";
 import { DemoBrand } from "./workshop/demo-brand";
 import { DemoNavigationLink } from "./workshop/demo-navigation-link";
@@ -44,7 +44,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
     const c = workshopCopy(currentLang);
     const wood=woodCopy(currentLang);
     return <div className="w-full min-w-0 px-3 pb-2 pt-4 sm:px-5" data-testid="baum-demo-topbar">
-      <div data-demo-teamrow className="relative flex min-w-0 items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><div className="min-w-0 flex-1"><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} /></div><DemoActorBar mode="notifications"/><details data-demo-profile className="relative shrink-0"><summary aria-label={c.profile} title={c.profile} className={`${navIcon} cursor-pointer list-none`}><UserRound className="size-4" /></summary><div className="absolute right-0 top-full z-50 mt-2 flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-2"><DemoActorBar mode="roles"/><LanguageSwitcher/></div></details></div>
+      <div data-demo-teamrow className="relative flex min-w-0 items-center gap-2"><DemoBrand alt={t("common.companyLogoAlt",currentLang)}/><div className="min-w-0 flex-1"><DemoTeamStrip workers={workers.map(worker=>({...worker,activeProfile:false,pendingVacationRequest:false,vacationDecisionSignal:false,vacationDecisionSignalKey:null}))} /></div></div>
       <div data-demo-actionrow className="mt-2 flex min-w-0 items-start gap-2">
         <nav data-demo-navigation aria-label="Demo" className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5 [&>*]:shrink-0">
           <DemoNavigationLink href="/demo/workzone" label={workzoneName} className={navIcon}><Home className="size-4" /></DemoNavigationLink>
@@ -54,7 +54,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=tools" label={c.tools} className={navIcon}><Package className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=fleet" label={c.fleet} className={navIcon}><Truck className="size-4" /></DemoNavigationLink>
         </nav>
-        <div data-demo-utilities className="flex shrink-0 items-center gap-1"><CompanyChatTrigger className={navIcon}/>{kidraht?<Link href="/demo/kidraht" aria-label={t("demo.kidrahtTitle",currentLang)} title={t("demo.kidrahtTitle",currentLang)} className={navIcon}><BookOpenCheck className="size-4"/></Link>:null}<DemoThemeButton label={t("admin.themeToggle",currentLang)} errorLabel={c.error}/></div>
+        <div data-demo-utilities data-testid="muster-header-utilities" className={header.utilities}><DemoProfileMenu kidraht={Boolean(kidraht)}/><MusterPreferences/></div>
       </div>
     </div>;
   }
