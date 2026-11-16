@@ -5,11 +5,59 @@
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 
 - **BaumdienstFlow** für Baumpflege- und Baumdienstbetriebe: Baumlisten mit Koordinaten, Fällungen, Kronenpflege, Hubsteiger und Häcksler.
-- **BauFlow** für Bau und Stahlfertigung: persönliche Büros, Materiallisten, Fertigungsprozesse, Montage, Lager und Werkstatt. Im realen Betrieb bei AL-Steel; die getrennte ältere Glasfaser-Demo nutzt fiktive Daten.
+- **BauFlow** für Bau und Stahlfertigung: persönliche Büros, Materiallisten, Fertigungsprozesse, Montage, Lager und Werkstatt. Im realen Betrieb bei AL-Steel; getrennte Musterfirmen für Stahlbau und Krandienste verwenden fiktive Daten.
 
 Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) werden nur für ausdrücklich ausgewählte Cloud-Prüfungen gestartet.
 
-**[English version](README.en.md)** · **BauFlow geprüft: 12. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **BauFlow-Muster geprüft: 16. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+
+## Werkstatt, Lager und Flotte im selben Arbeitsraum · 16.11.2026
+
+**[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** und **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** öffnen die drei Bereiche jetzt direkt unter derselben Team- und Symbolleiste. Kontinuierliche Räume, kompaktes Day/Night-Glas, aufklappbare Suche und die bestehenden Detailkarten behalten die Identität und Daten der jeweiligen Firma.
+
+[PR226](https://github.com/IamRedi/redionflow/pull/226) läuft als `d174709`, [PR227](https://github.com/IamRedi/redionflow/pull/227) als `84048b1`. 35 Online-Prüfungen bestanden auf Desktop und emuliertem Handy, in Light/Night, einschließlich Suche, Details, Fokus, natürlichem Footer und verweigertem Lagerzugang für Außenteams. AL-Steel, BaumdienstFlow und andere Demos wurden nicht veröffentlicht oder verändert. [Nachweise und Grenzen](docs/MUSTER_OPERATIONS_20261116.md).
+
+Echte Online-Aufnahmen mit ausschließlich fiktiven Daten · 16. November 2026.
+
+![RheinRuhr Muster: kompakte Flotte im durchgehenden Night-Glasraum](docs/assets/screenshots/muster-operations-crane-fleet-night.webp)
+
+<img src="docs/assets/screenshots/muster-operations-bauflow-inventory-phone.webp" alt="BauFlow Musterbau: Lager im Light-Glas auf emuliertem Handy" width="260">
+
+## Eigenständige Kran-Musterfirma ist online · 15.11.2026
+
+**[RheinRuhr Kranservice · MUSTER öffnen](https://rheinruhr-kran-muster-production.up.railway.app/muster)** — ein weiterer fiktiver Betrieb aus der BauFlow-Basis: sieben Mitarbeitende, drei Hebeeinsätze, zwei Maschinen, vier Werkzeuge und drei Büros. Die Fertigung ist deaktiviert. Geschäftsführung, Buchhaltung, Disposition, Außenteam und Werkstatt haben getrennte Zugänge mit den bestehenden Rollenrechten. Änderungen und Dokumente bleiben in der eigenen Datenbank gespeichert; bitte ausschließlich Testdaten eingeben.
+
+PR223 plus [Veröffentlichungsadapter PR224](https://github.com/IamRedi/redionflow/pull/224), Runtime `a2a5829`: 1.314 Unit-Tests, 36 lokale und 42 Online-Browserfälle bestanden. Ein hochgeladenes PDF blieb nach der erneuten Bereitstellung erhalten und wurde aus einer unabhängigen Mitarbeiter-Sitzung heruntergeladen. AL-Steel, BauFlow Musterbau und BaumdienstFlow behalten ihre bisherigen unabhängigen Deployments. AI, E-Mail, GPS und technische Hebeplanfreigaben sind hier nicht verbunden. [Veröffentlichung und genaue Grenzen](docs/CRANE_MUSTER.md).
+
+Echte Online-Aufnahmen mit fiktiven Daten · 15. November 2026. Die Handyansicht ist emuliert; Bilder sind illustrative Muster, keine technische Einsatzfreigabe.
+
+![RheinRuhr Kranservice Muster · Online-Workzone](docs/assets/screenshots/crane-muster-online-desktop.webp)
+
+<img src="docs/assets/screenshots/crane-muster-online-phone.webp" alt="RheinRuhr Kranservice Muster · Online-Workzone auf emuliertem Handy" width="260">
+
+## BauFlow-Musterbetrieb ist online · 14.11.2026
+
+Der eigenständige **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** nutzt die aktuelle Stahlbau-Anwendung mit der eigenen originalen BauFlow-Identität. Am Eingang stehen Geschäftsführung, Buchhaltung, Baustelle, Werkhalle und Werkstatt zur Wahl. Zwölf erfundene Mitarbeitende, fünf Büros, drei Baustellen, eine Werkhalle und elf Betriebsmittel (sechs Fahrzeuge und fünf Werkzeuge) sind miteinander verbunden. Änderungen bleiben gespeichert und sind für andere Testende sichtbar; bitte nur Testdaten verwenden. AL-Steel und BaumdienstFlow behalten ihre unabhängigen Deployments.
+
+[Veröffentlichung, Zugang und Prüfstand](docs/BAUFLOW_MUSTER_TEMPLATE.md). Erste PR206-Veröffentlichung: `67cd096`; 1.265 Unit-Tests und 45 Browserfälle bestanden. Die folgenden echten Online-Aufnahmen vom 14. November enthalten fiktive Daten. Die Handyansicht ist responsiv/emuliert, keine Abnahme auf einem physischen Gerät.
+
+![BauFlow Musterbau · echte Online-Workzone](docs/assets/screenshots/bauflow-muster-online-workzone.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-online-phone.webp" alt="BauFlow Musterbau · echte Online-Workzone auf schmalem Touch-Display" width="260">
+
+Die Flotte zeigt jetzt sechs bebilderte Musterfahrzeuge in klarem Day/Night-Glas, darunter Kran-LKW und Bauleiter-Kombi. PR211 läuft nur in der eigenständigen Musterfirma-Demo. Hochgeladene Fotos, ursprüngliche Fahrzeugdaten und die Reparaturhistorie bleiben erhalten.
+
+Echte Online-Oberfläche mit fiktiven Daten und illustrativen Fahrzeugbildern · 14. November 2026.
+
+![BauFlow Musterfirma · Fleet glass](docs/assets/screenshots/bauflow-muster-fleet-online.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-fleet-online-phone.webp" alt="BauFlow Musterfirma · Fleet on an emulated phone" width="260">
+
+Auch das Lager nutzt jetzt dieselben kompakten Day/Night-Glaskarten mit fünf bebilderten Werkzeugen. PR212 ist nur in der eigenständigen Musterfirma-Demo veröffentlicht; IDs, Barcodes, Übergaben und die bestehende Reparatur bleiben erhalten.
+
+![BauFlow Musterfirma · Inventory glass](docs/assets/screenshots/bauflow-muster-inventory-online.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-inventory-online-phone.webp" alt="BauFlow Musterfirma · Inventory on an emulated phone" width="260">
 
 ## Musterfirma: fotorealistische Baumreferenzen · 15. November 2026
 
@@ -38,9 +86,10 @@ Aktuelle Ansichten vom 15. November 2026: fotorealistische Baumreferenzen und de
 | Produkt | Website | Demo | Fiktive Firma |
 |---|---|---|---|
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 Mitarbeitende, 3 Baustellen, 152 Bäume, 5 Maschinen |
-| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 Mitarbeitende, 4 Glasfaser-Baustellen, 114 Arbeiten, 8 Maschinen, Werkzeuginventar |
+| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** | 12 Mitarbeitende, 5 Büros, 3 Stahlbau-Baustellen, eine Werkhalle, 6 Fahrzeuge und 5 Werkzeuge |
+| BauFlow · Kran-Muster | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** | 7 Mitarbeitende, 3 Hebeeinsätze, 3 Büros, 2 Maschinen und 4 Werkzeuge; Fertigung deaktiviert |
 
-Die öffentlichen Demos brauchen kein Login und enthalten ausschließlich fiktive Daten. In der Musterfirma lassen sich die vorhandenen gemeinsamen Demo-Abläufe ausprobieren; Änderungen bleiben im Demo-Kontext. Die getrennte ältere BauFlow-Glasfaser-Demo bleibt schreibgeschützt. Echte Firmenzugänge werden getrennt eingerichtet.
+BauFlow öffnet die reguläre Stahlbau-Anwendung über fünf ausdrücklich gewählte Musterrollen. Die separate Kran-Musterfirma nutzt dieselbe Basis mit eigener Datenbank und deaktivierter Fertigung. Änderungen sind je Musterfirma gemeinsam sichtbar und bleiben gespeichert; es gibt keinen nächtlichen Reset. Der bestehende BaumdienstFlow-Einstieg bleibt unabhängig. Echte Firmenzugänge werden getrennt eingerichtet. Bitte nur Testdaten verwenden.
 
 Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten** derselben fiktiven Firma verknüpft: Ein Knopf „Firmenwissen“ in der oberen Leiste und eine Unterweisungskarte auf jeder Baustelle öffnen die vom Chef freigegebenen Regeln und die Sicherheitsunterweisung für diese Baustelle. Mitarbeitende melden sich dort mit einer PIN an.
 

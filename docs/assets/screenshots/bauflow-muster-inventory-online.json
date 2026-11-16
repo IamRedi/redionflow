@@ -1,0 +1,27 @@
+{
+  "revision": "6ffa4d94a3093d014198824ed648c7cadf998602",
+  "pr": 212,
+  "deployment": "9762e2e7-d4f6-4f74-a508-cde26cef33d7",
+  "date": "2026-11-15",
+  "url": "https://bauflow-production-1344.up.railway.app/workzone/inventory",
+  "captures": [
+    {
+      "file": "bauflow-muster-inventory-online.webp",
+      "kind": "actual online responsive UI",
+      "width": 1280,
+      "height": 720,
+      "sha256": "7d083f4c1e8fcdcf52f44a643d8019768dc4f619d628b7675cf42c3573e2b292",
+      "physicalPhone": false
+    },
+    {
+      "file": "bauflow-muster-inventory-online-phone.webp",
+      "kind": "actual online responsive UI",
+      "width": 390,
+      "height": 844,
+      "sha256": "c70b8f55ad9ad9c15390cc3bcd69aa752d4dffccc1eb46156418dcce4c83617e",
+      "physicalPhone": false
+    }
+  ],
+  "archive": "https://drive.google.com/file/d/1oQKNtTzQfkmy_8CZNOoUjEEXfm7Sg_y0/view",
+  "source": "Original online JPEG captures are retained in the archive; PNG normalization and WebP export change encoding only, not UI content."
+}

@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-16",
+  "status": "PUBLISHED_ONLINE_VERIFIED",
+  "cases": {
+    "bauflow": 17,
+    "crane": 18,
+    "total": 35
+  },
+  "records": [
+    {
+      "file": "muster-operations-crane-fleet-night.webp",
+      "company": "RheinRuhr Kranservice Muster",
+      "sourceRevision": "84048b150c427e5e40e4095d19bb53bed8b90cbe",
+      "page": "https://rheinruhr-kran-muster-production.up.railway.app/workzone/fleet",
+      "theme": "Night",
+      "observedViewport": [
+        1440,
+        900
+      ],
+      "capturePixels": [
+        1440,
+        875
+      ],
+      "sourceSha256": "b36422681b3acb97ed5746a15ce4113efab0042e3becc578436505fdadc8d279",
+      "sha256": "c34526b316c8cd894148f588836690bccfd7cf402f53428ccf3bb6daac5a47ea",
+      "phoneEmulated": false,
+      "content": "Actual online UI with fictional demo data and illustrative asset images."
+    },
+    {
+      "file": "muster-operations-bauflow-inventory-phone.webp",
+      "company": "BauFlow Musterbau",
+      "sourceRevision": "d1747094ad14b92c4de32095a33a1f69e553c7a7",
+      "page": "https://bauflow-production-1344.up.railway.app/workzone/inventory",
+      "theme": "Light",
+      "observedViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        844
+      ],
+      "sourceSha256": "7f0a5f80c870af4850f70b9740298ded70b9f0b8c46c1c610ed42a1d1dea492b",
+      "sha256": "6307bb085be24237070599bc384f5bbfe30970f4c36afdcb9cde031a016b6850",
+      "phoneEmulated": true,
+      "content": "Actual online UI with fictional demo data and illustrative asset images."
+    }
+  ],
+  "capture": "Verified origin, heading, theme and viewport in separate steps before capture. Owned tabs closed and temporary viewport reset.",
+  "excluded": "Initial batched navigation screenshots are diagnostic only because paint could lag navigation; not used as public media.",
+  "limits": "Phone checks use viewport emulation; no physical phone, camera, NFC or printing acceptance. Optional separate 78-case Playwright probe was DEFERRED_BUSY, not run."
+}

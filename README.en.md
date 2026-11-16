@@ -5,13 +5,61 @@
 **Operations software for teams that work outdoors.** The owner plans in the office, the crew works on site from their phones, and both see the same state: job sites, tasks, hours, fleet, materials and cost estimates. One codebase ships as two products:
 
 - **BaumdienstFlow** for tree care companies: tree lists with coordinates, removals, crown work, aerial lifts and chippers.
-- **BauFlow** for construction and steel fabrication: personal offices, material lists, production, site assembly, warehouse and workshop. In real use at AL-Steel; the separate older fibre-construction demo uses fictitious data.
+- **BauFlow** for construction and steel fabrication: personal offices, material lists, production, site assembly, warehouse and workshop. In real use at AL-Steel; separate steel and crane sample companies use fictitious data.
 
 Routine checks run locally; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) runs are reserved for explicitly selected cloud verification.
 
-**[Deutsche Version](README.md)** · **BauFlow reviewed: 12 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
+**[Deutsche Version](README.md)** · **BauFlow samples reviewed: 16 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
 The user interface, the demo data and most documents are in German, because the target market is German-speaking. The app itself supports 6 languages.
+
+## Workshop, warehouse and fleet share one workspace · 16 November 2026
+
+**[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** and **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** now open these areas beneath the same team and icon navigation. Continuous rooms, compact Day/Night glass, expandable search and existing detail cards preserve each company's identity and records.
+
+[PR226](https://github.com/IamRedi/redionflow/pull/226) runs as `d174709`; [PR227](https://github.com/IamRedi/redionflow/pull/227) as `84048b1`. 35 online checks passed across desktop and emulated phone, Light/Night, including search, details, focus, natural footer and denied warehouse access for field staff. AL-Steel, BaumdienstFlow and other demos were not redeployed or changed. [Evidence and limits](docs/MUSTER_OPERATIONS_20261116.md).
+
+Actual online captures with fictional demo data only · 16 November 2026.
+
+![RheinRuhr Muster: compact fleet in the continuous Night glass workspace](docs/assets/screenshots/muster-operations-crane-fleet-night.webp)
+
+<img src="docs/assets/screenshots/muster-operations-bauflow-inventory-phone.webp" alt="BauFlow Musterbau: Light glass warehouse on an emulated phone" width="260">
+
+## Separate crane sample company is online · 15.11.2026
+
+**[Open RheinRuhr Kranservice · MUSTER](https://rheinruhr-kran-muster-production.up.railway.app/muster)** — another fictional company from the BauFlow base: seven staff, three lifting jobs, two machines, four tools and three offices. Manufacturing is disabled. Owner, accounting, dispatch, field staff and workshop use distinct accounts and the existing permissions. Changes and documents persist in its own database; use test data only.
+
+PR223 plus [publication adapter PR224](https://github.com/IamRedi/redionflow/pull/224), runtime `a2a5829`: 1,314 unit tests, 36 local and 42 online browser cases passed. An uploaded PDF survived redeployment and was downloaded from an independent employee session. AL-Steel, BauFlow Musterbau and BaumdienstFlow retain their existing independent deployments. AI, email, GPS and engineering lifting-plan approval are not connected here. [Release and exact limits](docs/CRANE_MUSTER.md).
+
+Actual online captures with fictional data · 15 November 2026. The phone viewport is emulated; images are illustrative samples, not technical job approval.
+
+![RheinRuhr Kranservice Muster · online Workzone](docs/assets/screenshots/crane-muster-online-desktop.webp)
+
+<img src="docs/assets/screenshots/crane-muster-online-phone.webp" alt="RheinRuhr Kranservice Muster · online Workzone on an emulated phone" width="260">
+
+## BauFlow sample company is online · 14.11.2026
+
+The separate **[BauFlow Musterbau · DEMO](https://bauflow-production-1344.up.railway.app/demo)** runs the current steel application with its own original BauFlow identity. Choose owner, accounting, site, factory or workshop at entry. Twelve fictional employees, five offices, three sites, one factory and eleven assets (six vehicles and five tools) share the same connected workflows. Changes persist and are visible to other testers; use test data only. AL-Steel and BaumdienstFlow keep their independent deployments.
+
+[Release, access and verification](docs/BAUFLOW_MUSTER_TEMPLATE.md). Initial PR206 release: `67cd096`; 1,265 unit tests and 45 browser cases passed. The following are actual online captures from 14 November, with fictional data. Phone views are responsive/emulated, not physical-device acceptance.
+
+![BauFlow Musterbau · actual online Workzone](docs/assets/screenshots/bauflow-muster-online-workzone.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-online-phone.webp" alt="BauFlow Musterbau · actual online Workzone on a narrow touch screen" width="260">
+
+The fleet now uses clear Day/Night glass with six photographed sample vehicles, including a crane truck and site-manager estate car. PR211 is live only on the independent Musterfirma demo. Existing uploaded photos, original vehicle records and repair history are preserved.
+
+Actual online UI with fictional data and illustrative vehicle images · 14 November 2026.
+
+![BauFlow Musterfirma · Fleet glass](docs/assets/screenshots/bauflow-muster-fleet-online.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-fleet-online-phone.webp" alt="BauFlow Musterfirma · Fleet on an emulated phone" width="260">
+
+The inventory now shares the compact Day/Night glass cards with five illustrated tools. PR212 is live only on the separate Musterfirma demo; identities, barcodes, custody and the existing repair are preserved.
+
+![BauFlow Musterfirma · Inventory glass](docs/assets/screenshots/bauflow-muster-inventory-online.webp)
+
+<img src="docs/assets/screenshots/bauflow-muster-inventory-online-phone.webp" alt="BauFlow Musterfirma · Inventory on an emulated phone" width="260">
 
 ## Musterfirma: photoreal tree references · 15 November 2026
 
@@ -40,9 +88,10 @@ Current views from 15 November 2026 use photoreal tree references and the same g
 | Product | Website | Demo | Fictitious company |
 |---|---|---|---|
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 employees, 3 job sites, 152 trees, 5 machines |
-| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | Glasfaserbau Beispieltal GmbH: 10 employees, 4 fibre-optic job sites, 114 tasks, 8 machines, tool inventory |
+| BauFlow | **[BauFlow website](https://www.baumdienstflow.de/bauflow/)** | **[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** | 12 staff, 5 offices, 3 steel assembly sites, one factory, 6 vehicles and 5 tools |
+| BauFlow · crane sample | **[BauFlow website](https://www.baumdienstflow.de/bauflow/)** | **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** | 7 staff, 3 lifting jobs, 3 offices, 2 machines and 4 tools; manufacturing disabled |
 
-The public demos need no login and contain fictional data only. Musterfirma supports the existing shared demo workflows; changes stay within the demo context. The separate older BauFlow fibre-construction demo remains read-only. Real company access is set up separately.
+BauFlow opens the ordinary steel application through five explicit sample roles. The separate crane sample uses the same base with its own database and manufacturing disabled. Changes are shared within each sample company and persist; there is no nightly reset. The existing BaumdienstFlow entry stays independent. Real company access is set up separately. Use test data only.
 
 Since 1 November 2026 the BaumdienstFlow demo links to the **KiDraht Assistant** of the same fictitious company: a "Company knowledge" button in the top bar and a briefing card on every job site open the owner-approved rules and the safety briefing for that site. Workers sign in there with a PIN.
 
