@@ -53,3 +53,19 @@ Die Ende-zu-Ende-Tests prüfen unter anderem: Anmeldung beider Produkte, Anlegen
 
 - Das Repository enthält keine echten Kunden-, Mitarbeiter- oder Baustellendaten. Alle Demo-Firmen, Namen, Adressen, Telefonnummern und Kennzeichen sind erfunden ([`prisma/seed-data.ts`](prisma/seed-data.ts), [`prisma/seed-data-bau.ts`](prisma/seed-data-bau.ts), [`prisma/seed-data-glasfaser.ts`](prisma/seed-data-glasfaser.ts)). Koordinaten liegen in echten Städten, damit die Karten realistisch aussehen.
 - Bilder, Diagramme und Texte: Redion Cekrezi / RediON. Es wird keine Nutzungslizenz über die [LICENSE](LICENSE) hinaus gewährt.
+
+## Musterfirma tree references · 15 November 2026
+
+Source 99c69ee; deployment53240831-27cb-4988-aed4-cd733ca44ec8 ONLINE, one replica, no issues. 727 unit tests,19 mocked integration cases, lint/types/build pass. The62-case browser run had61 passes and one short-reader sizing failure; the scoped CSS correction retained all assertions and the affected flow passed in eight theme/size combinations. All62 flows are verified cumulatively. Additional100/1,000-record synthetic browser fixtures check bounded DOM/images, every record reachable, stable flips and focus; these are UI checks, not a server load benchmark. Three non-Musterfirma profile boundaries pass. Live read-only review confirms new assets,56 logical trees with18 mounted at1280×720, fixed flip positions and no outer scrolling. Existing62tables/449rows,32 resolved variables and five neighbouring services remain unchanged; backup identity preserved. Public captures show only fictitious demo data.
+
+
+## Seasonal presentation publication · 15 November 2026
+
+Owner-approved native PR208/16750da, showcase PR207/6579b67 and portfolio PR90/fb7f483 are published. Cloudflare Production8585e389-3c40-460f-85ef-e2d70d673d55 and Vercel Productiondpl_CJwCGjYQAKHDLw3LJECJ1bURAMLA are verified live; all141nativepublicfiles match the exact approved package, preserving135otherfiles including BauFlow/legal/headers. Public desktop galleries show the new winter trees and atlas. See native PUBLIC_PRESENTATION and portfolio PORTFOLIO_SYNC for scope, rollback and local-vs-live evidence. These are static/documentation releases; the operational apps remain on their existing pinned sources.
+
+
+## Photoreal gallery replacement · 15 November 2026
+
+Owner requested replacement of every remaining sketch-era tree capture. Three portfolio slots in all four locales now use the current photoreal worksite card,390×844 tree list and glass leaf-detail reader;19 gallery slots and other product data are preserved. The three retired public files were removed after originals were archived and hash-verified. The native Workzone desktop/phone pair now uses the same current pictures and localized captions; its atlas was already current. No style, application, provider or data change.
+
+Validation: native generator contract5pages/4locales/200targets and unchanged BauFlow pass;16native locale/width/theme views and8portfolio home/case flows pass with no horizontal overflow. All three new sources are present, retired filenames absent from the visible gallery and leaf lightbox closes correctly. Mandatory portfolio install/lint/types/content/build/GitHub-sync passes. Desktop card and leaf are actual read-only Musterfirma captures; phone is the real current component with56fictional read-only records, not a generated UI. Source runtime99c69ee; originals/provenance retained. Publication follows the owner’s standing request for these surfaces.

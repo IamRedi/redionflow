@@ -5,11 +5,11 @@
 **Betriebssoftware für Teams, die draußen arbeiten.** Der Chef plant im Büro, die Mitarbeitenden arbeiten auf der Baustelle am Handy, und beide sehen denselben Stand: Baustellen, Arbeiten, Stunden, Fuhrpark, Material und Kalkulation. Aus einer Codebasis entstehen zwei Produkte:
 
 - **BaumdienstFlow** für Baumpflege- und Baumdienstbetriebe: Baumlisten mit Koordinaten, Fällungen, Kronenpflege, Hubsteiger und Häcksler.
-- **BauFlow** für Bau-, Tiefbau- und Glasfaserbetriebe: Arbeitslisten statt Bäume, Trassen, Hausanschlüsse, Spülbohrung, Werkzeug und Absicherung.
+- **BauFlow** für Bau und Stahlfertigung: persönliche Büros, Materiallisten, Fertigungsprozesse, Montage, Lager und Werkstatt. Im realen Betrieb bei AL-Steel; getrennte Musterfirmen für Stahlbau und Krandienste verwenden fiktive Daten.
 
-[![CI](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml)
+Routineprüfungen laufen lokal; [GitHub Actions](https://github.com/IamRedi/redionflow/actions/workflows/ci.yml) werden nur für ausdrücklich ausgewählte Cloud-Prüfungen gestartet.
 
-**[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
+**[English version](README.en.md)** · **BauFlow-Muster geprüft: 16. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
 ## Werkstatt, Lager und Flotte im selben Arbeitsraum · 16.11.2026
 
@@ -59,66 +59,123 @@ Auch das Lager nutzt jetzt dieselben kompakten Day/Night-Glaskarten mit fünf be
 
 <img src="docs/assets/screenshots/bauflow-muster-inventory-online-phone.webp" alt="BauFlow Musterfirma · Inventory on an emulated phone" width="260">
 
-## In Prüfung: Produktionspanel für Stahlbetriebe
+## Musterfirma: fotorealistische Baumreferenzen · 15. November 2026
 
-Ein Kalender zeigt bestätigte kg pro Tag und Projekt: Teileschnitt,
-Baugruppenschnitt und Zusammenbau bleiben getrennt. Dazu kommen Tagesnachweise,
-Prozessfortschritt, gespeicherte Bestätigungsgewichte und eine private
-Monitoransicht ohne Bearbeitung oder personenbezogene Arbeitsnachweise.
+Die Baumkarten behalten ihre feste Größe und drehen sich für Erledigt/Problemmeldungen. Die Filter stehen frei ohne zusätzliche weiße Leiste; Scrollen bleibt mit ausgeblendeter Scrollbar möglich. Der Artenatlas und die Karten teilen 26 erzeugte fotorealistische Referenzen für Sommer, Herbst und Winter. Es sind Artenillustrationen, keine Fotos der konkreten Baustellenbäume.
 
-Dieser Erweiterungskandidat ist lokal geprüft und zur Pilotfreigabe vorbereitet.
-[Definitionen, Grenzen und Nachweise](docs/STEEL_PRODUCTION_DASHBOARD.md).
-Die Aufnahme zeigt ausschließlich eine fiktive Firma mit synthetischer Arbeit.
+Lange Baumlisten montieren nur das sichtbare Fenster mit kleinem Puffer. Inventar und Holzansichten verwenden dieselbe Technik für große Sammlungen; bestehende Datenlimits und Funktionen bleiben erhalten. Quelle und Prüfstand: [PR217](https://github.com/IamRedi/redionflow/pull/217). Live nur in Musterfirma: Quelle `99c69ee`, Railway `53240831-27cb-4988-aed4-cd733ca44ec8`, SUCCESS/Online. 62 Browserabläufe verifiziert; 727 Unit-Tests und 19 simulierte Integrationsfälle bestanden. Daten und Konfiguration bleiben erhalten.
 
-![Lokaler Produktionspanel-Kandidat mit Kalender und Projektfortschritt](docs/assets/screenshots/steel-dashboard-candidate.png)
+![Fotorealistische Winterbäume und feste Glaskarten](docs/assets/screenshots/tree-photoreal-live-20261115.jpg)
 
-## Pilot-Erweiterung: Flottenkarte, Tankbelege und eigene Fotos
+![Fotorealistischer Artenatlas der Musterfirma](docs/assets/screenshots/atlas-photoreal-live-20261115.jpg)
 
-Die Pilot-Erweiterung zeigt bestätigte Fahrzeuge neben Baustellen, öffnet
-ihre GPS-Position in Maps und erfasst Original-Tankbelege mit hochladender Person,
-tatsächlich tankender Person, Belegzeit und nächster historischer GPS-Meldung
-einschließlich Zeitabstand. Lokale OCR schlägt die Uhrzeit vor; der Mensch prüft
-und bestätigt sie. Unklare Fahrzeugzuordnungen bleiben beim Chef.
+## Musterfirma: Baustellen als Glaskarten · 14. November 2026
 
-Fahrzeuge, Baustellen und Werkstatt erhalten eigene Fotos über ein kleines
-Kamerasymbol: aufnehmen oder auswählen; automatisch WebP, maximal 1024 Pixel
-und 180 KB. Fotos bleiben innerhalb der Firma.
+Die öffentliche BaumdienstFlow-Musterfirma öffnet Baustellen jetzt als Glaskarte über der bestehenden Workzone: Name, Adresse und Angaben in einer ruhigen Übersicht. Eine illustrierte Baumkarte öffnet die eigene Baumansicht mit **Alle / Zu erledigen / Erledigt**, Karte und Artenstudio. Geräte, Team, Absicherung, Fotos, Prozesse, Dokumente und Unterweisung öffnen getrennte Ansichten.
 
-Die Basis bestand 559 Unit-, 301 PostgreSQL- und 28 Chromium-Prüfungen. Für die
-Foto-Erweiterung wurden nur neue gezielte Prüfungen ausgeführt; die vollständigen
-älteren Tests wurden auf Wunsch des Eigentümers nicht wiederholt. Die Abnahme
-mit echten GPS-Geräten und Belegen bleibt separat ausstehend.
-[Ablauf, Grenzen und Freigabe](docs/FLEET_MAP_FUEL.md). Die folgenden Aufnahmen
-zeigen ausschließlich synthetische Daten aus dem lokalen Review-Kandidaten.
+[Baustellenkarte live öffnen](https://redionflow-production.up.railway.app/demo/baustellen/cmw5rbbq1000o2kk19w9m2apf). Die folgenden Ansichten zeigen die aktuelle Demo-Oberfläche mit ausschließlich fiktiven Daten; sie ändern keine Firmenzugänge anderer Produkte. Die bestehenden Daten und Dateien wurden bei der Veröffentlichung unverändert erhalten. Quelle: [a7093cf](https://github.com/IamRedi/redionflow/commit/a7093cf57599ccc319a5520fdb92e18c99ece0a4), [PR205](https://github.com/IamRedi/redionflow/pull/205).
 
-![Lokaler BauFlow-Kandidat: Fahrzeuge und Baustelle auf derselben Karte](docs/assets/screenshots/fleet-map-candidate.png)
+Aktuelle Ansichten vom 15. November 2026: fotorealistische Baumreferenzen und derselbe Glasstil. Die Telefonansicht nutzt fiktive, schreibgeschützte Demodaten.
 
-<img src="docs/assets/screenshots/fuel-receipt-candidate.png" alt="Synthetischer Tankbeleg im lokalen Kandidaten mit getrennten Upload-, Tank- und GPS-Zeiten" width="300">
+![Glaskarte der Musterfirma-Baustelle über Workzone](docs/assets/screenshots/site-card-photoreal-20261115.jpg)
 
-<img src="docs/assets/screenshots/asset-photos-phone.png" alt="Synthetic BauFlow photo upload workflow" width="260">
+<img src="docs/assets/screenshots/tree-cards-photoreal-phone-20261115.jpg" alt="Musterfirma am Telefon: Baumkarten mit Statusfiltern, Karte und Artenstudio" width="320">
 
 ## Websites und Live-Demos
 
 | Produkt | Website | Demo | Fiktive Firma |
 |---|---|---|---|
 | BaumdienstFlow | **[baumdienstflow.de](https://www.baumdienstflow.de/)** | **[redionflow-production.up.railway.app/demo](https://redionflow-production.up.railway.app/demo)** | Baumdienst Musterstadt GmbH: 8 Mitarbeitende, 3 Baustellen, 152 Bäume, 5 Maschinen |
-| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[bauflow-production-1344.up.railway.app/demo](https://bauflow-production-1344.up.railway.app/demo)** | BauFlow Musterbau: 12 Mitarbeitende, 5 Büros, 3 Stahlbau-Baustellen, eine Werkhalle, 30 Baustellenphasen, 9 verbundene Geräte |
+| BauFlow | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** | 12 Mitarbeitende, 5 Büros, 3 Stahlbau-Baustellen, eine Werkhalle, 6 Fahrzeuge und 5 Werkzeuge |
+| BauFlow · Kran-Muster | **[BauFlow-Website](https://www.baumdienstflow.de/bauflow/)** | **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** | 7 Mitarbeitende, 3 Hebeeinsätze, 3 Büros, 2 Maschinen und 4 Werkzeuge; Fertigung deaktiviert |
 
-Beide öffentlichen Einstiege verwenden erfundene Firmendaten. BauFlow öffnet die reguläre Stahlbau-Anwendung über fünf ausdrücklich gewählte Musterrollen; Änderungen sind gemeinsam sichtbar und bleiben gespeichert. Es gibt keinen nächtlichen Reset. Der bestehende BaumdienstFlow-Einstieg bleibt unabhängig. Bitte nur Testdaten verwenden.
+BauFlow öffnet die reguläre Stahlbau-Anwendung über fünf ausdrücklich gewählte Musterrollen. Die separate Kran-Musterfirma nutzt dieselbe Basis mit eigener Datenbank und deaktivierter Fertigung. Änderungen sind je Musterfirma gemeinsam sichtbar und bleiben gespeichert; es gibt keinen nächtlichen Reset. Der bestehende BaumdienstFlow-Einstieg bleibt unabhängig. Echte Firmenzugänge werden getrennt eingerichtet. Bitte nur Testdaten verwenden.
 
 Seit 1. November 2026 ist die BaumdienstFlow-Demo mit dem **KiDraht-Assistenten** derselben fiktiven Firma verknüpft: Ein Knopf „Firmenwissen“ in der oberen Leiste und eine Unterweisungskarte auf jeder Baustelle öffnen die vom Chef freigegebenen Regeln und die Sicherheitsunterweisung für diese Baustelle. Mitarbeitende melden sich dort mit einer PIN an.
+
+## BauFlow: vernetzte Büros, Fertigung und Baustelle · 12. November 2026
+
+**Aufgabenjournal · 13. November 2026.** Persönliche Kristallkarten mit Titel,
+Status, Wichtigkeit und optionaler Notiz; erledigen, bearbeiten und archivieren
+direkt aus der Karte. Freiwillige Erinnerungen gelten nur für die Person, die
+sie setzt, und verwenden die Firmenzeit. Der eingerichtete Server sendet auch
+bei geschlossener App über den vorhandenen Push-Kanal. Gerätefreigabe und
+Netz/OS bleiben Voraussetzung; die genaue Zuordnung der physischen iPhone-Probe
+zu einer geplanten Erinnerung steht noch aus. Firmenzugang erforderlich,
+keine Freischaltung in der öffentlichen Demo. Veröffentlicht mit
+[PR #191](https://github.com/IamRedi/redionflow/pull/191),
+[Produktionsrevision 3b327f8](https://github.com/IamRedi/redionflow/commit/3b327f80132328ff3a69a2d689b3c49bb28fac04).
+Die bestehenden Aufnahmen unten zeigen den zuvor abgenommenen Stand vom 12. November.
+
+Kalender an der Wand, Dokumente in der Schublade und der Assistent auf dem Monitor. Jedes Teammitglied öffnet seinen Arbeitsraum mit den erlaubten Werkzeugen und Informationen.
+
+Der Empfang verbindet die Teambüros. Start/Stopp zeigt die tatsächlich erfasste Arbeitspräsenz. Interne Post mit Anhängen, persönliche Aufgaben und Aufträge der Verwaltung. Persönliche Assistenten nutzen den Kontext und die Rechte des Mitarbeiters; der Führungsassistent bleibt getrennt.
+
+Kilogramm nach Tag und Projekt, mit Nachweisen der Bestätigungen. Teilezuschnitt, Baugruppenzuschnitt und Zusammenbau sind getrennte Prozesse; sie werden nicht zu einer einzigen Stahlmenge addiert.
+
+Inhaber und Administratoren verwalten das Unternehmen. Ingenieure arbeiten nach Rolle und Baustellenrechten; Büro- und Außenteams sehen ihre freigegebenen Funktionen.
+
+BauFlow ist bei AL-Steel im realen Betrieb. Die Ansichten hier zeigen fiktive Daten; der operative Zugang erfordert ein Firmenkonto. KI, GPS und Benachrichtigungen hängen von Konfiguration und Gerätefreigaben ab.
+
+![Das persönliche Büro · DEMO](docs/assets/screenshots/current-office-desktop.webp)
+
+![Empfang und Teambüros · DEMO](docs/assets/screenshots/current-reception-desktop.webp)
+
+![Produktionsübersicht und Kalender · DEMO](docs/assets/screenshots/current-dashboard-desktop.webp)
+
+Verifizierte App-Basis: [d2846d1](https://github.com/IamRedi/redionflow/commit/d2846d1797f2a91cd5a49af6b483067ca43ce615) · [Produktpräsentation](https://www.baumdienstflow.de/bauflow/about/de.html). Die ältere öffentliche Glasfaser-Demo zeigt nicht diese Büroversion. Externe E-Mail ist nicht enthalten.
+
 
 ## Was heute umgesetzt ist
 
 | Status | Bedeutung und Umfang |
 |---|---|
 | **Umgesetzt und live** | Workzone für die Baustelle (Arbeitsliste oder Baumliste, Karte, Arbeitszeit mit Start, Pause und Stopp, Zusatzarbeiten, Hinweise, Absicherung), Admin-Dashboard, Personal und Fuhrpark, Tagesplan mit Versionen, Barcode-Inventar mit Ausgabe an Mitarbeitende, Kalkulation (Projekte, Positionen, Vorlagen, Lohnrollen, Rezepte), Tages- und Monatsberichte, Baustellen-Export (ZIP mit HTML, CSV, KML), Urlaub, Admin-Login mit Passwort, 6 Sprachen |
-| **Verifiziert** | Frühere CI-Baseline: 711 Tests, Secret-Scan und Docker-Demo-Smoke. Aktuelle lokale Prüfungen und ihre exakte Abgrenzung stehen im [Prüfprotokoll](EVIDENCE.md). Cloud-Verifikation ist auf diesem Branch ausdrücklich wählbar. |
-| **Umgesetzt und live (Stahlbau-Pilot)** | Stahlbau-Projekte aus Tekla-Listen: neues Projekt aus Dokumenten mit Adresse auf der Karte, Werksliste und Baustellenliste je Element, Stückzahl je Arbeitsschritt mit Arbeitern, Abschluss mit Route, Werk nur zur Ansicht. [Regeln und Ablauf](docs/STEEL_ELEMENTS.md). |
-| **Neu vorbereitet, Freigabe offen** | WanWay/IOPGPS nur lesend: verschlüsselte Zugangsdaten je Firma, Verbindungstest, bestätigte Zuordnung zu vorhandenen Fahrzeugen, manuelle Synchronisierung und letzte Positionsdaten. Nicht in Production oder öffentlicher Demo aktiviert; echter GPS-Test steht aus. [Technik und Grenzen](docs/WANWAY_GPS.md). |
+| **Dokumentierte Prüfbasis vom 1. November** | 711 automatisierte Tests (423 Unit, 263 Integration gegen echte PostgreSQL, 25 Ende-zu-Ende im Browser), Secret-Scan, Docker-Demo-Smoke-Test, Lighthouse mobil 96/100/100/100. Historische Ergebnisse im [Prüfprotokoll](EVIDENCE.md); sie sind kein neuer Prüflauf dieses Dokumentationsstands. |
 | **Umgesetzt, in der Demo nicht aktiv** | KI-Assistent (braucht einen OpenAI-Schlüssel), Push-Benachrichtigungen (Firebase), Dateispeicher für Dokumente und Fotos (Supabase), Abos und Rechnungen im SaaS-Modus (Stripe), Fahrzeug-GPS. Der Code ist vorhanden und getestet; die öffentliche Demo läuft bewusst ohne diese Dienste. |
 | **In Arbeit** | Offline-Modus für Feldaktionen (Warteschlange im Browser ist angelegt, noch nicht im Feld erprobt), Content Security Policy von „Report-Only“ auf „blockierend“, echter Virenscanner für Uploads |
 | **Vision** | Pilotbetriebe in beiden Branchen, weitere Gewerke als eigener Modus, Auswertung über mehrere Saisons |
+
+**Stahlfertigung · Am 5. November 2026 für einen realen Betrieb veröffentlicht ([#55](https://github.com/IamRedi/redionflow/pull/55)).** Ein gemeinsamer Firmenkatalog ist im Produktivbetrieb: Arbeiten werden je Baustelle aktiviert; Abwahl und Archivierung erhalten bisherige Bestätigungen. Pro Material lassen sich die nötigen Fabrik- und Baustellenschritte festlegen. Explizit verknüpfte Aufgaben übernehmen den Fortschritt aus bestätigten Materialarbeiten. Eigene Fotos werden als kleine private WebP gespeichert. Dieser Stand erfordert die Firmenanmeldung; die öffentlichen Demos bleiben getrennt. Verifizierter Produktionsstand: [6c8b886](https://github.com/IamRedi/redionflow/commit/6c8b88645f8285331fc3654509f44d9458563849).
+
+**KI-Illustrationen:** Ein Image-API-Aufruf im Produktivbetrieb speicherte eine WebP-Illustration im bestehenden Stil in Orange und Schiefergrau; Arbeitsdarstellung und Fortbestand nach erneutem Laden wurden geprüft ([PR #60](https://github.com/IamRedi/redionflow/pull/60)). Die optionale Funktion setzt den eingerichteten Firmenzugang und verfügbare Bildkontingente voraus; eigene Fotos haben Vorrang, bei Fehlern bleibt ein vorhandenes Bild oder die Standardzeichnung erhalten.
+
+**Lager, Werkstatt und Fuhrpark · Am 6. November 2026 für einen realen Stahlbetrieb veröffentlicht ([#62](https://github.com/IamRedi/redionflow/pull/62)).** Werkzeuge, Kleidung und Baustellenausrüstung werden als einzelne Einheiten mit Code und gegebenenfalls Größe geführt. Ausgabe und Rückgabe brauchen Büro- und Mitarbeiterbestätigung; einen Kollegenwechsel bestätigen beide Beteiligten. Verlust und Ausmusterung bleiben bis zur Entscheidung der Leitung offen. Reparaturen durchlaufen gemeldet → angenommen → in Reparatur → einsatzbereit; die Freigabe erfordert Funktionsprüfung und Reparaturnotiz oder Beleg. Private Fotos, Rechnungen und Verlauf bleiben beim jeweiligen Betriebsmittel. Zwei kompakte Aktionen öffnen Flotte und Werkstatt; die Fahrzeugauswahl zeigt am Handy drei Spalten mit Namen und Kennzeichen. Verifizierter Produktivstand: [c91a95a](https://github.com/IamRedi/redionflow/commit/c91a95ae379a8ed2ac25306001a41f96e7f4c258). Die Firmenanmeldung ist erforderlich; diese Erweiterung ist in den öffentlichen Demos nicht freigeschaltet.
+
+## Dokumentübergabe und Gerätecodes in BauFlow
+
+Sechs Baustellenphasen bündeln Dokumente mit Download und Teilen-Dialog.
+Aktive Mitarbeitende bestätigen den Empfang persönlich mit Name und Zeitpunkt.
+Neue Dateiversionen behalten die alten Dateien und Bestätigungen im Verlauf;
+eine Empfangsbestätigung schließt keinen Produktionsschritt ab.
+
+Hersteller-Barcodes und QR-Codes bleiben lesbar, auch mit führenden Nullen,
+Groß-/Kleinschreibung und Satzzeichen. Ein gemeinsamer Modellcode verlangt die
+Auswahl des einzelnen Geräts. Jedes Gerät erhält eine eigene druckbare Etikette;
+bisherige Codes bleiben gültig. Firmenanmeldung erforderlich. Kamera und Drucker
+am realen Gerät werden getrennt von der lokalen Browserprüfung abgenommen.
+
+Die Aufnahme stammt aus der lokalen Anwendung mit ausschließlich synthetischen
+Daten. Diese Dokumentations-PR wird erst mit der freigegebenen App-Erweiterung
+veröffentlicht; sie schaltet die privaten Abläufe nicht in den öffentlichen Demos frei.
+
+<img src="docs/assets/screenshots/steel-phase-documents-synthetic.png" alt="Lokale fiktive BauFlow-Firma mit Phasendokumenten und persönlicher Empfangsbestätigung" width="300">
+
+## Baustellenrechte in BauFlow
+
+Mitarbeitende lesen Baustellendokumente und bestätigen ihren eigenen Empfang.
+Das Büro lädt Dokumente hoch; Ingenieure brauchen dafür eine explizite Freigabe
+je Baustelle. Die Leitung wählt sie beim Anlegen oder später unter **Zugriff**.
+Fabrik- und Baustellenschritte folgen weiterhin der jeweiligen Ingenieurrolle.
+Administratoren und Inhaber verwalten den Betrieb. Ein eigener Name/PIN-Zugang
+für Inhaber wird privat im angemeldeten Profil eingerichtet.
+
+Die lokale Prüfung deckt Erteilung, Entzug, konkurrierende Änderungen und
+Mandantengrenzen ab. Das Bild zeigt ausschließlich fiktive Daten. Veröffentlichung
+und Einrichtung realer Konten erfolgen getrennt nach Freigabe der App-Version;
+die öffentlichen Demos erhalten dadurch keine privaten Firmendaten.
+
+<img src="docs/assets/screenshots/steel-site-access-synthetic.png" alt="BauFlow: kompakte Auswahl der uploadberechtigten Baustelleningenieure mit fiktiven Daten" width="780">
 
 ## Warum dieses Projekt?
 
@@ -154,6 +211,12 @@ Alle Bilder stammen aus der laufenden Anwendung mit den fiktiven Demo-Daten. Es 
 |---|---|---|
 | ![Baustelle Stadtpark am Handy mit Start- und Stopp-Knopf](docs/assets/screenshots/baumdienst-mobil-baustelle.webp) | ![Glasfaser-Baustelle am Handy mit Arbeitsliste](docs/assets/screenshots/bauflow-mobil-baustelle.webp) | ![Übersicht der Glasfaser-Baustellen am Handy](docs/assets/screenshots/bauflow-mobil-workzone.webp) |
 
+### Werkstatt im Stahlbetrieb
+
+![Lokale Werkstattansicht mit vier Reparaturphasen und einem fiktiven Fahrzeug in der Phase einsatzbereit](docs/assets/screenshots/steel-workshop-ready-light-desktop.png)
+
+Echte lokale Anwendung mit ausschließlich erfundenen Testdaten. Das lokal aufgenommene Bild enthält keine Kundendaten und zeigt keine Freischaltung der Funktion in der öffentlichen Demo.
+
 ## Architektur
 
 ![Architektur: drei Oberflächen, eine Next.js-Anwendung mit Modus pro Firma, PostgreSQL mit Mandantentrennung, optionale Dienste](docs/assets/architecture.svg)
@@ -167,7 +230,7 @@ Mehr dazu in [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
 
 ## Qualität und Sicherheit
 
-- **Verifikation:** lokale Gates für Lint, TypeScript, Unit-/PostgreSQL-Integrationstests, Build und Browser-Tests. Cloud-Verifikation nur nach ausdrücklicher Auswahl (`workflow_dispatch`); erforderliche Checks und Merge-Schutz bleiben bestehen. [Regel](docs/LOCAL_CI_POLICY.md).
+- **Lokale Routineprüfung:** Lint ohne Warnungen, TypeScript strict, Unit- und Integrationstests gegen eine wegwerfbare PostgreSQL, Produktionsbuild, Browser-Tests, gitleaks und Docker-Demo-Smoke-Test bleiben die Prüfungen. Der bestehende Cloud-Workflow ist nur über `workflow_dispatch` startbar; alle Jobs bleiben erhalten. Lokale Ergebnisse und GitHub-CI-Ergebnisse werden getrennt ausgewiesen; erforderliche Schutzregeln bleiben bestehen.
 - **Sicherheit:** Passwörter und Codes mit scrypt, Rate-Limit beim Login, widerrufbare Sitzungen, Same-Origin-Prüfung für jede Änderung, private Dateien nur über eine geprüfte Route, Sicherheits-Header. Bedrohungsmodell und bekannte Restrisiken stehen offen in [SECURITY.md](SECURITY.md).
 - **Barrierefreiheit und Tempo:** Lighthouse mobil auf der Startseite 96 Performance, 100 Barrierefreiheit, 100 Best Practices, 100 SEO.
 - **Keine echten Daten.** Das Repository wurde als Schnappschuss ohne Git-Verlauf aus dem privaten Produktivsystem erstellt. Echte Firmen- und Personendaten wurden entfernt, die Demo-Daten sind selbst erfunden.
@@ -202,7 +265,7 @@ Betrieb, Auth-Details und Deployment: [docs/OPERATIONS.md](docs/OPERATIONS.md), 
 
 ## Wie dieses Projekt entsteht
 
-RediOnFlow wird von Redion Cekrezi entwickelt, mit KI-Agenten als Werkzeug: Der Mensch entscheidet, was gebaut wird, prüft jedes Ergebnis und gibt es frei; die Agenten schreiben Code, Tests und Dokumentation in kleinen Pull Requests, die nur mit grüner CI gemergt werden. Wie das konkret abläuft und wo die Grenzen liegen: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md).
+RediOnFlow wird von Redion Cekrezi entwickelt, mit KI-Agenten als Werkzeug: Der Mensch entscheidet, was gebaut wird, prüft jedes Ergebnis und gibt es frei; die Agenten schreiben Code, Tests und Dokumentation in kleinen Pull Requests. Verifikation läuft im normalen Entwicklungsablauf lokal; Review, Freigabe und erforderliche Schutzregeln bleiben eigenständige Voraussetzungen. Wie das konkret abläuft und wo die Grenzen liegen: [docs/KI_WORKFLOW.md](docs/KI_WORKFLOW.md).
 
 ## Dokumentation
 
@@ -224,16 +287,15 @@ Redion Cekrezi arbeitet seit 2021 als Baumpfleger und Teamleiter in einem Baumdi
 
 Interessant für Baumdienste, Bau-, Tiefbau- und Glasfaserbetriebe, die ihre Baustellen digital führen wollen, und für Partner, die einen Pilotbetrieb begleiten möchten. Eine Vorführung oder einen Admin-Zugang zur Demo gibt es auf Anfrage über das **[Portfolio](https://www.redioncekrezi.de)** oder [GitHub](https://github.com/IamRedi).
 
-**Redion Cekrezi · Full-Stack & Applied AI Developer · Produced by RediON**
+**Redion Cekrezi · Full-Stack & Applied AI Developer** · [by RediON](https://www.redioncekrezi.de/)
+
+## BauFlow: Fahrzeugkarte und Serviceablauf
+
+Die Fahrzeugkarte bündelt Datenbearbeitung, Foto und Dokumentfristen. Die Werkstattaktion am Fahrzeug öffnet Defektmeldung oder den genauen Serviceverlauf; die Vollansicht zeigt kompakte Karten nach Reparaturphase. Mechanik oder Leitung schalten weiter, Belege und Rechnungen bleiben beim jeweiligen Auftrag. Die Aufnahme und Browserprüfung nutzen ausschließlich synthetische Daten. Die privaten Firmenabläufe werden damit nicht in den öffentlichen Demos freigeschaltet.
+
+<img src="docs/assets/screenshots/steel-service-workspace-synthetic.png" alt="BauFlow service workspace with fictional vehicles grouped by phase" width="100%">
+
 
 ## Lizenz
 
 Source-available, alle Rechte vorbehalten. Der Code darf gelesen und zur Bewertung lokal ausgeführt werden, aber nicht kommerziell genutzt werden. Details in [LICENSE](LICENSE).
-
-## Bürooberfläche · 12. November 2026
-
-[PR175](https://github.com/IamRedi/redionflow/pull/175) ist im echten Firmenbetrieb veröffentlicht: Beschriftungen und kleine Linienicons sitzen direkt auf Schubladen und Briefumschlag. Arbeitsfenster nutzen kompaktes Kristallglas in den vorhandenen Farben. Die beiden konfigurierten Büro-Administratoren öffnen ihren bestehenden Firmenassistenten am Monitor statt am Firmenlogo; private Gesprächsarchive und Zugriffsregeln bleiben erhalten. Originalfotos und Berechtigungen wurden beim Deployment unverändert bestätigt. Die folgenden Aufnahmen zeigen ausschließlich fiktive Daten.
-
-![Office Studio DEMO · office crystal UI](docs/assets/screenshots/office-room-crystal-demo.png)
-
-![Office Studio DEMO · private task workspace](docs/assets/screenshots/office-tasks-crystal-demo.png)
