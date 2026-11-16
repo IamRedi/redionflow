@@ -29,8 +29,10 @@ fs.mkdirSync(out,{recursive:true});
    check(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),'Horizontal overflow');
    await page.evaluate(async()=>{await document.fonts.ready;});
    if(new URL(page.url()).pathname===home){
-    await expect(page.locator('main img').first()).toBeVisible();
-    await expect.poll(()=>page.locator('main img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0))).toBe(true);
+    // The accepted short-landscape card intentionally omits its photo. Wait
+    // only for displayed media, without forcing that independent layout open.
+    if(viewport.width>=1000) await expect(page.locator('main img:visible').first()).toBeVisible();
+    await expect.poll(()=>page.locator('main img:visible').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0))).toBe(true);
    }
    await page.screenshot({path:path.join(out,name+'.png')});records.push(name);
   }
