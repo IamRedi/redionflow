@@ -43,8 +43,8 @@ route layouts. Baumdienst mounts one provider in the opted-in demo shell. Its
 application children stay mounted while identity loads or changes; only the
 chat controller resets. A small React external store updates chat buttons
 without rebuilding searches, forms, the Workzone canvas or scene transitions.
-Its
-field and office persona selectors already use different signed-cookie paths:
+Scene navigation keeps this wrapper unkeyed; expired field/office resolutions are aborted, and the old context is hidden immediately until the matching identity arrives.
+Field and office persona selectors already use different signed-cookie paths:
 the field chat lives at `/api/demo/baumdienst/chat` and the office handler at
 `/api/demo/baumdienst/offices/chat`. The ordinary endpoint rejects the demo
 alias, so it cannot silently resolve a restricted field cookie as the boss.
