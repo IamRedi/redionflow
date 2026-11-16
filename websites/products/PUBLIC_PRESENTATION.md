@@ -148,3 +148,59 @@ Showcase PR207 merged as6579b67 and portfolio PR90 asfb7f483. Portfolio Producti
 Owner requested replacement of every remaining sketch-era tree capture. Three portfolio slots in all four locales now use the current photoreal worksite card,390×844 tree list and glass leaf-detail reader;19 gallery slots and other product data are preserved. The three retired public files were removed after originals were archived and hash-verified. The native Workzone desktop/phone pair now uses the same current pictures and localized captions; its atlas was already current. No style, application, provider or data change.
 
 Validation: native generator contract5pages/4locales/200targets and unchanged BauFlow pass;16native locale/width/theme views and8portfolio home/case flows pass with no horizontal overflow. All three new sources are present, retired filenames absent from the visible gallery and leaf lightbox closes correctly. Mandatory portfolio install/lint/types/content/build/GitHub-sync passes. Desktop card and leaf are actual read-only Musterfirma captures; phone is the real current component with56fictional read-only records, not a generated UI. Source runtime99c69ee; originals/provenance retained. Publication follows the owner’s standing request for these surfaces.
+
+
+## Three branded Muster entrances - 16 November 2026 - READY / PENDING_PUBLICATION
+
+The owner requested three aesthetic logo buttons on both native product websites.
+A single static renderer supplies the same construction, crane-service and
+Baumdienst entries in SQ/EN/DE/IT and both German root pages. Original accepted
+Muster logos are reused byte-for-byte; labels identify each field and the
+fictional company data. The existing warm BauFlow and green Baumdienst palettes,
+glass material, Light/Night controls and type remain. The compact three-column
+row aligns with each product's content; phone buttons stack logo and label
+within their own columns. Baumdienst's existing demo calls to action point back
+to this selector. Existing operational company entrances remain unchanged.
+
+Website source baseline is `7a6f777a6cd358eb17c86df1e716bf42527eea35` on
+`fix/compact-footers-workzone-20261114`, not the unrelated application main.
+All ten public HTML pages matched this source before editing. The three known
+Muster entrance URLs returned HTTP200 (Baumdienst redirects to /demo/workzone)
+without sign-in, role selection or any hosted data mutation. Tested candidate
+is `4e8f77062db2b1e7f240e3626f8b4fa85e31d0ff`; subsequent evidence-only commits
+must preserve its runtime tree.
+
+Validation: all 16 generator JavaScript modules pass syntax checks; generation,
+diff check, ten localized entry pages / 395 local references and the existing
+Baumdienst contract (five pages / four locales / 220 references) pass. References
+overlap between reports. A preservation assertion proves that every HTML byte
+outside the selector, its stylesheet link and the two Baumdienst demo anchors
+is unchanged, and all 135 existing runtime assets remain unchanged.
+
+Owned local Chromium on the mini PC passes 74 cases: 64 product/locale/theme/size
+views at 1440x900, 390x844, 320x740 and 844x390; four root-page checks; six native
+keyboard activations against locally mocked destination responses. Checks cover
+three complete logos, exact URLs, content alignment, 44px touch targets, focus,
+theme, language, one author signature, no horizontal overflow and no browser
+errors. Four real published-source baselines were rendered for comparison.
+Actual final desktop/phone Light/Night captures were visually inspected.
+Phone is emulated; physical Safari/text zoom are NOT_VERIFIED. Full application
+suites are not applicable to this static HTML/CSS addition; no Actions, package
+installation, AI generation, provider, database or app source change occurred.
+
+Evidence: `outputs/muster-operations-20261116/demo-entry-buttons` on the owner
+workspace; all 149 served static file hashes match the reviewed source. The
+owned browser/contexts and loopback preview were closed; the existing database
+was not started. Source and captures remain preserved. The reviewed overlay is
+14 runtime files (ten HTML pages, three logos, one stylesheet), 92,144 ZIP bytes,
+SHA256 `ad2558f9249d68ae0d41c21f2a2b514d969feecd676184b5e5baa955b5704726`.
+A future approved release must overlay only these files on a freshly retrieved
+current Pages tree, preserving unrelated files, headers and legal pages. Never
+publish the whole repository or push an app/Railway release branch.
+
+Native UI/locale/assets/local-sync gates PASS for this candidate; public
+publication and online candidate acceptance remain PENDING. This request
+prepares the website candidate only. AL Steel, all three demo runtimes, other
+demos and portfolio are untouched. App capabilities/readiness, README/About
+and portfolio content are NO_CONTENT_CHANGE. Prior PR231/232/233 header changes
+remain separate, open and unpublished; their state is not changed here.
