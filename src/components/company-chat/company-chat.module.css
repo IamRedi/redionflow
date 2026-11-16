@@ -1,5 +1,8 @@
 .trigger {position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;border-radius:50%;border:1px solid hsl(var(--border));background:hsl(var(--card)/.44);color:hsl(var(--foreground));backdrop-filter:blur(12px);cursor:pointer;}
 .trigger {pointer-events:auto;}
+.brand {position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;flex-shrink:0;border:0;border-radius:50%;background:transparent;padding:0;pointer-events:auto;cursor:pointer;}
+.brand:focus-visible {outline:2px solid hsl(var(--ring));outline-offset:3px;}
+.brand:disabled {cursor:wait;}
 .trigger:focus-visible,.icon:focus-visible,.history:focus-visible,.composer textarea:focus-visible {outline:2px solid hsl(var(--ring));outline-offset:3px;}
 .badge {position:absolute;right:-3px;top:-3px;display:grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border-radius:12px;background:#ca3a36;color:white;border:2px solid hsl(var(--card));font-size:10px;font-weight:750;line-height:1;}
 .overlay {position:fixed;inset:0;z-index:1400;background:#00131a20;}
