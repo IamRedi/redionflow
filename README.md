@@ -11,6 +11,18 @@
 
 **[English version](README.en.md)** · **Stand: 4. November 2026** · **[Projektstand und Verlauf](docs/PROJEKTSTAND.md)** · **[Prüfprotokoll](EVIDENCE.md)**
 
+## Werkstatt, Lager und Flotte im selben Arbeitsraum · 16.11.2026
+
+**[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** und **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** öffnen die drei Bereiche jetzt direkt unter derselben Team- und Symbolleiste. Kontinuierliche Räume, kompaktes Day/Night-Glas, aufklappbare Suche und die bestehenden Detailkarten behalten die Identität und Daten der jeweiligen Firma.
+
+[PR226](https://github.com/IamRedi/redionflow/pull/226) läuft als `d174709`, [PR227](https://github.com/IamRedi/redionflow/pull/227) als `84048b1`. 35 Online-Prüfungen bestanden auf Desktop und emuliertem Handy, in Light/Night, einschließlich Suche, Details, Fokus, natürlichem Footer und verweigertem Lagerzugang für Außenteams. AL-Steel, BaumdienstFlow und andere Demos wurden nicht veröffentlicht oder verändert. [Nachweise und Grenzen](docs/MUSTER_OPERATIONS_20261116.md).
+
+Echte Online-Aufnahmen mit ausschließlich fiktiven Daten · 16. November 2026.
+
+![RheinRuhr Muster: kompakte Flotte im durchgehenden Night-Glasraum](docs/assets/screenshots/muster-operations-crane-fleet-night.webp)
+
+<img src="docs/assets/screenshots/muster-operations-bauflow-inventory-phone.webp" alt="BauFlow Musterbau: Lager im Light-Glas auf emuliertem Handy" width="260">
+
 ## Eigenständige Kran-Musterfirma ist online · 15.11.2026
 
 **[RheinRuhr Kranservice · MUSTER öffnen](https://rheinruhr-kran-muster-production.up.railway.app/muster)** — ein weiterer fiktiver Betrieb aus der BauFlow-Basis: sieben Mitarbeitende, drei Hebeeinsätze, zwei Maschinen, vier Werkzeuge und drei Büros. Die Fertigung ist deaktiviert. Geschäftsführung, Buchhaltung, Disposition, Außenteam und Werkstatt haben getrennte Zugänge mit den bestehenden Rollenrechten. Änderungen und Dokumente bleiben in der eigenen Datenbank gespeichert; bitte ausschließlich Testdaten eingeben.

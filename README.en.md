@@ -11,6 +11,18 @@
 
 **[Deutsche Version](README.md)** · **As of 4 November 2026** · **[Project status and history](docs/PROJEKTSTAND.md)** (German) · **[Verification record](EVIDENCE.md)** (German)
 
+## Workshop, warehouse and fleet share one workspace · 16 November 2026
+
+**[BauFlow Musterbau](https://bauflow-production-1344.up.railway.app/muster)** and **[RheinRuhr Kranservice Muster](https://rheinruhr-kran-muster-production.up.railway.app/muster)** now open these areas beneath the same team and icon navigation. Continuous rooms, compact Day/Night glass, expandable search and existing detail cards preserve each company's identity and records.
+
+[PR226](https://github.com/IamRedi/redionflow/pull/226) runs as `d174709`; [PR227](https://github.com/IamRedi/redionflow/pull/227) as `84048b1`. 35 online checks passed across desktop and emulated phone, Light/Night, including search, details, focus, natural footer and denied warehouse access for field staff. AL-Steel, BaumdienstFlow and other demos were not redeployed or changed. [Evidence and limits](docs/MUSTER_OPERATIONS_20261116.md).
+
+Actual online captures with fictional demo data only · 16 November 2026.
+
+![RheinRuhr Muster: compact fleet in the continuous Night glass workspace](docs/assets/screenshots/muster-operations-crane-fleet-night.webp)
+
+<img src="docs/assets/screenshots/muster-operations-bauflow-inventory-phone.webp" alt="BauFlow Musterbau: Light glass warehouse on an emulated phone" width="260">
+
 ## Separate crane sample company is online · 15.11.2026
 
 **[Open RheinRuhr Kranservice · MUSTER](https://rheinruhr-kran-muster-production.up.railway.app/muster)** — another fictional company from the BauFlow base: seven staff, three lifting jobs, two machines, four tools and three offices. Manufacturing is disabled. Owner, accounting, dispatch, field staff and workshop use distinct accounts and the existing permissions. Changes and documents persist in its own database; use test data only.
