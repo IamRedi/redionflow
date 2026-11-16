@@ -8,9 +8,11 @@ import {OfficeScene,type OfficeDoor,type OfficeObject} from './OfficeScene';
 import s from './office.module.css';
 import studio from './studio.module.css';
 import {OfficeWorkButton} from './OfficeWorkButton';
+import { OfficeManagementTools } from './OfficeManagementTools';
+import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
 
-type Props={sceneLanguage?:SupportedLanguage;presence?:{active:boolean;profile:string;sessionId:string|null;paused:boolean}|null;artwork?:OfficeArtworkState;room:'reception'|'megi';lang:SupportedLanguage;companyLogo?:string|null;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean};
-export function OfficeSpace({sceneLanguage,presence,artwork,room,lang,companyName,companyLogo,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false}:Props){
+type Props={sceneLanguage?:SupportedLanguage;presence?:{active:boolean;profile:string;sessionId:string|null;paused:boolean}|null;artwork?:OfficeArtworkState;room:'reception'|'megi';lang:SupportedLanguage;companyLogo?:string|null;companyName:string;ownDesk:boolean;admin:boolean;workEnabled?:boolean;ownName?:string;unread?:number;visitorId?:string;officeTitle?:string;workbooksEnabled?:boolean;planEnabled?:boolean;doors?:OfficeDoor[];doorPage?:number;previewBase?:string;previewEnabled?:boolean;canManage?:boolean;workProfile?:string;assistantEnabled?:boolean;managementTools?:boolean};
+export function OfficeSpace({sceneLanguage,presence,artwork,room,lang,companyName,companyLogo,ownDesk,admin,workEnabled=false,ownName,unread=0,visitorId,officeTitle,workbooksEnabled=false,planEnabled=true,doors=[],doorPage=0,previewBase,previewEnabled=true,canManage=false,workProfile='GENERAL',assistantEnabled=false,managementTools=false}:Props){
  const de=sceneLanguage==='de',c=officeCopy(lang),baseCopy=officeWorkCopy(lang),w=de?{...baseCopy,mail:'Post',tasks:'Aufgaben & Notizen'}:baseCopy,sq=lang==='sq',reception=room==='reception',name=ownName||'Megi',tools=ownDesk||!!previewBase;
  const base=previewBase||'/workzone/offices/me';
  const href=(view:string)=>previewBase?`${base}?view=${view}`:`${base}/${view==='documents'?'resources':view}`;
@@ -23,7 +25,7 @@ export function OfficeSpace({sceneLanguage,presence,artwork,room,lang,companyNam
   ...(workbooksEnabled?[{kind:'workbooks' as const,label:de?'Stundenbücher':sq?'Fletoret e punëtorëve':'Staff workbooks',href:href('workbooks')}]:[]),
  ]:[];
  return <section className={`fixed ${s.nativeOffice} ${studio.shell}`} data-testid="office-space" data-office-fullscreen>
-  <nav data-testid="office-floating-nav" className={`${s.nativeNav} ${studio.nav}`} aria-label={c.offices}><Link href={reception?'/workzone':'/workzone/offices'}><ArrowLeft size={16}/>{reception?'Workzone':c.reception}</Link><h1>{reception?c.reception:`${de?'Büro':sq?'Zyra':'Office'} · ${name}`}</h1><div className={studio.navTools}>
+  <nav data-testid="office-floating-nav" className={`${s.nativeNav} ${studio.nav}`} aria-label={c.offices}><Link href={reception?'/workzone':'/workzone/offices'}><ArrowLeft size={16}/>{reception?'Workzone':c.reception}</Link><h1>{reception?c.reception:`${de?'Büro':sq?'Zyra':'Office'} · ${name}`}</h1><div className={studio.navTools}><CompanyChatTrigger/>{managementTools&&ownDesk&&!reception&&!previewBase&&<OfficeManagementTools lang={lang}/>}
    {!reception&&ownDesk&&!previewBase&&workEnabled&&<OfficeWorkButton de={de} active={presence?.active??false} sessionId={presence?.sessionId??null} paused={presence?.paused??false} sq={sq}/>}
    {(reception||!ownDesk)&&<Link href="/workzone/offices/me" aria-label={de?'Mein Büro':sq?'Zyra ime':'My office'}><Building2 size={16}/><span>{de?'Mein Büro':sq?'Zyra ime':'My office'}</span></Link>}
    {reception&&canManage&&<Link href="/workzone/offices/team" aria-label={de?'Büros verwalten':sq?'Menaxho zyrat':'Manage offices'} title={de?'Büros verwalten':sq?'Menaxho zyrat':'Manage offices'}><Settings2 size={16}/></Link>}

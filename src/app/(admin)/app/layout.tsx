@@ -1,5 +1,6 @@
 import '@/components/steel/steel-studio.css';
 import { OfficeReturnBar } from '@/components/offices/OfficeReturnBar';
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
 import { LogOut, SunMoon, UserRound } from "lucide-react";
 import Link from "next/link";
 import { OfficeEntry } from '@/components/offices/OfficeEntry';
@@ -60,6 +61,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const production = mode === 'bau' && Boolean(admin.companyProfileId) && await isSteelCompany(admin.companyProfileId!);
   const branding = productBranding(mode);
   const assets = assetCopy(currentLang);
+  const operations = isMusterOperationsCompany(admin.companyProfileId);
 
   const navSections: AdminNavSection[] = [
     {
@@ -104,7 +106,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div data-steel-studio={production || undefined} data-studio-admin={production || undefined} className={production ? `${workspace.shell} bg-background` : 'min-h-dvh bg-background'}>
       <header data-testid="admin-topbar" className={production ? "relative z-10 print:hidden" : "sticky top-0 z-10 print:hidden"}>
-        <FlowTopBar contained={production} />
+        <FlowTopBar contained={production} operationsNavigation={operations ? { warehouse: true, workshop: true } : undefined}/>
       </header>
       {!production && <AdminFleet production={false} machines={machines} isAdmin showCones={showCones} country={country} />}
       <div className={production ? `${workspace.body} ${workspace.admin}` : 'grid min-h-dvh grid-cols-1 gap-5 px-4 py-5 md:grid-cols-[208px_1fr] md:px-5 lg:pr-24'}>
@@ -121,7 +123,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
             <div className="contents md:flex md:flex-col md:gap-0.5">
-              <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />
+              {!operations && <AdminNavLink href="/app/dashboard" label={t("admin.navDashboard", currentLang, mode)} />}
               {!production && <OfficeEntry lang={currentLang} compact />}
               {kidrahtOn && !production ? <AdminNavLink href="/workzone/kidraht" label={KIDRAHT_NAME} /> : null}
             </div>

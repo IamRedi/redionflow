@@ -2,6 +2,53 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 16 November 2026 — own-office controls and company chat candidate
+
+Scope: **RheinRuhr crane Muster**, PR228, release base `84048b150c427e5e40e4095d19bb53bed8b90cbe`. Tested application source
+`61709de515c83152bcf4436a38b767001ee68abf`; subsequent evidence-only commits do not change that application.
+This candidate is **not merged or deployed**. No AL Steel, other demo, live
+database, provider, secret, portfolio or customer-data change was performed.
+
+Control panel and Dashboard view move to the administrator's own office;
+reception, employee and colleague-preview contexts do not expose those tools.
+The opted-in announcement button/banner becomes a shared company chat with
+server-resolved names, persistent history/read cursors, unread icon and in-app
+notice. Private office assistants/mail/resources retain their existing scopes.
+The additive migration creates two tenant-RLS chat tables; it neither rewrites
+announcement records nor resets business data. Logic, limits and rollback are
+documented in [MUSTER_TEAM_CHAT.md](docs/MUSTER_TEAM_CHAT.md).
+
+Final current-source checks on the authorized mini PC, bounded to 4 CPU / 4 GiB:
+
+- TypeScript, repository ESLint (zero warnings) and production webpack build PASS.
+- 13 focused identity/HTTP/contract tests and 6 PostgreSQL integration cases PASS.
+  Coverage includes strict tenant/author boundaries, forced RLS with a non-owner
+  role, concurrent receipt deduplication, monotonic snapshot-bound reads,
+  provider-failure persistence, rate rejection and a retained 10,000-message cap.
+- Guarded `tests/muster/company-chat.cjs` PASS with two independent fictional
+  profiles, lost-response retry, reload persistence, new-arrival/read behavior,
+  1,000 history records with at most 40 mounted messages and 11 render captures.
+  Desktop Light/Night, 390/320px touch, short landscape, reduced keyboard viewport,
+  Escape/focus restoration and own-office controls were checked. The existing
+  backgrounds/material tokens and compact 44px actions were visually inspected.
+- Earlier broad local gates passed (1,328 unit / 548 integration) before the last isolated chat
+  adapter/provider refinements; these counts are not claimed as a rerun of the
+  final application revision. The affected final checks above were rerun.
+
+Limits: Chromium touch/keyboard-viewport emulation is not a physical phone or
+native push-delivery test. Optional existing device notifications respect consent;
+no real notification provider or AI call was made. Existing unpdf/webpack and
+large-fixture pg deprecation warnings were retained without dependency changes.
+No cloud Actions were dispatched. Source, local verification, independent review,
+owner approval and online acceptance remain separate facts.
+
+Native presentation / portfolio assessment: **NO_CONTENT_CHANGE for this
+unpublished candidate**. Current public pages still describe the existing live
+releases. They must not advertise this chat as live before an approved release;
+publication and the corresponding presentation/readback are the next boundary.
+No readiness percentage or public screenshot was changed for these local probes.
+
+
 ## 5 November 2026 — recognizable illustrations from the native steel style
 
 Base/runtime: approved PR59 is live at3526d353095fde15dcd290cbc7f6b6a2c13bc894,
