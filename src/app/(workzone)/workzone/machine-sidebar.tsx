@@ -5,6 +5,7 @@ import { useMapOperationalStatuses, useWorkzoneMapMode } from './workzone-map-fl
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type RefObject } from "react";
 import * as Dialog from '@radix-ui/react-dialog';
 import Link from "next/link";
+import { usePathname } from 'next/navigation';
 import type { FleetLocation } from "@/lib/fleet/location";
 import { mapsLink } from "@/lib/fleet/location-link";
 import { fleetCopy } from "@/lib/fleet/copy";
@@ -14,7 +15,7 @@ import { AssetThumbnail } from '@/components/asset-thumbnail';
 import { createPortal } from "react-dom";
 import { AlertTriangle, Ban, Lock, LockOpen, CalendarCheck, CheckCircle2, ImageIcon, MessageCircle, Plus, PenLine, Wrench, X } from "lucide-react";
 import { FleetDock } from '@/components/company-assets/fleet-dock';
-import { ProductionHeaderActions } from '@/components/shell/ProductionHeaderActions';
+import { ProductionHeaderActions, useFleetWorkspaceTarget } from '@/components/shell/ProductionHeaderActions';
 import { FleetPicker } from '@/components/company-assets/fleet-picker';
 import { AssetDetailDialog } from '@/components/company-assets/asset-detail-panel';
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
@@ -195,6 +196,7 @@ export function MachineSidebar({
   country = "DE",
   embedded = false,
   enhancedOperations = false,
+  operationsWorkspace = false,
 }: {
   machines: MachineSideItem[];
   isAdmin: boolean;
@@ -207,6 +209,7 @@ export function MachineSidebar({
   country?: string;
   embedded?: boolean;
   enhancedOperations?: boolean;
+  operationsWorkspace?: boolean;
 }) {
   const { currentLang: lang } = useLanguage();
   const c = fleetCopy(lang);
@@ -239,6 +242,16 @@ export function MachineSidebar({
   const [resolveConfirmDefect, setResolveConfirmDefect] = useState<MachineDefect | null>(null);
   const [isPending, startTransition] = useTransition();
   const selected = useMemo(() => machines.find((machine) => machine.id === selectedId) ?? null, [machines, selectedId]);
+  const pathname = usePathname();
+  const fleetHost = useFleetWorkspaceTarget();
+  useEffect(() => {
+    if (!operationsWorkspace) return;
+    const frame = requestAnimationFrame(() => {
+      setSelectedId(null);
+      setDetail(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [operationsWorkspace, pathname]);
   const selectedNotes = useMemo(() => parseMachineNotes(selected?.notes ?? null), [selected?.notes]);
   const activeDefect = selectedNotes.defects.find((defect) => !defect.resolvedAt) ?? null;
   useEffect(() => {
@@ -338,7 +351,7 @@ export function MachineSidebar({
 
   return (
     <aside data-testid="fleet-rail" className={enhancedOperations ? 'contents print:hidden' : embedded ? 'flex min-h-0 min-w-0 items-center gap-2 px-3 py-2 print:hidden lg:flex-col lg:px-2' : compactMap ? "fixed left-3 bottom-3 z-20 flex items-center gap-2 print:hidden lg:left-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col" : "fixed inset-x-3 bottom-3 z-20 flex items-end gap-2 print:hidden lg:inset-x-auto lg:bottom-auto lg:right-3 lg:top-24 lg:flex-col lg:items-center"}>
-      {enhancedOperations ? <ProductionHeaderActions><FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={canSeeWorkshop ? () => openWorkshop() : undefined} /></ProductionHeaderActions> : <>
+      {enhancedOperations ? operationsWorkspace ? null : <ProductionHeaderActions><FleetDock ref={fleetButton} fleetLabel={t('workzone.fleet', lang)} workshopLabel={assets.workshop} onFleet={() => { setPickerSelection(null); changePickerOpen(true); }} onWorkshop={canSeeWorkshop ? () => openWorkshop() : undefined} /></ProductionHeaderActions> : <>
       <button
         type="button"
         title={t("workzone.fleet", lang)}
@@ -396,8 +409,8 @@ export function MachineSidebar({
       </>}
 
       {enhancedOperations ? <>
-        <FleetPicker open={pickerOpen} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} returnFocusRef={fleetButton} />
-        <AssetWorkspaceDialog open={workshopOpen} onOpenChange={open => { setWorkshopOpen(open); if (!open) void reloadStatuses(); }} title={assets.workshop} fullScreen><WorkshopWorkspace embedded /></AssetWorkspaceDialog>
+        {operationsWorkspace ? fleetHost ? createPortal(<FleetPicker inline open={!selectedId} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection}/>, fleetHost) : null : <FleetPicker open={pickerOpen} onOpenChange={changePickerOpen} machines={machines} statusFor={statusFor} onSelect={id => { setPickerSelection(id); setReturnToFleet(true); setPickerOpen(false); setSelectedId(id); setMessage(undefined); void reloadStatuses(); }} title={t('workzone.fleet', lang)} searchLabel={assets.search} emptyLabel={assets.empty} focusMachineId={pickerSelection} returnFocusRef={fleetButton} />}
+        {!operationsWorkspace ? <AssetWorkspaceDialog open={workshopOpen} onOpenChange={open => { setWorkshopOpen(open); if (!open) void reloadStatuses(); }} title={assets.workshop} fullScreen><WorkshopWorkspace embedded /></AssetWorkspaceDialog> : null}
         {editMachine && selected ? <MachineEditor machine={selected} country={country} onClose={() => { setEditMachine(false); void reloadStatuses(); }}/> : null}
         <AssetDetailDialog asset={detail?.asset ?? null} initialReport={detail?.initialReport} mode="service" onClose={() => { setDetail(null); void reloadStatuses(); }} />
       </> : null}

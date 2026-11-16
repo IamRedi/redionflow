@@ -4,6 +4,8 @@ import { SessionKeepAlive } from '@/components/auth/SessionKeepAlive';
 import { installationBrand } from '@/lib/installation-brand';
 import { bauflowMusterPublicDemoConfigured, isBauflowMusterCompany } from '@/lib/demo/bauflow-muster';
 import '@/components/steel/bauflow-muster.css';
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
+import '@/components/company-assets/muster-operations.css';
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Home, LayoutDashboard, UsersRound } from "lucide-react";
@@ -96,7 +98,7 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
+      <body data-muster-operations={isMusterOperationsCompany(companyId) || undefined} data-studio-compact-catalog={isMusterOperationsCompany(companyId) || undefined} data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
           <ProductionHeaderActionsProvider>
