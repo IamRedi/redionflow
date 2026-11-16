@@ -1,0 +1,19 @@
+.demo-entry-group{margin:12px 0 28px;scroll-margin-top:24px}
+.demo-entry-bau{max-width:1440px;margin-left:auto;margin-right:auto;padding:0 40px}
+.demo-entry-caption{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin-bottom:10px;color:var(--muted);font-size:12px;font-weight:700}
+.demo-entry-caption small{font-size:11px;font-weight:450}
+.demo-entry-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.demo-entry{display:flex;align-items:center;gap:14px;min-width:0;min-height:76px;padding:12px 16px;border:1px solid var(--line);border-radius:20px;background:var(--glass);color:var(--ink,var(--text));box-shadow:inset 0 1px 0 var(--border,var(--line));backdrop-filter:blur(10px);transition:border-color .18s,transform .18s}
+.demo-entry img{width:48px;height:48px;flex:none;object-fit:contain;border-radius:50%}
+.demo-entry-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px;line-height:1.4}
+.demo-entry strong{font-size:14px;font-weight:750;letter-spacing:-.02em}
+.demo-entry-copy>span{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.demo-entry>svg{width:18px;height:18px;flex:none;color:var(--amber,var(--acc))}
+.demo-entry:focus-visible{outline:3px solid var(--amber,var(--acc));outline-offset:4px}
+.demo-entry-group+.hero{margin-top:32px}
+@media(hover:hover){.demo-entry:hover{border-color:var(--amber,var(--acc));transform:translateY(-2px)}}
+@media(max-width:1100px){.demo-entry-bau{padding-right:28px;padding-left:28px}}
+@media(max-width:700px){.demo-entry-group{margin-top:8px;margin-bottom:24px}.demo-entry-bau{padding-right:20px;padding-left:20px}.demo-entry-links{gap:8px}.demo-entry{flex-direction:column;justify-content:flex-start;gap:8px;padding:12px 6px;border-radius:18px;text-align:center}.demo-entry img{width:42px;height:42px}.demo-entry-copy{flex:none;gap:3px;width:100%}.demo-entry strong{font-size:12px}.demo-entry-copy>span{font-size:10px;line-height:1.4}.demo-entry>svg{display:none}.demo-entry-caption small{font-size:10px}.demo-entry-group+.hero{margin-top:28px}}
+@media(prefers-reduced-motion:reduce){.demo-entry{transition:none}.demo-entry:hover{transform:none}}
+@media(prefers-reduced-transparency:reduce){.demo-entry{background:var(--solid,var(--surface));backdrop-filter:none}}
+@media(forced-colors:active){.demo-entry{background:Canvas;color:LinkText;border:1px solid LinkText;box-shadow:none;backdrop-filter:none}.demo-entry-copy>span,.demo-entry-caption{color:CanvasText}}

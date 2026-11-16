@@ -87,6 +87,12 @@ ${p.buyerInfo ? `<section class="start buyer-info" id="kosten-einrichtung" aria-
 `;
 }
 
+// Shared picker assets are copied once; preserve unrelated published assets.
+const demoAssets=resolve(root,'demo-assets');
+await mkdir(demoAssets,{recursive:true});
+await copyFile(here('./demo-entries.css'),resolve(demoAssets,'demo-entries.css'));
+for(const name of ['bauflow-muster.webp','crane-muster.svg','baumdienst-muster.webp']) await copyFile(here('./shots/demo/'+name),resolve(demoAssets,name));
+
 for (const p of [baum, bau]) {
   const dir = resolve(root, p.aboutDir);
   const assets = resolve(dir, 'assets');

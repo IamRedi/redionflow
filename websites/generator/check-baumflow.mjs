@@ -14,10 +14,11 @@ for(const [rel,lang]of [['index.html','de'],...locales.map(l=>['about/'+l+'.html
  for(const target of [links.admin,links.worker,links.baumDemo,links.kidraht,'/impressum.html','/datenschutz.html'])assert.ok(html.includes(target),'Missing access/legal target');
  for(const [,ref]of html.matchAll(/(?:src|href)="([^"]+)"/g)){
   if(/^(https?:|data:)/.test(ref))continue;if(ref.startsWith('#')){assert.ok(html.includes(`id="${ref.slice(1)}"`),'Broken anchor '+ref);continue;}
-  await stat(ref.startsWith('/')?path.join(site,ref):path.resolve(path.dirname(file),ref.split('?')[0]));refs++;
+  await stat(ref.startsWith('/')?path.join(site,ref.split('?')[0]):path.resolve(path.dirname(file),ref.split('?')[0]));refs++;
  }
  for(const [,sets]of html.matchAll(/srcset="([^"]+)"/g))for(const part of sets.split(',')){await stat(path.resolve(path.dirname(file),part.trim().split(' ')[0]));refs++;}
 }
-// Preserve the accepted compact-footer release; buyer/setup copy above stays separately pinned.
-const changed=execFileSync('git',['diff','--name-only','75e41f20e9816dda5cff9edac663357989bbfede','--','websites/products/bauflow'],{cwd:root,encoding:'utf8'}).trim();assert.equal(changed,'','BauFlow output changed');
-console.log(JSON.stringify({pages:5,localTargets:refs,locales:4,buyerCopyPreserved:true,productionLinksPreserved:true,bauflowUnchanged:true}));
+// Both native products now intentionally share the three-entry demo picker.
+// Keep the former preservation guarantee for every byte outside that bounded block.
+await import('./check-demo-entries.mjs');
+console.log(JSON.stringify({pages:5,localTargets:refs,locales:4,buyerCopyPreserved:true,productionLinksPreserved:true,bauflowOutsideDemoEntriesUnchanged:true}));

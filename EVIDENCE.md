@@ -125,3 +125,14 @@ Die Ende-zu-Ende-Tests prüfen unter anderem: Anmeldung beider Produkte, Anlegen
 
 - Das Repository enthält keine echten Kunden-, Mitarbeiter- oder Baustellendaten. Alle Demo-Firmen, Namen, Adressen, Telefonnummern und Kennzeichen sind erfunden ([`prisma/seed-data.ts`](prisma/seed-data.ts), [`prisma/seed-data-bau.ts`](prisma/seed-data-bau.ts), [`prisma/seed-data-glasfaser.ts`](prisma/seed-data-glasfaser.ts)). Koordinaten liegen in echten Städten, damit die Karten realistisch aussehen.
 - Bilder, Diagramme und Texte: Redion Cekrezi / RediON. Es wird keine Nutzungslizenz über die [LICENSE](LICENSE) hinaus gewährt.
+
+
+## 16 November 2026 - static demo-entry candidate
+
+Website-only candidate `4e8f77062db2b1e7f240e3626f8b4fa85e31d0ff` adds the three
+existing Muster entrances to both product sites. Generator/syntax/preservation
+checks and 74 owned local Chromium cases pass. Ten existing public pages and
+all prior runtime assets are preserved outside the explicitly bounded entry
+change. Physical device and publication acceptance remain unverified; no app,
+data, provider or deployment change. Full scope, exact overlay and evidence
+pointers: [native presentation record](websites/products/PUBLIC_PRESENTATION.md#three-branded-muster-entrances---16-november-2026---ready--pending_publication).
