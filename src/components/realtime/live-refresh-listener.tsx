@@ -60,6 +60,7 @@ export function LiveRefreshListener({ enabled = true }: LiveRefreshListenerProps
       source.onmessage = (message) => {
         try {
           const payload = JSON.parse(message.data) as RealtimePayload;
+          if (payload.event === 'company-chat.updated' && payload.scope.includes('company-chat')) window.dispatchEvent(new Event('company-chat-update'));
           if (shouldRefreshForPayload(payload, pathname)) router.refresh();
         } catch {
           // Ignore malformed realtime payloads; focus/online fallbacks still refresh.
