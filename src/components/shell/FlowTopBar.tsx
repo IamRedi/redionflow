@@ -23,6 +23,7 @@ import { WorkspaceHeaderOffset } from './WorkspaceHeaderOffset';
 import { ProductionHeaderToolsSlot } from './ProductionHeaderActions';
 import { currentOfficeAccess } from '@/lib/offices/access';
 import { MusterOperationsNavigation } from '@/components/company-assets/muster-navigation';
+import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
 
 function adminInitial(value: string | null | undefined) {
   const source = value?.trim();
@@ -221,7 +222,7 @@ export async function FlowTopBar({
             <div className="flex items-center gap-2 lg:hidden">
               {admin ? (
                 <>
-                  <TopbarAnnouncementButton message={announcementMessage} />
+                  {operationsNavigation ? <CompanyChatTrigger/> : <TopbarAnnouncementButton message={announcementMessage} />}
                   <NotificationBell admin={Boolean(admin)} className="size-9" />
                 </>
               ) : null}
@@ -281,11 +282,11 @@ export async function FlowTopBar({
           />
         </div>
 
-        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 flex-wrap items-center justify-between gap-2"><MusterOperationsNavigation admin={Boolean(admin)} {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><ProductionHeaderToolsSlot inline /></div> : <ProductionHeaderToolsSlot />)}
+        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 flex-wrap items-center justify-between gap-2"><MusterOperationsNavigation {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><ProductionHeaderToolsSlot inline /></div> : <ProductionHeaderToolsSlot />)}
         {!contained && <div className="hidden items-center gap-2 lg:flex">
           {admin ? (
             <>
-              <TopbarAnnouncementButton message={announcementMessage} />
+              {operationsNavigation ? <CompanyChatTrigger/> : <TopbarAnnouncementButton message={announcementMessage} />}
               <NotificationBell admin={Boolean(admin)} className="size-9" />
             </>
           ) : null}
