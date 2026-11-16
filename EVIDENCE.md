@@ -2,6 +2,57 @@
 
 **Stand: 5. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 16 November 2026 — consistent personal controls in the Muster header
+
+Scope: **BauFlow Musterbau**, release base `f9d66811762cc06d27ba9045ab1405aafbe0eab5`.
+Exact tested candidate: `6a4dbb3a858bcad9b67851fb4a1464a199216a9f`. Evidence-only follow-up commits
+do not change the tested application. This header candidate is **not merged or
+deployed**; its existing published chat release remains live. No AL Steel,
+other demo, portfolio, provider, production database or secret was changed.
+
+The original company logo is the single common-header chat trigger, with the
+existing unread cursor/badge. Right-side utilities have the same order in all
+three Muster profiles: personal profile, one-tap Day/Night, one-tap language flag
+(DE/EN/SQ/IT/PL/RO). Notifications, KiDraht and existing personal actions move
+inside the profile. Process permissions, original artwork/photos, native-office
+chat/management entry points, assistants and existing preference stores remain.
+Logic and the explicit fullscreen-office exception are in
+[MUSTER_TEAM_CHAT.md](docs/MUSTER_TEAM_CHAT.md).
+
+Final verification on the authorized mini PC, bounded to 4 CPU / 4 GiB:
+
+- TypeScript, repository ESLint (zero warnings), **1,315 unit tests**
+  and production webpack build PASS at the candidate source above.
+- `tests/muster/header-controls.cjs` PASS: one logo/chat trigger; profile-only
+  notification control; three utility positions; all six flags; no language
+  menu or document reload; retained unsent chat draft through locale/theme
+  refresh; persisted preferences and safe single-request failure/retry.
+- All header targets stay fully inside the viewport and at least 44px. Profile
+  panels and their last action remain reachable at 1440×900, 390×844, 320×640 and
+  760×360 in Light/Night. Notification-dialog Escape returns focus to its visible
+  profile action. Visual review caught and corrected the Baumdienst logo offset;
+  the full-bounds check and portal focus regression are retained in acceptance.
+- Existing guarded company-chat acceptance PASS with two independent fictional
+  profiles, unread/read and reload persistence, lost-response retry, 1,000-message
+  history with at most 40 mounted messages, office permissions and 11 renders.
+
+No dependency, API/schema, AI request, business process or authorization was
+changed. No cloud Actions were dispatched. Chromium touch/short-keyboard
+emulation is not physical-phone or native push acceptance. Existing unpdf
+webpack warning is unchanged on regular BauFlow builds.
+
+Native presentation / portfolio assessment: **NO_CONTENT_CHANGE for this
+unpublished internal header refinement**. Entry URLs, public capabilities and
+industry/process boundaries are unchanged. Existing public media/release notes
+remain dated historical captures; no new live claim, readiness score or public
+media replacement is made. Portfolio/publication remains outside this action.
+
+Local evidence: `outputs/muster-operations-20261116/header-evidence`,
+`header-final-results.json`, `header-shared-core.json` and
+`header-accepted-captures.json` in the existing task workspace. Final resources
+are released through the same owned-runner lifecycle; its preservation receipt
+keeps synthetic dumps/private configuration separate from Git.
+
 ## 16 November 2026 — own-office controls and company chat candidate
 
 Scope: **BauFlow Musterbau**, PR229, release base `d1747094ad14b92c4de32095a33a1f69e553c7a7`. Tested application source
