@@ -133,6 +133,4 @@ Website-only candidate `4e8f77062db2b1e7f240e3626f8b4fa85e31d0ff` adds the three
 existing Muster entrances to both product sites. Generator/syntax/preservation
 checks and 74 owned local Chromium cases pass. Ten existing public pages and
 all prior runtime assets are preserved outside the explicitly bounded entry
-change. Physical device and publication acceptance remain unverified; no app,
-data, provider or deployment change. Full scope, exact overlay and evidence
-pointers: [native presentation record](websites/products/PUBLIC_PRESENTATION.md#three-branded-muster-entrances---16-november-2026---ready--pending_publication).
+change. PR234 is merged and the two native sites are published and verified online: 147 exact public file matches and 38 live browser cases. Physical device remains unverified; app/data/provider configuration is unchanged. Full scope, exact overlay and evidence pointers: [native presentation record](websites/products/PUBLIC_PRESENTATION.md#three-branded-muster-entrances---16-november-2026---published--online_verified).

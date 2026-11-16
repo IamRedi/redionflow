@@ -150,7 +150,7 @@ Owner requested replacement of every remaining sketch-era tree capture. Three po
 Validation: native generator contract5pages/4locales/200targets and unchanged BauFlow pass;16native locale/width/theme views and8portfolio home/case flows pass with no horizontal overflow. All three new sources are present, retired filenames absent from the visible gallery and leaf lightbox closes correctly. Mandatory portfolio install/lint/types/content/build/GitHub-sync passes. Desktop card and leaf are actual read-only Musterfirma captures; phone is the real current component with56fictional read-only records, not a generated UI. Source runtime99c69ee; originals/provenance retained. Publication follows the owner’s standing request for these surfaces.
 
 
-## Three branded Muster entrances - 16 November 2026 - READY / PENDING_PUBLICATION
+## Three branded Muster entrances - 16 November 2026 - PUBLISHED / ONLINE_VERIFIED
 
 The owner requested three aesthetic logo buttons on both native product websites.
 A single static renderer supplies the same construction, crane-service and
@@ -198,9 +198,30 @@ A future approved release must overlay only these files on a freshly retrieved
 current Pages tree, preserving unrelated files, headers and legal pages. Never
 publish the whole repository or push an app/Railway release branch.
 
-Native UI/locale/assets/local-sync gates PASS for this candidate; public
-publication and online candidate acceptance remain PENDING. This request
-prepares the website candidate only. AL Steel, all three demo runtimes, other
-demos and portfolio are untouched. App capabilities/readiness, README/About
-and portfolio content are NO_CONTENT_CHANGE. Prior PR231/232/233 header changes
-remain separate, open and unpublished; their state is not changed here.
+The owner explicitly approved PR234 merge and publication in the next message.
+PR234 merged as `57e0c9b959978552e4c47f8706d6324a0fc6e767`; its entire tree equals
+approved head `bad0747b184796811517599b373fe0d38da93d18`. Cloudflare Pages Production
+`d7dbbfe1-274f-4ed9-a17b-949331043a2d` is active with success on both native paths.
+The fresh immutable baseline was `09b9ca04-9026-4246-90d0-2050fb944c7a`, not an
+older archive. All 143 public files and the exact header policy were backed up.
+Only the approved 14-file overlay was applied: 133 other public files and the
+header policy remain byte-identical. The complete upload is 148 files / 9,260,256
+ZIP bytes, SHA256 `e61bcddcf17e2f2fc2e6dedb33f72be2e7ef483e50ca7b3c7946bfd10a737047`.
+Rollback ZIP SHA256 is `f2004b6a4e5455e680e0ab390451c0b9fc4d4c197b6193458e70a131bfa819e1`.
+
+Post-publication acceptance PASS: all 147 custom-domain public files match the
+assembled package exactly. The owned live Chromium run passes 38 cases: 32
+product/locale/Light-Night/desktop-phone views and six actual public entrance
+clicks. Screenshots were inspected at 1440x900 and emulated 390x844, without
+clipping, horizontal overflow, missing marks or browser errors. Physical phone
+and Safari remain NOT_VERIFIED. Browser/contexts were closed; no preview or
+database was started. Detailed receipt and nine hashed screenshots are in
+`outputs/muster-operations-20261116/demo-entry-buttons/publication`.
+
+Native UI/locale/assets/published/local-sync gates PASS for the stated scope.
+AL Steel and all three demo entrypoint script fingerprints match before/after;
+app main and the three release branches are unchanged. No Railway deployment,
+demo data, secret, provider configuration, Actions or paid AI change occurred.
+Portfolio is explicitly excluded and NO_CONTENT_CHANGE; app capabilities,
+readiness and README/About are unchanged. PR231/232/233 are separate from this
+publication and were not merged or deployed by this action.
