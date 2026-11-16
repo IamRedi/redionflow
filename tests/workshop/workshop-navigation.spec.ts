@@ -6,17 +6,19 @@ import type { WorkshopSnapshot } from "../../src/lib/workshop/shared-contract";
 const api="/api/demo/baumdienst/workshop";
 test.beforeEach(async({context},info)=>{await resetWorkshopFixture();await context.addCookies([{name:"bk_lang",value:"de",url:String(info.project.use.baseURL)}]);await context.route("https://*.tile.openstreetmap.org/**",r=>r.abort());});
 
-test("dashboard, control panel and TV are directly reachable at desktop and touch sizes",async({page,request},info)=>{
+test("management actions belong to the boss office at desktop and touch sizes",async({page,request},info)=>{
   const before=await(await request.get(api)).json() as WorkshopSnapshot;
   for(const size of [{width:1440,height:1000},{width:390,height:844},{width:320,height:720},{width:740,height:360}]){
     await page.setViewportSize(size);await page.goto("/demo/workzone");const nav=page.getByRole("navigation",{name:"Demo",exact:true});
-    for(const label of ["Kontrollpanel","Dashboard view"]){const link=nav.getByRole("link",{name:label,exact:true});await expect(link).toBeVisible();expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);expect(await link.evaluate(el=>!el.closest("details"))).toBe(true);}
+    for(const label of ["Kontrollpanel","Dashboard view"]) await expect(nav.getByRole("link",{name:label,exact:true})).toHaveCount(0);
+    await page.goto('/demo/offices/manager');
+    for(const label of ["Kontrollpanel","Dashboard view"]){const link=page.getByTestId('muster-offices').getByRole("link",{name:label,exact:true});await expect(link).toBeVisible();expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);expect(await link.evaluate(el=>!el.closest("details"))).toBe(true);}
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.addStyleTag({content:"html{font-size:200% !important}"});
     expect(await page.getByTestId("demo-workspace").evaluate(el=>el.clientHeight)).toBeGreaterThan(Math.min(180,size.height/3));
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   }
-  await page.setViewportSize({width:390,height:844});await page.getByRole("navigation",{name:"Demo",exact:true}).getByRole("link",{name:"Kontrollpanel",exact:true}).click();
+  await page.setViewportSize({width:390,height:844});await page.getByTestId('muster-offices').getByRole("link",{name:"Kontrollpanel",exact:true}).click();
   await expect(page.getByTestId("demo-control-panel")).toBeVisible();
   for(const worker of before.directory.workers) await expect(page.getByTestId("demo-control-panel").getByRole("link",{name:worker.name,exact:true})).toHaveAttribute("href",`/demo/workers/${worker.id}`);
   await page.screenshot({path:info.outputPath("control-phone.png")});
@@ -32,7 +34,7 @@ test("dashboard, control panel and TV are directly reachable at desktop and touc
 
 test("Dashboard view opens fullscreen with no monitor controls and preserves inventory",async({page,request},info)=>{
   const before=await(await request.get(api)).json() as WorkshopSnapshot;
-  await page.goto("/demo/workzone");await page.getByRole("navigation",{name:"Demo",exact:true}).getByRole("link",{name:"Dashboard view",exact:true}).click();
+  await page.goto("/demo/offices/manager");await page.getByTestId('muster-offices').getByRole("link",{name:"Dashboard view",exact:true}).click();
   await expect(page).toHaveURL(/\/demo\/tv\?view=dashboard/);expect(await page.evaluate(()=>Boolean(document.fullscreenElement))).toBe(true);
   await expect(page.getByRole("heading",{name:"Dashboard",exact:true})).toBeVisible();await expect(page.getByTestId("baum-demo-topbar")).toBeHidden();
   await expect(page.locator("[data-demo-tv] button")).toHaveCount(0);await expect(page.locator("[data-demo-tv] nav")).toHaveCount(0);await expect(page.locator('[data-demo-tv] a[href*="workzone"]')).toHaveCount(0);

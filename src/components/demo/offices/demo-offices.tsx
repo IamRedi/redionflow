@@ -21,6 +21,10 @@ import { OfficeAssistant, OfficeAssistantDrawer } from "./office-assistant";
 import { OfficeReception, OfficeRoom, type ScenePanel } from "./office-scene";
 import s from "./office.module.css";
 import { DemoThemeButton } from "../demo-theme-button";
+import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
+import { Monitor, Settings2 } from 'lucide-react';
+import { navigationCopy } from '@/lib/workshop/navigation-copy';
+import { DemoDashboardLaunch } from '../workshop/demo-dashboard-launch';
 
 const panels: ScenePanel[] = ["archive", "tasks", "inquiries", "site", "offers", "staff", "assistant", "email", "work", "settings", "visit"];
 
@@ -42,6 +46,7 @@ export function DemoOffices({ room }: { room?: OfficeRole }) {
     ...(caps?.finances ? [{ id: "offers" as ScenePanel, label: c.offers, icon: Calculator }] : []),
   ];
   const errorText = (key: string) => key in c ? c[key as keyof typeof c] : c.error;
+  const management = navigationCopy(lang);
   const visible = !!panel && (panel === "settings" || panel === "visit" || !!room && own);
 
   return <div className={s.workspace} data-testid="muster-offices" data-office-room={room ?? "reception"}>
@@ -50,6 +55,8 @@ export function DemoOffices({ room }: { room?: OfficeRole }) {
     <nav aria-label={c.title} className={s.toolbar}>
       <Link transitionTypes={["baum-scene"]} href={room ? "/demo/offices" : "/demo/workzone"} className={s.nav}><ArrowLeft size={18} aria-hidden="true" /><span>{room ? c.reception : c.workzone}</span></Link>
       <div className={s.toolbarRight}>
+        <CompanyChatTrigger className={s.menuButton}/>
+        {room === 'manager' && own && <><Link className={s.menuButton} href="/demo/control" title={management.panel} aria-label={management.panel} data-testid="office-control-panel"><Settings2 size={18}/></Link><DemoDashboardLaunch className={s.menuButton} label={management.tv}><Monitor size={18}/></DemoDashboardLaunch></>}
         {o.data && !o.pending && (!room || !own) && <Link transitionTypes={["baum-scene"]} href={`/demo/offices/${o.data.actor}`} className={s.nav}><DoorOpen size={18} aria-hidden="true" /><span>{c.myOffice}</span></Link>}
         {!!room && own && <button type="button" className={s.nav} onClick={() => open("work")}><BookOpen size={18} aria-hidden="true" /><span>{c.work}</span></button>}
         {!!room && o.data && !own && <button type="button" className={s.nav} onClick={() => open("visit")}>{c.visit}</button>}

@@ -299,6 +299,8 @@ model User {
 }
 
 model CompanyProfile {
+  companyChatMessages CompanyChatMessage[]
+  companyChatReaders CompanyChatReader[]
   assistantQuotaBuckets AssistantQuotaBucket[]
   wanwayIntegration WanwayIntegration?
   id                    String  @id @default(cuid())
@@ -1699,4 +1701,30 @@ model SiteElementWork {
   @@index([elementId, stage])
   @@index([companyProfileId])
   @@index([companyProfileId, checkedAt, id])
+}
+
+model CompanyChatMessage {
+  id               String @id @default(uuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  seq              BigInt
+  requestId        String
+  authorKey        String
+  authorName       String
+  body             String
+  createdAt        DateTime @default(now())
+
+  @@unique([companyProfileId, authorKey, requestId])
+  @@unique([companyProfileId, seq])
+  @@index([companyProfileId, createdAt])
+}
+
+model CompanyChatReader {
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  actorKey         String
+  lastReadSeq      BigInt @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@id([companyProfileId, actorKey])
 }

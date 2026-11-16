@@ -12,13 +12,14 @@ test("one navigation, expandable search, readable ice filter and three registrat
     Object.assign(window, { registrationNfcSignals: signals, NDEFReader: class { onreading = null; onreadingerror = null; async scan({ signal }: { signal: AbortSignal }) { signals.push(signal); } } });
   });
   const search = "Name, Kennzeichen, Code oder Defekt suchen…";
-  const labels = ["Workzone", "Kontrollpanel", "Büros", "Dashboard view", "Holzwerkstatt", "Werkstatt", "Inventar", "Flotte"];
+  const labels = ["Workzone", "Büros", "Holzwerkstatt", "Werkstatt", "Inventar", "Flotte"];
   for (const theme of ["light", "dark"]) for (const width of [1440, 390]) {
     await context.addCookies([{ name: "bk_theme", value: theme, url: base }]);
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/demo/workshop?tab=tools");
     const nav = page.getByRole("navigation", { name: "Demo", exact: true });
     for (const label of labels) await expect(nav.getByRole("link", { name: label, exact: true })).toHaveCount(1);
+    for (const label of ['Kontrollpanel', 'Dashboard view']) await expect(nav.getByRole('link', { name: label, exact: true })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Inventar", exact: true })).toHaveCount(1);
     await expect(nav.getByRole("link", { name: "Inventar", exact: true })).toBeInViewport();
     await expect(page.getByRole("link", { name: "Werkstatt", exact: true })).toHaveCount(1);

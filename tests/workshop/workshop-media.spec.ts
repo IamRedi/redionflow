@@ -33,7 +33,8 @@ test("logo and site galleries expose explicit AI actions, saved logo removal and
   await page.getByTestId(`demo-photo-asset-${DEMO_BRAND_TARGET}`).getByRole("button").click();await d.getByRole("button",{name:"Bild entfernen",exact:true}).click();await d.getByRole("button",{name:"Schließen",exact:true}).click();await expect(page.getByRole("link",{name:"BaumdienstFlow · Workzone",exact:true}).locator("img")).not.toHaveAttribute("src",/api\/demo\/baumdienst\/files/);
   await page.goto("/demo/workzone");await page.locator('[data-testid^="demo-photo-site-"] button').first().click();d=page.getByRole("dialog");await expect(d.getByRole("button",{name:"Mit KI erstellen",exact:true})).toBeVisible();await d.getByRole("button",{name:"Schließen",exact:true}).click();
   expect(await page.locator('[data-studio-art] span').count()).toBe(0);
-  const nav=page.getByRole("navigation",{name:"Demo",exact:true});await expect(nav.getByRole("link",{name:"Dashboard view",exact:true})).toHaveAttribute("href","/demo/tv?view=dashboard");await expect(nav.getByRole("link",{name:"Dashboard",exact:true})).toHaveCount(0);
+  const nav=page.getByRole("navigation",{name:"Demo",exact:true});await expect(nav.getByRole("link",{name:"Dashboard view",exact:true})).toHaveCount(0);await expect(nav.getByRole("link",{name:"Dashboard",exact:true})).toHaveCount(0);
+  await page.goto('/demo/offices/manager');await expect(page.getByTestId('muster-offices').getByRole('link',{name:'Dashboard view',exact:true})).toHaveAttribute('href','/demo/tv?view=dashboard');
   const s=await(await request.get(api)).json(),headers={Origin:"https://other.invalid"};expect((await request.post("/api/demo/baumdienst/media",{headers,data:{requestId:randomUUID(),revision:s.revision,command:{kind:"asset",target:"crane",action:"remove",mediaId:"catalogue"}}})).status()).toBe(403);
   await page.screenshot({path:info.outputPath("single-dashboard-view-desktop.png")});
 });

@@ -20,6 +20,7 @@ import { isBaumdienstWorkshopDemoEnabled, isPublicDemoEnabled } from "@/lib/publ
 import { BaumdienstDemoFooter } from "@/components/demo/workshop/demo-footer";
 import { FleetInspectionProvider } from "@/components/demo/workshop/fleet-inspection-context";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
+import { DemoCompanyChat } from '@/components/company-chat/DemoCompanyChat';
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
 
@@ -112,5 +113,5 @@ export default async function DemoLayout({ children }: { children: ReactNode }) 
   );
   // Only deliberate Muster navigation/appearance changes animate. Refreshes,
   // polling, saves and same-room panels keep the normal immediate behavior.
-  return workshopEnabled ? <ViewTransition default="none" update={{ "baum-scene": "baum-diffuse", "baum-theme": "baum-diffuse", default: "none" }}>{shell}</ViewTransition> : shell;
+  return workshopEnabled ? <DemoCompanyChat><ViewTransition default="none" update={{ "baum-scene": "baum-diffuse", "baum-theme": "baum-diffuse", default: "none" }}>{shell}</ViewTransition></DemoCompanyChat> : shell;
 }

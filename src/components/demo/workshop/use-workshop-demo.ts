@@ -107,6 +107,7 @@ export function useWorkshopDemo() {
     const response = await fetch("/api/demo/baumdienst/actor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
     if (!response.ok) throw new Error("connection");
     etag = null; if (reading) await reading; await refresh();
+    window.dispatchEvent(new Event('company-chat-profile-update'));
     } finally { emit({pending: false}); }
   }
   async function manageMedia(command:MediaCommand) {

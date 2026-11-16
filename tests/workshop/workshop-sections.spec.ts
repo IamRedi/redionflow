@@ -14,7 +14,7 @@ test("one folder per section, direct utilities, shared stock and legacy links ke
     for(const [section,label,scene] of [["orders","Werkstatt","repair"],["fleet","Flotte","fleet"],["tools","Inventar","inventory"]]) {
       await page.goto(`/demo/workshop?tab=${section}`);
       const nav=page.getByRole("navigation",{name:"Demo",exact:true});
-      await expect(nav.getByRole("link")).toHaveCount(8);
+    await expect(nav.getByRole("link")).toHaveCount(6);
       await expect(nav.getByRole("link",{name:label,exact:true})).toHaveAttribute("aria-current","page");
       for(const name of ["Dokumente","Ersatzteile","Historie"]) await expect(nav.getByRole("link",{name,exact:true})).toHaveCount(0);
       await expect(page.locator('[data-demo-utilities] a[href="/demo/kidraht"]')).toBeVisible();
