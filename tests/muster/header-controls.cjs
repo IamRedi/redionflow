@@ -48,8 +48,8 @@ fs.mkdirSync(out,{recursive:true});
   await menu.locator('summary').click();await expect(menu.locator('[data-muster-profile-panel]')).toBeVisible();
   await page.screenshot({path:path.join(out,profile+'-profile-desktop.png')});
   // A profile notification trigger can open its portal and close without hiding the rest of the app.
-  await menu.locator('button').filter({has:page.locator('.lucide-bell')}).click();
-  await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);
+  const notifications=menu.locator('button').filter({has:page.locator('.lucide-bell')});await notifications.click();
+  await expect(page.getByRole('dialog')).toBeVisible();await page.getByRole('dialog').getByRole('heading').click();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(notifications).toBeFocused();
   if(await menu.getAttribute('open')!==null) await menu.locator('summary').click();
   await theme.click();await expect(page.locator('html')).toHaveClass(/dark/);await expect(theme).toBeEnabled();
   check(await page.evaluate(()=>window.__headerDocument)===documentToken,'Theme reloaded document');
