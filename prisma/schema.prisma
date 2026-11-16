@@ -333,6 +333,8 @@ model CompanyProfile {
   projects                  Project[]
   dailyPlans                DailyWorkPlan[]
   workzoneAnnouncements     WorkzoneAnnouncement[]
+  companyChatMessages       CompanyChatMessage[]
+  companyChatReaders        CompanyChatReader[]
   gpsLocationPoints         GpsLocationPoint[]
   machineBaustellePresences MachineBaustellePresence[]
 
@@ -740,6 +742,32 @@ model WorkzoneAnnouncement {
   updatedAt DateTime @updatedAt
 
   @@index([companyProfileId, isActive, createdAt])
+}
+
+model CompanyChatMessage {
+  id               String @id @default(uuid())
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  seq              BigInt
+  requestId        String
+  authorKey        String
+  authorName       String
+  body             String
+  createdAt        DateTime @default(now())
+
+  @@unique([companyProfileId, authorKey, requestId])
+  @@unique([companyProfileId, seq])
+  @@index([companyProfileId, createdAt])
+}
+
+model CompanyChatReader {
+  companyProfileId String
+  companyProfile   CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+  actorKey         String
+  lastReadSeq      BigInt @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@id([companyProfileId, actorKey])
 }
 
 model CompanyKnowledge {

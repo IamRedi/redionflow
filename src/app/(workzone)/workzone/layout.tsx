@@ -75,10 +75,10 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
         <div className={production ? "" : "pt-3"}>
           <FlowTopBar contained={production} announcementMessage={announcement?.message ?? null} operationsNavigation={operations ? { warehouse: !worker || Boolean(companyActor?.allows('warehouse.view')), workshop: canSeeWorkshop } : undefined} />
           <div className="mx-auto max-w-6xl space-y-1.5 px-5 pb-2 lg:pr-20">
-            <WorkzoneAnnouncementBar
+            {!operations && <WorkzoneAnnouncementBar
               message={announcement?.message ?? null}
               authorName={announcement?.createdByName ?? null}
-            />
+            />}
             <OfflineStatusBar />
           </div>
         </div>
