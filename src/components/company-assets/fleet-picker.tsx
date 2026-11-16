@@ -11,6 +11,7 @@ import { useLanguage } from '@/components/i18n/language-provider';
 import type { AssetOperationalStatus } from '@/lib/company-assets/types';
 import { AccessKeyButton } from '@/components/access/access-key-button';
 import { AssetThumbnail } from '@/components/asset-thumbnail';
+import { CompactAssetSearch } from './compact-search';
 
 function searchable(value: string) {
   return value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -21,11 +22,12 @@ function FleetThumbnail({ machine }: { machine: MachineSideItem }) {
   return machine.imageUrl && failed !== machine.imageUrl ? <AssetThumbnail src={machine.imageUrl} shape="4x3" sizes="(max-width:640px) 30vw, 160px" alt="" className="h-full w-full object-cover" onError={() => setFailed(machine.imageUrl)} /> : <MachineArt kind={machineKind(machine)} animate={false} className="h-full w-full p-1.5" />;
 }
 
-export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId, statusFor, returnFocusRef }: {
+export function FleetPicker({ open, onOpenChange, machines, onSelect, title, searchLabel, emptyLabel, focusMachineId, statusFor, returnFocusRef, inline = false }: {
   open: boolean; onOpenChange: (open: boolean) => void; machines: MachineSideItem[]; onSelect: (id: string) => void;
   title: string; searchLabel: string; emptyLabel: string; focusMachineId?: string | null;
   statusFor?: (id: string) => AssetOperationalStatus | null | undefined;
   returnFocusRef?: RefObject<HTMLElement | null>;
+  inline?: boolean;
 }) {
   const { currentLang } = useLanguage();
   const c = assetCopy(currentLang);
@@ -46,13 +48,12 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
     });
     return () => cancelAnimationFrame(frame);
   }, [open, focusMachineId]);
-  return <AssetWorkspaceDialog open={open} onOpenChange={onOpenChange} title={title} returnFocusRef={returnFocusRef}>
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="fleet-picker" data-fleet-count={Math.min(machines.length, 3)}>
+  const content = <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-fleet-inline={inline || undefined} data-testid="fleet-picker" data-fleet-count={Math.min(machines.length, 3)}>
       <div className="flex shrink-0 items-center gap-2 px-3 pb-3 sm:px-5">
-        <label className="relative block w-full min-w-0 flex-1">
+        {inline ? <><h1 className="mr-auto text-xl font-semibold">{title}</h1><CompactAssetSearch value={query} onChange={value => { setQuery(value); scrollTop.current = 0; }} label={searchLabel} closeLabel={c.close}/></> : <label className="relative block w-full min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" />
           <input data-studio-input ref={search} data-testid="fleet-search" type="search" value={query} onChange={event => { setQuery(event.target.value); scrollTop.current = 0; }} aria-label={searchLabel} placeholder={searchLabel} className="h-11 w-full min-w-0 rounded-xl border bg-card pl-10 pr-3 text-base outline-none focus:border-orange-500 focus-visible:ring-1 focus-visible:ring-orange-500" />
-        </label>
+        </label>}
         <AccessKeyButton place="fleet_gps" />
       </div>
       <div ref={grid} onScroll={event => { scrollTop.current = event.currentTarget.scrollTop; }} className="no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-5">
@@ -71,6 +72,6 @@ export function FleetPicker({ open, onOpenChange, machines, onSelect, title, sea
         </div>
         {!rows.length ? <p className="py-10 text-center text-sm text-muted-foreground" role="status">{emptyLabel}</p> : null}
       </div>
-    </div>
-  </AssetWorkspaceDialog>;
+    </div>;
+  return inline ? content : <AssetWorkspaceDialog open={open} onOpenChange={onOpenChange} title={title} returnFocusRef={returnFocusRef}>{content}</AssetWorkspaceDialog>;
 }
