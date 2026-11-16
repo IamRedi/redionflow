@@ -22,6 +22,9 @@ import { isSteelCompany } from "@/lib/dashboard/steel-access";
 import { WorkzoneMapFleet } from "./workzone-map-fleet";
 import workspace from '@/components/shell/app-workspace.module.css';
 import { currentCompanyActor } from "@/lib/site-files/actor";
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
+import { MusterWorkspaceLegal } from '@/components/company-assets/muster-legal';
+import { resolveRequestLanguage } from '@/lib/i18n/server';
 
 export default async function WorkzoneLayout({ children }: { children: ReactNode }) {
   await autoCloseForgottenDaySessions();
@@ -57,6 +60,8 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
   ]);
   const features = getFeatures(mode);
   const production = mode === "bau" && await isSteelCompany(company.id);
+  const operations = production && isMusterOperationsCompany(company.id);
+  const operationsLanguage = operations ? await resolveRequestLanguage() : null;
 
   return (
     <WorkzoneMapFleet enhancedOperations={production} statusMachines={machines.map(({ id, operationalStatus }) => ({ id, operationalStatus }))} vehicles={machines.filter(m => m.isActive).map(m => ({ id: m.id, name: m.nickname || m.name, plate: m.targe, operationalStatus: m.operationalStatus }))}>
@@ -68,7 +73,7 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
     >
       <header data-testid="workzone-topbar" className={production ? "relative z-10 print:hidden" : "sticky top-0 z-10 print:hidden"}>
         <div className={production ? "" : "pt-3"}>
-          <FlowTopBar contained={production} announcementMessage={announcement?.message ?? null} />
+          <FlowTopBar contained={production} announcementMessage={announcement?.message ?? null} operationsNavigation={operations ? { warehouse: !worker || Boolean(companyActor?.allows('warehouse.view')), workshop: canSeeWorkshop } : undefined} />
           <div className="mx-auto max-w-6xl space-y-1.5 px-5 pb-2 lg:pr-20">
             <WorkzoneAnnouncementBar
               message={announcement?.message ?? null}
@@ -82,8 +87,8 @@ export default async function WorkzoneLayout({ children }: { children: ReactNode
       <WorkzoneSyncRunner />
       <LiveRefreshListener enabled />
       <div className={production ? `${workspace.body} ${workspace.workzone}` : 'mx-auto w-full max-w-6xl lg:pr-20'}>
-        <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}><OfficeReturnBar/>{children}</div><RediOnFooter /></> : children}</main>
-        {production && features.machines ? <MachineSidebar embedded enhancedOperations canSetPrivate={canSetPrivateVehicles} canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
+        <main data-testid={production ? 'app-workspace-scroll' : undefined} tabIndex={production ? 0 : undefined} className={production ? workspace.scroll : 'px-5 py-6 print:max-w-none print:px-0 print:py-0'}>{production ? <><div className={workspace.page}><OfficeReturnBar/>{children}</div>{operationsLanguage ? <MusterWorkspaceLegal lang={operationsLanguage}/> : null}<RediOnFooter /></> : children}</main>
+        {production && features.machines ? <MachineSidebar embedded enhancedOperations operationsWorkspace={operations} canSetPrivate={canSetPrivateVehicles} canSeeWorkshop={canSeeWorkshop} machines={machines} isAdmin={Boolean(admin)} canEditPhotos={canEditMachinePhotos} showCones={showCones} country={country} /> : null}
         {!production && <RediOnFooter />}
       </div>
     </div>

@@ -6,6 +6,8 @@ import { bauflowMusterPublicDemoConfigured, isBauflowMusterCompany } from '@/lib
 import '@/components/steel/bauflow-muster.css';
 import '@/components/steel/company-ui.css';
 import { companyUiIdentity } from '@/lib/provision/company-ui';
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
+import '@/components/company-assets/muster-operations.css';
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Home, LayoutDashboard, UsersRound } from "lucide-react";
@@ -99,7 +101,7 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body data-company-ui={uiIdentity ?? undefined} data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} data-studio-compact-catalog={isBauflowMusterCompany(companyId) || uiIdentity !== null || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
+      <body data-muster-operations={isMusterOperationsCompany(companyId) || undefined} data-company-ui={uiIdentity ?? undefined} data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} data-studio-compact-catalog={isBauflowMusterCompany(companyId) || uiIdentity !== null || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
           <ProductionHeaderActionsProvider>
