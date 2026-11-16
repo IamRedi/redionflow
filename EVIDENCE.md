@@ -2,6 +2,62 @@
 
 **Stand: 3. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 16 November 2026 — own-office controls and company chat candidate
+
+Scope: **Baumdienst Musterstadt**, PR230, release base `99c69eee4f902f0b3d7ed3071921e75dd5e9f8ee`. Tested application source
+`4c67403e974f99cda5299febf631fb7a140a5ff7`; subsequent evidence-only commits do not change that application.
+This candidate is **not merged or deployed**. No AL Steel, other demo, live
+database, provider, secret, portfolio or customer-data change was performed.
+
+Control panel and Dashboard view move to the administrator's own office;
+reception, employee and colleague-preview contexts do not expose those tools.
+The opted-in announcement button/banner becomes a shared company chat with
+server-resolved names, persistent history/read cursors, unread icon and in-app
+notice. Private office assistants/mail/resources retain their existing scopes.
+The additive migration creates two tenant-RLS chat tables; it neither rewrites
+announcement records nor resets business data. Logic, limits and rollback are
+documented in [MUSTER_TEAM_CHAT.md](docs/MUSTER_TEAM_CHAT.md).
+
+Final current-source checks on the authorized mini PC, bounded to 4 CPU / 4 GiB:
+
+- TypeScript, repository ESLint (zero warnings) and production webpack build PASS.
+- 14 focused identity/HTTP/contract tests and 6 PostgreSQL integration cases PASS.
+  Coverage includes strict tenant/author boundaries, forced RLS with a non-owner
+  role, concurrent receipt deduplication, monotonic snapshot-bound reads,
+  provider-failure persistence, rate rejection and a retained 10,000-message cap.
+- Guarded `tests/muster/company-chat.cjs` PASS with two independent fictional
+  profiles, lost-response retry, reload persistence, new-arrival/read behavior,
+  1,000 history records with at most 40 mounted messages and 11 render captures.
+  Desktop Light/Night, 390/320px touch, short landscape, reduced keyboard viewport,
+  Escape/focus restoration and own-office controls were checked. The existing
+  backgrounds/material tokens and compact 44px actions were visually inspected.
+- Earlier broad local gates passed (740 unit) before the last isolated chat
+  adapter/provider refinements; these counts are not claimed as a rerun of the
+  final application revision. The affected final checks above were rerun.
+- The full 63-case workshop run passed 62 cases and exposed the scene transition
+  regression. Its cause was a keyed field/office wrapper remounting the scene.
+  The final fix retains the application tree and aborts obsolete identity loads;
+  all 4 affected motion/profile cases then PASS, preserving the original animation
+  assertions. Other cases were not needlessly repeated. The prior 62 passes cover
+  inventory/custody, fleet, repairs/uploads/history, wood processes, office
+  access, map/plan, canvas retention, 1,000-item windowing, scroll and footer.
+  All 3 deployment-boundary checks PASS: no opt-in, foreign company and SaaS fail
+  closed. No hosted database or public deployment was used for these tests.
+
+Limits: Chromium touch/keyboard-viewport emulation is not a physical phone or
+native push-delivery test. Optional existing device notifications respect consent;
+no real notification provider or AI call was made. Existing unpdf/webpack and
+large-fixture pg deprecation warnings were retained without dependency changes.
+No cloud Actions were dispatched. Source, local verification, independent review,
+owner approval and online acceptance remain separate facts.
+
+Native presentation / portfolio assessment: **NO_CONTENT_CHANGE for this
+unpublished candidate**. Current public pages still describe the existing live
+releases. They must not advertise this chat as live before an approved release;
+publication and the corresponding presentation/readback are the next boundary.
+No readiness percentage or public screenshot was changed for these local probes.
+
+
 ## 3 November 2026 — encrypted backup and assistant cost-limit candidate
 
 Scope: `fix/pilot-backup-ai-limits-20261103`, based on exact pilot revision
