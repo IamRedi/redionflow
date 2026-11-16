@@ -389,3 +389,70 @@ readiness remain accurate: presentation NO_CONTENT_CHANGE for this bounded
 inventory material/photo repair; companion PR209/PR91 record verified provenance
 after acceptance. AL-Steel, BaumdienstFlow, other demos and Portfolio Production
 remain outside this change.
+
+## Consistent Muster operations rooms, 16 November 2026
+
+Owner's identity decision: use BaumdienstFlow's continuous room, transparent
+header, clear ice controls and compact cards as the interaction standard for
+BauFlow Musterbau and RheinRuhr Kranservice Muster. Preserve each company's
+existing palette, original logo, typography and photographs. This is a bounded
+presentation adaptation, not a replacement of the operational asset system.
+
+One icon row below the team strip links Workzone, the authorized control panel,
+Werkstatt, warehouse, fleet and the existing office entry. Role permissions still
+decide which links appear. The previous floating fleet/workshop launchers are
+replaced only for these opted-in profiles. Opening a section now retains the
+team/navigation and shows its room directly; item and vehicle details continue
+to use the original accessible dialogs. Returning closes the detail and restores
+focus to the chosen vehicle. No duplicate data controller or asset store exists.
+
+`isMusterOperationsCompany` is a presentation fence, never an authorization
+decision. It accepts the explicitly configured BauFlow Muster profile or the
+exact RheinRuhr installation in local/demo mode with its public-demo flag.
+Production, SaaS, foreign tenants and missing installation identifiers cannot
+activate it. `/workzone/fleet` also requires the existing authenticated asset
+actor and returns 404 outside the opt-in. Inventory/workshop permissions, server
+commands, revisions, confirmations, reports, files and repair history retain
+their existing implementation. No migrations, reseeding, photo replacement,
+AI/provider calls or changes to manufacturing configuration are involved.
+
+Shared scoped CSS reuses current product tokens. Workshop and warehouse use the
+existing workshop illustration; fleet keeps the company's own yard. The room
+continues behind the transparent header and content. Light has no white veil;
+Night keeps dark readable surfaces. Plain headings are unboxed, empty bays fit
+their content, card width stays compact, and a magnifier expands the search only
+when needed. Escape clears/collapses search and restores keyboard focus. Normal
+refresh/error recovery remains available without an extra refresh control.
+The main content is the primary scroll region; the legal row and one by RediON
+credit occur naturally at its end. Reduced motion/transparency, forced colors
+and print have bounded fallbacks.
+
+Local evidence: UI revisions `0ce19bc` (BauFlow) and `0f3cfe1` (crane), with
+TypeScript, ESLint and production builds passed. The respective full unit runs
+passed 1,302/146 files and 1,316/148 files. The crane revision also passed all
+543 PostgreSQL integration tests in 52 files against a fresh isolated schema;
+this is not a second fresh integration run of the older BauFlow baseline.
+Actual Chromium runs passed 40 BauFlow and 39 crane cases without page errors:
+desktop and touch emulation in Light and
+Night, inline section changes, search/clear/Escape, canonical details and return
+focus, 320px and short landscape, reachable first/last content, natural footer
+and denied warehouse access for a field worker. Additional checks cover root
+text at 200%, registration open/cancel and the opt-out legacy dialogs. These are
+local synthetic checks, not physical-phone, camera/NFC, printing or owner
+acceptance. Captures and checksums:
+[candidate evidence](assets/screenshots/muster-operations-candidate.json).
+
+![Local crane Muster workshop candidate](assets/screenshots/muster-ops-crane-desktop.webp)
+
+<img src="assets/screenshots/muster-ops-bauflow-phone.webp" alt="Local BauFlow Muster warehouse candidate on an emulated phone" width="260">
+
+Publication remains separate. BauFlow is backported onto its actual live
+`4820fcf` baseline, without importing crane provisioning/schema changes. The
+crane branch retains its own accepted baseline. Only their dedicated release
+branches are potential deployment targets; never the pilot, app main or
+Baumdienst branch. Rollback is the prior source release, with no database
+rollback or destructive cleanup needed. Public entry URLs, capabilities and
+the Workzone/office media used by the current native presentation and portfolio
+remain accurate: NO_CONTENT_CHANGE for those surfaces during this bounded
+unpublished room repair. Existing pending companion PRs remain independent;
+no portfolio Production release or readiness increase is claimed.
