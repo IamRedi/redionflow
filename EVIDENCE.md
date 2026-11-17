@@ -2,7 +2,40 @@
 
 **Stand: 3. November 2026.** Dieses Protokoll trennt, was gemessen wurde, von dem, was nur im Code vorhanden ist. Zahlen ohne Quelle gibt es hier nicht.
 
+## 17 November 2026 — one global utility, personal tools in own profiles
+
+Scope: **Baumdienst Musterstadt**, candidate `e69402fcdfac2d406cff9bc463443eae05d9a0cb`. This is the current successor
+to the historical 16 November header below, in the same existing Muster PR.
+Right-side utilities contain only Day/Night. The original company logo opens
+chat/unread; language, notifications and enabled personal links are in the own
+worker/admin profile. The own-admin profile link and sign-out remain reachable
+from the control panel. No pilot, other demo or public presentation is changed.
+
+Authorized mini-PC verification, bounded to 4 CPU / 4 GiB: TypeScript, ESLint
+without warnings, 741 unit tests, Production build, the revised shared
+header/profile flow and the existing two-person/1,000-message chat regression
+PASS. Six languages, Light/Night, 1440x900 / 390x844 / 320x640 / 760x360,
+touch bounds, keyboard focus, unsent draft retention and safe theme retry are
+covered. Sixteen final header/profile captures are retained for this candidate.
+The first local attempt correctly failed i18n lint for a brand literal; a named
+brand constant fixed it without weakening the rule. The initial browser attempt
+found the owned tmpfs test schema empty after restart. Only verified local
+fixture dumps were restored into empty databases; no populated/live data was
+overwritten. Build/runtime code was unchanged when browser checks resumed.
+
+Baumdienst also passed eight focused scene/office/upload/persona scenarios and three negative deployment-boundary checks. The persona regression now changes the real role through the control panel in a second tab, then verifies that the original page retains its search/DOM when the shared cookie is re-read on return. Its initial expectation incorrectly navigated that very page away and was preserved as a test failure; no product assertion was removed.
+
+Logic, shared-source pointers and office exceptions:
+[MUSTER_TEAM_CHAT.md](docs/MUSTER_TEAM_CHAT.md). Source manifests, gate logs and
+captures: `outputs/muster-operations-20261117` in the existing owner workspace.
+Physical phone/native push remain NOT_VERIFIED. Merge, deployment and online
+acceptance are PENDING a separate exact-candidate approval. No Actions, paid AI,
+provider, secret, migration or production-data change. Native presentation,
+README/About and portfolio: NO_CONTENT_CHANGE for this unpublished refinement.
+
 ## 16 November 2026 — consistent personal controls in the Muster header
+
+Historical candidate, superseded by the 17 November correction above.
 
 Scope: **Baumdienst Musterstadt**, release base `ac1e597f0ac30c6665b8812667ed51df67881315`.
 Exact tested candidate: `502994e1939c623ada0cebbbd7540d0fa010dc96`. Evidence-only follow-up commits
