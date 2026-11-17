@@ -257,6 +257,7 @@ function ElementListSheet({
   const [processTarget, setProcessTarget] = useState<ElementView[] | null>(null);
   // The crew picked last per step, offered again on the next element.
   const lastPick = useRef<Record<string, string[]>>({});
+  const [productionCrew, setProductionCrew] = useState<string[]>([]);
 
   const title = side === "factory" ? t("elements.factoryList", lang) : t("elements.fieldList", lang);
   const current = view.kind === "list" ? null : items.find((element) => element.id === view.id) ?? null;
@@ -297,7 +298,8 @@ function ElementListSheet({
             <ElementDetail
               element={current}
               workers={workers}
-              lastPick={lastPick}
+              lastCrew={productionCrew}
+              onCrew={setProductionCrew}
               onCompleted={(entries, doneAt, doneBy) => patch(current.id, element => ({ ...element, work: [...element.work, ...entries], factoryDoneAt: doneAt ?? element.factoryDoneAt, factoryDoneBy: doneBy ?? element.factoryDoneBy }))}
               items={items}
               onComponent={side === 'factory' ? id => setView({ kind: 'element', id, parentId: current.id }) : undefined}
@@ -813,7 +815,8 @@ function PieceStrip({ element, side, definitions }: { element: ElementView; side
 function ElementDetail({
   element,
   workers,
-  lastPick,
+  lastCrew,
+  onCrew,
   onCompleted,
   items,
   onComponent,
@@ -827,7 +830,8 @@ function ElementDetail({
 }: {
   element: ElementView;
   workers: ElementWorkerOption[];
-  lastPick: React.MutableRefObject<Record<string, string[]>>;
+  lastCrew: string[];
+  onCrew: (ids: string[]) => void;
   onCompleted: (entries: ElementWorkView[], doneAt: string | null, doneBy: string | null) => void;
   items: ElementView[];
   onComponent?: (id: string) => void;
@@ -915,7 +919,7 @@ function ElementDetail({
         <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: stages.filter(stage => cap > 0 && stagePieces(element, stage) >= cap).length, total: stages.length })}</span>
         {onProcesses ? <button type="button" onClick={onProcesses} className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4" />{processButton(lang)}</button> : null}
         {side === 'factory' && canEdit && element.list === 'assembly' && productionCompletionStages(element).some(stage => stageRemaining(element, stage) > 0)
-          ? <CompleteProduction key={`${element.id}-${element.processRevision}-${element.work.length}`} element={element} workers={workers} definitions={definitions} lastCrew={lastPick.current.production ?? []} onCrew={ids => { lastPick.current.production = ids; }} onCompleted={onCompleted} /> : null}
+          ? <CompleteProduction key={`${element.id}-${element.processRevision}-${element.work.length}`} element={element} workers={workers} definitions={definitions} lastCrew={lastCrew} onCrew={onCrew} onCompleted={onCompleted} /> : null}
       </div>
       <div data-studio-element-grid={side === 'factory' || undefined} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stages.map((stage) => {
