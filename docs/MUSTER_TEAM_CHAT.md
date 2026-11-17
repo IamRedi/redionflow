@@ -4,13 +4,14 @@ Owner request, 16 November 2026. This is the first bounded shell-standardization
 step for the three fictional Muster installations. It is not activation on the
 AL Steel pilot, another company, another demo or the public portfolio.
 
-## Header refinement — 17 November 2026 candidate
+## Header refinement — 17 November 2026 published
 
 The owner's 17 November correction supersedes the unmerged 16 November header
 layout: the common operational header has exactly one right-hand utility,
 one-tap Day/Night. The former profile/flag pair and the standalone bell/chat/book
-shortcuts are absent. This is prepared only in the three existing Muster PRs;
-their published releases, AL Steel, other demos and portfolio are unchanged.
+shortcuts are absent. The owner approved and published these changes through
+the same three Muster PRs. AL Steel, other demos, public websites and portfolio
+remain outside this deployment.
 
 - The original company logo opens the existing company chat with its existing
   server-backed unread badge. Primary process links and crew remain where they
@@ -59,7 +60,44 @@ the current owner's scoped Muster implementation contract.
 
 The 16 November candidate's profile/theme/flag header was never published.
 Its decision and evidence remain historical in Git/EVIDENCE.md; this corrected
-candidate is the active successor in the same PR231/232/233, without duplicate PRs.
+candidate became the published successor through the same PR231/232/233, without duplicate PRs.
+
+### Publication and online acceptance — 17 November 2026
+
+Owner-approved merges and native Railway confirmations completed. The approved
+candidate trees match the release merges exactly. Each service is pinned to its
+own merge; no other source/configuration/variable/domain/volume was changed.
+
+- crane: PR231, merge `0a019bdb8f84bbd6d6dd46ce56f0cc93992fffef`, Railway `32a5a569-1086-4d34-84ac-42c6c1607856` (SUCCESS).
+- bauflow: PR232, merge `440751a359586330f0e1b9df4b1cd83c15e830b4`, Railway `558974ac-8e63-4d73-86f3-0f28920fd28c` (SUCCESS).
+- baumdienst: PR233, merge `4dcf959beca8f4868bea24730acf002268ad20b1`, Railway `a90642e8-eb92-47ed-a2b2-570463725274` (SUCCESS).
+
+Direct Chrome acceptance PASS: 23 header/touch/layout readbacks across the three
+published demos, with one theme utility, logo chat, six-language cycling in the
+own profile, notification-dialog entry, boss-office control/display links,
+worker-avatar entry and the Baum colleague-profile guard. Application console
+errors: zero in all three profiles. Desktop and phone viewport emulation,
+Light/Night were checked; nine individually reviewed representative screenshots
+are accepted in `publication/accepted-captures.json`. Actual frame dimensions
+are retained: the clear Baum desktop Light frame is 1440x596, the other accepted
+desktop frames 1440x900, phone frames 390x844. DOM viewport checks are separate.
+Physical phone, native push and rotation certification remain NOT_VERIFIED.
+
+Initial pending-theme reads, a query-navigation wait and transition/resize
+frames remain diagnostic rather than being passed off as final images. No app
+code, data reset, entity/repair/stock/shift/AI/push-test or chat-send command was
+used during online acceptance; demo session, preferences and read markers only.
+The mini-PC online probe was DEFERRED_BUSY_NOT_RUN; equivalent supported direct
+browser acceptance was completed instead. Task-owned tabs closed; viewport
+overrides reset; other tabs/jobs preserved.
+
+The existing `railway-accept-deploy-20261116` incident recurred: both MCP commits
+were cancelled despite scoped approval. Delivery recovered through the owner's
+two official Deploy Changes confirmations. The tool's root cause is UNKNOWN;
+no alternate API/CLI bypass or permission weakening was used. Protected Railway
+services, AL Steel, public websites and portfolio remained unchanged. Native
+presentation/portfolio: NO_CONTENT_CHANGE for this internal shell correction.
+Receipt and diagnostics: `outputs/muster-operations-20261117/publication`.
 
 ## Navigation and visual identity
 

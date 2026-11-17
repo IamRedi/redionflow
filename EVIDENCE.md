@@ -4,6 +4,15 @@
 
 ## 17 November 2026 — one global utility, personal tools in own profiles
 
+**Delivery: PUBLISHED / ONLINE_VERIFIED.** Owner approved PR232
+head `7a1dd01d3b06b226c1654f395031becdda1f7982`. Merge `440751a359586330f0e1b9df4b1cd83c15e830b4`
+exactly matches its tree. Railway deployment `558974ac-8e63-4d73-86f3-0f28920fd28c`
+is SUCCESS at that exact merge. See the delivery section in
+[the existing logic record](docs/MUSTER_TEAM_CHAT.md) for all three receipts,
+protected-service readback, online scope/limitations and browser cleanup.
+Nine representative final images across the three demos were individually
+reviewed; transition/resize frames remain diagnostic. No new public media.
+
 Scope: **BauFlow construction Muster**, candidate `9159747fee47deabfec55b45c20a7fc32345370a`. This is the current successor
 to the historical 16 November header below, in the same existing Muster PR.
 Right-side utilities contain only Day/Night. The original company logo opens
@@ -28,10 +37,11 @@ overwritten. Build/runtime code was unchanged when browser checks resumed.
 Logic, shared-source pointers and office exceptions:
 [MUSTER_TEAM_CHAT.md](docs/MUSTER_TEAM_CHAT.md). Source manifests, gate logs and
 captures: `outputs/muster-operations-20261117` in the existing owner workspace.
-Physical phone/native push remain NOT_VERIFIED. Merge, deployment and online
-acceptance are PENDING a separate exact-candidate approval. No Actions, paid AI,
-provider, secret, migration or production-data change. Native presentation,
-README/About and portfolio: NO_CONTENT_CHANGE for this unpublished refinement.
+Physical phone/native push remain NOT_VERIFIED. The owner subsequently
+approved the exact candidates; merges, deployments and direct-browser online
+acceptance are complete as recorded above. No Actions, paid AI, provider,
+secret, migration or operational business-record change. Native presentation,
+README/About and portfolio: NO_CONTENT_CHANGE for this internal refinement.
 
 ## 16 November 2026 — consistent personal controls in the Muster header
 
