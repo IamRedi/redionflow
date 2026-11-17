@@ -1,3 +1,5 @@
+import { DemoPersonalTools } from '@/components/demo/workshop/demo-personal-tools';
+import { kidrahtDemoUrl } from '@/lib/kidraht-demo';
 import { notFound } from "next/navigation";
 
 import { DemoReadonlyBadge } from "@/components/demo/demo-readonly-badge";
@@ -11,7 +13,8 @@ import { WoodAssignmentLinks } from "@/components/demo/workshop/wood-overview";
 
 export default async function DemoWorkerProfilePage({ params }: { params: Promise<{ workerId: string }> }) {
   const company = await getOrCreateDefaultCompany();
-  const inventoryEnabled = isBaumdienstWorkshopDemoEnabled(await getCompanyMode());
+  const mode = await getCompanyMode();
+  const inventoryEnabled = isBaumdienstWorkshopDemoEnabled(mode);
   if (inventoryEnabled) await requireWorkshopDemo();
   const { workerId } = await params;
   const worker = await prisma.worker.findFirst({
@@ -46,7 +49,7 @@ export default async function DemoWorkerProfilePage({ params }: { params: Promis
       {!inventoryEnabled && <div className="flex justify-end">
         <DemoReadonlyBadge />
       </div>}
-      <DemoWorkerProfileView worker={{ ...worker, inventoryMovements }} inventoryContent={inventoryEnabled ? <><InventoryScope scope="worker" identity={demoWorkerKey(worker)} now={new Date().toISOString()} /><WoodAssignmentLinks workerKey={demoWorkerKey(worker)}/></> : undefined} />
+      <DemoWorkerProfileView personalContent={inventoryEnabled ? <DemoPersonalTools workerKey={demoWorkerKey(worker)} kidraht={Boolean(kidrahtDemoUrl(mode))}/> : undefined} worker={{ ...worker, inventoryMovements }} inventoryContent={inventoryEnabled ? <><InventoryScope scope="worker" identity={demoWorkerKey(worker)} now={new Date().toISOString()} /><WoodAssignmentLinks workerKey={demoWorkerKey(worker)}/></> : undefined} />
     </div>
   );
 }

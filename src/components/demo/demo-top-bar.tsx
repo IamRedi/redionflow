@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Bot, Home, LayoutDashboard, Package, TreePine, Truck, Wrench } from "lucide-react";
 import { MusterPreferences } from '@/components/shell/MusterPreferences';
-import { DemoProfileMenu } from './workshop/demo-profile-menu';
 import header from '@/components/shell/muster-header.module.css';
 
 import { AppBrand } from "@/components/branding/AppBrand";
@@ -54,7 +53,7 @@ export async function DemoTopBar({ workers, mode, workshopEnabled = false }: { w
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=tools" label={c.tools} className={navIcon}><Package className="size-4" /></DemoNavigationLink>
           <DemoNavigationLink preserveWorkshopScope href="/demo/workshop?tab=fleet" label={c.fleet} className={navIcon}><Truck className="size-4" /></DemoNavigationLink>
         </nav>
-        <div data-demo-utilities data-testid="muster-header-utilities" className={header.utilities}><DemoProfileMenu kidraht={Boolean(kidraht)}/><MusterPreferences/></div>
+        <div data-demo-utilities data-testid="muster-header-utilities" className={header.utilities}><MusterPreferences/></div>
       </div>
     </div>;
   }

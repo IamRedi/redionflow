@@ -147,7 +147,7 @@ function whatsappHref(phone: string | null) {
   return `https://wa.me/${cleaned}`;
 }
 
-export async function DemoWorkerProfileView({ worker, inventoryContent }: { worker: DemoWorkerProfile; inventoryContent?: ReactNode }) {
+export async function DemoWorkerProfileView({ worker, inventoryContent, personalContent }: { worker: DemoWorkerProfile; inventoryContent?: ReactNode; personalContent?: ReactNode }) {
   const currentLang = await resolveRequestLanguage();
   const activeSession = worker.sessions.find((session) => session.isLive && !session.endTime) ?? null;
   const history = worker.sessions.filter((session) => (!session.isLive || session.endTime) && isReportableSession(session)).slice(0, 15);
@@ -160,6 +160,7 @@ export async function DemoWorkerProfileView({ worker, inventoryContent }: { work
 
   return (
     <div className={inventoryContent ? "space-y-5" : "mx-auto max-w-6xl space-y-5"}>
+      {personalContent}
       {inventoryContent ? <header className="flex flex-wrap items-center gap-4 rounded-3xl border bg-card p-4 sm:p-6">
         <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/20 bg-primary/10 text-2xl font-semibold text-primary">
           {worker.profileImageUrl ? <Image src={worker.profileImageUrl} alt={`${worker.firstName} ${worker.lastName}`} fill sizes="80px" className="object-cover" /> : initials}

@@ -27,11 +27,9 @@ function LanguageFlag({ lang }: { lang: SupportedLanguage }) {
 
 /** Explicit Muster-only controls reuse existing cookies/provider and preserve open work. */
 export function MusterPreferences() {
-  const { currentLang, setLang } = useLanguage(), router = useRouter();
+  const { currentLang } = useLanguage(), router = useRouter();
   const posting = useRef(false);
   const [pending, start] = useTransition(), [failed, setFailed] = useState(false);
-  const next = cycleLanguage(currentLang);
-  const label = `${t('workzone.language', currentLang)}: ${languageNames[currentLang]} → ${languageNames[next]}`;
   async function toggle(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (posting.current || pending) return;
@@ -50,6 +48,13 @@ export function MusterPreferences() {
       <button type="submit" className={s.icon} aria-label={t('admin.themeToggle', currentLang)} title={t('admin.themeToggle', currentLang)} disabled={pending} aria-busy={pending} data-testid="muster-theme-toggle"><Sun size={18} className="hidden dark:block" aria-hidden="true"/><Moon size={18} className="dark:hidden" aria-hidden="true"/></button>
       {failed && <span role="alert" className={s.error}>{errors[currentLang]}</span>}
     </form>
-    <button type="button" className={s.icon} aria-label={label} title={label} onClick={() => setLang(next)} data-testid="muster-language-cycle" data-language={currentLang}><LanguageFlag lang={currentLang}/></button>
   </>;
+}
+
+/** Language is a personal-profile action, never a second global header control. */
+export function MusterLanguageCycle() {
+  const { currentLang, setLang } = useLanguage();
+  const next = cycleLanguage(currentLang);
+  const label = `${t('workzone.language', currentLang)}: ${languageNames[currentLang]} → ${languageNames[next]}`;
+  return <button type="button" className={s.entry} aria-label={label} title={label} onClick={() => setLang(next)} data-testid="muster-language-cycle" data-language={currentLang}><LanguageFlag lang={currentLang}/><span>{languageNames[currentLang]}</span></button>;
 }
