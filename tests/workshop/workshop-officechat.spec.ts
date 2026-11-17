@@ -58,9 +58,10 @@ test("Workzone retains the original logo after hydration without deleting a comp
   expect(uploaded.status()).toBe(200); const before = await uploaded.json(), photo = before.photos.find((p: {id:string;target:string}) => p.target === DEMO_BRAND_TARGET && !initial.photos.some((existing: {id:string}) => existing.id === p.id));
   expect(photo).toBeTruthy(); const original = await (await request.get(photo.url)).body();
   await page.goto("/demo/workshop?tab=tools"); await expect(page.getByRole("button", { name: "Gerät erfassen", exact: true })).toBeEnabled();
-  const brand = page.getByRole("link", { name: "BaumdienstFlow · Workzone", exact: true });
+  const brand = page.locator("[data-company-chat-brand]");
   await expect(brand.getByRole("img")).toHaveAttribute("src", photo.url);
-  await brand.click(); await expect(brand).toHaveAttribute("data-brand-source", "original"); await expect(brand.getByRole("img")).toHaveAttribute("src", /branding%2Flogo-256.webp/);
+  await brand.click(); await expect(page.getByTestId("company-chat-dialog")).toBeVisible(); await page.keyboard.press("Escape");
+  await page.locator('[data-demo-navigation] a[href="/demo/workzone"]').click(); await expect(brand).toHaveAttribute("data-brand-source", "original"); await expect(brand.getByRole("img")).toHaveAttribute("src", /branding%2Flogo-256.webp/);
   await page.reload(); await expect(page.getByRole("navigation", { name:"Demo", exact:true }).getByRole("link", { name:"Büros", exact:true })).toBeVisible(); await expect(brand).toHaveAttribute("data-brand-source", "original"); await expect(brand.getByRole("img")).toHaveAttribute("src", /branding%2Flogo-256.webp/); await expect(brand.getByText("AI", { exact:true })).toHaveCount(0);
   await page.goto("/demo/workshop?tab=tools"); await expect(brand.getByRole("img")).toHaveAttribute("src", photo.url);
   const after = await (await request.get("/api/demo/baumdienst/workshop")).json(); expect(after.photos).toEqual(before.photos); expect(after.revision).toBe(before.revision);

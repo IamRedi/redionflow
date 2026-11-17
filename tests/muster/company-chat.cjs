@@ -40,8 +40,8 @@ async function main() {
     const directory = response.ok() ? (await response.json()).directory : null;
     let key = directory?.workers[0]?.key;
     if (!key) {
-     const select=page.locator('[data-demo-profile] select'); await page.locator('[data-demo-profile] summary').click();
-     key=await select.locator('option').nth(1).getAttribute('value'); await select.selectOption(key); await page.locator('[data-demo-profile] summary').click();
+     await page.goto(base+'/demo/control');const select=page.getByTestId('muster-profile-tools').locator('select');await expect(select).toBeEnabled();
+     key=await select.locator('option').nth(1).getAttribute('value');await select.selectOption(key);await expect(select).toHaveValue(key);await page.goto(base+route);
     } else { check((await page.request.post(base+'/api/demo/baumdienst/actor',{data:{key},headers:{Origin:base}})).ok(),'Field persona switch failed'); await page.reload(); }
    }
   }

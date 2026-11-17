@@ -17,7 +17,8 @@ test("one folder per section, direct utilities, shared stock and legacy links ke
     await expect(nav.getByRole("link")).toHaveCount(6);
       await expect(nav.getByRole("link",{name:label,exact:true})).toHaveAttribute("aria-current","page");
       for(const name of ["Dokumente","Ersatzteile","Historie"]) await expect(nav.getByRole("link",{name,exact:true})).toHaveCount(0);
-      await expect(page.locator('[data-demo-utilities] a[href="/demo/kidraht"]')).toBeVisible();
+      await expect(page.getByTestId('muster-profile-tools')).toHaveCount(0);
+      await expect(page.locator('[data-demo-utilities]').locator('button')).toHaveCount(1);
       await expect(page.locator('[data-demo-utilities]').getByRole("button",{name:"Hell/Dunkel",exact:true})).toBeVisible();
       await expect(page.getByLabel("Mehr",{exact:true})).toHaveCount(0);
       const folder=page.getByTestId("section-folder"); await folder.click();
@@ -45,6 +46,7 @@ test("one folder per section, direct utilities, shared stock and legacy links ke
   await page.goto(`/demo/workshop?tab=tools&asset=crane&site=${site}`);
   await page.getByTestId("section-folder").click(); await page.getByRole("option",{name:"Dokumente",exact:true}).click();
   const url=new URL(page.url()); expect(url.searchParams.get("asset")).toBe("crane");expect(url.searchParams.get("site")).toBe(site);
+  await page.goto('/demo/control');await expect(page.getByTestId('muster-profile-tools').locator('a[href="/demo/kidraht"]')).toBeVisible();
   const after=await(await request.get("/api/demo/baumdienst/workshop")).json();
   expect(after.revision).toBe(before.revision); expect(after.state).toEqual(before.state);
 });
