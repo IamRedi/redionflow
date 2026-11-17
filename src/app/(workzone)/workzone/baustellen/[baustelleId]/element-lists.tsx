@@ -297,6 +297,7 @@ function ElementListSheet({
             <ElementDetail
               element={current}
               workers={workers}
+              lastPick={lastPick}
               onCompleted={(entries, doneAt, doneBy) => patch(current.id, element => ({ ...element, work: [...element.work, ...entries], factoryDoneAt: doneAt ?? element.factoryDoneAt, factoryDoneBy: doneBy ?? element.factoryDoneBy }))}
               items={items}
               onComponent={side === 'factory' ? id => setView({ kind: 'element', id, parentId: current.id }) : undefined}
@@ -812,6 +813,7 @@ function PieceStrip({ element, side, definitions }: { element: ElementView; side
 function ElementDetail({
   element,
   workers,
+  lastPick,
   onCompleted,
   items,
   onComponent,
@@ -825,6 +827,7 @@ function ElementDetail({
 }: {
   element: ElementView;
   workers: ElementWorkerOption[];
+  lastPick: React.MutableRefObject<Record<string, string[]>>;
   onCompleted: (entries: ElementWorkView[], doneAt: string | null, doneBy: string | null) => void;
   items: ElementView[];
   onComponent?: (id: string) => void;
@@ -912,7 +915,7 @@ function ElementDetail({
         <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: stages.filter(stage => cap > 0 && stagePieces(element, stage) >= cap).length, total: stages.length })}</span>
         {onProcesses ? <button type="button" onClick={onProcesses} className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4" />{processButton(lang)}</button> : null}
         {side === 'factory' && canEdit && element.list === 'assembly' && productionCompletionStages(element).some(stage => stageRemaining(element, stage) > 0)
-          ? <CompleteProduction key={`${element.id}-${element.processRevision}-${element.work.length}`} element={element} workers={workers} definitions={definitions} onCompleted={onCompleted} /> : null}
+          ? <CompleteProduction key={`${element.id}-${element.processRevision}-${element.work.length}`} element={element} workers={workers} definitions={definitions} lastCrew={lastPick.current.production ?? []} onCrew={ids => { lastPick.current.production = ids; }} onCompleted={onCompleted} /> : null}
       </div>
       <div data-studio-element-grid={side === 'factory' || undefined} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stages.map((stage) => {

@@ -14,18 +14,20 @@ import { productionShortcutCopy } from './production-shortcut-copy';
 
 const button = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold disabled:opacity-50';
 
-export function CompleteProduction({ element, workers, definitions, onCompleted }: {
+export function CompleteProduction({ element, workers, definitions, lastCrew, onCrew, onCompleted }: {
   element: ElementView; workers: ElementWorkerOption[]; definitions: SteelWorkDefinitionView[];
+  lastCrew: string[]; onCrew: (ids: string[]) => void;
   onCompleted: (entries: ElementWorkView[], doneAt: string | null, doneBy: string | null) => void;
 }) {
   const { currentLang: lang } = useLanguage(), c = productionShortcutCopy(lang);
   const [open, setOpen] = useState(false);
   return <><button type="button" onClick={() => setOpen(true)} className={`${button} bg-orange-600`}><CheckCheck className="size-4" />{c.finish}</button>
-    {open ? <CompletionSession element={element} workers={workers} definitions={definitions} onClose={() => setOpen(false)} onCompleted={onCompleted} /> : null}</>;
+    {open ? <CompletionSession element={element} workers={workers} definitions={definitions} lastCrew={lastCrew} onCrew={onCrew} onClose={() => setOpen(false)} onCompleted={onCompleted} /> : null}</>;
 }
 
-function CompletionSession({ element, workers, definitions, onClose, onCompleted }: {
+function CompletionSession({ element, workers, definitions, lastCrew, onCrew, onClose, onCompleted }: {
   element: ElementView; workers: ElementWorkerOption[]; definitions: SteelWorkDefinitionView[];
+  lastCrew: string[]; onCrew: (ids: string[]) => void;
   onClose: () => void; onCompleted: (entries: ElementWorkView[], doneAt: string | null, doneBy: string | null) => void;
 }) {
   const { currentLang: lang } = useLanguage(), c = productionShortcutCopy(lang), router = useRouter();
@@ -38,6 +40,7 @@ function CompletionSession({ element, workers, definitions, onClose, onCompleted
   const remaining = productionCompletionStages(snapshot).map(stage => ({ stage, pieces: stageRemaining(snapshot, stage) })).filter(row => row.pieces > 0);
   const factoryCrew = workers.filter(w => w.crewRole === 'FACTORY_WORKER' || w.crewRole === 'FACTORY_ENGINEER');
   const choices = factoryCrew.length ? factoryCrew : workers;
+  const previousCrew = lastCrew.filter(id => choices.some(worker => worker.id === id));
   const label = (stage: string) => definitions.find(d => d.key === stage)?.label || t(`factory.steps.${stage}`, lang);
   function picker(selected: string[], change: (ids: string[]) => void, query = '') {
     return <div className="grid grid-cols-2 gap-1.5">{choices.filter(worker => !query.trim() || selected.includes(worker.id) || worker.name.toLowerCase().includes(query.trim().toLowerCase())).map(worker => <label key={worker.id} className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border bg-card px-2.5 text-xs font-semibold">
@@ -51,13 +54,14 @@ function CompletionSession({ element, workers, definitions, onClose, onCompleted
           expectedQuantity: snapshot.quantity, expectedWorkIds: snapshot.work.map(w => w.id),
           assignments: Object.fromEntries(remaining.map(row => [row.stage, overrides[row.stage] ?? common])) });
         if (!result.ok) { setError(result.code === 'CONFLICT' ? c.conflict : result.message); return; }
-        onCompleted(result.entries, result.doneAt, result.doneBy); router.refresh(); onClose();
+        onCrew(common); onCompleted(result.entries, result.doneAt, result.doneBy); router.refresh(); onClose();
       } catch { setError(t('factory.error', lang)); }
     });
   }
   return <AssetWorkspaceDialog open onOpenChange={value => { if (!value && !pending) onClose(); }} title={`${snapshot.mark} · ${c.finish}`} compact scrollBody contentClassName="overflow-hidden">
     <p className="mb-3 text-xs text-muted-foreground">{c.hint}</p>
     <fieldset disabled={pending} className="space-y-3"><legend className="mb-2 text-sm font-semibold">{c.crew}</legend>
+      {previousCrew.length && previousCrew.join() !== common.join() ? <button type="button" className={`${button} w-full justify-start text-left text-xs`} onClick={() => setCommon(previousCrew)}>{t('elements.sameAsLast', lang)} · {previousCrew.map(id => workers.find(worker => worker.id === id)?.name).join(', ')}</button> : null}
       {choices.length > 8 ? <label className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><input aria-label={t('elements.searchWorker', lang)} placeholder={t('elements.searchWorker', lang)} value={workerQuery} onChange={event => setWorkerQuery(event.target.value.slice(0, 80))} className="min-h-11 w-full rounded-xl border bg-card pl-9 pr-3 text-sm" /></label> : null}
       {picker(common, setCommon, workerQuery)}
       <ul className="space-y-2">{remaining.map(row => <li key={row.stage} className="rounded-xl border bg-card p-2.5">
