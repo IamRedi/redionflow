@@ -7,7 +7,8 @@ crystal interface, tenant/site permissions, confirmed work and existing metrics.
 ## User flow
 
 - **Single Parts** contains the imported part list, with its existing cutting
-  workflow. Codes keep their original case.
+  workflow. Codes keep their original case. A site containing only parts opens
+  that group directly and no longer labels its factory list as missing.
 - **Asamblime** contains imported assemblies. An export with separate `Assemb.`
   and `Parte` columns attaches subsequent component rows to their assembly.
   `B/1` in `Assemb.` is an assembly; `b/1` in `Parte` is a different part code.

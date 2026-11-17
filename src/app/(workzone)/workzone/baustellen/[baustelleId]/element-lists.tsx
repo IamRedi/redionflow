@@ -126,6 +126,9 @@ export function ElementListButtons({
   const allPieces = sum((element) => element.quantity);
   const factoryDone = sum((element) => doneQty(element, "factory"));
   const fieldDone = sum((element) => doneQty(element, "field"));
+  const factorySummary = assemblies.length ? assemblies : items.filter(element => element.list === 'part');
+  const factoryPieces = factorySummary.reduce((total, element) => total + element.quantity, 0);
+  const factoryCompleted = factorySummary.reduce((total, element) => total + doneQty(element, 'factory'), 0);
 
   if (items.length === 0 && !(can.upload??can.office) && !can.factory) return null;
 
@@ -133,8 +136,8 @@ export function ElementListButtons({
     {
       side: "factory",
       label: t("elements.factoryList", lang),
-      sub: assemblies.length ? fill(t("elements.doneOf", lang), { done: factoryDone, total: allPieces }) : t("elements.noList", lang),
-      pct: allPieces ? (factoryDone / allPieces) * 100 : 0,
+      sub: factorySummary.length ? fill(t("elements.doneOf", lang), { done: factoryCompleted, total: factoryPieces }) : t("elements.noList", lang),
+      pct: factoryPieces ? (factoryCompleted / factoryPieces) * 100 : 0,
       icon: <Factory className="size-6" />,
     },
     {
@@ -244,7 +247,7 @@ function ElementListSheet({
 }) {
   const { currentLang: lang } = useLanguage();
   const [view, setView] = useState<View>({ kind: "list" });
-  const [list, setList] = useState<MaterialGroup>("assembly");
+  const [list, setList] = useState<MaterialGroup>(() => items.some(e => materialGroup(e) === 'assembly') ? 'assembly' : side === 'factory' && items.some(e => e.list === 'part') ? 'part' : items.some(e => e.isManual) ? 'manual' : 'assembly');
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [processTarget, setProcessTarget] = useState<ElementView[] | null>(null);
@@ -447,7 +450,7 @@ function ListView({
       const result = await importElementListsAction(form);
       setMessage({ ok: result.ok, text: result.message });
       setImportOpen(false);
-      if (result.ok) { router.refresh(); setConfigureAfterImport(result.results?.flatMap(row => row.addedIds) ?? []); }
+      if (result.ok) { if (result.results?.length === 1) setList(result.results[0].list); router.refresh(); setConfigureAfterImport(result.results?.flatMap(row => row.addedIds) ?? []); }
     });
   }
 
@@ -551,6 +554,7 @@ function ListView({
                 <button
                   key={key}
                   type="button"
+                  aria-pressed={activeList === key}
                   onClick={() => {
                     setList(key);
                     setFilter("all");
