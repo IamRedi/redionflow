@@ -6,7 +6,7 @@ import { landingContent } from "@/components/landing/landing-content";
 import { isPublicDemoEnabled } from "@/lib/public-demo";
 import { isSaasMode } from "@/lib/saas-config";
 import { redirect } from 'next/navigation';
-import { bauflowMusterPublicDemoConfigured } from '@/lib/demo/bauflow-muster';
+import { publicMusterProfile } from '@/lib/demo/public-muster';
 
 export const metadata: Metadata = {
   title: landingContent.de.meta.title,
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  if (bauflowMusterPublicDemoConfigured()) redirect('/muster');
+  if (publicMusterProfile()) redirect('/muster');
   const jar = await cookies();
   const initialTheme = jar.get("bk_theme")?.value === "dark" ? "dark" : "light";
 

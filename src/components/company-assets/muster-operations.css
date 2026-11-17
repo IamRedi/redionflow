@@ -1,0 +1,116 @@
+/* Owner standard: Baumdienst's continuous room, quiet controls and clear ice.
+   Only the two explicit Muster installations opt in; their own palettes remain. */
+body[data-muster-operations][data-studio-compact-catalog] {
+  --muster-operation-scene: var(--bauflow-muster-scene);
+  --muster-operation-shade: linear-gradient(180deg,transparent,transparent);
+  --muster-ice: linear-gradient(130deg,hsl(var(--card)/.48),hsl(var(--card)/.34));
+  --muster-control-ice: linear-gradient(130deg,hsl(var(--card)/.46),hsl(var(--card)/.30));
+  --muster-ice-edge: var(--steel-edge);
+  --muster-ice-shadow: 0 4px 16px #0b243320,inset 0 1px 0 #ffffffa3;
+  --muster-text-shadow: 0 1px 1px #ffffffad;
+}
+html.dark body[data-muster-operations][data-studio-compact-catalog] {
+  --muster-operation-shade: linear-gradient(180deg,#05101b54,#05101b73);
+  --muster-ice: linear-gradient(130deg,hsl(var(--card)/.66),hsl(var(--card)/.46));
+  --muster-control-ice: linear-gradient(130deg,hsl(var(--card)/.76),hsl(var(--card)/.56));
+  --muster-ice-shadow: 0 4px 16px #00101833,inset 0 1px 0 #e0f2ff47;
+  --muster-text-shadow: 0 1px 2px #00101be6;
+}
+body[data-muster-operations][data-studio-compact-catalog]:has([data-muster-workshop]),
+body[data-muster-operations][data-studio-compact-catalog]:has([data-studio-warehouse]) {
+  --muster-operation-scene: url('/steel-studio-v1/workshop.webp');
+}
+body[data-muster-operations][data-studio-compact-catalog] .steelStudioWorkspace {
+  background: var(--muster-operation-shade),var(--muster-operation-scene) center/cover no-repeat !important;
+}
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=app-workspace-scroll] {
+  background: transparent !important;
+  scrollbar-width: none;
+}
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=app-workspace-scroll]::-webkit-scrollbar { width:0;height:0; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-header-controls] { background:transparent;border:0;box-shadow:none;backdrop-filter:none; }
+body[data-muster-operations][data-studio-compact-catalog]:has([data-muster-header-controls]) [data-testid=flow-mobile-tools]>a:is([href='/workzone'],[href='/app/dashboard']) { display:none; }
+body[data-muster-operations][data-studio-compact-catalog] :is(.musterOperationLink,[data-muster-header-controls] a,[data-muster-header-controls] button) {
+  min-width:44px;min-height:44px;border-radius:999px;
+  color:hsl(var(--foreground));background:var(--muster-control-ice);
+  border:1px solid var(--muster-ice-edge);box-shadow:var(--muster-ice-shadow);
+  backdrop-filter:blur(8px) saturate(1.12);-webkit-backdrop-filter:blur(8px) saturate(1.12);
+}
+body[data-muster-operations][data-studio-compact-catalog] .musterOperationLink[aria-current=page] { border-color:hsl(var(--primary));box-shadow:var(--muster-ice-shadow),inset 0 0 0 1px hsl(var(--primary)/.6); }
+body[data-muster-operations][data-studio-compact-catalog] :is([data-muster-workshop],[data-testid=asset-warehouse],[data-fleet-inline]) {
+  min-width:0;background:transparent !important;border:0;border-radius:0;box-shadow:none;
+  color:hsl(var(--foreground));text-shadow:var(--muster-text-shadow);
+}
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-testid=workshop-scroll] { overflow:visible;padding:0; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-testid=workshop-active-bays] { display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-testid=workshop-active-bays]>section { flex:0 1 320px;max-width:100%; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-testid=workshop-active-bays]>section[data-workshop-empty=true] { flex:0 0 auto; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-studio-workshop-phase]>h2 {
+  width:fit-content;max-width:100%;min-height:44px;gap:14px;border-radius:16px;
+  background:var(--muster-control-ice);border-color:var(--muster-ice-edge);
+}
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] :is(header h1,[data-testid=workshop-history-heading]>h2) { background:transparent;border:0;box-shadow:none;padding-left:0; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-studio-workshop-phase]>div>p { text-align:left;padding:12px 0; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] [data-testid=workshop-history-preview] { margin-top:16px; }
+body[data-muster-operations][data-studio-compact-catalog] :is([data-testid=workshop-repair-card],#warehouse-items>.grid>button,[data-testid=fleet-card-grid]>button) {
+  background:var(--muster-ice) !important;border:1px solid var(--muster-ice-edge);
+  color:hsl(var(--foreground));box-shadow:var(--muster-ice-shadow);border-radius:18px;
+  backdrop-filter:blur(10px) saturate(1.12);-webkit-backdrop-filter:blur(10px) saturate(1.12);
+}
+body[data-muster-operations][data-studio-compact-catalog] :is([data-muster-workshop],[data-testid=asset-warehouse],[data-fleet-inline],[data-studio-dialog]) :is(.steelStudioAssetButton,input:not([type=checkbox]):not([type=radio]),select,textarea) {
+  background:var(--muster-control-ice);color:hsl(var(--foreground));border-color:var(--muster-ice-edge);
+  box-shadow:var(--muster-ice-shadow);text-shadow:var(--muster-text-shadow);
+  backdrop-filter:blur(8px) saturate(1.12);-webkit-backdrop-filter:blur(8px) saturate(1.12);
+}
+body[data-muster-operations][data-studio-compact-catalog] :is([data-muster-workshop],[data-testid=asset-warehouse],[data-fleet-inline]) :is(input,textarea)::placeholder { color:hsl(var(--foreground)/.85);opacity:1; }
+body[data-muster-operations][data-studio-compact-catalog] :is([data-muster-workshop],[data-testid=asset-warehouse],[data-fleet-inline]) .text-muted-foreground { color:hsl(var(--foreground)/.84); }
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=asset-warehouse] { gap:12px; }
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=asset-warehouse]>div:first-child h1 { flex:0 1 auto;margin-right:auto; }
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=asset-warehouse] [role=tab] { flex:0 1 auto;border-radius:999px; }
+body[data-muster-operations][data-studio-compact-catalog] :is(#warehouse-items>.grid,[data-fleet-inline] [data-testid=fleet-card-grid]) { grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),230px));gap:12px; }
+body[data-muster-operations][data-studio-compact-catalog] #warehouse-items>.grid>button>span:first-child { background:hsl(var(--card)/.14) !important; }
+body[data-muster-operations][data-studio-compact-catalog] [data-studio-machine-icon] { background:transparent !important;color:hsl(var(--foreground)/.8); }
+body[data-muster-operations][data-studio-compact-catalog] [data-fleet-inline] { gap:12px; }
+body[data-muster-operations][data-studio-compact-catalog] [data-fleet-inline]>div { padding:0;overflow:visible; }
+body[data-muster-operations][data-studio-compact-catalog] [data-fleet-inline]>div:first-child { flex-wrap:wrap; }
+body[data-muster-operations][data-studio-compact-catalog] [data-fleet-inline] [data-testid=fleet-card-grid]>button { min-height:0; }
+body[data-muster-operations][data-studio-compact-catalog] [data-fleet-inline] [data-testid=fleet-card-grid]>button>span:last-child { padding:10px;gap:6px; }
+body[data-muster-operations][data-studio-compact-catalog] #muster-fleet-workspace:has([data-fleet-inline])>[data-fleet-mount-placeholder] { display:none; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-search]:has(input) { width:min(320px,100%);flex:0 1 320px; }
+body[data-muster-operations][data-studio-compact-catalog] [data-studio-dialog] {
+  background:var(--muster-control-ice);border-color:var(--muster-ice-edge);
+  box-shadow:var(--muster-ice-shadow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+body[data-muster-operations][data-studio-compact-catalog] [data-studio-dialog]>div:first-child { background:transparent;border:0; }
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=fleet-machine-card] { background:var(--muster-control-ice) !important; }
+body[data-muster-operations][data-studio-compact-catalog] [data-testid=fleet-machine-card]>div:first-of-type { background:transparent;border:0; }
+body[data-muster-operations][data-studio-compact-catalog] :is([data-studio-item-detail],[data-studio-service-detail]) { background:transparent !important; }
+body[data-muster-operations][data-studio-compact-catalog] [data-studio-dialog-overlay],body[data-muster-operations][data-studio-compact-catalog] [data-studio-vehicle-overlay] { background:#071d2938; }
+body[data-muster-operations][data-studio-compact-catalog] :is([data-studio-item-detail],[data-studio-service-detail]) :is([data-studio-item-header],.bg-card) { background:var(--muster-ice);border-color:var(--muster-ice-edge); }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-legal] { flex-shrink:0;margin-top:12px;text-shadow:var(--muster-text-shadow); }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-legal]+footer { background:transparent;border:0;box-shadow:none; }
+@media(max-width:600px) {
+  body[data-muster-operations][data-studio-compact-catalog] :is(#warehouse-items>.grid,[data-fleet-inline] [data-testid=fleet-card-grid]) { grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+  body[data-muster-operations][data-studio-compact-catalog] [data-muster-workshop] header>div:last-child { flex-wrap:wrap;max-width:100%; }
+  body[data-muster-operations][data-studio-compact-catalog] [data-muster-search]:has(input) { flex:1 1 200px;min-width:0; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  body[data-muster-operations][data-studio-compact-catalog] :is([data-muster-workshop],[data-studio-warehouse],[data-fleet-inline]) { animation:musterOperationsArrive 180ms ease-out; }
+  @keyframes musterOperationsArrive { from { opacity:.8; } to { opacity:1; } }
+}
+@media(prefers-reduced-transparency:reduce) {
+  body[data-muster-operations][data-studio-compact-catalog] { --muster-ice:hsl(var(--card));--muster-control-ice:hsl(var(--card)); }
+  body[data-muster-operations][data-studio-compact-catalog] :is(button,a,input,select,textarea,[data-studio-dialog]) { backdrop-filter:none !important;-webkit-backdrop-filter:none !important; }
+}
+@media(forced-colors:active) {
+  body[data-muster-operations][data-studio-compact-catalog] { --muster-ice:Canvas;--muster-control-ice:Canvas;--muster-ice-edge:CanvasText;--muster-ice-shadow:none;--muster-text-shadow:none; }
+  body[data-muster-operations][data-studio-compact-catalog] .steelStudioWorkspace { background:Canvas !important; }
+  body[data-muster-operations][data-studio-compact-catalog] :is(button,a,input,select,textarea,[data-studio-dialog]) { backdrop-filter:none !important;-webkit-backdrop-filter:none !important; }
+  body[data-muster-operations][data-studio-compact-catalog] [data-testid=app-workspace-scroll] { scrollbar-width:auto; }
+  body[data-muster-operations][data-studio-compact-catalog] [data-testid=app-workspace-scroll]::-webkit-scrollbar { width:auto;height:auto; }
+}
+@media print { body[data-muster-operations][data-studio-compact-catalog] .steelStudioWorkspace { background:white !important; } }
+
+/* Personal actions are grouped, never another row of circular global shortcuts. */
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-profile-panel] :is(a,button) { border:0;border-radius:12px;box-shadow:none;background:transparent;min-width:0;backdrop-filter:none; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-profile-panel] :is(a,button):hover { background:hsl(var(--foreground)/.07); }

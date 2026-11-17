@@ -22,6 +22,9 @@ import { TopbarAnnouncementButton } from '@/app/(workzone)/workzone/topbar-annou
 import { WorkspaceHeaderOffset } from './WorkspaceHeaderOffset';
 import { ProductionHeaderToolsSlot } from './ProductionHeaderActions';
 import { currentOfficeAccess } from '@/lib/offices/access';
+import { MusterOperationsNavigation } from '@/components/company-assets/muster-navigation';
+import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
+import { MusterHeaderUtilities } from './MusterHeaderUtilities';
 
 function adminInitial(value: string | null | undefined) {
   const source = value?.trim();
@@ -32,7 +35,8 @@ function adminInitial(value: string | null | undefined) {
 export async function FlowTopBar({
   announcementMessage = null,
   contained = false,
-}: { announcementMessage?: string | null; contained?: boolean } = {}) {
+  operationsNavigation,
+}: { announcementMessage?: string | null; contained?: boolean; operationsNavigation?: { warehouse: boolean; workshop: boolean } } = {}) {
   const admin = await getCurrentAdmin();
   const currentLang = await resolveRequestLanguage();
   const [companyMode, tenantId] = await Promise.all([
@@ -165,9 +169,11 @@ export async function FlowTopBar({
       {contained && <WorkspaceHeaderOffset />}
       <div className={`grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 ${contained ? "items-start gap-y-1" : "items-start gap-y-3 lg:grid-cols-[auto_minmax(0,1fr)_auto]"}`}>
         {/* Keep the production logo and scrollable team side by side in normal flow. */}
-        <div className={`pointer-events-none relative z-10 ${contained ? "col-start-1 row-start-1 flex-row items-center lg:row-span-2 lg:self-center" : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
+        <div className={`pointer-events-none relative z-10 ${contained ? `col-start-1 row-start-1 flex-row items-center ${operationsNavigation ? '' : 'lg:row-span-2 lg:self-center'}` : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
           <div className={`flex items-center gap-2 ${contained ? "shrink-0" : ""}`}>
-            {assistantAtDesk ? (
+            {operationsNavigation ? (
+              <CompanyChatTrigger><AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t('common.companyLogoAlt', currentLang)}/></CompanyChatTrigger>
+            ) : assistantAtDesk ? (
               <AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t('common.companyLogoAlt', currentLang)} />
             ) : admin ? (
               <TeamAssistantLogoTrigger
@@ -191,8 +197,8 @@ export async function FlowTopBar({
                 logoAlt={t('common.companyLogoAlt', currentLang)}
               />
             )}
-            {contained&&<div className="lg:hidden"><OfficeEntry lang={currentLang} compact /></div>}
-            <div className={contained ? "hidden gap-1 lg:grid" : "grid gap-1"}>
+            {contained&&!operationsNavigation&&<div className="lg:hidden"><OfficeEntry lang={currentLang} compact /></div>}
+            {!operationsNavigation && <div className={contained ? "hidden gap-1 lg:grid" : "grid gap-1"}>
               <Link
                 href="/workzone"
                 title={t('workzone.title', currentLang)}
@@ -212,14 +218,14 @@ export async function FlowTopBar({
                   <LayoutDashboard className="size-4" />
                 </Link>
               ) : null}
-            </div>
+            </div>}
           </div>
 
           {!contained && (admin || mobileAdminProfiles.length > 0) ? (
             <div className="flex items-center gap-2 lg:hidden">
               {admin ? (
                 <>
-                  <TopbarAnnouncementButton message={announcementMessage} />
+                  {operationsNavigation ? <CompanyChatTrigger/> : <TopbarAnnouncementButton message={announcementMessage} />}
                   <NotificationBell admin={Boolean(admin)} className="size-9" />
                 </>
               ) : null}
@@ -279,11 +285,11 @@ export async function FlowTopBar({
           />
         </div>
 
-        {contained && <ProductionHeaderToolsSlot />}
+        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 items-start justify-between gap-2"><MusterOperationsNavigation {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><MusterHeaderUtilities/></div> : <ProductionHeaderToolsSlot />)}
         {!contained && <div className="hidden items-center gap-2 lg:flex">
           {admin ? (
             <>
-              <TopbarAnnouncementButton message={announcementMessage} />
+              {operationsNavigation ? <CompanyChatTrigger/> : <TopbarAnnouncementButton message={announcementMessage} />}
               <NotificationBell admin={Boolean(admin)} className="size-9" />
             </>
           ) : null}

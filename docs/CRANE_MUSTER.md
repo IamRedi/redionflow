@@ -148,3 +148,60 @@ Native presentation / public showcase / portfolio assessment:
 readiness claim is advertised. The portfolio repository sync check passed.
 Existing presentation/publication follow-ups remain independent; this feature
 branch grants no merge or deployment approval.
+
+## Isolated public release — 15 November 2026
+
+Owner-authorized PR223 is published as the separate
+[RheinRuhr Kranservice Muster demo](https://rheinruhr-kran-muster-production.up.railway.app/muster).
+The runtime combines PR223 `496b648` with the explicit public-entry adapter and
+dashboard timezone correction in PR224. Railway is pinned to
+`a2a5829a2a2d097a3af503eed1b5de4545c76945`, deployment
+`cb366c61-c299-418d-8123-581c149c48ca` (SUCCESS). Neither PR is merged into
+`release/bauflow-muster-20261114`; that branch still serves the existing demo.
+
+The new private Railway project `bauflow-crane-muster` contains only its own app
+and PostgreSQL service, with a dedicated persistent volume and no public database
+proxy. The fictional fixture was restored from its verified dump. There is no
+startup seed/reset, shared client database, copied client secret or enabled AI,
+email or GPS integration. The opt-in public entry fails closed unless the exact
+company, owner, visual identity, demo flags and disabled factory agree. Its five
+roles reuse the ordinary signed sessions and permissions: director, accounting,
+disposition, field worker and workshop. Changes are shared test data; the entry
+asks visitors to use fictional data only. This is an open editable demonstration,
+not a production customer login or an engineering lifting-plan approval.
+
+Publication verification:
+
+- 1,314 unit tests in 147 files, lint, TypeScript and production build passed;
+  36 local browser cases passed. The earlier 543 integration tests remain the
+  engine baseline; no integration count is inferred from online checks.
+- 42 online browser cases passed on Chromium: desktop Light (1440×900), touch
+  Night (390×844), narrow 320×640 and landscape 760×360. Workzone, the three
+  sites, plate-aware fleet, four tools, saved/reloaded plan, workshop, reception,
+  personal offices, office tasks, dashboard and TV were rendered. No uncaught
+  page errors, broken visible images, horizontal overflow or redundant outer
+  scrollbar were observed in these checked views. Keyboard Home/End reached
+  content boundaries; the footer stays in the content flow. Phone acceptance
+  uses emulation, not physical hardware.
+- All five entry roles resolved to their own accounts. An independent worker
+  PIN session was denied the administrative warehouse, found RK-WZ-001 through
+  its personal profile and downloaded the same uploaded PDF from the server.
+  Exactly one `Online-MUSTER-Test.pdf` exists; it survived the second deployment.
+  The online database still has one company, seven workers, three sites, zero
+  factory sites, two machines, four tools and three office memberships.
+- The first online run exposed a server/browser clock hydration mismatch on
+  the dashboard. Only this opted-in visual profile now passes a server-formatted
+  Europe/Berlin label. A browser in America/New_York also passed after the fix;
+  other company profiles retain their previous behavior. Transient Chromium
+  ERR_NETWORK_CHANGED failures were retained as transport diagnostics and a
+  single retry settles its error page before repeating a read-only navigation.
+- Read-only Railway before/after snapshots match every source/deployment and
+  volume mount in the protected AL Steel and existing-demo projects. No AL Steel,
+  BauFlow Musterfirma, BaumdienstFlow, other demo or portfolio deployment changed.
+
+Local receipts/captures are in the task's existing `outputs/crane-muster-20261115`
+evidence location. Source commits, runtime pin, local regression, online rendering
+and physical-device acceptance remain separate evidence. Crane safety engineering,
+camera/NFC hardware, actual printing and connected external integrations retain
+the limits described above. Showcase and portfolio/native-presentation updates
+are companion PRs only; their publication remains separate.

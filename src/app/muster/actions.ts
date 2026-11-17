@@ -7,12 +7,12 @@ import { ensureLoginAllowed, getClientIp, registerFailedLogin } from '@/lib/auth
 import { ADMIN_COOKIE } from '@/lib/auth/admin-session';
 import { DISPLAY_COOKIE } from '@/lib/auth/display-session';
 import { WORKER_COOKIE } from '@/lib/workzone/worker-session';
-import { bauflowMusterPublicDemoConfigured } from '@/lib/demo/bauflow-muster';
+import { publicMusterProfile } from '@/lib/demo/public-muster';
 import { getBauflowDemoAccount } from '@/lib/demo/bauflow-muster-access';
 
 /** Next's same-origin server-action protection applies before role entry. */
 export async function enterBauflowDemo(form: FormData) {
-  if (!bauflowMusterPublicDemoConfigured()) notFound();
+  if (!publicMusterProfile()) notFound();
   const ip = getClientIp(await headers());
   const allowed = await ensureLoginAllowed('demo', ip);
   if (!allowed.ok) redirect('/muster?busy=1');

@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-16",
+  "status": "LOCAL_VERIFIED_NOT_DEPLOYED",
+  "uiRevisions": {
+    "bauflow": "0ce19bc793e2c6d3868a22e83b32e13c975624ca",
+    "crane": "0f3cfe141b09b7d42d1c643c39deabb25a758ac7"
+  },
+  "browserCases": {
+    "bauflow": 40,
+    "crane": 39
+  },
+  "captureLifecycle": "Owned Chromium contexts closed; preview children stopped after each run. No desktop capture.",
+  "records": [
+    {
+      "source": "crane-workshop-desktop.png",
+      "output": "muster-ops-crane-desktop.webp",
+      "sourceSha256": "e434108ef491861f68e12c51aa3bd07ea4edb08e25148e36bca06d6d65e4ce17",
+      "outputSha256": "bab1f7fab786a5c398aea57f5396113c574b1b73eea97fff2db73e3713b88f3e",
+      "kind": "actual local browser capture, fictional data",
+      "physicalDevice": false
+    },
+    {
+      "source": "crane-inventory-phone-light.png",
+      "output": "muster-ops-crane-phone.webp",
+      "sourceSha256": "2aefd82c7e0d8d034b4c8e98b5802f90a502c9edc5055fc3f0f0151cb132d79a",
+      "outputSha256": "139dcce340b8bf2fd9539ddf76368a4f2f5386b9f9b932fa6470a0dc2927086d",
+      "kind": "actual local browser capture, fictional data",
+      "physicalDevice": false
+    },
+    {
+      "source": "bauflow-workshop-desktop.png",
+      "output": "muster-ops-bauflow-desktop.webp",
+      "sourceSha256": "6d33d50a5f00b4641d51ac32d08a4cb89594024787f4897b07a462f18d89c172",
+      "outputSha256": "0aabbaef15b291f1de9b5022bd0b4213e19bf1668cda74f5aa8fffe46d1e22b7",
+      "kind": "actual local browser capture, fictional data",
+      "physicalDevice": false
+    },
+    {
+      "source": "bauflow-inventory-phone-light.png",
+      "output": "muster-ops-bauflow-phone.webp",
+      "sourceSha256": "06f903fe7b1d56216c7d23da898d29d52d4f0b3c48ffe247ffae278e2ca7f002",
+      "outputSha256": "3cbe869cd57c5c12551a2faf40912af3d19514ecb43e564480a7924714b45ebc",
+      "kind": "actual local browser capture, fictional data",
+      "physicalDevice": false
+    }
+  ]
+}

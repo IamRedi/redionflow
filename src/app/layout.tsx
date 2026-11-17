@@ -6,6 +6,10 @@ import { bauflowMusterPublicDemoConfigured, isBauflowMusterCompany } from '@/lib
 import '@/components/steel/bauflow-muster.css';
 import '@/components/steel/company-ui.css';
 import { companyUiIdentity } from '@/lib/provision/company-ui';
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
+import { CompanyChatProvider } from '@/components/company-chat/CompanyChat';
+import { companyChatIdentity } from '@/lib/company-chat/identity';
+import '@/components/company-assets/muster-operations.css';
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Home, LayoutDashboard, UsersRound } from "lucide-react";
@@ -69,7 +73,9 @@ export default async function RootLayout({
   const uiIdentity = await companyUiIdentity(companyId);
   const kidraht = await kidrahtAvailable(companyId);
   const production = companyMode === "bau" && companyId !== null && await isSteelCompany(companyId);
-  const announcement = production && admin ? await prisma.workzoneAnnouncement.findFirst({ where: { companyProfileId: companyId!, isActive: true }, select: { message: true }, orderBy: { createdAt: "desc" } }) : null;
+  const operations = isMusterOperationsCompany(companyId);
+  const chat = operations ? await companyChatIdentity() : null;
+  const announcement = production && admin && !operations ? await prisma.workzoneAnnouncement.findFirst({ where: { companyProfileId: companyId!, isActive: true }, select: { message: true }, orderBy: { createdAt: "desc" } }) : null;
   const brand = productBranding(companyMode);
   const showSaasPublicBrand = isSaasMode && !admin && !worker;
   // Fall back to the static brand for pre-session pages where no company is
@@ -99,14 +105,15 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body data-company-ui={uiIdentity ?? undefined} data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} data-studio-compact-catalog={isBauflowMusterCompany(companyId) || uiIdentity !== null || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
+      <body data-muster-operations={isMusterOperationsCompany(companyId) || undefined} data-company-ui={uiIdentity ?? undefined} data-bauflow-muster={isBauflowMusterCompany(companyId) || undefined} data-studio-compact-catalog={isBauflowMusterCompany(companyId) || uiIdentity !== null || undefined} className={`min-h-dvh bg-background text-foreground antialiased mode-${companyMode}`}>
         <LanguageProvider initialLang={initialLang}>
           {admin || worker ? <SessionKeepAlive /> : null}
           <ProductionHeaderActionsProvider>
+          <CompanyChatProvider actor={chat ? { key: chat.key, name: chat.name, demo: chat.demo } : null}>
           <FooterBrandProvider mark={production ? (admin ? <Link href="/app/profile" title={adminProfileTitle} aria-label={adminProfileTitle}>{brandBadge}</Link> : brandBadge) : null}>
           {/* Operational tools align with the header; the steel product mark lives in the shared footer. */}
-          {production ? <ProductionHeaderTools
-            navigation={<>
+          {production && !operations ? <ProductionHeaderTools
+            navigation={operations ? null : <>
               <Link href="/workzone" aria-label={t("workzone.title", initialLang)} title={t("workzone.title", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><Home className="size-4" /></Link>
               {admin && <Link href="/app/dashboard" aria-label={t("workzone.admin", initialLang)} title={t("workzone.admin", initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><LayoutDashboard className="size-4" /></Link>}
               {isBauflowMusterCompany(companyId) && bauflowMusterPublicDemoConfigured() ? <Link href="/muster" aria-label={t('admin.publicDemo', initialLang)} title={t('admin.publicDemo', initialLang)} className="inline-flex size-[44px] items-center justify-center rounded-full border bg-transparent text-foreground/80 transition hover:bg-muted hover:text-foreground"><UsersRound className="size-4" /></Link> : null}
@@ -116,7 +123,7 @@ export default async function RootLayout({
               <NotificationBell admin={Boolean(admin)} />
             </> : null}
             book={kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} iconOnly /> : null}
-          /> : <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
+          /> : !production ? <div data-testid="flow-global-tools" className="absolute right-2 top-2 z-[1000] flex items-center gap-1.5 print:hidden">
             {kidraht ? <KidrahtButton href="/workzone/kidraht" title={t("demo.kidrahtTitle", initialLang)} /> : null}
             <div className={`border border-border/50 bg-background/90 px-1.5 py-0.5 backdrop-blur ${admin ? "" : "pointer-events-none"}`}>
               {admin ? (
@@ -127,10 +134,11 @@ export default async function RootLayout({
                 brandBadge
               )}
             </div>
-          </div>}
+          </div> : null}
           <StaleDeploymentReload />
           {children}
           </FooterBrandProvider>
+          </CompanyChatProvider>
           </ProductionHeaderActionsProvider>
         </LanguageProvider>
       </body>
