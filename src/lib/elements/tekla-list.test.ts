@@ -35,6 +35,7 @@ describe("Tekla element lists", () => {
     expect(parse(rows)).toMatchObject({ projectNumber: '0099', elements: [{ mark: 'B/1', assemblyParts: { parts: [{ mark: 'b/1', quantity: 2 }] } }] });
     expect(() => parse([rows[1], rows[3]])).toThrow(ElementListError);
     expect(() => parse([...rows.slice(0, 3), ['', '', 'b/1', 0]])).toThrow(ElementListError);
+    expect(() => parse([rows[1], ['', 'B/1', 'b/1', 4]])).toThrow(ElementListError);
   });
   it("reads an assembly list with project number, marks, profiles and weights", () => {
     const file = teklaHtml(

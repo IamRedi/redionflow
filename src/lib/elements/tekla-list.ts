@@ -145,12 +145,15 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
           if (!parent) throw new ElementListError("A component has no assembly header.");
           if (/^(totale|total)/i.test(partMark)) break;
           const quantity = num(cells[columns.indexOf("quantity")]);
-          if (quantity === null || quantity <= 0 || !Number.isInteger(quantity)) throw new ElementListError("Invalid component quantity.");
+          if (quantity === null || quantity <= 0 || !Number.isSafeInteger(quantity)) throw new ElementListError("Invalid component quantity.");
           parent.assemblyParts!.parts.push({ mark: partMark, quantity });
           continue;
         }
         if (!lead) continue;
         if (/^(totale|total)/i.test(lead)) break;
+        // A single quantity column cannot tell us both the assembly quantity
+        // and its component quantity. Refuse this unsupported shape, never guess.
+        if (hasComposition && partMark) throw new ElementListError("Assembly and component quantities need separate rows.");
         const entry: ParsedElement = { mark: lead, kind: null, profile: null, material: null, quantity: 1, lengthMm: null, weightKg: null, areaM2: null };
         if (hasComposition) entry.assemblyParts = { v: 1, parts: [] };
         let weightTotal: number | null = null;
@@ -186,7 +189,6 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
         if (entry.areaM2 === null && areaTotal !== null) entry.areaM2 = areaTotal / entry.quantity;
         elements.push(entry);
         parent = entry;
-        if (hasComposition && partMark) entry.assemblyParts!.parts.push({ mark: partMark, quantity: entry.quantity });
       }
       found = {
         list,
