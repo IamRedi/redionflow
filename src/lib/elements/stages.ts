@@ -107,8 +107,17 @@ export function routeStages(element: ElementState, side: ElementSide) {
 
 /** A legacy engineer's closed route already records the steps that were needed. */
 export function productionCompletionStages(element: ElementState): readonly string[] {
-  return readProcessRoutes(element.processRoutes)?.factory == null && element.factoryDoneAt
+  const route = readProcessRoutes(element.processRoutes)?.factory == null && element.factoryDoneAt
     ? routeStages(element, 'factory') : stagesFor('factory', element.list, element.processRoutes);
+  return route.filter(stage => stage !== 'loading');
+}
+
+/** Manufacturing is complete before loading; neither a finish stamp nor readiness proves a load. */
+export function productionQuantities(element: ElementState) {
+  const route = productionCompletionStages(element);
+  const produced = route.length ? Math.min(...route.map(stage => stagePieces(element, stage))) : 0;
+  const loaded = element.list === 'assembly' ? stagePieces(element, 'loading') : 0;
+  return { produced, loaded, readyForLoading: element.list === 'assembly' ? Math.max(0, produced - loaded) : 0 };
 }
 
 /**

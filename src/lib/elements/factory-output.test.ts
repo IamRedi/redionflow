@@ -5,6 +5,16 @@ const fp = `fp-${"a".repeat(24)}`;
 const row = (over: Partial<OutputRow> = {}): OutputRow => ({ baustelleId: "demo-a", quantity: 4, weightKg: 10, factoryDoneAt: null, fieldDoneAt: null, work: [], ...over });
 const sites = [{ id: "demo-a", name: "Demo A" }, { id: "demo-b", name: "Demo B" }];
 
+it('reports manufactured and ready-for-loading quantities separately from actual loads and field release', () => {
+  const outputs = factoryOutput([
+    row({ processRoutes: { v: 1, factory: ['coating', 'loading'], field: [] }, work: [{ stage: 'coating', pieces: 4 }, { stage: 'loading', pieces: 1 }] }),
+    row({ baustelleId: 'demo-b', quantity: 2, processRoutes: { v: 1, factory: ['loading'], field: [] }, work: [{ stage: 'loading', pieces: 2 }] }),
+  ], sites);
+  expect(outputs[0]).toMatchObject({ donePieces: 1, manufacturedPieces: 4, manufacturedKg: 40, loadedPieces: 1, readyForLoadingPieces: 3 });
+  expect(outputs[1]).toMatchObject({ manufacturedPieces: 0, loadedPieces: 2, readyForLoadingPieces: 0 });
+  expect(totalOutput(outputs)).toMatchObject({ manufacturedPieces: 4, loadedPieces: 3, readyForLoadingPieces: 3 });
+});
+
 it("uses only selected elements in each process denominator while keeping current factory release route-aware", () => {
   const [output] = factoryOutput([
     row({ processRoutes: { v: 1, factory: ["cutting", fp], field: null }, work: [{ stage: "cutting", pieces: 4 }, { stage: fp, pieces: 2 }, { stage: "welding", pieces: 4 }] }),

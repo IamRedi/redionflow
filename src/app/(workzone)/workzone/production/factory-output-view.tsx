@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelPhaseArt } from "@/components/steel/steel-art";
+import { ProductionDelivery } from '@/components/steel/production-delivery';
 import { factoryProcessPercent, totalOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 import { FACTORY_STEP_KEYS, formatAmount } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
@@ -43,15 +44,16 @@ function Totals({ output }: { output: Omit<SiteFactoryOutput, "siteId" | "siteNa
   const { currentLang: lang } = useLanguage();
   const pcs = t("elements.pieceShort", lang);
   const waitingPieces = output.pieces - output.donePieces;
+  const produced = output.manufacturedPieces ?? output.donePieces;
   return (
     <div className="space-y-2"><PartsLine output={output}/>{output.pieces > 0 ? <div className="grid grid-cols-3 gap-1.5 text-[11px] tabular-nums">
       <div className="min-w-0 rounded-xl bg-green-600/10 px-2.5 py-2">
         <div className="truncate font-semibold text-green-800 dark:text-green-300">{t("elements.produced", lang)}</div>
         <div className="text-base font-bold leading-tight">
-          {amount(output.donePieces)}
+          {amount(produced)}
           <span className="text-xs font-semibold text-muted-foreground">/{amount(output.pieces)} {pcs}</span>
         </div>
-        {output.kg > 0 ? <div className="truncate text-muted-foreground">{amount(output.doneKg)} {t("factory.units.kg", lang)}</div> : null}
+        {output.kg > 0 ? <div className="truncate text-muted-foreground">{amount(output.manufacturedKg ?? output.doneKg)} {t("factory.units.kg", lang)}</div> : null}
       </div>
       <div className="min-w-0 rounded-xl bg-muted/70 px-2.5 py-2">
         <div className="truncate font-semibold">{t("elements.inFactory", lang)}</div>
@@ -67,7 +69,7 @@ function Totals({ output }: { output: Omit<SiteFactoryOutput, "siteId" | "siteNa
         </div>
         <div className="truncate text-muted-foreground">{fill(t("elements.ofArrived", lang), { n: amount(output.donePieces) })}</div>
       </div>
-    </div> : null}</div>
+    </div> : null}{output.pieces > 0 && output.loadedPieces !== undefined ? <ProductionDelivery produced={produced} loaded={output.loadedPieces} ready={output.readyForLoadingPieces} total={output.pieces} /> : null}</div>
   );
 }
 
@@ -163,9 +165,9 @@ export function AllSitesFactoryView({ sites, processDefinitions = [] }: { sites:
                 <PartsLine output={site}/>
                 {site.pieces > 0 ? <div className="text-[11px] tabular-nums text-muted-foreground">
                   {fill(site.kg > 0 ? t("elements.siteOutputLine", lang) : t("elements.siteOutputLine", lang).replace(/\s*\(\{kg\}[^)]*\)/, ""), {
-                    done: amount(site.donePieces),
+                    done: amount(site.manufacturedPieces ?? site.donePieces),
                     total: amount(site.pieces),
-                    kg: amount(site.doneKg),
+                    kg: amount(site.manufacturedKg ?? site.doneKg),
                     waiting: amount(site.pieces - site.donePieces),
                     mounted: amount(site.mountedPieces),
                   })}

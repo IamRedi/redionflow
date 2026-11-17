@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, productionCompletionStages, readProcessRoutes, routeClosed, routeStages, stagePieces, stageRemaining, sideOfStage, stageProgress, stagesFor } from "./stages";
+import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, productionCompletionStages, productionQuantities, readProcessRoutes, routeClosed, routeStages, stagePieces, stageProgress, stageRemaining, sideOfStage, stagesFor } from "./stages";
 
 const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office: boolean; reportMissing: boolean }>) => ({
   siteSteps: false,
@@ -11,6 +11,27 @@ const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office
 });
 
 describe("element stages", () => {
+  it('separates manufacturing from real loading without changing existing field-release rules', () => {
+    const e = { list: 'assembly' as const, quantity: 4, processRoutes: { v: 1, factory: ['welding', 'coating', 'loading'], field: ['mounted'] }, work: [{ stage: 'welding', pieces: 4 }, { stage: 'coating', pieces: 4 }] };
+    expect(productionCompletionStages(e)).toEqual(['welding', 'coating']);
+    expect(productionQuantities(e)).toEqual({ produced: 4, loaded: 0, readyForLoading: 4 });
+    expect(onFieldList(e)).toBe(false);
+    const partial = { ...e, work: [...e.work, { stage: 'loading', pieces: 2 }] };
+    expect(productionQuantities(partial)).toEqual({ produced: 4, loaded: 2, readyForLoading: 2 });
+    expect(capFor(partial, 'field')).toBe(2);
+    expect(stageRemaining(partial, 'loading')).toBe(2);
+    expect(productionQuantities({ ...e, factoryDoneAt: new Date() }).loaded).toBe(0);
+  });
+  it('keeps legacy confirmations, partial work and loading-only routes factual', () => {
+    const legacy = { list: 'assembly' as const, quantity: 4, factoryDoneAt: new Date(), work: [{ stage: 'welding', pieces: 3 }, { stage: 'loading', pieces: 1 }] };
+    expect(productionCompletionStages(legacy)).toEqual(['welding']);
+    expect(productionQuantities(legacy)).toEqual({ produced: 3, loaded: 1, readyForLoading: 2 });
+    expect(doneQty(legacy, 'factory')).toBe(1);
+    const loadingOnly = { ...legacy, processRoutes: { v: 1, factory: ['loading'], field: [] } };
+    expect(productionCompletionStages(loadingOnly)).toEqual([]);
+    expect(productionQuantities(loadingOnly)).toEqual({ produced: 0, loaded: 1, readyForLoading: 0 });
+    expect(productionQuantities({ list: 'part', quantity: 8, work: [{ stage: 'cutting', pieces: 5 }] })).toEqual({ produced: 5, loaded: 0, readyForLoading: 0 });
+  });
   it('preserves a previously closed legacy route and never adds its intentionally skipped stages', () => {
     expect(productionCompletionStages({ list: 'assembly', factoryDoneAt: new Date(), work: [{ stage: 'welding', pieces: 2 }] })).toEqual(['welding']);
     expect(productionCompletionStages({ list: 'assembly', work: [], processRoutes: { v: 1, factory: [], field: [] } })).toEqual([]);

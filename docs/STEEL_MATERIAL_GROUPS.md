@@ -70,6 +70,32 @@ steps. Company/site rights, active worker membership, catalog availability,
 quantity/route/work freshness, canonical locks and completion notifications all
 remain enforced. Concurrent/retried completion cannot duplicate quantities.
 
+### Manufacturing and loading — 17 November correction
+
+**Përfundo prodhimin** excludes the canonical `loading` stage, including on
+legacy and explicitly configured routes. A payload trying to include loading
+is rejected; a loading-only route cannot be completed with this shortcut.
+Loading is confirmed separately through its existing process card, with real
+workers, quantities, checker and timestamp. No historical loading receipt is
+deleted, relabelled or retroactively assumed false.
+
+The list/detail and factory overview distinguish manufactured quantities,
+**Gati për ngarkim** (manufactured minus actual loaded pieces) and **Ngarkuar**
+(actual loading confirmations). Empty manufacturing routes never invent ready
+pieces. Legacy closed manufacturing routes retain their accepted skipped steps;
+their finish timestamp alone is never displayed as evidence of loading. Partial
+loading remains partial, even after another production confirmation. Aggregate
+ready quantities are summed per element so another element's loading cannot
+cancel its waiting pieces.
+
+Existing field-release quantities, required process routes, completion events,
+permissions and historical dashboard metrics remain unchanged. When loading is
+still required, the shortcut does not newly stamp the route as closed, and field
+access stays capped by the separately completed required route. Routes that
+deliberately omit loading keep their existing release policy; the UI still does
+not claim a physical load without its receipt. Existing finish attribution is
+preserved. This correction adds no schema, account or configuration changes.
+
 The nullable link/index/FK migration does not rewrite existing material or work
 records. No Production files or confirmations are mutated during preparation.
 

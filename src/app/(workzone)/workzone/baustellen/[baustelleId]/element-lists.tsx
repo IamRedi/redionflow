@@ -11,7 +11,8 @@ import { ElementProcessEditor } from '@/components/steel/element-process-editor'
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
 import { elementImportCopy } from '@/components/steel/element-import-copy';
 import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
-import { productionCompletionStages, readProcessRoutes } from '@/lib/elements/stages';
+import { productionCompletionStages, productionQuantities, readProcessRoutes } from '@/lib/elements/stages';
+import { ProductionDelivery, productionDeliveryCopy } from '@/components/steel/production-delivery';
 import { materialGroup, materialGroupCopy, readAssemblyParts, type MaterialGroup } from '@/lib/elements/material-groups';
 import { planRemainders } from '@/lib/elements/remainders';
 import { productionShortcutCopy } from '@/components/steel/production-shortcut-copy';
@@ -65,11 +66,14 @@ export type ElementWorkerOption = { id: string; name: string; crewRole: string |
 
 type Filter = "all" | "waiting" | "working" | "done" | "factory" | "COLUMN" | "BEAM";
 type Status = "waiting" | "working" | "done";
+type DisplayStatus = Status | 'ready' | 'loaded';
 
-const STATUS_STYLE: Record<Status, { badge: string; pill: string }> = {
+const STATUS_STYLE: Record<DisplayStatus, { badge: string; pill: string }> = {
   waiting: { badge: "bg-muted text-foreground", pill: "bg-muted text-muted-foreground" },
   working: { badge: "bg-orange-500 text-white", pill: "bg-orange-500/15 text-orange-700 dark:text-orange-300" },
   done: { badge: "bg-green-600 text-white", pill: "bg-green-600/15 text-green-700 dark:text-green-300" },
+  ready: { badge: "bg-orange-500/15 text-orange-900 dark:text-orange-100", pill: "bg-orange-500/15 text-orange-800 dark:text-orange-200" },
+  loaded: { badge: "bg-green-600 text-white", pill: "bg-green-600/15 text-green-700 dark:text-green-300" },
 };
 
 function stageLabel(stage: string, lang: string, definitions: SteelWorkDefinitionView[] = []) {
@@ -79,8 +83,22 @@ function stageLabel(stage: string, lang: string, definitions: SteelWorkDefinitio
 
 const processButton = (lang: string) => ({ sq: 'Proceset', en: 'Processes', de: 'Prozesse', it: 'Processi', ro: 'Procese', pl: 'Procesy' })[lang] ?? 'Processes';
 
-function statusLabel(status: Status, lang: string) {
+function statusLabel(status: DisplayStatus, lang: string) {
+  if (status === 'ready' || status === 'loaded') return productionDeliveryCopy(lang)[status];
   return status === "done" ? t("elements.statusDone", lang) : status === "working" ? t("elements.statusWorking", lang) : t("elements.statusWaiting", lang);
+}
+
+function displayStatus(element: ElementView, side: ElementSide): DisplayStatus {
+  if (side === 'factory' && element.list === 'assembly') {
+    const q = productionQuantities(element);
+    if (q.loaded >= element.quantity) return 'loaded';
+    if (q.produced >= element.quantity) return 'ready';
+  }
+  return elementStatus(element, side);
+}
+
+function filterStatus(element: ElementView, side: ElementSide): Status {
+  return side === 'factory' && productionQuantities(element).produced >= element.quantity ? 'done' : elementStatus(element, side);
 }
 
 function kindLabel(kind: string | null, lang: string) {
@@ -449,13 +467,13 @@ function ListView({
   let lockedCount = 0;
   for (const element of shown) {
     if (isLocked(element)) lockedCount += 1;
-    else counts[elementStatus(element, side)] += 1;
+    else counts[filterStatus(element, side)] += 1;
   }
 
   const q = query.trim().toLowerCase();
   const visible = shown.filter((element) => {
     if (filter === "factory" && !isLocked(element)) return false;
-    if ((filter === "waiting" || filter === "working" || filter === "done") && (isLocked(element) || elementStatus(element, side) !== filter)) return false;
+    if ((filter === "waiting" || filter === "working" || filter === "done") && (isLocked(element) || filterStatus(element, side) !== filter)) return false;
     if ((filter === "COLUMN" || filter === "BEAM") && element.kind !== filter) return false;
     if (!q) return true;
     return [element.mark, element.profile, element.material, element.kind].some((value) => value?.toLowerCase().includes(q));
@@ -697,8 +715,8 @@ function bySource(items: ElementView[]) {
 }
 
 /** Segment per step: full green when every piece passed it, half when some did. */
-function stepTone(element: ElementView, stage: string, status: Status) {
-  if (status === "done") return "bg-green-600";
+function stepTone(element: ElementView, stage: string, status: DisplayStatus) {
+  if (status === "done" && stage !== 'loading') return "bg-green-600";
   const side = sideOfStage(stage) ?? "factory";
   const through = stagePieces(element, stage);
   const cap = side === "factory" ? element.quantity : capFor(element, "field");
@@ -708,7 +726,7 @@ function stepTone(element: ElementView, stage: string, status: Status) {
 
 function ElementRow({ element, stages, definitions, side, locked = false, canPlan, onOpen }: { element: ElementView; stages: readonly string[]; definitions: SteelWorkDefinitionView[]; side: ElementSide; locked?: boolean; canPlan: boolean; onOpen: () => void }) {
   const { currentLang: lang } = useLanguage();
-  const status = elementStatus(element, side);
+  const status = displayStatus(element, side);
   const total = (element.weightKg ?? 0) * element.quantity;
   const done = doneQty(element, side);
   const arrived = capFor(element, side);
@@ -763,6 +781,10 @@ function ElementRow({ element, stages, definitions, side, locked = false, canPla
 function PieceStrip({ element, side, definitions }: { element: ElementView; side: ElementSide; definitions: SteelWorkDefinitionView[] }) {
   const { currentLang: lang } = useLanguage();
   const total = element.quantity;
+  if (side === 'factory' && element.list === 'assembly') {
+    const q = productionQuantities(element);
+    return <div className="rounded-2xl border bg-card p-3"><ProductionDelivery produced={q.produced} loaded={q.loaded} total={total} /></div>;
+  }
   const done = doneQty(element, side);
   // Orange: on site but not finished there yet. In the factory there is no such state.
   const arrived = side === "field" ? capFor(element, side) : done;
@@ -852,7 +874,7 @@ function ElementDetail({
   const stages = stagesFor(side, element.list, element.processRoutes);
   const legacyRoute = readProcessRoutes(element.processRoutes)?.[side] == null;
   const historicStages = [...new Set(element.work.filter(work => sideOfStage(work.stage) === side && !stages.includes(work.stage)).map(work => work.stage))];
-  const status = elementStatus(element, side);
+  const status = displayStatus(element, side);
   const closed = routeClosed(element, side);
   const closedAt = side === "factory" ? element.factoryDoneAt : element.fieldDoneAt;
   const closedBy = side === "factory" ? element.factoryDoneBy : element.fieldDoneBy;
@@ -912,7 +934,7 @@ function ElementDetail({
         </ul>
       </section> : null}
 
-      {element.quantity > 1 || side === "field" ? <PieceStrip element={element} side={side} definitions={definitions} /> : null}
+      {element.quantity > 1 || side === "field" || element.list === 'assembly' ? <PieceStrip element={element} side={side} definitions={definitions} /> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <span className="text-sm font-bold">{side === "factory" ? t("elements.factorySteps", lang) : t("elements.fieldSteps", lang)}</span>
@@ -926,7 +948,7 @@ function ElementDetail({
           const entries = element.work.filter((entry) => entry.stage === stage);
           const through = stagePieces(element, stage);
           const full = through >= cap && through > 0;
-          const skipped = legacyRoute && entries.length === 0 && closed;
+          const skipped = legacyRoute && entries.length === 0 && closed && stage !== 'loading';
           const definition = definitions.find(definition => definition.key === stage);
           const last = entries[entries.length - 1] ?? null;
           return (
@@ -982,7 +1004,7 @@ function ElementDetail({
             </button>
           ) : null}
         </div>
-      ) : legacyRoute && canEdit && !closed ? (
+      ) : legacyRoute && canEdit && !closed && !(side === 'factory' && element.list === 'assembly' && productionQuantities(element).produced >= element.quantity) ? (
         <>
           <button
             type="button"
