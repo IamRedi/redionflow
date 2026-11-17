@@ -60,6 +60,14 @@ test('production shortcut and calculated elements keep actual attribution and co
     await editor.getByRole('button',{name:elementProcessCopy('sq').apply,exact:true}).click();
     const derived=await prisma.siteElement.findUniqueOrThrow({where:{remainderOfId:part.id}});
     expect(derived.quantity).toBe(4);expect(derived.processRevision).toBe(2);expect(derived.factoryDoneAt).toBeNull();
+    await expect(editor).not.toBeVisible();
+    await list.getByRole('button',{name:'Përfundo prodhimin',exact:true}).click();
+    const nextConfirmation=page.getByRole('dialog',{name:'p/1 · Përfundo prodhimin',exact:true});
+    await expect(nextConfirmation.getByRole('checkbox',{name:'Ardi DEMO',exact:true})).not.toBeChecked();
+    await nextConfirmation.getByRole('button').filter({hasText:'Ardi DEMO'}).click();
+    await expect(nextConfirmation.getByRole('checkbox',{name:'Ardi DEMO',exact:true})).toBeChecked();
+    await nextConfirmation.getByRole('button',{name:'Anulo',exact:true}).click();
+    expect(await prisma.siteElementWork.count({where:{elementId:derived.id}})).toBe(0);
     expect((await prisma.siteElement.findUniqueOrThrow({where:{id:part.id}})).quantity).toBe(10);
     expect(errors).toEqual([]);
   }finally{await context.close();await prisma.user.deleteMany({where:{companyProfileId:company.id}});await prisma.companyProfile.delete({where:{id:company.id}});}
