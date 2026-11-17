@@ -1,11 +1,12 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
-import { BellRing, CalendarDays, CheckCheck, LogIn, LogOut, MessageSquare, X } from 'lucide-react';
+import { BellRing, CalendarDays, CheckCheck, LogIn, LogOut, MessageSquare, Send, X } from 'lucide-react';
 import { useState, useTransition } from 'react';
+import { t } from '@/lib/i18n';
 import { useLanguage } from '@/components/i18n/language-provider';
 import { Button } from '@/components/ui/button';
 import { saveNotificationPreferenceAction } from '@/app/(workzone)/workzone/hr-actions';
-import { enableAndTestNotifications } from '@/lib/notifications/notification-client';
+import { enableAndTestNotifications, testBrowserNotification } from '@/lib/notifications/notification-client';
 import type { NotificationPreference, NotificationSettingsRow } from '@/lib/notifications/notification-store';
 
 const LANGS = ['sq', 'en', 'de', 'it', 'pl', 'ro'] as const;
@@ -44,7 +45,7 @@ const ROWS: Array<{ key: NotificationPreference; icon: typeof BellRing; work?: b
  * Each switch saves at once. Work start/end are opt-in and only an admin can
  * switch them on (canEnableWork); everyone else sees them only when already on.
  */
-export function NotificationPrefsButton({ userId, initial, canEnableWork, self = true, className = '' }: { userId: string; initial: NotificationSettingsRow; canEnableWork: boolean; self?: boolean; className?: string }) {
+export function NotificationPrefsButton({ userId, initial, canEnableWork, self = true, canTestTeam = false, className = '' }: { userId: string; initial: NotificationSettingsRow; canEnableWork: boolean; self?: boolean; canTestTeam?: boolean; className?: string }) {
   const { currentLang } = useLanguage();
   const c = copy(currentLang);
   const [settings, setSettings] = useState(initial);
@@ -104,6 +105,7 @@ export function NotificationPrefsButton({ userId, initial, canEnableWork, self =
           })}
         </ul>
         {self ? <Button type="button" disabled={busy} onClick={enable} data-testid="notification-prefs-enable" className="mt-3 min-h-11 w-full justify-center gap-2 rounded-2xl bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-500 dark:text-slate-950"><CheckCheck className="size-4" />{c.enable}</Button> : null}
+        {canTestTeam && <Button type="button" variant="outline" disabled={busy} onClick={() => { setMessage(null); start(async () => setMessage((await testBrowserNotification(true)).message)); }} data-testid="notification-test-all" className="mt-2 min-h-11 w-full justify-center gap-2"><Send className="size-4" />{t('workzone.notificationTestTeam', currentLang)}</Button>}
         {message ? <p role="status" className="mt-2 text-center text-xs text-muted-foreground">{message}</p> : null}
       </Dialog.Content>
     </Dialog.Portal>

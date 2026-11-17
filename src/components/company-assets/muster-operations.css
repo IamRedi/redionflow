@@ -110,3 +110,7 @@ body[data-muster-operations][data-studio-compact-catalog] [data-muster-legal]+fo
   body[data-muster-operations][data-studio-compact-catalog] [data-testid=app-workspace-scroll]::-webkit-scrollbar { width:auto;height:auto; }
 }
 @media print { body[data-muster-operations][data-studio-compact-catalog] .steelStudioWorkspace { background:white !important; } }
+
+/* Personal actions are grouped, never another row of circular global shortcuts. */
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-profile-panel] :is(a,button) { border:0;border-radius:12px;box-shadow:none;background:transparent;min-width:0;backdrop-filter:none; }
+body[data-muster-operations][data-studio-compact-catalog] [data-muster-profile-panel] :is(a,button):hover { background:hsl(var(--foreground)/.07); }

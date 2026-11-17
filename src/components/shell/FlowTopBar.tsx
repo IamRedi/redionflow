@@ -24,6 +24,7 @@ import { ProductionHeaderToolsSlot } from './ProductionHeaderActions';
 import { currentOfficeAccess } from '@/lib/offices/access';
 import { MusterOperationsNavigation } from '@/components/company-assets/muster-navigation';
 import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
+import { MusterHeaderUtilities } from './MusterHeaderUtilities';
 
 function adminInitial(value: string | null | undefined) {
   const source = value?.trim();
@@ -170,7 +171,9 @@ export async function FlowTopBar({
         {/* Keep the production logo and scrollable team side by side in normal flow. */}
         <div className={`pointer-events-none relative z-10 ${contained ? `col-start-1 row-start-1 flex-row items-center ${operationsNavigation ? '' : 'lg:row-span-2 lg:self-center'}` : "col-start-1 row-start-1 flex-col"} flex gap-2 [&_a]:pointer-events-auto [&_button]:pointer-events-auto`}>
           <div className={`flex items-center gap-2 ${contained ? "shrink-0" : ""}`}>
-            {assistantAtDesk ? (
+            {operationsNavigation ? (
+              <CompanyChatTrigger><AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t('common.companyLogoAlt', currentLang)}/></CompanyChatTrigger>
+            ) : assistantAtDesk ? (
               <AppBrand compact mode={companyMode} companyLogo={companyLogo} logoAlt={t('common.companyLogoAlt', currentLang)} />
             ) : admin ? (
               <TeamAssistantLogoTrigger
@@ -282,7 +285,7 @@ export async function FlowTopBar({
           />
         </div>
 
-        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 flex-wrap items-center justify-between gap-2"><MusterOperationsNavigation {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><ProductionHeaderToolsSlot inline /></div> : <ProductionHeaderToolsSlot />)}
+        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 items-start justify-between gap-2"><MusterOperationsNavigation {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><MusterHeaderUtilities/></div> : <ProductionHeaderToolsSlot />)}
         {!contained && <div className="hidden items-center gap-2 lg:flex">
           {admin ? (
             <>

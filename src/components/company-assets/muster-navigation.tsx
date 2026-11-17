@@ -16,7 +16,7 @@ export function MusterOperationsNavigation({ warehouse, workshop, office }: { wa
     { href: '/workzone/inventory', label: c.warehouse, Icon: Package, visible: warehouse },
     { href: '/workzone/fleet', label: t('workzone.fleet', lang), Icon: Truck, visible: true },
   ];
-  return <nav data-testid="muster-operations-nav" aria-label={t('workzone.title', lang)} className="flex min-w-0 flex-wrap items-center gap-2">
+  return <nav data-testid="muster-operations-nav" aria-label={t('workzone.title', lang)} className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5 [&>*]:shrink-0">
     {links.filter(link => link.visible).map(({ href, label, Icon }) => <Link key={href} href={href} title={label} aria-label={label} aria-current={path === href ? 'page' : undefined} className="musterOperationLink inline-flex size-11 shrink-0 items-center justify-center rounded-full border outline-none transition focus-visible:ring-2 focus-visible:ring-ring"><Icon size={19} aria-hidden="true" /></Link>)}
     {office}
   </nav>;
