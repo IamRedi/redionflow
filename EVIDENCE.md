@@ -4,6 +4,15 @@
 
 ## 17 November 2026 — one global utility, personal tools in own profiles
 
+**Delivery: PUBLISHED / ONLINE_VERIFIED.** Owner approved PR231
+head `7b2fc6b9febcc44c30a7c73139e4ea17f2b4eda1`. Merge `0a019bdb8f84bbd6d6dd46ce56f0cc93992fffef`
+exactly matches its tree. Railway deployment `32a5a569-1086-4d34-84ac-42c6c1607856`
+is SUCCESS at that exact merge. See the delivery section in
+[the existing logic record](docs/MUSTER_TEAM_CHAT.md) for all three receipts,
+protected-service readback, online scope/limitations and browser cleanup.
+Nine representative final images across the three demos were individually
+reviewed; transition/resize frames remain diagnostic. No new public media.
+
 Scope: **RheinRuhr crane Muster**, candidate `0fce7e7ca6fa093a59eff65a28da55ea0a7fb62e`. This is the current successor
 to the historical 16 November header below, in the same existing Muster PR.
 Right-side utilities contain only Day/Night. The original company logo opens
@@ -28,10 +37,11 @@ overwritten. Build/runtime code was unchanged when browser checks resumed.
 Logic, shared-source pointers and office exceptions:
 [MUSTER_TEAM_CHAT.md](docs/MUSTER_TEAM_CHAT.md). Source manifests, gate logs and
 captures: `outputs/muster-operations-20261117` in the existing owner workspace.
-Physical phone/native push remain NOT_VERIFIED. Merge, deployment and online
-acceptance are PENDING a separate exact-candidate approval. No Actions, paid AI,
-provider, secret, migration or production-data change. Native presentation,
-README/About and portfolio: NO_CONTENT_CHANGE for this unpublished refinement.
+Physical phone/native push remain NOT_VERIFIED. The owner subsequently
+approved the exact candidates; merges, deployments and direct-browser online
+acceptance are complete as recorded above. No Actions, paid AI, provider,
+secret, migration or operational business-record change. Native presentation,
+README/About and portfolio: NO_CONTENT_CHANGE for this internal refinement.
 
 ## 16 November 2026 — consistent personal controls in the Muster header
 
