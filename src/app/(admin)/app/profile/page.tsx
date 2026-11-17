@@ -1,3 +1,5 @@
+import { MusterPersonalTools } from '@/components/shell/MusterPersonalTools';
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,6 +43,7 @@ export default async function AdminProfilePage() {
   const pendingOwners=canManageAdmins&&steel?await prisma.user.findMany({where:{companyProfileId:admin.companyProfileId,role:'ADMIN',isOwner:true,isActive:false,passwordHash:null,loginPinHash:null},select:{name:true,email:true},take:10,orderBy:{createdAt:'asc'}}):[];
 
   const notificationSettings = await ensureNotificationSettings(user.id);
+  const muster = isMusterOperationsCompany(admin.companyProfileId);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -49,8 +52,10 @@ export default async function AdminProfilePage() {
           <h1 className="text-xl font-semibold">{t("admin.adminProfileHeading", currentLang)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("admin.adminProfileSubtitle", currentLang)}</p>
         </div>
-        <NotificationPrefsButton userId={user.id} initial={notificationSettings} canEnableWork className="size-10 border bg-card" />
+        {!muster && <NotificationPrefsButton userId={user.id} initial={notificationSettings} canEnableWork className="size-10 border bg-card" />}
       </div>
+
+      {muster && <MusterPersonalTools companyId={admin.companyProfileId} lang={currentLang} admin notifications={<NotificationPrefsButton userId={user.id} initial={notificationSettings} canEnableWork canTestTeam className="!size-11 border bg-card"/>}/>}
 
       <Card>
         <CardHeader>

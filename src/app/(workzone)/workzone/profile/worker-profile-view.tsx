@@ -1,3 +1,5 @@
+import { MusterPersonalTools } from '@/components/shell/MusterPersonalTools';
+import { isMusterOperationsCompany } from '@/lib/demo/muster-operations';
 import '@/components/steel/steel-studio.css';
 import { explicitWorkplaceLabel } from '@/lib/workzone/explicit-workplace';
 import { AssetWarehouse } from '@/components/company-assets/asset-warehouse';
@@ -243,6 +245,7 @@ export async function WorkerProfileView({
   const [currentLang, companyCountry] = await Promise.all([resolveRequestLanguage(), getCompanyCountry()]);
   const companyId = await getCurrentCompanyId();
   const assetOperations = Boolean(companyId && await isSteelCompany(companyId));
+  const musterSelf = mode === "worker" && isMusterOperationsCompany(companyId);
   const canRegisterEquipment = assetOperations && (await assetActor()).canRegister;
   const plannedSchedule = plannedSteelSchedule(worker.crewRole, assetOperations && companyCountry === 'AL');
   const showAssistantAccess = mode === "admin" && Boolean(companyId && await companyLimitsAssistant(companyId));
@@ -301,6 +304,7 @@ export async function WorkerProfileView({
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-3" data-testid="worker-profile" data-steel-studio={assetOperations || undefined} data-studio-profile={assetOperations || undefined}>
+      {musterSelf && <MusterPersonalTools companyId={companyId} lang={currentLang} admin={false} notifications={<NotificationPrefsButton userId={worker.id} initial={notificationSettings} canEnableWork={false} self className="!size-11 border bg-card"/>}/>}
       {/* Who: photo, name, role. Start and stop right below. */}
       <section className="relative overflow-hidden rounded-2xl border bg-card" data-testid="worker-profile-summary">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
@@ -325,7 +329,7 @@ export async function WorkerProfileView({
             </div>
           </div>
           <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1 self-start">
-            <NotificationPrefsButton userId={worker.id} initial={notificationSettings} canEnableWork={mode === "admin"} self={mode === "worker"} />
+            {!musterSelf && <NotificationPrefsButton userId={worker.id} initial={notificationSettings} canEnableWork={mode === "admin"} self={mode === "worker"} />}
             {worker.phone ? (
               <a href={`tel:${worker.phone}`} title={worker.phone} aria-label={t("common.phone", currentLang)} className="grid size-9 place-items-center rounded-full text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground">
                 <Phone className="size-4" />

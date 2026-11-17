@@ -4,6 +4,63 @@ Owner request, 16 November 2026. This is the first bounded shell-standardization
 step for the three fictional Muster installations. It is not activation on the
 AL Steel pilot, another company, another demo or the public portfolio.
 
+## Header refinement — 17 November 2026 candidate
+
+The owner's 17 November correction supersedes the unmerged 16 November header
+layout: the common operational header has exactly one right-hand utility,
+one-tap Day/Night. The former profile/flag pair and the standalone bell/chat/book
+shortcuts are absent. This is prepared only in the three existing Muster PRs;
+their published releases, AL Steel, other demos and portfolio are unchanged.
+
+- The original company logo opens the existing company chat with its existing
+  server-backed unread badge. Primary process links and crew remain where they
+  belong, filtered by the same permissions and enabled processes.
+- Language, notifications, enabled KiDraht, the existing personal assistant,
+  demo-role entry and sign-out belong to the current person's profile.
+  Regular workers use their first, active team avatar and `/workzone/profile`.
+  The boss reaches `/app/profile` through the existing control panel; that
+  single profile entry and admin sign-out are retained. Notification preferences
+  remain one existing dialog. Its existing optional team-test action is shown
+  only on the own Muster admin profile, with unchanged server authorization.
+- Baumdienst keeps its existing fictional actor selector and custody notices
+  in `/demo/control` and the selected worker's own `/demo/workers/:id` profile.
+  The selected worker is first in the team strip and opens that existing profile
+  directly. Visiting a colleague never shows the visitor's personal settings as
+  though they belonged to the colleague. The public simulation's role switch
+  remains explicit and separate from real account permissions and office roles.
+- Locale still cycles DE → EN → SQ → IT → PL → RO → DE using the same language
+  provider/cookie/local preference. The existing theme POST and HttpOnly cookie
+  are reused; open chat drafts survive both changes without a document reload.
+  No preference migration, provider, dependency, new route or permission is added.
+- Native fullscreen office scenes retain their task toolbar, local chat entry,
+  private assistant and own-office management actions. They replace the common
+  operational header; this correction does not remove their established tasks.
+
+Shared geometry/behavior live in `MusterPreferences.tsx`,
+`muster-header.module.css` and the unchanged company-chat trigger. The obsolete
+floating `MusterProfileMenu` and `DemoProfileMenu` were removed rather than left
+as a second navigation path. `MusterPersonalTools` and `DemoPersonalTools` adapt
+only the authenticated/simulated identity and already authorized actions.
+Existing tenant/forest tokens, artwork, typography, process permissions and chat
+logic stay intact. Controls remain 44px with visible focus and normal bounded
+profile scrolling; no new shell or empty reserved utility space is introduced.
+
+`tests/muster/header-controls.cjs` is identical across all three candidates.
+It verifies the own-admin control-panel entry, one global theme action, logo
+chat, profile-only language/notifications, all six locales, persisted theme and
+locale, retained unsent draft, one-request failure/retry, own-worker avatar entry
+and colleague isolation. Final captures wait for visible images. Desktop,
+390x844, 320x640 and 760x360 are checked in Light/Night; each candidate produces
+16 header/profile captures. Existing two-person chat/read/unread/idempotent retry,
+1,000-message bounded history and own-office authorization acceptance is retained.
+Local gates and emulated touch do not claim publication, a physical phone or
+native push delivery. RediON Connect remains the shared policy source; this is
+the current owner's scoped Muster implementation contract.
+
+The 16 November candidate's profile/theme/flag header was never published.
+Its decision and evidence remain historical in Git/EVIDENCE.md; this corrected
+candidate is the active successor in the same PR231/232/233, without duplicate PRs.
+
 ## Navigation and visual identity
 
 Control panel and Dashboard view belong to the authenticated administrator's
