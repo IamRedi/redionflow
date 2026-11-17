@@ -42,7 +42,7 @@ const isEmptyRoute = (value: unknown) => {
  */
 export async function fillDefaultElementRoutes(tx: Tx, companyId: string): Promise<number> {
   const rows = await tx.siteElement.findMany({
-    where: { companyProfileId: companyId, processRevision: 0, work: { none: {} } },
+    where: { companyProfileId: companyId, isManual: false, processRevision: 0, work: { none: {} } },
     select: { id: true, list: true, processRoutes: true },
   });
   const empty = rows.filter(row => isEmptyRoute(row.processRoutes));

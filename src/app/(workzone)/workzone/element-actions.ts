@@ -6,7 +6,7 @@ import { Prisma } from "@/generated/prisma/client";
 
 import { getCurrentCompanyId } from "@/lib/db/tenant";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { ElementImportConflict, importElementList, type ElementImportResult } from "@/lib/elements/import";
+import { ElementImportConflict, ElementImportManualConflict, importElementList, type ElementImportResult } from "@/lib/elements/import";
 import { mayDeleteElementList } from "@/lib/elements/list-delete";
 import { canCheck, doneQty, isCustomStage, onFieldList, pieces, readProcessRoutes, routeStages, sideOfStage, stagePieces, stageRemaining, stagesFor, type ElementList } from "@/lib/elements/stages";
 import { describeWorkbook, ElementListError, parseElementList, type ParsedElementList } from "@/lib/elements/tekla-list";
@@ -30,6 +30,38 @@ function revalidateSite(baustelleId: string, companyId:string) {
 }
 
 export type ElementImportState = { ok: boolean; message: string; results?: ElementImportResult[] };
+
+/** Manual group starts with no assumed route; uses the existing factory planning right. */
+export async function createManualElementAction(input: unknown): Promise<ActionResult & { id?: string }> {
+  const tr = await getActionTranslator();
+  const parsed = z.object({
+    siteId: z.string().min(1).max(64), mark: z.string().trim().min(1).max(80),
+    name: z.string().trim().min(1).max(120), quantity: z.number().int().min(1).max(100000),
+  }).strict().safeParse(input);
+  if (!parsed.success) return { ok: false, message: tr("invalidInput") };
+  const companyId = await getCurrentCompanyId();
+  if (!companyId) return { ok: false, message: tr("notSignedIn") };
+  const actor = await currentCompanyActor(companyId);
+  const here = actor?.at(parsed.data.siteId);
+  if (!actor || !here || !(here.office || here.factorySteps)) return { ok: false, message: tr("accessDenied") };
+  const { siteId, mark, name, quantity } = parsed.data;
+  const result = await withTenantContext(companyId, async tx => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
+    const site = await tx.baustelle.findFirst({ where: { id: siteId, companyProfileId: companyId, type: "STEEL_ASSEMBLY" }, select: { id: true } });
+    if (!site) return null;
+    if (await tx.siteElement.findFirst({ where: { companyProfileId: companyId, baustelleId: siteId, list: "assembly", mark }, select: { id: true } })) return "duplicate" as const;
+    const row = await tx.siteElement.create({ data: {
+      companyProfileId: companyId, baustelleId: siteId, list: "assembly", isManual: true,
+      mark, kind: name, quantity, processRoutes: { v: 1, factory: [], field: [] },
+      processRevision: 1, processEditedBy: actor.name, processEditedAt: new Date(),
+    }, select: { id: true } });
+    return row.id;
+  });
+  if (!result) return { ok: false, message: tr("siteNotFound") };
+  if (result === "duplicate") return { ok: false, message: tr("elementManualCodeConflict", { mark }) };
+  revalidateSite(siteId, companyId);
+  return { ok: true, message: "OK", id: result };
+}
 
 /**
  * Office only: reads the drawing office exports (assembly list, part list),
@@ -99,6 +131,7 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
     { timeout: 30_000, maxWait: 10_000 },
   ); } catch (error) {
     if (error instanceof ElementImportConflict) return { ok: false, message: tr('elementImportQuantityConflict', { mark: error.message }) };
+    if (error instanceof ElementImportManualConflict) return { ok: false, message: tr('elementManualCodeConflict', { mark: error.message }) };
     throw error;
   }
   if (!results) return { ok: false, message: tr("siteNotFound") };
@@ -487,7 +520,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
       return site.id;
     },
     { timeout: 30_000, maxWait: 10_000 },
-  );}catch(error){if(error instanceof ElementImportConflict)return {ok:false,message:tr('elementImportQuantityConflict',{mark:error.message})};if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
+  );}catch(error){if(error instanceof ElementImportConflict)return {ok:false,message:tr('elementImportQuantityConflict',{mark:error.message})};if(error instanceof ElementImportManualConflict)return {ok:false,message:tr('elementManualCodeConflict',{mark:error.message})};if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
   if (!siteId) return { ok: false, message: tr("invalidInput") };
   revalidatePath("/workzone");
   revalidateSite(siteId, companyId);
@@ -523,7 +556,7 @@ export async function deleteElementSourceAction(input: unknown): Promise<ActionR
     // Default: who may import the lists or acts on this site's factory list. LIST_DELETE_ONLY narrows it to named people.
     const byDefault = Boolean(actor.at(siteId)?.factorySteps) || await mayUploadSiteDocuments(tx, identity, siteId);
     if (!mayDeleteElementList(actor.name, byDefault)) return null;
-    const removed = await tx.siteElement.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile } });
+    const removed = await tx.siteElement.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile, isManual: false } });
     if (sourceFile) await tx.siteFile.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, kind: "document", fileName: sourceFile } });
     return removed.count;
   }, { timeout: 30_000 });

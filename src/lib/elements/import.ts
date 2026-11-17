@@ -6,6 +6,7 @@ import { defaultElementRoutes } from "./default-routes";
 export type ElementImportResult = { list: ParsedElementList["list"]; added: number; updated: number; removed: number; kept: number; addedIds: string[] };
 export type ElementImportMode = 'merge' | 'snapshot';
 export class ElementImportConflict extends Error {}
+export class ElementImportManualConflict extends Error {}
 
 /**
  * Writes one parsed list onto a site. Running it again with a newer export
@@ -26,11 +27,13 @@ export async function importElementList(
   // the confirmation/configuration serialization before inspecting work.
   await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "companyProfileId"=${companyId} AND "baustelleId"=${baustelleId} ORDER BY "id" FOR UPDATE`;
   const existing = await tx.siteElement.findMany({
-    where: { companyProfileId: companyId, baustelleId, list: parsed.list },
+    where: { companyProfileId: companyId, baustelleId, list: parsed.list, isManual: false },
     select: { id: true, mark: true, quantity: true, sortIndex: true, processRoutes: true, processRevision: true, work: { select: { stage: true, pieces: true } }, _count: { select: { work: true } } },
   });
   const byMark = new Map(existing.map((row) => [row.mark, row]));
   const ordered = [...parsed.elements].sort((a, b) => compareMarks(a.mark, b.mark));
+  const manualCollision = await tx.siteElement.findFirst({ where: { companyProfileId: companyId, baustelleId, list: parsed.list, isManual: true, mark: { in: ordered.map(element => element.mark) } }, select: { mark: true } });
+  if (manualCollision) throw new ElementImportManualConflict(manualCollision.mark);
   for (const element of ordered) {
     const row = byMark.get(element.mark);
     if (!row) continue;
@@ -53,6 +56,8 @@ export async function importElementList(
       areaM2: element.areaM2,
       sortIndex: input.mode === 'snapshot' ? index : byMark.get(element.mark)?.sortIndex ?? nextSortIndex++,
       sourceFile: fileName,
+      // An assembly-only export must not erase a previously imported BOM.
+      ...(element.assemblyParts ? { assemblyParts: element.assemblyParts } : {}),
     };
     const row = byMark.get(element.mark);
     if (row) {

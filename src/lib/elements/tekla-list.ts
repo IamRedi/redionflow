@@ -12,6 +12,8 @@ import * as XLSX from "xlsx";
 export type ElementListKind = "assembly" | "part";
 
 export type ParsedElement = {
+  /** Component quantities exactly as exported, without inferring per-assembly allocation. */
+  assemblyParts?: { v: 1; parts: Array<{ mark: string; quantity: number }> };
   mark: string;
   kind: string | null;
   profile: string | null;
@@ -117,9 +119,11 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
       const row = rows[r] ?? [];
       const first = text(row[0]);
       // Project header: "Progetto numero: 0132", "Progetto Pllum Stafuka".
-      const label = first.toLowerCase().replace(/[:\s]+$/, "");
-      if (/^(progetto numero|project number|nr\.? projekti)/.test(label)) projectNumber = text(shown[r]?.[1]) || projectNumber;
-      else if (/^(progetto|project|projekti)$/.test(label)) projectName = text(row[1]) || projectName;
+      row.forEach((cell, c) => {
+        const label = text(cell).toLowerCase().replace(/[:\s]+$/, "");
+        if (/^(progetto numero|project number|nr\.? projekti)/.test(label)) projectNumber = text(shown[r]?.[c + 1]) || projectNumber;
+        else if (/^(progetto|project|projekti)$/.test(label)) projectName = text(row[c + 1]) || projectName;
+      });
       if (found) continue;
       // The header row: a mark column and a quantity column, wherever they
       // start (an export re-saved in Excel may shift or rename the first cell).
@@ -129,13 +133,26 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
       const list = detectList(first) ?? (markAt >= 0 ? detectList(text(row[markAt])) : null) ?? (markAt >= 0 ? guessList(columns) : null);
       if (!list) continue;
       const lead0 = markAt >= 0 ? markAt : 0;
+      const partAt = list === "assembly" ? row.findIndex(cell => /^(parte|part)\b/i.test(text(cell))) : -1;
+      const hasComposition = partAt >= 0 && partAt !== lead0;
       const elements: ParsedElement[] = [];
+      let parent: ParsedElement | undefined;
       for (let d = r + 1; d < rows.length; d += 1) {
         const cells = rows[d] ?? [];
         const lead = text(cells[lead0]);
+        const partMark = hasComposition ? text(cells[partAt]) : "";
+        if (!lead && partMark) {
+          if (!parent) throw new ElementListError("A component has no assembly header.");
+          if (/^(totale|total)/i.test(partMark)) break;
+          const quantity = num(cells[columns.indexOf("quantity")]);
+          if (quantity === null || quantity <= 0 || !Number.isInteger(quantity)) throw new ElementListError("Invalid component quantity.");
+          parent.assemblyParts!.parts.push({ mark: partMark, quantity });
+          continue;
+        }
         if (!lead) continue;
         if (/^(totale|total)/i.test(lead)) break;
         const entry: ParsedElement = { mark: lead, kind: null, profile: null, material: null, quantity: 1, lengthMm: null, weightKg: null, areaM2: null };
+        if (hasComposition) entry.assemblyParts = { v: 1, parts: [] };
         let weightTotal: number | null = null;
         let areaTotal: number | null = null;
         columns.forEach((field, c) => {
@@ -168,6 +185,8 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
         if (entry.weightKg === null && weightTotal !== null) entry.weightKg = weightTotal / entry.quantity;
         if (entry.areaM2 === null && areaTotal !== null) entry.areaM2 = areaTotal / entry.quantity;
         elements.push(entry);
+        parent = entry;
+        if (hasComposition && partMark) entry.assemblyParts!.parts.push({ mark: partMark, quantity: entry.quantity });
       }
       found = {
         list,
@@ -192,7 +211,13 @@ function dedupe(elements: ParsedElement[]) {
   const byMark = new Map<string, ParsedElement>();
   for (const element of elements) {
     const existing = byMark.get(element.mark);
-    if (existing) existing.quantity += element.quantity;
+    if (existing) {
+      existing.quantity += element.quantity;
+      if (element.assemblyParts) {
+        existing.assemblyParts ??= { v: 1, parts: [] };
+        existing.assemblyParts.parts.push(...element.assemblyParts.parts);
+      }
+    }
     else byMark.set(element.mark, { ...element });
   }
   return [...byMark.values()];

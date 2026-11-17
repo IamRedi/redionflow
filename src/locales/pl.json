@@ -407,6 +407,7 @@
     "changeCodeSave": "Zapisz kod",
     "nationalIdLabel": "Numer dowodu",
     "elementListUnreadable": "Plik {file} nie jest listą elementów (zespoły lub części).",
+    "elementManualCodeConflict": "Kod {mark} należy już do elementu lub zespołu. Nic nie zapisano; istniejący materiał pozostaje bez zmian.",
     "elementImportQuantityConflict": "Ilość dla {mark} jest mniejsza niż potwierdzona praca. Sprawdź listę; import nie został zapisany.",
     "elementListImported": "Listy wgrane: {added} nowych, {updated} zaktualizowanych.",
     "elementCheckOnlyEngineer": "Ten etap potwierdza tylko odpowiedzialny inżynier lub biuro.",

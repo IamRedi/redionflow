@@ -12,6 +12,7 @@ import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dial
 import { elementImportCopy } from '@/components/steel/element-import-copy';
 import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
 import { readProcessRoutes } from '@/lib/elements/stages';
+import { materialGroup, materialGroupCopy, readAssemblyParts, type MaterialGroup } from '@/lib/elements/material-groups';
 
 import { AccessKeyButton } from '@/components/access/access-key-button';
 import { useLanguage } from "@/components/i18n/language-provider";
@@ -19,7 +20,7 @@ import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
-import { addElementWorkAction, deleteElementSourceAction, importElementListsAction, removeElementWorkAction, setElementDoneAction } from "../../element-actions";
+import { addElementWorkAction, createManualElementAction, deleteElementSourceAction, importElementListsAction, removeElementWorkAction, setElementDoneAction } from "../../element-actions";
 import { Sheet } from "../../production/production-ui";
 
 export type ElementWorkView = {
@@ -35,6 +36,8 @@ export type ElementWorkView = {
 export type ElementView = {
   id: string;
   list: ElementList;
+  isManual?: boolean;
+  assemblyParts?: unknown;
   mark: string;
   kind: string | null;
   profile: string | null;
@@ -124,7 +127,7 @@ export function ElementListButtons({
   const factoryDone = sum((element) => doneQty(element, "factory"));
   const fieldDone = sum((element) => doneQty(element, "field"));
 
-  if (items.length === 0 && !(can.upload??can.office)) return null;
+  if (items.length === 0 && !(can.upload??can.office) && !can.factory) return null;
 
   const buttons: Array<{ side: ElementSide; label: string; sub: string; pct: number; icon: React.ReactNode }> = [
     {
@@ -185,6 +188,7 @@ export function ElementListButtons({
             canImport={can.upload??can.office}
             canDeleteSource={can.deleteSource ?? (Boolean(can.upload ?? can.office) || can.factory)}
             canPlan={can.office || can.factory || can.field}
+            canCreateManual={can.office || can.factory}
             definitions={definitions}
             onClose={() => setOpen(null)}
           />
@@ -194,7 +198,7 @@ export function ElementListButtons({
   );
 }
 
-type View = { kind: "list" } | { kind: "element"; id: string } | { kind: "stage"; id: string; stage: string };
+type View = { kind: "list" } | { kind: "element"; id: string; parentId?: string } | { kind: "stage"; id: string; stage: string };
 
 /** Exiting views keep their animation, but their previous actions are no longer available. */
 function AnimatedElementView({ isList, children }: { isList: boolean; children: ReactNode }) {
@@ -220,6 +224,7 @@ function ElementListSheet({
   canImport,
   canDeleteSource,
   canPlan,
+  canCreateManual,
   definitions,
   onClose,
 }: {
@@ -233,12 +238,13 @@ function ElementListSheet({
   /** Trash per list file: decided on the server (LIST_DELETE_ONLY or import/factory-list rights). */
   canDeleteSource: boolean;
   canPlan: boolean;
+  canCreateManual: boolean;
   definitions: SteelWorkDefinitionView[];
   onClose: () => void;
 }) {
   const { currentLang: lang } = useLanguage();
   const [view, setView] = useState<View>({ kind: "list" });
-  const [list, setList] = useState<ElementList>("assembly");
+  const [list, setList] = useState<MaterialGroup>("assembly");
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [processTarget, setProcessTarget] = useState<ElementView[] | null>(null);
@@ -275,6 +281,7 @@ function ElementListSheet({
               canImport={canImport}
               canDeleteSource={canDeleteSource}
               canPlan={canPlan}
+              canCreateManual={canCreateManual}
               definitions={definitions}
               onProcesses={(elements) => setProcessTarget(elements)}
               onOpen={(id) => setView({ kind: "element", id })}
@@ -282,11 +289,13 @@ function ElementListSheet({
           ) : view.kind === "element" ? (
             <ElementDetail
               element={current}
+              items={items}
+              onComponent={side === 'factory' ? id => setView({ kind: 'element', id, parentId: current.id }) : undefined}
               side={side}
               canEdit={canEdit && (side === 'factory' || onFieldList(current))}
               definitions={definitions}
               onProcesses={canPlan ? () => setProcessTarget([current]) : undefined}
-              onBack={() => setView({ kind: "list" })}
+              onBack={() => setView(view.parentId ? { kind: 'element', id: view.parentId } : { kind: "list" })}
               onStage={(stage) => setView({ kind: "stage", id: current.id, stage })}
               onDone={(doneAt, doneBy) =>
                 patch(current.id, (element) =>
@@ -338,6 +347,7 @@ function ListView({
   canImport,
   canDeleteSource,
   canPlan,
+  canCreateManual,
   definitions,
   onProcesses,
   onOpen,
@@ -346,8 +356,8 @@ function ListView({
   site: { id: string; name: string };
   items: ElementView[];
   setItems: React.Dispatch<React.SetStateAction<ElementView[]>>;
-  list: ElementList;
-  setList: (list: ElementList) => void;
+  list: MaterialGroup;
+  setList: (list: MaterialGroup) => void;
   filter: Filter;
   setFilter: (filter: Filter) => void;
   query: string;
@@ -355,6 +365,7 @@ function ListView({
   canImport: boolean;
   canDeleteSource: boolean;
   canPlan: boolean;
+  canCreateManual: boolean;
   definitions: SteelWorkDefinitionView[];
   onProcesses: (elements: ElementView[]) => void;
   onOpen: (id: string) => void;
@@ -367,22 +378,39 @@ function ListView({
   const [importOpen, setImportOpen] = useState(false);
   const [importMode, setImportMode] = useState<'merge' | 'snapshot'>('merge');
   const importCopy = elementImportCopy(lang);
+  const groupCopy = materialGroupCopy(lang);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualMark, setManualMark] = useState('');
+  const [manualName, setManualName] = useState('');
+  const [manualQuantity, setManualQuantity] = useState('1');
+  const [manualError, setManualError] = useState<string | null>(null);
+  function addManual() {
+    setManualError(null);
+    startImport(async () => {
+      const result = await createManualElementAction({ siteId: site.id, mark: manualMark, name: manualName, quantity: Number(manualQuantity) });
+      if (!result.ok || !result.id) { setManualError(result.message || t('factory.error', lang)); return; }
+      const element: ElementView = { id: result.id, list: 'assembly', isManual: true, mark: manualMark.trim(), kind: manualName.trim(), quantity: Number(manualQuantity), profile: null, material: null, lengthMm: null, weightKg: null, areaM2: null, factoryDoneAt: null, factoryDoneBy: null, fieldDoneAt: null, fieldDoneBy: null, processRoutes: { v: 1, factory: [], field: [] }, processRevision: 1, work: [] };
+      setItems(all => [...all, element]);
+      setManualOpen(false); setManualMark(''); setManualName(''); setManualQuantity('1');
+      router.refresh(); onProcesses([element]);
+    });
+  }
   function removeSource(sourceFile: string | null, label: string, count: number) {
     if (!window.confirm(importCopy.removeAsk.replace("{count}", String(count)).replace("{file}", label))) return;
     setMessage(null);
     startImport(async () => {
       const result = await deleteElementSourceAction({ siteId: site.id, sourceFile });
       if (!result.ok) { setMessage({ ok: false, text: result.message || importCopy.removeFailed }); return; }
-      setItems((all) => all.filter((element) => (element.sourceFile ?? null) !== sourceFile));
+      setItems((all) => all.filter((element) => element.isManual || (element.sourceFile ?? null) !== sourceFile));
       setMessage({ ok: true, text: importCopy.removed.replace("{count}", String(result.deleted ?? 0)) });
       router.refresh();
     });
   }
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const lists: ElementList[] = side === "factory" ? ["assembly", "part"] : ["assembly"];
-  const activeList = side === "field" ? "assembly" : list;
-  const ofList = items.filter((element) => element.list === activeList);
+  const lists: MaterialGroup[] = side === "factory" ? ["part", "assembly", "manual"] : ["assembly", "manual"];
+  const activeList = side === "field" && list === 'part' ? "assembly" : list;
+  const ofList = items.filter((element) => materialGroup(element) === activeList);
   // The field list shows every element; those still in the factory are visible but locked.
   const shown = ofList;
   // Pieces not yet out of the factory (also of elements partly on site).
@@ -480,7 +508,7 @@ function ListView({
               />
             </>
           ) : null}
-          {canPlan ? <button type="button" onClick={() => onProcesses(ofList)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4 text-orange-600" />{processButton(lang)}</button> : null}
+          {canPlan && ofList.length > 0 ? <button type="button" onClick={() => onProcesses(ofList)} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4 text-orange-600" />{processButton(lang)}</button> : null}
         </div>
         {shown.length > 0 ? (
           <div className={`mt-3 grid gap-1.5 ${stages.length > 4 ? "grid-cols-3 sm:grid-cols-6" : stages.length > 1 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
@@ -517,12 +545,8 @@ function ListView({
       {message ? <p className={`text-sm font-medium ${message.ok ? "text-green-700 dark:text-green-400" : "text-red-600"}`}>{message.text}</p> : null}
       {configureAfterImport.length > 0 && canPlan ? <button type="button" onClick={() => { onProcesses(items.filter(row => configureAfterImport.includes(row.id))); setConfigureAfterImport([]); }} className="min-h-11 rounded-xl border border-orange-500/50 bg-orange-500/10 px-4 text-sm font-semibold">{processButton(lang)} · {configureAfterImport.length} {t('elements.marks', lang)}</button> : null}
 
-      {items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{canImport ? t("elements.emptyOffice", lang) : t("elements.empty", lang)}</p>
-      ) : (
-        <>
           {lists.length > 1 ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-1.5 ${lists.length === 3 ? "grid-cols-3" : "grid-cols-2"}`} data-testid="material-groups">
               {lists.map((key) => (
                 <button
                   key={key}
@@ -531,14 +555,35 @@ function ListView({
                     setList(key);
                     setFilter("all");
                   }}
-                  className={`h-10 rounded-full border-2 px-3 text-sm font-semibold active:scale-95 ${activeList === key ? "border-orange-500 bg-orange-500/10 text-orange-800 dark:text-orange-200" : "bg-card"}`}
+                  className={`min-h-11 rounded-full border-2 px-1.5 text-xs sm:text-sm font-semibold active:scale-95 ${activeList === key ? "border-orange-500 bg-orange-500/10 text-orange-800 dark:text-orange-200" : "bg-card"}`}
                 >
-                  {key === "assembly" ? t("elements.assemblies", lang) : t("elements.parts", lang)}{" "}
-                  <span className="ml-1 tabular-nums text-muted-foreground">{items.filter((element) => element.list === key).length}</span>
+                  {groupCopy[key]}{" "}
+                  <span className="ml-1 tabular-nums text-muted-foreground">{items.filter((element) => materialGroup(element) === key).length}</span>
                 </button>
               ))}
             </div>
           ) : null}
+
+      {activeList === 'manual' ? <div className="flex items-center gap-2 rounded-2xl border bg-card p-3">
+        <p className="min-w-0 flex-1 text-xs text-muted-foreground">{groupCopy.manualHint}</p>
+        {side === 'factory' && canCreateManual ? <button type="button" onClick={() => { setManualError(null); setManualOpen(true); }} className="min-h-11 shrink-0 rounded-full border px-3 text-xs font-semibold">+ {groupCopy.add}</button> : null}
+      </div> : null}
+      <AssetWorkspaceDialog open={manualOpen} onOpenChange={setManualOpen} title={groupCopy.add} compact scrollBody>
+        <form onSubmit={event => { event.preventDefault(); addManual(); }} className="space-y-3">
+          <div className="grid grid-cols-[1fr_5rem] gap-2">
+            <label className="grid gap-1 text-xs font-semibold">{groupCopy.mark}<input autoFocus required maxLength={80} value={manualMark} onChange={e => setManualMark(e.target.value)} className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" /></label>
+            <label className="grid gap-1 text-xs font-semibold">{groupCopy.quantity}<input required type="number" min={1} max={100000} step={1} value={manualQuantity} onChange={e => setManualQuantity(e.target.value)} className="min-h-11 w-full rounded-xl border bg-background px-2 text-sm" /></label>
+          </div>
+          <label className="grid gap-1 text-xs font-semibold">{groupCopy.name}<input required maxLength={120} value={manualName} onChange={e => setManualName(e.target.value)} className="min-h-11 w-full rounded-xl border bg-background px-3 text-sm" /></label>
+          <p className="text-xs text-muted-foreground">{groupCopy.manualHint}</p>
+          {manualError ? <p role="alert" className="text-sm text-red-600">{manualError}</p> : null}
+          <button type="submit" disabled={importing} className="min-h-11 rounded-full border px-4 text-sm font-semibold disabled:opacity-50">{importing ? <Loader2 className="size-4 animate-spin" /> : groupCopy.save}</button>
+        </form>
+      </AssetWorkspaceDialog>
+      {items.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">{canImport ? t("elements.emptyOffice", lang) : t("elements.empty", lang)}</p>
+      ) : (
+        <>
 
           <div className="sticky top-0 z-10 -mx-4 space-y-2 bg-background/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6">
             <label className="relative block">
@@ -577,7 +622,7 @@ function ListView({
                   <FileSpreadsheet className="size-4 shrink-0 text-orange-600 dark:text-orange-400" />
                   <span className="min-w-0 flex-1 truncate">{group.label}</span>
                   <span className="shrink-0 rounded-full bg-card px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{group.items.length}</span>
-                  {canDeleteSource ? (
+                  {canDeleteSource && activeList !== "manual" ? (
                     <button type="button" disabled={importing} onClick={() => removeSource(group.source || null, group.label ?? "", items.filter((element) => (element.sourceFile ?? "") === group.source).length)} data-testid="element-source-delete" title={importCopy.removeGroup} aria-label={importCopy.removeGroup} className="grid size-8 shrink-0 place-items-center rounded-lg text-red-600 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400">
                       <Trash2 className="size-4" />
                     </button>
@@ -736,6 +781,8 @@ function PieceStrip({ element, side, definitions }: { element: ElementView; side
 
 function ElementDetail({
   element,
+  items,
+  onComponent,
   side,
   canEdit,
   definitions,
@@ -745,6 +792,8 @@ function ElementDetail({
   onDone,
 }: {
   element: ElementView;
+  items: ElementView[];
+  onComponent?: (id: string) => void;
   side: ElementSide;
   canEdit: boolean;
   definitions: SteelWorkDefinitionView[];
@@ -756,6 +805,9 @@ function ElementDetail({
   const { currentLang: lang } = useLanguage();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const groupCopy = materialGroupCopy(lang);
+  const composition = readAssemblyParts(element.assemblyParts);
+  const partsByMark = new Map(items.filter(item => item.list === "part").map(item => [item.mark, item]));
   const stages = stagesFor(side, element.list, element.processRoutes);
   const legacyRoute = readProcessRoutes(element.processRoutes)?.[side] == null;
   const historicStages = [...new Set(element.work.filter(work => sideOfStage(work.stage) === side && !stages.includes(work.stage)).map(work => work.stage))];
@@ -796,12 +848,26 @@ function ElementDetail({
         <span className={`grid h-14 min-w-16 shrink-0 place-items-center rounded-xl px-3 text-xl font-bold tabular-nums ${STATUS_STYLE[status].badge}`}>{element.mark}</span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-lg font-bold">{kindLabel(element.kind, lang) ?? (element.list === "part" ? t("elements.part", lang) : t("elements.assembly", lang))}</span>
+            <span className="truncate text-lg font-bold">{kindLabel(element.kind, lang) ?? groupCopy[materialGroup(element)]}</span>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_STYLE[status].pill}`}>{statusLabel(status, lang)}</span>
           </div>
           <div className="truncate text-xs tabular-nums text-muted-foreground">{facts.join(" · ")}</div>
         </div>
       </div>
+
+      {composition && onComponent ? <section data-testid="assembly-composition" className="rounded-2xl border bg-card p-3">
+        <h3 className="text-sm font-bold">{groupCopy.components}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">{groupCopy.exported}</p>
+        <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          {composition.parts.map((part, index) => {
+            const linked = partsByMark.get(part.mark);
+            return <li key={`${part.mark}-${index}`} className="flex min-w-0 items-center gap-2 rounded-xl border px-3 py-1.5">
+              <div className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{part.mark} <span className="text-xs font-normal tabular-nums">× {part.quantity}</span></span><span className="block truncate text-xs text-muted-foreground">{linked ? linked.profile || linked.material || 'Single Parts' : groupCopy.missing}</span></div>
+              {linked ? <button type="button" onClick={() => onComponent(linked.id)} aria-label={`${groupCopy.open} ${part.mark}`} className="grid size-11 shrink-0 place-items-center rounded-full border"><ChevronRight className="size-4" /></button> : null}
+            </li>;
+          })}
+        </ul>
+      </section> : null}
 
       {element.quantity > 1 || side === "field" ? <PieceStrip element={element} side={side} definitions={definitions} /> : null}
 

@@ -14,6 +14,28 @@ function teklaHtml(header: string[], rows: Array<Array<string | number>>, total:
 }
 
 describe("Tekla element lists", () => {
+  it('reads mixed assembly/part columns as composition, preserving code case and parent totals only', () => {
+    const data = teklaHtml(
+      ['Assemb.', 'Parte', 'Q.tà', 'Profilo', 'Materiale', 'Peso(kg) un.'],
+      [['B/1', '', 1, '', '', 82.18], ['', 1001, 4, 'PL10*190', 'S235JR', 2.85], ['', 'b/1', 1, 'SHS40*2', 'S235JR', 1.21], ['B/7', '', 1, '', '', 77.7], ['', 1001, 2, 'PL10*190', 'S235JR', 2.85]],
+      ['Totale', '', 2],
+    );
+    const parsed = parseElementList(data);
+    expect(parsed.elements.map(e => [e.mark, e.assemblyParts])).toEqual([
+      ['B/1', { v: 1, parts: [{ mark: '1001', quantity: 4 }, { mark: 'b/1', quantity: 1 }] }],
+      ['B/7', { v: 1, parts: [{ mark: '1001', quantity: 2 }] }],
+    ]);
+    expect(parsed.totalPieces).toBe(2);
+    expect(parsed.totalKg).toBe(159.88);
+  });
+
+  it('finds shifted composition columns in real Excel and refuses orphan or invalid component quantities', () => {
+    const rows = [['', 'Project number:', '0099'], ['', 'Assemb.', 'Parte', 'Q.tà'], ['', 'B/1', '', 1], ['', '', 'b/1', 2]];
+    const parse = (input: (string | number)[][]) => { const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet(input), 'BOM'); return parseElementList(new Uint8Array(XLSX.write(book, { type: 'array', bookType: 'xlsx' }))); };
+    expect(parse(rows)).toMatchObject({ projectNumber: '0099', elements: [{ mark: 'B/1', assemblyParts: { parts: [{ mark: 'b/1', quantity: 2 }] } }] });
+    expect(() => parse([rows[1], rows[3]])).toThrow(ElementListError);
+    expect(() => parse([...rows.slice(0, 3), ['', '', 'b/1', 0]])).toThrow(ElementListError);
+  });
   it("reads an assembly list with project number, marks, profiles and weights", () => {
     const file = teklaHtml(
       ["Assemb.", "Q.tà", "Nome", "Profilo", "Area(m²) un.", "Area(m²) tot.", "Peso(kg) un.", "Peso(kg) tot."],

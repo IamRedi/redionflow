@@ -2191,6 +2191,10 @@ model SiteFile {
 /// parts like plate 1001). The factory and the field team check off, per
 /// element and stage, which workers made or mounted it.
 model SiteElement {
+  // Manual elements share the proven assembly workflow but have explicitly selected routes.
+  isManual      Boolean @default(false)
+  // Exported BOM references only; never another stock/production quantity.
+  assemblyParts Json?
   processRoutes Json?
   processRevision Int @default(0)
   processEditedBy String?
