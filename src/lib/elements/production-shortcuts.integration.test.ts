@@ -96,14 +96,14 @@ it('permits the existing factory engineer role without giving a field engineer p
   expect(entries.every(w => w.checkedByWorkerId === a.worker.id && w.checkedByUserId === null)).toBe(true);
 });
 it('keeps different workers per stage, including an explicitly chosen custom process', async () => {
-  const a = tenants[0], e = await material(), key = 'fp-123456789012345678901234';
+  const a = tenants[0], e = await material(), stage = 'fp-123456789012345678901234';
   const worker = await prisma.worker.create({ data: { companyProfileId: a.company.id, firstName: 'Other DEMO', lastName: 'Crew' } });
-  await prisma.steelWorkDefinition.create({ data: { companyProfileId: a.company.id, kind: 'factory', key, label: 'Custom DEMO' } });
-  await prisma.siteElement.update({ where: { id: e.id }, data: { processRoutes: { v: 1, factory: ['welding', key], field: [] } } });
+  await prisma.steelWorkDefinition.create({ data: { companyProfileId: a.company.id, kind: 'factory', key: stage, label: 'Custom DEMO' } });
+  await prisma.siteElement.update({ where: { id: e.id }, data: { processRoutes: { v: 1, factory: ['welding', stage], field: [] } } });
   const input = await completionInput(e.id);
-  expect((await completeElementProductionAction({ ...input, assignments: { welding: [a.worker.id], [key]: [worker.id] } })).ok).toBe(true);
+  expect((await completeElementProductionAction({ ...input, assignments: { welding: [a.worker.id], [stage]: [worker.id] } })).ok).toBe(true);
   const work = await prisma.siteElementWork.findMany({ where: { elementId: e.id } });
-  expect(work.find(w => w.stage === key)?.workerIds).toEqual([worker.id]);
+  expect(work.find(w => w.stage === stage)?.workerIds).toEqual([worker.id]);
   expect(work.find(w => w.stage === 'welding')?.workerIds).toEqual([a.worker.id]);
 });
 it('creates one linked standalone row from the real remainder and retains source work', async () => {
