@@ -62,9 +62,8 @@ test('material groups retain crystal layout and resolve exact part codes without
     expect(await prisma.siteElementWork.count({ where: { companyProfileId: company.id } })).toBe(6);
     expect(errors).toEqual([]);
   } finally {
-    // Let refresh/action responses settle, then close our context before removing
-    // its synthetic tenant. A late RSC must not query a deleted fixture company.
-    await page.waitForLoadState('networkidle').catch(() => undefined);
+    // Close our context before removing its synthetic tenant. Persistent realtime
+    // connections are not a network-idle readiness signal.
     await context.close();
     await prisma.user.deleteMany({ where: { companyProfileId: company.id } });
     await prisma.companyProfile.delete({ where: { id: company.id } });
