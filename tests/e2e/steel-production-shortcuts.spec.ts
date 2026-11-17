@@ -58,9 +58,10 @@ test('production shortcut and calculated elements keep actual attribution and co
     await expect(editor.locator('input[type="checkbox"]:checked')).toHaveCount(0);
     await editor.getByRole('checkbox').first().check();
     await editor.getByRole('button',{name:elementProcessCopy('sq').apply,exact:true}).click();
+    await expect(editor).not.toBeVisible();
+    await expect.poll(async()=>(await prisma.siteElement.findUniqueOrThrow({where:{remainderOfId:part.id}})).processRevision).toBe(2);
     const derived=await prisma.siteElement.findUniqueOrThrow({where:{remainderOfId:part.id}});
     expect(derived.quantity).toBe(4);expect(derived.processRevision).toBe(2);expect(derived.factoryDoneAt).toBeNull();
-    await expect(editor).not.toBeVisible();
     await list.getByRole('button',{name:'Përfundo prodhimin',exact:true}).click();
     const nextConfirmation=page.getByRole('dialog',{name:'p/1 · Përfundo prodhimin',exact:true});
     await expect(nextConfirmation.getByRole('checkbox',{name:'Ardi DEMO',exact:true})).not.toBeChecked();
