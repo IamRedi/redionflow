@@ -25,7 +25,6 @@ import { currentOfficeAccess } from '@/lib/offices/access';
 import { MusterOperationsNavigation } from '@/components/company-assets/muster-navigation';
 import { CompanyChatTrigger } from '@/components/company-chat/CompanyChat';
 import { MusterHeaderUtilities } from './MusterHeaderUtilities';
-import { kidrahtAvailable } from '@/lib/kidraht/company-link';
 
 function adminInitial(value: string | null | undefined) {
   const source = value?.trim();
@@ -286,7 +285,7 @@ export async function FlowTopBar({
           />
         </div>
 
-        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 items-start justify-between gap-2"><MusterOperationsNavigation {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><MusterHeaderUtilities lang={currentLang} name={admin?.name || workers.find(worker => worker.id === currentWorkerId)?.firstName || companyBrand?.displayName || t('admin.profile', currentLang)} admin={Boolean(admin)} kidraht={await kidrahtAvailable(tenantId)}/></div> : <ProductionHeaderToolsSlot />)}
+        {contained && (operationsNavigation ? <div data-muster-header-controls className="pointer-events-auto col-span-2 row-start-2 flex min-w-0 items-start justify-between gap-2"><MusterOperationsNavigation {...operationsNavigation} office={<OfficeEntry lang={currentLang} compact/>}/><MusterHeaderUtilities/></div> : <ProductionHeaderToolsSlot />)}
         {!contained && <div className="hidden items-center gap-2 lg:flex">
           {admin ? (
             <>

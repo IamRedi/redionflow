@@ -217,7 +217,7 @@ export function WorkerIconStrip({
                   if (worker.activeProfile) {
                     dismissOwnVacationSignal(worker);
                     setOpenMenu(null);
-                    router.push("/workzone/profile");
+                    router.push(profileHrefBase ? `${profileHrefBase}/${worker.id}` : "/workzone/profile");
                     return;
                   }
                   const rect = event.currentTarget.getBoundingClientRect();
