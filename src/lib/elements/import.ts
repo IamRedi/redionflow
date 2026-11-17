@@ -42,6 +42,7 @@ export async function importElementList(
     if (element.quantity < Math.max(0, ...byStage.values())) throw new ElementImportConflict(element.mark);
   }
   const routes = (await defaultElementRoutes(tx, companyId))[parsed.list];
+  const importedAt = new Date().toISOString();
   let nextSortIndex = Math.max(-1, ...existing.map(row => row.sortIndex)) + 1;
   let updated = 0;
   const fresh: Prisma.SiteElementCreateManyInput[] = [];
@@ -57,7 +58,7 @@ export async function importElementList(
       sortIndex: input.mode === 'snapshot' ? index : byMark.get(element.mark)?.sortIndex ?? nextSortIndex++,
       sourceFile: fileName,
       // An assembly-only export must not erase a previously imported BOM.
-      ...(element.assemblyParts ? { assemblyParts: element.assemblyParts } : {}),
+      ...(element.assemblyParts ? { assemblyParts: { ...element.assemblyParts, sourceFile: fileName, importedAt } } : {}),
     };
     const row = byMark.get(element.mark);
     if (row) {

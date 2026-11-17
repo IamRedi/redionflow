@@ -59,6 +59,8 @@ it('keeps BOM references separate from production and resolves exact-case Single
   const actual = await withTenantContext(a.company.id, tx => tx.siteElement.findMany({ where: { companyProfileId: a.company.id, baustelleId: a.site.id, list: 'part' } }));
   expect(actual).toHaveLength(3);
   const refs = readAssemblyParts(assembly.assemblyParts)!;
+  expect(refs.sourceFile).toBe('bom.xls');
+  expect(Number.isFinite(Date.parse(refs.importedAt!))).toBe(true);
   expect(refs.parts.map(p => actual.find(row => row.mark === p.mark)?.mark)).toEqual(['b/1', '1001']);
   expect(await prisma.siteElementWork.count({ where: { companyProfileId: a.company.id } })).toBe(0);
   // A plain re-export updates the assembly without discarding an earlier BOM.
@@ -66,7 +68,7 @@ it('keeps BOM references separate from production and resolves exact-case Single
   expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: assembly.id } })).assemblyParts).toEqual(assembly.assemblyParts);
   parsed.elements[0].assemblyParts = { v: 1, parts: [{ mark: '1001', quantity: 3 }] };
   await run(parsed);
-  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: assembly.id } })).assemblyParts).toEqual(parsed.elements[0].assemblyParts);
+  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: assembly.id } })).assemblyParts).toMatchObject({ ...parsed.elements[0].assemblyParts, sourceFile: 'bom.xls' });
 });
 
 it('creates manual elements only for authorized planners, never auto-selects processes or erases them on reimport', async () => {

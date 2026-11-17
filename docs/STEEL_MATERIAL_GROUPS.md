@@ -13,6 +13,8 @@ crystal interface, tenant/site permissions, confirmed work and existing metrics.
   `B/1` in `Assemb.` is an assembly; `b/1` in `Parte` is a different part code.
   Its composition links automatically to the exact-code Single Part in the
   **same site and company**, including when that part list arrives later.
+  The composition keeps its own source filename/import date, even if a later
+  assembly-only export updates the material without a replacement composition.
 - **Elementet** contains manual elements. An authorized factory planner uses
   **Shto element**, enters code/name/quantity, then chooses processes with the
   existing process editor. No process is automatically selected. An empty route

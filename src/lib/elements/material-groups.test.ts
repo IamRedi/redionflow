@@ -10,6 +10,7 @@ describe('material group boundaries', () => {
   it('accepts exported references without folding code case and rejects malformed stored compositions', () => {
     const value = { v: 1, parts: [{ mark: 'B/1', quantity: 1 }, { mark: 'b/1', quantity: 2 }] };
     expect(readAssemblyParts(value)).toEqual(value);
+    expect(readAssemblyParts({ ...value, sourceFile: 'original-bom.xls', importedAt: '2026-11-17T09:00:00Z' })).toEqual({ ...value, sourceFile: 'original-bom.xls', importedAt: '2026-11-17T09:00:00Z' });
     for (const parts of [[{ mark: '', quantity: 1 }], [{ mark: 'a', quantity: -1 }], [{ mark: 'a', quantity: 1.5 }], [null]]) expect(readAssemblyParts({ v: 1, parts })).toBeNull();
     expect(readAssemblyParts({ v: 2, parts: [] })).toBeNull();
     expect(readAssemblyParts(null)).toBeNull();

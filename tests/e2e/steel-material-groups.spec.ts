@@ -15,7 +15,7 @@ test('material groups retain crystal layout and resolve exact part codes without
   try {
     const admin = await prisma.user.create({ data: { companyProfileId: company.id, email: `materials-${company.id}@example.test`, name: 'Planner DEMO', role: 'ADMIN', isActive: true } });
     const seed = await seedSteelWorkCatalog(company.id);
-    if (!baseline) await prisma.siteElement.update({ where: { id: seed.elements.beam.id }, data: { assemblyParts: { v: 1, parts: [{ mark: 'b/1', quantity: 2 }, { mark: 'MISSING', quantity: 1 }] } } });
+    if (!baseline) await prisma.siteElement.update({ where: { id: seed.elements.beam.id }, data: { assemblyParts: { v: 1, sourceFile: 'composition-demo.xls', importedAt: '2026-11-17T09:00:00Z', parts: [{ mark: 'b/1', quantity: 2 }, { mark: 'MISSING', quantity: 1 }] } } });
     await prisma.siteElement.create({ data: { companyProfileId: company.id, baustelleId: seed.sites.aurora.id, list: 'part', mark: 'b/1', profile: 'SHS40*2', quantity: 8 } });
     await context.addCookies([{ name: 'bk_admin_id', value: await createSessionCookie('admin', admin.id, admin.sessionEpoch), url: base }, { name: 'bk_lang', value: 'sq', url: base }]);
     for (const theme of ['light', 'dark']) for (const width of [1440, 390, 320]) {
@@ -34,6 +34,7 @@ test('material groups retain crystal layout and resolve exact part codes without
         await dialog.getByRole('button').filter({ has: page.getByText('B/20', { exact: true }) }).click();
         const composition = dialog.getByTestId('assembly-composition');
         await expect(composition.getByText('Ende mungon te Single Parts')).toBeVisible();
+        await expect(composition.getByText(/composition-demo.xls/)).toBeVisible();
         await page.screenshot({ path: `${process.env.OFFICE_EVIDENCE_DIR}/after-composition-${theme}-${width}.png` });
         await composition.getByRole('button', { name: 'Hap Single Part b/1', exact: true }).click();
         await expect(dialog.getByText('b/1', { exact: true }).first()).toBeVisible();

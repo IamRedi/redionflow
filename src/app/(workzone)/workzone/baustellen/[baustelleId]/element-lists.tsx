@@ -857,6 +857,7 @@ function ElementDetail({
 
       {composition && onComponent ? <section data-testid="assembly-composition" className="rounded-2xl border bg-card p-3">
         <h3 className="text-sm font-bold">{groupCopy.components}</h3>
+        {composition.sourceFile ? <p className="mt-1 truncate text-xs text-muted-foreground" title={composition.sourceFile}>{composition.sourceFile}{composition.importedAt ? ` · ${formatShortDate(composition.importedAt)}` : ''}</p> : null}
         <p className="mt-1 text-xs text-muted-foreground">{groupCopy.exported}</p>
         <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {composition.parts.map((part, index) => {

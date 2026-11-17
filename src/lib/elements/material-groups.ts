@@ -4,7 +4,7 @@ export function materialGroup(element: { list: string; isManual?: boolean }): Ma
   return element.list === "part" ? "part" : element.isManual ? "manual" : "assembly";
 }
 
-export type AssemblyParts = { v: 1; parts: Array<{ mark: string; quantity: number }> };
+export type AssemblyParts = { v: 1; parts: Array<{ mark: string; quantity: number }>; sourceFile?: string; importedAt?: string };
 export function readAssemblyParts(value: unknown): AssemblyParts | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const row = value as Record<string, unknown>;
@@ -15,7 +15,10 @@ export function readAssemblyParts(value: unknown): AssemblyParts | null {
       || !Number.isSafeInteger(part.quantity) || part.quantity <= 0) return null;
     parts.push({ mark: part.mark, quantity: part.quantity });
   }
-  return { v: 1, parts };
+  return { v: 1, parts,
+    ...(typeof row.sourceFile === 'string' && row.sourceFile.length <= 260 ? { sourceFile: row.sourceFile } : {}),
+    ...(typeof row.importedAt === 'string' && Number.isFinite(Date.parse(row.importedAt)) ? { importedAt: row.importedAt } : {}),
+  };
 }
 
 const en = {
