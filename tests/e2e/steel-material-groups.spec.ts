@@ -56,11 +56,16 @@ test('material groups retain crystal layout and resolve exact part codes without
         await editor.getByRole('checkbox').first().check();
         await editor.getByRole('button', { name: elementProcessCopy('sq').apply, exact: true }).click();
         await expect.poll(async () => (await prisma.siteElement.findUniqueOrThrow({ where: { id: manual.id } })).processRevision).toBe(2);
+        await expect(editor).not.toBeVisible();
       }
     }
     expect(await prisma.siteElementWork.count({ where: { companyProfileId: company.id } })).toBe(6);
     expect(errors).toEqual([]);
   } finally {
+    // Let refresh/action responses settle, then close our context before removing
+    // its synthetic tenant. A late RSC must not query a deleted fixture company.
+    await page.waitForLoadState('networkidle').catch(() => undefined);
+    await context.close();
     await prisma.user.deleteMany({ where: { companyProfileId: company.id } });
     await prisma.companyProfile.delete({ where: { id: company.id } });
   }
