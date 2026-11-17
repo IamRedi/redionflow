@@ -1,19 +1,15 @@
 .utilities { display:flex;align-items:center;gap:4px;flex-shrink:0;pointer-events:auto; }
-.icon { position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;padding:0;border-radius:50%;border:1px solid var(--muster-ice-edge,hsl(var(--border)/.65));background:var(--muster-control-ice,hsl(var(--card)/.42));color:hsl(var(--foreground));box-shadow:var(--muster-ice-shadow,0 2px 8px #00131a16);backdrop-filter:blur(8px) saturate(1.12);cursor:pointer;list-style:none; }
-.icon::-webkit-details-marker { display:none; }
-.icon:focus-visible,.panel :is(a,button,select):focus-visible { outline:2px solid hsl(var(--ring));outline-offset:3px; }
+.icon { position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;padding:0;border-radius:50%;border:1px solid var(--muster-ice-edge,hsl(var(--border)/.65));background:var(--muster-control-ice,hsl(var(--card)/.42));color:hsl(var(--foreground));box-shadow:var(--muster-ice-shadow,0 2px 8px #00131a16);backdrop-filter:blur(8px) saturate(1.12);cursor:pointer; }
+.icon:focus-visible,.profileTools :is(a,button,select):focus-visible { outline:2px solid hsl(var(--ring));outline-offset:3px; }
 .icon:disabled { opacity:.5;cursor:wait; }
-.flag { width:22px;height:15px;overflow:hidden;border-radius:2px;box-shadow:0 0 0 1px hsl(var(--foreground)/.15); }
-.theme,.profile { position:relative;flex-shrink:0; }
-.profile[open] { z-index:1100; }
-.panel { position:absolute;right:0;top:calc(100% + 8px);z-index:1100;display:flex;flex-direction:column;gap:4px;width:268px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 190px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:10px;border:1px solid var(--muster-ice-edge,hsl(var(--border)/.7));border-radius:20px;background:hsl(var(--popover)/.88);color:hsl(var(--popover-foreground));backdrop-filter:blur(20px) saturate(1.12);box-shadow:0 12px 32px #00131a35; }
-.panel::-webkit-scrollbar { display:none; }
-.panel :is(a,button,select) { min-height:44px; }
-.name { display:block;overflow-wrap:anywhere;padding:6px 10px;font-size:13px;font-weight:750; }
-.entry { display:flex;align-items:center;gap:10px;min-height:44px;width:100%;padding:8px 10px;border-radius:12px;font-size:13px;font-weight:600;text-align:left; }
+.flag { width:22px;height:15px;flex-shrink:0;overflow:hidden;border-radius:2px;box-shadow:0 0 0 1px hsl(var(--foreground)/.15); }
+.theme { position:relative;flex-shrink:0; }
+.profileTools { display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0; }
+.profileTools>div { min-width:0;max-width:100%;width:auto;flex:0 1 auto; }
+.profileTools :is(a,button,select) { min-height:44px; }
+.entry { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;max-width:100%;padding:8px 12px;border:1px solid var(--muster-ice-edge,hsl(var(--border)/.65));border-radius:999px;background:var(--muster-control-ice,hsl(var(--card)/.42));color:hsl(var(--foreground));font-size:13px;font-weight:600;text-align:left;backdrop-filter:blur(8px) saturate(1.12); }
 .entry:hover { background:hsl(var(--foreground)/.07); }
+.profileTools form { margin:0; }
 .error { position:absolute;right:0;top:100%;z-index:1100;min-width:160px;padding:8px;border-radius:12px;background:hsl(var(--popover));color:hsl(var(--popover-foreground));font-size:12px; }
-@media(max-width:600px) { .utilities { gap:2px; }.panel { right:-92px; } }
-@media(max-height:450px) { .panel { position:fixed;right:12px;top:12px;max-height:calc(100dvh - 24px); } }
-@media(prefers-reduced-transparency:reduce) { .icon,.panel { background:hsl(var(--popover));backdrop-filter:none; } }
-@media(forced-colors:active) { .icon,.panel { background:Canvas;color:CanvasText;border:1px solid CanvasText;backdrop-filter:none;box-shadow:none; }.panel { scrollbar-width:auto; } }
+@media(prefers-reduced-transparency:reduce) { .icon,.entry { background:hsl(var(--popover));backdrop-filter:none; } }
+@media(forced-colors:active) { .icon,.entry { background:Canvas;color:CanvasText;border:1px solid CanvasText;backdrop-filter:none;box-shadow:none; } }

@@ -144,6 +144,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <div className="contents md:mt-auto md:flex md:flex-col md:gap-0.5 md:border-t md:pt-2">
               <AdminNavLink href="/app/settings" label={t("admin.navSettings", currentLang, mode)} />
               <AdminNavLink href="/app/audit" label={t("admin.auditLog", currentLang, mode)} activePrefixes={["/app/audit"]} />
+              {operations && <AdminNavLink href="/app/profile" label={t("admin.profile", currentLang, mode)} />}
               {!operations && <div className="hidden items-center gap-1 pt-1 md:flex">
                 <div className="min-w-0 flex-1">
                   <LanguageDropdown />
