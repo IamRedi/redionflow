@@ -11,6 +11,7 @@ import type { ElementView, ElementWorkerOption, ElementWorkView } from '@/app/(w
 import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
 import { t } from '@/lib/i18n';
 import { productionShortcutCopy } from './production-shortcut-copy';
+import { productionDeliveryCopy } from './production-delivery';
 
 const button = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold disabled:opacity-50';
 
@@ -59,7 +60,7 @@ function CompletionSession({ element, workers, definitions, lastCrew, onCrew, on
     });
   }
   return <AssetWorkspaceDialog open onOpenChange={value => { if (!value && !pending) onClose(); }} title={`${snapshot.mark} · ${c.finish}`} compact scrollBody contentClassName="overflow-hidden">
-    <p className="mb-3 text-xs text-muted-foreground">{c.hint}</p>
+    <p className="mb-3 text-xs text-muted-foreground">{c.hint} {productionDeliveryCopy(lang).separate}</p>
     <fieldset disabled={pending} className="space-y-3"><legend className="mb-2 text-sm font-semibold">{c.crew}</legend>
       {previousCrew.length && previousCrew.join() !== common.join() ? <button type="button" className={`${button} w-full justify-start text-left text-xs`} onClick={() => setCommon(previousCrew)}>{t('elements.sameAsLast', lang)} · {previousCrew.map(id => workers.find(worker => worker.id === id)?.name).join(', ')}</button> : null}
       {choices.length > 8 ? <label className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><input aria-label={t('elements.searchWorker', lang)} placeholder={t('elements.searchWorker', lang)} value={workerQuery} onChange={event => setWorkerQuery(event.target.value.slice(0, 80))} className="min-h-11 w-full rounded-xl border bg-card pl-9 pr-3 text-sm" /></label> : null}

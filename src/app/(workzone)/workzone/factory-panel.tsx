@@ -46,9 +46,10 @@ export function FactoryPanel({
 }) {
   const { currentLang: lang } = useLanguage();
   const total = totalOutput(siteOutput);
+  const produced = total.manufacturedPieces ?? total.donePieces;
   const pcs = t("elements.pieceShort", lang);
   const inFactory = total.pieces - total.donePieces;
-  const pct = total.pieces > 0 ? Math.round((total.donePieces / total.pieces) * 100) : 0;
+  const pct = total.pieces > 0 ? Math.round((produced / total.pieces) * 100) : 0;
 
   return (
     <section data-studio-surface id="fabrika" className="scroll-mt-4 overflow-hidden rounded-3xl border bg-card shadow-sm">
@@ -69,7 +70,7 @@ export function FactoryPanel({
               <span className="rounded-full border bg-background/70 px-2.5 py-1 text-xs font-semibold">{t("factory.forSites", lang).replace("{n}", String(siteOutput.length))}</span>
             ) : null}
             <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-green-700 dark:text-green-300">
-              {t("elements.produced", lang)}: {formatAmount(total.donePieces)} {pcs}
+              {t("elements.produced", lang)}: {formatAmount(produced)} {pcs}
             </span>
             </> : null}
             <AccessKeyButton place="factory" compact />

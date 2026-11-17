@@ -7,7 +7,7 @@ import { withTenantContext } from '@/lib/db/tenant-context';
 import { completeElementProductionAction, syncRemainderElementsAction, setElementProcessesAction, addElementWorkAction, createSiteFromProjectAction, importElementListsAction, deleteElementSourceAction } from '@/app/(workzone)/workzone/element-actions';
 import { seedSecurityTenants, removeSecurityTenants, createTestSession } from '../../../tests/security/fixtures';
 import { reconcileRemainders, RemainderConflict } from './remainders-db';
-import { doneQty } from './stages';
+import { doneQty, onFieldList, productionCompletionStages, productionQuantities } from './stages';
 
 let tenants: Awaited<ReturnType<typeof seedSecurityTenants>>;
 beforeEach(async () => {
@@ -51,6 +51,62 @@ it('completes only remaining stage quantities and preserves earlier workers, tim
   expect(actual.work.every(w => (w.productionSnapshot as { unitWeightKg: number }).unitWeightKg === 20)).toBe(true);
   expect(doneQty({ ...actual, list: 'assembly' }, 'factory')).toBe(4);
   expect(actual.factoryDoneBy).toBe(a.admin.name);
+});
+
+it('finishes manufacturing without a load and releases only the separately confirmed loading quantities', async () => {
+  const a = tenants[0], e = await material();
+  await prisma.siteElement.update({ where: { id: e.id }, data: { processRoutes: { v: 1, factory: ['welding', 'coating', 'loading'], field: ['mounted'] } } });
+  const old = await prisma.siteElementWork.create({ data: { companyProfileId: a.company.id, elementId: e.id, stage: 'welding', pieces: 1, workerIds: [a.worker.id], workerNames: 'Original DEMO', checkedByName: 'Original DEMO' } });
+  const input = await completionInput(e.id), result = await completeElementProductionAction(input);
+  expect(result.ok).toBe(true); if (!result.ok) throw Error('Completion failed');
+  expect(result.entries.map(w => w.stage).sort()).toEqual(['coating', 'welding']);
+  expect(result.doneAt).toBeNull();
+  let actual = await prisma.siteElement.findUniqueOrThrow({ where: { id: e.id }, include: { work: true } });
+  expect(actual.factoryDoneAt).toBeNull();
+  expect(productionQuantities({ ...actual, list: 'assembly' })).toEqual({ produced: 4, loaded: 0, readyForLoading: 4 });
+  expect(onFieldList({ ...actual, list: 'assembly' })).toBe(false);
+  expect((await completeElementProductionAction(input)).ok).toBe(true);
+  expect(await prisma.siteElementWork.count({ where: { elementId: e.id } })).toBe(3);
+  expect((await addElementWorkAction({ elementId: e.id, stage: 'loading', pieces: 2, workerIds: [a.worker.id] })).ok).toBe(true);
+  actual = await prisma.siteElement.findUniqueOrThrow({ where: { id: e.id }, include: { work: true } });
+  expect(productionQuantities({ ...actual, list: 'assembly' })).toEqual({ produced: 4, loaded: 2, readyForLoading: 2 });
+  expect(doneQty({ ...actual, list: 'assembly' }, 'factory')).toBe(2);
+  expect(await prisma.siteElementWork.findUnique({ where: { id: old.id } })).toEqual(old);
+});
+
+it('does not close a default legacy route across missing loading and keeps its history intact', async () => {
+  const a = tenants[0], e = await material();
+  await prisma.siteElement.update({ where: { id: e.id }, data: { processRoutes: { v: 1, factory: null, field: null } } });
+  const actual = await prisma.siteElement.findUniqueOrThrow({ where: { id: e.id }, include: { work: true } });
+  const stages = productionCompletionStages({ ...actual, list: 'assembly' });
+  expect(stages).toEqual(['cutting', 'assembly', 'welding', 'cleaning', 'coating']);
+  const input = { ...await completionInput(e.id), assignments: Object.fromEntries(stages.map(stage => [stage, [a.worker.id]])) };
+  expect((await completeElementProductionAction(input)).ok).toBe(true);
+  const done = await prisma.siteElement.findUniqueOrThrow({ where: { id: e.id }, include: { work: true } });
+  expect(done.factoryDoneAt).toBeNull(); expect(done.work).toHaveLength(5);
+  expect(productionQuantities({ ...done, list: 'assembly' })).toEqual({ produced: 4, loaded: 0, readyForLoading: 4 });
+  expect(onFieldList({ ...done, list: 'assembly' })).toBe(false);
+});
+
+it('rejects loading in a production payload and cannot manufacture a loading-only route', async () => {
+  const a = tenants[0], e = await material(), input = await completionInput(e.id);
+  const forged = await completeElementProductionAction({ ...input, assignments: { ...input.assignments, loading: [a.worker.id] } });
+  expect(forged.ok).toBe(false);
+  expect(await prisma.siteElementWork.count({ where: { elementId: e.id } })).toBe(0);
+  await prisma.siteElement.update({ where: { id: e.id }, data: { processRoutes: { v: 1, factory: ['loading'], field: [] } } });
+  expect((await completeElementProductionAction({ ...input, assignments: {} })).ok).toBe(false);
+  expect(await prisma.siteElementWork.count({ where: { elementId: e.id } })).toBe(0);
+});
+
+it('never replaces an existing loading receipt or a legacy finish timestamp', async () => {
+  const a = tenants[0], e = await material(), at = new Date('2026-11-10T08:00:00Z');
+  await prisma.siteElement.update({ where: { id: e.id }, data: { factoryDoneAt: at, factoryDoneBy: 'Original DEMO' } });
+  const loading = await prisma.siteElementWork.create({ data: { companyProfileId: a.company.id, elementId: e.id, stage: 'loading', pieces: 1, workerIds: [a.worker.id], workerNames: 'Original DEMO', checkedByName: 'Original DEMO' } });
+  expect((await completeElementProductionAction(await completionInput(e.id))).ok).toBe(true);
+  expect(await prisma.siteElementWork.findUnique({ where: { id: loading.id } })).toEqual(loading);
+  const after = await prisma.siteElement.findUniqueOrThrow({ where: { id: e.id } });
+  expect(after.factoryDoneAt).toEqual(at); expect(after.factoryDoneBy).toBe('Original DEMO');
+  expect(await prisma.siteElementWork.count({ where: { elementId: e.id, stage: 'loading' } })).toBe(1);
 });
 it('is idempotent under double click/concurrent confirmation and never doubles production', async () => {
   const e = await material(), input = await completionInput(e.id);

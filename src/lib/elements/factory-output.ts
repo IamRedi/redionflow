@@ -6,7 +6,7 @@
  */
 import { FACTORY_STEP_KEYS } from "@/lib/factory/production";
 
-import { doneQty, pieces, routeClosed, routeStages, stagePieces, stagesFor, type ElementState } from "./stages";
+import { doneQty, pieces, productionQuantities, routeClosed, routeStages, stagePieces, stagesFor, type ElementState } from "./stages";
 
 export type OutputRow = {
   baustelleId: string;
@@ -32,6 +32,11 @@ export type SiteFactoryOutput = {
   doneKg: number;
   /** Elements with every piece out of the factory. */
   doneMarks: number;
+  /** Manufacturing and actual loading are separate from the historical field-release route. */
+  manufacturedPieces?: number;
+  manufacturedKg?: number;
+  readyForLoadingPieces?: number;
+  loadedPieces?: number;
   /** Pieces the site finished. */
   mountedPieces: number;
   /** Confirmed process-piece work, never a count of distinct produced pieces or kg. */
@@ -53,13 +58,18 @@ export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name
     if (!site) continue;
     const entry =
       bySite.get(site.id) ??
-      ({ siteId: site.id, siteName: site.name, marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, mountedPieces: 0, processWork: { done: 0, total: 0 }, partCutting: emptyStage(), stages: emptyStages() } satisfies SiteFactoryOutput);
+      ({ siteId: site.id, siteName: site.name, marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, manufacturedPieces: 0, manufacturedKg: 0, readyForLoadingPieces: 0, loadedPieces: 0, mountedPieces: 0, processWork: { done: 0, total: 0 }, partCutting: emptyStage(), stages: emptyStages() } satisfies SiteFactoryOutput);
     if (row.list !== undefined && row.list !== "assembly" && row.list !== "part") continue;
     const state: ElementState = { list: row.list === "part" ? "part" : "assembly", quantity: row.quantity, work: row.work, factoryDoneAt: row.factoryDoneAt, fieldDoneAt: row.fieldDoneAt, processRoutes: row.processRoutes };
     const count = pieces(state);
     const kgPiece = row.weightKg ?? 0;
     const out = doneQty(state, "factory");
     if (state.list === "assembly") {
+      const q = productionQuantities(state);
+      entry.manufacturedPieces! += q.produced;
+      entry.manufacturedKg! += kgPiece * q.produced;
+      entry.readyForLoadingPieces! += q.readyForLoading;
+      entry.loadedPieces! += q.loaded;
       entry.marks += 1;
       entry.pieces += count;
       entry.kg += kgPiece * count;
@@ -97,8 +107,12 @@ export function factoryOutput(rows: OutputRow[], sites: Array<{ id: string; name
 
 /** All sites together. */
 export function totalOutput(sites: SiteFactoryOutput[]): Omit<SiteFactoryOutput, "siteId" | "siteName"> {
-  const total = { marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, mountedPieces: 0, processWork: { done: 0, total: 0 }, partCutting: emptyStage(), stages: emptyStages() };
+  const total = { marks: 0, pieces: 0, kg: 0, donePieces: 0, doneKg: 0, doneMarks: 0, manufacturedPieces: 0, manufacturedKg: 0, readyForLoadingPieces: 0, loadedPieces: 0, mountedPieces: 0, processWork: { done: 0, total: 0 }, partCutting: emptyStage(), stages: emptyStages() };
   for (const site of sites) {
+    total.manufacturedPieces += site.manufacturedPieces ?? site.donePieces;
+    total.manufacturedKg += site.manufacturedKg ?? site.doneKg;
+    total.readyForLoadingPieces += site.readyForLoadingPieces ?? 0;
+    total.loadedPieces += site.loadedPieces ?? 0;
     total.processWork.done += site.processWork?.done ?? site.donePieces;
     total.processWork.total += site.processWork?.total ?? site.pieces;
     for (const key of ["marks", "pieces", "eligibleMarks", "eligiblePieces"] as const) total.partCutting[key] += site.partCutting?.[key] ?? 0;

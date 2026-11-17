@@ -303,10 +303,14 @@ export async function completeElementProductionAction(input: unknown) {
       }, select: { id: true, stage: true, pieces: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } });
       entries.push({ ...created, checkedAt: created.checkedAt.toISOString() });
     }
-    const doneAt = new Date();
-    await tx.siteElement.update({ where: { id: element.id }, data: { factoryDoneAt: doneAt, factoryDoneBy: actor.name } });
+    // Do not close a legacy route over a missing loading step: field release
+    // still follows the existing required route, independently of manufacturing.
+    const finished = doneQty({ ...asState(element), work: [...element.work, ...entries] }, 'factory') >= element.quantity;
+    const doneAt = element.factoryDoneAt ?? (finished ? new Date() : null);
+    if (doneAt && !element.factoryDoneAt)
+      await tx.siteElement.update({ where: { id: element.id }, data: { factoryDoneAt: doneAt, factoryDoneBy: actor.name } });
     after = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
-    return { ok: true as const, siteId: element.baustelleId, entries, doneAt: doneAt.toISOString(), doneBy: actor.name };
+    return { ok: true as const, siteId: element.baustelleId, entries, doneAt: doneAt?.toISOString() ?? null, doneBy: doneAt && !element.factoryDoneAt ? actor.name : null };
   }, { timeout: 30_000, maxWait: 10_000 });
   if (!result.ok) return result;
   if (result.entries.length) await dispatchCompletions(companyId, before, after, result.entries[0].id);
