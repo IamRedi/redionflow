@@ -30,7 +30,13 @@ test('factory Start, material completion, phase and open dashboard share actual 
   if(baseline||captureOnly)await prisma.workSession.create({data:{workerId:worker.id,startTime:new Date(),isLive:true,baustelleId:workshop.id}});
   else{
    await employee.goto('/workzone/profile');
-   await employee.getByRole('button',{name:text('workzone.startWork'),exact:true}).click();
+   // The cold SSR button can precede the interactive client form. Opening that
+   // form is idempotent and writes no hours; wait for it before the one real start.
+   await expect(async()=>{
+    const now=employee.getByRole('button',{name:text('common.now'),exact:true});
+    if(!await now.isVisible())await employee.getByRole('button',{name:text('workzone.startWork'),exact:true}).click();
+    await expect(now).toBeVisible({timeout:1500});
+   }).toPass({timeout:15000});
    await employee.getByRole('button',{name:text('common.now'),exact:true}).click();
    await expect(employee.getByTestId('worker-current-workplace')).toContainText(workshop.name);
    const clock=await prisma.workSession.findFirstOrThrow({where:{workerId:worker.id,isLive:true}});expect(clock.baustelleId).toBe(workshop.id);
