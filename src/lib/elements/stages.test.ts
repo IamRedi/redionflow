@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, readProcessRoutes, routeClosed, routeStages, stagePieces, stageRemaining, sideOfStage, stageProgress, stagesFor } from "./stages";
+import { capFor, canCheck, doneQty, elementDone, elementStatus, onFieldList, productionCompletionStages, readProcessRoutes, routeClosed, routeStages, stagePieces, stageRemaining, sideOfStage, stageProgress, stagesFor } from "./stages";
 
 const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office: boolean; reportMissing: boolean }>) => ({
   siteSteps: false,
@@ -11,6 +11,11 @@ const perms = (over: Partial<{ siteSteps: boolean; factorySteps: boolean; office
 });
 
 describe("element stages", () => {
+  it('preserves a previously closed legacy route and never adds its intentionally skipped stages', () => {
+    expect(productionCompletionStages({ list: 'assembly', factoryDoneAt: new Date(), work: [{ stage: 'welding', pieces: 2 }] })).toEqual(['welding']);
+    expect(productionCompletionStages({ list: 'assembly', work: [], processRoutes: { v: 1, factory: [], field: [] } })).toEqual([]);
+    expect(productionCompletionStages({ list: 'assembly', work: [], processRoutes: { v: 1, factory: ['coating'], field: [] } })).toEqual(['coating']);
+  });
   it("assemblies pass the whole factory line, parts only cutting", () => {
     expect(stagesFor("factory", "assembly")).toEqual(["cutting", "assembly", "welding", "cleaning", "coating", "loading"]);
     expect(stagesFor("factory", "part")).toEqual(["cutting"]);

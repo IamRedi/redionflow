@@ -2195,6 +2195,10 @@ model SiteElement {
   isManual      Boolean @default(false)
   // Exported BOM references only; never another stock/production quantity.
   assemblyParts Json?
+  // Standalone remainder of an imported Single Part, never a second part stock.
+  remainderOfId String? @unique
+  remainderOf SiteElement? @relation("StandaloneRemainder", fields: [remainderOfId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  remainder SiteElement? @relation("StandaloneRemainder")
   processRoutes Json?
   processRevision Int @default(0)
   processEditedBy String?

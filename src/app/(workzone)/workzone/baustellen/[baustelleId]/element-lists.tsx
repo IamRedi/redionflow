@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ArrowLeft, Check, CheckCheck, ChevronRight, Factory, FileSpreadsheet, HardHat, Loader2, Lock, Minus, RotateCcw, Search, Trash2, UploadCloud, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition, type ReactNode } from "react";
+import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { SteelWorkVisual } from '@/components/steel/work-catalog';
 import Image from 'next/image';
 import { SlidersHorizontal } from 'lucide-react';
@@ -11,8 +11,11 @@ import { ElementProcessEditor } from '@/components/steel/element-process-editor'
 import { AssetWorkspaceDialog } from '@/components/company-assets/workspace-dialog';
 import { elementImportCopy } from '@/components/steel/element-import-copy';
 import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
-import { readProcessRoutes } from '@/lib/elements/stages';
+import { productionCompletionStages, readProcessRoutes } from '@/lib/elements/stages';
 import { materialGroup, materialGroupCopy, readAssemblyParts, type MaterialGroup } from '@/lib/elements/material-groups';
+import { planRemainders } from '@/lib/elements/remainders';
+import { productionShortcutCopy } from '@/components/steel/production-shortcut-copy';
+import { CompleteProduction } from '@/components/steel/complete-production';
 
 import { AccessKeyButton } from '@/components/access/access-key-button';
 import { useLanguage } from "@/components/i18n/language-provider";
@@ -20,7 +23,7 @@ import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
-import { addElementWorkAction, createManualElementAction, deleteElementSourceAction, importElementListsAction, removeElementWorkAction, setElementDoneAction } from "../../element-actions";
+import { addElementWorkAction, createManualElementAction, deleteElementSourceAction, importElementListsAction, removeElementWorkAction, setElementDoneAction, syncRemainderElementsAction } from "../../element-actions";
 import { Sheet } from "../../production/production-ui";
 
 export type ElementWorkView = {
@@ -38,6 +41,7 @@ export type ElementView = {
   list: ElementList;
   isManual?: boolean;
   assemblyParts?: unknown;
+  remainderOfId?: string | null;
   mark: string;
   kind: string | null;
   profile: string | null;
@@ -253,6 +257,7 @@ function ElementListSheet({
   const [processTarget, setProcessTarget] = useState<ElementView[] | null>(null);
   // The crew picked last per step, offered again on the next element.
   const lastPick = useRef<Record<string, string[]>>({});
+  const [productionCrew, setProductionCrew] = useState<string[]>([]);
 
   const title = side === "factory" ? t("elements.factoryList", lang) : t("elements.fieldList", lang);
   const current = view.kind === "list" ? null : items.find((element) => element.id === view.id) ?? null;
@@ -292,6 +297,10 @@ function ElementListSheet({
           ) : view.kind === "element" ? (
             <ElementDetail
               element={current}
+              workers={workers}
+              lastCrew={productionCrew}
+              onCrew={setProductionCrew}
+              onCompleted={(entries, doneAt, doneBy) => patch(current.id, element => ({ ...element, work: [...element.work, ...entries], factoryDoneAt: doneAt ?? element.factoryDoneAt, factoryDoneBy: doneBy ?? element.factoryDoneBy }))}
               items={items}
               onComponent={side === 'factory' ? id => setView({ kind: 'element', id, parentId: current.id }) : undefined}
               side={side}
@@ -382,6 +391,19 @@ function ListView({
   const [importMode, setImportMode] = useState<'merge' | 'snapshot'>('merge');
   const importCopy = elementImportCopy(lang);
   const groupCopy = materialGroupCopy(lang);
+  const shortcutCopy = productionShortcutCopy(lang);
+  const remainderPlan = useMemo(() => planRemainders(items), [items]);
+  const remainderRows = remainderPlan.rows.filter(row => row.remaining > 0);
+  function refreshRemainders() {
+    setMessage(null);
+    startImport(async () => {
+      try {
+        const result = await syncRemainderElementsAction({ siteId: site.id });
+        if (!result.ok) { setMessage({ ok: false, text: result.message }); return; }
+        router.refresh();
+      } catch { setMessage({ ok: false, text: t('factory.error', lang) }); }
+    });
+  }
   const [manualOpen, setManualOpen] = useState(false);
   const [manualMark, setManualMark] = useState('');
   const [manualName, setManualName] = useState('');
@@ -470,6 +492,13 @@ function ListView({
 
   return (
     <>
+      {activeList === 'manual' && side === 'factory' ? <section data-testid="remainder-summary" className="rounded-2xl border bg-card p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{shortcutCopy.remainder}</h3>
+          {canCreateManual && remainderPlan.status === 'ready' ? <button type="button" disabled={importing} onClick={refreshRemainders} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-semibold disabled:opacity-50"><RotateCcw className="size-4" />{shortcutCopy.refresh}</button> : null}</div>
+        <p className="mt-1 text-xs text-muted-foreground">{shortcutCopy.formula}</p>
+        <p className="mt-1 text-xs">{remainderPlan.status === 'ready' ? shortcutCopy.ready : shortcutCopy[remainderPlan.status]} {remainderPlan.marks.slice(0, 12).join(', ')}{remainderPlan.marks.length > 12 ? '…' : ''}</p>
+        {remainderPlan.status === 'ready' ? <p className="mt-1 break-words text-xs tabular-nums">{remainderRows.slice(0, 8).map(row => `${row.mark} × ${row.remaining}`).join(' · ') || shortcutCopy.none}{remainderRows.length > 8 ? ` · +${remainderRows.length - 8}` : ''}</p> : null}
+      </section> : null}
       {/* Summary: compact, the list is what matters */}
       <div data-studio-list-summary className="rounded-2xl border bg-card p-3">
         <div className="flex items-center gap-3">
@@ -785,6 +814,10 @@ function PieceStrip({ element, side, definitions }: { element: ElementView; side
 
 function ElementDetail({
   element,
+  workers,
+  lastCrew,
+  onCrew,
+  onCompleted,
   items,
   onComponent,
   side,
@@ -796,6 +829,10 @@ function ElementDetail({
   onDone,
 }: {
   element: ElementView;
+  workers: ElementWorkerOption[];
+  lastCrew: string[];
+  onCrew: (ids: string[]) => void;
+  onCompleted: (entries: ElementWorkView[], doneAt: string | null, doneBy: string | null) => void;
   items: ElementView[];
   onComponent?: (id: string) => void;
   side: ElementSide;
@@ -856,6 +893,7 @@ function ElementDetail({
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_STYLE[status].pill}`}>{statusLabel(status, lang)}</span>
           </div>
           <div className="truncate text-xs tabular-nums text-muted-foreground">{facts.join(" · ")}</div>
+          {element.remainderOfId ? <div className="text-xs text-muted-foreground">{productionShortcutCopy(lang).origin}</div> : null}
         </div>
       </div>
 
@@ -876,10 +914,12 @@ function ElementDetail({
 
       {element.quantity > 1 || side === "field" ? <PieceStrip element={element} side={side} definitions={definitions} /> : null}
 
-      <div className="flex items-baseline justify-between px-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <span className="text-sm font-bold">{side === "factory" ? t("elements.factorySteps", lang) : t("elements.fieldSteps", lang)}</span>
         <span className="text-xs tabular-nums text-muted-foreground">{fill(t("elements.stepsChecked", lang), { done: stages.filter(stage => cap > 0 && stagePieces(element, stage) >= cap).length, total: stages.length })}</span>
         {onProcesses ? <button type="button" onClick={onProcesses} className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"><SlidersHorizontal className="size-4" />{processButton(lang)}</button> : null}
+        {side === 'factory' && canEdit && element.list === 'assembly' && productionCompletionStages(element).some(stage => stageRemaining(element, stage) > 0)
+          ? <CompleteProduction key={`${element.id}-${element.processRevision}-${element.work.length}`} element={element} workers={workers} definitions={definitions} lastCrew={lastCrew} onCrew={onCrew} onCompleted={onCompleted} /> : null}
       </div>
       <div data-studio-element-grid={side === 'factory' || undefined} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {stages.map((stage) => {

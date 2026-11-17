@@ -22,7 +22,11 @@ test('material groups retain crystal layout and resolve exact part codes without
       await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
       await context.addCookies([{ name: 'bk_theme', value: theme, url: base }]);
       await page.goto(`/workzone/baustellen/${seed.sites.aurora.id}`);
-      await page.locator('[data-studio-list-open]').first().click();
+      await expect(async () => {
+        const sheet=page.locator('[data-studio-process-sheet]');
+        if (!await sheet.isVisible()) await page.locator('[data-studio-list-open]').first().click();
+        await expect(sheet).toBeVisible();
+      }).toPass();
       const dialog = page.getByRole('dialog').last();
       await expect(dialog.getByText('B/20', { exact: true }).first()).toBeVisible();
       await expect.poll(() => dialog.evaluate(e => getComputedStyle(e).opacity)).toBe('1');

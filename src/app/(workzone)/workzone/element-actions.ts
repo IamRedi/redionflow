@@ -21,6 +21,8 @@ import { AssetOperationError } from '@/lib/company-assets/access';
 import { allowedForKind, safeFileName, SITE_FILE_MAX_BYTES, sniffSiteFileMime } from "@/lib/site-files/validate";
 import type { ActionResult } from "@/lib/validation/action-result";
 import { dispatchCompletions, siteCompletionSnapshot, type CompletionSnapshot } from '@/lib/notifications/events';
+import { reconcileRemainders, RemainderConflict } from '@/lib/elements/remainders-db';
+import { productionCompletionStages } from '@/lib/elements/stages';
 
 function revalidateSite(baustelleId: string, companyId:string) {
   revalidatePath(`/workzone/baustellen/${baustelleId}`);
@@ -126,12 +128,14 @@ export async function importElementListsAction(formData: FormData): Promise<Elem
           },
         });
       }
+      await reconcileRemainders(tx, companyId, baustelleId);
       return done;
     },
     { timeout: 30_000, maxWait: 10_000 },
   ); } catch (error) {
     if (error instanceof ElementImportConflict) return { ok: false, message: tr('elementImportQuantityConflict', { mark: error.message }) };
     if (error instanceof ElementImportManualConflict) return { ok: false, message: tr('elementManualCodeConflict', { mark: error.message }) };
+    if (error instanceof RemainderConflict) return { ok: false, message: tr('elementImportQuantityConflict', { mark: error.message }) };
     throw error;
   }
   if (!results) return { ok: false, message: tr("siteNotFound") };
@@ -249,6 +253,91 @@ export async function addElementWorkAction(input: unknown): Promise<ActionResult
   await dispatchCompletions(companyId, before, after, result.workId);
   revalidateSite(result.siteId, companyId);
   return { ok: true, message: "OK", checkedByName: actor.name, workId: result.workId, pieces: result.count };
+}
+
+/** One atomic confirmation for the remaining pieces of ONE element's factory route. */
+export async function completeElementProductionAction(input: unknown) {
+  const tr = await getActionTranslator();
+  const parsed = z.object({
+    elementId: z.string().min(1).max(64), expectedRevision: z.number().int().min(0),
+    expectedQuantity: z.number().int().min(1).max(100000),
+    expectedWorkIds: z.array(z.string().min(1).max(64)).max(5000),
+    assignments: z.record(z.string().min(1).max(32), z.array(z.string().min(1).max(64)).min(1).max(20)),
+  }).strict().safeParse(input);
+  const fail = (code: string) => ({ ok: false as const, code, message: tr('invalidInput') });
+  if (!parsed.success) return fail('INVALID_INPUT');
+  const companyId = await getCurrentCompanyId();
+  const actor = companyId ? await currentCompanyActor(companyId) : null;
+  if (!actor || !companyId) return fail('ACCESS_DENIED');
+  const data = parsed.data;
+  let before: CompletionSnapshot | null = null, after: CompletionSnapshot | null = null;
+  const result = await withTenantContext(companyId, async tx => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
+    await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "id"=${data.elementId} AND "companyProfileId"=${companyId} FOR UPDATE`;
+    const element = await tx.siteElement.findFirst({ where: { id: data.elementId, companyProfileId: companyId }, select: elementSelect });
+    if (!element || element.list !== 'assembly') return fail('NOT_FOUND');
+    if (!canCheck(actor.at(element.baustelleId), 'factory')) return fail('ACCESS_DENIED');
+    if (element.processRevision !== data.expectedRevision || element.quantity !== data.expectedQuantity) return fail('CONFLICT');
+    const stages = [...productionCompletionStages(asState(element))];
+    if (!stages.length || stages.length > 80) return fail('NO_PROCESSES');
+    const remaining = stages.map(stage => ({ stage, pieces: stageRemaining(asState(element), stage) })).filter(row => row.pieces > 0);
+    if (!remaining.length) return { ok: true as const, siteId: element.baustelleId, entries: [], doneAt: element.factoryDoneAt?.toISOString() ?? null, doneBy: null };
+    if (data.expectedWorkIds.length !== element.work.length || element.work.some(work => !data.expectedWorkIds.includes(work.id))) return fail('CONFLICT');
+    if (Object.keys(data.assignments).length !== remaining.length || remaining.some(row => !Object.hasOwn(data.assignments, row.stage))) return fail('CONFLICT');
+    const definitions = await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId, kind: 'factory', key: { in: stages } }, select: { key: true, archivedAt: true } });
+    const configured = readProcessRoutes(element.processRoutes)?.factory;
+    if (stages.some(stage => isCustomStage(stage) && !definitions.some(d => d.key === stage)
+      || definitions.some(d => d.key === stage && d.archivedAt) && !configured?.includes(stage))) return fail('PROCESS_UNAVAILABLE');
+    const workerIds = [...new Set(Object.values(data.assignments).flat())];
+    const workers = await tx.worker.findMany({ where: { id: { in: workerIds }, companyProfileId: companyId, status: 'active' }, select: { id: true, firstName: true, lastName: true } });
+    if (workers.length !== workerIds.length) return fail('INVALID_WORKER');
+    before = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
+    const entries = [];
+    for (const row of remaining) {
+      const ids = [...new Set(data.assignments[row.stage])];
+      const names = ids.map(id => workers.find(w => w.id === id)!).map(w => `${w.firstName} ${w.lastName}`.trim()).join(', ');
+      const created = await tx.siteElementWork.create({ data: { companyProfileId: companyId, elementId: element.id,
+        stage: row.stage, pieces: row.pieces, workerIds: ids, workerNames: names,
+        checkedByName: actor.name, checkedByUserId: actor.userId, checkedByWorkerId: actor.workerId,
+        productionSnapshot: { v: 1, list: element.list, mark: element.mark, quantity: element.quantity, unitWeightKg: element.weightKg },
+      }, select: { id: true, stage: true, pieces: true, workerIds: true, workerNames: true, checkedByName: true, checkedAt: true } });
+      entries.push({ ...created, checkedAt: created.checkedAt.toISOString() });
+    }
+    const doneAt = new Date();
+    await tx.siteElement.update({ where: { id: element.id }, data: { factoryDoneAt: doneAt, factoryDoneBy: actor.name } });
+    after = await siteCompletionSnapshot(tx, companyId, element.baustelleId);
+    return { ok: true as const, siteId: element.baustelleId, entries, doneAt: doneAt.toISOString(), doneBy: actor.name };
+  }, { timeout: 30_000, maxWait: 10_000 });
+  if (!result.ok) return result;
+  if (result.entries.length) await dispatchCompletions(companyId, before, after, result.entries[0].id);
+  revalidateSite(result.siteId, companyId);
+  return { ...result, message: 'OK' };
+}
+
+/** Explicit refresh for lists already uploaded before automatic remainders existed. */
+export async function syncRemainderElementsAction(input: unknown) {
+  const tr = await getActionTranslator();
+  const parsed = z.object({ siteId: z.string().min(1).max(64) }).strict().safeParse(input);
+  if (!parsed.success) return { ok: false, code: 'INVALID_INPUT', message: tr('invalidInput') };
+  const companyId = await getCurrentCompanyId();
+  const actor = companyId ? await currentCompanyActor(companyId) : null;
+  const here = actor?.at(parsed.data.siteId);
+  if (!companyId || !actor || !here || !(here.factorySteps || here.office)) return { ok: false, code: 'ACCESS_DENIED', message: tr('accessDenied') };
+  try {
+    const plan = await withTenantContext(companyId, async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`steel-catalog:${companyId}`}))`;
+      const site = await tx.baustelle.findFirst({ where: { id: parsed.data.siteId, companyProfileId: companyId, type: 'STEEL_ASSEMBLY' }, select: { id: true } });
+      if (!site) return null;
+      await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "companyProfileId"=${companyId} AND "baustelleId"=${site.id} ORDER BY "id" FOR UPDATE`;
+      return reconcileRemainders(tx, companyId, site.id);
+    }, { timeout: 30_000, maxWait: 10_000 });
+    if (!plan || plan.status !== 'ready') return { ok: false, code: plan?.status ?? 'NOT_FOUND', message: tr('invalidInput') };
+    revalidateSite(parsed.data.siteId, companyId);
+    return { ok: true, message: 'OK' };
+  } catch (error) {
+    if (error instanceof RemainderConflict) return { ok: false, code: 'CONFLICT', message: tr('elementImportQuantityConflict', { mark: error.message }) };
+    throw error;
+  }
 }
 
 /** Engineer takes back one entry of a step (a mistake). */
@@ -496,6 +585,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
       for (const item of lists) {
         await importElementList(tx, { companyId, baustelleId: site.id, parsed: item.list, fileName: item.fileName });
       }
+      await reconcileRemainders(tx, companyId, site.id);
       const known = new Set((await tx.siteFile.findMany({ where: { companyProfileId: companyId, baustelleId: site.id }, select: { fileName: true } })).map((file) => file.fileName));
       const keep = [
         ...lists.map((item) => ({ bytes: item.bytes, fileName: item.fileName, mime: spreadsheetMime(item.fileName) ?? "application/vnd.ms-excel", reference: item.list.projectNumber })),
@@ -520,7 +610,7 @@ export async function createSiteFromProjectAction(formData: FormData): Promise<P
       return site.id;
     },
     { timeout: 30_000, maxWait: 10_000 },
-  );}catch(error){if(error instanceof ElementImportConflict)return {ok:false,message:tr('elementImportQuantityConflict',{mark:error.message})};if(error instanceof ElementImportManualConflict)return {ok:false,message:tr('elementManualCodeConflict',{mark:error.message})};if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
+  );}catch(error){if(error instanceof ElementImportConflict||error instanceof RemainderConflict)return {ok:false,message:tr('elementImportQuantityConflict',{mark:error.message})};if(error instanceof ElementImportManualConflict)return {ok:false,message:tr('elementManualCodeConflict',{mark:error.message})};if(error instanceof AssetOperationError&&['DENIED','CONFLICT','NOT_FOUND'].includes(error.code))return {ok:false,message:tr('accessDenied')};throw error;}
   if (!siteId) return { ok: false, message: tr("invalidInput") };
   revalidatePath("/workzone");
   revalidateSite(siteId, companyId);
@@ -556,11 +646,16 @@ export async function deleteElementSourceAction(input: unknown): Promise<ActionR
     // Default: who may import the lists or acts on this site's factory list. LIST_DELETE_ONLY narrows it to named people.
     const byDefault = Boolean(actor.at(siteId)?.factorySteps) || await mayUploadSiteDocuments(tx, identity, siteId);
     if (!mayDeleteElementList(actor.name, byDefault)) return null;
+    // A source part with a standalone route is retained until its linked element
+    // is explicitly resolved; never cascade away its production/field history.
+    if (await tx.siteElement.findFirst({ where: { companyProfileId: companyId, baustelleId: siteId, remainderOfId: { not: null } }, select: { id: true } })
+      && await tx.siteElement.findFirst({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile, isManual: false }, select: { id: true } })) return 'linked' as const;
     const removed = await tx.siteElement.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, sourceFile, isManual: false } });
     if (sourceFile) await tx.siteFile.deleteMany({ where: { companyProfileId: companyId, baustelleId: siteId, kind: "document", fileName: sourceFile } });
     return removed.count;
   }, { timeout: 30_000 });
   if (deleted === null) return { ok: false, message: tr("accessDenied") };
+  if (deleted === 'linked') return { ok: false, message: tr('elementImportQuantityConflict', { mark: sourceFile ?? 'Single Parts' }) };
   revalidateSite(siteId, companyId);
   return { ok: true, message: "OK", deleted };
 }

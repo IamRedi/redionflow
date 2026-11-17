@@ -28,7 +28,7 @@ export async function importElementList(
   await tx.$queryRaw`SELECT "id" FROM "SiteElement" WHERE "companyProfileId"=${companyId} AND "baustelleId"=${baustelleId} ORDER BY "id" FOR UPDATE`;
   const existing = await tx.siteElement.findMany({
     where: { companyProfileId: companyId, baustelleId, list: parsed.list, isManual: false },
-    select: { id: true, mark: true, quantity: true, sortIndex: true, processRoutes: true, processRevision: true, work: { select: { stage: true, pieces: true } }, _count: { select: { work: true } } },
+    select: { id: true, mark: true, quantity: true, sortIndex: true, processRoutes: true, processRevision: true, remainder: { select: { id: true } }, work: { select: { stage: true, pieces: true } }, _count: { select: { work: true } } },
   });
   const byMark = new Map(existing.map((row) => [row.mark, row]));
   const ordered = [...parsed.elements].sort((a, b) => compareMarks(a.mark, b.mark));
@@ -75,7 +75,7 @@ export async function importElementList(
   const gone = [...byMark.values()];
   // An untouched import keeps its default processes (revision 0). An engineer's
   // saved route (including an intentionally empty one) is planning data to retain.
-  const removable = (input.mode === 'snapshot' ? gone : []).filter((row) => row._count.work === 0 && row.processRevision === 0).map((row) => row.id);
+  const removable = (input.mode === 'snapshot' ? gone : []).filter((row) => row._count.work === 0 && row.processRevision === 0 && !row.remainder).map((row) => row.id);
   if (removable.length > 0) await tx.siteElement.deleteMany({ where: { id: { in: removable }, companyProfileId: companyId } });
   return { list: parsed.list, added, updated, removed: removable.length, kept: gone.length - removable.length, addedIds: newRows.map(row => row.id) };
 }

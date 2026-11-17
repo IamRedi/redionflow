@@ -105,6 +105,12 @@ export function routeStages(element: ElementState, side: ElementSide) {
   return stagesFor(side, element.list).filter((stage) => element.work.some((work) => work.stage === stage));
 }
 
+/** A legacy engineer's closed route already records the steps that were needed. */
+export function productionCompletionStages(element: ElementState): readonly string[] {
+  return readProcessRoutes(element.processRoutes)?.factory == null && element.factoryDoneAt
+    ? routeStages(element, 'factory') : stagesFor('factory', element.list, element.processRoutes);
+}
+
 /**
  * The route is fixed when the engineer finished the element (the steps not
  * taken are not needed) or when every step has been worked.

@@ -16,17 +16,62 @@ crystal interface, tenant/site permissions, confirmed work and existing metrics.
   **same site and company**, including when that part list arrives later.
   The composition keeps its own source filename/import date, even if a later
   assembly-only export updates the material without a replacement composition.
-- **Elementet** contains manual elements. An authorized factory planner uses
+- **Elementet** contains standalone remainders calculated from the imported lists,
+  alongside explicitly manual elements. An authorized factory planner uses
   **Shto element**, enters code/name/quantity, then chooses processes with the
   existing process editor. No process is automatically selected. An empty route
   never means completed work. Existing factory-before-field release rules apply.
 
-Composition quantities are the values printed in the source export. The app
-does not assume whether they are per assembly or per exported batch. These
+Megi clarified on 17 November 2026 that component quantities are for **one
+assembly**. Standalone quantity is `Single Part quantity - SUM(component quantity
+per assembly * assembly quantity)`, matched by the exact part code in the same
+site/company. Repeated parent export rows add assembly quantities while retaining
+one identical unit composition; conflicting unit compositions reject the file.
+These
 references do not create more stock, duplicate production totals, assign part
 work to an assembly, or automatically confirm assembly work. Missing parts are
 explicitly marked; repeated codes in different assemblies retain their own
 exported quantities. No component weight is embedded in this new metadata.
+
+## Standalone elements and one-action production — 17 November follow-up
+
+After an upload transaction completes, a complete and consistent set of lists
+updates linked standalone elements automatically. For previously uploaded lists,
+the authorized planner can use **Elementet → Përditëso Elementet**. Reading a
+page or installing the additive migration never creates/reclassifies records.
+Missing lists, missing/empty composition, unresolved codes and over-allocation
+are explicit; they never mean that all parts are free. Incomplete initial
+uploads stay importable without invented standalone stock. Once linked elements
+exist, an inconsistent reimport is rejected atomically rather than retaining
+misleading quantities. A same-code manual/assembly collision also rejects the
+reconciliation; a manual record is never silently adopted.
+
+`remainderOfId` links one standalone assembly-workflow row to its original part.
+The original Single Part and cutting history retain their IDs, quantities and
+checks; this is a final standalone material, not an additional Single Part stock
+row. Existing canonical metrics keep cutting, assembly processing and released
+materials separate. The linked element starts with empty factory/field routes,
+no work and no assumed completion. **Proceset** reuses the existing company
+catalog checkbox picker, including custom processes and its current permissions.
+Recalculation preserves selected routes, IDs, workers, finish attribution and
+work snapshots. Quantity reductions below confirmed work, or deletion of a
+configured/historical standalone element, fail without changing either list.
+Source-file removal is blocked while linked elements depend on the site's lists.
+
+**Përfundo prodhimin** is for one assembly/standalone element, never a whole
+site. The compact crystal dialog shows only unfinished quantities for its
+required factory stages. Choose a common crew once and optionally different
+workers per stage, then confirm once. One transaction creates normal per-stage
+records for the remaining quantities, retaining every previous record unchanged.
+It records the actual selected workers, authenticated checker, time and immutable
+production weight snapshot; it does not infer workers from presence. Empty
+routes cannot finish. A closed legacy route retains its intentionally skipped
+steps. Company/site rights, active worker membership, catalog availability,
+quantity/route/work freshness, canonical locks and completion notifications all
+remain enforced. Concurrent/retried completion cannot duplicate quantities.
+
+The nullable link/index/FK migration does not rewrite existing material or work
+records. No Production files or confirmations are mutated during preparation.
 
 ## Compatibility and boundaries
 
