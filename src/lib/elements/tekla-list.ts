@@ -162,6 +162,8 @@ export function parseElementList(data: ArrayBuffer | Uint8Array): ParsedElementL
           const value = cells[c];
           switch (field) {
             case "quantity":
+              if (hasComposition && (num(value) === null || !Number.isSafeInteger(num(value)) || num(value)! <= 0))
+                throw new ElementListError('Invalid assembly quantity for unit composition.');
               entry.quantity = Math.max(1, Math.round(num(value) ?? 1));
               break;
             case "kind":
@@ -216,8 +218,16 @@ function dedupe(elements: ParsedElement[]) {
     if (existing) {
       existing.quantity += element.quantity;
       if (element.assemblyParts) {
-        existing.assemblyParts ??= { v: 1, parts: [] };
-        existing.assemblyParts.parts.push(...element.assemblyParts.parts);
+        // Component counts are per ONE assembly, not another batch total.
+        // Repeated parent rows add assemblies, never multiply the unit BOM twice.
+        const signature = (parts: NonNullable<ParsedElement['assemblyParts']>['parts']) => {
+          const totals = new Map<string, number>();
+          for (const part of parts) totals.set(part.mark, (totals.get(part.mark) ?? 0) + part.quantity);
+          return JSON.stringify([...totals].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
+        };
+        if (existing.assemblyParts && signature(existing.assemblyParts.parts) !== signature(element.assemblyParts.parts))
+          throw new ElementListError('Repeated assembly has conflicting unit composition.');
+        existing.assemblyParts ??= element.assemblyParts;
       }
     }
     else byMark.set(element.mark, { ...element });

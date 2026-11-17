@@ -14,6 +14,13 @@ function teklaHtml(header: string[], rows: Array<Array<string | number>>, total:
 }
 
 describe("Tekla element lists", () => {
+  it('adds repeated assembly counts without doubling the per-unit composition, rejecting conflicting BOMs', () => {
+    const parse = (n: number) => parseElementList(teklaHtml(['Assemb.', 'Parte', 'Q.tà'],
+      [['B/1', '', 2], ['', 'p', 3], ['B/1', '', 1], ['', 'p', n]], ['Totale', '', 3]));
+    expect(parse(3).elements[0]).toMatchObject({ mark: 'B/1', quantity: 3, assemblyParts: { parts: [{ mark: 'p', quantity: 3 }] } });
+    expect(() => parse(4)).toThrow(ElementListError);
+    for (const quantity of [0, -1, 1.5, '']) expect(() => parseElementList(teklaHtml(['Assemb.', 'Parte', 'Q.tà'], [['B/1', '', quantity], ['', 'p', 1]], ['Totale']))).toThrow(ElementListError);
+  });
   it('reads mixed assembly/part columns as composition, preserving code case and parent totals only', () => {
     const data = teklaHtml(
       ['Assemb.', 'Parte', 'Q.tà', 'Profilo', 'Materiale', 'Peso(kg) un.'],

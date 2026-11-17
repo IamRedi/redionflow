@@ -268,6 +268,7 @@ export default async function BaustelleDetailPage({
             list: true,
             isManual: true,
             assemblyParts: true,
+            remainderOfId: true,
             mark: true,
             kind: true,
             profile: true,
