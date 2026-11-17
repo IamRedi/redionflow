@@ -717,6 +717,7 @@
     "changeCodeSave": "Save code",
     "nationalIdLabel": "National ID",
     "elementListUnreadable": "The file {file} is not an element list (assemblies or parts).",
+    "elementManualCodeConflict": "Code {mark} already belongs to an element or assembly. Nothing was saved; the existing material is unchanged.",
     "elementImportQuantityConflict": "The quantity for {mark} is below its confirmed work. Check the list; this upload was not saved.",
     "elementListImported": "Lists uploaded: {added} new, {updated} updated.",
     "elementCheckOnlyEngineer": "Only the responsible engineer or the office confirms this stage.",

@@ -3,6 +3,9 @@ import {prisma} from '../../src/lib/db/prisma';
 import {createSessionCookie} from '../../src/lib/auth/session-cookie';
 import {assertE2ETestDatabase} from '../../scripts/lib/e2e-target';
 import {removeSecurityTenants} from '../security/fixtures';
+import {readFileSync} from 'node:fs';
+const words=JSON.parse(readFileSync(new URL('../../src/locales/sq.json',import.meta.url),'utf8'));
+const text=(path:string):string=>path.split('.').reduce((v,k)=>v[k],words);
 
 test('part-only cutting is visible without assembly output and the mobile site board follows active/alphabetic order',async({page,context},info)=>{
  test.setTimeout(180000);assertE2ETestDatabase(process.env);
@@ -37,6 +40,14 @@ test('part-only cutting is visible without assembly output and the mobile site b
    if(!baseline){const detail=page.getByTestId('site-factory-output');await expect(detail.getByTestId('factory-process-percent')).toHaveText('40%');await expect(detail).toContainText('Prerja e pjesëve: 4/10 copë');await expect(detail).not.toContainText('0/0 copë');await detail.scrollIntoViewIfNeeded();}
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
    await page.screenshot({path:`${out}/${baseline?'before':'after'}-site-${width}-${theme}.png`});
+   if(!baseline){
+    const launch=page.locator('[data-studio-list-open]').first();await expect(launch).not.toContainText(text('elements.noList'));await launch.click();
+    const sheet=page.getByRole('dialog').last();await expect(sheet.getByRole('button',{name:/Single Parts/,pressed:true})).toBeVisible();
+    await expect(sheet.getByText('PLATE-DEMO',{exact:true}).first()).toBeVisible();
+    expect(await sheet.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
+    await page.screenshot({path:`${out}/after-single-parts-list-${width}-${theme}.png`});
+    await sheet.getByRole('button',{name:text('factory.close'),exact:true}).click();
+   }
   }
   if(!baseline){
    // A site becomes active without editing the site: it must move ahead of idle cards.

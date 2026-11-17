@@ -266,6 +266,8 @@ export default async function BaustelleDetailPage({
           select: {
             id: true,
             list: true,
+            isManual: true,
+            assemblyParts: true,
             mark: true,
             kind: true,
             profile: true,

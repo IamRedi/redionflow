@@ -407,6 +407,7 @@
     "changeCodeSave": "Salvează codul",
     "nationalIdLabel": "Număr act de identitate",
     "elementListUnreadable": "Fișierul {file} nu este o listă de elemente (ansambluri sau piese).",
+    "elementManualCodeConflict": "Codul {mark} aparține deja unui element sau ansamblu. Nu s-a salvat nimic; materialul existent rămâne neschimbat.",
     "elementImportQuantityConflict": "Cantitatea pentru {mark} este sub munca confirmată. Verifică lista; importul nu a fost salvat.",
     "elementListImported": "Liste încărcate: {added} noi, {updated} actualizate.",
     "elementCheckOnlyEngineer": "Această etapă o confirmă doar inginerul responsabil sau biroul.",

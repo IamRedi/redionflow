@@ -8,13 +8,14 @@ vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { withTenantContext } from "@/lib/db/tenant-context";
-import { addElementWorkAction, deleteElementSourceAction, removeElementWorkAction, setElementDoneAction, setElementProcessesAction } from "@/app/(workzone)/workzone/element-actions";
+import { addElementWorkAction, createManualElementAction, deleteElementSourceAction, removeElementWorkAction, setElementDoneAction, setElementProcessesAction } from "@/app/(workzone)/workzone/element-actions";
 import { seedSecurityTenants, removeSecurityTenants, createTestSession } from "../../../tests/security/fixtures";
 import { importElementList, type ElementImportMode } from "./import";
 import type { ParsedElementList } from "./tekla-list";
 import { doneQty, FIELD_STAGES, type ElementList } from "./stages";
 import { FACTORY_STEP_KEYS } from "../factory/production";
 import { fillDefaultElementRoutes } from "./default-routes";
+import { materialGroup, readAssemblyParts } from './material-groups';
 
 const DEFAULT_ASSEMBLY = { v: 1, factory: [...FACTORY_STEP_KEYS], field: [...FIELD_STAGES] };
 
@@ -43,6 +44,62 @@ async function importFor(tenant: (typeof tenants)[number], marks: string[], mode
     importElementList(tx, { companyId: tenant.company.id, baustelleId: tenant.site.id, parsed: list(marks), fileName: "list.xls", mode }),
   );
 }
+
+it('keeps BOM references separate from production and resolves exact-case Single Parts arriving later', async () => {
+  const [a, b] = tenants;
+  const parsed = list(['B/1']);
+  parsed.elements[0].assemblyParts = { v: 1, parts: [{ mark: 'b/1', quantity: 4 }, { mark: '1001', quantity: 2 }] };
+  const run = (data: ParsedElementList) => withTenantContext(a.company.id, tx => importElementList(tx, { companyId: a.company.id, baustelleId: a.site.id, parsed: data, fileName: 'bom.xls' }));
+  await run(parsed);
+  const assembly = await prisma.siteElement.findFirstOrThrow({ where: { baustelleId: a.site.id, mark: 'B/1' } });
+  expect(await prisma.siteElement.count({ where: { baustelleId: a.site.id } })).toBe(1);
+  const parts = list(['b/1', 'B/1', '1001']); parts.list = 'part';
+  await run(parts); await run(parts);
+  await importFor(b, ['b/1']);
+  const actual = await withTenantContext(a.company.id, tx => tx.siteElement.findMany({ where: { companyProfileId: a.company.id, baustelleId: a.site.id, list: 'part' } }));
+  expect(actual).toHaveLength(3);
+  const refs = readAssemblyParts(assembly.assemblyParts)!;
+  expect(refs.sourceFile).toBe('bom.xls');
+  expect(Number.isFinite(Date.parse(refs.importedAt!))).toBe(true);
+  expect(refs.parts.map(p => actual.find(row => row.mark === p.mark)?.mark)).toEqual(['b/1', '1001']);
+  expect(await prisma.siteElementWork.count({ where: { companyProfileId: a.company.id } })).toBe(0);
+  // A plain re-export updates the assembly without discarding an earlier BOM.
+  await run(list(['B/1']));
+  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: assembly.id } })).assemblyParts).toEqual(assembly.assemblyParts);
+  parsed.elements[0].assemblyParts = { v: 1, parts: [{ mark: '1001', quantity: 3 }] };
+  await run(parsed);
+  expect((await prisma.siteElement.findUniqueOrThrow({ where: { id: assembly.id } })).assemblyParts).toMatchObject({ ...parsed.elements[0].assemblyParts, sourceFile: 'bom.xls' });
+});
+
+it('creates manual elements only for authorized planners, never auto-selects processes or erases them on reimport', async () => {
+  const [a, b] = tenants;
+  await prisma.baustelle.update({ where: { id: a.site.id }, data: { type: 'STEEL_ASSEMBLY' } });
+  const input = { siteId: a.site.id, mark: 'MAN/1', name: 'Manual DEMO', quantity: 3 };
+  request.values.set('bk_worker_id', await createTestSession('worker', a.worker.id));
+  expect((await createManualElementAction(input)).ok).toBe(false);
+  request.values.clear(); request.values.set('bk_admin_id', await createTestSession('admin', b.admin.id));
+  expect((await createManualElementAction(input)).ok).toBe(false);
+  request.values.clear(); request.values.set('bk_admin_id', await createTestSession('admin', a.admin.id));
+  const created = await createManualElementAction(input); expect(created.ok).toBe(true);
+  const manual = await prisma.siteElement.findUniqueOrThrow({ where: { id: created.id! } });
+  expect(materialGroup(manual)).toBe('manual');
+  expect(manual.processRoutes).toEqual({ v: 1, factory: [], field: [] });
+  expect(doneQty({ ...manual, list: 'assembly', work: [] }, 'factory')).toBe(0);
+  // Even a future revision-zero record is protected from default backfill.
+  await prisma.siteElement.update({ where: { id: manual.id }, data: { processRevision: 0 } });
+  expect(await withTenantContext(a.company.id, tx => fillDefaultElementRoutes(tx, a.company.id))).toBe(0);
+  expect((await addElementWorkAction({ elementId: manual.id, stage: 'cutting', workerIds: [a.worker.id], pieces: 1 })).ok).toBe(false);
+  expect((await createManualElementAction(input)).ok).toBe(false);
+  await importFor(a, ['B/1'], 'snapshot');
+  expect(await prisma.siteElement.findUnique({ where: { id: manual.id } })).not.toBeNull();
+  const before = await prisma.siteElement.findUniqueOrThrow({ where: { id: manual.id } });
+  await expect(importFor(a, ['MAN/1'])).rejects.toThrow('MAN/1');
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: manual.id } })).toEqual(before);
+  expect((await deleteElementSourceAction({ siteId: a.site.id, sourceFile: null })).ok).toBe(true);
+  expect(await prisma.siteElement.findUnique({ where: { id: manual.id } })).not.toBeNull();
+  expect((await setElementProcessesAction({ siteId: a.site.id, elementIds: [manual.id], side: 'factory', stages: ['cutting'] })).ok).toBe(true);
+  expect((await addElementWorkAction({ elementId: manual.id, stage: 'cutting', workerIds: [a.worker.id], pieces: 1 })).ok).toBe(true);
+});
 
 it("re-import updates in place, keeps checked elements and drops unchecked ones", async () => {
   const [a] = tenants;
