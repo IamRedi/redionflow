@@ -53,6 +53,7 @@ export function StaleDeploymentReload({ version, enabled }: { version: string | 
         const response = await originalFetch('/api/app-version', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
         if (!response.ok || disposed || !response.headers.get('content-type')?.includes('application/json')) return;
         const body: unknown = await response.json();
+        if (disposed) return;
         const seen = body && typeof body === 'object' && 'version' in body ? body.version : null;
         const result = observeBuildVersion(mountedVersion, candidate, seen);
         candidate = result.candidate;
