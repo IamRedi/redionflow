@@ -101,6 +101,9 @@ test('invalid probes, offline state, file/password work and a real stale-action 
       const holder = document.createElement('section'); holder.id = 'fixture-update-draft';
       holder.innerHTML = '<label>Draft DEMO<input aria-label="Draft DEMO"></label><label>Upload DEMO<input type="file" aria-label="Upload DEMO"></label><input type="password" aria-label="Secret DEMO">';
       document.body.append(holder);
+      // A programmatic/autofill edit can precede MutationObserver's first scan.
+      const auto = document.createElement('input'); auto.setAttribute('aria-label', 'Autofill DEMO'); holder.append(auto);
+      auto.value = 'Unfocused synthetic draft'; auto.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await page.getByLabel('Draft DEMO', { exact: true }).fill('Keep this unsaved synthetic text');
     await page.getByLabel('Upload DEMO', { exact: true }).setInputFiles({ name: 'synthetic.txt', mimeType: 'text/plain', buffer: Buffer.from('synthetic file') });
@@ -116,6 +119,9 @@ test('invalid probes, offline state, file/password work and a real stale-action 
     const storage = await page.evaluate(() => JSON.stringify({ session: { ...sessionStorage }, local: { ...localStorage } }));
     expect(storage).not.toContain('Keep this unsaved'); expect(storage).not.toContain('synthetic-only'); expect(storage).not.toContain('synthetic.txt');
     await context.setOffline(false); f.mode('same');
+    await page.evaluate(() => document.getElementById('fixture-update-draft')?.querySelectorAll('input:not([aria-label="Autofill DEMO"])').forEach(e => e.remove()));
+    await page.clock.runFor(7_000); expect(f.navigations()).toBe(0);
+    await expect(page.getByLabel('Autofill DEMO', { exact: true })).toHaveValue('Unfocused synthetic draft');
     await page.evaluate(() => document.getElementById('fixture-update-draft')?.remove());
     await page.clock.runFor(7_000); await expect.poll(f.navigations).toBe(1);
   } finally { await context.setOffline(false); await f.cleanup(); }

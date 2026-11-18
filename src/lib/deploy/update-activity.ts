@@ -29,7 +29,7 @@ export function trackUpdateActivity(doc: Document, changed: () => void) {
   const dirty = new Set<Editable>();
   const capture = (event: Event) => {
     const element = editable(event.target);
-    if (element && !initial.has(element)) initial.set(element, value(element));
+    if (element && !initial.has(element) && !dirty.has(element)) initial.set(element, value(element));
   };
   const edit = (event: Event) => {
     const element = editable(event.target);
@@ -40,11 +40,21 @@ export function trackUpdateActivity(doc: Document, changed: () => void) {
     else dirty.delete(element);
     changed();
   };
-  const seed = () => doc.querySelectorAll<HTMLElement>(editableSelector).forEach(element => {
-    if (!initial.has(element)) initial.set(element, value(element));
+  const remember = (element: Editable) => {
+    if (!initial.has(element) && !dirty.has(element)) initial.set(element, value(element));
+  };
+  doc.querySelectorAll<HTMLElement>(editableSelector).forEach(remember);
+  const observer = new MutationObserver(records => {
+    for (const record of records) for (const node of record.addedNodes) {
+      if (!(node instanceof HTMLElement)) continue;
+      const field = editable(node); if (field) remember(field);
+      node.querySelectorAll<HTMLElement>(editableSelector).forEach(remember);
+    }
+    // Release disconnected controls without repeatedly scanning the whole page
+    // for live-list changes or each token of an assistant response.
+    if (records.some(record => Array.from(record.removedNodes).some(node => node instanceof HTMLElement)))
+      for (const element of dirty) if (!element.isConnected) dirty.delete(element);
   });
-  seed();
-  const observer = new MutationObserver(seed);
   observer.observe(doc.body, { childList: true, subtree: true });
   doc.addEventListener('focusin', capture, true);
   doc.addEventListener('beforeinput', capture, true);
