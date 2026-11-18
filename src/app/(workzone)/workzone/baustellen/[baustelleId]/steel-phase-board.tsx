@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, PackageCheck, PackageX, PenLine, Plus, RotateCcw, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { createPortal } from "react-dom";
 
 import { useLanguage } from "@/components/i18n/language-provider";
@@ -39,6 +39,10 @@ export type SteelPhaseView = {
   completedPieces?: number;
   requiredPieces?: number;
 };
+
+const subscribeHydration=()=>()=>{};
+const clientHydrated=()=>true;
+const serverHydrated=()=>false;
 
 type Editor = "note" | "missing" | null;
 
@@ -102,6 +106,7 @@ export function SteelPhaseBoard({
   definitions?: SteelWorkDefinitionView[];
 }) {
   const { currentLang } = useLanguage();
+  const hydrated=useSyncExternalStore(subscribeHydration,clientHydrated,serverHydrated);
   const router = useRouter();
   const [items, setItems] = useState(phases);
   const [openId, setOpenId] = useState<string | null>(()=>phases.find(p=>p.id===initialPhase)?.id??null);
@@ -335,7 +340,7 @@ export function SteelPhaseBoard({
 
       <SteelWorkCatalog open={catalogOpen} onOpenChange={setCatalogOpen} kind="site" group={group} siteId={baustelleId} definitions={definitions} canManage={canManage} initialDefinitionId={catalogInitialId} onChanged={() => router.refresh()} returnFocusRef={catalogTrigger} />
 
-      {typeof document !== "undefined"
+      {hydrated
         ? createPortal(
       <AnimatePresence>
         {open ? (

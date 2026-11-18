@@ -199,7 +199,7 @@ it('stores attachments atomically, retries without duplicates, replies and marks
 it('keeps sent replies discoverable, personal archives isolated, and receipts tied to the reader',async()=>{
  const id=randomUUID();await sendOfficeMail(mail({id}));
  expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)).toMatchObject({hasSent:true,hasReceived:false,otherReadAt:null,archivedAt:null});
- as(almet);await readOfficeThread(id);const reply=randomUUID();await sendOfficeMail(mail({id:reply,thread:id,to:megi,body:'Reply in the sent folder'}));
+ as(almet);const unreadBefore=await officeUnreadCount();await archiveOfficeThread({id,restore:false});expect(await officeUnreadCount()).toBe(unreadBefore-1);await archiveOfficeThread({id,restore:true});expect(await officeUnreadCount()).toBe(unreadBefore);await readOfficeThread(id);const reply=randomUUID();await sendOfficeMail(mail({id:reply,thread:id,to:megi,body:'Reply in the sent folder'}));
  expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)).toMatchObject({hasSent:true,hasReceived:true,archivedAt:null});
  const before=await prisma.officeThread.findUniqueOrThrow({where:{id}});
  await archiveOfficeThread({id,restore:false});expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)?.archivedAt).not.toBeNull();

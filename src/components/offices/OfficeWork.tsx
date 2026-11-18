@@ -41,7 +41,7 @@ export function OfficeWork({initial,view,lang,initialCompose=false,initialRecipi
   const readThrough=currentThread?.otherReadAt??(thread?(thread.senderId===data.self?thread.recipientReadAt:thread.senderReadAt):null);
   function archiveThread(){if(thread)run(()=>archiveThreadAction({id:thread.id,restore:!!currentThread?.archivedAt}),()=>{setThread(null);setCompose(false);},currentThread?.archivedAt?c.saved:(lang==='sq'?'Biseda u arkivua vetëm për ty. E gjen te Arkiva.':'Conversation archived for you. Find it in Archive.'));}
 
-  const unread=data.threads.filter(t=>t.unread).length;
+  const unread=data.threads.filter(t=>t.unread&&!t.archivedAt).length;
   return <section className={s.workspace} data-testid="office-work" aria-busy={busy} data-app-update-blocked={compose || Boolean(thread)}>
     <nav className={`${s.nav} ${glass.backNav}`} aria-label={c.desk}>
       <Link href="/workzone/offices/me"><ArrowLeft size={17}/>{c.desk}</Link>

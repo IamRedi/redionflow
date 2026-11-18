@@ -1,3 +1,4 @@
+import { isRuntimePilotEnabled } from '@/lib/auth/pilot-session';
 import { after } from 'next/server';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { sendInstalledNotification } from '@/lib/notifications/sendNotification';
@@ -12,6 +13,7 @@ export function scheduleOfficeActivity(event:Activity){
   try{after(run);}catch{/* Direct test/script callers dispatch explicitly, without an HTTP request. */}
 }
 export async function dispatchOfficeActivity(event:Activity,deliver=sendInstalledNotification){
+  if(isRuntimePilotEnabled())return;
   const actor=await officeActor(),companyId=actor.companyId;
   if(process.env.INSTALLATION_COMPANY_ID!==companyId)return;
   const config=JSON.parse(process.env.VIRTUAL_OFFICE_ACCESS_JSON!);

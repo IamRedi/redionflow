@@ -37,7 +37,7 @@ export type OfficeSnapshot=Awaited<ReturnType<typeof officeWorkSnapshot>>;
 export async function officeUnreadCount(){
   const actor=await officeActor();
   return withTenantContext(actor.companyId,async tx=>{
-    const rows=await tx.officeThread.findMany({where:{companyProfileId:actor.companyId,...participant(actor.principalId)},select:{senderId:true,senderReadAt:true,recipientReadAt:true,messages:{select:{senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},take:500});
+    const rows=await tx.officeThread.findMany({where:{companyProfileId:actor.companyId,OR:[{senderId:actor.principalId,senderArchivedAt:null},{recipientId:actor.principalId,recipientArchivedAt:null}]},select:{senderId:true,senderReadAt:true,recipientReadAt:true,messages:{select:{senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},take:500});
     return rows.filter(t=>{const last=t.messages[0],read=t.senderId===actor.principalId?t.senderReadAt:t.recipientReadAt;return last&&last.senderId!==actor.principalId&&(!read||last.createdAt>read);}).length;
   });
 }
