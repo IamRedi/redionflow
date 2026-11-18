@@ -2,6 +2,7 @@
 
 import { Check, HardHat, Loader2, MapPin, Pencil, Search, Truck, X } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
+import { useAppUpdateBlocker } from '@/components/use-app-update-blocker';
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { AssetThumbnail } from '@/components/asset-thumbnail';
@@ -139,6 +140,7 @@ export function DailyPlanBoard({
   const savedKeys = savedRows.filter(hasContent).map(rowKey).sort();
   const dirty = boardRows.join("\n") !== savedKeys.join("\n");
   const neverSaved = savedRows.length === 0;
+  useAppUpdateBlocker(isPending || dirty || Boolean(picked) || Boolean(pendingConfirmation) || Boolean(noteFor));
 
   const needle = query.trim().toLocaleLowerCase();
   // Free ones first, then the ones already placed today.

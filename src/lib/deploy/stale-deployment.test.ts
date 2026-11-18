@@ -1,7 +1,7 @@
 import { expect, it, vi } from "vitest";
 import { UnrecognizedActionError } from "next/dist/client/components/unrecognized-action-error";
 
-import { isStaleDeploymentError, reloadOnStaleDeployment } from "./stale-deployment";
+import { handleStaleDeploymentSafely, isStaleDeploymentError, reloadOnStaleDeployment } from "./stale-deployment";
 
 const fakeWindow = () => {
   const store = new Map<string, string>();
@@ -31,4 +31,14 @@ it("ignores other errors", () => {
   const win = fakeWindow();
   expect(reloadOnStaleDeployment(new Error("boom"), 1, win)).toBe(false);
   expect(win.location.reload).not.toHaveBeenCalled();
+});
+
+it('hands a stale action to the work-aware coordinator instead of discarding the current page', () => {
+  const win = fakeWindow(); vi.stubGlobal('window', win);
+  const defer = vi.fn(), release = handleStaleDeploymentSafely(defer);
+  try {
+    expect(reloadOnStaleDeployment(new UnrecognizedActionError('old action'))).toBe(true);
+    expect(defer).toHaveBeenCalledOnce(); expect(win.location.reload).not.toHaveBeenCalled();
+    expect(reloadOnStaleDeployment(new Error('database failed'))).toBe(false);
+  } finally { release(); vi.unstubAllGlobals(); }
 });

@@ -14,6 +14,11 @@ RUN npm ci --no-audit --no-fund
 
 COPY . .
 
+# Optional per-installation private key, supplied by Railway at build time.
+# Reuse across builds so unchanged Server Actions keep stable references.
+# It must never be NEXT_PUBLIC, committed, printed or regenerated per release.
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+
 # Build needs a syntactically valid URL only; nothing connects at build time.
 ENV APP_ENV=demo \
     NEXT_TELEMETRY_DISABLED=1 \

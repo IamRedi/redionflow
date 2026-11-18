@@ -25,6 +25,7 @@ import { productBranding } from "@/lib/mode-config";
 import { isSaasMode } from "@/lib/saas-config";
 import { resolveRequestLanguage } from "@/lib/i18n/server";
 import { StaleDeploymentReload } from "@/components/stale-deployment-reload";
+import { appBuildVersion } from '@/lib/deploy/build-version';
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -122,7 +123,7 @@ export default async function RootLayout({
               )}
             </div>
           </div>}
-          <StaleDeploymentReload />
+          <StaleDeploymentReload enabled={Boolean(admin || worker)} version={appBuildVersion()} />
           {children}
           </FooterBrandProvider>
           </ProductionHeaderActionsProvider>

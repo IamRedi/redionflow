@@ -34,7 +34,7 @@ export function OfficeWork({initial,view,lang,initialCompose=false,initialRecipi
   function submitMail(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const files=f.getAll('files').filter((v):v is File=>v instanceof File&&v.size>0);if(files.length>MAX_MAIL_FILES||files.some(v=>v.size>MAX_MAIL_FILE_BYTES)||files.reduce((n,v)=>n+v.size,0)>MAX_MAIL_TOTAL_BYTES){setError(c.invalid);return;}if(!requestId.current)requestId.current=crypto.randomUUID();f.set('requestId',requestId.current);f.set('threadId',thread?.id??'');if(thread){f.set('subject',thread.subject);f.set('recipientId',thread.senderId===data.self?thread.recipientId:thread.senderId);}run(()=>sendMailAction(f),({id})=>{requestId.current=null;mailForm.current?.reset();setCompose(false);start(async()=>{const r=await readThreadAction(id);if(r.ok)setThread(r.data);else fail(r.error);});},c.sentOk);}
   const mailRows=data.threads.filter(t=>(filter==='all'||filter==='unread'&&t.unread||filter==='sent'&&t.senderId===data.self||filter==='inbox'&&t.recipientId===data.self)&&`${t.subject} ${name(t.senderId)} ${name(t.recipientId)}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const unread=data.threads.filter(t=>t.unread).length;
-  return <section className={s.workspace} data-testid="office-work" aria-busy={busy}>
+  return <section className={s.workspace} data-testid="office-work" aria-busy={busy} data-app-update-blocked={compose || Boolean(thread)}>
     <nav className={`${s.nav} ${glass.backNav}`} aria-label={c.desk}>
       <Link href="/workzone/offices/me"><ArrowLeft size={17}/>{c.desk}</Link>
       <Link href="/workzone/offices">{c.reception}</Link>
