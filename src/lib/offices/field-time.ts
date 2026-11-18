@@ -1,3 +1,4 @@
+import { withRealtimeBatch } from '@/lib/realtime/event-hub';
 import { z } from 'zod';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import { officeActor, OfficeError } from './work-access';
@@ -41,7 +42,8 @@ const batchInput=z.object({command:z.enum(['start','stop']),at:z.string().max(40
 export async function changeFieldTime(raw:unknown){
   const input=batchInput.parse(raw),at=input.at?parseWorkDateTime(input.at):new Date();
   if(!at||at.getTime()>Date.now()+60_000)throw new OfficeError('INVALID');
-  const snapshot=await fieldTimeSnapshot();
+  const actor=await fieldActor(),snapshot=await fieldTimeSnapshot();
+  return withRealtimeBatch(actor.companyId,async()=>{
   const results=[];
   for(const selected of input.workers){
     try{
@@ -56,4 +58,5 @@ export async function changeFieldTime(raw:unknown){
     }catch(e){results.push({workerId:selected.workerId,ok:false,message:e instanceof OfficeError?e.code:'FAILED'});}
   }
   return {results};
+  });
 }

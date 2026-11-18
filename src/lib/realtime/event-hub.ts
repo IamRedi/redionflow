@@ -1,4 +1,6 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 type RealtimeSubscriber = (payload: string) => void;
+const batches = new AsyncLocalStorage<{companyId:string;events:Set<string>;scopes:Set<string>}>();
 
 /**
  * T-034 — Per-tenant realtime channels.
@@ -40,6 +42,25 @@ export function notifyRealtimeUpdate(
   scope: string[],
   companyProfileId?: string,
 ): void {
+  const batch=batches.getStore();
+  if(batch&&(!companyProfileId||batch.companyId===companyProfileId)){
+    batch.events.add(event);scope.forEach(value=>batch.scopes.add(value));return;
+  }
+  publish(event,scope,companyProfileId);
+}
+
+/** Request-local only: one UI refresh for a group, including partial commits.
+ * Existing individual actions and unrelated concurrent requests stay immediate. */
+export async function withRealtimeBatch<T>(companyId:string,run:()=>Promise<T>):Promise<T>{
+  if(batches.getStore()?.companyId===companyId)return run();
+  const batch={companyId,events:new Set<string>(),scopes:new Set<string>()};
+  return batches.run(batch,async()=>{
+    try{return await run();}
+    finally{if(batch.scopes.size)publish(batch.events.size===1?[...batch.events][0]:'batch.updated',[...batch.scopes],companyId);}
+  });
+}
+
+function publish(event:string,scope:string[],companyProfileId?:string):void{
   const payload = JSON.stringify({ event, scope, companyProfileId });
   for (const entry of subscribers) {
     // Subscribers without a tenant id receive everything (legacy behaviour).
