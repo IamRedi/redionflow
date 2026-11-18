@@ -16,7 +16,7 @@ async function login(index = 0, worker = false) {
  request.values.set(worker ? 'bk_worker_id' : 'bk_admin_id', await createTestSession(worker ? 'worker' : 'admin', worker ? tenants[index].worker.id : tenants[index].admin.id));
 }
 beforeEach(async () => {
- assertAssistantTestDatabase(); vi.stubEnv('SESSION_SIGNING_SECRET', 'synthetic-diary-session-key');
+ assertAssistantTestDatabase(); vi.stubEnv('SESSION_SIGNING_SECRET', 'synthetic-phase-diary-session-signing-key-only');
  tenants = await seedSecurityTenants();
  await prisma.companyProfile.update({ where: { id: tenants[0].company.id }, data: { mode: 'bau', country: 'AL' } });
  await prisma.baustelle.update({ where: { id: tenants[0].site.id }, data: { type: 'STEEL_ASSEMBLY' } });
