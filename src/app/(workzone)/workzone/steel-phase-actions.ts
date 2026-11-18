@@ -13,8 +13,9 @@ import { canManageSteelCatalog } from '@/lib/steel-work/types';
 import { applySteelPhaseCommand, readSteelPhaseMeta, type SteelPhaseCommand } from '@/lib/workzone/steel-phases';
 import { saveSteelWorkDefinitionAction } from './steel-catalog-actions';
 import { dispatchCompletions, siteCompletionSnapshot, type CompletionSnapshot } from '@/lib/notifications/events';
+import { appendPhaseNote, phaseNotesPage, type PhaseNotesPage } from '@/lib/steel-work/phase-notes';
 
-const schema = z.object({ phaseItemId: z.string().min(1).max(64), command: z.enum(['done', 'reopen', 'note', 'missing', 'materialArrived']), text: z.string().max(500).optional().default('') }).strict();
+const schema = z.object({ phaseItemId: z.string().min(1).max(64), command: z.enum(['done', 'reopen', 'note', 'missing', 'materialArrived']), text: z.string().max(500).optional().default(''), noteRequestId: z.uuid().optional() }).strict();
 function refresh(siteId: string) {
   revalidatePath(`/workzone/baustellen/${siteId}`); revalidatePath('/workzone');
   notifyRealtimeUpdate('tree.updated', ['tree-list', 'baustelle-progress']);
@@ -35,7 +36,13 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
     if (!allowedAt(assignment.baustelleId)) { denied = true; return null; }
     if (effectiveTaskProcessLink(assignment.definition).linkedProcessKey && ['done', 'reopen'].includes(parsed.data.command)) return null;
     if (parsed.data.command === 'done') before = await siteCompletionSnapshot(tx, companyId, assignment.baustelleId);
-    const item = assignment.treeItem, text = parsed.data.text.trim();
+    const item = assignment.treeItem, text = parsed.data.text.trim(), now = new Date();
+    if (parsed.data.command === 'note') {
+      if (!text) return null;
+      const saved = await appendPhaseNote(tx, assignment, actor, text, now, parsed.data.noteRequestId);
+      if (saved === 'conflict') return null;
+      if (saved === 'duplicate') return assignment.baustelleId;
+    }
     let command: SteelPhaseCommand;
     switch (parsed.data.command) {
       case 'done': command = { kind: 'done', actor: actor.name }; break;
@@ -44,7 +51,7 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
       case 'missing': if (!text) return null; command = { kind: 'missing', actor: actor.name, text }; break;
       default: command = { kind: 'materialArrived' };
     }
-    const next = applySteelPhaseCommand({ status: item.status, meta: readSteelPhaseMeta(item.notes) }, command, new Date());
+    const next = applySteelPhaseCommand({ status: item.status, meta: readSteelPhaseMeta(item.notes) }, command, now);
     const finished = next.status === 'done';
     await tx.treeItem.update({ where: { id: item.id }, data: {
       status: next.status, notes: JSON.stringify(next.meta), lastEditedBy: actor.name, lastEditedAt: new Date(),
@@ -59,6 +66,22 @@ export async function updateSteelPhaseAction(input: unknown): Promise<ActionResu
   if (!siteId) return { ok: false, message: tr('invalidInput') };
   await dispatchCompletions(companyId, before, after, transitionKey);
   refresh(siteId); return { ok: true, message: 'OK' };
+}
+/** Read-only diary; the same site-view scope as the process page. */
+export async function getSteelPhaseNotesAction(input: unknown): Promise<(ActionResult & { page?: PhaseNotesPage })> {
+  const tr = await getActionTranslator();
+  const parsed = z.object({ phaseItemId: z.string().min(1).max(64), day: z.string().regex(/^20\d{2}-\d{2}-\d{2}$/).optional(), author: z.string().max(400).optional(), cursor: z.string().max(64).optional() }).strict().safeParse(input);
+  if (!parsed.success) return { ok: false, message: tr('invalidInput') };
+  const companyId = await getCurrentCompanyId(), actor = companyId ? await currentCompanyActor(companyId) : null;
+  if (!companyId || !actor) return { ok: false, message: tr('notSignedIn') };
+  try {
+    const page = await withTenantContext(companyId, async tx => {
+      const assignment = await tx.steelSiteTask.findFirst({ where: { companyProfileId: companyId, treeItemId: parsed.data.phaseItemId, enabled: true, definition: { archivedAt: null, kind: 'site' } }, include: { treeItem: true } });
+      if (!assignment || !actor.allows('site.view', assignment.baustelleId)) return null;
+      return phaseNotesPage(tx, assignment, parsed.data);
+    });
+    return page ? { ok: true, page } : { ok: false, message: tr('accessDenied') };
+  } catch { return { ok: false, message: tr('invalidInput') }; }
 }
 /** Compatibility entry point: create/reuse a shared definition, selecting this site only. */
 export async function addSteelTaskAction(input: unknown): Promise<ActionResult> {
