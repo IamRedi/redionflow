@@ -7,7 +7,7 @@ import { ensureSteelWorkCatalog } from '../../src/lib/steel-work/catalog';
 async function workspace(page: Page, context: BrowserContext, base: string) {
   assertE2ETestDatabase(process.env);
   await context.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort('blockedbyclient'));
-  const company = await prisma.companyProfile.create({ data: { displayName: 'Update DEMO', mode: 'bau', country: 'AL' } });
+  const company = await prisma.companyProfile.create({ data: { displayName: 'Update DEMO', legalName: 'Synthetic update tests only', mode: 'bau', country: 'AL' } });
   const admin = await prisma.user.create({ data: { companyProfileId: company.id, email: `update-${company.id}@example.test`, name: 'Update operator DEMO', role: 'ADMIN', isActive: true } });
   const site = await prisma.baustelle.create({ data: { companyProfileId: company.id, name: 'Update site DEMO', type: 'STEEL_ASSEMBLY' } });
   const tree = await prisma.treeItem.create({ data: { baustelleId: site.id, treeId: 'steel-task-update-demo', species: 'task', diameter: 0, status: 'done', completedAt: new Date('2026-11-17T09:00Z'), notes: JSON.stringify({ label: 'Update process DEMO', note: 'Original note DEMO', noteBy: 'Original operator DEMO', noteAt: '2026-11-17T10:00:00Z' }) } });
