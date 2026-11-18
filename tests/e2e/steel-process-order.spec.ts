@@ -32,6 +32,7 @@ async function catalog(page: Page) {
 
 test('drilling can move second, new processes choose a slot and concurrent changes preserve the open draft and existing work', async ({ page, context }, info) => {
   assertE2ETestDatabase(process.env); test.setTimeout(180_000);
+  page.setDefaultTimeout(10_000);
   const origin = String(info.project.use.baseURL);
   await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort('blockedbyclient'));
   const company = await prisma.companyProfile.create({ data: { displayName: 'Process order DEMO', legalName: 'Synthetic process ordering only', mode: 'bau', country: 'AL' } });

@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import * as Dialog from "@radix-ui/react-dialog";
 import { Archive, ArrowLeft, Camera, Check, ImagePlus, Loader2, PenLine, Plus, RotateCcw, Search, Sparkles, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, useTransition, type RefObject } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useTransition, type RefObject } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelWorkPhoto } from "@/components/steel/work-photo";
@@ -67,6 +67,7 @@ export function SteelWorkCatalog(props: CatalogProps) {
 function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions = [], canManage = true, initialDefinitionId, onChanged, returnFocusRef, group = null }: CatalogProps) {
   const { currentLang: lang } = useLanguage();
   const c = workCatalogCopy(lang);
+  const positionHintId = useId();
   const [items, setItems] = useState(definitions);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -249,11 +250,11 @@ function SteelWorkCatalogSession({ open, onOpenChange, kind, siteId, definitions
             </div>
             <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.name}</span><input autoFocus required maxLength={80} value={editor.label} disabled={pending || !canManage} onChange={(event) => setEditor(kind === "site" ? withProcessLink({ ...editor, label: event.target.value }) : { ...editor, label: event.target.value })} className={input} /></label>
             <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.description}</span><textarea maxLength={500} rows={2} value={editor.description} disabled={pending || !canManage} onChange={(event) => setEditor({ ...editor, description: event.target.value })} className={`${input} resize-y py-2`} /></label>
-            {editor.placement ? <label className="block max-w-sm space-y-1.5"><span className="text-sm font-semibold">{c.position}</span><select value={editor.placement.beforeId ?? ''} disabled={pending || !canManage} onChange={event => setEditor({ ...editor, placement: { ...editor.placement!, beforeId: event.target.value || null } })} className={input}>
+            {editor.placement ? <label className="block max-w-sm space-y-1.5"><span className="text-sm font-semibold">{c.position}</span><select aria-label={c.position} aria-describedby={positionHintId} value={editor.placement.beforeId ?? ''} disabled={pending || !canManage} onChange={event => setEditor({ ...editor, placement: { ...editor.placement!, beforeId: event.target.value || null } })} className={input}>
               {missingPosition ? <option value={editor.placement.beforeId!} disabled>{c.choosePosition}</option> : null}
               {positionRows.map((row, index) => <option key={row.id} value={row.id}>{index + 1} · {index === 0 ? c.first : c.after.replace('{name}', steelWorkLabel(positionRows[index - 1], lang))}</option>)}
               <option value="">{positionRows.length + 1} · {positionRows.length ? c.after.replace('{name}', steelWorkLabel(positionRows[positionRows.length - 1], lang)) : c.first}</option>
-            </select><span className="block text-xs text-muted-foreground">{c.orderHint}</span></label> : null}
+            </select><span id={positionHintId} className="block text-xs text-muted-foreground">{c.orderHint}</span></label> : null}
             {kind === "site" ? <label className="block space-y-1.5"><span className="text-sm font-semibold">{t("steel.groupLabel", lang)}</span><select value={editor.phaseGroup} disabled={pending || !canManage} onChange={(event) => setEditor(withProcessLink({ ...editor, phaseGroup: steelPhaseGroup(event.target.value) }))} className={input}>{STEEL_PHASE_GROUPS.map((key) => <option key={key} value={key}>{t(key === "concrete" ? "steel.groupConcrete" : key === "production" ? "steel.groupProduction" : "steel.groupAssembly", lang)}</option>)}</select></label> : null}
             {kind === "site" ? <div className="space-y-3 border-t pt-4">
               <label className="block space-y-1.5"><span className="text-sm font-semibold">{c.link}</span><select value={editor.linkedProcessKey} disabled={pending || !canManage || Boolean(automaticProduction)} onChange={(event) => setEditor({ ...editor, linkedProcessKey: event.target.value, linkedList: sideOfStage(event.target.value) === "field" ? "assembly" : editor.linkedList })} className={input}><option value="">{c.manual}</option>{availableStages.map((stage) => <option key={stage} value={stage}>{c.automatic} · {linkedProcessLabel(stage)}</option>)}</select></label>
