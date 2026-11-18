@@ -16,7 +16,9 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
   await context.addCookies([{ name: 'bk_admin_id', value: await createSessionCookie('admin', admin.id, admin.sessionEpoch), url: base }, { name: 'bk_lang', value: 'sq', url: base }]);
   await page.addInitScript(() => {
     const events: Array<{ kind: string; tag: string; type: string; trusted: boolean }> = [];
-    Object.assign(window, { updateFixtureEvents: events });
+    const unloads: Array<{ prevented: boolean; value: string }> = [];
+    Object.assign(window, { updateFixtureEvents: events, updateFixtureUnloads: unloads, updateFixtureDocumentId: crypto.randomUUID() });
+    window.addEventListener('beforeunload', e => queueMicrotask(() => unloads.push({ prevented: e.defaultPrevented, value: e.returnValue })));
     for (const kind of ['input', 'change']) document.addEventListener(kind, e => {
       const element = e.target as HTMLInputElement;
       events.push({ kind, tag: element.tagName, type: element.type ?? '', trusted: e.isTrusted });
@@ -26,7 +28,8 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
   expect(versionResponse.headers()['cache-control']).toContain('no-store');
   const current = (await versionResponse.json()).version as string;
   expect(current).toMatch(/^[\w-]{1,128}$/);
-  let calls = 0, navigations = 0, loaded = false, mode: 'new' | 'same' | 'invalid' = 'new';
+  let calls = 0, documentRequests = 0, loaded = false, mode: 'new' | 'same' | 'invalid' = 'new';
+  page.on('request', request => { if (loaded && request.isNavigationRequest() && !request.frame().parentFrame()) { documentRequests++; mode = 'same'; } });
   const replies: Promise<void>[] = [];
   await page.route('**/api/app-version', route => {
     calls++;
@@ -35,12 +38,12 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
     });
     replies.push(reply); return reply;
   });
-  page.on('framenavigated', frame => { if (loaded && frame === page.mainFrame()) { navigations++; mode = 'same'; } });
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1_000));
   await page.goto(`/workzone/baustellen/${site.id}?view=production#prodhimi`);
   await expect(page.getByRole('heading', { name: site.name, exact: true })).toBeVisible();
   loaded = true;
+  const initialDocument = await page.evaluate(() => (window as unknown as { updateFixtureDocumentId: string }).updateFixtureDocumentId);
   const advance = async (milliseconds: number) => {
     // A single large virtual-clock jump can fire the real fetch's timeout before
     // its fulfilled network response reaches the browser. Drain replies between
@@ -57,9 +60,13 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
   const expectReload = async () => {
     // React commit/response draining can finish after a virtual tick. Keep time
     // advancing while asserting the real reload, without increasing the timeout.
-    await expect(async () => { await advance(1_000); expect(navigations).toBe(1); }).toPass({ timeout: 10_000 });
+    await expect(async () => {
+      await advance(1_000);
+      expect(documentRequests).toBe(1);
+      expect(await page.evaluate(() => (window as unknown as { updateFixtureDocumentId: string }).updateFixtureDocumentId)).not.toBe(initialDocument);
+    }).toPass({ timeout: 10_000 });
   };
-  return { company, tree, task, checkTwice, advance, expectReload, current, calls: () => calls, navigations: () => navigations, mode: (value: typeof mode) => { mode = value; },
+  return { company, tree, task, checkTwice, advance, expectReload, current, calls: () => calls, documentRequests: () => documentRequests, navigations: () => documentRequests, mode: (value: typeof mode) => { mode = value; },
     cleanup: async () => { await prisma.user.deleteMany({ where: { companyProfileId: company.id } }); await prisma.companyProfile.delete({ where: { id: company.id } }); } };
 }
 
@@ -73,9 +80,11 @@ test('an idle authenticated page updates itself once at the same URL and does no
         visible: document.visibilityState, online: navigator.onLine, now: Date.now(),
         loopGuard: sessionStorage.getItem('bk-app-update-reload'),
         events: (window as unknown as { updateFixtureEvents: unknown[] }).updateFixtureEvents,
+        unloads: (window as unknown as { updateFixtureUnloads: unknown[] }).updateFixtureUnloads,
         blockers: Array.from(document.querySelectorAll('[role=dialog],[role=alertdialog],[aria-busy=true],[data-app-update-blocked=true]')).map(e => ({ tag: e.tagName, role: e.getAttribute('role'), busy: e.getAttribute('aria-busy'), flag: e.getAttribute('data-app-update-blocked'), rendered: e.getClientRects().length > 0 })),
         fields: Array.from(document.querySelectorAll<HTMLInputElement>('input,textarea,select')).map(e => ({ tag: e.tagName, type: e.type, length: e.value.length, files: e.files?.length ?? 0 })),
-      }))); throw error;
+      })), { documentRequests: f.documentRequests() });
+      throw error;
     }
     await expect(page).toHaveURL(url);
     await f.advance(120_000); expect(f.navigations()).toBe(1);
@@ -109,8 +118,14 @@ test('a real process draft stays intact through an update, saves exactly once, t
     await sheet.getByRole('button', { name: 'Ruaj', exact: true }).click();
     await expect(sheet.locator('[data-studio-phase-notes]')).toContainText('Draft DEMO stays here until the operator saves');
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
-    await sheet.getByRole('button').first().click();
-    await expect(async () => { await f.advance(250); expect(await sheet.isVisible()).toBe(false); }).toPass({ timeout: 10_000 });
+    await sheet.getByRole('button', { name: 'Mbyll', exact: true }).click();
+    await expect(async () => {
+      // The fake JS clock cannot advance the compositor's native WAAPI clock.
+      // Complete only finite animations after the real Close click; do not hide
+      // or remove any application DOM and keep the closed-state assertion.
+      await page.evaluate(() => { for (const animation of document.getAnimations()) if (Number.isFinite(animation.effect?.getComputedTiming().endTime)) animation.finish(); });
+      await f.advance(250); expect(await sheet.isVisible()).toBe(false);
+    }).toPass({ timeout: 10_000 });
     await f.advance(7_000); await f.expectReload();
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
     expect(await prisma.treeItem.findUniqueOrThrow({ where: { id: f.tree.id } })).toMatchObject({ status: 'done', completedAt: new Date('2026-11-17T09:00Z') });
