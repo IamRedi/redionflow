@@ -2297,9 +2297,29 @@ model SteelSiteTask {
   revision Int @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+  notes SteelPhaseNote[]
+  @@unique([companyProfileId,id])
   @@unique([companyProfileId,baustelleId,definitionId])
   @@unique([baustelleId,treeItemId])
   @@index([companyProfileId,definitionId])
+}
+
+/// Append-only process diary. The latest TreeItem note remains compatible;
+/// old author/date gaps are kept unknown instead of inferred from an import.
+model SteelPhaseNote {
+  id String @id @default(cuid())
+  companyProfileId String
+  taskId String
+  task SteelSiteTask @relation(fields:[companyProfileId,taskId],references:[companyProfileId,id],onDelete:Cascade)
+  entryKey String
+  text String
+  authorKey String
+  authorName String
+  writtenAt DateTime?
+  legacy Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@unique([taskId,entryKey])
+  @@index([companyProfileId,taskId,createdAt,id])
 }
 
 model SiteElementWork {

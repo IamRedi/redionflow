@@ -228,6 +228,31 @@ approved real AL Steel Image API acceptance request after deployment.
 
 ## Verification and release
 
+### Process diary — 18 November 2026
+
+Each selected site process keeps append-only notes in `SteelPhaseNote`, scoped
+through its existing company/task relationship and forced tenant RLS. The server
+records the authenticated author's stable identity/name and time; neither is
+accepted from form fields. Adding a note uses the existing site-step permission
+and catalog lock. Reading uses the same site-view permission as the process page.
+Repeated request IDs cannot duplicate a note or replace another author's entry.
+
+The compact crystal diary shows author/date/time, filters by person and company-
+local date (including DST boundaries), and loads older entries in bounded pages.
+The existing latest-note metadata remains available to current readers. The old
+note is shown without writes and preserved once in the diary when the first new
+note is added. Plain old text is preserved too; absent author/time remains visibly
+unrecorded. Notes previously overwritten before this change cannot be recovered
+or attributed from guesses. No production work, completion or material state is
+recomputed by the diary. Disabling or archiving a catalog choice keeps its notes.
+
+The additive migration creates the private diary table and a same-company task
+key without rewriting existing notes or process confirmations. Apply only after
+explicit release approval and verified backup/restore. Keep the table/data during
+recovery; prefer a forward correction once new diary entries exist, since an older
+app's single-note editor does not append history. This internal refinement does
+not require new native presentation, website or portfolio content (NO_CONTENT_CHANGE).
+
 Local checks use the isolated laptop database and fictional companies. Required
 coverage includes legacy route preservation, selected denominators, partial
 delivery, concurrent revisions, tenant/role isolation, shared disabled choices,

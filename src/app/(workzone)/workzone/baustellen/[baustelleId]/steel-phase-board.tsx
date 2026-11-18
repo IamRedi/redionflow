@@ -10,6 +10,8 @@ import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelProgressRing } from "@/components/steel/steel-art";
 import { SteelWorkCatalog, SteelWorkVisual } from "@/components/steel/work-catalog";
 import { workCatalogCopy } from "@/components/steel/work-catalog-copy";
+import { SteelPhaseNotes } from "@/components/steel/phase-notes";
+import { phaseNotesCopy } from "@/components/steel/phase-notes-copy";
 import { t } from "@/lib/i18n";
 import { STEEL_PHASE_GROUPS, type SteelPhaseGroup, type SteelWorkDefinitionView } from "@/lib/steel-work/types";
 import {
@@ -105,6 +107,7 @@ export function SteelPhaseBoard({
   const [openId, setOpenId] = useState<string | null>(null);
   const [editor, setEditor] = useState<Editor>(null);
   const [text, setText] = useState("");
+  const [noteRequestId, setNoteRequestId] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -145,6 +148,7 @@ export function SteelPhaseBoard({
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") closeSheet();
       if (editor) return;
+      if (event.defaultPrevented || (event.target instanceof HTMLElement && event.target.closest('input,textarea,select,[contenteditable="true"]'))) return;
       if (event.key === "ArrowRight") move(1);
       if (event.key === "ArrowLeft") move(-1);
     }
@@ -175,7 +179,8 @@ export function SteelPhaseBoard({
     if (!open) return;
     setEditor(kind);
     setError(null);
-    setText(kind === "note" ? open.meta.note : open.meta.material);
+    setText(kind === "note" ? "" : open.meta.material);
+    setNoteRequestId(kind === "note" ? crypto.randomUUID() : undefined);
   }
 
   function run(command: "done" | "reopen" | "note" | "missing" | "materialArrived", value = "") {
@@ -193,7 +198,7 @@ export function SteelPhaseBoard({
     setEditor(null);
     setError(null);
     startTransition(async () => {
-      const result = await updateSteelPhaseAction({ phaseItemId: target.id, command, text: value });
+      const result = await updateSteelPhaseAction({ phaseItemId: target.id, command, text: value, ...(command === "note" ? { noteRequestId } : {}) });
       if (!result.ok) {
         setItems(before);
         setError(t("steel.error", currentLang));
@@ -413,14 +418,7 @@ export function SteelPhaseBoard({
                         ) : null}
                       </div>
                     ) : null}
-                    {open.meta.note ? (
-                      <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-3">
-                        <div className="font-medium text-sky-900 dark:text-sky-100">{open.meta.note}</div>
-                        {open.meta.noteBy && open.meta.noteBy !== "…" ? (
-                          <div className="text-xs text-sky-700/80 dark:text-sky-300/80">{fill(t("steel.noteBy", currentLang), { name: open.meta.noteBy })}</div>
-                        ) : null}
-                      </div>
-                    ) : null}
+                    <SteelPhaseNotes key={open.id} phaseItemId={open.id} refreshKey={pending ? 'saving' : open.meta.noteAt} />
                     {error ? <p className="font-medium text-red-600">{error}</p> : null}
                   </div>
                 </div>
@@ -435,7 +433,8 @@ export function SteelPhaseBoard({
                         value={text}
                         onChange={(event) => setText(event.target.value.slice(0, 500))}
                         rows={3}
-                        placeholder={t(editor === "note" ? "steel.notePlaceholder" : "steel.materialPlaceholder", currentLang)}
+                        aria-label={editor === "note" ? phaseNotesCopy(currentLang).add : t("steel.missing", currentLang)}
+                        placeholder={editor === "note" ? phaseNotesCopy(currentLang).placeholder : t("steel.materialPlaceholder", currentLang)}
                         className="w-full resize-none rounded-2xl border-2 bg-card p-4 text-lg outline-none focus:border-orange-500"
                       />
                       {editor === "missing" ? (
@@ -462,7 +461,7 @@ export function SteelPhaseBoard({
                         </button>
                         <button
                           type="button"
-                          disabled={pending || (editor === "missing" && !text.trim())}
+                          disabled={pending || !text.trim()}
                           onClick={() => run(editor, text)}
                           className={`h-16 rounded-2xl text-lg font-bold text-white shadow-md active:scale-[0.98] disabled:opacity-50 ${
                             editor === "missing" ? "bg-amber-500" : "bg-sky-600"
@@ -513,7 +512,7 @@ export function SteelPhaseBoard({
                         onClick={() => openEditor("note")}
                         className="flex h-20 items-center justify-center gap-3 rounded-2xl border-2 border-sky-500/40 bg-sky-500/10 text-lg font-semibold text-sky-800 active:scale-[0.98] disabled:opacity-50 dark:text-sky-200"
                       >
-                        <PenLine className="size-6" /> {t("steel.note", currentLang)}
+                        <PenLine className="size-6" /> {phaseNotesCopy(currentLang).add}
                       </button>
                       {open.status === "blocked" ? (
                         <button
