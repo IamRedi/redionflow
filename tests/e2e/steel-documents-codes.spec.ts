@@ -7,7 +7,10 @@ import {phaseDocumentCopy} from '../../src/lib/site-phase-documents/copy';
 import {DOCUMENT_PHASES} from '../../src/lib/site-phase-documents/types';
 import {assertE2ETestDatabase,validateE2ETarget} from '../../scripts/lib/e2e-target';
 import {seedSteelAssetsWorkshop,cleanupSteelAssetsWorkshop} from '../fixtures/steel-assets-workshop';
-const a=assetCopy('sq'),c=phaseDocumentCopy('sq'),output='/mnt/c/Users/Lenovo/Documents/Codex/2026-11-04/ko/outputs/steel-documents-codes';
+import {mkdirSync} from 'node:fs';
+import {resolve} from 'node:path';
+const a=assetCopy('sq'),c=phaseDocumentCopy('sq'),output=process.env.STEEL_DOCUMENTS_EVIDENCE_DIR??resolve('test-results','evidence','steel-documents-codes');
+mkdirSync(output,{recursive:true});
 const pdf={name:'Synthetic drawing.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nSynthetic phase drawing only\n%%EOF')};
 async function syntheticOnly(context:BrowserContext,baseURL:string){
  const target=validateE2ETarget(baseURL);await context.route('**/*',route=>new URL(route.request().url()).origin===target.baseURL?route.continue():route.abort('blockedbyclient'));

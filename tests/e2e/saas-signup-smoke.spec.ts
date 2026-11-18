@@ -341,7 +341,8 @@ test.describe("SaaS authenticated smoke", () => {
     await context.clearCookies();await loginWorker(page,`${firstName} ${lastName}`,code);
     const png=await sharp({create:{width:12,height:8,channels:3,background:'#467e69'}}).png().toBuffer();
     await page.locator('input[data-photo-input="upload"]').setInputFiles({name:"synthetic.png",mimeType:"image/png",buffer:png});
-    const image=page.locator('img[src*="/api/asset-photos/worker/"]').first();
+    // Check the profile photo that was edited, not a lazy team-strip thumbnail.
+    const image=page.getByTestId('worker-profile-summary').locator('img[src*="/api/asset-photos/worker/"]').first();
     await expect(image).toBeVisible();await expect.poll(()=>image.evaluate(el=>(el as HTMLImageElement).naturalWidth)).toBe(12);
     const photo=await image.getAttribute("src");expect(photo).toBeTruthy();
     await page.getByTestId('worker-documents-open').click();
