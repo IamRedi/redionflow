@@ -1,0 +1,50 @@
+import { expect,test,type BrowserContext } from '@playwright/test';
+import { prisma } from '../../src/lib/db/prisma';
+import { seedOfficeE2E } from '../fixtures/office-e2e';
+import { createSessionCookie } from '../../src/lib/auth/session-cookie';
+const companyId='office-e2e-company',base=process.env.PLAYWRIGHT_BASE_URL!;
+test.beforeEach(seedOfficeE2E);
+async function login(context:BrowserContext,kind:'admin'|'worker',id:string){
+ const row=kind==='admin'?await prisma.user.findUniqueOrThrow({where:{id}}):await prisma.worker.findUniqueOrThrow({where:{id}});
+ await context.clearCookies();await context.addCookies([{name:kind==='admin'?'bk_admin_id':'bk_worker_id',value:await createSessionCookie(kind,id,row.sessionEpoch),url:base},{name:'bk_lang',value:'sq',url:base}]);
+}
+test('field engineer selects the eligible team in one action on crystal desktop and phone',async({page,context})=>{
+ test.setTimeout(180_000);const ids=['clock-demo-engineer','clock-demo-a','clock-demo-b','clock-demo-factory'];
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ for(const[id,firstName,crewRole]of[[ids[0],'Hrisa','FIELD_ENGINEER'],[ids[1],'Alex','FIELD_WORKER'],[ids[2],'Beni','FIELD_WORKER'],[ids[3],'Factory','FACTORY_WORKER']] as const)await prisma.worker.create({data:{id,companyProfileId:companyId,firstName,lastName:'Clock DEMO',crewRole,accessLevel:'BASE'}});
+ const member=await prisma.officeMember.create({data:{companyProfileId:companyId,workerId:ids[0],title:'Terreni DEMO',enabled:true,fieldAttendanceEnabled:true}});
+ const own=await prisma.workSession.create({data:{workerId:ids[0],startTime:new Date(Date.now()-3600_000),workplace:'OFFICE',isLive:true}});
+ try{
+  await login(context,'worker',ids[0]);await page.setViewportSize({width:320,height:740});await page.goto('/workzone/offices/me');
+  const nav=page.getByTestId('office-floating-nav');const link=nav.getByRole('link',{name:'Ekipi · Nis/Ndalo'});await expect(link).toBeVisible();
+  for(const target of await nav.locator('a,button').all()){const b=await target.boundingBox();if(b){expect(b.x).toBeGreaterThanOrEqual(0);expect(b.x+b.width).toBeLessThanOrEqual(321);expect(b.height).toBeGreaterThanOrEqual(44);}}
+  await link.click();const panel=page.getByTestId('office-field-time');await expect(panel).toBeVisible();await panel.getByRole('searchbox').fill('Clock DEMO');
+  await expect(panel.getByRole('checkbox',{name:'Factory Clock DEMO'})).toHaveCount(0);await expect(panel.getByRole('checkbox',{name:'Hrisa Clock DEMO'})).toBeDisabled();
+  await panel.getByRole('checkbox',{name:/Zgjidh të gjithë/}).check();await expect(panel.getByRole('checkbox',{name:'Alex Clock DEMO'})).toBeChecked();await expect(panel.getByRole('checkbox',{name:'Beni Clock DEMO'})).toBeChecked();
+  for(const theme of ['light','dark']){await context.addCookies([{name:'bk_theme',value:theme,url:base}]);await page.evaluate(theme=>document.documentElement.classList.toggle('dark',theme==='dark'),theme);for(const[width,height]of[[1440,1000],[390,844],[320,740]]){await page.setViewportSize({width,height});expect(await panel.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.screenshot({path:`${process.env.OFFICE_EVIDENCE_DIR}/team-time-${theme}-${width}.png`});}}
+  const commit=await panel.getByRole('button',{name:/^Nis të zgjedhurit/}).boundingBox();expect(commit!.y+commit!.height).toBeLessThanOrEqual(740);
+  await panel.getByText('Orë tjetër (opsionale)',{exact:true}).click();await panel.locator('input[type=datetime-local]').fill((await import('../../src/lib/workzone/date-utils')).workDateTimeInput(new Date(Date.now()-3*3600_000)));
+  await panel.getByRole('button',{name:/^Nis të zgjedhurit/}).click();await expect(panel.getByRole('status')).toContainText('2 u regjistruan');
+  const sessions=await prisma.workSession.findMany({where:{workerId:{in:ids.slice(1,3)},isLive:true}});expect(sessions).toHaveLength(2);
+  for(const row of sessions)await prisma.$executeRaw`UPDATE "WorkSession" SET "createdAt"=now()-interval '10 minutes' WHERE id=${row.id}`;
+  await panel.getByRole('button',{name:'Ndalo',exact:true}).click();await panel.locator('input[type=datetime-local]').fill('');await panel.getByRole('checkbox',{name:/Zgjidh të gjithë/}).check();await panel.getByRole('button',{name:/^Ndalo të zgjedhurit/}).click();await expect(panel.getByRole('status')).toContainText('2 u regjistruan');
+  const closed=await prisma.workSession.findMany({where:{id:{in:sessions.map(s=>s.id)}}});for(const row of closed){expect(row.isLive).toBe(false);expect(row.breakMinutes).toBe(30);expect(row.totalHours).toBeGreaterThanOrEqual(2.5);expect(row.totalHours).toBeLessThan(2.53);}
+  expect((await prisma.workSession.findUniqueOrThrow({where:{id:own.id}})).isLive).toBe(true);
+  await prisma.officeMember.update({where:{id:member.id},data:{fieldAttendanceEnabled:false}});await page.reload();await expect(panel).toHaveCount(0);expect(errors).toEqual([]);
+ }finally{await prisma.officeMember.deleteMany({where:{workerId:{in:ids}}});await prisma.worker.deleteMany({where:{id:{in:ids}}});}
+});
+test('mail folders retain sent replies, archive per person, and deep links show real read receipts',async({page,context})=>{
+ test.setTimeout(180_000);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await login(context,'admin','office-e2e-megi');await page.setViewportSize({width:390,height:844});await page.goto('/workzone/offices/me/mail');
+ const panel=page.getByTestId('office-work');await panel.getByRole('button',{name:'Shkruaj',exact:true}).click();await panel.locator('select[name=recipientId]').selectOption('office-e2e-almet');await panel.getByLabel('Subjekti').fill('Mesazh i qartë · CLOCK DEMO');await panel.getByLabel('Mesazhi',{exact:true}).fill('Mesazh provë lokal.');await panel.getByRole('button',{name:'Dërgo',exact:true}).click();await expect(panel.getByRole('status')).toContainText('E gjen te Të dërguara');await expect(panel.getByText('U dërgua',{exact:true})).toBeVisible();await expect(panel.getByText('U lexua',{exact:true})).toHaveCount(0);
+ const thread=await prisma.officeThread.findFirstOrThrow({where:{companyProfileId:companyId,subject:'Mesazh i qartë · CLOCK DEMO'}});
+ await panel.getByRole('button',{name:'Kthehu · Posta',exact:true}).click();await panel.getByRole('button',{name:/^Të dërguara/}).click();await expect(panel.getByRole('button',{name:/^Mesazh i qartë/})).toBeVisible();
+ await login(context,'admin','office-e2e-almet');await page.goto(`/workzone/offices/me/mail?thread=${thread.id}`);await expect(panel.getByRole('heading',{name:thread.subject})).toBeVisible();await panel.getByLabel('Përgjigju').fill('U përgjigja nga biseda.');await panel.getByRole('button',{name:'Dërgo',exact:true}).click();await expect(panel.getByText('U përgjigja nga biseda.',{exact:true})).toBeVisible();await panel.getByRole('button',{name:'Kthehu · Posta',exact:true}).click();await panel.getByRole('button',{name:/^Të dërguara/}).click();await panel.getByRole('button',{name:/^Mesazh i qartë/}).click();await panel.getByRole('button',{name:'Arkivo',exact:true}).click();await panel.getByRole('button',{name:/^Arkiva/}).click();await expect(panel.getByRole('button',{name:/^Mesazh i qartë/})).toBeVisible();await page.screenshot({path:`${process.env.OFFICE_EVIDENCE_DIR}/mail-folders-390.png`});
+ await login(context,'admin','office-e2e-megi');await page.goto(`/workzone/offices/me/mail?thread=${thread.id}`);await expect(panel.getByText('U lexua',{exact:true})).toBeVisible();await expect(panel.getByText('U përgjigja nga biseda.',{exact:true})).toBeVisible();
+ const site=await prisma.baustelle.create({data:{companyProfileId:companyId,name:'Clock notification site DEMO',type:'STEEL_ASSEMBLY',documents:[]}});
+ const definition=await prisma.steelWorkDefinition.create({data:{companyProfileId:companyId,key:'steel-task-clock-deep-link',kind:'site',label:'Hap detyrën nga njoftimi DEMO',phaseGroup:'assembly'}});
+ const item=await prisma.treeItem.create({data:{baustelleId:site.id,treeId:definition.key,species:'task',diameter:0}});await prisma.steelSiteTask.create({data:{companyProfileId:companyId,baustelleId:site.id,definitionId:definition.id,treeItemId:item.id}});
+ await page.goto(`/workzone/baustellen/${site.id}?task=${item.id}`);await expect(page.getByRole('dialog',{name:definition.label})).toBeVisible();await expect(page.getByRole('dialog').getByRole('heading',{name:definition.label})).toBeVisible();expect(errors).toEqual([]);
+ await prisma.baustelle.delete({where:{id:site.id}});await prisma.steelWorkDefinition.delete({where:{id:definition.id}});
+ await login(context,'admin','office-e2e-other');await page.goto(`/workzone/offices/me/mail?thread=${thread.id}`);await expect(panel.getByText('Mesazh provë lokal.',{exact:true})).toHaveCount(0);
+ await prisma.officeThread.delete({where:{id:thread.id}});
+});

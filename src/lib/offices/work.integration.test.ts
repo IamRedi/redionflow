@@ -8,7 +8,7 @@ vi.mock('@/lib/workzone/worker-session',()=>({getCurrentWorker:auth.worker}));
 vi.mock('@/lib/db/tenant',()=>({getCurrentCompanyId:auth.company}));
 import { prisma } from '@/lib/db/prisma';
 import { assertAssistantTestDatabase } from '../../../tests/fixtures/assistant-database';
-import { archiveOfficeTask,initializeOfficeCategories,officeWorkSnapshot,officeUnreadCount,readOfficeAttachment,readOfficeThread,saveOfficeCategory,saveOfficeTask,sendOfficeMail } from './work-service';
+import { archiveOfficeThread,archiveOfficeTask,initializeOfficeCategories,officeWorkSnapshot,officeUnreadCount,readOfficeAttachment,readOfficeThread,saveOfficeCategory,saveOfficeTask,sendOfficeMail } from './work-service';
 assertAssistantTestDatabase();
 let companyId:string,otherCompanyId:string,megi:string,almet:string,outsider:string,foreign:string,workerId:string;
 const role='office_work_rls_probe';
@@ -195,6 +195,33 @@ it('stores attachments atomically, retries without duplicates, replies and marks
   await sendOfficeMail(mail({thread:sent.id,to:megi,body:'Reply from Almet'}));as(megi);expect(await officeUnreadCount()).toBe(1);expect((await readOfficeThread(sent.id)).messages).toHaveLength(2);
   as(outsider);await expect(readOfficeThread(sent.id)).rejects.toThrow('DENIED');await expect(readOfficeAttachment(attachment.id)).rejects.toThrow('DENIED');
   as(megi);await expect(sendOfficeMail(mail({id,file,body:'Changed retry'}))).rejects.toThrow('CONFLICT');
+});
+it('keeps sent replies discoverable, personal archives isolated, and receipts tied to the reader',async()=>{
+ const id=randomUUID();await sendOfficeMail(mail({id}));
+ expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)).toMatchObject({hasSent:true,hasReceived:false,otherReadAt:null,archivedAt:null});
+ as(almet);const unreadBefore=await officeUnreadCount();await archiveOfficeThread({id,restore:false});expect(await officeUnreadCount()).toBe(unreadBefore-1);await archiveOfficeThread({id,restore:true});expect(await officeUnreadCount()).toBe(unreadBefore);await readOfficeThread(id);const reply=randomUUID();await sendOfficeMail(mail({id:reply,thread:id,to:megi,body:'Reply in the sent folder'}));
+ expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)).toMatchObject({hasSent:true,hasReceived:true,archivedAt:null});
+ const before=await prisma.officeThread.findUniqueOrThrow({where:{id}});
+ await archiveOfficeThread({id,restore:false});expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)?.archivedAt).not.toBeNull();
+ as(megi);expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)).toMatchObject({hasSent:true,hasReceived:true,archivedAt:null});
+ const thread=await readOfficeThread(id);expect(thread.senderReadAt).toEqual(thread.messages.at(-1)!.createdAt);
+ expect((await prisma.officeThread.findUniqueOrThrow({where:{id}})).updatedAt).toEqual(before.updatedAt);
+ await sendOfficeMail(mail({thread:id,body:'A new reply restores the recipient inbox'}));as(almet);expect((await officeWorkSnapshot()).threads.find(t=>t.id===id)?.archivedAt).toBeNull();
+ as(outsider);await expect(archiveOfficeThread({id,restore:false})).rejects.toThrow('DENIED');
+});
+it('notifies mail/shared tasks only once with private-safe text and fresh recipient access',async()=>{
+ const {dispatchOfficeActivity}=await import('./activity-notifications');
+ vi.stubEnv('INSTALLATION_COMPANY_ID',companyId);const deliver=vi.fn().mockResolvedValue({sent:1,failed:0});
+ const id=randomUUID();await sendOfficeMail(mail({id,body:'PRIVATE-BODY-SENTINEL'}));
+ await Promise.all([dispatchOfficeActivity({kind:'mail',messageId:id},deliver),dispatchOfficeActivity({kind:'mail',messageId:id},deliver)]);
+ expect(deliver).toHaveBeenCalledTimes(1);expect(deliver.mock.calls[0][1]).toMatchObject({userIds:[almet],url:`/workzone/offices/me/mail?thread=${id}`,preference:'adminMessages'});expect(JSON.stringify(deliver.mock.calls)).not.toContain('PRIVATE-BODY-SENTINEL');
+ const note=draft();await saveOfficeTask(note);await dispatchOfficeActivity({kind:'task',taskId:note.id,version:1},deliver);expect(deliver).toHaveBeenCalledTimes(1);
+ const category=(await saveOfficeCategory({id:null,name:'Notification DEMO'})).id,shared={...draft(),id:randomUUID(),kind:'COMPANY',ownerId:almet,categoryId:category};const saved=await saveOfficeTask(shared);expect(saved.activityVersion).toBe(1);
+ await dispatchOfficeActivity({kind:'task',taskId:shared.id,version:1},deliver);expect(deliver).toHaveBeenCalledTimes(2);expect(deliver.mock.calls[1][1].url).toBe(`/workzone/offices/me/tasks?task=${shared.id}`);
+ expect((await saveOfficeTask({...shared,version:1,body:'Ordinary edit'})).activityVersion).toBeNull();
+ const revoked=randomUUID();await sendOfficeMail(mail({id:revoked}));await prisma.user.update({where:{id:almet},data:{isActive:false}});
+ await dispatchOfficeActivity({kind:'mail',messageId:revoked},deliver);expect(deliver.mock.calls.at(-1)![1].userIds).toEqual([]);
+ await prisma.user.update({where:{id:almet},data:{isActive:true}});vi.stubEnv('INSTALLATION_COMPANY_ID','');
 });
 it('rejects foreign recipients, malformed uploads, mixed sessions and revoked access',async()=>{
   await expect(sendOfficeMail(mail({to:foreign}))).rejects.toThrow('DENIED');

@@ -20,14 +20,15 @@ export async function officeWorkSnapshot(){
   const actor=await officeActor();
   return withTenantContext(actor.companyId,async tx=>{
     const where={companyProfileId:actor.companyId,...participant(actor.principalId)};
-    const [tasks,categories,threads]=await Promise.all([
+    const [tasks,categories,threads,received]=await Promise.all([
       tx.officeTask.findMany({where:{companyProfileId:actor.companyId,OR:[{ownerId:actor.principalId},{kind:'COMPANY',...(actor.manager?{}:{createdById:actor.principalId})}]},select:{...taskSelect,reminders:{where:{memberId:actor.principalId},select:{remindAt:true,status:true,sentAt:true}}},orderBy:[{createdAt:'desc'},{id:'desc'}],take:2000}),
       tx.officeCategory.findMany({where:{companyProfileId:actor.companyId},select:{id:true,name:true,archivedAt:true},orderBy:{name:'asc'}}),
-      tx.officeThread.findMany({where,select:{id:true,subject:true,senderId:true,recipientId:true,senderReadAt:true,recipientReadAt:true,updatedAt:true,messages:{select:{id:true,senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},orderBy:[{updatedAt:'desc'},{id:'desc'}],take:500}),
+      tx.officeThread.findMany({where,select:{id:true,subject:true,senderId:true,recipientId:true,senderReadAt:true,recipientReadAt:true,senderArchivedAt:true,recipientArchivedAt:true,updatedAt:true,_count:{select:{messages:{where:{senderId:actor.principalId}}}},messages:{select:{id:true,senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},orderBy:[{updatedAt:'desc'},{id:'desc'}],take:500}),
+      tx.officeThread.findMany({where:{...where,messages:{some:{senderId:{not:actor.principalId}}}},select:{id:true},take:500}),
     ]);
     return jsonDates({self:actor.principalId,seat:actor.seat,manager:actor.manager,people:actor.people,tasks,categories,remindersEnabled:reminderCompany()===actor.companyId,threads:threads.map(t=>{
       const last=t.messages[0],read=t.senderId===actor.principalId?t.senderReadAt:t.recipientReadAt;
-      return {id:t.id,subject:t.subject,senderId:t.senderId,recipientId:t.recipientId,updatedAt:t.updatedAt,unread:!!last&&last.senderId!==actor.principalId&&(!read||last.createdAt>read)};
+      return {id:t.id,subject:t.subject,senderId:t.senderId,recipientId:t.recipientId,updatedAt:t.updatedAt,otherReadAt:t.senderId===actor.principalId?t.recipientReadAt:t.senderReadAt,hasSent:t._count.messages>0,hasReceived:received.some(r=>r.id===t.id),archivedAt:t.senderId===actor.principalId?t.senderArchivedAt:t.recipientArchivedAt,unread:!!last&&last.senderId!==actor.principalId&&(!read||last.createdAt>read)};
     })});
   });
 }
@@ -36,7 +37,7 @@ export type OfficeSnapshot=Awaited<ReturnType<typeof officeWorkSnapshot>>;
 export async function officeUnreadCount(){
   const actor=await officeActor();
   return withTenantContext(actor.companyId,async tx=>{
-    const rows=await tx.officeThread.findMany({where:{companyProfileId:actor.companyId,...participant(actor.principalId)},select:{senderId:true,senderReadAt:true,recipientReadAt:true,messages:{select:{senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},take:500});
+    const rows=await tx.officeThread.findMany({where:{companyProfileId:actor.companyId,OR:[{senderId:actor.principalId,senderArchivedAt:null},{recipientId:actor.principalId,recipientArchivedAt:null}]},select:{senderId:true,senderReadAt:true,recipientReadAt:true,messages:{select:{senderId:true,createdAt:true},orderBy:[{createdAt:'desc'},{id:'desc'}],take:1}},take:500});
     return rows.filter(t=>{const last=t.messages[0],read=t.senderId===actor.principalId?t.senderReadAt:t.recipientReadAt;return last&&last.senderId!==actor.principalId&&(!read||last.createdAt>read);}).length;
   });
 }
@@ -79,7 +80,7 @@ export async function saveOfficeTask(raw:unknown){
         }
       }
     }
-    return {id};
+    return {id,activityVersion:input.kind==='COMPANY'&&input.status!=='DONE'&&(!old||old.kind!=='COMPANY'||old.ownerId!==input.ownerId)?(old?.version??0)+1:null};
   },{timeout:35_000,maxWait:5_000});
 }
 export async function archiveOfficeTask(raw:unknown){
@@ -155,7 +156,7 @@ export async function sendOfficeMail(form:FormData){
       const thread=await tx.officeThread.findFirst({where:{id:threadId,companyProfileId:actor.companyId,...participant(actor.principalId)}});
       if(!thread||!isThreadParticipant(thread,input.recipientId))throw new OfficeError('NOT_FOUND');
       if(await tx.officeMessage.count({where:{companyProfileId:actor.companyId,threadId}})>=500)throw new OfficeError('LIMIT');
-      await tx.officeThread.update({where:{id:threadId},data:{updatedAt:now,...(thread.senderId===actor.principalId?{senderReadAt:now}:{recipientReadAt:now})}});
+      await tx.officeThread.update({where:{id:threadId},data:{updatedAt:now,senderArchivedAt:null,recipientArchivedAt:null,...(thread.senderId===actor.principalId?{senderReadAt:now}:{recipientReadAt:now})}});
     }else{
       if(await tx.officeThread.count({where:{companyProfileId:actor.companyId}})>=500)throw new OfficeError('LIMIT');
       threadId=input.requestId;
@@ -171,13 +172,13 @@ export async function readOfficeThread(id:string){
   z.uuid().parse(id);const actor=await officeActor();
   return withTenantContext(actor.companyId,async tx=>{
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`office-mail:${actor.companyId}`}))`;
-    const thread=await tx.officeThread.findFirst({where:{id,companyProfileId:actor.companyId,...participant(actor.principalId)},select:{id:true,subject:true,senderId:true,recipientId:true,updatedAt:true,messages:{select:{id:true,senderId:true,body:true,createdAt:true,attachments:{select:attachmentSelect}},orderBy:[{createdAt:'asc'},{id:'asc'}],take:500}}});
+    const thread=await tx.officeThread.findFirst({where:{id,companyProfileId:actor.companyId,...participant(actor.principalId)},select:{id:true,subject:true,senderId:true,recipientId:true,senderReadAt:true,recipientReadAt:true,senderArchivedAt:true,recipientArchivedAt:true,updatedAt:true,messages:{select:{id:true,senderId:true,body:true,createdAt:true,attachments:{select:attachmentSelect}},orderBy:[{createdAt:'asc'},{id:'asc'}],take:500}}});
     if(!thread)throw new OfficeError('NOT_FOUND');
     // Update only this reader's receipt; mark through the last returned message,
     // not wall-clock time (a concurrent new message must remain unread).
     const last=thread.messages.at(-1)?.createdAt;
     if(last)await tx.officeThread.update({where:{id},data:{...(thread.senderId===actor.principalId?{senderReadAt:last}:{recipientReadAt:last}),updatedAt:thread.updatedAt}});
-    return jsonDates(thread);
+    return jsonDates({...thread,...(last?(thread.senderId===actor.principalId?{senderReadAt:last}:{recipientReadAt:last}):{})});
   });
 }
 export type OfficeMailThread=Awaited<ReturnType<typeof readOfficeThread>>;
@@ -187,4 +188,15 @@ export async function readOfficeAttachment(id:string){
     const file=await tx.officeAttachment.findFirst({where:{id,companyProfileId:actor.companyId,message:{thread:{...participant(actor.principalId)}}},select:{fileName:true,mime:true,dataBytes:true}});
     if(!file)throw new OfficeError('NOT_FOUND');return file;
   });
+}
+
+/** Each participant archives only their own mailbox; history and the other inbox stay intact. */
+export async function archiveOfficeThread(raw:unknown){
+ const {id,restore}=z.object({id:z.uuid(),restore:z.boolean()}).strict().parse(raw),actor=await officeActor();
+ return withTenantContext(actor.companyId,async tx=>{
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`office-mail:${actor.companyId}`}))`;
+  const thread=await tx.officeThread.findFirst({where:{id,companyProfileId:actor.companyId,...participant(actor.principalId)}});
+  if(!thread)throw new OfficeError('NOT_FOUND');
+  await tx.officeThread.update({where:{id},data:{...(thread.senderId===actor.principalId?{senderArchivedAt:restore?null:new Date()}:{recipientArchivedAt:restore?null:new Date()}),updatedAt:thread.updatedAt}});
+ });
 }

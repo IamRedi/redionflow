@@ -60,7 +60,7 @@ test('office routes and nested controls stay above the team and inside the viewp
         }
         if (view === 'mail') {
           await page.getByRole('button', { name: 'Shkruaj', exact: true }).click({ force: baseline });
-          await check(page.getByRole('button', { name: 'Posta', exact: true }), `mail-editor-${theme}-${width}`);
+          await check(page.getByRole('button', { name: 'Kthehu · Posta', exact: true }), `mail-editor-${theme}-${width}`);
         }
         if (['tasks', 'resources'].includes(view)) await page.screenshot({ path: `${out}/${baseline ? 'before' : 'after'}-${view}-${theme}-${width}.png` });
       }
@@ -111,6 +111,11 @@ test('office routes and nested controls stay above the team and inside the viewp
     expect(await records()).toBe(before); expect(errors).toEqual([]);
   } finally {
     await writeFile(`${out}/${baseline ? 'before' : 'after'}-controls.json`, JSON.stringify(receipts, null, 2));
+    // This disposable company can already contain mail from another office scenario.
+    // Remove private-mail dependencies before their restricted participant rows.
+    await prisma.officeAttachment.deleteMany({where:{companyProfileId:companyId}});
+    await prisma.officeMessage.deleteMany({where:{companyProfileId:companyId}});
+    await prisma.officeThread.deleteMany({where:{companyProfileId:companyId}});
     await prisma.officeTask.deleteMany({ where: { companyProfileId: companyId } });
     await prisma.officeMember.deleteMany({ where: { companyProfileId: companyId } });
     await cleanupSteelAssetsWorkshop(companyId);

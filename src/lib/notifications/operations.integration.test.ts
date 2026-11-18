@@ -105,3 +105,19 @@ it('admin team test reaches every active person of the company on their devices,
  const endpoints=provider.send.mock.calls.map(call=>(call as unknown as [{endpoint:string}])[0].endpoint);
  expect(endpoints).toEqual(['https://web.push.apple.com/synthetic-team-worker']);
 });
+
+it('a newly selected task notifies current site viewers once and opens that task, without work-start requirements',async()=>{
+ const a=tenants[0];await prisma.baustelle.update({where:{id:a.site.id},data:{type:'STEEL_ASSEMBLY'}});
+ await registerNotificationSubscription(a.worker.id,encodeBrowserSubscription(sub(a.worker.id)));
+ await prisma.worker.update({where:{id:a.worker.id},data:{accessLevel:'BASE'}});
+ await prisma.accessGrant.create({data:{companyProfileId:a.company.id,workerId:a.worker.id,place:'site',scopeId:a.site.id,level:'view'}});
+ const {saveSteelWorkDefinitionAction,setSteelTaskSelectionAction}=await import('@/app/(workzone)/workzone/steel-catalog-actions');
+ const {dispatchSiteTaskAdded}=await import('./site-task-added');
+ const result=await saveSteelWorkDefinitionAction({kind:'site',label:'New shared task DEMO',siteId:a.site.id});expect(result.ok).toBe(true);
+ const selection=await prisma.steelSiteTask.findFirstOrThrow({where:{definitionId:result.definitionId,baustelleId:a.site.id}});
+ await dispatchSiteTaskAdded(a.company.id,selection);await dispatchSiteTaskAdded(a.company.id,selection);expect(provider.send).toHaveBeenCalledTimes(1);
+ const audit=await prisma.auditLog.findFirstOrThrow({where:{companyProfileId:a.company.id,action:'notification.delivery',payload:{path:['eventKey'],equals:`site-task-added:${selection.id}:${selection.revision}`}}});expect(audit.payload).toMatchObject({eligible:2});
+ expect((await setSteelTaskSelectionAction({siteId:a.site.id,definitionId:result.definitionId,enabled:true,revision:selection.revision})).ok).toBe(true);
+ await dispatchSiteTaskAdded(a.company.id,selection);expect(provider.send).toHaveBeenCalledTimes(1);
+ await prisma.steelSiteTask.update({where:{id:selection.id},data:{enabled:false,revision:{increment:1}}});await dispatchSiteTaskAdded(a.company.id,selection);expect(provider.send).toHaveBeenCalledTimes(1);
+});

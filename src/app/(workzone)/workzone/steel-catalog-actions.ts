@@ -1,5 +1,6 @@
 'use server';
 
+import { scheduleSiteTaskAdded } from '@/lib/notifications/site-task-added';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCurrentCompanyId } from '@/lib/db/tenant';
@@ -39,7 +40,9 @@ export async function saveSteelWorkDefinitionAction(input: unknown): Promise<{ o
   if (!auth) return { ok: false, message: tr('accessDenied') };
   try {
     const result = await saveSteelWorkDefinition(auth.companyId, auth.person, parsed.data);
-    refresh(parsed.data.siteId); return { ok: true, message: 'OK', ...result };
+    if(result.notification)scheduleSiteTaskAdded(auth.companyId,result.notification);
+    const saved={definitionId:result.definitionId,revision:result.revision,key:result.key,artNeeded:result.artNeeded};
+    refresh(parsed.data.siteId); return { ok: true, message: 'OK', ...saved };
   } catch (error) { return { ok: false, message: tr('invalidInput'), ...(error instanceof SteelCatalogError && error.message === 'ORDER_CONFLICT' ? { code: 'ORDER_CONFLICT' as const } : {}) }; }
 }
 export async function setSteelTaskSelectionAction(input: unknown): Promise<{ ok: boolean; message: string }> {
@@ -47,7 +50,7 @@ export async function setSteelTaskSelectionAction(input: unknown): Promise<{ ok:
   if (!parsed.success) return { ok: false, message: tr('invalidInput') };
   const auth = await actor(true);
   if (!auth) return { ok: false, message: tr('accessDenied') };
-  try { await setSteelTaskSelection(auth.companyId, auth.person, parsed.data); refresh(parsed.data.siteId); return { ok: true, message: 'OK' }; }
+  try { const notification=await setSteelTaskSelection(auth.companyId, auth.person, parsed.data); if(notification)scheduleSiteTaskAdded(auth.companyId,notification); refresh(parsed.data.siteId); return { ok: true, message: 'OK' }; }
   catch { return { ok: false, message: tr('invalidInput') }; }
 }
 export async function archiveSteelWorkDefinitionAction(input: unknown): Promise<{ ok: boolean; message: string }> {

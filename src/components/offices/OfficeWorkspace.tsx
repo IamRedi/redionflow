@@ -7,7 +7,7 @@ import s from './surfaces.module.css';
 /** One scrolling work surface, with the room's materials behind it. */
 export function OfficeWorkspace({children}:{children:ReactNode}){
  const path=usePathname();
- const work=/^\/workzone\/offices\/(?:me\/(mail|tasks|resources|workbooks)(\/|$)|team(?:\/|$))/.test(path);
+ const work=/^\/workzone\/offices\/(?:me\/(mail|tasks|resources|workbooks|team-time)(\/|$)|team(?:\/|$))/.test(path);
  useEffect(()=>{
   if(path==='/workzone/offices/me'&&location.hash==='#office-assistant')document.getElementById('office-assistant')?.focus({preventScroll:true});
  },[path]);
