@@ -678,7 +678,7 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
     const removed = await prisma.$transaction(async tx=>{
       if(!await delegateStillAllowed(tx))return {count:0};
       const result=await tx.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null, ...delegatedWhere, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) } });
-      if(result.count&&fieldOnly)await tx.workSessionPauseInterval.updateMany({where:{id:{in:openPauseUpdates},workSessionId:session.id,endedAt:null},data:{endedAt:endTime}});
+      // Deleting a quick-undo session already cascades its pause intervals.
    if(result.count&&delegated)await fieldTimeAudit(tx,currentCompanyId,currentWorker!.id,session.workerId,session.id,'stop');
       return result;
     });

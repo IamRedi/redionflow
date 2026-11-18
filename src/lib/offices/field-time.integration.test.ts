@@ -54,6 +54,19 @@ it('records each selected person through the original clock, preserves breaks, a
  expect(await prisma.workSession.count({where:{workerId:b.worker.id}})).toBe(0);
  await expect(changeFieldTime({command:'start',workers:[{workerId:a.worker.id,sessionId:null},{workerId:a.worker.id,sessionId:null}]})).rejects.toThrow();
 });
+it.each(['quick-undo','short-session'] as const)('discards a delegated %s and cascades its pauses without touching other sessions',async(kind)=>{
+ await engineer();const a=tenants[0];
+ const own=await beginWorkerSession({companyId:a.company.id,workerId:engineerId,start:at(3),siteId:null,workplace:'OFFICE'});
+ const live=await beginWorkerSession({companyId:a.company.id,workerId:a.worker.id,start:kind==='quick-undo'?at(3):new Date(Date.now()-10_000),siteId:a.site.id,recordedByWorkerId:engineerId,fieldOnly:true});
+ if(kind==='short-session')await prisma.$executeRaw`UPDATE "WorkSession" SET "createdAt"=now()-interval '10 minutes' WHERE id=${live.id}`;
+ await prisma.workSessionPauseInterval.create({data:{workSessionId:live.id,workerId:a.worker.id,startedAt:new Date()}});
+ const result=await changeFieldTime({command:'stop',workers:[{workerId:a.worker.id,sessionId:live.id}]});
+ expect(result.results).toHaveLength(1);expect(result.results[0].ok).toBe(true);
+ expect(await prisma.workSession.findUnique({where:{id:live.id}})).toBeNull();
+ expect(await prisma.workSessionPauseInterval.count({where:{workSessionId:live.id}})).toBe(0);
+ expect((await prisma.workSession.findUniqueOrThrow({where:{id:own.id}})).isLive).toBe(true);
+ expect(await prisma.auditLog.count({where:{companyProfileId:a.company.id,actorId:engineerId,action:'office.field_time.stop'}})).toBe(1);
+});
 it('never stops or reopens office/workshop clocks and never stops a replacement session from a stale selection',async()=>{
  await engineer();const a=tenants[0];
  const own=await beginWorkerSession({companyId:a.company.id,workerId:a.worker.id,start:at(3),siteId:null,workplace:'OFFICE'});
