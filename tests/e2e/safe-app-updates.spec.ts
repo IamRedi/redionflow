@@ -14,6 +14,14 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
   await ensureSteelWorkCatalog(company.id);
   const task = await prisma.steelSiteTask.findUniqueOrThrow({ where: { treeItemId: tree.id } });
   await context.addCookies([{ name: 'bk_admin_id', value: await createSessionCookie('admin', admin.id, admin.sessionEpoch), url: base }, { name: 'bk_lang', value: 'sq', url: base }]);
+  await page.addInitScript(() => {
+    const events: Array<{ kind: string; tag: string; type: string; trusted: boolean }> = [];
+    Object.assign(window, { updateFixtureEvents: events });
+    for (const kind of ['input', 'change']) document.addEventListener(kind, e => {
+      const element = e.target as HTMLInputElement;
+      events.push({ kind, tag: element.tagName, type: element.type ?? '', trusted: e.isTrusted });
+    }, true);
+  });
   const versionResponse = await context.request.get(`${base}/api/app-version`);
   expect(versionResponse.headers()['cache-control']).toContain('no-store');
   const current = (await versionResponse.json()).version as string;
@@ -54,7 +62,17 @@ test('an idle authenticated page updates itself once at the same URL and does no
   const f = await workspace(page, context, String(info.project.use.baseURL));
   try {
     const url = page.url(); await f.checkTwice(); await f.advance(6_000);
-    await expect.poll(f.navigations).toBe(1); await expect(page).toHaveURL(url);
+    try { await expect.poll(f.navigations).toBe(1); }
+    catch (error) {
+      console.log('UPDATE_FIXTURE_DIAGNOSTIC', await page.evaluate(() => ({
+        visible: document.visibilityState, online: navigator.onLine, now: Date.now(),
+        loopGuard: sessionStorage.getItem('bk-app-update-reload'),
+        events: (window as unknown as { updateFixtureEvents: unknown[] }).updateFixtureEvents,
+        blockers: Array.from(document.querySelectorAll('[role=dialog],[role=alertdialog],[aria-busy=true],[data-app-update-blocked=true]')).map(e => ({ tag: e.tagName, role: e.getAttribute('role'), busy: e.getAttribute('aria-busy'), flag: e.getAttribute('data-app-update-blocked'), rendered: e.getClientRects().length > 0 })),
+        fields: Array.from(document.querySelectorAll<HTMLInputElement>('input,textarea,select')).map(e => ({ tag: e.tagName, type: e.type, length: e.value.length, files: e.files?.length ?? 0 })),
+      }))); throw error;
+    }
+    await expect(page).toHaveURL(url);
     await f.advance(120_000); expect(f.navigations()).toBe(1);
     const keys = await page.evaluate(() => Object.keys(sessionStorage));
     expect(keys).toContain('bk-app-update-reload');
@@ -85,7 +103,7 @@ test('a real process draft stays intact through an update, saves exactly once, t
     await sheet.getByRole('button', { name: 'Ruaj', exact: true }).click();
     await expect(sheet.locator('[data-studio-phase-notes]')).toContainText('Draft DEMO stays here until the operator saves');
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
-    await sheet.getByRole('button').first().click(); await expect(sheet).not.toBeVisible();
+    await sheet.getByRole('button').first().click(); await f.advance(500); await expect(sheet).not.toBeVisible();
     await f.advance(7_000); await expect.poll(f.navigations).toBe(1);
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
     expect(await prisma.treeItem.findUniqueOrThrow({ where: { id: f.tree.id } })).toMatchObject({ status: 'done', completedAt: new Date('2026-11-17T09:00Z') });
@@ -124,7 +142,7 @@ test('invalid probes, offline state, file/password work and a real stale-action 
     await page.getByLabel('Upload DEMO', { exact: true }).setInputFiles({ name: 'synthetic.txt', mimeType: 'text/plain', buffer: Buffer.from('synthetic file') });
     await page.getByLabel('Secret DEMO', { exact: true }).fill('synthetic-only');
     const result = await page.evaluate(async () => {
-      const r = await fetch(window.location.pathname, { method: 'POST', headers: { 'Next-Action': '0000000000000000000000000000000000000000', Accept: 'text/x-component' }, body: '[]' });
+      const r = await fetch(window.location.pathname, { method: 'POST', headers: { 'Next-Action': '00'.repeat(21), Accept: 'text/x-component' }, body: '[]' });
       return { status: r.status, notFound: r.headers.get('x-nextjs-action-not-found') };
     });
     expect(result).toEqual({ status: 404, notFound: '1' });
