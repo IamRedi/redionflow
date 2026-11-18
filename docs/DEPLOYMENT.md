@@ -23,8 +23,14 @@ save remains a failed save; completion is never inferred from a refresh.
 
 For Railway's Docker build, declare the private
 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` through the existing `ARG` and provider secret
-mechanism. Generate one random 32-byte AES key in base64 per installation after
-exact release approval; retain it across builds AND runtime. Never make it
+mechanism. For the existing AL-Steel installation, preserve the exact private key
+of the currently running server manifest when placing it in provider secrets;
+do NOT rotate it for this rollout. Read-only metadata verified a valid32-byte key
+and189active action references in PR238, without returning its value. Before the
+approved release, revalidate the exact live revision and key metadata, then move
+the existing key privately to the provider with deploys suppressed until the
+approved source is ready. Generate a new32-byte base64 key only for a fresh
+installation with no existing clients. Retain across builds AND runtime. Never make it
 `NEXT_PUBLIC`, print it, commit it, share it with another installation or rotate
 it on every publication. This keeps unchanged action references stable while an
 open editor finishes its work. It does not promise compatibility for renamed,
@@ -36,8 +42,10 @@ does not route old requests to an old Railway container. This change therefore
 uses a guarded release probe rather than introducing that unguarded behavior.
 Existing error handling delegates to the same guard when mounted; the minimal
 root-error fallback remains bounded. A build published before this mechanism
-cannot receive new JavaScript until it next loads the app; bootstrap and physical
-iPhone acceptance are separate from local mocked-transition/render tests.
+cannot receive new JavaScript until it next loads the app; preserving the existing
+key lets unchanged old commands finish, and ordinary navigation can load the new
+client without closing the app. Bootstrap and physical iPhone acceptance remain
+separate from local mocked-transition/render tests.
 No migration, permission, production calculation, provider/model or dependency
 change. Keep exact-version approval, fresh backup/restore and release freshness
 gates. Forward recovery must retain saved process notes and active work.
