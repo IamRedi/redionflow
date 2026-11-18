@@ -215,10 +215,8 @@ Long-running or destructive migrations should be applied manually via
 
 ## Open pages after a deployment
 
-A page opened before a deployment still calls the old server action ids.
-Next.js answers "Server Action ... was not found" and the click did nothing.
-Since 07.11.2026 `StaleDeploymentReload` (root layout) and the error
-boundaries reload the page once (at most once per 30 seconds, so a real
-fault cannot loop): `src/lib/deploy/stale-deployment.ts`. The click that
-hit the old version is not repeated; the user taps again on the fresh page.
-Still deploy production outside working hours when possible.
+See [Safe updates for an already open app](#safe-updates-for-an-already-open-app--18-november-2026)
+for the current guarded coordinator and first-rollout key-preservation contract.
+The previous immediate reload is retained only as the bounded root-error fallback
+when the coordinator is not mounted. A rejected command is never replayed.
+Prefer a quiet release window and verify the exact approved version after deploy.
