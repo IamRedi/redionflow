@@ -76,9 +76,12 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
       if (!process || process.archivedAt && !unchangedLink || linkedList === 'part' && process.kind === 'field') fail('INVALID_LINK');
     }
     const data = { label: input.label, description: input.description ?? '', linkedProcessKey, linkedList, linkedKind, phaseGroup };
+    const orderOnlyEdit = Boolean(input.id && placement && existing && Object.entries(data).every(([key, value]) => existing[key as keyof typeof data] === value));
     let definition;
     // Reusing the same kind/label is idempotent; never overwrite a shared definition through a create form.
     if (existing && !input.id) definition = existing;
+    // A position-only save must not invalidate an in-flight illustration job.
+    else if (existing && orderOnlyEdit) definition = existing;
     else if (existing) definition = await tx.steelWorkDefinition.update({ where: { id: existing.id }, data: { ...data,
       // Every edit invalidates the old job revision, even an unchanged Save.
       // Retain its existing bytes, but never leave an orphaned pending badge.
@@ -102,7 +105,6 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     }
     await audit(tx, companyId, actor, existing ? 'steel.catalog_updated' : 'steel.catalog_created', { definitionId: definition.id, revision: definition.revision, ...(placement ? { beforeId: placement.beforeId } : {}), ...(input.siteId && input.kind === 'site' && !input.id ? { siteId: input.siteId } : {}) });
     const changedArt = !!input.id && !!existing && (existing.label !== definition.label || existing.description !== definition.description || existing.linkedProcessKey !== definition.linkedProcessKey || existing.linkedList !== definition.linkedList || existing.linkedKind !== definition.linkedKind);
-    const orderOnlyEdit = Boolean(input.id && placement && !changedArt);
     return { definitionId: definition.id, revision: definition.revision, key: definition.key, artNeeded: definition.visualStatus !== 'photo' && (changedArt || !definition.visualUpdatedAt && !orderOnlyEdit) };
   });
 }

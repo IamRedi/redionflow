@@ -246,6 +246,14 @@ it('inserts a new process at its chosen slot, keeps duplicate submits idempotent
   expect((await processes()).at(-1)?.id).toBe(legacy.definitionId);
 });
 
+it('keeps an in-flight illustration revision and status intact when only the position changes', async () => {
+  const created = await saveSteelWorkDefinitionAction({ kind: 'factory', label: 'Pending drill DEMO' });
+  await prisma.steelWorkDefinition.update({ where: { id: created.definitionId! }, data: { visualStatus: 'pending' } });
+  const rows = await processes(), target = rows.find(row => row.id === created.definitionId)!;
+  expect(await saveSteelWorkDefinitionAction({ id: target.id, kind: 'factory', label: target.label, description: target.description, revision: target.revision, placement: { ...processPlacement(target.id, rows), beforeId: rows[1].id } })).toMatchObject({ ok: true, artNeeded: false, revision: target.revision });
+  expect(await prisma.steelWorkDefinition.findUniqueOrThrow({ where: { id: target.id } })).toMatchObject({ revision: target.revision, visualStatus: 'pending', visualUpdatedAt: null });
+});
+
 it('serializes competing insertions, returns an order conflict and never partially creates the loser', async () => {
   const rows = await processes(), placement = { ...processPlacement(undefined, rows), beforeId: rows[1].id };
   const results = await Promise.all(['Concurrent A DEMO', 'Concurrent B DEMO'].map(label => saveSteelWorkDefinitionAction({ kind: 'factory', label, placement })));
