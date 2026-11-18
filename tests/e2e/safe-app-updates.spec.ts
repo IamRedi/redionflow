@@ -19,29 +19,43 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
   const current = (await versionResponse.json()).version as string;
   expect(current).toMatch(/^[\w-]{1,128}$/);
   let calls = 0, navigations = 0, loaded = false, mode: 'new' | 'same' | 'invalid' = 'new';
+  const replies: Promise<void>[] = [];
   await page.route('**/api/app-version', route => {
     calls++;
-    return route.fulfill({ contentType: 'application/json', headers: { 'cache-control': 'no-store' }, body: JSON.stringify({ version: mode === 'invalid' ? null : mode === 'new' ? `${current}-next` : current }) });
+    const reply = route.fulfill({ contentType: 'application/json', headers: { 'cache-control': 'no-store' }, body: JSON.stringify({ version: mode === 'invalid' ? null : mode === 'new' ? `${current}-next` : current }) }).then(async () => {
+      const response = await route.request().response(); if (response) await response.finished();
+    });
+    replies.push(reply); return reply;
   });
   page.on('framenavigated', frame => { if (loaded && frame === page.mainFrame()) { navigations++; mode = 'same'; } });
   await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1_000));
   await page.goto(`/workzone/baustellen/${site.id}?view=production#prodhimi`);
   await expect(page.getByRole('heading', { name: site.name, exact: true })).toBeVisible();
   loaded = true;
-  const checkTwice = async () => {
-    await page.clock.runFor(2_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(1);
-    await page.clock.runFor(10_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(2);
+  const advance = async (milliseconds: number) => {
+    // A single large virtual-clock jump can fire the real fetch's timeout before
+    // its fulfilled network response reaches the browser. Drain replies between
+    // ticks; keep the application's real probe/timeout/cooldown intervals intact.
+    for (let elapsed = 0; elapsed < milliseconds; elapsed += 1_000) {
+      await page.clock.runFor(Math.min(1_000, milliseconds - elapsed));
+      if (replies.length) await Promise.allSettled(replies.splice(0));
+    }
   };
-  return { company, tree, task, checkTwice, current, calls: () => calls, navigations: () => navigations, mode: (value: typeof mode) => { mode = value; },
+  const checkTwice = async () => {
+    await advance(2_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(1);
+    await advance(11_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(2);
+  };
+  return { company, tree, task, checkTwice, advance, current, calls: () => calls, navigations: () => navigations, mode: (value: typeof mode) => { mode = value; },
     cleanup: async () => { await prisma.user.deleteMany({ where: { companyProfileId: company.id } }); await prisma.companyProfile.delete({ where: { id: company.id } }); } };
 }
 
 test('an idle authenticated page updates itself once at the same URL and does not loop', async ({ page, context }, info) => {
   const f = await workspace(page, context, String(info.project.use.baseURL));
   try {
-    const url = page.url(); await f.checkTwice(); await page.clock.runFor(6_000);
+    const url = page.url(); await f.checkTwice(); await f.advance(6_000);
     await expect.poll(f.navigations).toBe(1); await expect(page).toHaveURL(url);
-    await page.clock.runFor(120_000); expect(f.navigations()).toBe(1);
+    await f.advance(120_000); expect(f.navigations()).toBe(1);
     const keys = await page.evaluate(() => Object.keys(sessionStorage));
     expect(keys).toContain('bk-app-update-reload');
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(0);
@@ -67,12 +81,12 @@ test('a real process draft stays intact through an update, saves exactly once, t
       expect(await page.getByTestId('app-update-ready').evaluate(e => getComputedStyle(e).pointerEvents)).toBe('none');
       await page.screenshot({ path: `${process.env.OFFICE_EVIDENCE_DIR}/safe-update-${theme}-${width}.png` });
     }
-    await page.clock.runFor(60_000); expect(f.navigations()).toBe(0);
+    await f.advance(60_000); expect(f.navigations()).toBe(0);
     await sheet.getByRole('button', { name: 'Ruaj', exact: true }).click();
     await expect(sheet.locator('[data-studio-phase-notes]')).toContainText('Draft DEMO stays here until the operator saves');
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
     await sheet.getByRole('button').first().click(); await expect(sheet).not.toBeVisible();
-    await page.clock.runFor(7_000); await expect.poll(f.navigations).toBe(1);
+    await f.advance(7_000); await expect.poll(f.navigations).toBe(1);
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
     expect(await prisma.treeItem.findUniqueOrThrow({ where: { id: f.tree.id } })).toMatchObject({ status: 'done', completedAt: new Date('2026-11-17T09:00Z') });
   } finally { await f.cleanup(); }
@@ -86,9 +100,9 @@ test('an in-flight write blocks updating and is never repeated by the updater', 
   try {
     await page.evaluate(() => { void fetch('/api/fixture-update-write', { method: 'POST', body: 'synthetic operation' }).then(() => document.body.setAttribute('data-fixture-finished', 'true')); });
     await expect.poll(() => writes).toBe(1); await f.checkTwice();
-    await page.clock.runFor(30_000); expect(f.navigations()).toBe(0);
+    await f.advance(30_000); expect(f.navigations()).toBe(0);
     release(); await expect(page.locator('body')).toHaveAttribute('data-fixture-finished', 'true');
-    await page.clock.runFor(7_000); await expect.poll(f.navigations).toBe(1); expect(writes).toBe(1);
+    await f.advance(7_000); await expect.poll(f.navigations).toBe(1); expect(writes).toBe(1);
   } finally { release(); await f.cleanup(); }
 });
 
@@ -96,7 +110,8 @@ test('invalid probes, offline state, file/password work and a real stale-action 
   test.setTimeout(120_000);
   const f = await workspace(page, context, String(info.project.use.baseURL));
   try {
-    f.mode('invalid'); await f.checkTwice(); await page.clock.runFor(65_000); expect(f.navigations()).toBe(0);
+    f.mode('invalid'); await f.advance(2_000); await expect.poll(f.calls).toBeGreaterThanOrEqual(1);
+    await f.advance(65_000); expect(f.navigations()).toBe(0);
     await page.evaluate(() => {
       const holder = document.createElement('section'); holder.id = 'fixture-update-draft';
       holder.innerHTML = '<label>Draft DEMO<input aria-label="Draft DEMO"></label><label>Upload DEMO<input type="file" aria-label="Upload DEMO"></label><input type="password" aria-label="Secret DEMO">';
@@ -114,15 +129,15 @@ test('invalid probes, offline state, file/password work and a real stale-action 
     });
     expect(result).toEqual({ status: 404, notFound: '1' });
     await expect(page.getByTestId('app-update-ready')).toBeVisible();
-    await context.setOffline(true); await page.clock.runFor(70_000); expect(f.navigations()).toBe(0);
+    await context.setOffline(true); await f.advance(70_000); expect(f.navigations()).toBe(0);
     await expect(page.getByLabel('Draft DEMO', { exact: true })).toHaveValue('Keep this unsaved synthetic text');
     const storage = await page.evaluate(() => JSON.stringify({ session: { ...sessionStorage }, local: { ...localStorage } }));
     expect(storage).not.toContain('Keep this unsaved'); expect(storage).not.toContain('synthetic-only'); expect(storage).not.toContain('synthetic.txt');
-    await context.setOffline(false); f.mode('same');
+    f.mode('same'); await context.setOffline(false);
     await page.evaluate(() => document.getElementById('fixture-update-draft')?.querySelectorAll('input:not([aria-label="Autofill DEMO"])').forEach(e => e.remove()));
-    await page.clock.runFor(7_000); expect(f.navigations()).toBe(0);
+    await f.advance(7_000); expect(f.navigations()).toBe(0);
     await expect(page.getByLabel('Autofill DEMO', { exact: true })).toHaveValue('Unfocused synthetic draft');
     await page.evaluate(() => document.getElementById('fixture-update-draft')?.remove());
-    await page.clock.runFor(7_000); await expect.poll(f.navigations).toBe(1);
+    await f.advance(7_000); await expect.poll(f.navigations).toBe(1);
   } finally { await context.setOffline(false); await f.cleanup(); }
 });
