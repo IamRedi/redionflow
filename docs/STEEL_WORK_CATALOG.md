@@ -23,6 +23,8 @@ material routes, quantities, confirmations, history and loading rules stay intac
 Archived definitions retain their relative slots. Moving an existing process
 without changing its work context does not request a new AI image; explicit
 image generation and new-process artwork keep their existing flows and quotas.
+A position-only move retains the target's visual revision/status as well, so
+an already running illustration job can finish normally.
 The feature is prepared separately from released PR239/91f362c; production
 ordering changes require its own exact-version approval.
 

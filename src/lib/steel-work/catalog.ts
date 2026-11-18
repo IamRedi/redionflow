@@ -83,7 +83,7 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     // A position-only save must not invalidate an in-flight illustration job.
     else if (existing && orderOnlyEdit) definition = existing;
     else if (existing) definition = await tx.steelWorkDefinition.update({ where: { id: existing.id }, data: { ...data,
-      // Every edit invalidates the old job revision, even an unchanged Save.
+      // Metadata edits and legacy saves invalidate the old job revision.
       // Retain its existing bytes, but never leave an orphaned pending badge.
       ...(existing.visualStatus === 'pending' ? { visualStatus: existing.visualUpdatedAt ? 'generated' : 'fallback' } : {}),
       revision: { increment: 1 } } });
