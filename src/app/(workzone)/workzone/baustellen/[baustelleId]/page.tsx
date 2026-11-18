@@ -54,9 +54,9 @@ import { currentCompanyActor } from '@/lib/site-files/actor';
 import { isDocumentEngineer } from '@/lib/site-phase-documents/site-access';
 
 export default async function BaustelleDetailPage({
-  params,
+  params,searchParams,
 }: {
-  params: Promise<{ baustelleId: string }>;
+  params: Promise<{ baustelleId: string }>;searchParams?:Promise<{task?:string}>;
 }) {
   await autoLockPastWorkLogs();
   const { baustelleId } = await params;
@@ -398,7 +398,7 @@ export default async function BaustelleDetailPage({
             Engineers who move between sites get the small start/stop toggle in the header. */}
 
         <div data-studio-site-columns className={`grid min-w-0 gap-4 lg:items-start ${seeProduction && (factoryView || batches.length > 0) ? "lg:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>
-          <SteelPhaseBoard phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
+          <SteelPhaseBoard initialPhase={(await searchParams)?.task} phases={steelPhases} definitions={definitions} canEdit={can.siteSteps} canReport={can.reportMissing} canManage={canManageSteelCatalog(can)} baustelleId={baustelle.id} />
           <div className="lg:sticky lg:top-4">
             {/* The factory here is only to look at: what it produced for this site, per process. */}
             {!seeProduction ? null : factoryView ? (

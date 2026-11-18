@@ -2,6 +2,8 @@
 import { rememberProfileLanguage } from "@/lib/i18n/server";
 import { plannedSiteId } from "@/lib/workzone/plan-site";
 import { beginWorkerSession, SessionStartError } from '@/lib/workzone/session-start';
+import { canDelegateFieldTime,fieldTimeDelegate,fieldTimeTarget,fieldTimeAudit } from '@/lib/workzone/field-attendance-access';
+import type { Prisma } from '@/generated/prisma/client';
 import { parseWorkDateTime } from '@/lib/workzone/date-utils';
 import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { assetActionError, assetWorkflowMessage } from '@/lib/company-assets/action-errors';
@@ -499,12 +501,12 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   const { workerId, startTime } = parsed.data;
   const [admin, currentWorker] = await Promise.all([getCurrentAdmin(), getCurrentWorker()]);
   if (!admin && !currentWorker) return { ok: false, message: tr("loginRequired") };
-  if (!admin && currentWorker?.id !== workerId) {
-    return { ok: false, message: tr("cannotStartOtherWorkerSession") };
-  }
-
   const currentCompanyId = await getCurrentCompanyId();
   if (!currentCompanyId) return { ok: false, message: tr("notSignedIn") };
+  const delegated = !admin && !!currentWorker && currentWorker.id !== workerId;
+  if (delegated && !await canDelegateFieldTime(currentCompanyId,currentWorker!.id,workerId)) {
+    return { ok: false, message: tr("cannotStartOtherWorkerSession") };
+  }
 
   const worker = await prisma.worker.findUnique({ where: { id: workerId } });
   if (!worker || worker.status !== "active") return { ok: false, message: tr("workerNotActive") };
@@ -517,7 +519,7 @@ export async function startWorkerSessionAction(input: unknown): Promise<ActionRe
   const baustelleId = await plannedSiteId(currentCompanyId, workerId, selectedStartTime);
   let sessionId: string;
   try {
-    const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId, fillMissingSite: true });
+    const result = await beginWorkerSession({ companyId: currentCompanyId, workerId, start: selectedStartTime, siteId: baustelleId, fillMissingSite: true, fieldOnly:parsed.data.fieldOnly, ...(delegated?{recordedByWorkerId:currentWorker!.id}:{}) });
     sessionId = result.id;
     if (result.kind === 'existing') {
       if('siteAssigned' in result&&result.siteAssigned){revalidateWorkerProfile(workerId);revalidatePath('/workzone');notifyRealtimeUpdate('worker.session.updated',['worker-strip','working-badge']);}
@@ -651,11 +653,20 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
   });
   if (!session) return { ok: false, message: tr("sessionNotFound") };
   if (session.worker.companyProfileId !== currentCompanyId) return { ok: false, message: tr("accessDenied") };
-  if (!admin && currentWorker?.id !== session.workerId) {
+  const delegated = !admin && !!currentWorker && currentWorker.id !== session.workerId;
+  if (delegated && !await canDelegateFieldTime(currentCompanyId,currentWorker!.id,session.workerId,{siteId:session.baustelleId,workplace:session.workplace})) {
     return { ok: false, message: tr("cannotStopOtherWorkerSession") };
   }
   if (!session.isLive) return { ok: false, message: tr("sessionAlreadyEnded") };
   if (parsed.data.expectedWorkplace && (session.workplace !== parsed.data.expectedWorkplace || session.baustelleId)) return { ok: false, message: tr('sessionNotActive') };
+  // Bind a delegated stop to this exact field session/place; a concurrent move
+  // to an office or workshop must never be stopped through this panel.
+  const fieldOnly=delegated||parsed.data.fieldOnly;
+  const delegatedWhere=fieldOnly?{workplace:null,baustelleId:session.baustelleId}:{};
+  const delegateStillAllowed=async(tx:Prisma.TransactionClient)=>{
+    if(fieldOnly)await tx.$queryRaw`SELECT id FROM "Worker" WHERE id=${session.workerId} AND "companyProfileId"=${currentCompanyId} FOR UPDATE`;
+    return (!delegated||await fieldTimeDelegate(tx,currentCompanyId,currentWorker!.id))&&(!fieldOnly||await fieldTimeTarget(tx,currentCompanyId,session.workerId,{siteId:session.baustelleId,workplace:session.workplace}));
+  };
 
   const endTime = parseWorkDateTime(parsed.data.endTime);
   if (!endTime || endTime < session.startTime || endTime.getTime() > Date.now() + 60_000) {
@@ -664,7 +675,14 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
 
   // Stopping within 5 seconds of pressing start (or a session under a minute) leaves no record.
   if (isTrivialSession(session.startTime, endTime) || isQuickUndo(session.createdAt)) {
-    const removed = await prisma.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) } });
+    const removed = await prisma.$transaction(async tx=>{
+      if(!await delegateStillAllowed(tx))return {count:0};
+      const result=await tx.workSession.deleteMany({ where: { id: session.id, isLive: true, endTime: null, ...delegatedWhere, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) } });
+      if(result.count&&fieldOnly)await tx.workSessionPauseInterval.updateMany({where:{id:{in:openPauseUpdates},workSessionId:session.id,endedAt:null},data:{endedAt:endTime}});
+   if(result.count&&delegated)await fieldTimeAudit(tx,currentCompanyId,currentWorker!.id,session.workerId,session.id,'stop');
+      return result;
+    });
+    if(fieldOnly&&!removed.count)return {ok:false,message:tr('sessionNotActive')};
     if (parsed.data.expectedWorkplace && !removed.count) return { ok: false, message: tr('sessionNotActive') };
     revalidateWorkerProfile(session.workerId);
     revalidatePath(`/workzone/baustellen`);
@@ -676,13 +694,15 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
   const pauseIntervals = await findPauseIntervalsForSession(session.id);
   const openPauseUpdates = pauseIntervals
     .filter((interval) => interval.endedAt === null)
-    .map((interval) => closePauseInterval(interval.id, endTime));
+    .map((interval) => interval.id);
   const intervals = pauseIntervals.map((interval) => (interval.endedAt === null ? { ...interval, endedAt: endTime } : interval));
   const breakMinutes = stopBreakMinutes(parsed.data.breakMinutes, intervals, endTime);
 
-  await Promise.all(openPauseUpdates);
-  const stopped = await prisma.workSession.updateMany({
-    where: { id: session.id, isLive: true, endTime: null, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) },
+  if(!fieldOnly)await Promise.all(openPauseUpdates.map(id=>closePauseInterval(id,endTime)));
+  const stopped = await prisma.$transaction(async tx=>{
+   if(!await delegateStillAllowed(tx))return {count:0};
+   const result=await tx.workSession.updateMany({
+    where: { id: session.id, isLive: true, endTime: null, ...delegatedWhere, ...(parsed.data.expectedWorkplace ? { workplace: parsed.data.expectedWorkplace, baustelleId: null } : {}) },
     data: {
       endTime,
       breakMinutes,
@@ -691,6 +711,10 @@ export async function stopWorkerSessionAction(input: unknown): Promise<ActionRes
       closedBySystem: false,
       systemNote: null,
     },
+   });
+   if(result.count&&fieldOnly)await tx.workSessionPauseInterval.updateMany({where:{id:{in:openPauseUpdates},workSessionId:session.id,endedAt:null},data:{endedAt:endTime}});
+   if(result.count&&delegated)await fieldTimeAudit(tx,currentCompanyId,currentWorker!.id,session.workerId,session.id,'stop');
+   return result;
   });
   if (!stopped.count) return { ok: false, message: tr('sessionAlreadyEnded') };
 

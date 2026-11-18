@@ -103,6 +103,7 @@ export type WorkzoneWorkingValues = z.infer<typeof workzoneWorkingSchema>;
 export const startWorkSessionSchema = z.object({
   workerId: z.string().min(1),
   startTime: z.string().min(1).optional(),
+  fieldOnly: z.boolean().optional(),
 });
 
 export type StartWorkSessionValues = z.infer<typeof startWorkSessionSchema>;
@@ -140,6 +141,7 @@ export type WorkerLoginValues = z.infer<typeof workerLoginSchema>;
 export const stopWorkSessionSchema = z.object({
   sessionId: z.string().min(1),
   expectedWorkplace: z.enum(['OFFICE','WORKSHOP']).optional(),
+  fieldOnly: z.boolean().optional(),
   breakMinutes: z.coerce.number().int().refine((value) => [0, 15, 30, 60].includes(value), t("validation.breakMinutesInvalid")),
   endTime: z.string().min(1),
 });

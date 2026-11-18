@@ -84,14 +84,14 @@ function phaseHint(item: SteelPhaseView, lang: string) {
 }
 
 export function SteelPhaseBoard({
-  phases,
+  phases,initialPhase,
   canEdit,
   canManage = false,
   canReport = false,
   baustelleId,
   definitions = [],
 }: {
-  phases: SteelPhaseView[];
+  phases: SteelPhaseView[];initialPhase?:string;
   /** Field engineer or office: finish, reopen, note. */
   canEdit: boolean;
   /** Everyone signed in: report missing material. */
@@ -104,7 +104,7 @@ export function SteelPhaseBoard({
   const { currentLang } = useLanguage();
   const router = useRouter();
   const [items, setItems] = useState(phases);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(()=>phases.find(p=>p.id===initialPhase)?.id??null);
   const [editor, setEditor] = useState<Editor>(null);
   const [text, setText] = useState("");
   const [noteRequestId, setNoteRequestId] = useState<string | undefined>();
@@ -126,7 +126,7 @@ export function SteelPhaseBoard({
   }
 
   // The site opens with three windows; the phases live inside their window.
-  const [group, setGroup] = useState<SteelPhaseGroup | null>(null);
+  const [group, setGroup] = useState<SteelPhaseGroup | null>(()=>phases.find(p=>p.id===initialPhase)?.group??(phases.some(p=>p.id===initialPhase)?'assembly':null));
   const groupOf = (item: SteelPhaseView) => item.group ?? "assembly";
   const visible = group ? items.filter((item) => groupOf(item) === group) : [];
   // A server refresh may reorder the phases. Keep the selected process itself.

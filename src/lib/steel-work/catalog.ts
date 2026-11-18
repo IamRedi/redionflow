@@ -93,7 +93,7 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
       const prefix = input.kind === 'site' ? 'steel-task-' : input.kind === 'factory' ? 'fp-' : 'sp-';
       definition = await tx.steelWorkDefinition.create({ data: { ...data, companyProfileId: companyId, kind: input.kind, key: `${prefix}${randomBytes(12).toString('hex')}`, sortOrder: (last._max.sortOrder ?? 99) + 1 } });
     }
-    if (input.siteId && input.kind === 'site' && !input.id) await selectTask(tx, companyId, input.siteId, definition.id, true);
+    const notification=input.siteId && input.kind === 'site' && !input.id?await selectTask(tx, companyId, input.siteId, definition.id, true):null;
     if (placement) {
       // Keep archived definitions in their relative slots, and keep all IDs,
       // revisions of other definitions, visuals and recorded work unchanged.
@@ -105,7 +105,7 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     }
     await audit(tx, companyId, actor, existing ? 'steel.catalog_updated' : 'steel.catalog_created', { definitionId: definition.id, revision: definition.revision, ...(placement ? { beforeId: placement.beforeId } : {}), ...(input.siteId && input.kind === 'site' && !input.id ? { siteId: input.siteId } : {}) });
     const changedArt = !!input.id && !!existing && (existing.label !== definition.label || existing.description !== definition.description || existing.linkedProcessKey !== definition.linkedProcessKey || existing.linkedList !== definition.linkedList || existing.linkedKind !== definition.linkedKind);
-    return { definitionId: definition.id, revision: definition.revision, key: definition.key, artNeeded: definition.visualStatus !== 'photo' && (changedArt || !definition.visualUpdatedAt && !orderOnlyEdit) };
+    return { definitionId: definition.id, revision: definition.revision, key: definition.key, notification, artNeeded: definition.visualStatus !== 'photo' && (changedArt || !definition.visualUpdatedAt && !orderOnlyEdit) };
   });
 }
 
@@ -127,21 +127,23 @@ async function selectTask(tx: Tx, companyId: string, siteId: string, definitionI
     if (requireRevision && revision === undefined) fail('CONFLICT');
     if (revision !== undefined && existing.revision !== revision) fail('CONFLICT');
     // A phase chosen (again) goes to the end: the board follows the order of choosing.
-    if (existing.enabled !== enabled) await tx.steelSiteTask.update({ where: { id: existing.id }, data: { enabled, revision: { increment: 1 }, ...(enabled ? { position: await nextPosition(tx, companyId, siteId) } : {}) } });
-    return;
+    if (existing.enabled !== enabled) {const row=await tx.steelSiteTask.update({ where: { id: existing.id }, data: { enabled, revision: { increment: 1 }, ...(enabled ? { position: await nextPosition(tx, companyId, siteId) } : {}) } });return enabled?{id:row.id,revision:row.revision}:null;}
+    return null;
   }
   if (revision !== undefined) fail('CONFLICT');
-  if (!enabled) return;
+  if (!enabled) return null;
   const tree = await tx.treeItem.create({ data: { baustelleId: siteId, treeId: definition!.key, species: definition!.key.startsWith('steel-task-') ? 'task' : definition!.key.slice(6), diameter: 0, status: 'todo', notes: JSON.stringify({ label: definition!.label }) } });
-  await tx.steelSiteTask.create({ data: { companyProfileId: companyId, baustelleId: siteId, definitionId, treeItemId: tree.id, position: await nextPosition(tx, companyId, siteId) } });
+  const row=await tx.steelSiteTask.create({ data: { companyProfileId: companyId, baustelleId: siteId, definitionId, treeItemId: tree.id, position: await nextPosition(tx, companyId, siteId) } });
+  return {id:row.id,revision:row.revision};
 }
 
 export async function setSteelTaskSelection(companyId: string, actor: CompanyActor, input: { siteId: string; definitionId: string; enabled: boolean; revision?: number }) {
   if (!canManageSteelCatalog(actor.can)) fail('DENIED');
   return withTenantContext(companyId, async tx => {
     await ensureSteelWorkCatalog(companyId, tx);
-    await selectTask(tx, companyId, input.siteId, input.definitionId, input.enabled, input.revision, true);
+    const notification=await selectTask(tx, companyId, input.siteId, input.definitionId, input.enabled, input.revision, true);
     await audit(tx, companyId, actor, 'steel.task_selected', { definitionId: input.definitionId, siteId: input.siteId, enabled: input.enabled });
+    return notification;
   });
 }
 export async function archiveSteelWorkDefinition(companyId: string, actor: CompanyActor, input: { definitionId: string; revision: number; archived: boolean }) {
