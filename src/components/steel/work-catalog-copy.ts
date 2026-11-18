@@ -1,4 +1,5 @@
 const en = {
+  position: "Position", first: "At the beginning", after: "After {name}", orderHint: "This order is used in the catalog and process cards.", orderConflict: "The order changed elsewhere. Check the position and save again.", choosePosition: "Choose a position",
   site: "Site tasks", factory: "Factory processes", field: "Site processes", title: "Company work catalog",
   hint: "Shared with every site. Select only the tasks this site needs.", processHint: "Shared process definitions. Each element keeps its own required processes.",
   search: "Search tasks or processes", add: "New task", addProcess: "New process", edit: "Edit", close: "Close", back: "Back", save: "Save", saving: "Saving…", cancel: "Cancel",
@@ -12,6 +13,7 @@ const en = {
 type Copy = typeof en;
 
 const sq: Copy = {
+  position: "Pozicioni", first: "Në fillim", after: "Pas {name}", orderHint: "Ky rend përdoret në katalog dhe në kartat e proceseve.", orderConflict: "Renditja ndryshoi diku tjetër. Kontrollo pozicionin dhe ruaj sërish.", choosePosition: "Zgjidh pozicionin",
   site: "Detyrat e kantierit", factory: "Proceset e fabrikës", field: "Proceset në kantier", title: "Katalogu i punëve të firmës",
   hint: "I përbashkët për të gjitha kantieret. Zgjidh vetëm detyrat që i duhen këtij kantieri.", processHint: "Procese të përbashkëta. Çdo element ruan proceset që i duhen.",
   search: "Kërko detyrë ose proces", add: "Detyrë e re", addProcess: "Proces i ri", edit: "Ndrysho", close: "Mbyll", back: "Kthehu", save: "Ruaj", saving: "Duke ruajtur…", cancel: "Anulo",
@@ -23,6 +25,7 @@ const sq: Copy = {
 };
 
 const de: Copy = {
+  position: "Position", first: "Am Anfang", after: "Nach {name}", orderHint: "Diese Reihenfolge gilt im Katalog und auf den Prozesskarten.", orderConflict: "Die Reihenfolge wurde andernorts geändert. Position prüfen und erneut speichern.", choosePosition: "Position wählen",
   site: "Baustellenaufgaben", factory: "Werkstattprozesse", field: "Baustellenprozesse", title: "Arbeitskatalog der Firma",
   hint: "Für alle Baustellen gemeinsam. Nur die hier benötigten Aufgaben auswählen.", processHint: "Gemeinsame Prozessdefinitionen. Jedes Element behält seine erforderlichen Prozesse.",
   search: "Aufgabe oder Prozess suchen", add: "Neue Aufgabe", addProcess: "Neuer Prozess", edit: "Bearbeiten", close: "Schließen", back: "Zurück", save: "Speichern", saving: "Wird gespeichert…", cancel: "Abbrechen",
@@ -34,6 +37,7 @@ const de: Copy = {
 };
 
 const it: Copy = {
+  position: "Posizione", first: "All’inizio", after: "Dopo {name}", orderHint: "Questo ordine si applica al catalogo e alle schede dei processi.", orderConflict: "L’ordine è stato modificato altrove. Controlla la posizione e salva di nuovo.", choosePosition: "Scegli una posizione",
   site: "Attività del cantiere", factory: "Processi in officina", field: "Processi in cantiere", title: "Catalogo lavori aziendale",
   hint: "Condiviso tra tutti i cantieri. Seleziona solo le attività necessarie qui.", processHint: "Processi condivisi. Ogni elemento mantiene i propri processi richiesti.",
   search: "Cerca attività o processo", add: "Nuova attività", addProcess: "Nuovo processo", edit: "Modifica", close: "Chiudi", back: "Indietro", save: "Salva", saving: "Salvataggio…", cancel: "Annulla",
@@ -45,6 +49,7 @@ const it: Copy = {
 };
 
 const ro: Copy = {
+  position: "Poziție", first: "La început", after: "După {name}", orderHint: "Această ordine se aplică în catalog și pe cardurile proceselor.", orderConflict: "Ordinea a fost schimbată în altă parte. Verifică poziția și salvează din nou.", choosePosition: "Alege o poziție",
   site: "Sarcini de șantier", factory: "Procese în fabrică", field: "Procese pe șantier", title: "Catalogul de lucrări al firmei",
   hint: "Comun tuturor șantierelor. Alege doar sarcinile necesare aici.", processHint: "Procese comune. Fiecare element își păstrează procesele necesare.",
   search: "Caută sarcină sau proces", add: "Sarcină nouă", addProcess: "Proces nou", edit: "Editează", close: "Închide", back: "Înapoi", save: "Salvează", saving: "Se salvează…", cancel: "Anulează",
@@ -56,6 +61,7 @@ const ro: Copy = {
 };
 
 const pl: Copy = {
+  position: "Pozycja", first: "Na początku", after: "Po {name}", orderHint: "Ta kolejność obowiązuje w katalogu i na kartach procesów.", orderConflict: "Kolejność zmieniono w innym miejscu. Sprawdź pozycję i zapisz ponownie.", choosePosition: "Wybierz pozycję",
   site: "Zadania budowy", factory: "Procesy w zakładzie", field: "Procesy na budowie", title: "Firmowy katalog prac",
   hint: "Wspólny dla wszystkich budów. Wybierz tylko zadania potrzebne tutaj.", processHint: "Wspólne procesy. Każdy element zachowuje swoje wymagane procesy.",
   search: "Szukaj zadania lub procesu", add: "Nowe zadanie", addProcess: "Nowy proces", edit: "Edytuj", close: "Zamknij", back: "Wstecz", save: "Zapisz", saving: "Zapisywanie…", cancel: "Anuluj",

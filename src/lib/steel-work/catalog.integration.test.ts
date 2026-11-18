@@ -12,6 +12,7 @@ import { createTestSession, seedSecurityTenants, removeSecurityTenants } from '.
 import { getSteelWorkCatalogAction, saveSteelWorkDefinitionAction, setSteelTaskSelectionAction, archiveSteelWorkDefinitionAction } from '@/app/(workzone)/workzone/steel-catalog-actions';
 import { removeSteelTaskAction, updateSteelPhaseAction } from '@/app/(workzone)/workzone/steel-phase-actions';
 import { ensureSteelWorkCatalog, steelPhaseAddedBy } from './catalog';
+import { processPlacement } from './process-order';
 
 let tenants: Awaited<ReturnType<typeof seedSecurityTenants>>;
 async function login(index = 0, worker = false) {
@@ -210,4 +211,72 @@ it('standard production phases follow list confirmations and reject duplicate ma
  expect((await steelDashboardData({...t.company,country:'AL',displayName:'Synthetic'}, {},false)).totalProgress.stages.welding).toMatchObject({pieces:4,kg:40});
  expect(await prisma.steelWorkDefinition.findUniqueOrThrow({where:{id:saved.id}})).toMatchObject({linkedProcessKey:'assembly',linkedList:'part'});
  expect(await prisma.treeItem.findUniqueOrThrow({where:{id:selection.treeItemId}})).toMatchObject({status:'todo'});
+});
+
+async function processes(kind: 'factory' | 'field' = 'factory') {
+  const result = await getSteelWorkCatalogAction(); expect(result.ok).toBe(true);
+  return result.definitions!.filter(row => row.kind === kind);
+}
+
+it('places an existing drilling process second without rewriting routes, confirmations, images or another company', async () => {
+  const tenant = tenants[0];
+  const created = await saveSteelWorkDefinitionAction({ kind: 'factory', label: 'Shpimi DEMO' });
+  const element = await prisma.siteElement.create({ data: { companyProfileId: tenant.company.id, baustelleId: tenant.site.id, list: 'assembly', mark: 'SYN-ORDER', quantity: 4, weightKg: 10, processRevision: 3, processRoutes: { v: 1, factory: ['cutting', 'assembly', created.key!], field: [] } } });
+  await prisma.siteElementWork.create({ data: { companyProfileId: tenant.company.id, elementId: element.id, stage: 'cutting', pieces: 2, workerIds: [tenant.worker.id], workerNames: 'Original synthetic crew', checkedByName: 'Original checker', checkedAt: new Date('2026-01-05T08:00:00Z') } });
+  const beforeElement = await prisma.siteElement.findUniqueOrThrow({ where: { id: element.id }, include: { work: true } });
+  await ensureSteelWorkCatalog(tenants[1].company.id);
+  const foreign = await prisma.steelWorkDefinition.findMany({ where: { companyProfileId: tenants[1].company.id }, orderBy: { id: 'asc' } });
+  const rows = await processes(), target = rows.find(row => row.id === created.definitionId)!;
+  const result = await saveSteelWorkDefinitionAction({ id: target.id, kind: 'factory', label: target.label, description: target.description, revision: target.revision, placement: { ...processPlacement(target.id, rows), beforeId: rows.find(row => row.key === 'assembly')!.id } });
+  expect(result).toMatchObject({ ok: true, artNeeded: false });
+  expect((await processes()).filter(row => !row.archivedAt).slice(0, 3).map(row => row.key)).toEqual(['cutting', target.key, 'assembly']);
+  expect(await prisma.siteElement.findUniqueOrThrow({ where: { id: element.id }, include: { work: true } })).toEqual(beforeElement);
+  expect(await prisma.steelWorkDefinition.findUniqueOrThrow({ where: { id: target.id } })).toMatchObject({ key: target.key, visualStatus: target.visualStatus, visualUpdatedAt: null });
+  expect(await prisma.steelWorkDefinition.findMany({ where: { companyProfileId: tenants[1].company.id }, orderBy: { id: 'asc' } })).toEqual(foreign);
+});
+
+it('inserts a new process at its chosen slot, keeps duplicate submits idempotent and keeps old clients appending', async () => {
+  const rows = await processes(), placement = { ...processPlacement(undefined, rows), beforeId: rows[1].id };
+  const first = await saveSteelWorkDefinitionAction({ kind: 'factory', label: 'New drill DEMO', placement });
+  const replay = await saveSteelWorkDefinitionAction({ kind: 'factory', label: 'New drill DEMO', placement });
+  expect(first.ok).toBe(true); expect(replay).toMatchObject({ ok: true, definitionId: first.definitionId });
+  expect((await processes()).slice(0, 3).map(row => row.id)).toEqual([rows[0].id, first.definitionId, rows[1].id]);
+  expect(await prisma.steelWorkDefinition.count({ where: { companyProfileId: tenants[0].company.id, label: 'New drill DEMO' } })).toBe(1);
+  const legacy = await saveSteelWorkDefinitionAction({ kind: 'factory', label: 'Legacy caller DEMO' });
+  expect((await processes()).at(-1)?.id).toBe(legacy.definitionId);
+});
+
+it('serializes competing insertions, returns an order conflict and never partially creates the loser', async () => {
+  const rows = await processes(), placement = { ...processPlacement(undefined, rows), beforeId: rows[1].id };
+  const results = await Promise.all(['Concurrent A DEMO', 'Concurrent B DEMO'].map(label => saveSteelWorkDefinitionAction({ kind: 'factory', label, placement })));
+  expect(results.filter(row => row.ok)).toHaveLength(1);
+  expect(results.filter(row => row.code === 'ORDER_CONFLICT')).toHaveLength(1);
+  expect(await prisma.steelWorkDefinition.count({ where: { companyProfileId: tenants[0].company.id, label: { startsWith: 'Concurrent ' } } })).toBe(1);
+});
+
+it('rejects foreign, archived, self and cross-kind anchors without changing the saved definition', async () => {
+  await ensureSteelWorkCatalog(tenants[1].company.id);
+  const rows = await processes(), target = rows[0];
+  const archived = rows.at(-1)!;
+  expect((await archiveSteelWorkDefinitionAction({ definitionId: archived.id, revision: archived.revision, archived: true })).ok).toBe(true);
+  const current = await processes(), placement = processPlacement(target.id, current);
+  const foreign = await prisma.steelWorkDefinition.findFirstOrThrow({ where: { companyProfileId: tenants[1].company.id, kind: 'factory' } });
+  const field = (await processes('field'))[0];
+  const before = await prisma.steelWorkDefinition.findMany({ where: { companyProfileId: tenants[0].company.id }, orderBy: { id: 'asc' } });
+  for (const anchor of [foreign.id, archived.id, target.id, field.id]) {
+    expect(await saveSteelWorkDefinitionAction({ id: target.id, kind: 'factory', label: 'Must not be written', revision: target.revision, placement: { ...placement, beforeId: anchor } })).toMatchObject({ ok: false, code: 'ORDER_CONFLICT' });
+  }
+  expect(await prisma.steelWorkDefinition.findMany({ where: { companyProfileId: tenants[0].company.id }, orderBy: { id: 'asc' } })).toEqual(before);
+});
+
+it('scopes field ordering to its own catalog and never changes per-site task positions', async () => {
+  const factory = await processes(), field = await processes('field');
+  const task = await create('Keep site order DEMO');
+  const siteTask = await prisma.steelSiteTask.findFirstOrThrow({ where: { definitionId: task.definitionId } });
+  const result = await saveSteelWorkDefinitionAction({ kind: 'field', label: 'Field check DEMO', placement: { ...processPlacement(undefined, field), beforeId: field[1].id } });
+  expect(result.ok).toBe(true);
+  expect((await processes('field'))[1].id).toBe(result.definitionId);
+  expect((await processes()).map(row => [row.id, row.sortOrder])).toEqual(factory.map(row => [row.id, row.sortOrder]));
+  expect((await saveSteelWorkDefinitionAction({ kind: 'site', label: 'Wrong scope DEMO', placement: processPlacement(undefined, factory) })).ok).toBe(false);
+  expect(await prisma.steelSiteTask.findUniqueOrThrow({ where: { id: siteTask.id } })).toEqual(siteTask);
 });

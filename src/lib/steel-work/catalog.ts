@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { effectiveTaskProcessLink } from './task-process-link';
+import type { ProcessPlacement } from './process-order';
 import type { Prisma } from '@/generated/prisma/client';
 import { withTenantContext } from '@/lib/db/tenant-context';
 import type { CompanyActor } from '@/lib/site-files/actor';
@@ -46,7 +47,7 @@ export async function readSteelWorkCatalog(companyId: string, siteId?: string): 
   });
 }
 
-export type SaveSteelWorkInput = { id?: string; siteId?: string; kind: SteelWorkKind; label: string; description?: string; linkedProcessKey?: string | null; linkedList?: 'assembly' | 'part' | 'all' | null; linkedKind?: string | null; phaseGroup?: string | null; revision?: number };
+export type SaveSteelWorkInput = { id?: string; siteId?: string; kind: SteelWorkKind; label: string; description?: string; linkedProcessKey?: string | null; linkedList?: 'assembly' | 'part' | 'all' | null; linkedKind?: string | null; phaseGroup?: string | null; revision?: number; placement?: ProcessPlacement };
 export async function saveSteelWorkDefinition(companyId: string, actor: CompanyActor, input: SaveSteelWorkInput) {
   if (!canManageSteelCatalog(actor.can)) fail('DENIED');
   return withTenantContext(companyId, async tx => {
@@ -55,6 +56,15 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
     if (!input.label.trim() && (!input.id || !existing || !builtinKeys.has(existing.key))) fail('INVALID_INPUT');
     if (input.id && (!existing || existing.revision !== input.revision || existing.kind !== input.kind)) fail('CONFLICT');
     if (existing?.archivedAt) fail('ARCHIVED');
+    // Old clients retain append/edit behavior. Duplicate creates remain idempotent.
+    if (input.placement && input.kind === 'site') fail('INVALID_INPUT');
+    const placement = existing && !input.id ? undefined : input.placement;
+    const ordered = placement ? await tx.steelWorkDefinition.findMany({ where: { companyProfileId: companyId, kind: input.kind }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: { id: true, sortOrder: true, archivedAt: true } }) : [];
+    if (placement) {
+      const active = ordered.filter(row => !row.archivedAt);
+      if (JSON.stringify(active.map(row => row.id)) !== JSON.stringify(placement.expectedOrder)
+        || placement.beforeId !== null && !active.some(row => row.id === placement.beforeId && row.id !== existing?.id)) fail('ORDER_CONFLICT');
+    }
     const phaseGroup = input.kind === 'site' ? (input.phaseGroup === undefined ? existing?.phaseGroup ?? null : input.phaseGroup ? steelPhaseGroup(input.phaseGroup) : null) : null;
     const link=effectiveTaskProcessLink({...input,key:existing?.key,phaseGroup,linkedList:input.linkedList==='all'?null:input.linkedList??'assembly'});
     const linkedProcessKey = input.kind === 'site' ? link.linkedProcessKey : null;
@@ -81,9 +91,19 @@ export async function saveSteelWorkDefinition(companyId: string, actor: CompanyA
       definition = await tx.steelWorkDefinition.create({ data: { ...data, companyProfileId: companyId, kind: input.kind, key: `${prefix}${randomBytes(12).toString('hex')}`, sortOrder: (last._max.sortOrder ?? 99) + 1 } });
     }
     if (input.siteId && input.kind === 'site' && !input.id) await selectTask(tx, companyId, input.siteId, definition.id, true);
-    await audit(tx, companyId, actor, existing ? 'steel.catalog_updated' : 'steel.catalog_created', { definitionId: definition.id, revision: definition.revision, ...(input.siteId && input.kind === 'site' && !input.id ? { siteId: input.siteId } : {}) });
+    if (placement) {
+      // Keep archived definitions in their relative slots, and keep all IDs,
+      // revisions of other definitions, visuals and recorded work unchanged.
+      const next = ordered.filter(row => row.id !== definition.id);
+      const index = placement.beforeId === null ? next.length : next.findIndex(row => row.id === placement.beforeId);
+      next.splice(index, 0, { id: definition.id, sortOrder: definition.sortOrder, archivedAt: null });
+      for (const [sortOrder, row] of next.entries()) if (row.sortOrder !== sortOrder)
+        await tx.steelWorkDefinition.update({ where: { id: row.id, companyProfileId: companyId }, data: { sortOrder } });
+    }
+    await audit(tx, companyId, actor, existing ? 'steel.catalog_updated' : 'steel.catalog_created', { definitionId: definition.id, revision: definition.revision, ...(placement ? { beforeId: placement.beforeId } : {}), ...(input.siteId && input.kind === 'site' && !input.id ? { siteId: input.siteId } : {}) });
     const changedArt = !!input.id && !!existing && (existing.label !== definition.label || existing.description !== definition.description || existing.linkedProcessKey !== definition.linkedProcessKey || existing.linkedList !== definition.linkedList || existing.linkedKind !== definition.linkedKind);
-    return { definitionId: definition.id, revision: definition.revision, key: definition.key, artNeeded: definition.visualStatus !== 'photo' && (changedArt || !definition.visualUpdatedAt) };
+    const orderOnlyEdit = Boolean(input.id && placement && !changedArt);
+    return { definitionId: definition.id, revision: definition.revision, key: definition.key, artNeeded: definition.visualStatus !== 'photo' && (changedArt || !definition.visualUpdatedAt && !orderOnlyEdit) };
   });
 }
 

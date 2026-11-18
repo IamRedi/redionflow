@@ -12,6 +12,7 @@ import type { SteelWorkDefinitionView } from '@/lib/steel-work/types';
 import { t } from '@/lib/i18n';
 import { productionShortcutCopy } from './production-shortcut-copy';
 import { productionDeliveryCopy } from './production-delivery';
+import { orderedProcessKeys } from '@/lib/steel-work/process-order';
 
 const button = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold disabled:opacity-50';
 
@@ -39,6 +40,7 @@ function CompletionSession({ element, workers, definitions, lastCrew, onCrew, on
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null), [pending, start] = useTransition();
   const remaining = productionCompletionStages(snapshot).map(stage => ({ stage, pieces: stageRemaining(snapshot, stage) })).filter(row => row.pieces > 0);
+  const displayRemaining = orderedProcessKeys(remaining.map(row => row.stage), definitions).map(stage => remaining.find(row => row.stage === stage)!);
   const factoryCrew = workers.filter(w => w.crewRole === 'FACTORY_WORKER' || w.crewRole === 'FACTORY_ENGINEER');
   const choices = factoryCrew.length ? factoryCrew : workers;
   const previousCrew = lastCrew.filter(id => choices.some(worker => worker.id === id));
@@ -65,7 +67,7 @@ function CompletionSession({ element, workers, definitions, lastCrew, onCrew, on
       {previousCrew.length && previousCrew.join() !== common.join() ? <button type="button" className={`${button} w-full justify-start text-left text-xs`} onClick={() => setCommon(previousCrew)}>{t('elements.sameAsLast', lang)} · {previousCrew.map(id => workers.find(worker => worker.id === id)?.name).join(', ')}</button> : null}
       {choices.length > 8 ? <label className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><input aria-label={t('elements.searchWorker', lang)} placeholder={t('elements.searchWorker', lang)} value={workerQuery} onChange={event => setWorkerQuery(event.target.value.slice(0, 80))} className="min-h-11 w-full rounded-xl border bg-card pl-9 pr-3 text-sm" /></label> : null}
       {picker(common, setCommon, workerQuery)}
-      <ul className="space-y-2">{remaining.map(row => <li key={row.stage} className="rounded-xl border bg-card p-2.5">
+      <ul className="space-y-2">{displayRemaining.map(row => <li key={row.stage} className="rounded-xl border bg-card p-2.5">
         <div className="flex min-w-0 items-center justify-between gap-2"><span className="break-words text-sm font-semibold">{label(row.stage)}</span><span className="shrink-0 text-xs tabular-nums">+{row.pieces} / {snapshot.quantity}</span></div>
         <div className="my-1 text-xs text-muted-foreground">{(overrides[row.stage] ?? common).map(id => workers.find(w => w.id === id)?.name).filter(Boolean).join(', ') || '—'}</div>
         <details onToggle={event => { const open = event.currentTarget.open; setExpanded(all => { const next = new Set(all); if (open) next.add(row.stage); else next.delete(row.stage); return next; }); }}><summary className="flex min-h-11 cursor-pointer items-center text-xs font-semibold">{c.different}</summary>

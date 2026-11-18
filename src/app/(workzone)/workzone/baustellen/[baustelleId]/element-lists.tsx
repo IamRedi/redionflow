@@ -21,6 +21,7 @@ import { CompleteProduction } from '@/components/steel/complete-production';
 import { AccessKeyButton } from '@/components/access/access-key-button';
 import { useLanguage } from "@/components/i18n/language-provider";
 import { capFor, CREW_FOR_SIDE, doneQty, elementStatus, onFieldList, routeClosed, routeStages, sideOfStage, stagePieces, stageProgress, stageRemaining, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
+import { orderedProcessKeys } from '@/lib/steel-work/process-order';
 import { formatAmount, formatShortDate } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 
@@ -458,7 +459,7 @@ function ListView({
   const shown = ofList;
   // Pieces not yet out of the factory (also of elements partly on site).
   const stillInFactory = side === "field" ? ofList.reduce((sum, element) => sum + element.quantity - doneQty(element, "factory"), 0) : 0;
-  const stages = [...new Set(shown.flatMap(element => [...stagesFor(side, element.list, element.processRoutes)]))];
+  const stages = orderedProcessKeys([...new Set(shown.flatMap(element => [...stagesFor(side, element.list, element.processRoutes)]))], definitions);
   const progress = stageProgress(shown, side);
   const pieces = shown.reduce((sum, element) => sum + element.quantity, 0);
   const totalKg = shown.reduce((sum, element) => sum + (element.weightKg ?? 0) * element.quantity, 0);
@@ -683,7 +684,7 @@ function ListView({
               <ul className="space-y-1.5">
                 {group.items.map((element) => (
                   <li key={element.id}>
-                    <ElementRow element={element} stages={stagesFor(side, element.list, element.processRoutes)} definitions={definitions} side={side} locked={side === "field" && !onFieldList(element)} canPlan={canPlan} onOpen={() => onOpen(element.id)} />
+                    <ElementRow element={element} stages={orderedProcessKeys(stagesFor(side, element.list, element.processRoutes), definitions)} definitions={definitions} side={side} locked={side === "field" && !onFieldList(element)} canPlan={canPlan} onOpen={() => onOpen(element.id)} />
                   </li>
                 ))}
               </ul>
@@ -871,7 +872,7 @@ function ElementDetail({
   const groupCopy = materialGroupCopy(lang);
   const composition = readAssemblyParts(element.assemblyParts);
   const partsByMark = new Map(items.filter(item => item.list === "part").map(item => [item.mark, item]));
-  const stages = stagesFor(side, element.list, element.processRoutes);
+  const stages = orderedProcessKeys(stagesFor(side, element.list, element.processRoutes), definitions);
   const legacyRoute = readProcessRoutes(element.processRoutes)?.[side] == null;
   const historicStages = [...new Set(element.work.filter(work => sideOfStage(work.stage) === side && !stages.includes(work.stage)).map(work => work.stage))];
   const status = displayStatus(element, side);
@@ -956,6 +957,7 @@ function ElementDetail({
               key={stage}
               type="button"
               data-testid="element-process-card"
+              data-process-key={stage}
               data-studio-element-process={side === 'factory' || undefined}
               disabled={!canEdit && entries.length === 0}
               onClick={() => onStage(stage)}

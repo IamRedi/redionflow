@@ -1,5 +1,31 @@
 # Shared work catalog and material applicability
 
+## Choose a process position —18 November 2026
+
+The factory/field process editor has a compact Position choice for both new and
+existing definitions: beginning, after a named process, or end. For example,
+drilling can appear second after cutting. It reuses company-scoped sortOrder;
+there is no migration. The same catalog order presents factory summaries,
+material cards/columns, process choices, completion review and dashboard stages.
+Unknown historical keys remain visible; selected badges follow the displayed
+order. Per-site task selection positions remain independent and unchanged.
+
+Save holds the existing company advisory lock and checks the active-order
+snapshot before moving a definition. Stale order/removed neighbour returns an
+order conflict before any definition is created or edited. The UI reloads the
+available order while retaining the name, description, photo and chosen neighbour;
+the operator checks the position and saves again. A removed neighbour requires
+a new choice. Duplicate creates keep their existing idempotency. Legacy clients
+that omit placement retain append/edit behavior and cannot overwrite ordering.
+
+Only catalog metadata moves. IDs/keys, other definition revisions/visuals,
+material routes, quantities, confirmations, history and loading rules stay intact.
+Archived definitions retain their relative slots. Moving an existing process
+without changing its work context does not request a new AI image; explicit
+image generation and new-process artwork keep their existing flows and quotas.
+The feature is prepared separately from released PR239/91f362c; production
+ordering changes require its own exact-version approval.
+
 ## Production list is the completion source — 12 November 2026
 
 Standard production-window tasks (Prerje, Asamblim/Asambim, Saldim,
