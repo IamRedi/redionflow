@@ -71,6 +71,7 @@ test('drilling can move second, new processes choose a slot and concurrent chang
     await expect(page.locator('#fabrika [data-process-key]').first()).toBeVisible();
     expect(await page.locator('#fabrika [data-process-key]').evaluateAll(rows => rows.slice(0, 3).map(row => row.getAttribute('data-process-key')))).toEqual(['cutting', drill.key, 'assembly']);
     await openMaterial(page, seed.sites.aurora.id);
+    await expect(page.getByTestId('element-process-card')).toHaveCount(3);
     expect(await page.getByTestId('element-process-card').evaluateAll(rows => rows.map(row => row.getAttribute('data-process-key')))).toEqual(['cutting', drill.key, 'assembly']);
     await catalog(page);
     await dialog(page).getByRole('button', { name: c.addProcess, exact: true }).click();
