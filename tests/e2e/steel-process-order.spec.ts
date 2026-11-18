@@ -1,10 +1,20 @@
 import { test, expect, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { prisma } from '../../src/lib/db/prisma';
 import { createSessionCookie } from '../../src/lib/auth/session-cookie';
 import { seedSteelWorkCatalog } from '../fixtures/steel-work-catalog';
 import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
 import { workCatalogCopy, elementProcessCopy } from '../../src/components/steel/work-catalog-copy';
-import { t } from '../../src/lib/i18n';
+
+// Match the existing catalogue fixture: Next bundles these JSON dictionaries;
+// the native Node ESM browser-test runner reads its own expected labels.
+const dictionary: unknown = JSON.parse(readFileSync(new URL('../../src/locales/sq.json', import.meta.url), 'utf8'));
+function t(path: string, language: 'sq') {
+  if (language !== 'sq') throw new Error('Unsupported fixture language');
+  const value = path.split('.').reduce<unknown>((current, key) => current && typeof current === 'object' ? (current as Record<string, unknown>)[key] : undefined, dictionary);
+  if (typeof value !== 'string') throw new Error(`Missing fixture label: ${path}`);
+  return value;
+}
 
 const c = workCatalogCopy('sq'), p = elementProcessCopy('sq');
 const dialog = (page: Page) => page.getByRole('dialog').last();
