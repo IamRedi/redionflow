@@ -83,7 +83,7 @@ export function OfficeTaskJournal({data,onData,lang,initialTask}:{data:OfficeSna
     &&`${row.title} ${row.body}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
   const reminderLabel=(status:string)=>status==='SENT'?t.sent:status==='NO_DEVICE'?t.noDevice:status==='FAILED'?t.failed:status==='CANCELLED'?t.cancelled:t.pending;
   const reminder=current?.reminders[0];
-  return <div className={j.journal} data-testid="office-task-journal" aria-busy={busy}>
+  return <div className={j.journal} data-testid="office-task-journal" aria-busy={busy} data-app-update-blocked={Boolean(edit)}>
     <div className={j.feedback} role="status" aria-live="polite" data-error={!!error}>{busy?c.loading:error||feedback}</div>
     {edit?<form className={j.sheet} onSubmit={submit} data-testid="task-composer">
       <div className={j.sheetTop}><button type="button" onClick={close} disabled={busy}><ArrowLeft size={17}/>{t.back}</button><span><LockKeyhole size={13}/>{edit.kind==='COMPANY'?c.shared:t.private}</span></div>

@@ -1,0 +1,183 @@
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { prisma } from '../../src/lib/db/prisma';
+import { createSessionCookie } from '../../src/lib/auth/session-cookie';
+import { assertE2ETestDatabase } from '../../scripts/lib/e2e-target';
+import { ensureSteelWorkCatalog } from '../../src/lib/steel-work/catalog';
+
+async function workspace(page: Page, context: BrowserContext, base: string) {
+  assertE2ETestDatabase(process.env);
+  await context.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort('blockedbyclient'));
+  const company = await prisma.companyProfile.create({ data: { displayName: 'Update DEMO', legalName: 'Synthetic update tests only', mode: 'bau', country: 'AL' } });
+  const admin = await prisma.user.create({ data: { companyProfileId: company.id, email: `update-${company.id}@example.test`, name: 'Update operator DEMO', role: 'ADMIN', isActive: true } });
+  const site = await prisma.baustelle.create({ data: { companyProfileId: company.id, name: 'Update site DEMO', type: 'STEEL_ASSEMBLY' } });
+  const tree = await prisma.treeItem.create({ data: { baustelleId: site.id, treeId: 'steel-task-update-demo', species: 'task', diameter: 0, status: 'done', completedAt: new Date('2026-11-17T09:00Z'), notes: JSON.stringify({ label: 'Update process DEMO', note: 'Original note DEMO', noteBy: 'Original operator DEMO', noteAt: '2026-11-17T10:00:00Z' }) } });
+  await ensureSteelWorkCatalog(company.id);
+  const task = await prisma.steelSiteTask.findUniqueOrThrow({ where: { treeItemId: tree.id } });
+  await context.addCookies([{ name: 'bk_admin_id', value: await createSessionCookie('admin', admin.id, admin.sessionEpoch), url: base }, { name: 'bk_lang', value: 'sq', url: base }]);
+  await page.addInitScript(() => {
+    const events: Array<{ kind: string; tag: string; type: string; trusted: boolean }> = [];
+    const unloads: Array<{ prevented: boolean; value: string }> = [];
+    Object.assign(window, { updateFixtureEvents: events, updateFixtureUnloads: unloads, updateFixtureDocumentId: crypto.randomUUID() });
+    window.addEventListener('beforeunload', e => queueMicrotask(() => unloads.push({ prevented: e.defaultPrevented, value: e.returnValue })));
+    for (const kind of ['input', 'change']) document.addEventListener(kind, e => {
+      const element = e.target as HTMLInputElement;
+      events.push({ kind, tag: element.tagName, type: element.type ?? '', trusted: e.isTrusted });
+    }, true);
+  });
+  const versionResponse = await context.request.get(`${base}/api/app-version`);
+  expect(versionResponse.headers()['cache-control']).toContain('no-store');
+  const current = (await versionResponse.json()).version as string;
+  expect(current).toMatch(/^[\w-]{1,128}$/);
+  let calls = 0, documentRequests = 0, loaded = false, mode: 'new' | 'same' | 'invalid' = 'new';
+  page.on('request', request => { if (loaded && request.isNavigationRequest() && !request.frame().parentFrame()) { documentRequests++; mode = 'same'; } });
+  const replies: Promise<void>[] = [];
+  await page.route('**/api/app-version', route => {
+    calls++;
+    const reply = route.fulfill({ contentType: 'application/json', headers: { 'cache-control': 'no-store' }, body: JSON.stringify({ version: mode === 'invalid' ? null : mode === 'new' ? `${current}-next` : current }) }).then(async () => {
+      const response = await route.request().response(); if (response) await response.finished();
+    });
+    replies.push(reply); return reply;
+  });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1_000));
+  await page.goto(`/workzone/baustellen/${site.id}?view=production#prodhimi`);
+  await expect(page.getByRole('heading', { name: site.name, exact: true })).toBeVisible();
+  loaded = true;
+  const initialDocument = await page.evaluate(() => (window as unknown as { updateFixtureDocumentId: string }).updateFixtureDocumentId);
+  const advance = async (milliseconds: number) => {
+    // A single large virtual-clock jump can fire the real fetch's timeout before
+    // its fulfilled network response reaches the browser. Drain replies between
+    // ticks; keep the application's real probe/timeout/cooldown intervals intact.
+    for (let elapsed = 0; elapsed < milliseconds; elapsed += 1_000) {
+      await page.clock.runFor(Math.min(1_000, milliseconds - elapsed));
+      if (replies.length) await Promise.allSettled(replies.splice(0));
+    }
+  };
+  const checkTwice = async () => {
+    await advance(2_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(1);
+    await advance(11_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(2);
+  };
+  const expectReload = async () => {
+    // React commit/response draining can finish after a virtual tick. Keep time
+    // advancing while asserting the real reload, without increasing the timeout.
+    await expect(async () => {
+      await advance(1_000);
+      expect(documentRequests).toBe(1);
+      expect(await page.evaluate(() => (window as unknown as { updateFixtureDocumentId: string }).updateFixtureDocumentId)).not.toBe(initialDocument);
+    }).toPass({ timeout: 10_000 });
+  };
+  return { company, tree, task, checkTwice, advance, expectReload, current, calls: () => calls, documentRequests: () => documentRequests, navigations: () => documentRequests, mode: (value: typeof mode) => { mode = value; },
+    cleanup: async () => { await prisma.user.deleteMany({ where: { companyProfileId: company.id } }); await prisma.companyProfile.delete({ where: { id: company.id } }); } };
+}
+
+test('an idle authenticated page updates itself once at the same URL and does not loop', async ({ page, context }, info) => {
+  const f = await workspace(page, context, String(info.project.use.baseURL));
+  try {
+    const url = page.url(); await f.checkTwice(); await f.advance(6_000);
+    try { await f.expectReload(); }
+    catch (error) {
+      console.log('UPDATE_FIXTURE_DIAGNOSTIC', await page.evaluate(() => ({
+        visible: document.visibilityState, online: navigator.onLine, now: Date.now(),
+        loopGuard: sessionStorage.getItem('bk-app-update-reload'),
+        events: (window as unknown as { updateFixtureEvents: unknown[] }).updateFixtureEvents,
+        unloads: (window as unknown as { updateFixtureUnloads: unknown[] }).updateFixtureUnloads,
+        blockers: Array.from(document.querySelectorAll('[role=dialog],[role=alertdialog],[aria-busy=true],[data-app-update-blocked=true]')).map(e => ({ tag: e.tagName, role: e.getAttribute('role'), busy: e.getAttribute('aria-busy'), flag: e.getAttribute('data-app-update-blocked'), rendered: e.getClientRects().length > 0 })),
+        fields: Array.from(document.querySelectorAll<HTMLInputElement>('input,textarea,select')).map(e => ({ tag: e.tagName, type: e.type, length: e.value.length, files: e.files?.length ?? 0 })),
+      })), { documentRequests: f.documentRequests() });
+      throw error;
+    }
+    await expect(page).toHaveURL(url);
+    await f.advance(120_000); expect(f.navigations()).toBe(1);
+    const keys = await page.evaluate(() => Object.keys(sessionStorage));
+    expect(keys).toContain('bk-app-update-reload');
+    expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(0);
+  } finally { await f.cleanup(); }
+});
+
+test('a real process draft stays intact through an update, saves exactly once, then updates when closed', async ({ page, context }, info) => {
+  test.setTimeout(150_000);
+  const f = await workspace(page, context, String(info.project.use.baseURL));
+  try {
+    const card = page.locator('[data-studio-phase-card]').filter({ has: page.getByText('Update process DEMO', { exact: true }) });
+    if (!await card.count()) await page.getByTestId('phase-group-assembly').click();
+    await card.click(); const sheet = page.getByRole('dialog', { name: 'Update process DEMO', exact: true });
+    await sheet.getByRole('button', { name: 'Shto shënim', exact: true }).click();
+    const text = sheet.getByRole('textbox', { name: 'Shto shënim', exact: true });
+    await text.fill('Draft DEMO stays here until the operator saves');
+    await f.checkTwice(); await expect(page.getByTestId('app-update-ready')).toContainText('Përditësim gati');
+    for (const theme of ['light', 'dark']) for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 950 : 844 });
+      await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), theme === 'dark');
+      await expect(text).toHaveValue('Draft DEMO stays here until the operator saves');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+      expect(await page.getByTestId('app-update-ready').evaluate(e => getComputedStyle(e).pointerEvents)).toBe('none');
+      expect(await page.getByTestId('app-update-ready').evaluate(e => e.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
+      await page.screenshot({ path: `${process.env.OFFICE_EVIDENCE_DIR}/safe-update-${theme}-${width}.png` });
+    }
+    await f.advance(60_000); expect(f.navigations()).toBe(0);
+    await sheet.getByRole('button', { name: 'Ruaj', exact: true }).click();
+    await expect(sheet.locator('[data-studio-phase-notes]')).toContainText('Draft DEMO stays here until the operator saves');
+    expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
+    await sheet.getByRole('button', { name: 'Mbyll', exact: true }).click();
+    await expect(async () => {
+      // The fake JS clock cannot advance the compositor's native WAAPI clock.
+      // Complete only finite animations after the real Close click; do not hide
+      // or remove any application DOM and keep the closed-state assertion.
+      await page.evaluate(() => { for (const animation of document.getAnimations()) if (Number.isFinite(animation.effect?.getComputedTiming().endTime)) animation.finish(); });
+      await f.advance(250); expect(await sheet.isVisible()).toBe(false);
+    }).toPass({ timeout: 10_000 });
+    await f.advance(7_000); await f.expectReload();
+    expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
+    expect(await prisma.treeItem.findUniqueOrThrow({ where: { id: f.tree.id } })).toMatchObject({ status: 'done', completedAt: new Date('2026-11-17T09:00Z') });
+  } finally { await f.cleanup(); }
+});
+
+test('an in-flight write blocks updating and is never repeated by the updater', async ({ page, context }, info) => {
+  const f = await workspace(page, context, String(info.project.use.baseURL));
+  let release: () => void = () => {}, writes = 0;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/fixture-update-write', async route => { writes++; await held; await route.fulfill({ contentType: 'application/json', body: '{"ok":true}' }); });
+  try {
+    await page.evaluate(() => { void fetch('/api/fixture-update-write', { method: 'POST', body: 'synthetic operation' }).then(() => document.body.setAttribute('data-fixture-finished', 'true')); });
+    await expect.poll(() => writes).toBe(1); await f.checkTwice();
+    await f.advance(30_000); expect(f.navigations()).toBe(0);
+    release(); await expect(page.locator('body')).toHaveAttribute('data-fixture-finished', 'true');
+    await f.advance(7_000); await f.expectReload(); expect(writes).toBe(1);
+  } finally { release(); await f.cleanup(); }
+});
+
+test('invalid probes, offline state, file/password work and a real stale-action response cannot discard a draft', async ({ page, context }, info) => {
+  test.setTimeout(120_000);
+  const f = await workspace(page, context, String(info.project.use.baseURL));
+  try {
+    f.mode('invalid'); await f.advance(2_000); await expect.poll(f.calls).toBeGreaterThanOrEqual(1);
+    await f.advance(65_000); expect(f.navigations()).toBe(0);
+    await page.evaluate(() => {
+      const holder = document.createElement('section'); holder.id = 'fixture-update-draft';
+      holder.innerHTML = '<label>Draft DEMO<input aria-label="Draft DEMO"></label><label>Upload DEMO<input type="file" aria-label="Upload DEMO"></label><input type="password" aria-label="Secret DEMO">';
+      document.body.append(holder);
+      // A programmatic/autofill edit can precede MutationObserver's first scan.
+      const auto = document.createElement('input'); auto.setAttribute('aria-label', 'Autofill DEMO'); holder.append(auto);
+      auto.value = 'Unfocused synthetic draft'; auto.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.getByLabel('Draft DEMO', { exact: true }).fill('Keep this unsaved synthetic text');
+    await page.getByLabel('Upload DEMO', { exact: true }).setInputFiles({ name: 'synthetic.txt', mimeType: 'text/plain', buffer: Buffer.from('synthetic file') });
+    await page.getByLabel('Secret DEMO', { exact: true }).fill('synthetic-only');
+    const result = await page.evaluate(async () => {
+      const r = await fetch(window.location.pathname, { method: 'POST', headers: { 'Next-Action': '00'.repeat(21), Accept: 'text/x-component' }, body: '[]' });
+      return { status: r.status, notFound: r.headers.get('x-nextjs-action-not-found') };
+    });
+    expect(result).toEqual({ status: 409, notFound: '1' });
+    await expect(page.getByTestId('app-update-ready')).toContainText('Përditësim gati');
+    await context.setOffline(true); await f.advance(70_000); expect(f.navigations()).toBe(0);
+    await expect(page.getByLabel('Draft DEMO', { exact: true })).toHaveValue('Keep this unsaved synthetic text');
+    const storage = await page.evaluate(() => JSON.stringify({ session: { ...sessionStorage }, local: { ...localStorage } }));
+    expect(storage).not.toContain('Keep this unsaved'); expect(storage).not.toContain('synthetic-only'); expect(storage).not.toContain('synthetic.txt');
+    f.mode('same'); await context.setOffline(false);
+    await page.evaluate(() => document.getElementById('fixture-update-draft')?.querySelectorAll('input:not([aria-label="Autofill DEMO"])').forEach(e => e.remove()));
+    await f.advance(7_000); expect(f.navigations()).toBe(0);
+    await expect(page.getByLabel('Autofill DEMO', { exact: true })).toHaveValue('Unfocused synthetic draft');
+    await page.evaluate(() => document.getElementById('fixture-update-draft')?.remove());
+    await f.advance(7_000); await f.expectReload();
+  } finally { await context.setOffline(false); await f.cleanup(); }
+});

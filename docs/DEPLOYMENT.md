@@ -1,5 +1,63 @@
 # Deployment Strategy
 
+## Safe updates for an already open app — 18 November 2026
+
+`StaleDeploymentReload` now probes the public, uncached `/api/app-version`
+identifier while a signed-in tab is visible. It accepts the same other build
+twice, checks on resume/online, then refreshes the same URL only after an idle
+safe point. Offline/invalid replies do not count as releases. Dev stays disabled.
+This is not a service-worker navigation cache: push registrations, subscriptions,
+private resources and notification behavior are unchanged.
+
+Open dialogs, changed native controls/contenteditable, selected files/passwords,
+pending same-origin writes (including streamed responses), active media and
+explicit React-only work block automatic reload. The daily plan, office task
+editor and mail composer/reader expose those state-only holds too. The operator
+can finish/save/close the current work normally, then the app updates itself.
+The localized waiting state is announced accessibly without a foreground banner:
+visual review rejected an overlay that obscured Save on narrow phones. Existing
+premium controls, material, artwork and available screen space stay unchanged.
+No drafts, request bodies, passwords or files are persisted in browser storage.
+Only the public target build/time loop guard is retained per tab. If storage is
+blocked, automatic refresh fails closed. Mutations are never replayed. A failed
+save remains a failed save; completion is never inferred from a refresh.
+
+For Railway's Docker build, declare the private
+`NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` through the existing `ARG` and provider secret
+mechanism. For the existing AL-Steel installation, preserve the exact private key
+of the currently running server manifest when placing it in provider secrets;
+do NOT rotate it for this rollout. Read-only metadata verified a valid32-byte key
+and189active action references in PR238, without returning its value. Before the
+approved release, revalidate the exact live revision and key metadata, then move
+the existing key privately to the provider with deploys suppressed until the
+approved source is ready. Generate a new32-byte base64 key only for a fresh
+installation with no existing clients. Retain across builds AND runtime. Never make it
+`NEXT_PUBLIC`, print it, commit it, share it with another installation or rotate
+it on every publication. This keeps unchanged action references stable while an
+open editor finishes its work. It does not promise compatibility for renamed,
+removed or incompatible changed functions. Keep action schemas/auth/tenant
+checks and old-client payload compatibility; never retry a write blindly.
+
+Next's `deploymentId` alone can force a hard navigation with unsaved work and
+does not route old requests to an old Railway container. This change therefore
+uses a guarded release probe rather than introducing that unguarded behavior.
+Existing error handling delegates to the same guard when mounted; the minimal
+root-error fallback remains bounded. A build published before this mechanism
+cannot receive new JavaScript until it next loads the app; preserving the existing
+key lets unchanged old commands finish, and ordinary navigation can load the new
+client without closing the app. Bootstrap and physical iPhone acceptance remain
+separate from local mocked-transition/render tests.
+No migration, permission, production calculation, provider/model or dependency
+change. Keep exact-version approval, fresh backup/restore and release freshness
+gates. Forward recovery must retain saved process notes and active work.
+
+Official contracts checked against installed Next16.4.3 docs/source and
+[Next Server Action guidance](https://nextjs.org/docs/messages/failed-to-find-server-action),
+[Railway Dockerfile build variables](https://docs.railway.com/builds/dockerfiles#using-variables-at-build-time).
+Local verification/rollout evidence: `outputs/steel-safe-app-updates-20261118/VERIFICATION.md`.
+Native presentation/website/portfolio NO_CONTENT_CHANGE for this internal update
+safety correction; the owner has deferred routine marketing.
+
 ## Principle
 
 One codebase supports two product tracks and one optional presentation/demo
@@ -157,10 +215,8 @@ Long-running or destructive migrations should be applied manually via
 
 ## Open pages after a deployment
 
-A page opened before a deployment still calls the old server action ids.
-Next.js answers "Server Action ... was not found" and the click did nothing.
-Since 07.11.2026 `StaleDeploymentReload` (root layout) and the error
-boundaries reload the page once (at most once per 30 seconds, so a real
-fault cannot loop): `src/lib/deploy/stale-deployment.ts`. The click that
-hit the old version is not repeated; the user taps again on the fresh page.
-Still deploy production outside working hours when possible.
+See [Safe updates for an already open app](#safe-updates-for-an-already-open-app--18-november-2026)
+for the current guarded coordinator and first-rollout key-preservation contract.
+The previous immediate reload is retained only as the bounded root-error fallback
+when the coordinator is not mounted. A rejected command is never replayed.
+Prefer a quiet release window and verify the exact approved version after deploy.
