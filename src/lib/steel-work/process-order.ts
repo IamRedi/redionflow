@@ -8,8 +8,9 @@ export function processPlacement(id: string | undefined, definitions: readonly D
   return { beforeId: index < 0 ? null : active[index + 1]?.id ?? null, expectedOrder: active.map(row => row.id) };
 }
 
-/** Presentation only: never rewrite required routes, work or completion order. */
+/** Server-ordered catalogue, including kind groups and its ID tie-breaker.
+ * Presentation only: never rewrite required routes, work or completion order. */
 export function orderedProcessKeys(keys: readonly string[], definitions: readonly { key: string; sortOrder?: number }[]) {
-  const rank = new Map(definitions.map((row, index) => [row.key, row.sortOrder ?? index]));
+  const rank = new Map(definitions.map((row, index) => [row.key, index]));
   return [...keys].sort((a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER));
 }
