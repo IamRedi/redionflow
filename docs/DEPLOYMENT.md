@@ -14,8 +14,9 @@ pending same-origin writes (including streamed responses), active media and
 explicit React-only work block automatic reload. The daily plan, office task
 editor and mail composer/reader expose those state-only holds too. The operator
 can finish/save/close the current work normally, then the app updates itself.
-The small localized waiting notice uses the accepted crystal tokens/Lucide
-family, has no obstructing pointer target and changes no business controls.
+The localized waiting state is announced accessibly without a foreground banner:
+visual review rejected an overlay that obscured Save on narrow phones. Existing
+premium controls, material, artwork and available screen space stay unchanged.
 No drafts, request bodies, passwords or files are persisted in browser storage.
 Only the public target build/time loop guard is retained per tab. If storage is
 blocked, automatic refresh fails closed. Mutations are never replayed. A failed

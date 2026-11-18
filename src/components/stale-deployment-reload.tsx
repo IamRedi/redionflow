@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/components/i18n/language-provider';
 import { handleStaleDeploymentSafely, reloadOnStaleDeployment } from '@/lib/deploy/stale-deployment';
 import { trackUpdateActivity } from '@/lib/deploy/update-activity';
@@ -121,7 +120,6 @@ export function StaleDeploymentReload({ version, enabled }: { version: string | 
     };
   }, [enabled, mountedVersion]);
   if (!enabled || !mountedVersion || !waiting) return null;
-  return <div role="status" data-testid="app-update-ready" className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[1900] flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-border/60 bg-background/80 px-3 py-2 text-xs font-medium text-foreground shadow-sm backdrop-blur-xl print:hidden">
-    <RefreshCw aria-hidden className="size-3.5 shrink-0" /><span>{copy[currentLang] ?? copy.en}</span>
-  </div>;
+  // Background maintenance must never cover a Save/Stop/Back control or a draft.
+  return <span role="status" data-testid="app-update-ready" className="sr-only pointer-events-none">{copy[currentLang] ?? copy.en}</span>;
 }

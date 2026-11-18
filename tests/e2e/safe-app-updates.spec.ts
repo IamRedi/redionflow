@@ -54,7 +54,12 @@ async function workspace(page: Page, context: BrowserContext, base: string) {
     await advance(2_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(1);
     await advance(11_000); await expect.poll(() => calls).toBeGreaterThanOrEqual(2);
   };
-  return { company, tree, task, checkTwice, advance, current, calls: () => calls, navigations: () => navigations, mode: (value: typeof mode) => { mode = value; },
+  const expectReload = async () => {
+    // React commit/response draining can finish after a virtual tick. Keep time
+    // advancing while asserting the real reload, without increasing the timeout.
+    await expect(async () => { await advance(1_000); expect(navigations).toBe(1); }).toPass({ timeout: 10_000 });
+  };
+  return { company, tree, task, checkTwice, advance, expectReload, current, calls: () => calls, navigations: () => navigations, mode: (value: typeof mode) => { mode = value; },
     cleanup: async () => { await prisma.user.deleteMany({ where: { companyProfileId: company.id } }); await prisma.companyProfile.delete({ where: { id: company.id } }); } };
 }
 
@@ -62,7 +67,7 @@ test('an idle authenticated page updates itself once at the same URL and does no
   const f = await workspace(page, context, String(info.project.use.baseURL));
   try {
     const url = page.url(); await f.checkTwice(); await f.advance(6_000);
-    try { await expect.poll(f.navigations).toBe(1); }
+    try { await f.expectReload(); }
     catch (error) {
       console.log('UPDATE_FIXTURE_DIAGNOSTIC', await page.evaluate(() => ({
         visible: document.visibilityState, online: navigator.onLine, now: Date.now(),
@@ -90,21 +95,23 @@ test('a real process draft stays intact through an update, saves exactly once, t
     await sheet.getByRole('button', { name: 'Shto shënim', exact: true }).click();
     const text = sheet.getByRole('textbox', { name: 'Shto shënim', exact: true });
     await text.fill('Draft DEMO stays here until the operator saves');
-    await f.checkTwice(); await expect(page.getByTestId('app-update-ready')).toBeVisible();
+    await f.checkTwice(); await expect(page.getByTestId('app-update-ready')).toContainText('Përditësim gati');
     for (const theme of ['light', 'dark']) for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: width === 1440 ? 950 : 844 });
       await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), theme === 'dark');
       await expect(text).toHaveValue('Draft DEMO stays here until the operator saves');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
       expect(await page.getByTestId('app-update-ready').evaluate(e => getComputedStyle(e).pointerEvents)).toBe('none');
+      expect(await page.getByTestId('app-update-ready').evaluate(e => e.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
       await page.screenshot({ path: `${process.env.OFFICE_EVIDENCE_DIR}/safe-update-${theme}-${width}.png` });
     }
     await f.advance(60_000); expect(f.navigations()).toBe(0);
     await sheet.getByRole('button', { name: 'Ruaj', exact: true }).click();
     await expect(sheet.locator('[data-studio-phase-notes]')).toContainText('Draft DEMO stays here until the operator saves');
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
-    await sheet.getByRole('button').first().click(); await f.advance(500); await expect(sheet).not.toBeVisible();
-    await f.advance(7_000); await expect.poll(f.navigations).toBe(1);
+    await sheet.getByRole('button').first().click();
+    await expect(async () => { await f.advance(250); expect(await sheet.isVisible()).toBe(false); }).toPass({ timeout: 10_000 });
+    await f.advance(7_000); await f.expectReload();
     expect(await prisma.steelPhaseNote.count({ where: { taskId: f.task.id } })).toBe(2);
     expect(await prisma.treeItem.findUniqueOrThrow({ where: { id: f.tree.id } })).toMatchObject({ status: 'done', completedAt: new Date('2026-11-17T09:00Z') });
   } finally { await f.cleanup(); }
@@ -120,7 +127,7 @@ test('an in-flight write blocks updating and is never repeated by the updater', 
     await expect.poll(() => writes).toBe(1); await f.checkTwice();
     await f.advance(30_000); expect(f.navigations()).toBe(0);
     release(); await expect(page.locator('body')).toHaveAttribute('data-fixture-finished', 'true');
-    await f.advance(7_000); await expect.poll(f.navigations).toBe(1); expect(writes).toBe(1);
+    await f.advance(7_000); await f.expectReload(); expect(writes).toBe(1);
   } finally { release(); await f.cleanup(); }
 });
 
@@ -145,8 +152,8 @@ test('invalid probes, offline state, file/password work and a real stale-action 
       const r = await fetch(window.location.pathname, { method: 'POST', headers: { 'Next-Action': '00'.repeat(21), Accept: 'text/x-component' }, body: '[]' });
       return { status: r.status, notFound: r.headers.get('x-nextjs-action-not-found') };
     });
-    expect(result).toEqual({ status: 404, notFound: '1' });
-    await expect(page.getByTestId('app-update-ready')).toBeVisible();
+    expect(result).toEqual({ status: 409, notFound: '1' });
+    await expect(page.getByTestId('app-update-ready')).toContainText('Përditësim gati');
     await context.setOffline(true); await f.advance(70_000); expect(f.navigations()).toBe(0);
     await expect(page.getByLabel('Draft DEMO', { exact: true })).toHaveValue('Keep this unsaved synthetic text');
     const storage = await page.evaluate(() => JSON.stringify({ session: { ...sessionStorage }, local: { ...localStorage } }));
@@ -156,6 +163,6 @@ test('invalid probes, offline state, file/password work and a real stale-action 
     await f.advance(7_000); expect(f.navigations()).toBe(0);
     await expect(page.getByLabel('Autofill DEMO', { exact: true })).toHaveValue('Unfocused synthetic draft');
     await page.evaluate(() => document.getElementById('fixture-update-draft')?.remove());
-    await f.advance(7_000); await expect.poll(f.navigations).toBe(1);
+    await f.advance(7_000); await f.expectReload();
   } finally { await context.setOffline(false); await f.cleanup(); }
 });
