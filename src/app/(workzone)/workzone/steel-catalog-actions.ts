@@ -8,10 +8,10 @@ import { isSteelCompany } from '@/lib/dashboard/steel-access';
 import { getActionTranslator } from '@/lib/i18n/action-messages';
 import { notifyRealtimeUpdate } from '@/lib/realtime/event-hub';
 import { canManageSteelCatalog, type SteelWorkDefinitionView } from '@/lib/steel-work/types';
-import { readSteelWorkCatalog, saveSteelWorkDefinition, setSteelTaskSelection, archiveSteelWorkDefinition } from '@/lib/steel-work/catalog';
+import { readSteelWorkCatalog, saveSteelWorkDefinition, setSteelTaskSelection, archiveSteelWorkDefinition, SteelCatalogError } from '@/lib/steel-work/catalog';
 
 const id = z.string().min(1).max(64), revision = z.number().int().min(1);
-const save = z.object({ id: id.optional(), siteId: id.optional(), kind: z.enum(['site', 'factory', 'field']), label: z.string().trim().max(80), description: z.string().trim().max(500).optional(), linkedProcessKey: z.string().max(32).nullable().optional(), linkedList: z.enum(['assembly', 'part', 'all']).nullable().optional(), linkedKind: z.string().trim().max(80).nullable().optional(), phaseGroup: z.enum(['concrete', 'production', 'assembly']).nullable().optional(), revision: revision.optional() }).strict();
+const save = z.object({ id: id.optional(), siteId: id.optional(), kind: z.enum(['site', 'factory', 'field']), label: z.string().trim().max(80), description: z.string().trim().max(500).optional(), linkedProcessKey: z.string().max(32).nullable().optional(), linkedList: z.enum(['assembly', 'part', 'all']).nullable().optional(), linkedKind: z.string().trim().max(80).nullable().optional(), phaseGroup: z.enum(['concrete', 'production', 'assembly']).nullable().optional(), revision: revision.optional(), placement: z.object({ beforeId: id.nullable(), expectedOrder: z.array(id).max(1000) }).strict().optional() }).strict();
 async function actor(manage: boolean) {
   const companyId = await getCurrentCompanyId();
   const person = companyId ? await currentCompanyActor(companyId) : null;
@@ -32,7 +32,7 @@ export async function getSteelWorkCatalogAction(input: { siteId?: string } = {})
   try { return { ok: true, message: 'OK', definitions: await readSteelWorkCatalog(auth.companyId, parsed.data.siteId) }; }
   catch { return { ok: false, message: tr('invalidInput') }; }
 }
-export async function saveSteelWorkDefinitionAction(input: unknown): Promise<{ ok: boolean; message: string; definitionId?: string; revision?: number; key?: string; artNeeded?: boolean }> {
+export async function saveSteelWorkDefinitionAction(input: unknown): Promise<{ ok: boolean; message: string; code?: 'ORDER_CONFLICT'; definitionId?: string; revision?: number; key?: string; artNeeded?: boolean }> {
   const tr = await getActionTranslator(), parsed = save.safeParse(input);
   if (!parsed.success) return { ok: false, message: tr('invalidInput') };
   const auth = await actor(true);
@@ -40,7 +40,7 @@ export async function saveSteelWorkDefinitionAction(input: unknown): Promise<{ o
   try {
     const result = await saveSteelWorkDefinition(auth.companyId, auth.person, parsed.data);
     refresh(parsed.data.siteId); return { ok: true, message: 'OK', ...result };
-  } catch { return { ok: false, message: tr('invalidInput') }; }
+  } catch (error) { return { ok: false, message: tr('invalidInput'), ...(error instanceof SteelCatalogError && error.message === 'ORDER_CONFLICT' ? { code: 'ORDER_CONFLICT' as const } : {}) }; }
 }
 export async function setSteelTaskSelectionAction(input: unknown): Promise<{ ok: boolean; message: string }> {
   const tr = await getActionTranslator(), parsed = z.object({ siteId: id, definitionId: id, enabled: z.boolean(), revision: revision.optional() }).strict().safeParse(input);

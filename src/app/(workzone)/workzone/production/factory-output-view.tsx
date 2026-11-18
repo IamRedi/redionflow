@@ -9,6 +9,7 @@ import { ProductionDelivery } from '@/components/steel/production-delivery';
 import { factoryProcessPercent, totalOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 import { FACTORY_STEP_KEYS, formatAmount } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
+import { orderedProcessKeys } from '@/lib/steel-work/process-order';
 
 import { artKey } from "./production-ui";
 
@@ -18,7 +19,7 @@ const fill = (template: string, values: Record<string, string | number>) =>
   Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
 export type FactoryProcessDefinition = { key: string; label: string };
 const processKeys = (output: Pick<SiteFactoryOutput, "stages">, definitions: FactoryProcessDefinition[]) =>
-  [...new Set([...definitions.map(definition => definition.key), ...Object.keys(output.stages)])].filter(key => output.stages[key]?.eligibleMarks > 0);
+  orderedProcessKeys([...new Set([...definitions.map(definition => definition.key), ...Object.keys(output.stages)])].filter(key => output.stages[key]?.eligibleMarks > 0), definitions);
 function processLabel(key: string, definitions: FactoryProcessDefinition[], lang: string) {
   return definitions.find(definition => definition.key === key)?.label.trim()
     || ((FACTORY_STEP_KEYS as readonly string[]).includes(key) ? t(`factory.steps.${key}`, lang) : t("steel.task", lang));
@@ -82,7 +83,7 @@ function StageTiles({ output, art = false, processDefinitions = [] }: { output: 
       {processKeys(output, processDefinitions).map((key) => {
         const stage = output.stages[key];
         return (
-          <div data-studio-process-card key={key} className="min-w-0 overflow-hidden rounded-xl border bg-background">
+          <div data-studio-process-card data-process-key={key} key={key} className="min-w-0 overflow-hidden rounded-xl border bg-background">
             {art ? (
               <div data-studio-process-media className="relative h-16 bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
                 {(FACTORY_STEP_KEYS as readonly string[]).includes(key)

@@ -10,6 +10,7 @@ import { SteelWorkCatalog, SteelWorkVisual } from "@/components/steel/work-catal
 import { elementProcessCopy, workCatalogCopy } from "@/components/steel/work-catalog-copy";
 import { steelWorkLabel } from "@/components/steel/work-catalog-label";
 import { readProcessRoutes, stagesFor, type ElementList, type ElementSide } from "@/lib/elements/stages";
+import { orderedProcessKeys } from '@/lib/steel-work/process-order';
 import { t } from "@/lib/i18n";
 import type { SteelWorkDefinitionView } from "@/lib/steel-work/types";
 import { setElementProcessesAction } from "@/app/(workzone)/workzone/element-actions";
@@ -50,6 +51,7 @@ function ElementProcessSession({ open, onOpenChange, siteId, side, elements, def
   const count = snapshot.materials.length;
   const scopeError = count === 0 ? p.noElements : count > 1000 ? p.tooMany : side === "field" && snapshot.materials.some((element) => element.list !== "assembly") ? p.fieldParts : null;
   const currentKeys = new Set(snapshot.effective.flat());
+  const selectedOrder = orderedProcessKeys(selected, definitions);
   const catalog = definitions.filter((definition) => definition.kind === side);
   const choices: Array<{ key: string; definition?: SteelWorkDefinitionView }> = catalog
     .filter((definition) => !definition.archivedAt || currentKeys.has(definition.key))
@@ -103,7 +105,7 @@ function ElementProcessSession({ open, onOpenChange, siteId, side, elements, def
                 return <li key={key}><label className={`flex min-h-16 items-center gap-3 p-2 sm:p-3 ${unavailable ? "opacity-60" : "cursor-pointer"}`}>
                   <span className="grid min-h-[44px] min-w-[44px] shrink-0 place-items-center"><input type="checkbox" className="size-5 accent-orange-600" checked={selected.includes(key)} disabled={pending || Boolean(scopeError) || unavailable} onChange={(event) => { setSelected((prior) => event.target.checked ? [...prior, key] : prior.filter((stage) => stage !== key)); setError(null); }} /></span>
                   <span className="block h-[48px] w-[64px] shrink-0 overflow-hidden rounded-lg bg-muted"><SteelWorkVisual definition={definition} fallback={key} /></span>
-                  <span className="min-w-0 flex-1"><span className="flex items-center gap-2 break-words text-sm font-semibold">{selected.includes(key) ? <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange-600 text-xs font-bold tabular-nums text-white">{selected.indexOf(key) + 1}</span> : null}<span className="min-w-0">{label(key, definition)}</span></span>{definition?.description ? <span className="block text-xs text-muted-foreground">{definition.description}</span> : null}{definition?.archivedAt ? <span className="block text-xs text-muted-foreground">{unavailable ? p.retained : p.archived}</span> : null}</span>
+                  <span className="min-w-0 flex-1"><span className="flex items-center gap-2 break-words text-sm font-semibold">{selected.includes(key) ? <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange-600 text-xs font-bold tabular-nums text-white">{selectedOrder.indexOf(key) + 1}</span> : null}<span className="min-w-0">{label(key, definition)}</span></span>{definition?.description ? <span className="block text-xs text-muted-foreground">{definition.description}</span> : null}{definition?.archivedAt ? <span className="block text-xs text-muted-foreground">{unavailable ? p.retained : p.archived}</span> : null}</span>
                 </label></li>;
               })}
               {!choices.length ? <li className="p-5 text-center text-sm text-muted-foreground">{c.empty}</li> : null}

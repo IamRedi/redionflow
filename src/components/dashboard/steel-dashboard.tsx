@@ -10,6 +10,7 @@ import { t } from '@/lib/i18n';
 import { reportLocale } from '@/lib/workzone/date-utils';
 import { productionDate, productionNumber } from '@/lib/dashboard/steel-format';
 import { sideOfStage } from '@/lib/elements/stages';
+import { orderedProcessKeys } from '@/lib/steel-work/process-order';
 import styles from './steel-dashboard.module.css';
 import '@/components/steel/steel-studio.css';
 
@@ -61,7 +62,7 @@ export function SteelDashboard({ data: d, lang }: {
     const offset = (new Date(`${d.month}-01T12:00Z`).getUTCDay() + 6) % 7;
     const readyPct = d.totalProgress.totalPieces ? Math.round(100 * d.totalProgress.readyPieces / d.totalProgress.totalPieces) : 0;
     const stageName = (stage: string) => d.processDefinitions?.find(definition => definition.key === stage)?.label || t(`${sideOfStage(stage) === 'field' ? 'elements.fieldStages' : 'factory.steps'}.${stage}`, lang);
-    const stageKeys = (progress: typeof d.totalProgress, side: 'factory' | 'field') => Object.keys(progress.stages).filter(key => sideOfStage(key) === side && progress.stages[key].eligiblePieces > 0);
+    const stageKeys = (progress: typeof d.totalProgress, side: 'factory' | 'field') => orderedProcessKeys(Object.keys(progress.stages).filter(key => sideOfStage(key) === side && progress.stages[key].eligiblePieces > 0), d.processDefinitions ?? []);
     const badge = (m: Metric) => d.piecesOnly ? null : <span className={styles.micro}>{n(m.pieces, 0)} {c.pieces}{m.missingPieces > 0 ? ` · ${n(m.missingPieces, 0)} ${c.missing}` : ''}</span>;
     const trendDays = d.days.filter(day => day.key <= d.today), max = Math.max(1, ...trendDays.flatMap(day => visible.map(s => day.metrics[s].kg)));
     const x = (i: number) => 50 + i / Math.max(1, trendDays.length - 1) * 650;
