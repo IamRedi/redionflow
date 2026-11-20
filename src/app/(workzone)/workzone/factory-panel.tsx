@@ -8,7 +8,7 @@ import { LiveWorkerNames } from "./live-worker-names";
 import { t } from "@/lib/i18n";
 
 import { NewProjectButton } from "./new-project";
-import { AllSitesFactoryView } from "./production/factory-output-view";
+import { AllSitesFactoryView, type FactoryProcessDefinition } from "./production/factory-output-view";
 import { AssetPhoto } from "@/components/asset-photo";
 import { AccessKeyButton } from "@/components/access/access-key-button";
 
@@ -40,7 +40,7 @@ export function FactoryPanel({
   workingNames?:string[];
   siteOutput: SiteFactoryOutput[];
   canManage: boolean;
-  processDefinitions?: Array<{ key: string; label: string }>;
+  processDefinitions?: FactoryProcessDefinition[];
   /** Production progress only for admins and whoever checks factory elements. */
   showProgress?: boolean;
 }) {

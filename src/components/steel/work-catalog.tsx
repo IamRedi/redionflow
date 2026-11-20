@@ -1,12 +1,11 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import * as Dialog from "@radix-ui/react-dialog";
 import { Archive, ArrowLeft, Camera, Check, ImagePlus, Loader2, PenLine, Plus, RotateCcw, Search, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, useTransition, type RefObject } from "react";
 
 import { useLanguage } from "@/components/i18n/language-provider";
-import { SteelWorkPhoto } from "@/components/steel/work-photo";
+import { SteelWorkVisual } from "@/components/steel/work-visual";
 import { workCatalogCopy } from "@/components/steel/work-catalog-copy";
 import { steelWorkLabel } from "@/components/steel/work-catalog-label";
 import { FIELD_STAGES, sideOfStage } from "@/lib/elements/stages";
@@ -40,21 +39,7 @@ const control = "h-11 rounded-xl border bg-card px-3 text-sm font-semibold outli
 const iconControl = "grid size-[44px] shrink-0 place-items-center rounded-xl outline-none transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-orange-500 disabled:opacity-50";
 const input = "min-h-11 w-full min-w-0 rounded-xl border-2 bg-background px-3 text-base outline-none focus:border-orange-500 disabled:opacity-50";
 
-export function steelWorkVisualUrl(definition: Pick<SteelWorkDefinitionView, "id" | "visualUpdatedAt">) {
-  return definition.visualUpdatedAt ? `/api/steel-work-visuals/${definition.id}?v=${new Date(definition.visualUpdatedAt).getTime()}` : null;
-}
-
-/** Uploaded photos win; defaults and generated work use the photographic identity. */
-export function SteelWorkVisual({ definition, fallback, src, className = "h-full w-full", imageClassName }: {
-  definition?: SteelWorkDefinitionView | null; fallback?: string; src?: string | null; animate?: boolean; className?: string; imageClassName?: string;
-}) {
-  const url = src ?? (definition ? steelWorkVisualUrl(definition) : null);
-  const { currentLang } = useLanguage();
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  return <div className={`relative isolate overflow-hidden ${className}`} data-steel-work-visual>
-    {url && failedUrl !== url ? <img src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName ?? "h-full w-full object-cover"} /> : <SteelWorkPhoto definition={definition} fallback={fallback} />}
-  </div>;
-}
+export { SteelWorkVisual, steelWorkVisualUrl } from "@/components/steel/work-visual";
 
 function processLabel(key: string, lang: string) {
   return t((FIELD_STAGES as readonly string[]).includes(key) ? `elements.fieldStages.${key}` : `factory.steps.${key}`, lang);
