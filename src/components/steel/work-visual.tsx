@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useLanguage } from "@/components/i18n/language-provider";
 import { SteelWorkPhoto } from "@/components/steel/work-photo";
 import { steelWorkLabel } from "@/components/steel/work-catalog-label";
@@ -21,7 +21,11 @@ export function SteelWorkVisual({ definition, fallback, src, className = "h-full
   const url = src ?? (definition ? steelWorkVisualUrl(definition) : null);
   const { currentLang } = useLanguage();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // A fast failed SSR image may finish before React attaches onError.
+  const checkImage = useCallback((image: HTMLImageElement | null) => {
+    if (image?.complete && image.naturalWidth === 0) setFailedUrl(url);
+  }, [url]);
   return <div className={`relative isolate overflow-hidden ${className}`} data-steel-work-visual>
-    {url && failedUrl !== url ? <img src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName ?? "h-full w-full object-cover"} /> : <SteelWorkPhoto definition={definition} fallback={fallback} />}
+    {url && failedUrl !== url ? <img ref={checkImage} src={url} alt={definition ? steelWorkLabel(definition, currentLang) : ""} onError={() => setFailedUrl(url)} className={imageClassName ?? "h-full w-full object-cover"} /> : <SteelWorkPhoto definition={definition} fallback={fallback} />}
   </div>;
 }
