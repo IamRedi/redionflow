@@ -1,5 +1,32 @@
 # Steel production dashboard — review candidate, 4 November 2026
 
+## Delegated field clock choices — 20 November 2026 candidate
+
+The engineer's selected-worker action opens a compact crystal confirmation card
+for both Start and Stop: Now, Set time, or Company hours. A group choice can be
+overridden per person for late arrivals and early departures. Opening/cancelling
+the card never records attendance. The remembered per-worker preference is off
+by default and applies only when an authorized engineer confirms the action; no
+unattended attendance scheduler is introduced.
+
+Company hours come from the existing Albanian steel role schedule (field
+07:00–17:00, Monday–Saturday), also used by the worker profile. They are not a
+new company-wide schedule setting. Unknown schedules, nonworking days, future
+fixed finishes and old/overnight live sessions require an explicit valid time.
+Original session actions retain overlap, pause, quick-undo, plan/site, active
+worker and delegated-access checks. Old clients can still submit their existing
+batch date/time shape. Neither sessions nor breaks are backfilled or rewritten.
+
+The additive Worker.fieldTimeScheduled boolean stores only this preference.
+After a successful clock action, changing it rechecks tenant/target/delegation,
+locks the worker and compares its prior boolean before writing an actor audit.
+A preference-save failure is reported separately from a successful clock action
+so it cannot invite a duplicate clock retry. Permissions, role schedules,
+provisioning, photos, services and production quantities remain unchanged.
+Merge/deploy and this additive migration require exact owner approval. Native
+presentation/portfolio: NO_CONTENT_CHANGE for a time-choice refinement inside
+the existing attendance capability; no new module, public entry or readiness claim.
+
 ## Clothing group issue — 12 November 2026 candidate
 
 Managers can open a clothing type/size group, choose one active employee and a

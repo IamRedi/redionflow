@@ -26,10 +26,10 @@ export function FieldTimeConfirm({ people, command, sq, busy, onCancel, onConfir
   return <section className={t.clockCard} aria-label={command === 'start' ? (sq ? 'Ora e fillimit' : 'Start time') : (sq ? 'Ora e mbarimit' : 'Finish time')} data-testid="field-time-confirm" onKeyDown={e=>{if(e.key==='Escape'&&!busy){e.preventDefault();e.stopPropagation();onCancel();}}}>
     <header><div><Clock3 size={18}/><h2 ref={heading} tabIndex={-1}>{sq ? (command === 'start' ? 'Kur filloi puna?' : 'Kur mbaroi puna?') : (command === 'start' ? 'When did work start?' : 'When did work finish?')}</h2><small>{people.length} {sq ? 'persona' : 'people'}</small></div><button type="button" className={s.icon} aria-label={sq ? 'Mbyll zgjedhjen e orës' : 'Close time choice'} disabled={busy} onClick={onCancel}><X size={17}/></button></header>
     <div className={t.clockGroup}>
-      <button type="button" disabled={busy} onClick={() => group('now')}>{sq ? 'Tani' : 'Now'}</button>
-      <button type="button" disabled={busy} onClick={() => group('manual')}>{sq ? 'Vendos orën' : 'Set time'}</button>
-      {people.some(w => w.schedule) && <button type="button" disabled={busy} onClick={() => group('schedule')}>{sq ? 'Orari i firmës' : 'Company hours'}</button>}
-      <label>{sq ? 'Ora për grupin' : 'Group time'}<input type="datetime-local" value={time} disabled={busy} onChange={e => { const at = e.target.value; setTime(at); setChoices(old => Object.fromEntries(Object.entries(old).map(([id, choice]) => [id, choice.mode === 'manual' ? { mode: 'manual', at } : choice]))); }}/></label>
+      <button type="button" disabled={busy} aria-pressed={people.every(w=>choices[w.id].mode==='now')} onClick={() => group('now')}>{sq ? 'Tani' : 'Now'}</button>
+      <button type="button" disabled={busy} aria-pressed={people.every(w=>choices[w.id].mode==='manual')} onClick={() => group('manual')}>{sq ? 'Vendos orën' : 'Set time'}</button>
+      {people.some(w => w.schedule) && <button type="button" disabled={busy} aria-pressed={people.every(w=>choices[w.id].mode==='schedule')} onClick={() => group('schedule')}>{sq ? 'Orari i firmës' : 'Company hours'}</button>}
+      {people.some(w=>choices[w.id].mode==='manual')&&<label>{sq ? 'Ora për grupin' : 'Group time'}<input type="datetime-local" value={time} disabled={busy} onChange={e => { const at = e.target.value; setTime(at); setChoices(old => Object.fromEntries(Object.entries(old).map(([id, choice]) => [id, choice.mode === 'manual' ? { mode: 'manual', at } : choice]))); }}/></label>}
     </div>
     <p className={s.hint}>{sq ? 'Zgjedhja sipër vlen për grupin. Ndrysho veçmas personin që ka ardhur vonë ose është larguar më herët.' : 'The choice above applies to the group. Override anyone who arrived late or left early.'} · {REPORT_TIME_ZONE}</p>
     <div className={t.clockPeople}>{people.map(w => {
