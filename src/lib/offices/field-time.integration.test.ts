@@ -27,7 +27,7 @@ beforeEach(async()=>{
  engineerId=(await prisma.worker.create({data:{companyProfileId:tenants[0].company.id,firstName:'Hrisa',lastName:'DEMO',crewRole:'FIELD_ENGINEER',accessLevel:'BASE'}})).id;
  await prisma.worker.update({where:{id:tenants[0].worker.id},data:{crewRole:'FIELD_WORKER'}});
 });
-afterEach(async()=>{await removeSecurityTenants(tenants.map(t=>t.company.id));vi.unstubAllEnvs();});
+afterEach(async()=>{vi.useRealTimers();await removeSecurityTenants(tenants.map(t=>t.company.id));vi.unstubAllEnvs();});
 it('requires an explicit engineer grant, rejects foreign/non-field staff and revokes immediately',async()=>{
  await engineer(false);await expect(fieldTimeSnapshot()).rejects.toThrow('DENIED');
  expect((await startWorkerSessionAction({workerId:tenants[0].worker.id,startTime:at(3).toISOString()})).ok).toBe(false);
@@ -81,4 +81,50 @@ it('never stops or reopens office/workshop clocks and never stops a replacement 
  expect((await prisma.workSession.findUniqueOrThrow({where:{id:replacement.id}})).isLive).toBe(true);
  await prisma.workSession.update({where:{id:replacement.id},data:{workplace:'WORKSHOP',baustelleId:null}});
  expect((await stopWorkerSessionAction({sessionId:replacement.id,endTime:new Date().toISOString(),breakMinutes:0})).ok).toBe(false);
+});
+
+it('records fixed and late arrivals independently, remembers the choice only after success, and preserves existing hours and access',async()=>{
+ await engineer();const a=tenants[0];
+ await prisma.companyProfile.update({where:{id:a.company.id},data:{country:'AL'}});
+ await prisma.baustelle.update({where:{id:a.site.id},data:{type:'STEEL_ASSEMBLY'}});
+ const existing=await prisma.workSession.create({data:{workerId:a.worker.id,startTime:new Date('2026-11-19T06:00Z'),endTime:new Date('2026-11-19T16:00Z'),totalHours:9.5,breakMinutes:30,isLive:false,updatedAt:new Date('2026-11-19T16:00Z')}});
+ const grants=await prisma.accessGrant.findMany({where:{workerId:a.worker.id}});
+ vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-11-20T17:15Z'));
+ const before=await fieldTimeSnapshot();expect(before.workers.find(w=>w.id===a.worker.id)).toMatchObject({scheduled:false,schedule:{start:'07:00',end:'17:00'}});
+ const started=await changeFieldTime({command:'start',workers:[
+  {workerId:a.worker.id,sessionId:null,clock:{mode:'schedule'},preference:{value:true,expected:false}},
+  {workerId:engineerId,sessionId:null,clock:{mode:'manual',at:'2026-11-20T08:20'},preference:{value:false,expected:false}},
+  {workerId:tenants[1].worker.id,sessionId:null,clock:{mode:'schedule'},preference:{value:true,expected:false}},
+ ]});
+ expect(started.results.map(r=>r.ok)).toEqual([true,true,false]);
+ const fixed=await prisma.workSession.findFirstOrThrow({where:{workerId:a.worker.id,isLive:true}}),late=await prisma.workSession.findFirstOrThrow({where:{workerId:engineerId,isLive:true}});
+ expect(fixed.startTime.toISOString()).toBe('2026-11-20T06:00:00.000Z');expect(late.startTime.toISOString()).toBe('2026-11-20T07:20:00.000Z');
+ expect((await fieldTimeSnapshot()).workers.find(w=>w.id===a.worker.id)?.scheduled).toBe(true);
+ expect((await prisma.worker.findUniqueOrThrow({where:{id:tenants[1].worker.id}})).fieldTimeScheduled).toBe(false);
+ await prisma.workSession.updateMany({where:{id:{in:[fixed.id,late.id]}},data:{createdAt:new Date('2026-11-20T16:00Z')}});
+ const stopped=await changeFieldTime({command:'stop',workers:[
+  {workerId:a.worker.id,sessionId:fixed.id,clock:{mode:'schedule'},preference:{value:true,expected:true}},
+  {workerId:engineerId,sessionId:late.id,clock:{mode:'manual',at:'2026-11-20T16:30'}},
+ ]});expect(stopped.results.map(r=>r.ok)).toEqual([true,true]);
+ expect(await prisma.workSession.findUniqueOrThrow({where:{id:fixed.id}})).toMatchObject({endTime:new Date('2026-11-20T16:00Z'),totalHours:9.5,breakMinutes:30,isLive:false});
+ expect(await prisma.workSession.findUniqueOrThrow({where:{id:existing.id}})).toEqual(existing);
+ expect(await prisma.accessGrant.findMany({where:{workerId:a.worker.id}})).toEqual(grants);
+ expect(await prisma.auditLog.count({where:{companyProfileId:a.company.id,action:'office.field_time.schedule_preference'}})).toBe(1);
+});
+
+it('does not write a preference for invalid, future, overlapping, revoked or unknown schedules',async()=>{
+ await engineer();const a=tenants[0];
+ await prisma.companyProfile.update({where:{id:a.company.id},data:{country:'AL'}});await prisma.baustelle.update({where:{id:a.site.id},data:{type:'STEEL_ASSEMBLY'}});
+ vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-11-20T04:00Z'));
+ const request={command:'start',workers:[{workerId:a.worker.id,sessionId:null,clock:{mode:'schedule'},preference:{value:true,expected:false}}]};
+ expect((await changeFieldTime(request)).results[0]).toMatchObject({ok:false,message:'CLOCK'});
+ vi.setSystemTime(new Date('2026-11-20T17:00Z'));
+ await prisma.workSession.create({data:{workerId:a.worker.id,startTime:new Date('2026-11-20T06:00Z'),endTime:new Date('2026-11-20T07:00Z'),isLive:false,updatedAt:new Date('2026-11-20T07:00Z')}});
+ expect((await changeFieldTime(request)).results[0].ok).toBe(false);
+ expect((await prisma.worker.findUniqueOrThrow({where:{id:a.worker.id}})).fieldTimeScheduled).toBe(false);
+ await prisma.companyProfile.update({where:{id:a.company.id},data:{country:'DE'}});
+ expect((await changeFieldTime(request)).results[0]).toMatchObject({ok:false,message:'CLOCK'});
+ await prisma.officeMember.updateMany({where:{workerId:engineerId},data:{fieldAttendanceEnabled:false}});
+ await expect(changeFieldTime(request)).rejects.toThrow('DENIED');
+ expect(await prisma.auditLog.count({where:{companyProfileId:a.company.id,action:'office.field_time.schedule_preference'}})).toBe(0);
 });
