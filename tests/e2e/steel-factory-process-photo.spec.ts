@@ -20,9 +20,9 @@ test('factory process cards reuse saved visuals and photographic defaults withou
     await prisma.baustelle.create({ data: { companyProfileId: company.id, name: 'Punishtja DEMO', type: 'STEEL_WORKSHOP' } });
     const site = await prisma.baustelle.create({ data: { companyProfileId: company.id, name: 'Photo site DEMO', type: 'STEEL_ASSEMBLY' } });
     const at = new Date('2026-01-05T08:00:00Z');
-    const generated = await prisma.steelWorkDefinition.create({ data: { companyProfileId: company.id, key: 'fp-photo-drill-demo', kind: 'factory', label: 'Shpime DEMO', sortOrder: 10, visualStatus: 'generated', visualUpdatedAt: at } });
-    const uploaded = await prisma.steelWorkDefinition.create({ data: { companyProfileId: company.id, key: 'fp-photo-upload-demo', kind: 'factory', label: 'Lyerje e personalizuar DEMO', sortOrder: 11, visualStatus: 'photo', visualUpdatedAt: at } });
-    const fallback = await prisma.steelWorkDefinition.create({ data: { companyProfileId: company.id, key: 'fp-photo-fallback-demo', kind: 'factory', label: 'Shpime pa foto DEMO', sortOrder: 12 } });
+    const generated = await prisma.steelWorkDefinition.create({ data: { companyProfileId: company.id, key: `fp-${'d'.repeat(24)}`, kind: 'factory', label: 'Shpime DEMO', sortOrder: 10, visualStatus: 'generated', visualUpdatedAt: at } });
+    const uploaded = await prisma.steelWorkDefinition.create({ data: { companyProfileId: company.id, key: `fp-${'e'.repeat(24)}`, kind: 'factory', label: 'Lyerje e personalizuar DEMO', sortOrder: 11, visualStatus: 'photo', visualUpdatedAt: at } });
+    const fallback = await prisma.steelWorkDefinition.create({ data: { companyProfileId: company.id, key: `fp-${'f'.repeat(24)}`, kind: 'factory', label: 'Shpime pa foto DEMO', sortOrder: 12 } });
     const bytes = readFileSync(new URL('../../public/steel-process-photos-v1/drilling.webp', import.meta.url));
     for (const definition of [generated, uploaded]) await prisma.steelWorkVisual.create({ data: { companyProfileId: company.id, definitionId: definition.id, mime: 'image/webp', data: bytes, scene: { style: STEEL_ILLUSTRATION_STYLE_VERSION } } });
     const element = await prisma.siteElement.create({ data: { companyProfileId: company.id, baustelleId: site.id, list: 'assembly', mark: 'PHOTO/1', quantity: 4, weightKg: 12, processRoutes: { v: 1, factory: ['cutting', generated.key, uploaded.key, fallback.key], field: [] } } });
