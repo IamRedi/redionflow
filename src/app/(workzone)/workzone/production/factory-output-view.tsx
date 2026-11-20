@@ -4,20 +4,18 @@ import { ChevronRight, Factory } from "lucide-react";
 import Link from "next/link";
 
 import { useLanguage } from "@/components/i18n/language-provider";
-import { SteelPhaseArt } from "@/components/steel/steel-art";
+import { SteelWorkVisual, type SteelWorkVisualDefinition } from "@/components/steel/work-visual";
 import { ProductionDelivery } from '@/components/steel/production-delivery';
 import { factoryProcessPercent, totalOutput, type SiteFactoryOutput } from "@/lib/elements/factory-output";
 import { FACTORY_STEP_KEYS, formatAmount } from "@/lib/factory/production";
 import { t } from "@/lib/i18n";
 import { orderedProcessKeys } from '@/lib/steel-work/process-order';
 
-import { artKey } from "./production-ui";
-
 const amount = (value: number) => formatAmount(Math.round(value));
 const percentLabel = (value: number) => `${value > 0 && value < 1 ? "<1" : Math.floor(value)}%`;
 const fill = (template: string, values: Record<string, string | number>) =>
   Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
-export type FactoryProcessDefinition = { key: string; label: string };
+export type FactoryProcessDefinition = Pick<SteelWorkVisualDefinition, "key" | "label"> & Partial<SteelWorkVisualDefinition>;
 const processKeys = (output: Pick<SiteFactoryOutput, "stages">, definitions: FactoryProcessDefinition[]) =>
   orderedProcessKeys([...new Set([...definitions.map(definition => definition.key), ...Object.keys(output.stages)])].filter(key => output.stages[key]?.eligibleMarks > 0), definitions);
 function processLabel(key: string, definitions: FactoryProcessDefinition[], lang: string) {
@@ -82,13 +80,12 @@ function StageTiles({ output, art = false, processDefinitions = [] }: { output: 
     <div className={`grid gap-1.5 ${art ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" : "grid-cols-3"}`}>
       {processKeys(output, processDefinitions).map((key) => {
         const stage = output.stages[key];
+        const definition = processDefinitions.find(item => item.key === key);
         return (
           <div data-studio-process-card data-process-key={key} key={key} className="min-w-0 overflow-hidden rounded-xl border bg-background">
             {art ? (
               <div data-studio-process-media className="relative h-16 bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950">
-                {(FACTORY_STEP_KEYS as readonly string[]).includes(key)
-                  ? <SteelPhaseArt photoPhase={key} phase={artKey(key)} animate={false} className="absolute inset-0 h-full w-full p-1" />
-                  : <Factory aria-hidden="true" className="absolute inset-0 m-auto size-9 text-orange-500" />}
+                <SteelWorkVisual definition={{ ...definition, key, label: definition?.label ?? "", kind: "factory" }} fallback={key} className="absolute inset-0 h-full w-full" />
               </div>
             ) : null}
             <div className="px-2.5 py-2">
