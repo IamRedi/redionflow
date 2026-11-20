@@ -36,11 +36,14 @@ export function FieldTimeConfirm({ people, command, sq, busy, onCancel, onConfir
       const choice = choices[w.id], at = fieldClockTime(choice, command, w.schedule, w.session?.start ?? null, now);
       return <div className={t.clockPerson} key={w.id} data-testid="field-clock-person">
         <strong>{w.name}</strong>
+        <details className={t.personChoice}>
+          <summary aria-label={`${sq?'Ndrysho orën':'Change time'} · ${w.name}`}><Clock3 size={14}/>{choice.mode==='now'?(sq?'Tani':'Now'):choice.mode==='schedule'?(command==='start'?w.schedule?.start:w.schedule?.end):(choice.at?.replace('T',' ')||'—')}<span>{sq?'Ndrysho veçmas':'Override'}</span></summary>
         <select aria-label={`${sq ? 'Ora' : 'Time'} · ${w.name}`} disabled={busy} value={choice.mode} onChange={e => setChoices(old => ({ ...old, [w.id]: { mode: e.target.value as FieldClockChoice['mode'], at: time } }))}>
           <option value="now">{sq ? 'Tani' : 'Now'}</option><option value="manual">{sq ? 'Vendos orën' : 'Set time'}</option>
           {w.schedule && <option value="schedule">{sq ? 'Orari i firmës' : 'Company hours'} · {command === 'start' ? w.schedule.start : w.schedule.end}</option>}
         </select>
         {choice.mode === 'manual' && <label className={t.personTime}>{sq ? 'Data dhe ora' : 'Date and time'} · {w.name}<input type="datetime-local" value={choice.at ?? ''} disabled={busy} onChange={e => setChoices(old => ({ ...old, [w.id]: { mode: 'manual', at: e.target.value } }))}/></label>}
+        </details>
         {w.schedule && <label className={t.remember}><input type="checkbox" disabled={busy} checked={preferences[w.id]} onChange={e => { const checked = e.target.checked; setPreferences(old => ({ ...old, [w.id]: checked })); if (checked) setChoices(old => ({ ...old, [w.id]: { mode: 'schedule' } })); }}/>{sq ? 'Kujto orarin e firmës' : 'Remember company hours'} · {w.schedule.start}–{w.schedule.end}</label>}
         {!at && <small role="alert" className={t.error}>{sq ? 'Zgjidh një orë të vlefshme: jo në të ardhmen, para fillimit ose jashtë ditëve të orarit.' : 'Choose a valid time: not in the future, before the start or outside scheduled days.'}</small>}
       </div>;

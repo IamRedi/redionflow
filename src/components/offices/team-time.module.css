@@ -6,3 +6,5 @@
 @media(forced-colors:active){.clockCard,.clockPerson{background:Canvas;border-color:CanvasText;box-shadow:none}}
 
 .clockGroup button[aria-pressed=true]{border-color:#658e7c;background:linear-gradient(135deg,#b8e5cf70,#fff5);color:#194b3a}:global(.dark) .clockGroup button[aria-pressed=true]{color:#c7f1dc;background:#335f4b75}
+
+.clockPerson .personChoice{min-width:0}.personChoice summary{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-height:44px;font-size:13px;cursor:pointer;overflow-wrap:anywhere}.personChoice summary span{font-size:11px;text-decoration:underline;text-underline-offset:3px}.clockPerson .personChoice[open]{grid-column:1/-1}.personChoice[open] summary{justify-content:flex-start}.personChoice select{margin-bottom:8px}.personChoice .personTime{margin-bottom:6px}@media(max-width:520px){.clockPerson{grid-template-columns:minmax(0,1fr) auto}.clockPerson>.remember,.clockPerson>.error{grid-column:1/-1}.personChoice summary{flex-wrap:wrap;max-width:145px;font-size:12px}.personChoice summary span{width:100%;text-align:right}.personChoice[open] summary{max-width:none}.personChoice[open] summary span{width:auto;text-align:left}}
