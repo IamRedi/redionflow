@@ -1084,6 +1084,8 @@ model Worker {
   level                 WorkerLevel        @default(JUNIOR)
   /// Metal construction role (see src/lib/workzone/crew-roles.ts); null = plain worker.
   crewRole              String?
+  /// Preferred time choice in the delegated field panel, never unattended attendance.
+  fieldTimeScheduled    Boolean              @default(false)
   /// Access level (src/lib/access/rules.ts): BASE or FULL_VIEW; null = derived from crewRole.
   accessLevel           String?
   /// AI assistant access when the company limits it to selected people.
